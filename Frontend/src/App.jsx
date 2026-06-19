@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import AdminDashboard from './AdminDashboard';
+import { authAPI, categoriesAPI, articlesAPI, liveUpdatesAPI, epaperAPI, marketsAPI } from './api';
 
 // Default mock data matching the screenshot exactly
 const MOCK_FEATURED = [
@@ -148,10 +149,7 @@ function App() {
   const verifyAdmin = async () => {
     if (token) {
       try {
-        const res = await fetch('/api/auth/profile', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await res.json();
+        const data = await authAPI.getProfile();
         if (data.success) {
           setAdminUser(data.data);
         } else {
@@ -165,8 +163,7 @@ function App() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
-      const resData = await response.json();
+      const resData = await categoriesAPI.getAll();
       if (resData.success && resData.data) {
         const locs = resData.data.filter(c => c.is_location === 1 || c.is_location === true);
         setLocationCategories(locs);
@@ -185,8 +182,7 @@ function App() {
 
   const fetchArticles = async () => {
     try {
-      const response = await fetch('/api/articles?status=published&limit=100');
-      const resData = await response.json();
+      const resData = await articlesAPI.getAll('status=published&limit=100');
       if (resData.success && resData.data) {
         setDbArticles(resData.data);
       }
@@ -197,8 +193,7 @@ function App() {
 
   const fetchLiveUpdates = async () => {
     try {
-      const res = await fetch('/api/live-updates');
-      const resData = await res.json();
+      const resData = await liveUpdatesAPI.getAll();
       if (resData.success && resData.data) {
         setLiveUpdates(resData.data);
       }
@@ -209,8 +204,7 @@ function App() {
 
   const fetchLatestEpaper = async () => {
     try {
-      const res = await fetch('/api/epaper/latest');
-      const resData = await res.json();
+      const resData = await epaperAPI.getLatest();
       if (resData.success && resData.data) {
         setLatestEpaper(resData.data);
       }
@@ -221,8 +215,7 @@ function App() {
 
   const fetchLiveRates = async () => {
     try {
-      const res = await fetch('/api/markets/live-rates');
-      const resData = await res.json();
+      const resData = await marketsAPI.getLiveRates();
       if (resData.success && resData.data) {
         setLiveRates(resData.data);
       }
@@ -340,12 +333,7 @@ function App() {
     }
 
     try {
-      const headers = {};
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-      const res = await fetch(`/api/articles/${articleIdOrSlug}`, { headers });
-      const data = await res.json();
+      const data = await articlesAPI.getByIdOrSlug(articleIdOrSlug);
       if (data.success && data.data) {
         setActiveArticle(data.data);
       } else {
@@ -355,6 +343,7 @@ function App() {
       console.error('Error loading article:', err);
     }
   };
+
 
   if (isAdminMode) {
     return (
