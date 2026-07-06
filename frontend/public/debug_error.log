@@ -1,0 +1,1166 @@
+[2026-06-29T09:18:53.464Z] POST Article Error:
+PrismaClientKnownRequestError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.create()` invocation in
+D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__01t54hd._.js:782:176
+
+  779         }
+  780     });
+  781 }
+→ 782 const article = await __TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.create(
+The provided value for the column is too long for the column's type. Column: featuredImage
+    at ei.handleRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async POST (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__01t54hd._.js:782:25)
+    at async AppRouteRouteModule.do (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40131)
+    at async AppRouteRouteModule.handle (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47411)
+    at async responseGenerator (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1m9q1a7._.js:16543:38)
+    at async AppRouteRouteModule.handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:228552)
+    at async handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1m9q1a7._.js:16606:32)
+    at async Module.handler (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1m9q1a7._.js:16660:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1462:9)
+    at async DevServer.renderPageComponent (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1514:24)
+    at async DevServer.renderToResponseImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1564:32)
+    at async DevServer.pipeImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1044:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:935:17)
+    at async D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-06-29T09:21:10.011Z] POST Article Error:
+PrismaClientKnownRequestError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.create()` invocation in
+D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__01t54hd._.js:782:176
+
+  779         }
+  780     });
+  781 }
+→ 782 const article = await __TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.create(
+The provided value for the column is too long for the column's type. Column: featuredImage
+    at ei.handleRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:7268)
+    at ei.handleAndLogRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async POST (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__01t54hd._.js:782:25)
+    at async AppRouteRouteModule.do (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40131)
+    at async AppRouteRouteModule.handle (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47411)
+    at async responseGenerator (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1m9q1a7._.js:16543:38)
+    at async AppRouteRouteModule.handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:228552)
+    at async handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1m9q1a7._.js:16606:32)
+    at async Module.handler (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1m9q1a7._.js:16660:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1462:9)
+    at async DevServer.renderPageComponent (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1514:24)
+    at async DevServer.renderToResponseImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1564:32)
+    at async DevServer.pipeImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1044:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:935:17)
+    at async D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-06-29T10:27:32.479Z] PUT Article Error:
+PrismaClientValidationError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update()` invocation in
+D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:176
+
+  771         }
+  772     });
+  773 }
+→ 774 const updated = await __TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update({
+        where: {
+          id: "be9b86bd-23d7-4902-8514-39dac8cacdd3"
+        },
+        data: {
+          slug: "gujarat-expands-electric-bus-fleet-to-promote-sustainable-public-transportation",
+          title: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleGu: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleHi: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          excerpt: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptGu: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptHi: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          content: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentGu: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentHi: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          featuredImage: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          thumbnail: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          categoryId: "570ea67e-4cb9-481e-8ccc-e83519e59fde",
+          ~~~~~~~~~~
+          authorId: "34d98e64-a263-4836-abe5-ea4aa13ad0a1",
+          readingTime: 4,
+          isTrending: true,
+          isBreaking: true,
+          isFeatured: true,
+          isPublished: false,
+          priority: 0,
+          status: "DRAFT",
+          seoTitle: undefined,
+          seoDescription: undefined,
+          seoKeywords: undefined,
+          canonicalUrl: undefined,
+          metaRobots: "index, follow",
+          updatedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          publishedByUser: undefined,
+          tags: {
+            set: [],
+            connectOrCreate: [
+              {
+                where: {
+                  slug: "surat"
+                },
+                create: {
+                  slug: "surat",
+                  name: "Surat",
+                  nameGu: "Surat",
+                  nameHi: "Surat"
+                }
+              },
+              {
+                where: {
+                  slug: "environment"
+                },
+                create: {
+                  slug: "environment",
+                  name: "Environment",
+                  nameGu: "Environment",
+                  nameHi: "Environment"
+                }
+              },
+              {
+                where: {
+                  slug: "sustainable-transport"
+                },
+                create: {
+                  slug: "sustainable-transport",
+                  name: "Sustainable Transport",
+                  nameGu: "Sustainable Transport",
+                  nameHi: "Sustainable Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "vadodara"
+                },
+                create: {
+                  slug: "vadodara",
+                  name: "Vadodara",
+                  nameGu: "Vadodara",
+                  nameHi: "Vadodara"
+                }
+              },
+              {
+                where: {
+                  slug: "smart-city"
+                },
+                create: {
+                  slug: "smart-city",
+                  name: "Smart City",
+                  nameGu: "Smart City",
+                  nameHi: "Smart City"
+                }
+              },
+              {
+                where: {
+                  slug: "ahmedabad"
+                },
+                create: {
+                  slug: "ahmedabad",
+                  name: "Ahmedabad",
+                  nameGu: "Ahmedabad",
+                  nameHi: "Ahmedabad"
+                }
+              },
+              {
+                where: {
+                  slug: "ev"
+                },
+                create: {
+                  slug: "ev",
+                  name: "EV",
+                  nameGu: "EV",
+                  nameHi: "EV"
+                }
+              },
+              {
+                where: {
+                  slug: "gujarat"
+                },
+                create: {
+                  slug: "gujarat",
+                  name: "Gujarat",
+                  nameGu: "Gujarat",
+                  nameHi: "Gujarat"
+                }
+              },
+              {
+                where: {
+                  slug: "clean-energy"
+                },
+                create: {
+                  slug: "clean-energy",
+                  name: "Clean Energy",
+                  nameGu: "Clean Energy",
+                  nameHi: "Clean Energy"
+                }
+              },
+              {
+                where: {
+                  slug: "transportation"
+                },
+                create: {
+                  slug: "transportation",
+                  name: "Transportation",
+                  nameGu: "Transportation",
+                  nameHi: "Transportation"
+                }
+              },
+              {
+                where: {
+                  slug: "urban-mobility"
+                },
+                create: {
+                  slug: "urban-mobility",
+                  name: "Urban Mobility",
+                  nameGu: "Urban Mobility",
+                  nameHi: "Urban Mobility"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-bus"
+                },
+                create: {
+                  slug: "electric-bus",
+                  name: "Electric Bus",
+                  nameGu: "Electric Bus",
+                  nameHi: "Electric Bus"
+                }
+              },
+              {
+                where: {
+                  slug: "rajkot"
+                },
+                create: {
+                  slug: "rajkot",
+                  name: "Rajkot",
+                  nameGu: "Rajkot",
+                  nameHi: "Rajkot"
+                }
+              },
+              {
+                where: {
+                  slug: "public-transport"
+                },
+                create: {
+                  slug: "public-transport",
+                  name: "Public Transport",
+                  nameGu: "Public Transport",
+                  nameHi: "Public Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-vehicle"
+                },
+                create: {
+                  slug: "electric-vehicle",
+                  name: "Electric Vehicle",
+                  nameGu: "Electric Vehicle",
+                  nameHi: "Electric Vehicle"
+                }
+              },
+              {
+                where: {
+                  slug: "green-energy"
+                },
+                create: {
+                  slug: "green-energy",
+                  name: "Green Energy",
+                  nameGu: "Green Energy",
+                  nameHi: "Green Energy"
+                }
+              }
+            ]
+          },
+      ?   id?: String | StringFieldUpdateOperationsInput,
+      ?   publishedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   expiresAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   views?: Int | IntFieldUpdateOperationsInput,
+      ?   category?: CategoryUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   author?: AuthorUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   createdByUser?: UserUpdateOneWithoutCreatedArticlesNestedInput
+        },
+        include: {
+          author: true,
+          category: true,
+          tags: true
+        }
+      })
+
+Unknown argument `categoryId`. Did you mean `category`? Available options are marked with ?.
+    at Nn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async PUT (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:25)
+    at async AppRouteRouteModule.do (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40131)
+    at async AppRouteRouteModule.handle (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47411)
+    at async responseGenerator (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16543:38)
+    at async AppRouteRouteModule.handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:228552)
+    at async handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16606:32)
+    at async Module.handler (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16660:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1462:9)
+    at async DevServer.renderPageComponent (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1514:24)
+    at async DevServer.renderToResponseImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1564:32)
+    at async DevServer.pipeImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1044:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:935:17)
+    at async D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-06-29T10:35:11.702Z] PUT Article Error:
+PrismaClientValidationError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update()` invocation in
+D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:176
+
+  771         }
+  772     });
+  773 }
+→ 774 const updated = await __TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update({
+        where: {
+          id: "be9b86bd-23d7-4902-8514-39dac8cacdd3"
+        },
+        data: {
+          slug: "gujarat-expands-electric-bus-fleet-to-promote-sustainable-public-transportation",
+          title: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleGu: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleHi: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          excerpt: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptGu: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptHi: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          content: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentGu: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentHi: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          featuredImage: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          thumbnail: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          categoryId: "570ea67e-4cb9-481e-8ccc-e83519e59fde",
+          ~~~~~~~~~~
+          authorId: "34d98e64-a263-4836-abe5-ea4aa13ad0a1",
+          readingTime: 4,
+          isTrending: true,
+          isBreaking: true,
+          isFeatured: true,
+          isPublished: true,
+          priority: 0,
+          status: "PUBLISHED",
+          seoTitle: null,
+          seoDescription: null,
+          seoKeywords: null,
+          canonicalUrl: null,
+          metaRobots: "index, follow",
+          updatedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          publishedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          tags: {
+            set: [],
+            connectOrCreate: [
+              {
+                where: {
+                  slug: "surat"
+                },
+                create: {
+                  slug: "surat",
+                  name: "Surat",
+                  nameGu: "સુરત",
+                  nameHi: "सूरत"
+                }
+              },
+              {
+                where: {
+                  slug: "environment"
+                },
+                create: {
+                  slug: "environment",
+                  name: "Environment",
+                  nameGu: "Environment",
+                  nameHi: "Environment"
+                }
+              },
+              {
+                where: {
+                  slug: "sustainable-transport"
+                },
+                create: {
+                  slug: "sustainable-transport",
+                  name: "Sustainable Transport",
+                  nameGu: "Sustainable Transport",
+                  nameHi: "Sustainable Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "vadodara"
+                },
+                create: {
+                  slug: "vadodara",
+                  name: "Vadodara",
+                  nameGu: "વડોદરા",
+                  nameHi: "वडोदरा"
+                }
+              },
+              {
+                where: {
+                  slug: "smart-city"
+                },
+                create: {
+                  slug: "smart-city",
+                  name: "Smart City",
+                  nameGu: "Smart City",
+                  nameHi: "Smart City"
+                }
+              },
+              {
+                where: {
+                  slug: "ahmedabad"
+                },
+                create: {
+                  slug: "ahmedabad",
+                  name: "Ahmedabad",
+                  nameGu: "અમદાવાદ",
+                  nameHi: "अहमदाबाद"
+                }
+              },
+              {
+                where: {
+                  slug: "ev"
+                },
+                create: {
+                  slug: "ev",
+                  name: "EV",
+                  nameGu: "EV",
+                  nameHi: "EV"
+                }
+              },
+              {
+                where: {
+                  slug: "gujarat"
+                },
+                create: {
+                  slug: "gujarat",
+                  name: "Gujarat",
+                  nameGu: "ગુજરાત",
+                  nameHi: "गुजरात"
+                }
+              },
+              {
+                where: {
+                  slug: "clean-energy"
+                },
+                create: {
+                  slug: "clean-energy",
+                  name: "Clean Energy",
+                  nameGu: "Clean Energy",
+                  nameHi: "Clean Energy"
+                }
+              },
+              {
+                where: {
+                  slug: "transportation"
+                },
+                create: {
+                  slug: "transportation",
+                  name: "Transportation",
+                  nameGu: "Transportation",
+                  nameHi: "Transportation"
+                }
+              },
+              {
+                where: {
+                  slug: "urban-mobility"
+                },
+                create: {
+                  slug: "urban-mobility",
+                  name: "Urban Mobility",
+                  nameGu: "Urban Mobility",
+                  nameHi: "Urban Mobility"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-bus"
+                },
+                create: {
+                  slug: "electric-bus",
+                  name: "Electric Bus",
+                  nameGu: "Electric Bus",
+                  nameHi: "Electric Bus"
+                }
+              },
+              {
+                where: {
+                  slug: "rajkot"
+                },
+                create: {
+                  slug: "rajkot",
+                  name: "Rajkot",
+                  nameGu: "રાજકોટ",
+                  nameHi: "राजकोट"
+                }
+              },
+              {
+                where: {
+                  slug: "public-transport"
+                },
+                create: {
+                  slug: "public-transport",
+                  name: "Public Transport",
+                  nameGu: "Public Transport",
+                  nameHi: "Public Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-vehicle"
+                },
+                create: {
+                  slug: "electric-vehicle",
+                  name: "Electric Vehicle",
+                  nameGu: "Electric Vehicle",
+                  nameHi: "Electric Vehicle"
+                }
+              },
+              {
+                where: {
+                  slug: "green-energy"
+                },
+                create: {
+                  slug: "green-energy",
+                  name: "Green Energy",
+                  nameGu: "Green Energy",
+                  nameHi: "Green Energy"
+                }
+              }
+            ]
+          },
+      ?   id?: String | StringFieldUpdateOperationsInput,
+      ?   publishedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   expiresAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   views?: Int | IntFieldUpdateOperationsInput,
+      ?   category?: CategoryUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   author?: AuthorUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   createdByUser?: UserUpdateOneWithoutCreatedArticlesNestedInput
+        },
+        include: {
+          author: true,
+          category: true,
+          tags: true
+        }
+      })
+
+Unknown argument `categoryId`. Did you mean `category`? Available options are marked with ?.
+    at Nn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async PUT (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:25)
+    at async AppRouteRouteModule.do (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40131)
+    at async AppRouteRouteModule.handle (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47411)
+    at async responseGenerator (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16543:38)
+    at async AppRouteRouteModule.handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:228552)
+    at async handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16606:32)
+    at async Module.handler (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16660:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1462:9)
+    at async DevServer.renderPageComponent (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1514:24)
+    at async DevServer.renderToResponseImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1564:32)
+    at async DevServer.pipeImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1044:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:935:17)
+    at async D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-06-29T10:40:19.571Z] PUT Article Error:
+PrismaClientValidationError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update()` invocation in
+D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:176
+
+  771         }
+  772     });
+  773 }
+→ 774 const updated = await __TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update({
+        where: {
+          id: "be9b86bd-23d7-4902-8514-39dac8cacdd3"
+        },
+        data: {
+          slug: "gujarat-expands-electric-bus-fleet-to-promote-sustainable-public-transportation",
+          title: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleGu: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleHi: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          excerpt: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptGu: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptHi: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          content: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentGu: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentHi: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          featuredImage: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          thumbnail: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          categoryId: "570ea67e-4cb9-481e-8ccc-e83519e59fde",
+          ~~~~~~~~~~
+          authorId: "34d98e64-a263-4836-abe5-ea4aa13ad0a1",
+          readingTime: 4,
+          isTrending: true,
+          isBreaking: true,
+          isFeatured: true,
+          isPublished: true,
+          priority: 0,
+          status: "PUBLISHED",
+          seoTitle: null,
+          seoDescription: null,
+          seoKeywords: null,
+          canonicalUrl: null,
+          metaRobots: "index, follow",
+          updatedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          publishedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          tags: {
+            set: [],
+            connectOrCreate: [
+              {
+                where: {
+                  slug: "surat"
+                },
+                create: {
+                  slug: "surat",
+                  name: "Surat",
+                  nameGu: "સુરત",
+                  nameHi: "सूरत"
+                }
+              },
+              {
+                where: {
+                  slug: "environment"
+                },
+                create: {
+                  slug: "environment",
+                  name: "Environment",
+                  nameGu: "Environment",
+                  nameHi: "Environment"
+                }
+              },
+              {
+                where: {
+                  slug: "sustainable-transport"
+                },
+                create: {
+                  slug: "sustainable-transport",
+                  name: "Sustainable Transport",
+                  nameGu: "Sustainable Transport",
+                  nameHi: "Sustainable Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "vadodara"
+                },
+                create: {
+                  slug: "vadodara",
+                  name: "Vadodara",
+                  nameGu: "વડોદરા",
+                  nameHi: "वडोदरा"
+                }
+              },
+              {
+                where: {
+                  slug: "smart-city"
+                },
+                create: {
+                  slug: "smart-city",
+                  name: "Smart City",
+                  nameGu: "Smart City",
+                  nameHi: "Smart City"
+                }
+              },
+              {
+                where: {
+                  slug: "ahmedabad"
+                },
+                create: {
+                  slug: "ahmedabad",
+                  name: "Ahmedabad",
+                  nameGu: "અમદાવાદ",
+                  nameHi: "अहमदाबाद"
+                }
+              },
+              {
+                where: {
+                  slug: "ev"
+                },
+                create: {
+                  slug: "ev",
+                  name: "EV",
+                  nameGu: "EV",
+                  nameHi: "EV"
+                }
+              },
+              {
+                where: {
+                  slug: "gujarat"
+                },
+                create: {
+                  slug: "gujarat",
+                  name: "Gujarat",
+                  nameGu: "ગુજરાત",
+                  nameHi: "गुजरात"
+                }
+              },
+              {
+                where: {
+                  slug: "clean-energy"
+                },
+                create: {
+                  slug: "clean-energy",
+                  name: "Clean Energy",
+                  nameGu: "Clean Energy",
+                  nameHi: "Clean Energy"
+                }
+              },
+              {
+                where: {
+                  slug: "transportation"
+                },
+                create: {
+                  slug: "transportation",
+                  name: "Transportation",
+                  nameGu: "Transportation",
+                  nameHi: "Transportation"
+                }
+              },
+              {
+                where: {
+                  slug: "urban-mobility"
+                },
+                create: {
+                  slug: "urban-mobility",
+                  name: "Urban Mobility",
+                  nameGu: "Urban Mobility",
+                  nameHi: "Urban Mobility"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-bus"
+                },
+                create: {
+                  slug: "electric-bus",
+                  name: "Electric Bus",
+                  nameGu: "Electric Bus",
+                  nameHi: "Electric Bus"
+                }
+              },
+              {
+                where: {
+                  slug: "rajkot"
+                },
+                create: {
+                  slug: "rajkot",
+                  name: "Rajkot",
+                  nameGu: "રાજકોટ",
+                  nameHi: "राजकोट"
+                }
+              },
+              {
+                where: {
+                  slug: "public-transport"
+                },
+                create: {
+                  slug: "public-transport",
+                  name: "Public Transport",
+                  nameGu: "Public Transport",
+                  nameHi: "Public Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-vehicle"
+                },
+                create: {
+                  slug: "electric-vehicle",
+                  name: "Electric Vehicle",
+                  nameGu: "Electric Vehicle",
+                  nameHi: "Electric Vehicle"
+                }
+              },
+              {
+                where: {
+                  slug: "green-energy"
+                },
+                create: {
+                  slug: "green-energy",
+                  name: "Green Energy",
+                  nameGu: "Green Energy",
+                  nameHi: "Green Energy"
+                }
+              }
+            ]
+          },
+      ?   id?: String | StringFieldUpdateOperationsInput,
+      ?   publishedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   expiresAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   views?: Int | IntFieldUpdateOperationsInput,
+      ?   category?: CategoryUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   author?: AuthorUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   createdByUser?: UserUpdateOneWithoutCreatedArticlesNestedInput
+        },
+        include: {
+          author: true,
+          category: true,
+          tags: true
+        }
+      })
+
+Unknown argument `categoryId`. Did you mean `category`? Available options are marked with ?.
+    at Nn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async PUT (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:25)
+    at async AppRouteRouteModule.do (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40131)
+    at async AppRouteRouteModule.handle (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47411)
+    at async responseGenerator (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16543:38)
+    at async AppRouteRouteModule.handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:228552)
+    at async handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16606:32)
+    at async Module.handler (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16660:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1462:9)
+    at async DevServer.renderPageComponent (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1514:24)
+    at async DevServer.renderToResponseImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1564:32)
+    at async DevServer.pipeImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1044:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:935:17)
+    at async D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\start-server.js:225:13)
+
+[2026-06-29T10:40:32.210Z] PUT Article Error:
+PrismaClientValidationError: 
+Invalid `__TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update()` invocation in
+D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:176
+
+  771         }
+  772     });
+  773 }
+→ 774 const updated = await __TURBOPACK__imported__module__$5b$project$5d2f$server$2f$database$2f$prisma$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["prisma"].article.update({
+        where: {
+          id: "be9b86bd-23d7-4902-8514-39dac8cacdd3"
+        },
+        data: {
+          slug: "gujarat-expands-electric-bus-fleet-to-promote-sustainable-public-transportation",
+          title: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleGu: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          titleHi: "Gujarat Expands Electric Bus Fleet to Promote Sustainable Public Transportation",
+          excerpt: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptGu: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          excerptHi: "The Gujarat government has introduced a new fleet of electric buses to improve public transportation, reduce pollution, and provide commuters with a cleaner and more comfortable travel experience across major cities.",
+          content: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentGu: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          contentHi: "The Gujarat government has taken another significant step toward sustainable urban mobility by expanding its fleet of electric buses across major cities, including Ahmedabad, Surat, Vadodara, and Rajkot.\n\nThe initiative aims to reduce carbon emissions, improve air quality, and offer residents a modern and eco-friendly mode of transportation. The newly introduced buses are equipped with air conditioning, GPS tracking, CCTV cameras, digital display systems, and comfortable seating to enhance passenger safety and convenience.\n\nTransport department officials stated that electric buses produce zero tailpipe emissions and operate with significantly lower noise levels compared to conventional diesel-powered vehicles. This transition is expected to contribute to cleaner urban environments while reducing long-term fuel and maintenance costs.\n\nCharging infrastructure is also being developed at major bus depots to support the growing electric vehicle fleet. Fast-charging stations have been installed to ensure buses can return to service quickly, minimizing operational downtime.\n\nDaily commuters have welcomed the initiative, praising the improved comfort, quieter rides, and environmentally friendly transportation option. Authorities believe the expansion will encourage more people to use public transport, helping reduce traffic congestion in urban areas.\n\nOfficials further stated that additional electric buses will be introduced in phases over the coming years as part of Gujarat's long-term sustainable transport strategy. The government continues to invest in green mobility projects to build cleaner, smarter, and more efficient cities for future generations.",
+          featuredImage: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          thumbnail: "https://images.openai.com/static-rsc-4/fykTyLpNZBHDtcOvrep163K4TrAEbcRZDLYRaxNnpgpamBuhaqs2UE9KHFhJ-XxbbvquyYnixkx9YUsQS3tTpqsTf9YLZiKoYMHbR6xIW1s6kuh1hKDblMFoaQDUTWPBLUvQa-MN746SmWEeiF8eXkweW4lDDfheXxa3lT1aH8o?purpose=inline",
+          categoryId: "570ea67e-4cb9-481e-8ccc-e83519e59fde",
+          ~~~~~~~~~~
+          authorId: "34d98e64-a263-4836-abe5-ea4aa13ad0a1",
+          readingTime: 4,
+          isTrending: true,
+          isBreaking: true,
+          isFeatured: true,
+          isPublished: true,
+          priority: 0,
+          status: "PUBLISHED",
+          seoTitle: null,
+          seoDescription: null,
+          seoKeywords: null,
+          canonicalUrl: null,
+          metaRobots: "index, follow",
+          updatedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          publishedByUser: {
+            connect: {
+              id: "3f183159-85ab-4ec5-a6af-dea64a7b531a"
+            }
+          },
+          tags: {
+            set: [],
+            connectOrCreate: [
+              {
+                where: {
+                  slug: "surat"
+                },
+                create: {
+                  slug: "surat",
+                  name: "Surat",
+                  nameGu: "સુરત",
+                  nameHi: "सूरत"
+                }
+              },
+              {
+                where: {
+                  slug: "environment"
+                },
+                create: {
+                  slug: "environment",
+                  name: "Environment",
+                  nameGu: "Environment",
+                  nameHi: "Environment"
+                }
+              },
+              {
+                where: {
+                  slug: "sustainable-transport"
+                },
+                create: {
+                  slug: "sustainable-transport",
+                  name: "Sustainable Transport",
+                  nameGu: "Sustainable Transport",
+                  nameHi: "Sustainable Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "vadodara"
+                },
+                create: {
+                  slug: "vadodara",
+                  name: "Vadodara",
+                  nameGu: "વડોદરા",
+                  nameHi: "वडोदरा"
+                }
+              },
+              {
+                where: {
+                  slug: "smart-city"
+                },
+                create: {
+                  slug: "smart-city",
+                  name: "Smart City",
+                  nameGu: "Smart City",
+                  nameHi: "Smart City"
+                }
+              },
+              {
+                where: {
+                  slug: "ahmedabad"
+                },
+                create: {
+                  slug: "ahmedabad",
+                  name: "Ahmedabad",
+                  nameGu: "અમદાવાદ",
+                  nameHi: "अहमदाबाद"
+                }
+              },
+              {
+                where: {
+                  slug: "ev"
+                },
+                create: {
+                  slug: "ev",
+                  name: "EV",
+                  nameGu: "EV",
+                  nameHi: "EV"
+                }
+              },
+              {
+                where: {
+                  slug: "gujarat"
+                },
+                create: {
+                  slug: "gujarat",
+                  name: "Gujarat",
+                  nameGu: "ગુજરાત",
+                  nameHi: "गुजरात"
+                }
+              },
+              {
+                where: {
+                  slug: "clean-energy"
+                },
+                create: {
+                  slug: "clean-energy",
+                  name: "Clean Energy",
+                  nameGu: "Clean Energy",
+                  nameHi: "Clean Energy"
+                }
+              },
+              {
+                where: {
+                  slug: "transportation"
+                },
+                create: {
+                  slug: "transportation",
+                  name: "Transportation",
+                  nameGu: "Transportation",
+                  nameHi: "Transportation"
+                }
+              },
+              {
+                where: {
+                  slug: "urban-mobility"
+                },
+                create: {
+                  slug: "urban-mobility",
+                  name: "Urban Mobility",
+                  nameGu: "Urban Mobility",
+                  nameHi: "Urban Mobility"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-bus"
+                },
+                create: {
+                  slug: "electric-bus",
+                  name: "Electric Bus",
+                  nameGu: "Electric Bus",
+                  nameHi: "Electric Bus"
+                }
+              },
+              {
+                where: {
+                  slug: "rajkot"
+                },
+                create: {
+                  slug: "rajkot",
+                  name: "Rajkot",
+                  nameGu: "રાજકોટ",
+                  nameHi: "राजकोट"
+                }
+              },
+              {
+                where: {
+                  slug: "public-transport"
+                },
+                create: {
+                  slug: "public-transport",
+                  name: "Public Transport",
+                  nameGu: "Public Transport",
+                  nameHi: "Public Transport"
+                }
+              },
+              {
+                where: {
+                  slug: "electric-vehicle"
+                },
+                create: {
+                  slug: "electric-vehicle",
+                  name: "Electric Vehicle",
+                  nameGu: "Electric Vehicle",
+                  nameHi: "Electric Vehicle"
+                }
+              },
+              {
+                where: {
+                  slug: "green-energy"
+                },
+                create: {
+                  slug: "green-energy",
+                  name: "Green Energy",
+                  nameGu: "Green Energy",
+                  nameHi: "Green Energy"
+                }
+              }
+            ]
+          },
+      ?   id?: String | StringFieldUpdateOperationsInput,
+      ?   publishedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   updatedAt?: DateTime | DateTimeFieldUpdateOperationsInput,
+      ?   deletedAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   expiresAt?: DateTime | NullableDateTimeFieldUpdateOperationsInput | Null,
+      ?   views?: Int | IntFieldUpdateOperationsInput,
+      ?   category?: CategoryUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   author?: AuthorUpdateOneRequiredWithoutArticlesNestedInput,
+      ?   createdByUser?: UserUpdateOneWithoutCreatedArticlesNestedInput
+        },
+        include: {
+          author: true,
+          category: true,
+          tags: true
+        }
+      })
+
+Unknown argument `categoryId`. Did you mean `category`? Available options are marked with ?.
+    at Nn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:29:1363)
+    at ei.handleRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6911)
+    at ei.handleAndLogRequestError (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6593)
+    at ei.request (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:121:6300)
+    at async a (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\@prisma\client\runtime\library.js:130:9551)
+    at async PUT (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\[root-of-the-server]__0ogcf6e._.js:774:25)
+    at async AppRouteRouteModule.do (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:40131)
+    at async AppRouteRouteModule.handle (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:5:47411)
+    at async responseGenerator (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16543:38)
+    at async AppRouteRouteModule.handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\compiled\next-server\app-route-turbo.runtime.dev.js:1:228552)
+    at async handleResponse (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16606:32)
+    at async Module.handler (D:\Htech\GujaratPost\Gujarat-Post-main\.next\dev\server\chunks\node_modules_next_1-mf3vi._.js:16660:13)
+    at async DevServer.renderToResponseWithComponentsImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1462:9)
+    at async DevServer.renderPageComponent (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1514:24)
+    at async DevServer.renderToResponseImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1564:32)
+    at async DevServer.pipeImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:1044:25)
+    at async NextNodeServer.handleCatchallRenderRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\base-server.js:935:17)
+    at async D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:394:20
+    at async Span.traceAsyncFn (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (D:\Htech\GujaratPost\Gujarat-Post-main\node_modules\next\dist\server\lib\start-server.js:225:13)
+

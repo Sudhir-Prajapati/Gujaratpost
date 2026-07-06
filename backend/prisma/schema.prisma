@@ -1,0 +1,226 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  SUPER_ADMIN
+  EDITOR
+  REPORTER
+  SEO
+  ADVERTISEMENT
+  PHOTOGRAPHER
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+  PENDING_VERIFICATION
+}
+
+enum ArticleStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+  SCHEDULED
+}
+
+model User {
+  id                String          @id @default(uuid())
+  email             String          @unique
+  passwordHash      String
+  role              Role            @default(REPORTER)
+  status            AccountStatus   @default(PENDING_VERIFICATION)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  sessions          Session[]
+  auditLogs         AuditLog[]
+  
+  // Relations for content audit trail
+  createdArticles   Article[]       @relation("CreatedArticles")
+  updatedArticles   Article[]       @relation("UpdatedArticles")
+  publishedArticles Article[]       @relation("PublishedArticles")
+
+  // Link User login account to public Author profile
+  authorId          String?         @unique
+  author            Author?         @relation(fields: [authorId], references: [id], onDelete: SetNull)
+}
+
+model Session {
+  id           String    @id @default(uuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique @db.VarChar(255) // SHA-256 hash of the 256-bit random refresh token
+  deviceName   String?   @db.VarChar(255)
+  browser      String?   @db.VarChar(255)
+  ipAddress    String?   @db.VarChar(45)
+  country      String?   @db.VarChar(100)
+  createdAt    DateTime  @default(now())
+  lastUsedAt   DateTime  @default(now())
+  expiresAt    DateTime
+  revokedAt    DateTime?
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String   @db.VarChar(255) // e.g., "LOGIN_SUCCESS", "ARTICLE_DELETED"
+  entity    String?  @db.VarChar(100) // The table modified (e.g. "Article")
+  entityId  String?  @db.VarChar(255) // The ID of the modified entity
+  ipAddress String?  @db.VarChar(45)
+  userAgent String?  @db.VarChar(255)
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id           String    @id @default(uuid())
+  slug         String    @unique
+  name         String    @unique
+  nameGu       String
+  nameHi       String
+  icon         String?   @db.VarChar(100)
+  color        String?   @db.VarChar(30)
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  articles     Article[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}
+
+model Author {
+  id            String    @id @default(uuid())
+  name          String
+  nameGu        String
+  nameHi        String
+  image         String    @db.Text
+  designation   String
+  designationGu String
+  designationHi String
+  bio           String    @db.Text
+  bioGu         String    @db.Text
+  bioHi         String    @db.Text
+  email         String    @unique
+  twitter       String?
+  facebook      String?
+  instagram     String?
+  linkedin      String?
+  isActive      Boolean   @default(true)
+  joinedAt      DateTime  @default(now())
+  articles      Article[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  // Inverse relation to User
+  user          User?
+}
+
+model Tag {
+  id        String    @id @default(uuid())
+  slug      String    @unique
+  name      String    @unique
+  nameGu    String
+  nameHi    String
+  articles  Article[]
+  createdAt DateTime  @default(now())
+}
+
+model Article {
+  id                String        @id @default(uuid())
+  slug              String        @unique
+  title             String
+  titleGu           String
+  titleHi           String
+  excerpt           String        @db.Text
+  excerptGu         String        @db.Text
+  excerptHi         String        @db.Text
+  content           String        @db.Text
+  contentGu         String        @db.Text
+  contentHi         String        @db.Text
+  featuredImage     String        @db.Text
+  thumbnail         String        @db.Text
+  categoryId        String
+  category          Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  authorId          String
+  author            Author        @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  tags              Tag[]
+  publishedAt       DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  readingTime       Int           @default(0)
+  isTrending        Boolean       @default(false)
+  isBreaking        Boolean       @default(false)
+  isFeatured        Boolean       @default(false)
+  isPublished       Boolean       @default(false)
+  expiresAt         DateTime?
+  priority          Int           @default(0)
+  views             Int           @default(0)
+  status            ArticleStatus @default(DRAFT)
+  
+  // SEO fields
+  seoTitle          String?
+  seoDescription    String?       @db.Text
+  seoKeywords       String?
+  canonicalUrl      String?
+  metaRobots        String?
+  
+  // Auditing trail
+  createdByUserId   String?
+  createdByUser     User?         @relation("CreatedArticles", fields: [createdByUserId], references: [id], onDelete: SetNull)
+  updatedByUserId   String?
+  updatedByUser     User?         @relation("UpdatedArticles", fields: [updatedByUserId], references: [id], onDelete: SetNull)
+  publishedByUserId String?
+  publishedByUser   User?         @relation("PublishedArticles", fields: [publishedByUserId], references: [id], onDelete: SetNull)
+
+  // Indexes for homepage feeds and dashboard queries
+  @@index([publishedAt])
+  @@index([categoryId])
+  @@index([isTrending])
+  @@index([isFeatured])
+  @@index([views])
+  @@index([slug])
+  @@index([status])
+}
+
+model Video {
+  id          String    @id @default(uuid())
+  title       String
+  titleGu     String
+  titleHi     String
+  description String?   @db.Text
+  thumbnail   String    @db.Text
+  youtubeId   String    @unique
+  embedUrl    String    @db.Text
+  channel     String?
+  duration    String
+  type        String    // 'video' | 'short' | 'podcast' | 'interview'
+  isFeatured  Boolean   @default(false)
+  views       Int       @default(0)
+  publishedAt DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+}
+
+model Photo {
+  id           String    @id @default(uuid())
+  src          String    @db.Text
+  alt          String
+  caption      String
+  captionGu    String
+  captionHi    String
+  category     String?
+  photographer String?
+  copyright    String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+}

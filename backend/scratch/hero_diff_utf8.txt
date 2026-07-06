@@ -1,0 +1,229 @@
+diff --git a/components/sections/HeroSection.tsx b/components/sections/HeroSection.tsx
+index 378616a..8000fb9 100644
+--- a/components/sections/HeroSection.tsx
++++ b/components/sections/HeroSection.tsx
+@@ -5,15 +5,12 @@ import Link from 'next/link';
+ import Image from 'next/image';
+ import { Clock, ArrowRight, Flame, Eye, Play, ChevronRight, ChevronLeft } from 'lucide-react';
+ import {
+-  getFeaturedArticles,
+   getArticleTitle,
+   getArticleExcerpt,
+   formatTime,
+   formatDate,
+   formatViews,
+   getCategoryLabel,
+-  getArticlesByCategory,
+-  getTrendingArticles,
+   VIDEOS,
+   getLocalized,
+ } from '@/data';
+@@ -87,28 +84,62 @@ export default function HeroSection() {
+   const { language } = useApp();
+   const [videoMode, setVideoMode] = useState<'latest' | 'live'>('latest');
+ 
+-  const featured = getFeaturedArticles();
+-// Left column: "મુખ્ય સમાચાર" — 8 compact list items
+-  const leftItems = featured.slice(0, 3);
+-  // Center top: "ટૉપ સ્ટોરી" — 4×3 grid = 12 cards
+-  const topStories = featured.slice(8, 16);
+-  // Center bottom row: 4 more cards
+-  const centerBot = featured.slice(20, 24);
+-  // Category rows below
+-  const gujaratArt = getArticlesByCategory('Gujarat').slice(0, 16);
+-  const crimeArt = getArticlesByCategory('Crime').slice(0, 4);
+-  const nationalArt = getArticlesByCategory('Politics').slice(0, 4);
+-  const worldArt = getArticlesByCategory('World').slice(0, 4);
+-  const businessArt = getArticlesByCategory('Business').slice(0, 4);
+-  const sportsArt = getArticlesByCategory('Sports').slice(0, 5);
+-  // Videos
++  // DB-backed article state
++  const [topNews, setTopNews] = useState<Article[]>([]);
++  const [topStories, setTopStories] = useState<Article[]>([]);
++  const [trendingArtDB, setTrendingArtDB] = useState<Article[]>([]);
++  const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>([]);
++  const [crimeArtDB, setCrimeArtDB] = useState<Article[]>([]);
++  const [nationalArtDB, setNationalArtDB] = useState<Article[]>([]);
++  const [worldArtDB, setWorldArtDB] = useState<Article[]>([]);
++  const [businessArtDB, setBusinessArtDB] = useState<Article[]>([]);
++  const [sportsArtDB, setSportsArtDB] = useState<Article[]>([]);
++
++  const fetchArticles = async (url: string): Promise<Article[]> => {
++    try {
++      const res = await fetch(url);
++      const json = await res.json();
++      return json.success ? (json.data?.articles || []) : [];
++    } catch {
++      return [];
++    }
++  };
++
++  useEffect(() => {
++    Promise.all([
++      fetchArticles('/api/news/top-news?limit=6'),
++      fetchArticles('/api/news/top-stories?limit=8'),
++      fetchArticles('/api/news/trending?limit=10'),
++      fetchArticles('/api/category/state?limit=16'),
++      fetchArticles('/api/category/crime?limit=4'),
++      fetchArticles('/api/category/national?limit=4'),
++      fetchArticles('/api/category/world?limit=4'),
++      fetchArticles('/api/category/business?limit=4'),
++      fetchArticles('/api/category/sports?limit=7'),
++    ]).then(([news, stories, trend, guj, crime, natl, world, biz, sports]) => {
++      setTopNews(news);
++      setTopStories(stories);
++      setTrendingArtDB(trend);
++      setGujaratArtDB(guj);
++      setCrimeArtDB(crime);
++      setNationalArtDB(natl);
++      setWorldArtDB(world);
++      setBusinessArtDB(biz);
++      setSportsArtDB(sports);
++    });
++  }, []);
++
++  // Derived slices
++  const leftItems = topNews.slice(0, 3);
++  const topStoriesSlice = topStories.slice(0, 8);
++  const extraRightArticles = topNews.slice(3, 6);
++
++  // Videos — still from static data
+   const videos = VIDEOS.filter(v => v.type === 'video').slice(0, 5);
+-  const extraRightArticles = featured.slice(24, 28);
+-  const trendingArt = getTrendingArticles().slice(0, 10);
++
+   const [
+     uniqueLeftItems,
+     uniqueTopStories,
+-    ,
+     uniqueGujaratArt,
+     uniqueCrimeArt,
+     uniqueNationalArt,
+@@ -119,19 +150,18 @@ export default function HeroSection() {
+     uniqueTrendingArt,
+   ] = makeHomeImagesUnique([
+     leftItems,
+-    topStories,
+-    centerBot,
+-    gujaratArt,
+-    crimeArt,
+-    nationalArt,
+-    worldArt,
+-    businessArt,
+-    sportsArt,
++    topStoriesSlice,
++    gujaratArtDB,
++    crimeArtDB,
++    nationalArtDB,
++    worldArtDB,
++    businessArtDB,
++    sportsArtDB,
+     extraRightArticles,
+-    trendingArt,
++    trendingArtDB,
+   ]);
+ 
+-  if (!featured.length) return null;
++  if (!topStories.length) return null;
+ 
+   return (
+     <div className="mx-auto max-w-screen-xl px-2 py-0.5 space-y-1">
+@@ -161,7 +191,7 @@ export default function HeroSection() {
+               <div>
+                   <div className="flex items-center justify-between mb-1.5">
+                   <SectionLabel title="Top Stories" titleGu="ટૉપ સ્ટોરી" language={language} />
+-                  <Link href="/category/gujarat" className="flex items-center gap-0.5 text-[11px] font-bold text-accent hover:underline">
++                  <Link href="/category/state" className="flex items-center gap-0.5 text-[11px] font-bold text-accent hover:underline">
+                     {language === 'gu' ? 'બધા જુઓ' : 'View all'} <ChevronRight className="h-3 w-3" />
+                   </Link>
+                 </div>
+@@ -198,7 +228,7 @@ export default function HeroSection() {
+             {/* ── Rajya Samachar (fills remaining white space) */}
+             <CategoryRow
+               title="State News" titleGu="રાજ્ય સમાચાર"
+-              href="/category/gujarat"
++              href="/category/state"
+               articles={uniqueGujaratArt} language={language}
+             />
+           </div>
+@@ -230,7 +260,7 @@ export default function HeroSection() {
+ 
+       {/* ── ROW 2: 4-column category columns (National, World, Crime, Business) */}
+       <div className="grid grid-cols-1 gap-1 md:grid-cols-2 lg:grid-cols-4">
+-        <CategoryColumn title="National" titleGu="રાષ્ટ્રીય" href="/category/politics" articles={uniqueNationalArt} language={language} showExcerpt={true} />
++        <CategoryColumn title="National" titleGu="રાષ્ટ્રીય" href="/category/national" articles={uniqueNationalArt} language={language} showExcerpt={true} />
+         <CategoryColumn title="World" titleGu="વિશ્વ" href="/category/world" articles={uniqueWorldArt} language={language} />
+         <CategoryColumn title="Crime" titleGu="અપરાધ" href="/category/crime" articles={uniqueCrimeArt} language={language} />
+         <CategoryColumn title="Business" titleGu="બિઝનેસ" href="/category/business" articles={uniqueBusinessArt} language={language} />
+@@ -245,7 +275,7 @@ export default function HeroSection() {
+ }
+ 
+ /* --- Trending Bar ----------------------------------------------------------- */
+-function TrendingBar({ articles, language }: { articles: ReturnType<typeof getTrendingArticles>; language: Language }) {
++function TrendingBar({ articles, language }: { articles: Article[]; language: Language }) {
+   const label = language === 'gu' ? 'ટ્રેન્ડિંગ સમાચાર' : 'Trending News';
+   const [start, setStart] = useState(0);
+   const visible = 5;
+@@ -280,7 +310,7 @@ function TrendingBar({ articles, language }: { articles: ReturnType<typeof getTr
+ 
+       {/* Items */}
+       <div className="grid grid-cols-5 divide-x divide-border">
+-        {articles.slice(start, start + visible).map((art, idx) => (
++        {articles.slice(start, start + visible).map((art: Article, idx: number) => (
+           <Link
+             key={art.id}
+             href={`/news/${art.slug}`}
+@@ -323,7 +353,7 @@ function SectionLabel({ title, titleGu, language }: { title: string; titleGu: st
+ }
+ 
+ /* --- Left List Item --------------------------------------------------------- */
+-function LeftListItem({ article, language }: { article: ReturnType<typeof getFeaturedArticles>[0]; language: Language }) {
++function LeftListItem({ article, language }: { article: Article; language: Language }) {
+   const title = getArticleTitle(article, language);
+   const cat = getCategoryLabel(article, language);
+   const cc = getCategoryColor(article.category);
+@@ -346,7 +376,7 @@ function LeftListItem({ article, language }: { article: ReturnType<typeof getFea
+ }
+ 
+ /* --- Story Card (exact match — image 2 design) ------------------------------ */
+-function StoryCard({ article, language }: { article: ReturnType<typeof getFeaturedArticles>[0]; language: Language }) {
++function StoryCard({ article, language }: { article: Article; language: Language }) {
+   const title = getArticleTitle(article, language);
+   const cat = getCategoryLabel(article, language);
+   const cc = getCategoryColor(article.category);
+@@ -395,7 +425,7 @@ function StoryCard({ article, language }: { article: ReturnType<typeof getFeatur
+ /* --- Category Row (4-col horizontal) --------------------------------------- */
+ function CategoryRow({
+   title, titleGu, href, articles, language
+-}: { title: string; titleGu: string; href: string; articles: ReturnType<typeof getArticlesByCategory>; language: Language }) {
++}: { title: string; titleGu: string; href: string; articles: Article[]; language: Language }) {
+   const display = language === 'en' ? title : titleGu;
+   return (
+     <div>
+@@ -406,7 +436,7 @@ function CategoryRow({
+         </Link>
+       </div>
+       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+-        {articles.map((art) => {
++        {articles.map((art: Article) => {
+           const t = getArticleTitle(art, language);
+           const cc = getCategoryColor(art.category);
+           return (
+@@ -437,7 +467,7 @@ function CategoryColumn({
+   title: string;
+   titleGu: string;
+   href: string;
+-  articles: ReturnType<typeof getArticlesByCategory>;
++  articles: Article[];
+   language: Language;
+   showExcerpt?: boolean;
+ }) {
+@@ -461,7 +491,7 @@ function CategoryColumn({
+ 
+       {/* List */}
+       <div className="flex flex-col gap-2">
+-        {articles.slice(0, 4).map((art, idx) => {
++        {articles.slice(0, 4).map((art: Article, idx: number) => {
+           const t = getArticleTitle(art, language);
+           const excerpt = getArticleExcerpt(art, language);
+ 
