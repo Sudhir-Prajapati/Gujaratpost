@@ -9,8 +9,6 @@ import { StatsController } from '../controllers/stats.controller.js';
 import { HeroController } from '../controllers/hero.controller.js';
 import { InstagramReelController } from '../controllers/instagramReel.controller.js';
 import { WebStoryController } from '../controllers/webStory.controller.js';
-import { AdController } from '../controllers/ad.controller.js';
-import { EPaperController } from '../controllers/epaper.controller.js';
 import uploadRoutes from './upload.routes.js';
 
 import { requireAuth } from '../middleware/auth.middleware.js';
@@ -100,68 +98,7 @@ router.delete('/reels/:id', requireAuth, InstagramReelController.deleteReel);
 router.get('/web-stories', requireAuth, WebStoryController.getAll);
 router.post('/web-stories', requireAuth, WebStoryController.create);
 router.put('/web-stories/:id', requireAuth, WebStoryController.update);
-// ==========================================
-// 12. Astrology Signs Management
-// ==========================================
-router.get('/astrology', requireAuth, async (req, res, next) => {
-  try {
-    const signs = await prisma.astrologySign.findMany({ orderBy: { createdAt: 'asc' } });
-    return sendSuccess(res, { signs }, 'Astrology signs retrieved');
-  } catch (error) {
-    next(error);
-  }
-});
-
-router.put('/astrology/:id', requireAuth, async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const { prediction, predictionGu, nameGu, nameHi, details, detailsJson } = req.body;
-
-    const existing = await prisma.astrologySign.findFirst({
-      where: { OR: [{ id }, { slug: id }] },
-    });
-
-    if (!existing) {
-      return res.status(404).json({ success: false, message: 'Astrology sign not found' });
-    }
-
-    const payloadJson = detailsJson || (details ? JSON.stringify(details) : undefined);
-
-    const updated = await (prisma.astrologySign as any).update({
-      where: { id: existing.id },
-      data: {
-        ...(prediction !== undefined && { prediction }),
-        ...(predictionGu !== undefined && { predictionGu }),
-        ...(nameGu !== undefined && { nameGu }),
-        ...(nameHi !== undefined && { nameHi }),
-        ...(payloadJson !== undefined && { detailsJson: payloadJson }),
-      },
-    });
-
-    return sendSuccess(res, { sign: updated }, 'Astrology sign updated successfully');
-  } catch (error) {
-    next(error);
-  }
-});
-
-// ==========================================
-// 13. E-Paper Management
-// ==========================================
-router.get('/epaper', requireAuth, EPaperController.getAdminEditions);
-router.post('/epaper', requireAuth, EPaperController.createEdition);
-router.put('/epaper/:id', requireAuth, EPaperController.updateEdition);
-router.delete('/epaper/:id', requireAuth, EPaperController.deleteEdition);
-router.get('/epaper/cities', requireAuth, EPaperController.getCities);
-router.post('/epaper/cities', requireAuth, EPaperController.createCity);
-router.delete('/epaper/cities/:id', requireAuth, EPaperController.deleteCity);
-
-// ==========================================
-// 12. Section Advertisements
-// ==========================================
-router.get('/ads', requireAuth, AdController.getAllAds);
-router.post('/ads', requireAuth, AdController.createOrUpdateAd);
-router.put('/ads/:id/toggle', requireAuth, AdController.toggleActive);
-router.delete('/ads/:id', requireAuth, AdController.deleteAd);
+router.delete('/web-stories/:id', requireAuth, WebStoryController.delete);
 
 export default router;
 

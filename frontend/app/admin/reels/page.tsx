@@ -21,7 +21,6 @@ interface ReelData {
   videoUrl: string | null;
   instaUrl: string | null;
   isActive: boolean;
-  scheduledAt?: string | null;
   createdAt: string;
 }
 
@@ -44,7 +43,6 @@ export default function ReelsPage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [instaUrl, setInstaUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [scheduledAt, setScheduledAt] = useState('');
 
   // File upload states
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +75,6 @@ export default function ReelsPage() {
     setVideoUrl('');
     setInstaUrl('');
     setIsActive(true);
-    setScheduledAt('');
     setSelectedReel(null);
   };
 
@@ -96,13 +93,6 @@ export default function ReelsPage() {
     setVideoUrl(reel.videoUrl || '');
     setInstaUrl(reel.instaUrl || '');
     setIsActive(reel.isActive);
-    if (reel.scheduledAt) {
-      const d = new Date(reel.scheduledAt);
-      const localIso = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-      setScheduledAt(localIso);
-    } else {
-      setScheduledAt('');
-    }
     setEditModalOpen(true);
   };
 
@@ -151,7 +141,6 @@ export default function ReelsPage() {
           videoUrl: type === 'VIDEO' ? videoUrl : null,
           instaUrl: type === 'INSTAGRAM' ? instaUrl : null,
           isActive,
-          scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
         }),
       });
 
@@ -266,20 +255,9 @@ export default function ReelsPage() {
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      {reel.scheduledAt && new Date(reel.scheduledAt) > new Date() ? (
-                        <div className="flex flex-col gap-1">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 w-fit">
-                            ⏰ Scheduled
-                          </span>
-                          <span className="text-[10px] text-slate-500 font-mono">
-                            {new Date(reel.scheduledAt).toLocaleString()}
-                          </span>
-                        </div>
-                      ) : (
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-black ${reel.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
-                          {reel.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      )}
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-black ${reel.isActive ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {reel.isActive ? 'Active' : 'Inactive'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -428,22 +406,6 @@ export default function ReelsPage() {
                     </div>
                   </div>
                 )}
-
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5 flex items-center justify-between">
-                    <span>Scheduled Publish Date & Time ⏰</span>
-                    <span className="text-[10px] text-slate-400 font-normal">Optional</span>
-                  </label>
-                  <input
-                    type="datetime-local"
-                    value={scheduledAt}
-                    onChange={(e) => setScheduledAt(e.target.value)}
-                    className="w-full rounded-xl border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 py-2.5 text-sm font-mono focus:border-[#B3121B] focus:ring-[#B3121B]"
-                  />
-                  <p className="text-xs text-slate-400 mt-1">
-                    Set a future time for scheduled publishing. Reel will automatically appear on website when this time arrives.
-                  </p>
-                </div>
 
                 <div className="flex items-center gap-2 pt-2">
                   <input

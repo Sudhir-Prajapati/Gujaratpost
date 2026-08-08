@@ -57,26 +57,20 @@ const fileFilter = (req: any, file: any, cb: any) => {
   const mimetype = (file.mimetype || '').toLowerCase();
   const originalName = (file.originalname || '').toLowerCase();
 
-  const isAllowedMime =
-    mimetype.startsWith('image/') ||
-    mimetype.startsWith('video/') ||
-    mimetype === 'application/pdf' ||
-    mimetype === 'application/x-pdf' ||
-    mimetype === 'application/octet-stream';
-
-  const isAllowedExt = /\.(jpg|jpeg|png|gif|webp|jfif|pjpeg|avif|svg|bmp|mp4|webm|mov|mkv|pdf)$/i.test(originalName);
+  const isImageMime = mimetype.startsWith('image/') || mimetype.startsWith('video/') || mimetype === 'application/octet-stream';
+  const isImageExt = /\.(jpg|jpeg|png|gif|webp|jfif|pjpeg|avif|svg|bmp|mp4|webm|mov|mkv)$/i.test(originalName);
 
   if (isAllowedMime || isAllowedExt) {
     cb(null, true);
   } else {
-    cb(new Error('Only valid image, video, and PDF files are allowed.'), false);
+    cb(new Error('Only valid image and video files are allowed.'), false);
   }
 };
 
 const upload = multer({
   storage: diskStorage,
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB max limit
+    fileSize: 100 * 1024 * 1024, // Increased to 100MB for videos
   },
   fileFilter,
 });

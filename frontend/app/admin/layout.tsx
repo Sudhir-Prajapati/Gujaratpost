@@ -21,10 +21,6 @@ import {
   LayoutTemplate,
   Smartphone,
   BookOpen,
-  Megaphone,
-  Film,
-  Newspaper,
-  Sparkles,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -73,17 +69,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Categories', href: '/admin/categories', icon: Layers },
     { label: 'Gallery', href: '/admin/gallery', icon: ImageIcon },
     { label: 'Videos', href: '/admin/videos', icon: Video },
-    { label: 'Short Videos (શોર્ટ્સ)', href: '/admin/shorts', icon: Film },
     { label: 'Reels', href: '/admin/reels', icon: Smartphone },
     { label: 'Web Stories', href: '/admin/web-stories', icon: BookOpen },
-    { label: 'E-Paper (ઈ-પેપર)', href: '/admin/epaper', icon: Newspaper },
-    { label: 'Astrology (રાશિફળ)', href: '/admin/astrology', icon: Sparkles },
     { label: 'Users', href: '/admin/users', icon: Users },
   ];
 
   const ROLE_PERMISSIONS: Record<string, string[]> = {
     SUPER_ADMIN: ["/admin"],
-    EDITOR: ["/admin/articles", "/admin/hero", "/admin/ads", "/admin/categories", "/admin/gallery", "/admin/videos", "/admin/reels", "/admin/web-stories"],
+    EDITOR: ["/admin/articles", "/admin/hero", "/admin/categories", "/admin/gallery", "/admin/videos", "/admin/reels", "/admin/web-stories"],
     REPORTER: ["/admin/articles"],
     SEO: ["/admin/articles", "/admin/categories"],
     ADVERTISEMENT: ["/admin/articles", "/admin/ads"],

@@ -24,36 +24,6 @@ interface ReelItem {
   instaUrl: string | null;
 }
 
-const DEMO_REELS: ReelItem[] = [
-  {
-    id: 'demo-1',
-    type: 'INSTAGRAM',
-    heading: 'Gujarat Post Daily News Highlights',
-    headingGu: 'ગુજરાત પોસ્ટ સમાચાર વાયરલ અપડેટ્સ',
-    headingHi: 'गुजरात पोस्ट समाचार अपडेट्स',
-    videoUrl: null,
-    instaUrl: 'https://www.instagram.com/gujaratpostnews',
-  },
-  {
-    id: 'demo-2',
-    type: 'INSTAGRAM',
-    heading: 'Breaking Politics & City News',
-    headingGu: 'ગાંધીનગર રાજકારણ તાજા વાયરલ દ્રશ્યો',
-    headingHi: 'गांधीनगर राजनीति ताजा समाचार',
-    videoUrl: null,
-    instaUrl: 'https://www.instagram.com/gujaratpostnews',
-  },
-  {
-    id: 'demo-3',
-    type: 'INSTAGRAM',
-    heading: 'Live Weather & Special Report',
-    headingGu: 'ગુજરાત હવામાન તથા વિશેષ ન્યૂઝ રિલ',
-    headingHi: 'गुजरात मौसम तथा विशेष रिपोर्ट',
-    videoUrl: null,
-    instaUrl: 'https://www.instagram.com/gujaratpostnews',
-  },
-];
-
 export default function InstagramStories() {
   const { language } = useApp();
   const [reels, setReels] = useState<ReelItem[]>([]);
@@ -63,12 +33,10 @@ export default function InstagramStories() {
 
   useEffect(() => {
     getPublicReels().then((res) => {
-      if (res && Array.isArray(res) && res.length > 0) {
+      if (res && res.length > 0) {
         setReels(res);
-      } else {
-        setReels(DEMO_REELS);
       }
-    }).catch(() => setReels(DEMO_REELS));
+    });
   }, []);
 
   const updateArrows = useCallback(() => {
@@ -101,11 +69,13 @@ export default function InstagramStories() {
   };
 
   const handleReelClick = (reel: ReelItem) => {
-    const url = reel.type === 'VIDEO' ? (reel.videoUrl || reel.instaUrl) : (reel.instaUrl || 'https://www.instagram.com/gujaratpostnews');
+    const url = reel.type === 'VIDEO' ? reel.videoUrl : reel.instaUrl;
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
     }
   };
+
+  if (reels.length === 0) return null;
 
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-8 mb-6 relative overflow-hidden">
@@ -154,7 +124,7 @@ export default function InstagramStories() {
             className="scrollbar-hide flex gap-4 overflow-x-auto pb-2"
           >
             {reels.map((reel) => {
-              const displayTitle = language === 'gu' ? (reel.headingGu || reel.heading) : language === 'hi' ? (reel.headingHi || reel.heading) : reel.heading;
+              const displayTitle = language === 'gu' ? reel.headingGu : language === 'hi' ? reel.headingHi : reel.heading;
               return (
                 <div
                   key={reel.id}
@@ -166,26 +136,18 @@ export default function InstagramStories() {
                       <ReelsBadgeIcon className="h-3.5 w-3.5 text-white" />
                     </div>
 
-                    {/* Render HTML5 Video preview if uploaded video file exists */}
-                    {reel.type === 'VIDEO' && reel.videoUrl ? (
-                      <video
-                        src={reel.videoUrl}
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    ) : (
-                      /* Instagram Gradient Cover */
-                      <div className="absolute inset-0 h-full w-full bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
+                    {/* Gradient Background since there is no thumbnail */}
+                    <div className="absolute inset-0 h-full w-full bg-gradient-to-tr from-[#f09433] via-[#e6683c] to-[#bc1888] flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
+                      {reel.type === 'VIDEO' ? (
                         <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
                           <svg viewBox="0 0 24 24" className="w-6 h-6 text-white ml-1" fill="currentColor">
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </div>
-                      </div>
-                    )}
+                      ) : (
+                        <ReelsBadgeIcon className="h-12 w-12 text-white/30" />
+                      )}
+                    </div>
 
                     {/* Bottom Title Container Box */}
                     <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-100 dark:border-slate-800 z-10">
@@ -194,7 +156,7 @@ export default function InstagramStories() {
                           <ReelsBadgeIcon className="h-3 w-3 text-[#B3121B] shrink-0" />
                         </div>
                         <p className="text-[11px] sm:text-[12px] font-black leading-tight text-slate-900 dark:text-white line-clamp-2">
-                          {displayTitle}
+                          {displayTitle || reel.heading}
                         </p>
                       </div>
                       <span className="flex h-6 w-6 sm:h-7 sm:w-7 items-center justify-center rounded-full bg-[#B3121B] text-white shrink-0 ml-1 shadow-sm group-hover:scale-105 transition-transform">

@@ -17,7 +17,7 @@ interface TokenPayload {
 // Map roles to their permitted admin path prefixes
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   SUPER_ADMIN: ["/admin"], // Super admin can access all admin routes
-  EDITOR: ["/admin/articles", "/admin/categories", "/admin/gallery", "/admin/videos", "/admin/stats"],
+  EDITOR: ["/admin/articles", "/admin/categories", "/admin/gallery", "/admin/videos", "/admin/reels", "/admin/web-stories", "/admin/stats"],
   REPORTER: ["/admin/articles"],
   SEO: ["/admin/seo"],
   ADVERTISEMENT: ["/admin/ads"],

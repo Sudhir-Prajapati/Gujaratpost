@@ -5,10 +5,6 @@ import { withDbRetry } from '../utils/db.js';
 import { HeroController } from '../controllers/hero.controller.js';
 import { InstagramReelController } from '../controllers/instagramReel.controller.js';
 import { WebStoryController } from '../controllers/webStory.controller.js';
-import { AdController } from '../controllers/ad.controller.js';
-import { EPaperController } from '../controllers/epaper.controller.js';
-import { GalleryController } from '../controllers/gallery.controller.js';
-import { autoPublishDueArticles } from '../controllers/article.controller.js';
 
 const router = Router();
 
@@ -737,93 +733,5 @@ router.get('/reels', InstagramReelController.getAllReels);
  * Fetch active Web Stories
  */
 router.get('/web-stories', WebStoryController.getAll);
-
-/**
- * GET /api/public/gallery
- * Fetch Photo Gallery photos
- */
-router.get('/gallery', GalleryController.getAllPhotos);
-
-let weatherCache: { [cityKey: string]: { data: any; timestamp: number } } = {};
-
-/**
- * GET /api/public/weather
- * Fetch live Weather data from Open-Meteo API
- */
-router.get('/weather', async (req, res) => {
-  const city = (req.query.city as string) || 'ahmedabad';
-  const cityLower = city.toLowerCase().trim();
-  const NOW = Date.now();
-
-  if (weatherCache[cityLower] && NOW - weatherCache[cityLower].timestamp < 10 * 60 * 1000) {
-    return sendSuccess(res, weatherCache[cityLower].data, 'Weather retrieved from cache');
-  }
-
-  const coordsMap: Record<string, { lat: number; lon: number; nameGu: string; nameEn: string }> = {
-    ahmedabad: { lat: 23.0225, lon: 72.5714, nameGu: 'અમદાવાદ', nameEn: 'Ahmedabad' },
-    surat: { lat: 21.1702, lon: 72.8311, nameGu: 'સુરત', nameEn: 'Surat' },
-    vadodara: { lat: 22.3072, lon: 73.1812, nameGu: 'વડોદરા', nameEn: 'Vadodara' },
-    rajkot: { lat: 22.3039, lon: 70.8022, nameGu: 'રાજકોટ', nameEn: 'Rajkot' },
-    gandhinagar: { lat: 23.2156, lon: 72.6369, nameGu: 'ગાંધીનગર', nameEn: 'Gandhinagar' },
-  };
-
-  const selected = coordsMap[cityLower] || coordsMap.ahmedabad;
-
-  try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${selected.lat}&longitude=${selected.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&timezone=Asia%2FKolkata`;
-    const response: any = await fetch(url).then((r) => r.json());
-    const current = response?.current || {};
-
-    const temp = Math.round(current.temperature_2m ?? 32);
-    const humidity = Math.round(current.relative_humidity_2m ?? 68);
-    const windSpeed = Math.round(current.wind_speed_10m ?? 14);
-    const code = current.weather_code ?? 2;
-
-    let conditionGu = 'આંશિક વાદળછાયું';
-    let conditionEn = 'Partly cloudy';
-
-    if (code === 0) {
-      conditionGu = 'સાફ આકાશ';
-      conditionEn = 'Clear sky';
-    } else if (code >= 1 && code <= 3) {
-      conditionGu = 'આંશિક વાદળછાયું';
-      conditionEn = 'Partly cloudy';
-    } else if (code >= 51 && code <= 67) {
-      conditionGu = 'વરસાદી હવામાન';
-      conditionEn = 'Rainy weather';
-    } else if (code >= 80 && code <= 99) {
-      conditionGu = 'ભારે વરસાદ અને વાવાઝોડું';
-      conditionEn = 'Thunderstorm & Heavy rain';
-    }
-
-    const payload = {
-      city: selected.nameGu,
-      cityEn: selected.nameEn,
-      temp,
-      humidity,
-      windSpeed,
-      conditionGu,
-      conditionEn,
-      weatherCode: code,
-      updatedAt: new Date().toISOString(),
-    };
-
-    weatherCache[cityLower] = { data: payload, timestamp: NOW };
-    return sendSuccess(res, payload, 'Live weather retrieved');
-  } catch {
-    const fallbackPayload = {
-      city: selected.nameGu,
-      cityEn: selected.nameEn,
-      temp: 32,
-      humidity: 68,
-      windSpeed: 14,
-      conditionGu: 'આંશિક વાદળછાયું',
-      conditionEn: 'Partly cloudy',
-      weatherCode: 2,
-      updatedAt: new Date().toISOString(),
-    };
-    return sendSuccess(res, fallbackPayload, 'Fallback weather retrieved');
-  }
-});
 
 export default router;

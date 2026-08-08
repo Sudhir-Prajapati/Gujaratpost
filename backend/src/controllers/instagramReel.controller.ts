@@ -6,19 +6,11 @@ export class InstagramReelController {
   // Get all reels (for admin or public)
   static async getAllReels(req: Request, res: Response, next: NextFunction) {
     try {
-      const { isActive, isPublic } = req.query;
-      const now = new Date();
+      const { isActive } = req.query;
       
       const whereClause: any = {};
       if (isActive !== undefined) {
         whereClause.isActive = isActive === 'true';
-      }
-
-      if (isPublic === 'true' || req.originalUrl.includes('/public/')) {
-        whereClause.OR = [
-          { scheduledAt: null },
-          { scheduledAt: { lte: now } },
-        ];
       }
 
       const reels = await prisma.reel.findMany({
@@ -37,7 +29,7 @@ export class InstagramReelController {
   // Create a new reel
   static async createReel(req: Request, res: Response, next: NextFunction) {
     try {
-      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, isActive, scheduledAt } = req.body;
+      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, isActive } = req.body;
 
       const newReel = await prisma.reel.create({
         data: {
@@ -48,7 +40,6 @@ export class InstagramReelController {
           videoUrl,
           instaUrl,
           isActive: isActive !== undefined ? isActive : true,
-          scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
         },
       });
 
@@ -62,7 +53,7 @@ export class InstagramReelController {
   static async updateReel(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, isActive, scheduledAt } = req.body;
+      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, isActive } = req.body;
 
       const updatedReel = await prisma.reel.update({
         where: { id },
@@ -74,7 +65,6 @@ export class InstagramReelController {
           videoUrl,
           instaUrl,
           isActive,
-          scheduledAt: scheduledAt !== undefined ? (scheduledAt ? new Date(scheduledAt) : null) : undefined,
         },
       });
 
