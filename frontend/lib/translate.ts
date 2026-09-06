@@ -5,12 +5,13 @@ import { Language } from '@/types';
 
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 const memoryCache: Record<string, string> = {};
+const CACHE_PREFIX = 'gp_tr_v6';
 
 // ─── In-flight deduplication: same key won't fire a second fetch ──────────────
 const inFlight: Record<string, Promise<string>> = {};
 
-// ─── Concurrency limiter: max 3 parallel translate requests ──────────────────
-const MAX_CONCURRENT = 3;
+// ─── Concurrency limiter: max 20 parallel translate requests ──────────────────
+const MAX_CONCURRENT = 20;
 let activeCount = 0;
 const waitQueue: Array<() => void> = [];
 
@@ -33,12 +34,27 @@ function releaseSlot(): void {
   if (next) next();
 }
 
+function isBadCacheValue(val: string, original: string, targetLang: Language): boolean {
+  if (!val || typeof val !== 'string' || !val.trim()) return true;
+  const valTrimmed = val.trim();
+
+  // If target is English, but value still contains Gujarati script, it's untranslated/bad cache!
+  if (targetLang === 'en' && /[\u0A80-\u0AFF]/.test(valTrimmed)) {
+    return true;
+  }
+  // If target is Hindi, but value still contains Gujarati script and no Devanagari, it's bad cache!
+  if (targetLang === 'hi' && /[\u0A80-\u0AFF]/.test(valTrimmed) && !/[\u0900-\u097F]/.test(valTrimmed)) {
+    return true;
+  }
+  return false;
+}
+
 function getPersistentCache(key: string): string | null {
   try {
     if (typeof window !== 'undefined') {
-      const sessVal = sessionStorage.getItem(`gp_tr_${key}`);
+      const sessVal = sessionStorage.getItem(`${CACHE_PREFIX}_${key}`);
       if (sessVal) return sessVal;
-      const localVal = localStorage.getItem(`gp_tr_${key}`);
+      const localVal = localStorage.getItem(`${CACHE_PREFIX}_${key}`);
       if (localVal) return localVal;
     }
   } catch { }
@@ -48,7 +64,8 @@ function getPersistentCache(key: string): string | null {
 function setPersistentCache(key: string, value: string): void {
   try {
     if (typeof window !== 'undefined' && value) {
-      sessionStorage.setItem(`gp_tr_${key}`, value);
+      sessionStorage.setItem(`${CACHE_PREFIX}_${key}`, value);
+      localStorage.setItem(`${CACHE_PREFIX}_${key}`, value);
     }
   } catch { }
 }
@@ -82,22 +99,22 @@ export async function translateOnFly(text: string, targetLang: Language): Promis
 
   if (!textToTranslate) return trimmed;
 
-  // Early-exit: text is already in the target script
-  if (targetLang === 'gu' && /[\u0A80-\u0AFF]/.test(textToTranslate)) return trimmed;
-  if (targetLang === 'hi' && /[\u0900-\u097F]/.test(textToTranslate)) return trimmed;
-  if (targetLang === 'en' && !/[\u0A80-\u0AFF\u0900-\u097F]/.test(textToTranslate)) return trimmed;
+  if (isAlreadyTargetLanguage(textToTranslate, targetLang)) return trimmed;
 
-  const cacheKey = `${targetLang}:${textToTranslate}`;
+  const sourceLang = detectSourceLanguage(textToTranslate, targetLang);
+  const cacheKey = `${sourceLang}:${targetLang}:${textToTranslate}`;
 
   // 1. Memory Cache hit
   if (memoryCache[cacheKey]) {
     const cached = memoryCache[cacheKey];
-    return hasHtml ? trimmed.replace(textToTranslate, cached) : cached;
+    if (!isBadCacheValue(cached, textToTranslate, targetLang)) {
+      return hasHtml ? trimmed.replace(textToTranslate, cached) : cached;
+    }
   }
 
   // 2. Persistent Storage Cache hit
   const persistent = getPersistentCache(cacheKey);
-  if (persistent) {
+  if (persistent && !isBadCacheValue(persistent, textToTranslate, targetLang)) {
     memoryCache[cacheKey] = persistent;
     return hasHtml ? trimmed.replace(textToTranslate, persistent) : persistent;
   }
@@ -105,23 +122,35 @@ export async function translateOnFly(text: string, targetLang: Language): Promis
   // 3. Deduplicate: if already in-flight for this key, await the same promise
   if (cacheKey in inFlight) {
     const result = await inFlight[cacheKey];
-    return hasHtml && result ? trimmed.replace(textToTranslate, result) : result || trimmed;
+    if (result && !isBadCacheValue(result, textToTranslate, targetLang)) {
+      return hasHtml ? trimmed.replace(textToTranslate, result) : result;
+    }
   }
 
   // Start a new fetch — guarded by the concurrency limiter
   const fetchPromise: Promise<string> = (async () => {
     await acquireSlot();
     try {
-      const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`;
-      const res = await fetch(url);
-      if (!res.ok) return trimmed;
-      const data = await res.json();
-      if (data && data[0] && Array.isArray(data[0])) {
-        const translated = data[0].map((chunk: any) => chunk[0] || '').join('');
-        if (translated && translated.trim()) {
-          memoryCache[cacheKey] = translated;
-          setPersistentCache(cacheKey, translated);
-          return hasHtml ? trimmed.replace(textToTranslate, translated) : translated;
+      const endpoints = [
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`,
+        `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`,
+      ];
+
+      for (const url of endpoints) {
+        try {
+          const res = await fetch(url);
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (data && data[0] && Array.isArray(data[0])) {
+            const translated = data[0].map((chunk: any) => chunk[0] || '').join('');
+            if (translated && translated.trim() && !isBadCacheValue(translated, textToTranslate, targetLang)) {
+              memoryCache[cacheKey] = translated;
+              setPersistentCache(cacheKey, translated);
+              return hasHtml ? trimmed.replace(textToTranslate, translated) : translated;
+            }
+          }
+        } catch {
+          // try next endpoint
         }
       }
     } catch (e) {
@@ -141,11 +170,25 @@ function isAlreadyTargetLanguage(text: string, targetLang: Language): boolean {
   const plain = text.replace(/<[^>]*>/g, '').trim();
   if (!plain) return true;
 
-  return (
-    (targetLang === 'gu' && /[\u0A80-\u0AFF]/.test(plain)) ||
-    (targetLang === 'hi' && /[\u0900-\u097F]/.test(plain)) ||
-    (targetLang === 'en' && !/[\u0A80-\u0AFF\u0900-\u097F]/.test(plain))
-  );
+  const hasGujarati = /[\u0A80-\u0AFF]/.test(plain);
+  const hasDevanagari = /[\u0900-\u097F]/.test(plain);
+
+  if (targetLang === 'gu') return hasGujarati && !hasDevanagari;
+  if (targetLang === 'hi') return hasDevanagari && !hasGujarati;
+  return !hasGujarati && !hasDevanagari;
+}
+
+function detectSourceLanguage(text: string, targetLang: Language): Language | 'auto' {
+  const plain = text.replace(/<[^>]*>/g, '').trim();
+  if (!plain) return 'auto';
+
+  const gujaratiCount = (plain.match(/[\u0A80-\u0AFF]/g) || []).length;
+  const devanagariCount = (plain.match(/[\u0900-\u097F]/g) || []).length;
+
+  if (gujaratiCount > 0 && gujaratiCount >= devanagariCount) return 'gu';
+  if (devanagariCount > 0) return 'hi';
+  if (/[A-Za-z]/.test(plain)) return 'en';
+  return targetLang === 'en' ? 'auto' : 'en';
 }
 
 function shouldTranslateTextNode(text: string, targetLang: Language): boolean {
@@ -155,9 +198,32 @@ function shouldTranslateTextNode(text: string, targetLang: Language): boolean {
   return !isAlreadyTargetLanguage(trimmed, targetLang);
 }
 
+async function translatePlainTextPreserveLayout(text: string, targetLang: Language): Promise<string> {
+  const parts = text.split(/(\r?\n+)/);
+
+  const translatedParts = await Promise.all(parts.map(async (part) => {
+    const trimmed = part.trim();
+    if (!trimmed) return part;
+    if (/^!\[[^\]]*\]\((https?:\/\/|\/)/i.test(trimmed)) return part;
+    if (/^https?:\/\//i.test(trimmed)) return part;
+    if (isAlreadyTargetLanguage(trimmed, targetLang)) return part;
+
+    const leading = part.match(/^\s*/)?.[0] || '';
+    const trailing = part.match(/\s*$/)?.[0] || '';
+    const translated = await translateOnFly(trimmed, targetLang);
+    return `${leading}${translated || trimmed}${trailing}`;
+  }));
+
+  return translatedParts.join('');
+}
+
 export async function translateHtmlOnFly(html: string, targetLang: Language): Promise<string> {
   if (!html || !html.trim()) return html || '';
   if (isAlreadyTargetLanguage(html, targetLang)) return html;
+
+  if (!/<[a-z][\s\S]*>/i.test(html)) {
+    return translatePlainTextPreserveLayout(html, targetLang);
+  }
 
   if (typeof window === 'undefined' || typeof DOMParser === 'undefined') {
     return translateOnFly(html, targetLang);
@@ -194,11 +260,12 @@ export async function translateHtmlOnFly(html: string, targetLang: Language): Pr
 
 /**
  * React hook: translates `text` to `targetLang` in the background.
- * - Resolves synchronously from cache when possible (no flash).
+ * - Resolves synchronously from memory cache when possible.
+ * - Defers persistent storage check to useEffect to guarantee 100% SSR hydration matching.
  * - Uses a cancellation flag so stale async results are discarded.
  */
 export function useAutoTranslate(text: string, targetLang: Language): string {
-  // Resolve the initial value synchronously from cache to avoid a flash of the wrong language
+  // Resolve initial value from memoryCache only (same on server and initial client render)
   const getInitialValue = (): string => {
     if (!text || typeof text !== 'string' || !text.trim()) return text || '';
     if (
@@ -209,14 +276,17 @@ export function useAutoTranslate(text: string, targetLang: Language): string {
     ) return text;
 
     const plain = text.replace(/<[^>]*>/g, '').trim();
-    const alreadyRight =
-      (targetLang === 'gu' && /[\u0A80-\u0AFF]/.test(plain)) ||
-      (targetLang === 'hi' && /[\u0900-\u097F]/.test(plain)) ||
-      (targetLang === 'en' && !/[\u0A80-\u0AFF\u0900-\u097F]/.test(plain));
-    if (alreadyRight) return text;
+    if (isAlreadyTargetLanguage(plain, targetLang)) return text;
 
-    const cached = memoryCache[`${targetLang}:${plain}`];
-    return cached || ''; // empty means "loading", avoids flash of Gujarati
+    const sourceLang = detectSourceLanguage(plain, targetLang);
+    const cacheKey = `${sourceLang}:${targetLang}:${plain}`;
+
+    const mem = memoryCache[cacheKey];
+    if (mem && !isBadCacheValue(mem, plain, targetLang)) {
+      return mem;
+    }
+
+    return '';
   };
 
   const [translatedText, setTranslatedText] = useState<string>(getInitialValue);
@@ -240,18 +310,24 @@ export function useAutoTranslate(text: string, targetLang: Language): string {
     }
 
     const plain = text.replace(/<[^>]*>/g, '').trim();
-    const alreadyRight =
-      (targetLang === 'gu' && /[\u0A80-\u0AFF]/.test(plain)) ||
-      (targetLang === 'hi' && /[\u0900-\u097F]/.test(plain)) ||
-      (targetLang === 'en' && !/[\u0A80-\u0AFF\u0900-\u097F]/.test(plain));
-
-    if (alreadyRight) {
+    if (isAlreadyTargetLanguage(plain, targetLang)) {
       setTranslatedText(text);
       return;
     }
 
+    const sourceLang = detectSourceLanguage(plain, targetLang);
+    const cacheKey = `${sourceLang}:${targetLang}:${plain}`;
+
+    // Read persistent storage in useEffect (after hydration is complete!)
+    const persistent = getPersistentCache(cacheKey);
+    if (persistent && !isBadCacheValue(persistent, plain, targetLang)) {
+      memoryCache[cacheKey] = persistent;
+      setTranslatedText(persistent);
+      return;
+    }
+
     translateOnFly(text, targetLang).then((result) => {
-      if (!cancelled && result) {
+      if (!cancelled && result && !isBadCacheValue(result, plain, targetLang)) {
         setTranslatedText(result);
       }
     });
@@ -267,12 +343,6 @@ export function useAutoTranslate(text: string, targetLang: Language): string {
 export function useAutoTranslateHtml(html: string, targetLang: Language): string {
   const getInitialValue = (): string => {
     if (!html || typeof html !== 'string' || !html.trim()) return html || '';
-    if (
-      html.includes('<figure') ||
-      html.includes('<iframe') ||
-      html.includes('<img') ||
-      html.includes('<table')
-    ) return html;
     return isAlreadyTargetLanguage(html, targetLang) ? html : '';
   };
 
@@ -283,16 +353,6 @@ export function useAutoTranslateHtml(html: string, targetLang: Language): string
 
     if (!html || typeof html !== 'string' || !html.trim()) {
       setTranslatedHtml(html || '');
-      return;
-    }
-
-    if (
-      html.includes('<figure') ||
-      html.includes('<iframe') ||
-      html.includes('<img') ||
-      html.includes('<table')
-    ) {
-      setTranslatedHtml(html);
       return;
     }
 

@@ -12,6 +12,7 @@ import { WebStoryController } from '../controllers/webStory.controller.js';
 import { EPaperController } from '../controllers/epaper.controller.js';
 import { AdController } from '../controllers/ad.controller.js';
 import { AiController } from '../controllers/ai.controller.js';
+import { SupportController } from '../controllers/support.controller.js';
 import uploadRoutes from './upload.routes.js';
 
 import { requireAuth } from '../middleware/auth.middleware.js';
@@ -177,4 +178,11 @@ router.put('/ads/:id/toggle', requireAuth, AdController.toggleActive);
 router.put('/ads/:id/toggle-random', requireAuth, AdController.toggleIncludeInRandom);
 router.delete('/ads/:id', requireAuth, AdController.deleteAd);
 
+// ==========================================
+// 15. Support Details Management (SUPER_ADMIN only)
+// ==========================================
+router.get('/support', requireAuth, requireRole(Role.SUPER_ADMIN), SupportController.getSupportSettings);
+router.put('/support', requireAuth, requireRole(Role.SUPER_ADMIN), SupportController.updateSupportSettings);
+
 export default router;
+

@@ -55,7 +55,7 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 // Memory cache & In-flight request deduplication map
 const apiCache = new Map<string, { timestamp: number; data: any }>();
 const inFlightRequests = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = 60000; // 60 seconds cache TTL for public API calls
+const CACHE_TTL_MS = 180000; // 3 minutes cache TTL for public API calls
 
 export function clearApiCache(): void {
   apiCache.clear();
@@ -657,7 +657,7 @@ export async function getPublicWeather(city?: string): Promise<any> {
 export async function getPublicAds(): Promise<any[]> {
   try {
     const url = `${API_BASE_URL}/ads`;
-    const json = await fetchCachedJson<any>(url, 30 * 1000);
+    const json = await fetchCachedJson<any>(url, 5 * 60 * 1000); // 5 minutes cache
     if (json && json.success && json.data?.ads) {
       return json.data.ads;
     }
@@ -670,7 +670,7 @@ export async function getPublicAds(): Promise<any[]> {
 export async function getPublicAdBySection(section: string): Promise<any | null> {
   try {
     const url = `${API_BASE_URL}/ads/${encodeURIComponent(section)}`;
-    const json = await fetchCachedJson<any>(url, 30 * 1000);
+    const json = await fetchCachedJson<any>(url, 5 * 60 * 1000); // 5 minutes cache
     if (json && json.success && json.data?.ad) {
       return json.data.ad;
     }
@@ -679,3 +679,20 @@ export async function getPublicAdBySection(section: string): Promise<any | null>
   }
   return null;
 }
+
+/**
+ * Fetch public Support QR Code & Bank details
+ */
+export async function getPublicSupportDetails(): Promise<any | null> {
+  try {
+    const url = `${API_BASE_URL}/support?t=${Date.now()}`;
+    const json = await fetchCachedJson<any>(url, 0);
+    if (json && json.success && json.data) {
+      return json.data;
+    }
+  } catch (error: any) {
+    console.warn('Failed to fetch public support details:', error?.message || error);
+  }
+  return null;
+}
+

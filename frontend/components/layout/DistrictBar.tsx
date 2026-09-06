@@ -22,7 +22,7 @@ export default function DistrictBar() {
       getPublicCategories({ showInHeader: true, headerType: 'GUJARAT' })
         .then((cats) => {
           if (cats && Array.isArray(cats)) {
-            setGujaratCategories(cats.sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0)));
+            setGujaratCategories(cats.sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0)));
           }
         })
         .catch(() => {});
@@ -63,27 +63,27 @@ export default function DistrictBar() {
   }, [gujaratCategories, language]);
 
   return (
-    <div className="w-full border-t border-border/40 bg-card/95 backdrop-blur-md select-none py-1.5 md:py-2">
-      <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center gap-3.5 px-4">
+    <div className="w-full border-t border-border/40 bg-card/95 backdrop-blur-md select-none py-1 md:py-2">
+      <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center gap-2 md:gap-3.5 px-3 md:px-4">
         {/* Gujarat Map Logo and vertical separator */}
-        <div className="flex items-center gap-3 shrink-0 pr-3 border-r border-border/50">
+        <div className="flex items-center gap-2 md:gap-3 shrink-0 pr-2 md:pr-3 border-r border-border/50">
           <img
             src="/assets/GujaratLogo.png"
             alt="Gujarat Logo"
-            style={{ height: '38px', width: 'auto', display: 'block' }}
-            className="object-contain transform transition-transform duration-300 hover:scale-110 cursor-pointer select-none"
+            style={{ height: '28px', width: 'auto', display: 'block' }}
+            className="object-contain transform transition-transform duration-300 hover:scale-110 cursor-pointer select-none md:h-[38px]"
           />
         </div>
 
         {/* Scrollable list of Districts */}
         <div className="flex-1 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-6 py-0.5 pr-4">
+          <div className="flex items-center gap-4 md:gap-6 py-0.5 pr-2 md:pr-4">
             
             {displayList.map((item) => (
               <Link
                 key={`${item.slug}-${language}`}
                 href={`/category/${item.slug}`}
-                className="text-[15px] md:text-[16px] font-extrabold text-foreground hover:text-[#B3121B] transition-colors duration-150 whitespace-nowrap"
+                className="text-[13px] md:text-[16px] font-extrabold text-foreground hover:text-[#B3121B] transition-colors duration-150 whitespace-nowrap"
               >
                 {item.label}
               </Link>

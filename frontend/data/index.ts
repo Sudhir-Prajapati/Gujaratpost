@@ -12,6 +12,81 @@ export const PHOTOS: any[] = [];
 export const AUTHORS: Author[] = [];
 export const BREAKING_TICKER: Array<{ en: string; gu: string; hi: string; slug: string }> = [];
 
+const WINDOWS_1252_BYTES: Record<string, number> = {
+  '€': 0x80,
+  '‚': 0x82,
+  'ƒ': 0x83,
+  '„': 0x84,
+  '…': 0x85,
+  '†': 0x86,
+  '‡': 0x87,
+  'ˆ': 0x88,
+  '‰': 0x89,
+  'Š': 0x8a,
+  '‹': 0x8b,
+  'Œ': 0x8c,
+  'Ž': 0x8e,
+  '‘': 0x91,
+  '’': 0x92,
+  '“': 0x93,
+  '”': 0x94,
+  '•': 0x95,
+  '–': 0x96,
+  '—': 0x97,
+  '˜': 0x98,
+  '™': 0x99,
+  'š': 0x9a,
+  '›': 0x9b,
+  'œ': 0x9c,
+  'ž': 0x9e,
+  'Ÿ': 0x9f,
+};
+
+export function normalizeDisplayText(value?: string | null): string {
+  const text = value || '';
+  if (!/[àáâãäåæçèéêëìíîïðñòóôõöùúûüýÿÂÃ€ŒœŠšŽžŸ]/.test(text)) {
+    return text;
+  }
+
+  try {
+    const bytes = Array.from(text, (char) => {
+      const code = char.charCodeAt(0);
+      if (code <= 0xff) return code;
+      return WINDOWS_1252_BYTES[char] ?? code;
+    }).filter((byte) => byte >= 0 && byte <= 0xff);
+
+    const decoded = new TextDecoder('utf-8', { fatal: false }).decode(new Uint8Array(bytes));
+    return decoded.includes('�') ? text : decoded;
+  } catch {
+    return text;
+  }
+}
+
+export function decodeHtmlEntities(value?: string | null): string {
+  return normalizeDisplayText(value)
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
+export function cleanArticlePlainText(value?: string | null): string {
+  return decodeHtmlEntities(value)
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<\/?(p|div|br|h[1-6]|li|ul|ol|blockquote|figure|figcaption)[^>]*>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[#*_`~>|]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export const CATEGORY_META: Record<string, { name: string; gu: string; hi: string }> = {
   gujarat: { name: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
   state: { name: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
@@ -109,13 +184,22 @@ export const NAV_ITEMS: NavItem[] = [
 ].map(([label, labelGu, labelHi, href]) => ({ label, labelGu, labelHi, href }));
 
 export const getLocalized = (language: Language, values: { en?: string; gu?: string; hi?: string }) => {
-  const en = (values?.en || '').trim();
-  const gu = (values?.gu || '').trim();
-  const hi = (values?.hi || '').trim();
+  const enRaw = (values?.en || '').trim();
+  const guRaw = (values?.gu || '').trim();
+  const hiRaw = (values?.hi || '').trim();
 
-  if (language === 'en') return en || gu || hi;
-  if (language === 'hi') return hi || gu || en;
-  return gu || en || hi;
+  // Validate script types to prevent duplicated Gujarati text from being mistaken as English or Hindi
+  const isValidEn = Boolean(enRaw && /[A-Za-z]/.test(enRaw) && !/[\u0A80-\u0AFF]/.test(enRaw));
+  const isValidHi = Boolean(hiRaw && /[\u0900-\u097F]/.test(hiRaw) && !/[\u0A80-\u0AFF]/.test(hiRaw));
+  const isValidGu = Boolean(guRaw && /[\u0A80-\u0AFF]/.test(guRaw));
+
+  const en = isValidEn ? enRaw : '';
+  const hi = isValidHi ? hiRaw : '';
+  const gu = isValidGu ? guRaw : (guRaw || enRaw || hiRaw);
+
+  if (language === 'en') return normalizeDisplayText(en || gu || hi || enRaw || hiRaw);
+  if (language === 'hi') return normalizeDisplayText(hi || gu || en || hiRaw || enRaw);
+  return normalizeDisplayText(gu || en || hi || guRaw);
 };
 
 export const getArticleTitle = (article: Article, language: Language) =>
@@ -123,16 +207,48 @@ export const getArticleTitle = (article: Article, language: Language) =>
 
 export const getArticleExcerpt = (article: Article, language: Language) => {
   const raw = getLocalized(language, { en: article?.excerpt || '', gu: article?.excerptGu || '', hi: article?.excerptHi || '' });
-  return (raw || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '').trim();
+  return cleanArticlePlainText(raw);
 };
 
 export const getArticleExcerptHtml = (article: Article, language: Language) => {
   const raw = getLocalized(language, { en: article?.excerpt || '', gu: article?.excerptGu || '', hi: article?.excerptHi || '' });
-  return (raw || '').replace(/!\[.*?\]\(.*?\)/g, '').trim();
+  return decodeHtmlEntities(raw).replace(/!\[.*?\]\(.*?\)/g, '').trim();
 };
 
-export const getArticleContent = (article: Article, language: Language) =>
-  getLocalized(language, { en: article?.content || '', gu: article?.contentGu || '', hi: article?.contentHi || '' });
+const getContentScore = (value?: string) => {
+  const raw = (value || '').trim();
+  if (!raw) return 0;
+
+  const textLength = raw
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim().length;
+  const paragraphCount = (raw.match(/<\/p>/gi) || []).length + (raw.match(/\n\s*\n/g) || []).length;
+  const mediaCount = (raw.match(/<img|<figure|<iframe|!\[[^\]]*\]\(/gi) || []).length;
+  const headingCount = (raw.match(/<h[1-6]|^#{1,6}\s/gim) || []).length;
+
+  return textLength + paragraphCount * 120 + mediaCount * 250 + headingCount * 80;
+};
+
+export const getArticleContent = (article: Article, language: Language) => {
+  const preferred = getLocalized(language, {
+    en: article?.content || '',
+    gu: article?.contentGu || '',
+    hi: article?.contentHi || '',
+  });
+
+  const available = [article?.content || '', article?.contentGu || '', article?.contentHi || '']
+    .map((content) => ({ content: content.trim(), score: getContentScore(content) }))
+    .filter((entry) => entry.content);
+
+  if (!available.length) return '';
+
+  const richest = available.reduce((best, entry) => (entry.score > best.score ? entry : best), available[0]);
+  const preferredScore = getContentScore(preferred);
+
+  return preferredScore >= richest.score * 0.6 ? preferred : richest.content;
+};
 
 export const getCategoryLabel = (
   input: any,
@@ -156,7 +272,7 @@ export const getCategoryLabel = (
   const meta = CATEGORY_META[catLower];
 
   if (meta) {
-    return language === 'hi' ? meta.hi : language === 'gu' ? meta.gu : meta.name;
+    return normalizeDisplayText(language === 'hi' ? meta.hi : language === 'gu' ? meta.gu : meta.name);
   }
 
   const guCategoryMap: Record<string, string> = {
@@ -210,13 +326,13 @@ export const getCategoryLabel = (
   };
 
   if (language === 'gu') {
-    return guCategoryMap[catLower] || catGu || rawCat || 'સમાચાર';
+    return normalizeDisplayText(guCategoryMap[catLower] || catGu || rawCat || 'સમાચાર');
   }
   if (language === 'hi') {
-    return hiCategoryMap[catLower] || catHi || rawCat || 'समाचार';
+    return normalizeDisplayText(hiCategoryMap[catLower] || catHi || rawCat || 'समाचार');
   }
 
-  return rawCat.toUpperCase() || 'NEWS';
+  return normalizeDisplayText(rawCat.toUpperCase() || 'NEWS');
 };
 
 export const getLocationLabel = (article: Article | { location?: string }, language: Language) => {

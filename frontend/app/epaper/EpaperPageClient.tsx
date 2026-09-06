@@ -30,6 +30,10 @@ import {
   clearLegacyLocalStorage,
 } from '@/lib/epaper';
 import { formatEpaperPdfUrl, formatEpaperDownloadUrl } from '@/lib/media';
+import { Page1Front } from '@/components/epaper/Page1Front';
+import { Page2Gujarat } from '@/components/epaper/Page2Gujarat';
+import { Page3Business } from '@/components/epaper/Page3Business';
+import { Page4Sports } from '@/components/epaper/Page4Sports';
 
 function isPdfUrl(url?: string): boolean {
   if (!url || url.startsWith('blob:')) return false;
@@ -603,7 +607,29 @@ export default function EpaperPageClient() {
               className="min-h-full flex items-start justify-center py-4"
               style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
             >
-              {isPdfUrl(activeReaderEdition.fileUrl) || activeReaderEdition.fileUrl?.includes('/uploads/') ? (
+              {activeReaderEdition.templateData ? (() => {
+                let parsed: any = null;
+                try {
+                  parsed = typeof activeReaderEdition.templateData === 'string'
+                    ? JSON.parse(activeReaderEdition.templateData)
+                    : activeReaderEdition.templateData;
+                } catch (_) {}
+
+                if (parsed) {
+                  return (
+                    <div className="bg-white shadow-2xl overflow-hidden rounded">
+                      {currentPage === 1 && <Page1Front data={parsed.page1} onChange={() => {}} />}
+                      {currentPage === 2 && <Page2Gujarat data={parsed.page2} onChange={() => {}} />}
+                      {currentPage === 3 && <Page3Business data={parsed.page3} onChange={() => {}} />}
+                      {currentPage === 4 && <Page4Sports data={parsed.page4} onChange={() => {}} />}
+                    </div>
+                  );
+                }
+
+                return null;
+              })() : null}
+
+              {!activeReaderEdition.templateData && (isPdfUrl(activeReaderEdition.fileUrl) || activeReaderEdition.fileUrl?.includes('/uploads/')) ? (
                 <iframe
                   key={`${activeReaderEdition.id}-p${currentPage}`}
                   src={formatEpaperPdfUrl(activeReaderEdition.fileUrl, currentPage)}
@@ -611,19 +637,19 @@ export default function EpaperPageClient() {
                   style={{ height: 'calc((100vw - 2rem) * 1.414)', maxHeight: '90vh' }}
                   title={`Gujarat Post E-Paper Page ${currentPage}`}
                 />
-              ) : isImageUrl(activeReaderEdition.fileUrl) ? (
+              ) : !activeReaderEdition.templateData && isImageUrl(activeReaderEdition.fileUrl) ? (
                 <img
                   src={activeReaderEdition.fileUrl}
                   alt={`Gujarat Post E-Paper`}
                   className="w-full max-w-[900px] h-auto shadow-2xl"
                 />
-              ) : isImageUrl(activeReaderEdition.thumbnailUrl) ? (
+              ) : !activeReaderEdition.templateData && isImageUrl(activeReaderEdition.thumbnailUrl) ? (
                 <img
                   src={activeReaderEdition.thumbnailUrl}
                   alt={`Gujarat Post E-Paper`}
                   className="w-full max-w-[900px] h-auto shadow-2xl"
                 />
-              ) : (
+              ) : !activeReaderEdition.templateData && (
                 /* Fallback: newspaper mock layout */
                 <div className="w-full max-w-[750px] bg-white text-slate-900 shadow-2xl p-8 rounded-lg">
                   <div className="flex items-center justify-between border-b-4 border-slate-950 pb-3 mb-6">

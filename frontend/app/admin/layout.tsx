@@ -26,6 +26,7 @@ import {
   ShieldAlert,
   ArrowLeft,
   Sparkles,
+  Heart,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -60,6 +61,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/web-stories',
       '/admin/epaper',
       '/admin/users',
+      '/admin/support',
     ],
   },
   EDITOR: {
@@ -172,6 +174,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Web Stories (વેબ સ્ટોરીઝ)', href: '/admin/web-stories', icon: BookOpen },
     { label: 'E-Paper (ઈ-પેપર)', href: '/admin/epaper', icon: Newspaper },
     { label: 'Users (યુઝર્સ મેનેજમેન્ટ)', href: '/admin/users', icon: Users },
+    { label: 'Support QR & Bank (સપોર્ટ વિગતો)', href: '/admin/support', icon: Heart },
   ];
 
   const currentRoleMeta = userRole ? ROLE_CONFIG[userRole] : null;

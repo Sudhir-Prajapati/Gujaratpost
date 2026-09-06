@@ -1,7 +1,7 @@
-// Backend Initialization - SMTP Email Support Loaded
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
@@ -18,6 +18,9 @@ const PORT = process.env.PORT || 5000;
 
 // Trust proxy header configuration (crucial for accurate IP rate limiting downstream)
 app.set('trust proxy', true);
+
+// Enable HTTP payload compression (Brotli/Gzip) according to Performance Standard Section 14
+app.use(compression());
 
 // Configure CORS to permit Next.js frontend calls & mobile apps with credentials
 app.use(
@@ -89,23 +92,35 @@ const bootstrap = async () => {
     });
     console.log('Successfully connected to MySQL database via Prisma.');
 
-    // 3. Start listening
-    const server = app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`Gujarat Post backend running on port http://localhost:${PORT}`);
-    });
-    server.on('error', (err: any) => {
-      if (err.code === 'EADDRINUSE') {
-        console.error(`\n⚠️  Port ${PORT} is already in use by another process.`);
-        console.error(`   Run this to fix it: taskkill /F /PID $(netstat -ano | findstr :${PORT} | awk '{print $5}' | head -1)`);
-        console.error(`   Or simply close the other terminal running the backend.\n`);
-        process.exit(1);
-      } else {
-        throw err;
-      }
-    });
+    // 3. Start listening with automatic retry if port is busy during nodemon reload
+    const listenWithRetry = (portNum: number, attempts = 0) => {
+      const server = app.listen(portNum, '0.0.0.0', () => {
+        console.log(`🚀 Gujarat Post backend running on port http://localhost:${portNum}`);
+      });
+
+      server.on('error', (err: any) => {
+        if (err.code === 'EADDRINUSE') {
+          console.warn(`\n⚠️  Port ${portNum} is currently in use.`);
+          if (attempts < 3) {
+            console.log(`   Retrying in 1.5 seconds... (Attempt ${attempts + 1}/3)`);
+            setTimeout(() => {
+              listenWithRetry(portNum, attempts + 1);
+            }, 1500);
+          } else {
+            console.error(`   Could not bind to port ${portNum} after multiple retries.`);
+            console.error(`   Run this in terminal to clear it: taskkill /F /PID $(netstat -ano | findstr :${portNum} | awk '{print $5}' | head -1)`);
+            process.exit(1);
+          }
+        } else {
+          console.error('Server listen error:', err);
+        }
+      });
+    };
+
+    listenWithRetry(Number(PORT));
   } catch (error) {
     console.error('Bootstrap warning:', error);
-    // Start listening anyway so backend stays online and nodemon never crashes
+    // Start listening anyway so backend stays online
     app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Gujarat Post backend running on port http://localhost:${PORT}`);
     });
@@ -138,4 +153,7 @@ const gracefulShutdown = async (signal: string) => {
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-// Server reloaded at 2026-08-13T12:58:35Z
+process.once('SIGUSR2', () => {
+  gracefulShutdown('SIGUSR2');
+});
+

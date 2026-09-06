@@ -43,6 +43,7 @@ import {
   getDateOffsetStr,
   clearLegacyLocalStorage,
 } from '@/lib/epaper';
+import { NewspaperTemplateBuilder } from '@/components/epaper/NewspaperTemplateBuilder';
 
 function formatDateLabel(dateStr: string): string {
   try {
@@ -109,6 +110,11 @@ export default function AdminEPaperPage() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editingEdition, setEditingEdition] = useState<EPaperEdition | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Creation Mode selector: 'PDF' vs 'TEMPLATE'
+  const [editionCreationOption, setEditionCreationOption] = useState<'PDF' | 'TEMPLATE'>('TEMPLATE');
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [builderEdition, setBuilderEdition] = useState<EPaperEdition | null>(null);
 
   // Form fields
   const [title, setTitle] = useState('');
@@ -257,6 +263,7 @@ export default function AdminEPaperPage() {
 
   const openAdd = (prefillCity?: string, prefillDate?: string) => {
     resetForm(prefillCity, prefillDate);
+    setEditionCreationOption('TEMPLATE');
     setModalOpen(true);
   };
 
@@ -268,10 +275,16 @@ export default function AdminEPaperPage() {
     setDate(ed.date);
     setPublishTime(ed.publishTime || '06:00 AM');
     setStatus(ed.status || 'PUBLISHED');
-    setPages(ed.pages || 24);
+    setPages(ed.pages || 4);
     setFileUrl(ed.fileUrl || '');
     setThumbnailUrl(ed.thumbnailUrl || '');
     setIsActive(ed.isActive);
+
+    if (ed.editionType === 'TEMPLATE' || ed.templateData) {
+      setBuilderEdition(ed);
+      setBuilderOpen(true);
+      return;
+    }
 
     if (ed.fileUrl && ed.fileUrl.startsWith('http') && !ed.fileUrl.includes('blob:')) {
       setPdfInputMode('link');
@@ -285,6 +298,7 @@ export default function AdminEPaperPage() {
       setThumbInputMode('file');
     }
 
+    setEditionCreationOption('PDF');
     setModalOpen(true);
   };
 
@@ -567,21 +581,114 @@ export default function AdminEPaperPage() {
     }
   };
 
-  const formatDateLabel = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString('gu-IN', { day: 'numeric', month: 'long', year: 'numeric' });
-    } catch {
-      return dateStr;
+  const handleBuilderSaveDraft = async (templateData: any, pageImages: string[]) => {
+    const finalTitle = title.trim() || `${city.toUpperCase()} EDITION`;
+    const primaryImage = pageImages[0] || thumbnailUrl || fileUrl || '';
+    const payload: Partial<EPaperEdition> = {
+      title: finalTitle,
+      city: city.trim(),
+      cityGu: cityGu.trim() || city.trim(),
+      date,
+      pages: 4,
+      fileUrl: primaryImage,
+      thumbnailUrl: primaryImage,
+      status: 'DRAFT',
+      publishTime,
+      isActive: true,
+      editionType: 'TEMPLATE',
+      templateData,
+    };
+
+    const targetId = builderEdition?.id || editingEdition?.id;
+    if (targetId) {
+      const res = await updateEPaperEdition(targetId, payload);
+      if (res?.edition) {
+        showToast('success', 'વર્તમાનપત્ર ડ્રાફ્ટ સેવ થઈ ગયું!');
+        loadData();
+      } else {
+        showToast('error', res?.error || 'ડ્રાફ્ટ સેવ કરવામાં ક્ષતિ.');
+      }
+    } else {
+      const res = await createEPaperEdition(payload);
+      if (res?.edition) {
+        setBuilderEdition(res.edition);
+        showToast('success', 'નવું વર્તમાનપત્ર ડ્રાફ્ટ બનાવ્યું!');
+        loadData();
+      } else {
+        showToast('error', res?.error || 'ડ્રાફ્ટ બનાવવામાં ક્ષતિ.');
+      }
     }
   };
+
+  const handleBuilderPublish = async (templateData: any, pageImages: string[]) => {
+    const finalTitle = title.trim() || `${city.toUpperCase()} EDITION`;
+    const primaryImage = pageImages[0] || thumbnailUrl || fileUrl || '';
+    const payload: Partial<EPaperEdition> = {
+      title: finalTitle,
+      city: city.trim(),
+      cityGu: cityGu.trim() || city.trim(),
+      date,
+      pages: 4,
+      fileUrl: primaryImage,
+      thumbnailUrl: primaryImage,
+      status: 'PUBLISHED',
+      publishTime,
+      isActive: true,
+      editionType: 'TEMPLATE',
+      templateData,
+    };
+
+    const targetId = builderEdition?.id || editingEdition?.id;
+    if (targetId) {
+      const res = await updateEPaperEdition(targetId, payload);
+      if (res?.edition) {
+        showToast('success', `"${finalTitle}" અખબાર સફળતાપૂર્વક પબ્લિશ થયું!`);
+        setBuilderOpen(false);
+        loadData();
+      } else {
+        showToast('error', res?.error || 'પબ્લિશ કરવામાં ક્ષતિ.');
+      }
+    } else {
+      const res = await createEPaperEdition(payload);
+      if (res?.edition) {
+        showToast('success', `"${finalTitle}" અખબાર સફળતાપૂર્વક પબ્લિશ થયું!`);
+        setBuilderOpen(false);
+        loadData();
+      } else {
+        showToast('error', res?.error || 'પબ્લિશ કરવામાં ક્ષતિ.');
+      }
+    }
+  };
+
+  if (builderOpen) {
+    let parsedData = null;
+    if (builderEdition?.templateData) {
+      try {
+        parsedData = typeof builderEdition.templateData === 'string' ? JSON.parse(builderEdition.templateData) : builderEdition.templateData;
+      } catch (_) {}
+    }
+    return (
+      <NewspaperTemplateBuilder
+        initialData={parsedData}
+        city={city}
+        cityGu={cityGu}
+        date={date}
+        onSaveDraft={handleBuilderSaveDraft}
+        onPublish={handleBuilderPublish}
+        onBackToDashboard={() => {
+          setBuilderOpen(false);
+          loadData();
+        }}
+      />
+    );
+  }
 
   const todayStr = getTodayDateStr();
   const yesterdayStr = getDateOffsetStr(-1);
   const activeCityInfo = citiesList.find((c) => c.city === selectedCityFilter);
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8">
+    <div className="p-3.5 sm:p-6 max-w-7xl mx-auto space-y-6 sm:space-y-8">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-5 right-5 z-[9999] flex items-center gap-3 px-5 py-3.5 rounded-2xl shadow-xl text-white text-sm font-bold transition-all animate-in slide-in-from-right ${toast.type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`}>
@@ -592,135 +699,147 @@ export default function AdminEPaperPage() {
 
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="bg-[#B3121B]/10 text-[#B3121B] text-xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
               Multi-Edition Newspaper Manager
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2.5 mt-1">
-            <Newspaper className="h-8 w-8 text-[#B3121B]" />
-            E-Paper Management (ઈ-પેપર મેનેજમેન્ટ)
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black text-zinc-900 dark:text-white flex items-center gap-2 mt-1 flex-wrap">
+            <Newspaper className="h-6 sm:h-8 w-6 sm:w-8 text-[#B3121B] shrink-0" />
+            <span>E-Paper Management</span>
+            <span className="text-sm sm:text-base font-semibold text-zinc-500 dark:text-zinc-400">(ઈ-પેપર મેનેજમેન્ટ)</span>
           </h1>
-          <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400 mt-1">
+          <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400 mt-1">
             અમદાવાદ અને તમામ શહેરો માટે વિવિધ આવૃત્તિઓ ઉમેરો અને મેનેજ કરો
           </p>
         </div>
 
         {/* Top Header Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setAddCityModalOpen(true)}
-            className="flex items-center gap-2 bg-zinc-800 text-white px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm hover:bg-zinc-900 transition shadow-sm cursor-pointer"
+            className="flex items-center justify-center gap-2 bg-zinc-800 text-white px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm hover:bg-zinc-900 transition shadow-sm cursor-pointer whitespace-nowrap w-full sm:w-auto"
           >
-            <Building className="h-4 w-4 text-amber-400" />
-            નવું શહેર ઉમેરો (Add City)
+            <Building className="h-4 w-4 text-amber-400 shrink-0" />
+            <span>નવું શહેર ઉમેરો (Add City)</span>
           </button>
 
           <button
             onClick={() => openAdd(selectedCityFilter !== 'ALL' ? selectedCityFilter : undefined, selectedDateFilter !== 'ALL' ? selectedDateFilter : undefined)}
-            className="flex items-center gap-2 bg-[#B3121B] text-white px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm hover:bg-[#8e0e15] transition shadow-md cursor-pointer"
+            className="flex items-center justify-center gap-2 bg-[#B3121B] text-white px-5 py-2.5 rounded-xl font-black text-xs sm:text-sm hover:bg-[#8e0e15] transition shadow-md cursor-pointer whitespace-nowrap w-full sm:w-auto"
           >
-            <Plus className="h-4 w-4" />
-            {selectedCityFilter !== 'ALL'
-              ? `Add Paper for ${activeCityInfo?.cityGu || selectedCityFilter}`
-              : 'નવી આવૃત્તિ (Add Edition)'}
+            <Plus className="h-4 w-4 shrink-0" />
+            <span>
+              {selectedCityFilter !== 'ALL'
+                ? `Add Paper for ${activeCityInfo?.cityGu || selectedCityFilter}`
+                : 'નવી આવૃત્તિ (Add Edition)'}
+            </span>
           </button>
         </div>
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {[
           { label: 'Total Editions', value: editions.length, icon: Newspaper, color: 'text-[#B3121B]', bg: 'bg-[#B3121B]/10' },
           { label: 'Published', value: editions.filter((e) => e.status === 'PUBLISHED').length, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-900/20' },
           { label: 'Drafts', value: editions.filter((e) => e.status === 'DRAFT').length, icon: FileCode, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
           { label: 'Cities', value: citiesList.length, icon: MapPin, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 flex items-center gap-3 shadow-sm">
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${stat.bg}`}>
-              <stat.icon className={`h-5 w-5 ${stat.color}`} />
+          <div key={stat.label} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 shadow-sm">
+            <div className={`h-9 sm:h-10 w-9 sm:w-10 rounded-xl flex items-center justify-center shrink-0 ${stat.bg}`}>
+              <stat.icon className={`h-4 sm:h-5 w-4 sm:w-5 ${stat.color}`} />
             </div>
-            <div>
-              <p className="text-2xl font-black text-zinc-900 dark:text-white leading-none">{stat.value}</p>
-              <p className="text-xs font-bold text-zinc-500 mt-0.5">{stat.label}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white leading-none">{stat.value}</p>
+              <p className="text-xs font-bold text-zinc-500 mt-1 truncate">{stat.label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Date, Status & City Filter Controls */}
-      <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-5 space-y-4">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-3.5 sm:p-5 space-y-4">
+        <div className="flex flex-col gap-3.5 sm:gap-4">
           
-          {/* Date Selector */}
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4 text-[#B3121B]" />
-              Select Date:
-            </span>
+          {/* Top Filter Row: Date Selector & Status Filter */}
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 sm:gap-4">
+            
+            {/* Date Selector */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 shrink-0">
+                <CalendarDays className="h-4 w-4 text-[#B3121B]" />
+                Select Date:
+              </span>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="date"
-                value={selectedDateFilter === 'ALL' ? '' : selectedDateFilter}
-                onChange={(e) => setSelectedDateFilter(e.target.value || 'ALL')}
-                className="px-3 py-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
-              />
-              <button
-                onClick={() => setSelectedDateFilter(todayStr)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition ${selectedDateFilter === todayStr ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
-              >
-                Today ({todayStr})
-              </button>
-              <button
-                onClick={() => setSelectedDateFilter('ALL')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-black transition ${selectedDateFilter === 'ALL' ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
-              >
-                All Dates
-              </button>
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <input
+                  type="date"
+                  value={selectedDateFilter === 'ALL' ? '' : selectedDateFilter}
+                  onChange={(e) => setSelectedDateFilter(e.target.value || 'ALL')}
+                  className="px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
+                />
+                <button
+                  onClick={() => setSelectedDateFilter(todayStr)}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedDateFilter === todayStr ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
+                >
+                  Today ({todayStr})
+                </button>
+                <button
+                  onClick={() => setSelectedDateFilter('ALL')}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedDateFilter === 'ALL' ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
+                >
+                  All Dates
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Status Filter */}
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 mr-1">Status:</span>
-            <button
-              onClick={() => setSelectedStatusFilter('ALL')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-700 border border-zinc-200 dark:border-zinc-800'}`}
-            >
-              All Status
-            </button>
-            <button
-              onClick={() => setSelectedStatusFilter('PUBLISHED')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'PUBLISHED' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-zinc-900 text-emerald-600 border border-emerald-200'}`}
-            >
-              Published
-            </button>
-            <button
-              onClick={() => setSelectedStatusFilter('DRAFT')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'DRAFT' ? 'bg-amber-600 text-white' : 'bg-white dark:bg-zinc-900 text-amber-600 border border-amber-200'}`}
-            >
-              Drafts
-            </button>
-          </div>
+            {/* Status Filter & Search Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0">Status:</span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setSelectedStatusFilter('ALL')}
+                    className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-700 border border-zinc-200 dark:border-zinc-800'}`}
+                  >
+                    All Status
+                  </button>
+                  <button
+                    onClick={() => setSelectedStatusFilter('PUBLISHED')}
+                    className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'PUBLISHED' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-zinc-900 text-emerald-600 border border-emerald-200'}`}
+                  >
+                    Published
+                  </button>
+                  <button
+                    onClick={() => setSelectedStatusFilter('DRAFT')}
+                    className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'DRAFT' ? 'bg-amber-600 text-white' : 'bg-white dark:bg-zinc-900 text-amber-600 border border-amber-200'}`}
+                  >
+                    Drafts
+                  </button>
+                </div>
+              </div>
 
-          {/* Search Box */}
-          <div className="relative w-full lg:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search edition title or date..."
-              className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
-            />
+              {/* Search Box */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search edition title or date..."
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
+                />
+              </div>
+            </div>
+
           </div>
         </div>
 
         {/* City Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-1 border-t border-zinc-200 dark:border-zinc-800">
-          <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0 flex items-center gap-1.5 mr-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+          <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0 flex items-center gap-1.5 mr-1">
             <MapPin className="h-4 w-4 text-[#B3121B]" />
             City Filter:
           </span>
@@ -1024,6 +1143,66 @@ export default function AdminEPaperPage() {
 
             {/* Modal Form */}
             <form onSubmit={handleSave} className="px-6 py-5 space-y-5">
+
+              {/* Dual Creation Mode Options */}
+              <div className="p-3.5 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-zinc-950/60 dark:to-zinc-900/60 rounded-2xl border border-blue-200/80 dark:border-zinc-800 space-y-2.5">
+                <label className="block text-xs font-black text-blue-950 dark:text-blue-200 uppercase tracking-wider">
+                  આવૃત્તિ બનાવવાની પદ્ધતિ (Select Edition Mode) *
+                </label>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setEditionCreationOption('TEMPLATE')}
+                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
+                      editionCreationOption === 'TEMPLATE'
+                        ? 'bg-white dark:bg-zinc-900 border-[#B3121B] shadow-md ring-2 ring-[#B3121B]/20'
+                        : 'bg-white/60 dark:bg-zinc-900/50 border-zinc-200 hover:border-[#B3121B]'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-xs font-black text-zinc-900 dark:text-white">
+                      <Newspaper className="h-4 w-4 text-[#B3121B] shrink-0" />
+                      <span>ઓપ્શન ૨ — Dynamic Template</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mt-1 leading-snug">
+                      ૪-પૃષ્ઠ ટેમ્પલેટ બિલ્ડરમાં સમાચાર સંપાદિત કરો.
+                    </p>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setEditionCreationOption('PDF')}
+                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
+                      editionCreationOption === 'PDF'
+                        ? 'bg-white dark:bg-zinc-900 border-blue-600 shadow-md ring-2 ring-blue-500/20'
+                        : 'bg-white/60 dark:bg-zinc-900/50 border-zinc-200 hover:border-blue-400'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5 text-xs font-black text-zinc-900 dark:text-white">
+                      <Upload className="h-4 w-4 text-blue-600 shrink-0" />
+                      <span>ઓપ્શન ૧ — PDF Upload</span>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 mt-1 leading-snug">
+                      તૈયાર PDF ફાઇલ અથવા લિંક અપલોડ કરો.
+                    </p>
+                  </button>
+                </div>
+
+                {editionCreationOption === 'TEMPLATE' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setModalOpen(false);
+                      setBuilderEdition(editingEdition);
+                      setBuilderOpen(true);
+                    }}
+                    className="w-full mt-2 py-2.5 px-4 bg-[#B3121B] hover:bg-[#8e0e15] text-white rounded-xl text-xs font-black shadow-md flex items-center justify-center gap-2 cursor-pointer transition"
+                  >
+                    <Newspaper className="h-4 w-4" />
+                    <span>૪-પૃષ્ઠ ટેમ્પલેટ બિલ્ડર ખોલો (Open 4-Page Newspaper Builder)</span>
+                  </button>
+                )}
+              </div>
 
               {/* Status Selector: Draft vs Published */}
               <div className="p-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200 dark:border-zinc-800">

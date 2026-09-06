@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, PostStatus } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -208,11 +208,13 @@ async function main() {
     const post = await prisma.post.upsert({
       where: { slug: artData.slug },
       update: {
-        ...artData,
+        ...(artData as any),
+        status: PostStatus.PUBLISHED,
         featuredImage: (artData as any).featuredImage || (artData as any).image,
       },
       create: {
-        ...artData,
+        ...(artData as any),
+        status: PostStatus.PUBLISHED,
         featuredImage: (artData as any).featuredImage || (artData as any).image,
         articleNumber: nextArticleNum++,
       },

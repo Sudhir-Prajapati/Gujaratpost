@@ -40,6 +40,7 @@ import CategorySection from '@/components/sections/CategorySection';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import VideoSection from '@/components/sections/VideoSection';
+import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const stripHtmlTags = (str?: string) => (str || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '');
 
@@ -413,7 +414,7 @@ export default function HeroSection({
   const initialMostReadPool = initialCustomMostReadArts.length > 0 ? initialCustomMostReadArts : publishedInitialArticles.slice(0, 5);
 
   const initialCategoriesDB = Array.isArray(initialCategories)
-    ? initialCategories.filter((c) => c.showInHome !== false && c.isActive !== false).sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0))
+    ? initialCategories.filter((c) => c.showInHome !== false && c.isActive !== false).sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0))
     : [];
   const initialCategorySlugs = initialCategoriesDB.map((c) => c.slug?.toLowerCase()).filter(Boolean);
 
@@ -467,7 +468,7 @@ export default function HeroSection({
       if (categoriesRes && Array.isArray(categoriesRes) && categoriesRes.length > 0) {
         const sortedCats = [...categoriesRes]
           .filter((c) => c.showInHome !== false && c.isActive !== false)
-          .sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
+          .sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0));
         setAllCategoriesDB(sortedCats);
         const sortedSlugs = sortedCats.map((c) => c.slug?.toLowerCase()).filter(Boolean);
         setOrderedCategorySlugs(sortedSlugs);
@@ -537,14 +538,15 @@ export default function HeroSection({
     ? featuredSidebar
     : videosList.filter(v => v.type === 'video' || !v.type).slice(0, 6);
   const [activeSidebarVideoIndex, setActiveSidebarVideoIndex] = useState(0);
+  const [isSidebarVideoPlaying, setIsSidebarVideoPlaying] = useState(false);
 
   useEffect(() => {
-    if (sidebarVideos.length === 0) return;
+    if (sidebarVideos.length === 0 || isSidebarVideoPlaying) return;
     const interval = setInterval(() => {
       setActiveSidebarVideoIndex((prev) => (prev + 1) % sidebarVideos.length);
-    }, 4000); // 2 seconds rotation
+    }, 2000); // 2 seconds rotation
     return () => clearInterval(interval);
-  }, [sidebarVideos.length]);
+  }, [sidebarVideos.length, isSidebarVideoPlaying]);
 
   const isCategoryVisible = (slug: string) => {
     if (!allCategoriesDB || !Array.isArray(allCategoriesDB) || allCategoriesDB.length === 0) {
@@ -557,11 +559,11 @@ export default function HeroSection({
 
   const activeOrderedCategories = useMemo(() => {
     if (!allCategoriesDB || !Array.isArray(allCategoriesDB) || allCategoriesDB.length === 0) {
-      return ['gujarat', 'national', 'trending', 'latest-news', 'instagram', 'world', 'politics', 'webstory', 'crime', 'entertainment', 'fact-check', 'photos', 'weather', 'shorts', 'live-center'];
+      return ['videos', 'gujarat', 'national', 'trending', 'latest-news', 'instagram', 'world', 'politics', 'webstory', 'crime', 'entertainment', 'fact-check', 'photos', 'weather', 'shorts', 'live-center'];
     }
 
     const homeCats = [...allCategoriesDB].filter(c => c.isActive !== false && c.showInHome !== false);
-    homeCats.sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
+    homeCats.sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0));
 
     return homeCats;
   }, [allCategoriesDB]);
@@ -794,7 +796,7 @@ export default function HeroSection({
               {uniqueTopStories[0] && (
                 <Link href={`/news/${uniqueTopStories[0].slug}`} className="group flex flex-col w-full">
                   {/* Hero image */}
-                  <div className="relative w-full overflow-hidden rounded-sm shadow-sm" style={{ aspectRatio: '3/2' }}>
+                  <div className="relative w-full overflow-hidden rounded-sm shadow-sm aspect-[16/9] md:aspect-[3/2]">
                     <ArticleMedia
                       src={uniqueTopStories[0].image || (uniqueTopStories[0] as any).featuredImage}
                       alt={uniqueTopStories[0].title}
@@ -812,12 +814,12 @@ export default function HeroSection({
                     </span>
                   </div>
                   {/* Headline */}
-                  <h1 className="text-foreground font-extrabold text-[22px] md:text-[24px] leading-[1.22] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
-                    {getArticleTitle(uniqueTopStories[0], language)}
+                  <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[24px] leading-[1.22] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
+                    <AutoArticleTitle article={uniqueTopStories[0]} language={language} />
                   </h1>
                   {/* Excerpt */}
-                  <p className="text-muted-foreground text-[13px] leading-relaxed mt-1.5 line-clamp-2 font-medium">
-                    {getArticleExcerpt(uniqueTopStories[0], language)}
+                  <p className="text-muted-foreground text-[12.5px] sm:text-[13px] leading-relaxed mt-1.5 line-clamp-2 font-medium">
+                    <AutoArticleExcerpt article={uniqueTopStories[0]} language={language} />
                   </p>
                   {/* Meta */}
                   <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground font-semibold border-t border-border/50 pt-2">
@@ -854,7 +856,7 @@ export default function HeroSection({
                       />
                     </div>
                     <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                      {getArticleTitle(uniqueTopStories[1], language)}
+                      <AutoArticleTitle article={uniqueTopStories[1]} language={language} />
                     </h3>
                   </Link>
                 )}
@@ -869,7 +871,7 @@ export default function HeroSection({
                       />
                     </div>
                     <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                      {getArticleTitle(uniqueTopStories[2], language)}
+                      <AutoArticleTitle article={uniqueTopStories[2]} language={language} />
                     </h3>
                   </Link>
                 )}
@@ -890,7 +892,7 @@ export default function HeroSection({
                       className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
                     >
                       <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        {getArticleTitle(leftArt, language)}
+                        <AutoArticleTitle article={leftArt} language={language} />
                       </h3>
                     </Link>
                   ) : <div />}
@@ -901,7 +903,7 @@ export default function HeroSection({
                       className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
                     >
                       <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        {getArticleTitle(rightArt, language)}
+                        <AutoArticleTitle article={rightArt} language={language} />
                       </h3>
                     </Link>
                   ) : <div />}
@@ -921,47 +923,49 @@ export default function HeroSection({
             if (cards.length === 0) return null;
 
             return (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/80 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 border-t border-border/80 pt-4">
                 {cards.slice(0, 3).map((art, idx) => {
                   if (!art) return null;
                   return (
                     <Link
                       key={art.id || idx}
                       href={`/news/${art.slug}`}
-                      className="group flex flex-col min-w-0"
+                      className="group flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 min-w-0 pb-3 md:pb-0 border-b md:border-b-0 border-border/30 last:border-b-0"
                     >
-                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                      <div className="relative aspect-[16/10] w-28 md:w-full h-20 md:h-auto shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted mb-0 md:mb-2.5">
                         <ArticleMedia
                           src={art.image || (art as any).featuredImage || getArticleImage(art)}
                           alt={art.title || ''}
                           className="transition-transform duration-300 group-hover:scale-105"
                         />
                       </div>
-                      <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1 select-none uppercase tracking-wide">
-                        {getCategoryLabel(art, language)}
-                      </span>
-                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                        {getArticleTitle(art, language)}
-                      </h3>
-                      <div className="flex items-center gap-1.5 mt-2.5 text-[10.5px] text-muted-foreground font-semibold">
-                        <span>
-                          {language === 'gu'
-                            ? (art.relativeTimeGu || formatDate(art.publishedAt, 'gu'))
-                            : language === 'hi'
-                              ? (art.relativeTimeHi || formatDate(art.publishedAt, 'hi'))
-                              : (art.relativeTime || formatDate(art.publishedAt, 'en'))}
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-[#B3121B] font-extrabold text-[11px] md:text-[13px] mb-0.5 md:mb-1 select-none uppercase tracking-wide">
+                          {getCategoryLabel(art, language)}
                         </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
+                        <h3 className="text-[13px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                          <AutoArticleTitle article={art} language={language} />
+                        </h3>
+                        <div className="flex items-center gap-1.5 mt-1 md:mt-2.5 text-[10.5px] text-muted-foreground font-semibold">
                           <span>
                             {language === 'gu'
-                              ? (art.readingTime ? `${art.readingTime} મિનિટ વાંચન` : '૪ મિનિટ વાંચન')
+                              ? (art.relativeTimeGu || formatDate(art.publishedAt, 'gu'))
                               : language === 'hi'
-                                ? (art.readingTime ? `${art.readingTime} मिनट पठन` : '4 मिनट पठन')
-                                : (art.readingTime ? `${art.readingTime} min read` : '4 min read')}
+                                ? (art.relativeTimeHi || formatDate(art.publishedAt, 'hi'))
+                                : (art.relativeTime || formatDate(art.publishedAt, 'en'))}
                           </span>
-                        </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
+                            <span>
+                              {language === 'gu'
+                                ? (art.readingTime ? `${art.readingTime} મિનિટ વાંચન` : '૪ મિનિટ વાંચન')
+                                : language === 'hi'
+                                  ? (art.readingTime ? `${art.readingTime} मिनट पठन` : '4 मिनट पठन')
+                                  : (art.readingTime ? `${art.readingTime} min read` : '4 min read')}
+                            </span>
+                          </span>
+                        </div>
                       </div>
                     </Link>
                   );
@@ -1008,16 +1012,34 @@ export default function HeroSection({
             </div>
 
             <div
-              className="relative w-full overflow-hidden rounded-sm border border-slate-200/60 bg-black shadow-inner"
+              className="relative w-full overflow-hidden rounded-sm border border-slate-200/60 bg-black shadow-inner cursor-pointer group"
               style={{ aspectRatio: '16/9' }}
+              onClick={() => setIsSidebarVideoPlaying(true)}
             >
-              <iframe
-                src={`https://www.youtube.com/embed/${safeYouTubeId(currentSidebarVideo.youtubeId)}?autoplay=0&mute=1&rel=0&modestbranding=1&controls=1`}
-                title="Gujarat Post Video"
-                className="absolute inset-0 h-full w-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
+              {isSidebarVideoPlaying ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${safeYouTubeId(currentSidebarVideo.youtubeId)}?autoplay=1&rel=0&modestbranding=1&controls=1`}
+                  title="Gujarat Post Video"
+                  className="absolute inset-0 h-full w-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <>
+                  <Image
+                    src={currentSidebarVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(currentSidebarVideo.youtubeId)}/hqdefault.jpg`}
+                    alt={currentSidebarVideo.title || 'Video'}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 768px) 100vw, 350px"
+                  />
+                  <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition-transform duration-300 group-hover:scale-110 border-2 border-white/80">
+                      <Play className="h-6 w-6 fill-current ml-0.5" />
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground pt-1 border-t border-border/40 mt-1 gap-2">
@@ -1068,7 +1090,7 @@ export default function HeroSection({
                     {idx + 1}
                   </span>
                   <h4 className="text-[12.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors flex-1 line-clamp-2">
-                    {getArticleTitle(art, language)}
+                    <AutoArticleTitle article={art} language={language} />
                   </h4>
                 </Link>
               ))}
@@ -1144,8 +1166,6 @@ export default function HeroSection({
         </div>
       </div>
 
-      {/* 19. NATIVE SPONSORED ADS SECTION */}
-      <RandomAdsSection />
     </div>
   );
 }
@@ -1409,34 +1429,34 @@ function AdCard({
     return (
       <a
         href={ad.href}
-        className={`group flex flex-col p-4 rounded-xl border border-border/40 hover:border-[#B3121B]/30 hover:shadow-md transition-all duration-300 bg-card ${className}`}
+        className={`group flex flex-row gap-3 p-3 rounded-xl border border-border/40 hover:border-[#B3121B]/30 hover:shadow-md transition-all duration-300 bg-card md:flex-col md:p-4 ${className}`}
       >
-        <div className="relative w-full h-44 overflow-hidden rounded-lg mb-3">
+        <div className="relative w-[90px] h-[72px] shrink-0 overflow-hidden rounded-lg md:w-full md:h-44 md:mb-3">
           <Image
             src={ad.image}
             alt={ad.title}
             fill
-            sizes="(max-width: 768px) 100vw, 360px"
+            sizes="(max-width: 768px) 90px, 360px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
-        <div className="flex flex-col justify-between flex-1">
+        <div className="flex flex-col justify-between flex-1 min-w-0">
           <div>
-            <h4 className="text-[13.5px] md:text-[14.5px] font-black leading-snug text-foreground line-clamp-2 group-hover:text-[#B3121B] transition-colors">
+            <h4 className="text-[12.5px] md:text-[14.5px] font-black leading-snug text-foreground line-clamp-3 md:line-clamp-2 group-hover:text-[#B3121B] transition-colors">
               {language === 'gu' ? ad.titleGu : ad.title}
             </h4>
             {ad.description && (
-              <p className="text-[12px] text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
+              <p className="hidden md:block text-[12px] text-muted-foreground mt-1.5 line-clamp-2 leading-relaxed">
                 {language === 'gu' ? ad.descriptionGu : ad.description}
               </p>
             )}
           </div>
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">
-              {language === 'gu' ? ad.sourceGu : `${ad.source} | Sponsored`}
+          <div className="mt-2 md:mt-4 flex items-center justify-between gap-2">
+            <span className="text-[9px] md:text-[10px] font-black uppercase text-muted-foreground tracking-wider truncate">
+              {language === 'gu' ? ad.sourceGu : `${ad.source}`}
             </span>
             {ad.buttonText && (
-              <span className="border border-[#B3121B] text-[#B3121B] text-[10.5px] font-black rounded-full px-3 py-1 hover:bg-[#B3121B] hover:text-white transition-all duration-200">
+              <span className="hidden md:inline-block border border-[#B3121B] text-[#B3121B] text-[10.5px] font-black rounded-full px-3 py-1 hover:bg-[#B3121B] hover:text-white transition-all duration-200 shrink-0">
                 {language === 'gu' ? ad.buttonTextGu : ad.buttonText}
               </span>
             )}
@@ -1448,34 +1468,34 @@ function AdCard({
     return (
       <a
         href={ad.href}
-        className={`group flex flex-col md:flex-row gap-4 p-4 rounded-xl border border-border/40 hover:border-[#B3121B]/30 hover:shadow-md transition-all duration-300 bg-card ${className}`}
+        className={`group flex flex-row gap-3 p-3 rounded-xl border border-border/40 hover:border-[#B3121B]/30 hover:shadow-md transition-all duration-300 bg-card md:gap-4 md:p-4 ${className}`}
       >
-        <div className="relative w-full md:w-56 h-36 shrink-0 overflow-hidden rounded-lg">
+        <div className="relative w-[90px] h-[72px] shrink-0 overflow-hidden rounded-lg md:w-56 md:h-36">
           <Image
             src={ad.image}
             alt={ad.title}
             fill
-            sizes="(max-width: 768px) 100vw, 224px"
+            sizes="(max-width: 768px) 90px, 224px"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         </div>
-        <div className="flex flex-col justify-between flex-1 py-1">
+        <div className="flex flex-col justify-between flex-1 min-w-0 py-0.5 md:py-1">
           <div>
-            <h4 className="text-[14px] md:text-[15.5px] font-black leading-snug text-foreground line-clamp-2 group-hover:text-[#B3121B] transition-colors">
+            <h4 className="text-[12.5px] md:text-[15.5px] font-black leading-snug text-foreground line-clamp-3 md:line-clamp-2 group-hover:text-[#B3121B] transition-colors">
               {language === 'gu' ? ad.titleGu : ad.title}
             </h4>
             {ad.description && (
-              <p className="text-[12px] text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
+              <p className="hidden md:block text-[12px] text-muted-foreground mt-2 line-clamp-2 leading-relaxed">
                 {language === 'gu' ? ad.descriptionGu : ad.description}
               </p>
             )}
           </div>
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <span className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">
-              {language === 'gu' ? ad.sourceGu : `${ad.source} | Sponsored`}
+          <div className="mt-2 md:mt-4 flex items-center justify-between gap-2">
+            <span className="text-[9px] md:text-[10px] font-black uppercase text-muted-foreground tracking-wider truncate">
+              {language === 'gu' ? ad.sourceGu : `${ad.source}`}
             </span>
             {ad.buttonText && (
-              <span className="border border-[#B3121B] text-[#B3121B] text-[10.5px] font-black rounded-full px-4 py-1.5 hover:bg-[#B3121B] hover:text-white transition-all duration-200">
+              <span className="hidden md:inline-block border border-[#B3121B] text-[#B3121B] text-[10.5px] font-black rounded-full px-4 py-1.5 hover:bg-[#B3121B] hover:text-white transition-all duration-200 shrink-0">
                 {language === 'gu' ? ad.buttonTextGu : ad.buttonText}
               </span>
             )}
@@ -1603,7 +1623,7 @@ export function NativeAdsSection({ language }: { language: Language }) {
 
               {/* ROW A: 2 Columns */}
               {row1.length > 0 && (
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${animClass}`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-6 ${animClass}`}>
                   {row1.map((ad) => (
                     <AdCard key={ad.id} ad={ad} language={language} isRow2={false} />
                   ))}
@@ -1612,7 +1632,7 @@ export function NativeAdsSection({ language }: { language: Language }) {
 
               {/* ROW B: 3 Columns */}
               {row2.length > 0 && (
-                <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ${animClass}`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ${animClass}`}>
                   {row2.map((ad) => (
                     <AdCard key={ad.id} ad={ad} language={language} isRow2={true} />
                   ))}
@@ -1621,7 +1641,7 @@ export function NativeAdsSection({ language }: { language: Language }) {
 
               {/* ROW C: 2 Columns */}
               {row3.length > 0 && (
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${groupIndex > 0 ? '' : 'animate-slideUp'}`}>
+                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-6 ${groupIndex > 0 ? '' : 'animate-slideUp'}`}>
                   {row3.map((ad) => (
                     <AdCard key={ad.id} ad={ad} language={language} isRow2={false} />
                   ))}
@@ -2321,7 +2341,14 @@ const TAG_NAME_MAP: Record<string, { gu: string; hi: string; en: string }> = {
   'સુરક્ષા': { gu: 'સુરક્ષા', hi: 'सुरक्षा', en: 'Security' },
   'ડેરી': { gu: 'ડેરી', hi: 'डेयरी', en: 'Dairy' },
   'ખેડૂત': { gu: 'ખેડૂત', hi: 'किसान', en: 'Farmer' },
-  'આણંદ': { gu: 'આણંદ', hi: 'आनंद', en: 'Anand' }
+  'આણંદ': { gu: 'આણંદ', hi: 'आनंद', en: 'Anand' },
+  'ચૂંટણી 2026': { gu: 'ચૂંટણી 2026', hi: 'चुनाव 2026', en: 'Election 2026' },
+  'ચૂંટણી 2027': { gu: 'ચૂંટણી 2027', hi: 'चुनाव 2027', en: 'Election 2027' },
+  'વરસાદ': { gu: 'વરસાદ', hi: 'बारिश', en: 'Rainfall' },
+  'સોના-ચાંદી': { gu: 'સોના-ચાંદી', hi: 'सोना-चांदी', en: 'Gold-Silver' },
+  'ક્રિકેટ': { gu: 'ક્રિકેટ', hi: 'क्रिकेट', en: 'Cricket' },
+  'સેમિકન્ડક્ટર': { gu: 'સેમિકન્ડક્ટર', hi: 'सेमीकंडक्टर', en: 'Semiconductor' },
+  'ડાયમંડ ઉદ્યોગ': { gu: 'ડાયમંડ ઉદ્યોગ', hi: 'डायमंड उद्योग', en: 'Diamond Industry' }
 };
 
 const getLocalizedTag = (tag: string, language: Language) => {
@@ -3167,7 +3194,7 @@ function CityHyperlocalSection({
             {currentSlide && (
               <div className="group relative flex flex-col min-w-0">
                 {/* Image container */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <div className="relative aspect-[16/9] md:aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
                   <Link href={`/news/${currentSlide.slug}`} className="block relative w-full h-full cursor-pointer">
                     <ArticleMedia
                       src={currentSlide.image}
@@ -3215,14 +3242,14 @@ function CityHyperlocalSection({
                   <Link href={`/news/${currentSlide.slug}`} className="group/link">
                     <div className="h-[48px] md:h-[50px] overflow-hidden">
                       <h3 className="font-extrabold text-[15.5px] md:text-[17px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
-                        {getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })}
+                        <AutoTranslateString text={getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })} language={language} />
                       </h3>
                     </div>
                   </Link>
 
                   <div className="h-[38px] overflow-hidden mt-2">
                     <p className="text-muted-foreground text-[12.5px] leading-relaxed line-clamp-2 font-medium">
-                      {stripHtmlTags(getLocalized(language, { en: currentSlide.excerpt, gu: currentSlide.excerptGu, hi: currentSlide.excerptHi }))}
+                      <AutoTranslateString text={stripHtmlTags(getLocalized(language, { en: currentSlide.excerpt, gu: currentSlide.excerptGu, hi: currentSlide.excerptHi }))} language={language} />
                     </p>
                   </div>
 
@@ -3274,7 +3301,7 @@ function CityHyperlocalSection({
                     </span>
                     <div className="h-[36px] overflow-hidden">
                       <h4 className="text-[13px] md:text-[13.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                        {getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
+                        <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
                       </h4>
                     </div>
                     <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-muted-foreground font-semibold select-none leading-none">
@@ -3347,7 +3374,7 @@ function CityHyperlocalSection({
                       className="border border-neutral-300 dark:border-neutral-700 text-[11px] font-black px-2.5 py-2 rounded-full text-foreground hover:border-[#B3121B] hover:bg-[#B3121B]/5 hover:text-[#B3121B] transition-all bg-card shadow-sm cursor-pointer select-none"
                     >
                       <span className="text-[#B3121B] font-extrabold mr-0.5">#</span>
-                      {cleanTag}
+                      <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />
                     </Link>
                   );
                 })}
@@ -3677,6 +3704,7 @@ function CrimeSection({
           id: art.id,
           slug: art.slug,
           image: art.image || DEMO_IMAGES[0],
+          article: art as Article,
           category: locEn,
           categoryGu: locGu,
           categoryHi: locHi,
@@ -3690,8 +3718,8 @@ function CrimeSection({
         };
       });
     }
-    return mockSlides.map((s) => ({ ...s, clockTime: getMockTime(s.id) }));
-  }, [dbCrimeArticles, language]);
+    return mockSlides.map((s) => ({ ...s, article: null as Article | null, clockTime: getMockTime(s.id) }));
+  }, [dbCrimeArticles]);
 
   const rightList = useMemo(() => {
     if (dbCrimeArticles.length > 3) {
@@ -3831,7 +3859,9 @@ function CrimeSection({
                 </span>
                 <Link href={`/news/${currentSlide.slug}`} className="group/link flex flex-col justify-start">
                   <h3 className="font-extrabold text-[15.5px] md:text-[17px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-3">
-                    {getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })}
+                    {currentSlide.article
+                      ? <AutoArticleTitle article={currentSlide.article} language={language} />
+                      : <AutoTranslateString text={currentSlide.titleGu} language={language} />}
                   </h3>
                 </Link>
               </div>
@@ -4305,32 +4335,30 @@ function PopularStoriesSection({
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 [&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1">
           {visibleArticles.map((art, idx) => (
             <div key={art.id} className="flex flex-col min-w-0">
-              <Link href={`/news/${art.slug}`} className="group flex flex-col gap-2.5">
+              <Link href={`/news/${art.slug}`} className="group flex flex-col gap-2">
                 {/* Image wrapper */}
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
                   {/* Overlay index badge matching tv9 style */}
-                  <span className="absolute top-2 left-2 z-10 bg-black/75 text-white text-[12px] font-black h-6 w-6 flex items-center justify-center rounded-sm select-none">
+                  <span className="absolute top-1.5 left-1.5 z-10 bg-black/75 text-white text-[11px] font-black h-5 w-5 flex items-center justify-center rounded-sm select-none">
                     {language === 'gu' ? getGoldNumberGu(idx) : getGoldNumber(idx)}
                   </span>
 
-                  <Image
+                  <ArticleMedia
                     src={art.image}
                     alt={art.title}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 25vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                    className="transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                 </div>
-                <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                <h3 className="text-[12px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                   {language === 'gu' ? art.titleGu : art.title}
                 </h3>
               </Link>
 
               {/* Metadata */}
-              <div className="text-[11px] text-muted-foreground font-bold mt-1 select-none">
+              <div className="text-[10px] md:text-[11px] text-muted-foreground font-bold mt-1 select-none">
                 {language === 'gu' ? art.relativeTimeGu : art.relativeTime}
               </div>
             </div>
@@ -4465,7 +4493,7 @@ function TrendingSidebarWidget({ articles, language }: { articles: Article[]; la
             {/* Title */}
             <div className="min-w-0 flex-1">
               <h4 className="line-clamp-3 text-[13.5px] leading-snug font-medium text-foreground group-hover:text-accent transition-colors duration-150">
-                {getArticleTitle(art, language)}
+                <AutoArticleTitle article={art} language={language} />
               </h4>
             </div>
           </Link>
@@ -4501,7 +4529,9 @@ function LeftListItem({ article, language }: { article: Article; language: Langu
       <div className="min-w-0 flex flex-1 flex-col justify-between">
         <div>
           <span className="rounded px-1.5 py-[2px] text-[8px] font-black leading-none text-white" style={{ background: cc }}>{cat}</span>
-          <p className="mt-0.5 line-clamp-2 text-[13.5px] font-black leading-[1.2] text-foreground transition-colors group-hover:text-accent">{title}</p>
+          <p className="mt-0.5 line-clamp-2 text-[13.5px] font-black leading-[1.2] text-foreground transition-colors group-hover:text-accent">
+            <AutoArticleTitle article={article} language={language} />
+          </p>
         </div>
         <div className="flex items-center justify-between gap-2 text-[10px] font-semibold text-muted-foreground">
           <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" />{formatTime(article.publishedAt)}</span>
@@ -4529,7 +4559,7 @@ function StoryRow({ article, language }: { article: Article; language: Language 
     >
       {/* Title (left side) */}
       <h3 className="flex-1 text-[14px] md:text-[15.5px] font-black leading-snug text-foreground transition-colors duration-200 group-hover:text-accent line-clamp-3 pr-2">
-        {title}
+        <AutoArticleTitle article={article} language={language} />
       </h3>
 
       {/* Image Thumbnail (right side) */}
@@ -4579,7 +4609,9 @@ function CategoryRow({
                 <ArticleMedia src={art.image} alt={art.title} className="transition group-hover:scale-105" />
               </div>
               <div className="min-w-0 flex flex-1 flex-col justify-between py-1">
-                <p className="line-clamp-3 text-[13px] md:text-[13.5px] font-black leading-[1.2] text-foreground transition-colors group-hover:text-accent">{t}</p>
+                <p className="line-clamp-3 text-[13px] md:text-[13.5px] font-black leading-[1.2] text-foreground transition-colors group-hover:text-accent">
+                  <AutoArticleTitle article={art} language={language} />
+                </p>
                 <div className="flex items-center gap-1 text-[10.5px] leading-none text-muted-foreground border-t border-border/30 pt-0.5">
                   <div className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: cc }} />
                   <span>{formatTime(art.publishedAt)}</span>
@@ -4639,11 +4671,11 @@ function CategoryColumn({
                 <div className="min-w-0 flex flex-col justify-between flex-1">
                   <div>
                     <p className="line-clamp-2 text-[12px] font-black leading-snug text-foreground group-hover:text-accent transition duration-200">
-                      {t}
+                      <AutoArticleTitle article={art} language={language} />
                     </p>
                     {showExcerpt && excerpt && (
                       <p className="line-clamp-2 text-[10.5px] text-muted-foreground leading-normal mt-0.5 font-semibold">
-                        {excerpt}
+                        <AutoArticleExcerpt article={art} language={language} />
                       </p>
                     )}
                   </div>
@@ -4663,7 +4695,7 @@ function CategoryColumn({
                 </div>
                 <div className="min-w-0 flex flex-col justify-between flex-1 min-h-[50px]">
                   <p className="line-clamp-2 text-[11px] font-black leading-snug text-foreground group-hover:text-accent transition duration-200">
-                    {t}
+                    <AutoArticleTitle article={art} language={language} />
                   </p>
                   <span className="flex items-center gap-1 text-[9.5px] text-accent font-bold mt-0.5">
                     <Clock className="h-2.5 w-2.5 text-accent fill-none stroke-[3]" />
@@ -4708,8 +4740,7 @@ function SportsShowcase({ articles, language }: { articles: Article[]; language:
         <div className="flex items-center gap-2">
           <span className="h-6 w-[3px] rounded-full bg-accent" />
           <h2 className="text-[18px] font-black leading-none text-foreground">
-            રમતગમત
-            <span className="ml-2 align-middle text-[11px] font-black text-muted-foreground">Sports</span>
+            {language === 'gu' ? 'રમતગમત' : language === 'hi' ? 'खेल' : 'Sports'}
           </h2>
         </div>
         <Link href="/category/sports" className="text-[11px] font-black text-accent hover:underline">
@@ -4762,9 +4793,13 @@ function SportsFeatureCard({
       </span>
       <div className="absolute inset-x-0 bottom-0 p-4 text-white">
         <h3 className={`${large ? 'text-[19px]' : 'text-[15px]'} line-clamp-2 font-black leading-snug`}>
-          {title}
+          <AutoArticleTitle article={article} language={language} />
         </h3>
-        {large && <p className="mt-2 line-clamp-2 text-[13px] font-semibold leading-relaxed text-white/85">{excerpt}</p>}
+        {large && (
+          <p className="mt-2 line-clamp-2 text-[13px] font-semibold leading-relaxed text-white/85">
+            <AutoArticleExcerpt article={article} language={language} />
+          </p>
+        )}
         <div className="mt-3 flex items-center justify-between text-[11px] font-bold text-white/85">
           <span className="flex items-center gap-1">
             <Clock className="h-3 w-3" />
@@ -4793,7 +4828,7 @@ function SportsListItem({ article, language }: { article: Article; language: Lan
         <div>
           <p className="text-[11px] font-black leading-none text-accent">{cat}</p>
           <p className="mt-1 line-clamp-2 text-[12.5px] font-black leading-snug text-foreground group-hover:text-accent">
-            {title}
+            <AutoArticleTitle article={article} language={language} />
           </p>
         </div>
         <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground">
@@ -5433,6 +5468,15 @@ const mockPoliticsBottomCards = [
     titleGu: 'આગામી ચૂંટણી પહેલાં મોટી હલચલ! નાના પક્ષો વચ્ચે ગઠબંધનની શક્યતાઓ તપાસાઈ રહી છે',
     relativeTimeGu: '14 કલાક પહેલાં',
     views: 52000
+  },
+  {
+    id: 'pol-bot-6',
+    slug: 'gujarat-assembly-session-dates-declared-516',
+    image: '/assets/demo/4.jpg',
+    categoryGu: 'વિધાનસભા',
+    titleGu: 'વિધાનસભાનું ચોમાસું સત્ર ટૂંક સમયમાં યોજાશે! મહત્વના વિધેયકો રજૂ થવાની શક્યતા',
+    relativeTimeGu: '15 કલાક પહેલાં',
+    views: 61000
   }
 ];
 
@@ -5449,14 +5493,15 @@ export function PoliticsSection({ language }: { language: Language }) {
   }, []);
 
   const top3 = useMemo(() => {
-    const list: Array<{ id: string; slug: string; image: string; title: string; categoryLabel: string; time: string }> = [];
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
     dbPoliticsArticles.slice(0, 3).forEach((art) => {
       list.push({
         id: art.id,
         slug: art.slug,
         image: art.image || DEMO_IMAGES[0],
-        categoryLabel: art.categoryGu || art.category || 'રાજકારણ',
-        title: getLocalized(language, { en: art.title, gu: art.titleGu || art.title, hi: (art as any).titleHi || art.title }),
+        categoryGu: art.categoryGu || art.category || 'રાજકારણ',
+        article: art,
+        titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
@@ -5467,8 +5512,9 @@ export function PoliticsSection({ language }: { language: Language }) {
             id: col.featured.id,
             slug: col.featured.slug,
             image: col.featured.image,
-            categoryLabel: language === 'gu' ? col.featured.categoryGu : 'Politics',
-            title: getMockTitle(col.featured, language),
+            categoryGu: col.featured.categoryGu,
+            article: null,
+            titleGu: col.featured.titleGu,
             time: getMockRelativeTime(col.featured.relativeTimeGu, language),
           });
         }
@@ -5478,26 +5524,28 @@ export function PoliticsSection({ language }: { language: Language }) {
   }, [dbPoliticsArticles, language]);
 
   const bottomGrid = useMemo(() => {
-    const list: Array<{ id: string; slug: string; image: string; title: string; categoryLabel: string; time: string }> = [];
-    dbPoliticsArticles.slice(3, 8).forEach((art) => {
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
+    dbPoliticsArticles.slice(3, 9).forEach((art) => {
       list.push({
         id: art.id,
         slug: art.slug,
         image: art.image || DEMO_IMAGES[1],
-        categoryLabel: art.categoryGu || art.category || 'રાજકારણ',
-        title: getLocalized(language, { en: art.title, gu: art.titleGu || art.title, hi: (art as any).titleHi || art.title }),
+        categoryGu: art.categoryGu || art.category || 'રાજકારણ',
+        article: art,
+        titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
-    if (list.length < 5) {
+    if (list.length < 6) {
       mockPoliticsBottomCards.forEach((card) => {
-        if (list.length < 5 && !list.some((item) => item.id === card.id)) {
+        if (list.length < 6 && !list.some((item) => item.id === card.id)) {
           list.push({
             id: card.id,
             slug: card.slug,
             image: card.image,
-            categoryLabel: language === 'gu' ? card.categoryGu : 'Politics',
-            title: getMockTitle(card, language),
+            categoryGu: card.categoryGu,
+            article: null,
+            titleGu: card.titleGu,
             time: getMockRelativeTime(card.relativeTimeGu, language),
           });
         }
@@ -5533,15 +5581,17 @@ export function PoliticsSection({ language }: { language: Language }) {
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
                   <ArticleMedia
                     src={card.image}
-                    alt={card.title}
+                    alt={card.titleGu}
                     className="transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
                 <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase">
-                  {card.categoryLabel}
+                  <AutoTranslateString text={card.categoryGu} language={language} />
                 </span>
                 <h3 className="text-[14px] md:text-[15.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 min-h-[40px] md:min-h-[46px]">
-                  {card.title}
+                  {card.article
+                    ? <AutoArticleTitle article={card.article} language={language} />
+                    : <AutoTranslateString text={card.titleGu} language={language} />}
                 </h3>
               </Link>
 
@@ -5555,34 +5605,44 @@ export function PoliticsSection({ language }: { language: Language }) {
         ))}
       </div>
 
-      {/* 5-Card Politics Bottom Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 border-t border-border/40 pt-6 mt-6">
-        {bottomGrid.map((card) => (
-          <div key={card.id} className="flex flex-col min-w-0">
-            <Link
-              href={`/news/${card.slug}`}
-              className="group flex flex-col"
+      {/* 6-Card Politics Bottom Grid — Perfect 2x3 on Mobile, 3x2 on Tablet, 6-Col on Desktop */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 border-t border-border/40 pt-6 mt-6">
+        {bottomGrid.map((card, idx) => {
+          const isLastOdd = bottomGrid.length % 2 !== 0 && idx === bottomGrid.length - 1;
+          return (
+            <div
+              key={card.id}
+              className={`flex flex-col min-w-0 ${isLastOdd ? 'col-span-2 sm:col-span-1' : ''}`}
             >
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
-                <ArticleMedia
-                  src={card.image}
-                  alt={card.title}
-                  className="transition-transform duration-300 group-hover:scale-105"
-                />
-              </div>
-              <span className="text-[#B3121B] font-extrabold text-[11px] mb-1.5 select-none uppercase leading-none">
-                {card.categoryLabel}
-              </span>
-              <h4 className="text-[12.5px] md:text-[13px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                {card.title}
-              </h4>
-            </Link>
-            <div className="flex items-center gap-1.5 mt-2.5 text-[10.5px] text-muted-foreground font-semibold">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-              <span>{card.time}</span>
+              <Link
+                href={`/news/${card.slug}`}
+                className={`group flex ${isLastOdd ? 'flex-row sm:flex-col items-center sm:items-start gap-3 sm:gap-0' : 'flex-col'}`}
+              >
+                <div className={`relative aspect-[16/10] overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5 ${isLastOdd ? 'w-28 sm:w-full h-20 sm:h-auto shrink-0 mb-0 sm:mb-2.5' : 'w-full'}`}>
+                  <ArticleMedia
+                    src={card.image}
+                    alt={card.titleGu}
+                    className="transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="flex flex-col flex-1 min-w-0">
+                  <span className="text-[#B3121B] font-extrabold text-[11px] mb-1 select-none uppercase leading-none">
+                    <AutoTranslateString text={card.categoryGu} language={language} />
+                  </span>
+                  <h4 className="text-[12.5px] md:text-[13px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                    {card.article
+                      ? <AutoArticleTitle article={card.article} language={language} />
+                      : <AutoTranslateString text={card.titleGu} language={language} />}
+                  </h4>
+                  <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-muted-foreground font-semibold">
+                    <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
+                    <span>{card.time}</span>
+                  </div>
+                </div>
+              </Link>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -5967,34 +6027,36 @@ export function NationalSection({ language }: { language: Language }) {
   }, []);
 
   const top3 = useMemo(() => {
-    const list: Array<{ id: string; slug: string; image: string; title: string; time: string }> = [];
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];
     dbNationalArticles.slice(0, 3).forEach((art) => {
       list.push({
         id: art.id,
         slug: art.slug,
         image: art.image || DEMO_IMAGES[0],
-        title: getLocalized(language, { en: art.title, gu: art.titleGu || art.title, hi: (art as any).titleHi || art.title }),
+        article: art,
+        titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
     if (list.length < 3) {
       mockNationalColumns.forEach((col) => {
         if (list.length < 3 && !list.some((item) => item.id === col.featured.id)) {
-          list.push({ id: col.featured.id, slug: col.featured.slug, image: col.featured.image, title: getMockTitle(col.featured, language), time: getMockRelativeTime(col.featured.relativeTimeGu, language) });
+          list.push({ id: col.featured.id, slug: col.featured.slug, image: col.featured.image, article: null, titleGu: col.featured.titleGu, time: getMockRelativeTime(col.featured.relativeTimeGu, language) });
         }
       });
     }
     return list;
-  }, [dbNationalArticles, language]);
+  }, [dbNationalArticles]);
 
   const bottomGrid = useMemo(() => {
-    const list: Array<{ id: string; slug: string; image: string; title: string; time: string }> = [];
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];
     dbNationalArticles.slice(3, 12).forEach((art) => {
       list.push({
         id: art.id,
         slug: art.slug,
         image: art.image || DEMO_IMAGES[1],
-        title: getLocalized(language, { en: art.title, gu: art.titleGu || art.title, hi: (art as any).titleHi || art.title }),
+        article: art,
+        titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
@@ -6002,7 +6064,7 @@ export function NationalSection({ language }: { language: Language }) {
       mockNationalColumns.forEach((col) => {
         col.subs.forEach((sub) => {
           if (list.length < 9 && !list.some((item) => item.id === sub.id)) {
-            list.push({ id: sub.id, slug: sub.slug, image: sub.image, title: getMockTitle(sub, language), time: getMockRelativeTime(sub.relativeTimeGu, language) });
+            list.push({ id: sub.id, slug: sub.slug, image: sub.image, article: null, titleGu: sub.titleGu, time: getMockRelativeTime(sub.relativeTimeGu, language) });
           }
         });
       });
@@ -6011,7 +6073,7 @@ export function NationalSection({ language }: { language: Language }) {
     const col2 = list.filter((_, i) => i % 3 === 1);
     const col3 = list.filter((_, i) => i % 3 === 2);
     return { col1, col2, col3, totalRows: Math.max(col1.length, col2.length, col3.length) };
-  }, [dbNationalArticles, language]);
+  }, [dbNationalArticles]);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-1">
@@ -6034,9 +6096,13 @@ export function NationalSection({ language }: { language: Language }) {
           <div key={item.id} className="flex flex-col justify-between min-w-0 border-b border-border/40 pb-3">
             <Link href={`/news/${item.slug}`} className="group flex flex-col">
               <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
-                <ArticleMedia src={item.image} alt={item.title} className="transition-transform duration-300 group-hover:scale-105" />
+                <ArticleMedia src={item.image} alt={item.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
               </div>
-              <h3 className="text-[14px] md:text-[15.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">{item.title}</h3>
+              <h3 className="text-[14px] md:text-[15.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                {item.article
+                  ? <AutoArticleTitle article={item.article} language={language} />
+                  : <AutoTranslateString text={item.titleGu} language={language} />}
+              </h3>
             </Link>
             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-semibold mt-2.5">
               <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
@@ -6055,11 +6121,13 @@ export function NationalSection({ language }: { language: Language }) {
               return (
                 <Link key={sub.id} href={`/news/${sub.slug}`} className="group flex gap-3 hover:bg-muted/10 transition-colors p-1 min-w-0">
                   <div className="relative h-[56px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
-                    <ArticleMedia src={sub.image} alt={sub.title} className="transition-transform duration-300 group-hover:scale-105" />
+                    <ArticleMedia src={sub.image} alt={sub.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
                   </div>
                   <div className="flex flex-col justify-center min-w-0 flex-1">
                     <h4 className="text-[12.5px] font-extrabold leading-snug line-clamp-2 text-foreground group-hover:text-[#B3121B] transition-colors">
-                      {sub.title}
+                      {sub.article
+                        ? <AutoArticleTitle article={sub.article} language={language} />
+                        : <AutoTranslateString text={sub.titleGu} language={language} />}
                     </h4>
                     <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground font-semibold">
                       <Clock className="h-3 w-3 text-muted-foreground/60" />
@@ -6245,8 +6313,9 @@ export function WorldSection({ language }: { language: Language }) {
         slug: art.slug,
         image: art.image || DEMO_IMAGES[0],
         categoryGu: art.categoryGu || art.category || 'વિશ્વ',
-        title: getLocalized(language, { en: art.title, gu: art.titleGu || art.title, hi: (art as any).titleHi || art.title }),
-        excerpt: getLocalized(language, { en: art.excerpt || '', gu: art.excerptGu || art.excerpt || '', hi: (art as any).excerptHi || art.excerpt || '' }),
+        article: art as Article,
+        titleGu: art.titleGu || art.title,
+        excerptGu: art.excerptGu || art.excerpt || '',
         watermarkGu: 'ગુજરાત પોસ્ટ',
       };
     }
@@ -6255,21 +6324,23 @@ export function WorldSection({ language }: { language: Language }) {
       slug: mockWorldFeatured.slug,
       image: mockWorldFeatured.image,
       categoryGu: mockWorldFeatured.categoryGu,
-      title: getMockTitle(mockWorldFeatured, language),
-      excerpt: language === 'gu' ? mockWorldFeatured.excerptGu : language === 'hi' ? 'अधिकांश सदस्य देशों द्वारा भारत के प्रस्ताव का समर्थन करने से स्थिति मजबूत हुई।' : 'With broad support from member nations, India’s global standing strengthens further.',
+      article: null as Article | null,
+      titleGu: mockWorldFeatured.titleGu,
+      excerptGu: mockWorldFeatured.excerptGu,
       watermarkGu: 'ગુજરાત પોસ્ટ',
     };
-  }, [dbWorldArticles, language]);
+  }, [dbWorldArticles]);
 
   const cardsList = useMemo(() => {
-    const list: Array<{ id: string; slug: string; image: string; title: string; categoryLabel: string; time: string }> = [];
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
     dbWorldArticles.slice(1, 5).forEach((art) => {
       list.push({
         id: art.id,
         slug: art.slug,
         image: art.image || DEMO_IMAGES[1],
-        categoryLabel: art.categoryGu || art.category || 'વિશ્વ',
-        title: getLocalized(language, { en: art.title, gu: art.titleGu || art.title, hi: (art as any).titleHi || art.title }),
+        categoryGu: art.categoryGu || art.category || 'વિશ્વ',
+        article: art,
+        titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
@@ -6280,15 +6351,16 @@ export function WorldSection({ language }: { language: Language }) {
             id: card.id,
             slug: card.slug,
             image: card.image,
-            categoryLabel: language === 'gu' ? card.categoryGu : language === 'hi' ? (card.categoryGu === 'યુરોપ' ? 'यूरोप' : card.categoryGu === 'અમેરિકા' ? 'अमेरिका' : card.categoryGu === 'એશિયા' ? 'एशिया' : 'मध्य-पूर्व') : (card.categoryGu === 'યુરોપ' ? 'Europe' : card.categoryGu === 'અમેરિકા' ? 'USA' : card.categoryGu === 'એશિયા' ? 'Asia' : 'Middle East'),
-            title: getMockTitle(card, language),
+            categoryGu: card.categoryGu,
+            article: null,
+            titleGu: card.titleGu,
             time: getMockRelativeTime(card.relativeTimeGu, language),
           });
         }
       });
     }
     return list;
-  }, [dbWorldArticles, language]);
+  }, [dbWorldArticles]);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-4">
@@ -6322,10 +6394,14 @@ export function WorldSection({ language }: { language: Language }) {
                 {featured.categoryGu}
               </span>
               <h3 className="text-[17px] md:text-[19px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
-                {featured.title}
+                {featured.article
+                  ? <AutoArticleTitle article={featured.article} language={language} />
+                  : <AutoTranslateString text={featured.titleGu} language={language} />}
               </h3>
               <p className="text-muted-foreground text-[13px] leading-relaxed mt-3.5 line-clamp-4 select-none">
-                {stripHtmlTags(featured.excerpt)}
+                {featured.article
+                  ? <AutoArticleExcerpt article={featured.article} language={language} />
+                  : <AutoTranslateString text={stripHtmlTags(featured.excerptGu)} language={language} />}
               </p>
             </div>
 
@@ -6333,7 +6409,7 @@ export function WorldSection({ language }: { language: Language }) {
             <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-muted order-1 md:order-2">
               <Image
                 src={featured.image}
-                alt={featured.title}
+                alt={featured.titleGu}
                 fill
                 sizes="(max-width: 768px) 100vw, 30vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
@@ -6355,17 +6431,19 @@ export function WorldSection({ language }: { language: Language }) {
                   <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
                     <Image
                       src={card.image}
-                      alt={card.title}
+                      alt={card.titleGu}
                       fill
                       sizes="(max-width: 768px) 100vw, 20vw"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                   <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase leading-none">
-                    {card.categoryLabel}
+                    <AutoTranslateString text={card.categoryGu} language={language} />
                   </span>
                   <h4 className="text-[13px] md:text-[13.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                    {card.title}
+                    {card.article
+                      ? <AutoArticleTitle article={card.article} language={language} />
+                      : <AutoTranslateString text={card.titleGu} language={language} />}
                   </h4>
                 </Link>
                 <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-muted-foreground font-semibold">
@@ -7376,10 +7454,10 @@ export function DynamicCategorySection({ category, language }: { category: any; 
                 {categoryTitle}
               </span>
               <h3 className="text-xl sm:text-2xl font-black text-foreground group-hover:text-[#B3121B] transition-colors leading-snug">
-                {getArticleTitle(lead, language)}
+                <AutoArticleTitle article={lead} language={language} />
               </h3>
               <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed font-medium">
-                {stripHtmlTags(getArticleExcerpt(lead, language))}
+                <AutoArticleExcerpt article={lead} language={language} />
               </p>
               <div className="flex items-center gap-2 pt-2 text-xs text-muted-foreground font-semibold border-t border-border/40">
                 <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
@@ -7410,10 +7488,10 @@ export function DynamicCategorySection({ category, language }: { category: any; 
                     {categoryTitle}
                   </span>
                   <h3 className="text-lg md:text-xl font-black text-foreground mt-2 line-clamp-2 group-hover:text-[#B3121B] transition-colors leading-snug">
-                    {getArticleTitle(lead, language)}
+                    <AutoArticleTitle article={lead} language={language} />
                   </h3>
                   <p className="text-xs md:text-sm text-muted-foreground mt-1.5 line-clamp-2 font-medium">
-                    {stripHtmlTags(getArticleExcerpt(lead, language))}
+                    <AutoArticleExcerpt article={lead} language={language} />
                   </p>
                   <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground font-semibold">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
@@ -7441,7 +7519,7 @@ export function DynamicCategorySection({ category, language }: { category: any; 
                 </div>
                 <div className="flex flex-col justify-between min-w-0 flex-1 py-0.5">
                   <h4 className="text-[13px] font-extrabold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
-                    {getArticleTitle(art, language)}
+                    <AutoArticleTitle article={art} language={language} />
                   </h4>
                   <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-semibold mt-1">
                     <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
@@ -7596,7 +7674,7 @@ export function EntertainTechLifeSection({ language }: { language: Language }) {
               </div>
               <div className="flex flex-col justify-between min-w-0 flex-1 py-0.5">
                 <h4 className="text-[12.5px] md:text-[13px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
-                  {language === 'gu' ? a.titleGu : a.title}
+                  <AutoTranslateString text={a.titleGu || a.title} language={language} />
                 </h4>
                 <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground font-semibold select-none">
                   <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
@@ -7832,7 +7910,7 @@ function PhotoGallerySection({ language }: { language: Language }) {
                   {/* Caption */}
                   <div className="absolute inset-x-0 bottom-0 z-10 p-4 translate-y-0 group-hover:-translate-y-1 transition-transform duration-300">
                     <p className="text-white font-bold leading-snug line-clamp-2 drop-shadow-lg text-[14px] md:text-[16px]">
-                      {title}
+                      <AutoTranslateString text={title} language={language} />
                     </p>
 
                     {/* View Photos — on hover */}

@@ -911,20 +911,20 @@ export default function HeroManagerPage() {
       </div>
 
       {/* Stats Bar */}
-      <div className="mb-8 grid grid-cols-3 gap-4">
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+      <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3.5 sm:p-4">
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Total Articles</p>
-          <p className="mt-1 text-3xl font-black text-zinc-900 dark:text-zinc-100">{allArticles.length}</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">{allArticles.length}</p>
           <p className="text-xs text-zinc-400 mt-0.5">Published news</p>
         </div>
-        <div className="rounded-xl border border-[#B3121B]/25 bg-red-50 dark:bg-red-950/20 p-4">
+        <div className="rounded-xl border border-[#B3121B]/25 bg-red-50 dark:bg-red-950/20 p-3.5 sm:p-4">
           <p className="text-[10px] font-bold uppercase tracking-widest text-[#B3121B]">Slots Filled</p>
-          <p className="mt-1 text-3xl font-black text-[#B3121B]">{usedIds.length} / 3</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-black text-[#B3121B]">{usedIds.length} / 3</p>
           <p className="text-xs text-[#B3121B]/60 mt-0.5">Bottom row image cards</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4">
+        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3.5 sm:p-4">
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Available</p>
-          <p className="mt-1 text-3xl font-black text-zinc-900 dark:text-zinc-100">{allArticles.length - usedIds.length}</p>
+          <p className="mt-1 text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">{allArticles.length - usedIds.length}</p>
           <p className="text-xs text-zinc-400 mt-0.5">Remaining articles</p>
         </div>
       </div>
@@ -939,15 +939,15 @@ export default function HeroManagerPage() {
           {/* ════════════════════════════════════════════════════════════════
              MAIN HERO GRID (13 POSITIONS MANAGEMENT)
              ════════════════════════════════════════════════════════════════ */}
-          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800 mb-6 gap-4">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <span className="text-xl">🏆</span>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
                     Top Main Hero Grid (13 Article Positions)
                   </h3>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-red-50 text-[#B3121B] border-red-200 dark:bg-red-950/40 dark:border-red-800">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-red-50 text-[#B3121B] border-red-200 dark:bg-red-950/40 dark:border-red-800 shrink-0">
                     {heroGridArticles.length} / 13 Positions
                   </span>
                 </div>
@@ -959,12 +959,12 @@ export default function HeroManagerPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
                 <button
                   type="button"
                   onClick={handleSaveHeroGrid}
                   disabled={savingHeroGrid}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer"
                 >
                   {savingHeroGrid ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                   {savingHeroGrid ? 'Saving Hero Grid...' : 'Save Hero Grid Positions'}
@@ -1006,7 +1006,7 @@ export default function HeroManagerPage() {
                     onDragStart={(e) => handleHeroDragStart(e, index)}
                     onDragOver={(e) => handleHeroDragOver(e, index)}
                     onDragEnd={handleHeroDragEnd}
-                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${
+                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-3.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${
                       isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
                     } ${
                       isSpotlight
@@ -1017,49 +1017,49 @@ export default function HeroManagerPage() {
                     } hover:shadow-md`}
                   >
                     {/* Left Info */}
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200" title="Drag to reorder position">
-                        <GripVertical className="h-5 w-5" />
-                        <span className={`h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black text-white ${
+                    <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1 w-full">
+                      <div className="flex items-center gap-1.5 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder position">
+                        <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
+                        <span className={`h-6 sm:h-7 w-6 sm:w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-black text-white ${
                           isSpotlight ? 'bg-[#B3121B]' : isTopCard ? 'bg-blue-600' : 'bg-zinc-700'
                         }`}>
                           #{index + 1}
                         </span>
                       </div>
 
-                      <div className="relative h-12 w-16 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 dark:border-zinc-800 shadow-2xs">
+                      <div className="relative h-11 w-15 sm:h-12 sm:w-16 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 dark:border-zinc-800 shadow-2xs">
                         <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className={`text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md ${
                             isSpotlight ? 'bg-red-100 text-[#B3121B]' : isTopCard ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600'
                           }`}>
                             {slotTitle}
                           </span>
                           {art.articleNumber && (
-                            <span className="text-[10px] font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
+                            <span className="text-[9px] sm:text-[10px] font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
                               #{art.articleNumber}
                             </span>
                           )}
                         </div>
-                        <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100 line-clamp-1 mt-1">
+                        <p className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 line-clamp-2 sm:line-clamp-1 leading-snug mt-1">
                           {getTitle(art)}
                         </p>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">
+                        <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
                           {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
                         </p>
                       </div>
                     </div>
 
                     {/* Right Controls */}
-                    <div className="flex items-center gap-2 mt-2 sm:mt-0 shrink-0 self-end sm:self-center">
+                    <div className="flex items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800/80 pt-2 sm:pt-0">
                       <button
                         type="button"
                         onClick={() => moveHeroGridArticle(index, -1)}
                         disabled={index === 0}
-                        className="p-1.5 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
                         title="Move Up 1 Position"
                       >
                         ⬆️ Move Up
@@ -1068,7 +1068,7 @@ export default function HeroManagerPage() {
                         type="button"
                         onClick={() => moveHeroGridArticle(index, 1)}
                         disabled={index === heroGridArticles.length - 1}
-                        className="p-1.5 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
                         title="Move Down 1 Position"
                       >
                         ⬇️ Move Down
@@ -1076,7 +1076,7 @@ export default function HeroManagerPage() {
                       <button
                         type="button"
                         onClick={() => handleRemoveHeroGridArticle(art.id)}
-                        className="p-1.5 text-xs font-bold text-red-600 rounded-lg border border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-red-600 rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
                         title="Remove from Hero Grid"
                       >
                         ✕ Remove
@@ -1090,15 +1090,15 @@ export default function HeroManagerPage() {
           {/* ════════════════════════════════════════════════════════════════
              BOTTOM ROW 3 IMAGE CARDS MANAGEMENT
              ════════════════════════════════════════════════════════════════ */}
-          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800 mb-6 gap-4">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <span className="text-xl">📌</span>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
                     Bottom Row 3 Image Cards (હરોળના 3 ઈમેજ કાર્ડ્સ)
                   </h3>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 shrink-0">
                     {usedIds.length} / 3 Cards Selected
                   </span>
                 </div>
@@ -1111,14 +1111,14 @@ export default function HeroManagerPage() {
                 type="button"
                 onClick={handleSaveBottomSlots}
                 disabled={savingBottomSlots}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0 self-start sm:self-auto"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0"
               >
                 {savingBottomSlots ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {savingBottomSlots ? 'Saving Bottom Cards...' : 'Save Bottom 3 Cards'}
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
               {[0, 1, 2].map((idx) => (
                 <SlotCard
                   key={idx}
@@ -1136,15 +1136,15 @@ export default function HeroManagerPage() {
           {/* ════════════════════════════════════════════════════════════════
              POPULAR NEWS 12 POSITIONS MANAGEMENT (લોકપ્રિય સમાચાર)
              ════════════════════════════════════════════════════════════════ */}
-          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800 mb-6 gap-4">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <span className="text-xl">🔥</span>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
                     Popular News Slider (લોકપ્રિય સમાચાર)
                   </h3>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800 shrink-0">
                     {popularNewsArticles.length} / 12 Positions
                   </span>
                 </div>
@@ -1157,7 +1157,7 @@ export default function HeroManagerPage() {
                 type="button"
                 onClick={handleSavePopularNews}
                 disabled={savingPopularNews}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0 self-start sm:self-auto"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0"
               >
                 {savingPopularNews ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {savingPopularNews ? 'Saving Popular News...' : 'Save Popular News 12 Positions'}
@@ -1178,7 +1178,7 @@ export default function HeroManagerPage() {
               />
             </div>
 
-            {/* List of 5 Most Read Positions */}
+            {/* List of Popular News Positions */}
             <div className="space-y-3">
               {popularNewsArticles.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-zinc-200 dark:border-zinc-800 p-6 text-center text-xs text-zinc-400">
@@ -1194,75 +1194,75 @@ export default function HeroManagerPage() {
                       onDragStart={(e) => handleDragStartPopular(e, idx)}
                       onDragOver={(e) => handleDragOverPopular(e, idx)}
                       onDragEnd={handleDragEndPopular}
-                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${
+                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-3.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${
                         isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
                       } hover:shadow-md`}
                     >
                       {/* Left Info */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200" title="Drag to reorder rank">
-                          <GripVertical className="h-5 w-5" />
-                          <span className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black text-white bg-[#B3121B]">
+                      <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1 w-full">
+                        <div className="flex items-center gap-1.5 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder rank">
+                          <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
+                          <span className="h-6 sm:h-7 w-6 sm:w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-black text-white bg-[#B3121B]">
                             #{idx + 1}
                           </span>
                         </div>
 
-                        <div className="relative h-12 w-16 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 dark:border-zinc-800 shadow-2xs">
+                        <div className="relative h-11 w-15 sm:h-12 sm:w-16 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 dark:border-zinc-800 shadow-2xs">
                           <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
                         </div>
 
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                            Most Read Rank #{idx + 1}
-                          </span>
-                          {art.articleNumber && (
-                            <span className="text-[10px] font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
-                              #{art.articleNumber}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                              Popular Rank #{idx + 1}
                             </span>
-                          )}
+                            {art.articleNumber && (
+                              <span className="text-[9px] sm:text-[10px] font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
+                                #{art.articleNumber}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 line-clamp-2 sm:line-clamp-1 leading-snug mt-1">
+                            {getTitle(art)}
+                          </p>
+                          <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
+                            {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
+                          </p>
                         </div>
-                        <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100 line-clamp-1 mt-1">
-                          {getTitle(art)}
-                        </p>
-                        <p className="text-[10px] text-zinc-400 mt-0.5">
-                          {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
-                        </p>
+                      </div>
+
+                      {/* Right Controls */}
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800/80 pt-2 sm:pt-0">
+                        <button
+                          type="button"
+                          onClick={() => movePopularArticle(idx, -1)}
+                          disabled={idx === 0}
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                          title="Move Up 1 Position"
+                        >
+                          ⬆️ Move Up
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => movePopularArticle(idx, 1)}
+                          disabled={idx === popularNewsArticles.length - 1}
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                          title="Move Down 1 Position"
+                        >
+                          ⬇️ Move Down
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePopularNewsArticle(art.id)}
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-red-600 rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                          title="Remove from Popular News"
+                        >
+                          ✕ Remove
+                        </button>
                       </div>
                     </div>
-
-                    {/* Right Controls */}
-                    <div className="flex items-center gap-2 mt-2 sm:mt-0 shrink-0 self-end sm:self-center">
-                      <button
-                        type="button"
-                        onClick={() => movePopularArticle(idx, -1)}
-                        disabled={idx === 0}
-                        className="p-1.5 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
-                        title="Move Up 1 Position"
-                      >
-                        ⬆️ Move Up
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => movePopularArticle(idx, 1)}
-                        disabled={idx === popularNewsArticles.length - 1}
-                        className="p-1.5 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
-                        title="Move Down 1 Position"
-                      >
-                        ⬇️ Move Down
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemovePopularNewsArticle(art.id)}
-                        className="p-1.5 text-xs font-bold text-red-600 rounded-lg border border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
-                        title="Remove from Most Read"
-                      >
-                        ✕ Remove
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
+                  );
+                })
               )}
             </div>
           </div>
@@ -1270,15 +1270,15 @@ export default function HeroManagerPage() {
           {/* ════════════════════════════════════════════════════════════════
              MOST READ 5 POSITIONS MANAGEMENT (સૌથી વધુ વંચાયેલા)
              ════════════════════════════════════════════════════════════════ */}
-          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800 mb-6 gap-4">
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <span className="text-xl">🔥</span>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
                     Most Read 5 Positions (સૌથી વધુ વંચાયેલા)
                   </h3>
-                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800 shrink-0">
                     {mostReadArticles.length} / 5 Positions
                   </span>
                 </div>
@@ -1291,7 +1291,7 @@ export default function HeroManagerPage() {
                 type="button"
                 onClick={handleSaveMostRead}
                 disabled={savingMostRead}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0 self-start sm:self-auto"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0"
               >
                 {savingMostRead ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 {savingMostRead ? 'Saving Most Read...' : 'Save Most Read 5 Positions'}
@@ -1328,50 +1328,50 @@ export default function HeroManagerPage() {
                       onDragStart={(e) => handleDragStartMostRead(e, idx)}
                       onDragOver={(e) => handleDragOverMostRead(e, idx)}
                       onDragEnd={handleDragEndMostRead}
-                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${
+                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-3.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${
                         isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
                       } hover:shadow-md`}
                     >
                       {/* Left Info */}
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200" title="Drag to reorder rank">
-                          <GripVertical className="h-5 w-5" />
-                          <span className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black text-white bg-[#B3121B]">
+                      <div className="flex items-start sm:items-center gap-2.5 sm:gap-3 min-w-0 flex-1 w-full">
+                        <div className="flex items-center gap-1.5 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder rank">
+                          <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
+                          <span className="h-6 sm:h-7 w-6 sm:w-7 shrink-0 rounded-full flex items-center justify-center text-[11px] sm:text-xs font-black text-white bg-[#B3121B]">
                             #{idx + 1}
                           </span>
                         </div>
 
-                        <div className="relative h-12 w-16 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 dark:border-zinc-800 shadow-2xs">
+                        <div className="relative h-11 w-15 sm:h-12 sm:w-16 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-zinc-200/60 dark:border-zinc-800 shadow-2xs">
                           <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-amber-100 text-amber-800">
                               Most Read Rank #{idx + 1}
                             </span>
                             {art.articleNumber && (
-                              <span className="text-[10px] font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
+                              <span className="text-[9px] sm:text-[10px] font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded border border-red-200 dark:border-red-800">
                                 #{art.articleNumber}
                               </span>
                             )}
                           </div>
-                          <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100 line-clamp-1 mt-1">
+                          <p className="text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 line-clamp-2 sm:line-clamp-1 leading-snug mt-1">
                             {getTitle(art)}
                           </p>
-                          <p className="text-[10px] text-zinc-400 mt-0.5">
+                          <p className="text-[10px] text-zinc-400 mt-0.5 truncate">
                             {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
                           </p>
                         </div>
                       </div>
 
                       {/* Right Controls */}
-                      <div className="flex items-center gap-2 mt-2 sm:mt-0 shrink-0 self-end sm:self-center">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mt-2.5 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-zinc-100 dark:border-zinc-800/80 pt-2 sm:pt-0">
                         <button
                           type="button"
                           onClick={() => moveMostReadArticle(idx, -1)}
                           disabled={idx === 0}
-                          className="p-1.5 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
                           title="Move Up 1 Position"
                         >
                           ⬆️ Move Up
@@ -1380,7 +1380,7 @@ export default function HeroManagerPage() {
                           type="button"
                           onClick={() => moveMostReadArticle(idx, 1)}
                           disabled={idx === mostReadArticles.length - 1}
-                          className="p-1.5 text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
                           title="Move Down 1 Position"
                         >
                           ⬇️ Move Down
@@ -1388,7 +1388,7 @@ export default function HeroManagerPage() {
                         <button
                           type="button"
                           onClick={() => handleRemoveMostReadArticle(art.id)}
-                          className="p-1.5 text-xs font-bold text-red-600 rounded-lg border border-red-200 hover:bg-red-50 dark:hover:bg-red-950/30 transition cursor-pointer"
+                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] sm:text-xs font-bold text-red-600 rounded-lg border border-red-200 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
                           title="Remove from Most Read"
                         >
                           ✕ Remove
@@ -1400,14 +1400,14 @@ export default function HeroManagerPage() {
               )}
             </div>
           </div>
-          <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 mb-4">
+          <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 mb-4 gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🔥</span>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                     <h3 className="text-base font-black text-zinc-900 dark:text-white">Trending Topics (Trending વિષયો)</h3>
-                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${trendingTopics.length >= 8 ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'}`}>
+                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${trendingTopics.length >= 8 ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'} shrink-0`}>
                       {trendingTopics.length} / 8 Max
                     </span>
                   </div>
@@ -1417,7 +1417,7 @@ export default function HeroManagerPage() {
               <button
                 type="button"
                 onClick={handleResetTopics}
-                className="text-xs font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 underline cursor-pointer"
+                className="text-xs font-bold text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 underline cursor-pointer self-start sm:self-auto"
               >
                 Reset Defaults
               </button>
@@ -1444,8 +1444,8 @@ export default function HeroManagerPage() {
             </div>
 
             {/* Add new topic tag input & Dedicated Save Button */}
-            <div className="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-2 max-w-lg flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2 w-full sm:max-w-lg flex-1">
                 <input
                   type="text"
                   value={newTopicInput}
@@ -1459,7 +1459,7 @@ export default function HeroManagerPage() {
                   type="button"
                   onClick={handleAddTopic}
                   disabled={trendingTopics.length >= 8}
-                  className="rounded-xl bg-zinc-900 px-4 py-2.5 text-xs font-extrabold text-white hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 cursor-pointer"
+                  className="shrink-0 rounded-xl bg-zinc-900 px-4 py-2.5 text-xs font-extrabold text-white hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 cursor-pointer"
                 >
                   + Add Topic
                 </button>
@@ -1470,7 +1470,7 @@ export default function HeroManagerPage() {
                 type="button"
                 onClick={handleSaveTrendingTopics}
                 disabled={savingTopics}
-                className="flex items-center gap-2 rounded-xl bg-[#B3121B] hover:bg-[#B3121B]/90 px-5 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] hover:bg-[#B3121B]/90 px-5 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50"
               >
                 {savingTopics ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 <span>Save Trending Topics</span>
@@ -1479,14 +1479,14 @@ export default function HeroManagerPage() {
           </div>
 
           {/* Managing Trending News Section (ટ્રેન્ડિંગ ન્યૂઝ Slider) */}
-          <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 mb-5 gap-2">
+          <div className="mt-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-zinc-100 pb-3 dark:border-zinc-800 mb-5 gap-3">
               <div className="flex items-center gap-2">
                 <span className="text-xl">⚡</span>
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                     <h3 className="text-base font-black text-zinc-900 dark:text-white">Trending News Slider (ટ્રેન્ડિંગ ન્યૂઝ)</h3>
-                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${trendingNewsArticles.length >= 10 ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'}`}>
+                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${trendingNewsArticles.length >= 10 ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300'} shrink-0`}>
                       {trendingNewsArticles.length} / 10 Max
                     </span>
                   </div>
@@ -1499,7 +1499,7 @@ export default function HeroManagerPage() {
                 type="button"
                 onClick={handleSaveTrendingNews}
                 disabled={savingTrendingNews}
-                className="flex items-center gap-2 rounded-xl bg-[#B3121B] hover:bg-[#B3121B]/90 px-5 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 shrink-0"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] hover:bg-[#B3121B]/90 px-5 py-2.5 text-xs font-black text-white shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 shrink-0"
               >
                 {savingTrendingNews ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 <span>Save Trending News</span>
@@ -1526,15 +1526,15 @@ export default function HeroManagerPage() {
               </div>
             ) : (
               <>
-                <div className="mb-3 flex items-center justify-between text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                <div className="mb-3 flex items-center justify-between text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 flex-wrap gap-1">
                   <span className="flex items-center gap-1.5">
                     <GripVertical className="h-3.5 w-3.5 text-[#B3121B]" />
-                    <span><strong>Drag & Drop</strong> cards to change order (e.g. #10 to #1), or use <strong>&lt; / &gt; arrows</strong> below cards.</span>
+                    <span><strong>Drag & Drop</strong> cards to change order, or use <strong>&lt; / &gt; arrows</strong> below cards.</span>
                   </span>
                   <span className="text-[10px] text-zinc-400 font-medium">Order 1 to {trendingNewsArticles.length}</span>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 sm:gap-3">
                   {trendingNewsArticles.map((art, idx) => (
                     <div
                       key={art.id}
@@ -1554,23 +1554,23 @@ export default function HeroManagerPage() {
                           <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover pointer-events-none" />
 
                           {/* Rank Badge */}
-                          <span className="absolute top-1.5 left-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#B3121B] text-white text-[11px] font-black shadow-md z-10 select-none">
+                          <span className="absolute top-1.5 left-1.5 flex h-5 sm:h-6 w-5 sm:w-6 items-center justify-center rounded-full bg-[#B3121B] text-white text-[10px] sm:text-[11px] font-black shadow-md z-10 select-none">
                             {idx + 1}
                           </span>
 
                           {/* Drag Handle Icon Indicator */}
-                          <div className="absolute top-1.5 left-8 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white/80 backdrop-blur-xs opacity-70 group-hover:opacity-100 transition z-10" title="Click & Drag to reorder">
-                            <GripVertical className="h-3.5 w-3.5" />
+                          <div className="absolute top-1.5 left-7 sm:left-8 flex h-5 sm:h-6 w-5 sm:w-6 items-center justify-center rounded-full bg-black/60 text-white/80 backdrop-blur-xs opacity-70 group-hover:opacity-100 transition z-10" title="Click & Drag to reorder">
+                            <GripVertical className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </div>
 
                           {/* Remove Button */}
                           <button
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleRemoveTrendingNewsArticle(art.id); }}
-                            className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-black/70 text-white hover:bg-red-600 transition cursor-pointer z-10"
+                            className="absolute top-1.5 right-1.5 flex h-5 sm:h-6 w-5 sm:w-6 items-center justify-center rounded-full bg-black/70 text-white hover:bg-red-600 transition cursor-pointer z-10"
                             title="Remove from Trending News"
                           >
-                            <X className="h-3.5 w-3.5" />
+                            <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </button>
                         </div>
                         <p className="text-[11px] font-extrabold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug select-none">
@@ -1580,7 +1580,7 @@ export default function HeroManagerPage() {
 
                       {/* Bottom Footer with Article Info & Left/Right Reorder Arrows */}
                       <div className="mt-2 flex items-center justify-between text-[9px] font-bold text-zinc-400 pt-1.5 border-t border-zinc-100 dark:border-zinc-800">
-                        <span className="truncate max-w-[60px]">{art.articleNumber ? `#${art.articleNumber}` : catName(art.category)}</span>
+                        <span className="truncate max-w-[50px] sm:max-w-[60px]">{art.articleNumber ? `#${art.articleNumber}` : catName(art.category)}</span>
 
                         {/* Reorder Buttons (Move Left & Right) */}
                         <div className="flex items-center gap-1 shrink-0">

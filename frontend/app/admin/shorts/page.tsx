@@ -227,22 +227,24 @@ export default function ShortsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-5 border-zinc-200 dark:border-zinc-800">
         <div>
-          <h1 className="text-2xl font-black text-zinc-900 dark:text-white flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#B3121B] text-white shadow-md">
-              <Film className="h-5 w-5" />
+          <h1 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white flex items-start sm:items-center gap-2.5">
+            <span className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-xl bg-[#B3121B] text-white shadow-md shrink-0 mt-0.5 sm:mt-0">
+              <Film className="h-4 sm:h-5 w-4 sm:w-5" />
             </span>
-            Short Videos Management (શોર્ટ વીડિયો)
+            <span className="leading-snug">
+              Short Videos Management <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400 block sm:inline">(શોર્ટ વીડિયો)</span>
+            </span>
           </h1>
-          <p className="text-sm text-zinc-500 mt-1">
+          <p className="text-xs sm:text-sm text-zinc-500 mt-1">
             Auto-synced directly from YouTube channel. Top 20 latest Shorts are automatically featured for the homepage carousel.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
           <button
             onClick={() => handleSyncShorts(false)}
             disabled={syncing}
-            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-red-700 shadow-sm shadow-red-600/20 disabled:opacity-50 cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition-all hover:bg-red-700 shadow-sm shadow-red-600/20 disabled:opacity-50 cursor-pointer whitespace-nowrap"
             title="Auto-sync and save all YouTube channel Shorts"
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />

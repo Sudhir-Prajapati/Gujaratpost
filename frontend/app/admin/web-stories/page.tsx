@@ -263,7 +263,7 @@ export default function WebStoriesPage() {
         </div>
         <button
           onClick={openAddModal}
-          className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary/90 transition-colors font-bold text-sm shrink-0"
         >
           <Plus size={18} />
           <span>Add Web Story</span>
@@ -295,86 +295,154 @@ export default function WebStoriesPage() {
             </p>
             <button
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-colors"
+              className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-colors font-bold text-sm"
             >
               <Plus size={18} />
               <span>Add Web Story</span>
             </button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 uppercase text-xs">
-                <tr>
-                  <th className="px-6 py-4 font-medium">Preview</th>
-                  <th className="px-6 py-4 font-medium">Heading (EN / GU)</th>
-                  <th className="px-6 py-4 font-medium">Images</th>
-                  <th className="px-6 py-4 font-medium">Status</th>
-                  <th className="px-6 py-4 font-medium">Date</th>
-                  <th className="px-6 py-4 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                {stories.map((story) => {
-                  let imageCount = 0;
-                  if (story.image1) imageCount++;
-                  if (story.image2) imageCount++;
-                  if (story.image3) imageCount++;
-                  if (story.image4) imageCount++;
-                  if (story.image5) imageCount++;
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 uppercase text-xs">
+                  <tr>
+                    <th className="px-6 py-4 font-medium">Preview</th>
+                    <th className="px-6 py-4 font-medium">Heading (EN / GU)</th>
+                    <th className="px-6 py-4 font-medium">Images</th>
+                    <th className="px-6 py-4 font-medium">Status</th>
+                    <th className="px-6 py-4 font-medium">Date</th>
+                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                  {stories.map((story) => {
+                    let imageCount = 0;
+                    if (story.image1) imageCount++;
+                    if (story.image2) imageCount++;
+                    if (story.image3) imageCount++;
+                    if (story.image4) imageCount++;
+                    if (story.image5) imageCount++;
 
-                  return (
-                    <tr key={story.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="w-16 h-24 relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700">
-                          <Image src={story.image1} alt="Cover" fill className="object-cover" />
+                    return (
+                      <tr key={story.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="w-16 h-24 relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700">
+                            <Image src={story.image1} alt="Cover" fill className="object-cover" />
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-gray-900 dark:text-white mb-1">{story.heading}</div>
+                          {story.headingGu && <div className="text-gray-500 dark:text-gray-400 text-xs">{story.headingGu}</div>}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                            {imageCount} / 5
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                            story.isActive 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
+                            {story.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                          {new Date(story.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => openEditModal(story)}
+                              className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              title="Edit"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(story.id)}
+                              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View */}
+            <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-800">
+              {stories.map((story) => {
+                let imageCount = 0;
+                if (story.image1) imageCount++;
+                if (story.image2) imageCount++;
+                if (story.image3) imageCount++;
+                if (story.image4) imageCount++;
+                if (story.image5) imageCount++;
+
+                return (
+                  <div key={story.id} className="p-3.5 flex gap-3 items-start">
+                    <div className="w-16 h-24 relative rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 shadow-xs border border-gray-200 dark:border-gray-700">
+                      <Image src={story.image1} alt="Cover" fill className="object-cover" />
+                    </div>
+
+                    <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
+                      <div>
+                        <div className="flex items-center justify-between gap-1.5 mb-1 flex-wrap">
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            story.isActive 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400'
+                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                          }`}>
+                            {story.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400">
+                            {imageCount} / 5 Images
+                          </span>
                         </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900 dark:text-white mb-1">{story.heading}</div>
-                        {story.headingGu && <div className="text-gray-500 dark:text-gray-400 text-xs">{story.headingGu}</div>}
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                          {imageCount} / 5
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          story.isActive 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                        }`}>
-                          {story.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
-                        {new Date(story.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+
+                        <h4 className="font-bold text-xs sm:text-sm text-gray-900 dark:text-white line-clamp-2 leading-snug">
+                          {story.heading}
+                        </h4>
+                        {story.headingGu && (
+                          <p className="text-gray-500 dark:text-gray-400 text-[11px] line-clamp-1 mt-0.5">
+                            {story.headingGu}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-800/80 text-[10px] text-gray-400">
+                        <span>{new Date(story.createdAt).toLocaleDateString()}</span>
+
+                        <div className="flex items-center gap-1.5">
                           <button
                             onClick={() => openEditModal(story)}
-                            className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                            title="Edit"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-primary hover:text-white transition-colors"
                           >
-                            <Edit2 size={16} />
+                            <Edit2 size={12} /> Edit
                           </button>
                           <button
                             onClick={() => handleDelete(story.id)}
-                            className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="Delete"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
                           >
-                            <Trash2 size={16} />
+                            <Trash2 size={12} /> Delete
                           </button>
                         </div>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
 
@@ -447,7 +515,7 @@ export default function WebStoriesPage() {
                   </label>
                   <p className="text-xs text-gray-500 mb-3">Upload portrait images (9:16 ratio recommended).</p>
                   
-                  <div className="grid grid-cols-3 gap-3 h-[250px] overflow-y-auto pr-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 h-[250px] overflow-y-auto pr-2">
                     <ImageUploaderBlock index={1} value={image1} setValue={setImage1} />
                     <ImageUploaderBlock index={2} value={image2} setValue={setImage2} />
                     <ImageUploaderBlock index={3} value={image3} setValue={setImage3} />

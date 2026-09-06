@@ -12,6 +12,7 @@ import { WebStoryController } from '../controllers/webStory.controller.js';
 import { AdController } from '../controllers/ad.controller.js';
 import { EPaperController } from '../controllers/epaper.controller.js';
 import { GalleryController } from '../controllers/gallery.controller.js';
+import { SupportController } from '../controllers/support.controller.js';
 import { autoPublishDueArticles } from '../controllers/article.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 
@@ -38,6 +39,9 @@ function sanitizeSingleUrl(url?: string | null): string {
   }
   return clean;
 }
+
+// Public Support Details route
+router.get('/support', SupportController.getSupportSettings);
 
 // Public E-Paper routes
 router.get('/epaper', EPaperController.getPublicEditions);

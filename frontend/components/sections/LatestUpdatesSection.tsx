@@ -13,6 +13,7 @@ import type { Article, Language } from '@/types';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { getArticleImage } from '@/components/sections/HeroSection';
 import Advertisement from '@/components/ads/Advertisement';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 export default function LatestUpdatesSection({
   view = 'all',
@@ -177,8 +178,8 @@ export default function LatestUpdatesSection({
                       {locationTag}
                     </span>
                   </div>
-                  <h3 className="text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
-                    {getArticleTitle(art, language)}
+                  <h3 className="text-[13.5px] sm:text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
+                    <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
                 <div className="relative h-[58px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
@@ -230,8 +231,8 @@ export default function LatestUpdatesSection({
                       {locationTag}
                     </span>
                   </div>
-                  <h3 className="text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
-                    {getArticleTitle(art, language)}
+                  <h3 className="text-[13.5px] sm:text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
+                    <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
                 <div className="relative h-[58px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
@@ -262,8 +263,8 @@ export default function LatestUpdatesSection({
           </Link>
         </div>
 
-        {/* 3-Card Horizontal Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        {/* 3-Card Grid — 1 big + 2 small on mobile, 3 equal on md+ */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5 [&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1">
           {displayPopularCards.map((art, idx) => {
             const cardRank = currentPopularIdx * 3 + idx + 1;
             return (
@@ -272,8 +273,8 @@ export default function LatestUpdatesSection({
                 href={`/news/${art.slug}`}
                 className="group flex flex-col min-w-0"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
-                  <span className="absolute top-2 left-2 z-10 bg-black/80 text-white font-extrabold text-[12px] px-2 py-0.5 rounded-sm select-none shadow">
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2">
+                  <span className="absolute top-1.5 left-1.5 z-10 bg-black/80 text-white font-extrabold text-[11px] px-1.5 py-0.5 rounded-sm select-none shadow">
                     {language === 'gu' ? toGuDigits(cardRank) : cardRank}
                   </span>
                   <ArticleMedia
@@ -282,10 +283,10 @@ export default function LatestUpdatesSection({
                     className="transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                  {getArticleTitle(art, language)}
+                <h3 className="text-[12px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                  <AutoArticleTitle article={art} language={language} />
                 </h3>
-                <span className="text-muted-foreground font-semibold text-[11px] mt-1.5">
+                <span className="text-muted-foreground font-semibold text-[10px] md:text-[11px] mt-1">
                   {language === 'gu'
                     ? (art.relativeTimeGu || formatDate(art.publishedAt, 'gu'))
                     : (art.relativeTime || formatDate(art.publishedAt, 'en'))}
@@ -331,14 +332,14 @@ export default function LatestUpdatesSection({
             <Link
               key={art.id}
               href={`/news/${art.slug}`}
-              className="group flex items-start gap-3.5 py-3 hover:bg-muted/20 transition-colors duration-150 px-1 rounded-sm border-b border-border/40 pb-3 last:border-b-0 last:pb-0 pt-3 first:pt-0"
+              className="group flex items-start gap-2.5 md:gap-3.5 py-2 md:py-3 hover:bg-muted/20 transition-colors duration-150 px-1 rounded-sm border-b border-border/40 pb-2 md:pb-3 last:border-b-0 last:pb-0 pt-2 md:pt-3 first:pt-0"
             >
-              <span className="text-[24px] font-serif font-black text-slate-300 dark:text-slate-700 group-hover:text-[#B3121B] transition-colors duration-150 leading-none w-6 text-center select-none">
+              <span className="text-[18px] md:text-[24px] font-serif font-black text-slate-300 dark:text-slate-700 group-hover:text-[#B3121B] transition-colors duration-150 leading-none w-5 md:w-6 text-center select-none shrink-0">
                 {language === 'gu' ? toGuDigits(idx + 1) : idx + 1}
               </span>
 
-              <h4 className="text-[14.5px] md:text-[15px] leading-snug text-foreground group-hover:text-[#B3121B] transition-colors duration-150 line-clamp-3 flex-1 mt-0.5" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
-                {getArticleTitle(art, language)}
+              <h4 className="text-[13.5px] md:text-[15px] leading-snug text-foreground group-hover:text-[#B3121B] transition-colors duration-150 line-clamp-2 md:line-clamp-3 flex-1 mt-0.5" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
+                <AutoArticleTitle article={art} language={language} />
               </h4>
             </Link>
           ))}

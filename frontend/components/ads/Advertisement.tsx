@@ -81,14 +81,15 @@ export default function Advertisement({ position, section, className = '' }: AdP
     return (
       <aside
         aria-label="Advertisement"
-        className={`group relative isolate overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
+        className={`group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
         style={{ minHeight: h }}
       >
         <a
           href={redirectLink && redirectLink !== '#' ? redirectLink : undefined}
           target={redirectLink && redirectLink !== '#' ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="relative flex h-full w-full min-h-[90px] overflow-hidden"
+          className="relative flex flex-1 w-full min-h-full overflow-hidden"
+          style={{ minHeight: h }}
         >
           {isVideo ? (
             <video

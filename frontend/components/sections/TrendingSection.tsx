@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDate, getArticleTitle } from '@/data';
+import { formatDate } from '@/data';
 import { getPublicArticles, getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import type { Article } from '@/types';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 const DEMO_CARD_IMAGES = [
   'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=500&auto=format&fit=crop&q=80', // Business Market / Textile
@@ -190,7 +191,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
               {/* Info Text below image */}
               <div className="p-2 flex flex-col justify-between flex-1 min-w-0">
                 <h3 className="line-clamp-3 text-[11px] md:text-[11.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
-                  {getArticleTitle(article, language)}
+                  <AutoArticleTitle article={article} language={language} />
                 </h3>
                 <div className="mt-2.5 pt-1.5 border-t border-border/40 flex items-center gap-1 text-[9px] font-bold text-muted-foreground/80">
                   <Clock className="h-3 w-3 text-muted-foreground/50 shrink-0" />

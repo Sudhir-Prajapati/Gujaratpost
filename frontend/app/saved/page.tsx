@@ -9,6 +9,7 @@ import { getPublicArticles } from '@/lib/api';
 import { getCategoryColor } from '@/lib/utils';
 import { useApp } from '@/components/AppProvider';
 import type { Article } from '@/types';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 export default function SavedPage() {
   const { language } = useApp();
@@ -126,7 +127,7 @@ export default function SavedPage() {
                     </div>
                     <Link href={`/news/${article.slug}`} className="block">
                       <h3 className="line-clamp-2 text-[14px] sm:text-[15px] font-black leading-snug text-foreground hover:text-accent transition-colors">
-                        {title}
+                        <AutoArticleTitle article={article} language={language} />
                       </h3>
                     </Link>
                   </div>

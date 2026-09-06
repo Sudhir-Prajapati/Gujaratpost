@@ -78,11 +78,11 @@ export default function SidebarAdBanner({
           href={redirectLink && redirectLink !== '#' ? redirectLink : undefined}
           target={redirectLink && redirectLink !== '#' ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="group relative flex w-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-red-500/30"
+          className="group relative flex flex-col w-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-red-500/30"
           style={{ minHeight }}
         >
           {isVideo ? (
-            <div className="relative w-full h-full min-h-[180px] bg-black overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-full min-h-[inherit] bg-black overflow-hidden flex items-center justify-center" style={{ minHeight }}>
               {mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be') ? (
                 <iframe
                   src={`${mediaUrl.replace('watch?v=', 'embed/')}?autoplay=1&mute=1&loop=1&playlist=${mediaUrl.split('v=')[1] || ''}`}
@@ -107,7 +107,7 @@ export default function SidebarAdBanner({
               </div>
             </div>
           ) : (
-            <div className="relative w-full h-full min-h-[180px] overflow-hidden">
+            <div className="relative w-full h-full min-h-[inherit] overflow-hidden" style={{ minHeight }}>
               <Image
                 src={mediaUrl}
                 alt="Advertisement"

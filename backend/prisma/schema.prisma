@@ -351,9 +351,13 @@ model EPaperEdition {
   status       String   @default("PUBLISHED")
   publishTime  String?  @default("06:00 AM")
   isActive     Boolean  @default(true)
+  editionType  String   @default("PDF")
+  templateData String?  @db.LongText
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  @@index([city, date, status])
+  @@index([isActive, status, date])
   @@map("epaper_editions")
 }
 
@@ -367,3 +371,21 @@ model EPaperCity {
 
   @@map("epaper_cities")
 }
+
+model SupportSetting {
+  id            String   @id @default("default")
+  qrCodeImage   String?  @db.Text
+  upiId         String?
+  accountName   String?  
+  accountNumber String?
+  ifscCode      String?
+  bankName      String?
+  branchName    String?
+  noteGu        String?  @db.Text
+  noteEn        String?  @db.Text
+  noteHi        String?  @db.Text
+  updatedAt     DateTime @updatedAt
+
+  @@map("support_settings")
+}
+

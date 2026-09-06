@@ -15,6 +15,7 @@ import {
   User,
   X,
   Home,
+  Heart,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { SocialLinks } from '@/components/ui/SocialLinks';
@@ -118,7 +119,7 @@ export default function Header() {
   }
 
   const router = useRouter();
-  const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs } = useApp();
+  const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal } = useApp();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -126,10 +127,12 @@ export default function Header() {
   const [cityModalOpen, setCityModalOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [otherMenuOpen, setOtherMenuOpen] = useState(false);
-  const triggerRef = useRef<HTMLLIElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const [dropdownLeft, setDropdownLeft] = useState<number | null>(null);
   const [hideStickyNav, setHideStickyNav] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  const [headerHeight, setHeaderHeight] = useState(84);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -150,6 +153,28 @@ export default function Header() {
     handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, [pathname]);
+
+  // Measure header height so mobile menu overlay starts right below it
+  useEffect(() => {
+    const updateHeight = () => {
+      if (headerRef.current) {
+        setHeaderHeight(headerRef.current.getBoundingClientRect().height);
+      }
+    };
+    updateHeight();
+    window.addEventListener('resize', updateHeight);
+    return () => window.removeEventListener('resize', updateHeight);
+  }, [mounted]);
+
+  // Lock body scroll when mobile menu is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [menuOpen]);
 
   const updateSavedCount = () => {
     try {
@@ -225,6 +250,21 @@ export default function Header() {
   const [languageChosen, setLanguageChosen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Lock background body scroll when mobile menu drawer is open
+  useEffect(() => {
+    if (menuOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
+  }, [menuOpen]);
+
   // On mount: check if user has explicitly chosen a language this session
   useEffect(() => {
     try {
@@ -247,13 +287,13 @@ export default function Header() {
   const [dbCategories, setDbCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    getPublicCategories({ showInHeader: true, headerType: 'GLOBAL' })
+    getPublicCategories({ showInHeader: true })
       .then((cats) => {
         if (cats && Array.isArray(cats) && cats.length > 0) {
           setDbCategories(cats);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const { navLinks, otherLinks } = useMemo(() => {
@@ -261,52 +301,54 @@ export default function Header() {
       return { navLinks: NAV_LINKS, otherLinks: OTHER_LINKS };
     }
 
-    // Dynamic categories from DB sorted by displayOrder (highest displayOrder first)
-    const dbLinks = dbCategories
-      .filter((c) => c.showInHeader !== false)
-      .map((c) => {
-        let href = `/category/${c.slug}`;
-        if (c.slug === 'home' || c.slug === 'main') href = '/';
-        else if (c.slug === 'videos') href = '/videos';
-        else if (c.slug === 'photos') href = '/photos';
-        else if (c.slug === 'podcasts') href = '/videos?tab=podcast';
+    const mapCategory = (c: any) => {
+      const slugLower = (c.slug || '').toLowerCase();
+      let href = `/category/${c.slug}`;
+      if (slugLower === 'home' || slugLower === 'main') href = '/';
+      else if (slugLower === 'videos') href = '/videos';
+      else if (slugLower === 'photos' || slugLower === 'photo-gallery' || slugLower === 'gallery') href = '/photos';
+      else if (slugLower === 'podcasts') href = '/videos?tab=podcast';
+      else if (slugLower === 'shorts' || slugLower === 'reels') href = '/shorts';
+      else if (slugLower === 'epaper') href = '/epaper';
+      else if (slugLower === 'web-stories' || slugLower === 'webstory') href = '/web-stories';
 
-        const slugLower = (c.slug || '').toLowerCase();
-        const staticTrans = CATEGORY_TRANSLATIONS[slugLower];
+      const staticTrans = CATEGORY_TRANSLATIONS[slugLower];
+      const labelEn = c.nameEn || (staticTrans ? staticTrans.en : c.name);
+      const labelGu = c.nameGu || (staticTrans ? staticTrans.gu : c.name);
+      const labelHi = c.nameHi || (staticTrans ? staticTrans.hi : c.name);
 
-        const labelEn = c.nameEn || (staticTrans ? staticTrans.en : c.name);
-        const labelGu = c.nameGu || (staticTrans ? staticTrans.gu : c.name);
-        const labelHi = c.nameHi || (staticTrans ? staticTrans.hi : c.name);
+      return { label: labelEn, labelGu, labelHi, href };
+    };
 
-        return {
-          label: labelEn,
-          labelGu: labelGu,
-          labelHi: labelHi,
-          href,
-        };
-      });
+    // GLOBAL type → Row 1 main nav bar (sorted by headerOrder desc)
+    const row1Cats = dbCategories
+      .filter((c) => c.showInHeader !== false && (!c.headerType || c.headerType === 'GLOBAL'))
+      .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
 
-    // Ensure Home link is at index 0, and subsequent categories follow exact DB displayOrder
+    // OTHER type → "અન્ย" dropdown (sorted by headerOrder desc)
+    const otherCats = dbCategories
+      .filter((c) => c.showInHeader !== false && c.headerType === 'OTHER')
+      .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
+
     const homeLink = { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' };
 
-    const nonHomeDbLinks = dbLinks.filter((l) => l.href !== '/');
+    const nonHomeRow1Links = row1Cats
+      .map(mapCategory)
+      .filter((l) => l.href !== '/');
 
-    // Display Home + first 11 DB categories in main bar matching exact DB order
-    const mainNav = [homeLink, ...nonHomeDbLinks.slice(0, 11)];
-    const dropdownLinks = nonHomeDbLinks.slice(11);
+    // Home + up to 14 GLOBAL categories in main nav bar (Max 15 total links in Row 1)
+    const row1MainLinks = nonHomeRow1Links.slice(0, 14);
+    const row1OverflowLinks = nonHomeRow1Links.slice(14);
 
-    const otherHrefs = new Set(dropdownLinks.map((l) => l.href.toLowerCase()));
-    const combinedOtherLinks = [...dropdownLinks];
+    const mainNav = [homeLink, ...row1MainLinks];
 
-    OTHER_LINKS.forEach((link) => {
-      const lower = link.href.toLowerCase();
-      if (!otherHrefs.has(lower) && !mainNav.some((m) => m.href.toLowerCase() === lower)) {
-        otherHrefs.add(lower);
-        combinedOtherLinks.push(link);
-      }
-    });
+    // OTHER-typed categories + any Row 1 overflow categories (beyond 15) go into "અન્ય" dropdown
+    const dropdownLinks = [
+      ...otherCats.map(mapCategory),
+      ...row1OverflowLinks,
+    ];
 
-    return { navLinks: mainNav, otherLinks: combinedOtherLinks };
+    return { navLinks: mainNav, otherLinks: dropdownLinks };
   }, [dbCategories]);
 
   // Determine active link: exact match for home, startsWith for others
@@ -323,28 +365,31 @@ export default function Header() {
 
   return (
     <>
-      <header className="relative z-[60] border-b border-border bg-card/95">
+      <header ref={headerRef} className="relative z-[60] border-b border-border bg-card/95">
         {/* Top bar: date + social */}
-        <div className="bg-black dark:bg-black text-white/95">
-          <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-3 px-4 py-1.5">
-            <div className="min-w-0 flex items-center gap-3 truncate text-sm font-semibold opacity-85">
+        <div className="bg-black dark:bg-black text-white/95 select-none">
+          <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-1.5">
+            {/* Left: Date + City */}
+            <div className="min-w-0 flex items-center gap-2 sm:gap-3 truncate text-xs sm:text-sm font-semibold opacity-90">
               <span className="hidden sm:inline">
                 {mounted ? formatDateLong(language) : 'Sunday, 21 June 2026'}
               </span>
-              <span className="sm:hidden">
+              <span className="sm:hidden text-[11px] font-bold">
                 {mounted ? formatDateShort(language) : '21 Jun 2026'}
               </span>
               <span className="opacity-40">|</span>
               <button
                 type="button"
                 onClick={() => setCityModalOpen(true)}
-                className="inline-flex items-center gap-1.5 text-xs font-bold text-white hover:text-red-200 transition duration-150 cursor-pointer bg-white/10 hover:bg-white/20 px-2.5 py-0.5 rounded-full select-none font-sans"
+                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-white hover:text-red-200 transition duration-150 cursor-pointer bg-white/10 hover:bg-white/20 px-2 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0"
               >
                 <span>📍</span>
                 <span>{cityTranslations[selectedCity]?.[language] || selectedCity}</span>
               </button>
             </div>
-            <div className="flex items-center gap-3.5 shrink-0 max-sm:hidden">
+
+            {/* Right: Desktop App buttons & Social links */}
+            <div className="flex items-center gap-3.5 shrink-0 max-md:hidden">
               <div className="flex items-center gap-2">
                 <a
                   href="https://apps.apple.com"
@@ -368,31 +413,49 @@ export default function Header() {
               <span className="opacity-20 select-none text-current">|</span>
               <SocialLinks size="sm" />
             </div>
+
+            {/* Right: Mobile quick access badges (News Brief & AQI) */}
+            <div className="flex md:hidden items-center gap-1.5 shrink-0">
+              <Link
+                href="/news-brief"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600/90 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-wider transition active:scale-95 shadow-xs"
+              >
+                <span>⚡</span>
+                <span>Brief</span>
+              </Link>
+              <Link
+                href="/aqi"
+                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-[10px] font-black uppercase tracking-wider transition active:scale-95 border border-amber-500/30"
+              >
+                <span>🌤️</span>
+                <span>AQI</span>
+              </Link>
+            </div>
           </div>
         </div>
 
 
         {/* Logo + Controls */}
-        <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-5 px-4 py-2.5">
+        <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-4 px-2.5 sm:px-4 py-2 sm:py-2.5 relative">
           {/* Slogan on top, Logo below */}
-          <div className="flex flex-col items-start gap-1 select-none">
+          <div className="flex flex-col items-start gap-0.5 select-none shrink-0">
             {/* Slogan */}
             <div className="flex flex-col justify-center leading-tight">
-              <p className="text-[12px] md:text-[13px] font-black text-foreground tracking-wide whitespace-nowrap" translate="no">
+              <p className="text-[10px] sm:text-[12px] md:text-[13px] font-black text-foreground tracking-wide whitespace-nowrap" translate="no">
                 Real Stories. <span className="text-red-600">Real Gujarat.</span>
               </p>
             </div>
 
             {/* Logo */}
             <a href="/" className="logo-3d group flex shrink-0 items-center">
-              <span className="logo-3d-inner relative block h-14 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300 sm:h-14 lg:h-16 w-40 sm:w-48 lg:w-56">
+              <span className="logo-3d-inner relative block h-10 sm:h-12 lg:h-16 w-32 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300">
                 <Image
                   src={gpLogo}
                   alt="Gujarat Post"
                   fill
                   priority
                   unoptimized
-                  sizes="(max-width: 640px) 160px, (max-width: 1024px) 192px, 224px"
+                  sizes="(max-width: 640px) 128px, (max-width: 1024px) 176px, 224px"
                   className="object-cover"
                 />
               </span>
@@ -465,62 +528,24 @@ export default function Header() {
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            {/* Mobile Search Button (only on mobile screen widths) */}
-            <div className={`md:hidden relative flex items-center transition-all duration-300 ease-in-out ${searchOpen ? 'w-44 sm:w-64' : 'w-10'}`}>
-              <form onSubmit={submitSearch} className="relative w-full flex items-center">
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder={language === 'gu' ? 'સમાચાર શોધો...' : language === 'hi' ? 'समाचार खोजें...' : 'Search news...'}
-                  className={`h-10 w-full rounded-full border border-border bg-muted py-2 pl-10 pr-10 text-sm text-foreground outline-none transition-all duration-300 ease-in-out focus:border-accent focus:bg-card ${searchOpen ? 'opacity-100 pointer-events-auto' : 'w-10 opacity-0 pointer-events-none'
-                    }`}
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (searchOpen) {
-                      if (searchQuery.trim()) {
-                        const query = searchQuery.trim();
-                        setSearchOpen(false);
-                        router.push(`/search?q=${encodeURIComponent(query)}`);
-                      } else {
-                        setSearchOpen(false);
-                      }
-                    } else {
-                      setSearchOpen(true);
-                    }
-                  }}
-                  className={`absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-secondary ${searchOpen ? 'text-muted-foreground hover:bg-transparent' : 'bg-muted'
-                    }`}
-                  aria-label={searchOpen ? 'Submit Search' : 'Search'}
-                >
-                  <Search className="h-4 w-4" />
-                </button>
-                {searchOpen && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchOpen(false);
-                      setSearchQuery('');
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 flex h-6 w-6 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary hover:text-foreground"
-                    aria-label="Close search"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </form>
-            </div>
+          {/* Controls (Mobile + Desktop compact icons) */}
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            {/* Mobile Search Icon Button */}
+            <button
+              type="button"
+              onClick={() => setSearchOpen(true)}
+              className="md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
+              aria-label="Search"
+            >
+              <Search className="h-4 w-4" />
+            </button>
 
             {/* Language switcher */}
-            <div className={`relative z-50 transition-all duration-300 notranslate ${searchOpen ? 'max-sm:hidden' : ''}`}>
+            <div className="relative z-50 transition-all duration-300 notranslate shrink-0">
               <button
                 type="button"
                 onClick={() => setLanguageOpen((value) => !value)}
-                className={`inline-flex h-10 items-center gap-1.5 rounded-full bg-muted px-4 text-sm font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
+                className={`inline-flex h-8.5 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2.5 sm:px-4 text-xs sm:text-sm font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
                   }`}
                 aria-label="Switch language"
                 aria-expanded={languageOpen}
@@ -531,8 +556,10 @@ export default function Header() {
                   <path d="M2 12h20" />
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
-                <span>{languageChosen ? languageLabels[language] : 'Language'}</span>
-                <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
+                <span className="truncate max-w-[65px] sm:max-w-none">
+                  {languageChosen ? languageLabels[language] : 'Language'}
+                </span>
+                <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
               </button>
 
               {languageOpen && (
@@ -555,11 +582,11 @@ export default function Header() {
                             setLanguage(item);
                             setLanguageOpen(false);
                             setLanguageChosen(true);
-                            try { sessionStorage.setItem('gp-lang-chosen', 'true'); } catch (e) {}
+                            try { sessionStorage.setItem('gp-lang-chosen', 'true'); } catch (e) { }
                           }}
                           className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs font-bold transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 ${isSelected
-                              ? 'bg-red-600 text-white font-extrabold shadow-sm'
-                              : 'text-foreground hover:bg-muted'
+                            ? 'bg-red-600 text-white font-extrabold shadow-sm'
+                            : 'text-foreground hover:bg-muted'
                             }`}
                         >
                           <span>{languageLabels[item]}</span>
@@ -574,51 +601,11 @@ export default function Header() {
               )}
             </div>
 
-            {/* Saved Articles button */}
-            {/* <Link
-            href="/saved"
-            className={`inline-flex h-10 w-10 relative items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary ${
-              searchOpen ? 'max-sm:hidden' : ''
-            }`}
-            aria-label="Saved articles"
-            title={language === 'gu' ? 'સાચવેલા લેખ' : 'Saved Articles'}
-          >
-            <span className="text-[15px]">🔖</span>
-            {savedCount > 0 && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-accent text-[9px] font-black text-white px-1 shadow-sm font-sans">
-                {savedCount}
-              </span>
-            )}
-          </Link> */}
-
-            {/* Font Sizing Controls */}
-            {/* <div className={`inline-flex items-center rounded-full bg-muted p-0.5 border border-border/20 font-sans ${searchOpen ? 'max-sm:hidden' : ''}`}>
-            <button
-              type="button"
-              onClick={decFs}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-xs font-black hover:bg-secondary transition-colors cursor-pointer text-foreground/80 hover:text-foreground"
-              title="Decrease font size"
-              disabled={fsLevel <= 0}
-            >
-              A−
-            </button>
-            <button
-              type="button"
-              onClick={incFs}
-              className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-black hover:bg-secondary transition-colors cursor-pointer text-foreground/80 hover:text-foreground"
-              title="Increase font size"
-              disabled={fsLevel >= 3}
-            >
-              A+
-            </button>
-          </div> */}
-
             {/* Theme toggle */}
             <button
               type="button"
               onClick={toggleTheme}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary ${searchOpen ? 'max-sm:hidden' : ''
-                }`}
+              className="inline-flex h-8.5 w-8.5 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
               aria-label="Toggle dark mode"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
@@ -635,8 +622,7 @@ export default function Header() {
                   setAuthModalOpen(true);
                 }
               }}
-              className={`inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary ${searchOpen ? 'max-sm:hidden' : ''
-                }`}
+              className="inline-flex h-8.5 w-8.5 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
               aria-label="Sign In"
               title="Sign In"
             >
@@ -647,29 +633,105 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setMenuOpen((value) => !value)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground md:hidden"
+              className="inline-flex h-8.5 w-8.5 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95"
               aria-label="Open menu"
             >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
+
+          {/* Mobile Full-Width Search Overlay Bar */}
+          {searchOpen && (
+            <div className="absolute inset-0 z-50 flex items-center bg-card px-3 md:hidden animate-in fade-in duration-200">
+              <form onSubmit={submitSearch} className="relative w-full flex items-center gap-2">
+                <div className="relative flex-1 flex items-center">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder={language === 'gu' ? 'સમાચાર શોધો...' : language === 'hi' ? 'समाचार खोजें...' : 'Search news...'}
+                    className="h-10 w-full rounded-full border border-border bg-muted py-2 pl-9 pr-8 text-sm text-foreground outline-none focus:border-accent focus:bg-card shadow-inner"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full bg-muted-foreground/30 text-card hover:bg-muted-foreground"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  type="submit"
+                  className="h-9 px-3.5 rounded-full bg-accent text-white text-xs font-black shrink-0 active:scale-95 shadow-sm"
+                >
+                  {language === 'gu' ? 'શોધો' : language === 'hi' ? 'खोजें' : 'Search'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchOpen(false);
+                    setSearchQuery('');
+                  }}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:text-foreground shrink-0"
+                  aria-label="Close search"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </form>
+            </div>
+          )}
         </div>
 
-        {/* -- Mobile Drawer -------------------------------------------------- */}
+        {/* -- Full-Screen Mobile Menu Drawer Overlay (below header) ------------- */}
         {menuOpen && (
-          <nav className="border-t border-border bg-card md:hidden" aria-label="Mobile navigation">
-            <div className="px-4 py-3">
-              {/* E-Paper CTA */}
-              <a
-                href="/epaper"
-                onClick={() => setMenuOpen(false)}
-                className="mb-3 flex w-full items-center justify-center gap-2 rounded-xl bg-accent py-2.5 text-sm font-black text-white shadow hover:bg-accent-hover transition"
-              >
-                {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}
-              </a>
+          <div className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200 select-none" style={{ top: `${headerHeight}px` }}>
+            {/* Menu Drawer Content Container */}
+            <div className="px-4 py-4 space-y-4 pb-24">
+              {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+                <Link
+                  href="/news-brief"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-zinc-900 to-black p-2 text-xs font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition"
+                >
+                  <Image src="/rightSide.png" alt="News Brief" width={14} height={14} className="object-contain" />
+                  <span>BRIEF</span>
+                </Link>
+                <Link
+                  href="/aqi"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-1 rounded-xl bg-amber-500/10 border border-amber-500/30 p-2 text-xs font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition"
+                >
+                  <span className="text-amber-500">🌤️</span>
+                  <span>AQI</span>
+                </Link>
+                <a
+                  href="/epaper"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-1 rounded-xl bg-accent p-2 text-xs font-black text-white shadow-sm hover:bg-accent-hover active:scale-95 transition"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span>{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    openSupportModal();
+                  }}
+                  className="flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 p-2 text-xs font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer"
+                >
+                  <Heart className="h-3.5 w-3.5 fill-current animate-pulse text-white" />
+                  <span>{language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'सपोर्ट' : 'Support'}</span>
+                </button>
+              </div>
 
               {/* App downloads CTA */}
-              <div className="mb-3.5 flex items-center justify-between gap-2 p-3 rounded-xl bg-muted/40 border border-border">
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/50 border border-border">
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">App:</span>
                 <div className="flex gap-2">
                   <a
@@ -678,7 +740,7 @@ export default function Header() {
                     rel="noreferrer"
                     className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-black text-white hover:border-zinc-500 hover:bg-zinc-800 transition active:scale-95 shadow-sm"
                   >
-                    <AppleIcon className="h-3.5 w-3.5 animate-pulse text-white" />
+                    <AppleIcon className="h-3.5 w-3.5 text-white" />
                     <span translate="no">App Store</span>
                   </a>
                   <a
@@ -693,7 +755,7 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Flat link grid */}
+              {/* Flat Link Grid */}
               <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
                 {[...navLinks, ...otherLinks].map((link) => {
                   const active = isActive(link.href);
@@ -702,9 +764,9 @@ export default function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${active
-                        ? 'border-accent/30 bg-accent/8 text-accent'
-                        : 'border-border bg-muted text-foreground hover:border-accent/25 hover:text-accent'
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
+                        ? 'border-accent/30 bg-accent/8 text-accent font-extrabold'
+                        : 'border-border bg-muted/60 text-foreground hover:border-accent/25 hover:text-accent'
                         }`}
                       aria-current={active ? 'page' : undefined}
                     >
@@ -716,8 +778,14 @@ export default function Header() {
                   );
                 })}
               </div>
+
+              {/* Social links at bottom of drawer */}
+              <div className="pt-3 border-t border-border flex items-center justify-between">
+                <span className="text-xs font-bold text-muted-foreground">Follow Us:</span>
+                <SocialLinks size="sm" />
+              </div>
             </div>
-          </nav>
+          </div>
         )}
       </header>
 
@@ -728,44 +796,43 @@ export default function Header() {
           className="hidden border-t border-border bg-card/98 md:block"
           aria-label="Main navigation"
         >
-          <div className="mx-auto max-w-screen-2xl px-2 xl:px-4 flex items-center justify-between gap-2 relative">
+          <div className="mx-auto max-w-screen-2xl px-2 xl:px-4 flex items-center gap-2 relative">
             {/* Main scrollable navigation list */}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <ul className="flex items-center gap-0 overflow-x-auto scrollbar-none">
-                {navLinks.map((link) => {
-                  const active = isActive(link.href);
-                  return (
-                    <li key={`${link.href}-${language}`} className="shrink-0">
-                      <a
-                        href={link.href}
-                        className={`relative flex h-11 items-center whitespace-nowrap px-2 xl:px-3 text-[14px] 2xl:text-[15px] font-bold tracking-tight transition-colors duration-150 ${active
-                          ? 'text-accent'
-                          : 'text-foreground hover:text-accent'
-                          }`}
-                        aria-current={active ? 'page' : undefined}
-                      >
-                        {link.href === '/' ? (
-                          <span className="flex items-center gap-1.5">
-                            <Home className="h-4 w-4 shrink-0 text-accent" />
-                            <span>{getNavLabel(link)}</span>
-                          </span>
-                        ) : (
-                          getNavLabel(link)
-                        )}
-                        {/* Active indicator – thick red underline */}
-                        {active && (
-                          <span
-                            className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent"
-                            aria-hidden="true"
-                          />
-                        )}
-                      </a>
-                    </li>
-                  );
-                })}
+            <div className="min-w-0 max-w-full overflow-hidden">
+              <ul className="flex items-center gap-0 overflow-x-auto scrollbar-none">                {navLinks.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <li key={`${link.href}-${language}`} className="shrink-0">
+                    <a
+                      href={link.href}
+                      className={`relative flex h-11 items-center whitespace-nowrap px-1.5 xl:px-2 2xl:px-2.5 text-[13px] xl:text-[14px] font-bold tracking-tight transition-colors duration-150 ${active
+                        ? 'text-accent'
+                        : 'text-foreground hover:text-accent'
+                        }`}
+                      aria-current={active ? 'page' : undefined}
+                    >
+                      {link.href === '/' ? (
+                        <span className="flex items-center gap-1.5">
+                          <Home className="h-4 w-4 shrink-0 text-accent" />
+                          <span>{getNavLabel(link)}</span>
+                        </span>
+                      ) : (
+                        getNavLabel(link)
+                      )}
+                      {/* Active indicator – thick red underline */}
+                      {active && (
+                        <span
+                          className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent"
+                          aria-hidden="true"
+                        />
+                      )}
+                    </a>
+                  </li>
+                );
+              })}
 
                 {/* Other / અન્ય Dropdown Trigger */}
-                <li
+                {/* <li
                   ref={triggerRef}
                   className="relative shrink-0"
                   onMouseEnter={() => {
@@ -788,12 +855,49 @@ export default function Header() {
                     <span key={language}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
                     <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
                   </button>
-                </li>
+                </li> */}
               </ul>
             </div>
 
-            {/* Non-scrollable controls pinned to the right (E-Paper CTA only) */}
-            <div className="flex items-center gap-4 shrink-0 pl-4 border-l border-border/40 h-11 relative">
+            {/* Other / અન્ય Dropdown Trigger — sits right after the last nav link (Podcast) */}
+            <div
+              ref={triggerRef}
+              className="relative shrink-0"
+              onMouseEnter={() => {
+                setOtherMenuOpen(true);
+                const rect = triggerRef.current?.getBoundingClientRect();
+                const navWrapper = triggerRef.current?.closest('.max-w-screen-2xl');
+                const navRect = navWrapper?.getBoundingClientRect();
+                if (rect && navRect) {
+                  setDropdownLeft(rect.left - navRect.left);
+                }
+              }}
+              onMouseLeave={() => setOtherMenuOpen(false)}
+            >
+              <button
+                type="button"
+                onClick={() => setOtherMenuOpen(!otherMenuOpen)}
+                className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-1.5 xl:px-2 2xl:px-2.5 text-[13px] xl:text-[14px] font-bold tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
+                  }`}
+              >
+                <span key={language}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+            </div>
+
+            {/* Non-scrollable controls pinned to the right (Support Us & E-Paper CTAs) */}
+            <div className="ml-auto flex items-center gap-2.5 shrink-0 pl-3 border-l border-border/40 h-11 relative">
+              {/* Support Us CTA */}
+              <button
+                type="button"
+                onClick={openSupportModal}
+                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-3 text-xs font-black text-white shadow-md shadow-red-900/20 ring-1 ring-red-600/40 transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-95 cursor-pointer"
+              >
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
+                <Heart className="h-3.5 w-3.5 shrink-0 fill-current text-white animate-pulse" />
+                <span className="tracking-wide">{language === 'gu' ? 'સપોર્ટ કરો' : language === 'hi' ? 'सपोर्ट करें' : 'Support Us'}</span>
+              </button>
+
               {/* E-Paper CTA */}
               <a
                 href="/epaper"

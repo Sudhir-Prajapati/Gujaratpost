@@ -13,6 +13,8 @@ export interface EPaperEdition {
   status: 'DRAFT' | 'PUBLISHED';
   publishTime?: string;
   isActive: boolean;
+  editionType?: 'PDF' | 'TEMPLATE';
+  templateData?: any;
   createdAt?: string;
   updatedAt?: string;
 }

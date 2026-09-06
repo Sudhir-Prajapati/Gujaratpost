@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
+import { Heart } from 'lucide-react';
 import { SOCIAL_LINKS, SocialIcon } from '@/components/ui/SocialLinks';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import RandomAdsSection from '@/components/ads/RandomAdsSection';
+import { useApp } from '@/components/AppProvider';
 
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
 const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
@@ -92,6 +96,7 @@ const topics3Links = [
 ];
 
 const companyLinks = [
+    { label: 'Support Us', href: '#support', isSupport: true },
     { label: 'About Us', href: '/about' },
     { label: 'Contact Us', href: '/contact' },
     { label: 'Advertise With Us', href: '/advertise' },
@@ -104,7 +109,7 @@ const companyLinks = [
 ];
 
 /* ─── NavColumn Component ─────────────────────────────────────────────────── */
-function NavColumn({ title, links, titleHref }: { title: string; links: { label: string; href: string }[]; titleHref?: string }) {
+function NavColumn({ title, links, titleHref, onSupportClick }: { title: string; links: { label: string; href: string; isSupport?: boolean }[]; titleHref?: string; onSupportClick?: () => void }) {
     return (
         <div>
             <div className="mb-2">
@@ -119,12 +124,23 @@ function NavColumn({ title, links, titleHref }: { title: string; links: { label:
             <ul className="space-y-1.5">
                 {links.map((item) => (
                     <li key={item.label}>
-                        <Link
-                            href={item.href}
-                            className="text-[13px] font-semibold text-slate-300 hover:text-white transition-colors duration-150 block leading-snug"
-                        >
-                            {item.label}
-                        </Link>
+                        {item.isSupport ? (
+                            <button
+                                type="button"
+                                onClick={onSupportClick}
+                                className="text-[13px] font-black text-rose-400 hover:text-rose-300 transition-colors duration-150 flex items-center gap-1 leading-snug cursor-pointer"
+                            >
+                                <Heart className="h-3 w-3 fill-current" />
+                                <span>{item.label}</span>
+                            </button>
+                        ) : (
+                            <Link
+                                href={item.href}
+                                className="text-[13px] font-semibold text-slate-300 hover:text-white transition-colors duration-150 block leading-snug"
+                            >
+                                {item.label}
+                            </Link>
+                        )}
                     </li>
                 ))}
             </ul>
@@ -133,10 +149,8 @@ function NavColumn({ title, links, titleHref }: { title: string; links: { label:
 }
 
 /* ─── Footer Component ─────────────────────────────────────────────────── */
-import { useApp } from '@/components/AppProvider';
-
 export default function Footer({ isInline = false }: { isInline?: boolean }) {
-    const { language } = useApp();
+    const { language, openSupportModal } = useApp();
     const pathname = usePathname();
 
     if (pathname === '/login' || pathname.startsWith('/admin')) {
@@ -150,10 +164,17 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
     const wrap = isInline ? 'pt-2 pb-1.5' : 'pt-4 pb-3';
 
     return (
-        <footer
-            data-theme="dark"
-            className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative"
-        >
+        <>
+            {!isInline && (
+                <div className="w-full bg-background text-foreground overflow-hidden">
+                    <AdSectionBanner section="FOOTER" />
+                    <RandomAdsSection />
+                </div>
+            )}
+            <footer
+                data-theme="dark"
+                className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative"
+            >
             <div className={`w-full px-4 sm:px-6 md:px-8 lg:px-10 ${wrap}`}>
 
                 {/* ── Main Layout: Logo left, Nav columns pushed right ── */}
@@ -178,6 +199,16 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 className="object-contain object-left"
                             />
                         </Link>
+                        {/* Support Us Button in Footer */}
+                        <button
+                            type="button"
+                            onClick={openSupportModal}
+                            className="mt-2.5 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-red-900/30 hover:scale-[1.02] active:scale-95 transition cursor-pointer border border-red-500/30 max-w-[210px]"
+                        >
+                            <Heart className="h-4 w-4 fill-current animate-pulse text-white" />
+                            <span>{language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}</span>
+                        </button>
+
                         {/* Social Icons Grid */}
                         <div className="grid grid-cols-4 gap-2.5 w-fit mt-3.5 ml-2">
                             {SOCIAL_LINKS.map((item) => (
@@ -199,7 +230,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         <NavColumn title="Topics" links={topics3Links} />
 
                         {/* Company Col 4 */}
-                        <NavColumn title="Company" links={companyLinks} />
+                        <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} />
 
                     </div>
 
@@ -276,5 +307,6 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
             </div>
         </footer>
+    </>
     );
 }

@@ -202,6 +202,7 @@ export default function CategoriesPage() {
   };
 
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
 
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedItemId(id);
@@ -209,14 +210,32 @@ export default function CategoriesPage() {
     e.dataTransfer.setData('text/plain', id);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, id?: string) => {
     e.preventDefault();
+    e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
+    if (id) setDragOverItemId(id);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    // Only clear if leaving the element itself, not a child
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverItemId(null);
+    }
   };
 
   const handleDropSubset = (targetItem: CategoryData, filterFn: (c: CategoryData) => boolean) => {
     if (!draggedItemId || draggedItemId === targetItem.id) return;
-    const subset = orderList.filter(filterFn).sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
+
+    // Use the correct order field based on the active tab
+    const getOrd = (c: CategoryData) => {
+      if (orderTab === 'header') return c.headerOrder ?? c.displayOrder ?? 0;
+      if (orderTab === 'home') return c.homeOrder ?? c.displayOrder ?? 0;
+      return c.displayOrder ?? 0;
+    };
+    const orderProp = orderTab === 'header' ? 'headerOrder' : orderTab === 'home' ? 'homeOrder' : 'displayOrder';
+
+    const subset = orderList.filter(filterFn).sort((a, b) => getOrd(b) - getOrd(a));
     const sourceIndex = subset.findIndex(c => c.id === draggedItemId);
     const targetIndex = subset.findIndex(c => c.id === targetItem.id);
     if (sourceIndex === -1 || targetIndex === -1) return;
@@ -225,17 +244,19 @@ export default function CategoriesPage() {
     const [movedItem] = newSubset.splice(sourceIndex, 1);
     newSubset.splice(targetIndex, 0, movedItem);
 
-    const baseOrder = 100;
+    // Re-assign order values: highest order = first item
+    const maxOrder = Math.max(...subset.map(s => getOrd(s)), 100);
     const updatedOrderList = [...orderList];
     newSubset.forEach((item, index) => {
       const idx = updatedOrderList.findIndex(c => c.id === item.id);
       if (idx !== -1) {
-        updatedOrderList[idx] = { ...updatedOrderList[idx], displayOrder: baseOrder - (index * 5) };
+        updatedOrderList[idx] = { ...updatedOrderList[idx], [orderProp]: maxOrder - (index * 5) };
       }
     });
 
     setOrderList(updatedOrderList);
     setDraggedItemId(null);
+    setDragOverItemId(null);
   };
 
   // Open Order Manager Modal with specific tab
@@ -467,9 +488,14 @@ export default function CategoriesPage() {
     }
   };
 
-  // Switch Header Placement Type (GLOBAL vs GUJARAT) directly
+  // Switch Header Placement Type (GLOBAL → OTHER → GUJARAT) directly
   const handleSwitchHeaderType = async (cat: CategoryData) => {
-    const nextType = cat.headerType === 'GUJARAT' ? 'GLOBAL' : 'GUJARAT';
+    // Cycle: GLOBAL → OTHER → GUJARAT → GLOBAL
+    let nextType: string;
+    if (!cat.headerType || cat.headerType === 'GLOBAL') nextType = 'OTHER';
+    else if (cat.headerType === 'OTHER') nextType = 'GUJARAT';
+    else nextType = 'GLOBAL';
+
     const nextShowInHome = nextType === 'GUJARAT' ? false : cat.showInHome;
     try {
       const res = await authFetch(getBackendApiUrl(`/api/admin/categories/${cat.id}`), {
@@ -560,28 +586,28 @@ export default function CategoriesPage() {
             Create categories, change position order for Home Page & Header navigation, and manage visibility.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setShowPreviewModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-4 py-2.5 text-sm font-black transition-all hover:scale-105 shadow-sm active:scale-95 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-4 py-2.5 text-xs sm:text-sm font-black transition-all hover:scale-105 shadow-sm active:scale-95 cursor-pointer whitespace-nowrap w-full sm:w-auto"
             title="Visualize Live Section Map across Home Page & Header Nav"
           >
-            <Eye className="h-4 w-4 text-emerald-400 dark:text-emerald-600" />
+            <Eye className="h-4 w-4 text-emerald-400 dark:text-emerald-600 shrink-0" />
             <span>Visualize Live Sections Map</span>
           </button>
           <button
             onClick={() => openOrderManager('all')}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-750 transition-all shadow-xs cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-750 transition-all shadow-xs cursor-pointer whitespace-nowrap w-full sm:w-auto"
             title="Reorder Home Page and Header Sections"
           >
-            <ArrowUpDown className="h-4 w-4 text-red-600" />
+            <ArrowUpDown className="h-4 w-4 text-red-600 shrink-0" />
             <span>Order Home Sections</span>
           </button>
           <button
             onClick={openCreate}
-            className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-sm font-extrabold text-white transition-all hover:bg-red-700 shadow-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-2.5 text-xs sm:text-sm font-extrabold text-white transition-all hover:bg-red-700 shadow-sm whitespace-nowrap w-full sm:w-auto"
           >
-            <FolderPlus className="h-4 w-4" />
+            <FolderPlus className="h-4 w-4 shrink-0" />
             <span>New Category</span>
           </button>
         </div>
@@ -767,7 +793,9 @@ export default function CategoriesPage() {
                               inHeader 
                                 ? (cat.headerType === 'GUJARAT'
                                     ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-500/20'
-                                    : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-500/20')
+                                    : cat.headerType === 'OTHER'
+                                      ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 ring-1 ring-purple-500/20'
+                                      : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-500/20')
                                 : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500'
                             }`}
                             title={inHeader ? 'Visible in Header Nav (Click to hide)' : 'Hidden from Header Nav (Click to show)'}
@@ -775,7 +803,11 @@ export default function CategoriesPage() {
                             <Layers className="h-3 w-3" />
                             <span>
                               {inHeader
-                                ? (cat.headerType === 'GUJARAT' ? 'Row 2: Cities Bar' : 'Row 1: Primary Bar')
+                                ? (cat.headerType === 'GUJARAT'
+                                    ? 'Row 2: Cities Bar'
+                                    : cat.headerType === 'OTHER'
+                                      ? '↓ Other Dropdown'
+                                      : 'Row 1: Primary Bar')
                                 : 'Hidden'}
                             </span>
                           </button>
@@ -783,10 +815,14 @@ export default function CategoriesPage() {
                             <button
                               type="button"
                               onClick={() => handleSwitchHeaderType(cat)}
-                              className="text-[10px] font-bold text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 underline transition cursor-pointer"
-                              title="Switch between First Row (Primary Header) & Second Row (Gujarat Cities Bar)"
+                              className="text-[10px] font-bold text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 underline transition cursor-pointer"
+                              title="Cycle: Row 1 (Primary) → Other Dropdown → Row 2 (Cities)"
                             >
-                              Switch to {cat.headerType === 'GUJARAT' ? 'Row 1 (Primary)' : 'Row 2 (Cities)'}
+                              {cat.headerType === 'GLOBAL' || !cat.headerType
+                                ? 'Move to → Other Dropdown'
+                                : cat.headerType === 'OTHER'
+                                  ? 'Move to → Row 2 (Cities)'
+                                  : 'Move to → Row 1 (Primary)'}
                             </button>
                           )}
                         </div>
@@ -935,11 +971,16 @@ export default function CategoriesPage() {
                         key={item.id}
                         draggable
                         onDragStart={(e) => handleDragStart(e, item.id)}
-                        onDragOver={handleDragOver}
+                        onDragOver={(e) => handleDragOver(e, item.id)}
+                        onDragLeave={handleDragLeave}
                         onDrop={() => handleDropSubset(item, c => (c.showInHome !== false) && c.isActive)}
-                        onDragEnd={() => setDraggedItemId(null)}
-                        className={`flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 hover:border-emerald-500/40 transition-all cursor-grab active:cursor-grabbing ${
-                          draggedItemId === item.id ? 'opacity-40 border-dashed border-emerald-500 bg-emerald-50/20' : ''
+                        onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
+                        className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
+                          draggedItemId === item.id
+                            ? 'opacity-40 border-dashed border-emerald-500 bg-emerald-50/20'
+                            : dragOverItemId === item.id
+                              ? 'border-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/30 scale-[1.01]'
+                              : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 hover:border-emerald-500/40'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -1005,24 +1046,29 @@ export default function CategoriesPage() {
                         </h4>
                       </div>
                       <span className="text-[10px] text-zinc-400 font-bold">
-                        ({orderList.filter(c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT').length} items)
+                        ({orderList.filter(c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL')).length} items)
                       </span>
                     </div>
 
                     <div className="space-y-2">
                       {orderList
-                        .filter(c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')
+                        .filter(c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))
                         .sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0))
                         .map((item, idx, row1Arr) => (
                           <div
                             key={item.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e, item.id)}
-                            onDragOver={handleDragOver}
-                            onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')}
-                            onDragEnd={() => setDraggedItemId(null)}
-                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl bg-zinc-800/90 border border-zinc-700 text-zinc-100 hover:border-red-500/50 transition-all cursor-grab active:cursor-grabbing ${
-                              draggedItemId === item.id ? 'opacity-40 border-dashed border-red-500' : ''
+                            onDragOver={(e) => handleDragOver(e, item.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))}
+                            onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
+                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
+                              draggedItemId === item.id
+                                ? 'opacity-40 border-dashed border-red-500 bg-zinc-800/90 text-zinc-100'
+                                : dragOverItemId === item.id
+                                  ? 'border-red-400 bg-zinc-700 text-zinc-100 scale-[1.01]'
+                                  : 'bg-zinc-800/90 border-zinc-700 text-zinc-100 hover:border-red-500/50'
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
@@ -1052,7 +1098,7 @@ export default function CategoriesPage() {
                               <div className="flex items-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => moveSubsetItem(item, 'up', c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')}
+                                  onClick={() => moveSubsetItem(item, 'up', c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))}
                                   disabled={idx === 0}
                                   className="p-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white disabled:opacity-30 cursor-pointer"
                                   title="Move UP in Primary Row 1"
@@ -1061,7 +1107,7 @@ export default function CategoriesPage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => moveSubsetItem(item, 'down', c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')}
+                                  onClick={() => moveSubsetItem(item, 'down', c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))}
                                   disabled={idx === row1Arr.length - 1}
                                   className="p-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white disabled:opacity-30 cursor-pointer"
                                   title="Move DOWN in Primary Row 1"
@@ -1075,7 +1121,102 @@ export default function CategoriesPage() {
                     </div>
                   </div>
 
-                  {/* SECTION B: ROW 2 (GUJARAT CITIES SUB-HEADER) */}
+                  {/* SECTION B: OTHER DROPDOWN ("અન્ય" Menu) */}
+                  <div className="space-y-2.5 p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-900 dark:text-purple-200">
+                    <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded bg-purple-600 text-white font-black text-[10px]">
+                          ↓ DROPDOWN
+                        </span>
+                        <h4 className="font-black text-xs uppercase tracking-wider text-purple-700 dark:text-purple-300">
+                          "અન્ય" (Other) Dropdown Menu
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                        ({orderList.filter(c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER').length} items)
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold pb-1">
+                      These categories appear inside the "અન્ય" (More) dropdown in the top header navigation bar.
+                    </p>
+
+                    <div className="space-y-2">
+                      {orderList
+                        .filter(c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')
+                        .sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0))
+                        .map((item, idx, otherArr) => (
+                          <div
+                            key={item.id}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, item.id)}
+                            onDragOver={(e) => handleDragOver(e, item.id)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')}
+                            onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
+                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
+                              draggedItemId === item.id
+                                ? 'opacity-40 border-dashed border-purple-500 bg-white/90 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
+                                : dragOverItemId === item.id
+                                  ? 'border-purple-400 bg-purple-50 dark:bg-purple-950/30 text-zinc-900 dark:text-zinc-100 scale-[1.01]'
+                                  : 'bg-white/90 dark:bg-zinc-800 border-purple-300 dark:border-purple-900/40 text-zinc-900 dark:text-zinc-100 hover:border-purple-500'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <GripVertical className="h-4 w-4 text-zinc-400 shrink-0 cursor-grab hover:text-purple-700" />
+                              <span className="h-6 px-2 rounded bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0 font-mono">
+                                #{idx + 1}
+                              </span>
+                              <span
+                                className="h-3 w-3 rounded-full shrink-0"
+                                style={{ backgroundColor: item.color || '#a855f7' }}
+                              />
+                              <div className="min-w-0">
+                                <span className="font-extrabold text-xs">
+                                  {item.nameGu || item.name}
+                                </span>
+                                <span className="text-[10px] text-zinc-400 font-mono ml-2">#{item.headerOrder ?? item.displayOrder ?? 0}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2 shrink-0">
+                              <input
+                                type="number"
+                                value={item.headerOrder ?? item.displayOrder ?? idx + 1}
+                                onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
+                                className="w-12 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1.5 py-0.5 text-center text-xs font-mono font-bold"
+                              />
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => moveSubsetItem(item, 'up', c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')}
+                                  disabled={idx === 0}
+                                  className="p-1 rounded bg-purple-100 dark:bg-zinc-700 hover:bg-purple-200 dark:hover:bg-zinc-600 text-purple-900 dark:text-white disabled:opacity-30 cursor-pointer"
+                                  title="Move UP in Other Dropdown"
+                                >
+                                  <ArrowUp className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => moveSubsetItem(item, 'down', c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')}
+                                  disabled={idx === otherArr.length - 1}
+                                  className="p-1 rounded bg-purple-100 dark:bg-zinc-700 hover:bg-purple-200 dark:hover:bg-zinc-600 text-purple-900 dark:text-white disabled:opacity-30 cursor-pointer"
+                                  title="Move DOWN in Other Dropdown"
+                                >
+                                  <ArrowDown className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      {orderList.filter(c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER').length === 0 && (
+                        <div className="text-center py-4 text-purple-500 dark:text-purple-400 text-xs font-semibold">
+                          No categories in the Other dropdown yet. Go to the main table and set a category&apos;s Header Nav to "↓ Other Dropdown".
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* SECTION C: ROW 2 (GUJARAT CITIES SUB-HEADER) */}
                   <div className="space-y-2.5 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200">
                     <div className="flex items-center justify-between border-b border-amber-500/30 pb-2">
                       <div className="flex items-center gap-2">
@@ -1100,11 +1241,16 @@ export default function CategoriesPage() {
                             key={item.id}
                             draggable
                             onDragStart={(e) => handleDragStart(e, item.id)}
-                            onDragOver={handleDragOver}
+                            onDragOver={(e) => handleDragOver(e, item.id)}
+                            onDragLeave={handleDragLeave}
                             onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && c.headerType === 'GUJARAT')}
-                            onDragEnd={() => setDraggedItemId(null)}
-                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl bg-white/90 dark:bg-zinc-800 border border-amber-300 dark:border-amber-900/40 text-zinc-900 dark:text-zinc-100 hover:border-amber-500 transition-all cursor-grab active:cursor-grabbing ${
-                              draggedItemId === item.id ? 'opacity-40 border-dashed border-amber-500' : ''
+                            onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
+                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
+                              draggedItemId === item.id
+                                ? 'opacity-40 border-dashed border-amber-500 bg-white/90 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
+                                : dragOverItemId === item.id
+                                  ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/20 text-zinc-900 dark:text-zinc-100 scale-[1.01]'
+                                  : 'bg-white/90 dark:bg-zinc-800 border-amber-300 dark:border-amber-900/40 text-zinc-900 dark:text-zinc-100 hover:border-amber-500'
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
@@ -1187,8 +1333,18 @@ export default function CategoriesPage() {
                             <div className="flex items-center gap-2 text-[11px] text-zinc-400 mt-0.5">
                               {inHome && <span className="text-emerald-600 dark:text-emerald-400 font-bold">• Home Section</span>}
                               {inHeader && (
-                                <span className="text-blue-600 dark:text-blue-400 font-bold">
-                                  • {item.headerType === 'GUJARAT' ? 'Header Row 2 (Cities)' : 'Header Row 1 (Primary)'}
+                                <span className={`font-bold ${
+                                  item.headerType === 'GUJARAT'
+                                    ? 'text-amber-600 dark:text-amber-400'
+                                    : item.headerType === 'OTHER'
+                                      ? 'text-purple-600 dark:text-purple-400'
+                                      : 'text-blue-600 dark:text-blue-400'
+                                }`}>
+                                  • {item.headerType === 'GUJARAT'
+                                      ? 'Header Row 2 (Cities)'
+                                      : item.headerType === 'OTHER'
+                                        ? 'Other Dropdown (અન્ય)'
+                                        : 'Header Row 1 (Primary)'}
                                 </span>
                               )}
                             </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink } from 'lucide-react';
 import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache } from '@/lib/api';
 import { sanitizeImageUrl } from '@/lib/media';
+import { translateOnFly } from '@/lib/translate';
 import CustomSelect from '@/components/ui/CustomSelect';
 import RichTextArea from '@/components/ui/RichTextArea';
 
@@ -214,6 +215,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   // Loaders & Errors
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(isEditMode);
+  const [translatingLanguage, setTranslatingLanguage] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Selector choices
@@ -571,6 +573,109 @@ interface ExtraDescriptionSlot {
 
     if (!contentGu.trim()) setContentGu(content);
     if (!contentHi.trim()) setContentHi(content);
+  };
+
+  const pickSourceForTranslation = (
+    target: 'en' | 'gu' | 'hi',
+    values: { en?: string; gu?: string; hi?: string }
+  ) => {
+    const orderedSources =
+      target === 'hi'
+        ? [values.gu, values.en]
+        : target === 'gu'
+          ? [values.hi, values.en]
+          : [values.gu, values.hi];
+
+    return orderedSources.find((value) => value && value.trim())?.trim() || '';
+  };
+
+  const translateDraftToSelectedLanguage = async () => {
+    const target = articleLanguage;
+    const targetLabel = target === 'hi' ? 'Hindi' : target === 'gu' ? 'Gujarati' : 'English';
+
+    const sourceTitle = pickSourceForTranslation(target, { en: title, gu: titleGu, hi: titleHi });
+    const sourceExcerpt = pickSourceForTranslation(target, { en: excerpt, gu: excerptGu, hi: excerptHi });
+    const sourceHighlights = pickSourceForTranslation(target, { en: highlights, gu: highlightsGu, hi: highlightsHi });
+    const sourceDesc1 = pickSourceForTranslation(target, { en: desc1, gu: desc1Gu, hi: desc1Hi });
+    const sourceQuoteText = pickSourceForTranslation(target, { en: quoteText, gu: quoteTextGu, hi: quoteTextHi });
+    const sourceQuoteCite = pickSourceForTranslation(target, { en: quoteCite, gu: quoteCiteGu, hi: quoteCiteHi });
+    const sourceContent = pickSourceForTranslation(target, { en: content, gu: contentGu, hi: contentHi });
+
+    if (!sourceTitle && !sourceExcerpt && !sourceHighlights && !sourceDesc1 && !sourceQuoteText && !sourceQuoteCite && !sourceContent) {
+      setError(`Add content in another language before translating to ${targetLabel}.`);
+      return;
+    }
+
+    setError(null);
+    setTranslatingLanguage(true);
+
+    try {
+      const translateField = async (value: string) => {
+        if (!value.trim()) return '';
+        return translateOnFly(value, target);
+      };
+
+      const [
+        translatedTitle,
+        translatedExcerpt,
+        translatedHighlights,
+        translatedDesc1,
+        translatedQuoteText,
+        translatedQuoteCite,
+        translatedContent,
+      ] = await Promise.all([
+        translateField(sourceTitle),
+        translateField(sourceExcerpt),
+        translateField(sourceHighlights),
+        translateField(sourceDesc1),
+        translateField(sourceQuoteText),
+        translateField(sourceQuoteCite),
+        translateField(sourceContent),
+      ]);
+
+      const translatedExtraDescriptions = await Promise.all(
+        extraDescriptions.map(async (slot) => {
+          const source = pickSourceForTranslation(target, slot);
+          if (!source) return slot;
+          const translated = await translateOnFly(source, target);
+          return { ...slot, [target]: translated };
+        })
+      );
+
+      if (target === 'hi') {
+        if (translatedTitle) setTitleHi(translatedTitle);
+        if (translatedExcerpt) setExcerptHi(translatedExcerpt);
+        if (translatedHighlights) setHighlightsHi(translatedHighlights);
+        if (translatedDesc1) setDesc1Hi(translatedDesc1);
+        if (translatedQuoteText) setQuoteTextHi(translatedQuoteText);
+        if (translatedQuoteCite) setQuoteCiteHi(translatedQuoteCite);
+        if (translatedContent) setContentHi(translatedContent);
+      } else if (target === 'gu') {
+        if (translatedTitle) setTitleGu(translatedTitle);
+        if (translatedExcerpt) setExcerptGu(translatedExcerpt);
+        if (translatedHighlights) setHighlightsGu(translatedHighlights);
+        if (translatedDesc1) setDesc1Gu(translatedDesc1);
+        if (translatedQuoteText) setQuoteTextGu(translatedQuoteText);
+        if (translatedQuoteCite) setQuoteCiteGu(translatedQuoteCite);
+        if (translatedContent) setContentGu(translatedContent);
+      } else {
+        if (translatedTitle) setTitle(translatedTitle);
+        if (translatedExcerpt) setExcerpt(translatedExcerpt);
+        if (translatedHighlights) setHighlights(translatedHighlights);
+        if (translatedDesc1) setDesc1(translatedDesc1);
+        if (translatedQuoteText) setQuoteText(translatedQuoteText);
+        if (translatedQuoteCite) setQuoteCite(translatedQuoteCite);
+        if (translatedContent) setContent(translatedContent);
+      }
+
+      setExtraDescriptions(translatedExtraDescriptions);
+      setContentLang(target);
+    } catch (err: any) {
+      console.error('Language translation failed:', err);
+      setError(err?.message || `Failed to translate article content to ${targetLabel}.`);
+    } finally {
+      setTranslatingLanguage(false);
+    }
   };
 
 
@@ -1592,8 +1697,22 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={translateDraftToSelectedLanguage}
+              disabled={translatingLanguage}
+              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition-all hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70"
+              title="Translate existing Gujarati, Hindi, or English draft fields into the selected primary language"
+            >
+              {translatingLanguage ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Globe className="h-3.5 w-3.5" />
+              )}
+              <span>{translatingLanguage ? 'Translating...' : 'Translate to selected language'}</span>
+            </button>
           </div>
-          <p className="text-[11px] text-zinc-400 mt-1.5">Select the main writing language for this news story.</p>
+          <p className="text-[11px] text-zinc-400 mt-1.5">Select the main writing language, then translate the existing draft fields into that language if needed.</p>
         </div>
 
         {/* LINE 1: News Name (In English / Slug) */}

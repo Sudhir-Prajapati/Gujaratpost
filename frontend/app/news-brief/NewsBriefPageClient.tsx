@@ -8,6 +8,7 @@ import { getArticleTitle, getArticleExcerpt, getArticleContent, getCategoryLabel
 import { getPublicArticles } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import type { Article } from '@/types';
+import { useAutoTranslate } from '@/lib/translate';
 
 function cleanBriefText(rawText: string): string {
   if (!rawText) return '';
@@ -138,7 +139,7 @@ export default function NewsBriefPageClient() {
     );
   }
 
-  const title = getArticleTitle(currentArticle, language);
+  const rawTitle = getArticleTitle(currentArticle, language);
   const category = getCategoryLabel(currentArticle, language);
   const rawExcerpt = getArticleExcerpt(currentArticle, language);
   const rawContent = getArticleContent(currentArticle, language);
@@ -147,9 +148,12 @@ export default function NewsBriefPageClient() {
   const cleanedContent = cleanBriefText(rawContent);
 
   // Use full content if longer to fill the available space nicely
-  const displayParagraph = (cleanedContent.length > cleanedExcerpt.length && cleanedContent.length > 50)
+  const rawDisplayParagraph = (cleanedContent.length > cleanedExcerpt.length && cleanedContent.length > 50)
     ? cleanedContent
     : (cleanedExcerpt.length > 20 ? cleanedExcerpt : cleanedContent);
+
+  const title = useAutoTranslate(rawTitle, language);
+  const displayParagraph = useAutoTranslate(rawDisplayParagraph, language);
 
   return (
     <div className="h-screen h-[100dvh] w-full bg-[#F8F9FA] flex flex-col font-sans select-none overflow-hidden">

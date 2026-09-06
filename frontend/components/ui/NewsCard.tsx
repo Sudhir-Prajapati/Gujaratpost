@@ -29,7 +29,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
   const excerpt = useAutoTranslate(rawExcerpt, language);
   const category = getCategoryLabel(article, language);
   const categoryColor = getCategoryColor(article.category);
-  const mediaSrc = article.image || (article as any).featuredImage || (article as any).thumbnail;
+  const mediaSrc = (article as any).featuredImage || article.image || (article as any).thumbnail;
 
   if (variant === 'hero') {
     return (

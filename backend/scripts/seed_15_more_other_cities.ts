@@ -26,8 +26,7 @@ async function main() {
       name: 'Gujarat Post Desk',
       nameGu: 'ગુજરાત પોસ્ટ ડેસ્ક',
       nameHi: 'ગુજરાત પોસ્ટ ડેસ્ક',
-      email: 'desk@gujaratpost.com',
-    }
+    } as any
   });
 
   const maxArt = await prisma.post.findFirst({ orderBy: { articleNumber: 'desc' } });

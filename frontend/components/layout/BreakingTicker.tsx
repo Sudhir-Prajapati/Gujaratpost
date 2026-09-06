@@ -7,6 +7,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { getLocalized } from '@/data';
 import { getPublicTickers } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
+import { AutoTranslatedText } from '@/components/ui/AutoTranslatedArticleText';
 
 const FALLBACK_TICKERS = [
   {
@@ -107,11 +108,11 @@ export default function BreakingTicker() {
             href={`/news/${item.slug}`}
             className="px-2 text-sm font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none"
           >
-            {label}
+            <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </Link>
         ) : (
           <span className="px-2 text-sm font-bold text-white/95">
-            {label}
+            <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </span>
         )}
         <span className="mx-4 inline-block h-1.5 w-1.5 rounded-full bg-white/60 shrink-0" aria-hidden="true" />

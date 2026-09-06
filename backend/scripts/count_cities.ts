@@ -16,7 +16,7 @@ async function main() {
     'Other Cities & State (અન્ય શહેરો / રાજ્ય)': 0,
   };
 
-  const detailedArticles: Record<string, Array<{ articleNumber: number; titleGu: string; location: string; category: string }>> = {
+  const detailedArticles: Record<string, Array<{ articleNumber: number | null; titleGu: string; location: string; category: string }>> = {
     'Ahmedabad (અમદાવાદ)': [],
     'Gandhinagar (ગાંધીનગર)': [],
     'Surat (સુરત)': [],

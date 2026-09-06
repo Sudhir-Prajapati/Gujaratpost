@@ -429,13 +429,13 @@ export default function GalleryPage() {
             Upload, search, and manage high-quality media assets for your news articles.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setNewCategoryModalOpen(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-zinc-900 shadow-sm transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white cursor-pointer whitespace-nowrap w-full sm:w-auto"
           >
-            <Plus className="h-4 w-4 text-[#B3121B]" />
-            <span> કેટેગરી ઉમેરો (Add Category)</span>
+            <Plus className="h-4 w-4 text-[#B3121B] shrink-0" />
+            <span>કેટેગરી ઉમેરો (Add Category)</span>
           </button>
 
           <button
@@ -443,9 +443,9 @@ export default function GalleryPage() {
               setFormLang('en');
               setUploadModalOpen(true);
             }}
-            className="inline-flex items-center gap-2 rounded-xl bg-[#B3121B] px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-[#8e0e15] shadow-md shadow-[#B3121B]/20 cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition-all hover:bg-[#8e0e15] shadow-md shadow-[#B3121B]/20 cursor-pointer whitespace-nowrap w-full sm:w-auto"
           >
-            <Upload className="h-4 w-4" />
+            <Upload className="h-4 w-4 shrink-0" />
             <span>Upload Image</span>
           </button>
         </div>

@@ -130,10 +130,8 @@ export default function VideoSection({ initialVideos }: Props) {
 
   return (
     <section className="my-6 mx-auto max-w-screen-xl px-2">
-      {/* Red Container matching screenshot design 100% */}
       <div className="overflow-hidden rounded-2xl bg-[#a50f15] p-4 md:p-6 shadow-xl border border-red-800/40 text-white">
         
-        {/* Header Bar inside Red Container */}
         <div className="mb-4 flex items-center justify-between border-b border-white/20 pb-3">
           <div className="flex items-center gap-2.5">
             <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/15 text-white">
@@ -153,10 +151,8 @@ export default function VideoSection({ initialVideos }: Props) {
           </Link>
         </div>
 
-        {/* Main Content Grid: Featured Video (Left) + List (Right) */}
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px] items-start">
           
-          {/* LEFT COLUMN: Main Featured Video */}
           <div className="flex flex-col">
             <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-lg border border-white/10 group">
               {isPlayingMain ? (
@@ -180,33 +176,29 @@ export default function VideoSection({ initialVideos }: Props) {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     priority
                   />
-                  {/* Dark gradient overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   
-                  {/* Play Button Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white text-[#a50f15] shadow-2xl transition-transform duration-300 group-hover:scale-110">
-                      <Play className="h-7 w-7 fill-current ml-1" />
+                    <span className="flex h-10 w-10 sm:h-14 sm:w-14 md:h-16 md:w-16 items-center justify-center rounded-full bg-white text-[#a50f15] shadow-2xl transition-transform duration-300 group-hover:scale-110">
+                      <Play className="h-4 w-4 sm:h-6 sm:w-6 md:h-7 md:w-7 fill-current ml-0.5 md:ml-1" />
                     </span>
                   </div>
 
-                  {/* Duration Badge bottom-right */}
-                  <span className="absolute bottom-3 right-3 rounded bg-black/85 px-2 py-0.5 text-xs font-black text-white tracking-wider">
+                  <span className="absolute bottom-2 right-2 rounded bg-black/85 px-1.5 py-0.5 text-[10px] sm:text-xs font-black text-white tracking-wider">
                     {activeMain.duration || '3:18'}
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Video Title & Meta Info */}
-            <div className="mt-3">
-              <h3 className="text-base md:text-xl font-black leading-snug text-white line-clamp-2">
+            <div className="mt-2.5">
+              <h3 className="text-sm sm:text-base md:text-xl font-black leading-snug text-white line-clamp-2">
                 {getTitle(activeMain)}
               </h3>
-              <div className="mt-1.5 flex items-center gap-3 text-xs font-bold text-white/80">
+              <div className="mt-1 flex items-center gap-2.5 text-[11px] sm:text-xs font-bold text-white/80">
                 <span className="flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
-                  {activeMain.views || 190} {language === 'gu' ? 'વ્યૂઝ' : language === 'hi' ? 'व्यूज' : 'views'}
+                  {activeMain.views || 190} {language === 'gu' ? 'વ્યૂઝ' : language === 'hi' ? 'ভিউઝ' : 'views'}
                 </span>
                 <span>·</span>
                 <span className="flex items-center gap-1">
@@ -217,8 +209,7 @@ export default function VideoSection({ initialVideos }: Props) {
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Vertical Video List */}
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2">
             {sidebarList.map((item) => (
               <div
                 key={item.id}

@@ -43,9 +43,37 @@ export const rateLimiter = (options: RateLimitOptions) => {
   };
 };
 
-// Pre-configured login rate limiter: 5 attempts per 15 minutes
+// Pre-configured login rate limiter: 5 attempts per 15 minutes (Brute-force protection)
 export const loginRateLimiter = rateLimiter({
   windowSeconds: 900, // 15 minutes
   maxRequests: 5,
   keyPrefix: 'rate_limit:login',
+});
+
+// Pre-configured Public API rate limiter: 300 requests per minute (Scraping & DDoS protection)
+export const publicApiRateLimiter = rateLimiter({
+  windowSeconds: 60, // 1 minute
+  maxRequests: 300,
+  keyPrefix: 'rate_limit:public',
+});
+
+// Pre-configured Admin API rate limiter: 100 requests per minute
+export const adminApiRateLimiter = rateLimiter({
+  windowSeconds: 60, // 1 minute
+  maxRequests: 100,
+  keyPrefix: 'rate_limit:admin',
+});
+
+// Pre-configured OTP Send rate limiter: 3 requests per 10 minutes (SMS/Email spam protection)
+export const otpRateLimiter = rateLimiter({
+  windowSeconds: 600, // 10 minutes
+  maxRequests: 3,
+  keyPrefix: 'rate_limit:otp_send',
+});
+
+// Pre-configured OTP Verify rate limiter: 5 attempts per 10 minutes (OTP Brute-force protection)
+export const otpVerifyRateLimiter = rateLimiter({
+  windowSeconds: 600, // 10 minutes
+  maxRequests: 5,
+  keyPrefix: 'rate_limit:otp_verify',
 });

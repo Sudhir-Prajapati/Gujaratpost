@@ -31,11 +31,27 @@ async function ensureEPaperTablesExist() {
         \`status\` VARCHAR(50) NOT NULL DEFAULT 'PUBLISHED',
         \`publishTime\` VARCHAR(50) NULL DEFAULT '06:00 AM',
         \`isActive\` TINYINT(1) NOT NULL DEFAULT 1,
+        \`editionType\` VARCHAR(50) NOT NULL DEFAULT 'PDF',
+        \`templateData\` LONGTEXT NULL,
         \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
         \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
         PRIMARY KEY (\`id\`)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
+
+    // Safely ensure columns and indexes exist if table already created without them
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE \`epaper_editions\` ADD COLUMN \`editionType\` VARCHAR(50) NOT NULL DEFAULT 'PDF';`);
+    } catch (_) {}
+    try {
+      await prisma.$executeRawUnsafe(`ALTER TABLE \`epaper_editions\` ADD COLUMN \`templateData\` LONGTEXT NULL;`);
+    } catch (_) {}
+    try {
+      await prisma.$executeRawUnsafe(`CREATE INDEX \`idx_epaper_city_date\` ON \`epaper_editions\` (\`city\`(100), \`date\`, \`status\`);`);
+    } catch (_) {}
+    try {
+      await prisma.$executeRawUnsafe(`CREATE INDEX \`idx_epaper_active_status\` ON \`epaper_editions\` (\`isActive\`, \`status\`, \`date\`);`);
+    } catch (_) {}
 
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS \`epaper_cities\` (
@@ -175,13 +191,16 @@ export class EPaperController {
   // Admin: Create or Upsert E-Paper edition
   static async createEdition(req: Request, res: Response, next: NextFunction) {
     try {
-      const { title, city, cityGu, date, pages, fileUrl, thumbnailUrl, status, publishTime, isActive } = req.body;
+      const { title, city, cityGu, date, pages, fileUrl, thumbnailUrl, status, publishTime, isActive, editionType, templateData } = req.body;
 
       if (!city || !date) {
         return res.status(400).json({ success: false, error: 'City and Date are required' });
       }
 
       const finalTitle = String(title || '').trim() || `${city} Edition`;
+      const finalEditionType = editionType ? String(editionType) : 'PDF';
+      const finalTemplateData = templateData ? (typeof templateData === 'string' ? templateData : JSON.stringify(templateData)) : null;
+
       const delegate = await getEPaperDelegate();
 
       if (delegate) {
@@ -199,12 +218,14 @@ export class EPaperController {
                 city: String(city),
                 cityGu: cityGu ? String(cityGu) : String(city),
                 date: String(date),
-                pages: Number(pages) || existing.pages || 24,
+                pages: Number(pages) || existing.pages || 4,
                 fileUrl: fileUrl ? String(fileUrl) : existing.fileUrl,
                 thumbnailUrl: thumbnailUrl ? String(thumbnailUrl) : existing.thumbnailUrl,
                 status: status ? String(status) : 'PUBLISHED',
                 publishTime: publishTime ? String(publishTime) : '06:00 AM',
                 isActive: isActive !== undefined ? Boolean(isActive) : true,
+                editionType: finalEditionType,
+                templateData: finalTemplateData,
               },
             });
           } else {
@@ -214,12 +235,14 @@ export class EPaperController {
                 city: String(city),
                 cityGu: cityGu ? String(cityGu) : String(city),
                 date: String(date),
-                pages: Number(pages) || 24,
+                pages: Number(pages) || 4,
                 fileUrl: String(fileUrl || ''),
                 thumbnailUrl: String(thumbnailUrl || ''),
                 status: status ? String(status) : 'PUBLISHED',
                 publishTime: publishTime ? String(publishTime) : '06:00 AM',
                 isActive: isActive !== undefined ? Boolean(isActive) : true,
+                editionType: finalEditionType,
+                templateData: finalTemplateData,
               },
             });
           }
@@ -240,13 +263,13 @@ export class EPaperController {
       if (existingRows && existingRows.length > 0) {
         editionId = existingRows[0].id;
         await prisma.$executeRawUnsafe(
-          `UPDATE \`epaper_editions\` SET \`title\`=?, \`city\`=?, \`cityGu\`=?, \`date\`=?, \`pages\`=?, \`fileUrl\`=?, \`thumbnailUrl\`=?, \`status\`=?, \`publishTime\`=?, \`isActive\`=?, \`updatedAt\`=NOW() WHERE \`id\`=?`,
-          finalTitle, String(city), String(cityGu || city), String(date), Number(pages) || 24, String(fileUrl || ''), String(thumbnailUrl || ''), String(status || 'PUBLISHED'), String(publishTime || '06:00 AM'), isActive !== false ? 1 : 0, editionId
+          `UPDATE \`epaper_editions\` SET \`title\`=?, \`city\`=?, \`cityGu\`=?, \`date\`=?, \`pages\`=?, \`fileUrl\`=?, \`thumbnailUrl\`=?, \`status\`=?, \`publishTime\`=?, \`isActive\`=?, \`editionType\`=?, \`templateData\`=?, \`updatedAt\`=NOW() WHERE \`id\`=?`,
+          finalTitle, String(city), String(cityGu || city), String(date), Number(pages) || 4, String(fileUrl || ''), String(thumbnailUrl || ''), String(status || 'PUBLISHED'), String(publishTime || '06:00 AM'), isActive !== false ? 1 : 0, finalEditionType, finalTemplateData, editionId
         );
       } else {
         await prisma.$executeRawUnsafe(
-          `INSERT INTO \`epaper_editions\` (\`id\`, \`title\`, \`city\`, \`cityGu\`, \`date\`, \`pages\`, \`fileUrl\`, \`thumbnailUrl\`, \`status\`, \`publishTime\`, \`isActive\`, \`createdAt\`, \`updatedAt\`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-          editionId, finalTitle, String(city), String(cityGu || city), String(date), Number(pages) || 24, String(fileUrl || ''), String(thumbnailUrl || ''), String(status || 'PUBLISHED'), String(publishTime || '06:00 AM'), isActive !== false ? 1 : 0
+          `INSERT INTO \`epaper_editions\` (\`id\`, \`title\`, \`city\`, \`cityGu\`, \`date\`, \`pages\`, \`fileUrl\`, \`thumbnailUrl\`, \`status\`, \`publishTime\`, \`isActive\`, \`editionType\`, \`templateData\`, \`createdAt\`, \`updatedAt\`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+          editionId, finalTitle, String(city), String(cityGu || city), String(date), Number(pages) || 4, String(fileUrl || ''), String(thumbnailUrl || ''), String(status || 'PUBLISHED'), String(publishTime || '06:00 AM'), isActive !== false ? 1 : 0, finalEditionType, finalTemplateData
         );
       }
 
@@ -265,7 +288,9 @@ export class EPaperController {
   static async updateEdition(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { title, city, cityGu, date, pages, fileUrl, thumbnailUrl, status, publishTime, isActive } = req.body;
+      const { title, city, cityGu, date, pages, fileUrl, thumbnailUrl, status, publishTime, isActive, editionType, templateData } = req.body;
+      const finalEditionType = editionType ? String(editionType) : undefined;
+      const finalTemplateData = templateData !== undefined ? (typeof templateData === 'string' ? templateData : JSON.stringify(templateData)) : undefined;
       const delegate = await getEPaperDelegate();
 
       if (delegate) {
@@ -283,6 +308,8 @@ export class EPaperController {
               status,
               publishTime,
               isActive: isActive !== undefined ? Boolean(isActive) : undefined,
+              editionType: finalEditionType,
+              templateData: finalTemplateData,
             },
           });
           return sendSuccess(res, { edition }, 'E-Paper edition updated successfully');
@@ -291,8 +318,8 @@ export class EPaperController {
 
       await ensureEPaperTablesExist();
       await prisma.$executeRawUnsafe(
-        `UPDATE \`epaper_editions\` SET \`title\`=COALESCE(?, \`title\`), \`city\`=COALESCE(?, \`city\`), \`cityGu\`=COALESCE(?, \`cityGu\`), \`date\`=COALESCE(?, \`date\`), \`pages\`=COALESCE(?, \`pages\`), \`fileUrl\`=COALESCE(?, \`fileUrl\`), \`thumbnailUrl\`=COALESCE(?, \`thumbnailUrl\`), \`status\`=COALESCE(?, \`status\`), \`publishTime\`=COALESCE(?, \`publishTime\`), \`isActive\`=COALESCE(?, \`isActive\`), \`updatedAt\`=NOW() WHERE \`id\`=?`,
-        title || null, city || null, cityGu || city || null, date || null, pages !== undefined ? Number(pages) : null, fileUrl || null, thumbnailUrl || null, status || null, publishTime || null, isActive !== undefined ? (isActive ? 1 : 0) : null, id
+        `UPDATE \`epaper_editions\` SET \`title\`=COALESCE(?, \`title\`), \`city\`=COALESCE(?, \`city\`), \`cityGu\`=COALESCE(?, \`cityGu\`), \`date\`=COALESCE(?, \`date\`), \`pages\`=COALESCE(?, \`pages\`), \`fileUrl\`=COALESCE(?, \`fileUrl\`), \`thumbnailUrl\`=COALESCE(?, \`thumbnailUrl\`), \`status\`=COALESCE(?, \`status\`), \`publishTime\`=COALESCE(?, \`publishTime\`), \`isActive\`=COALESCE(?, \`isActive\`), \`editionType\`=COALESCE(?, \`editionType\`), \`templateData\`=COALESCE(?, \`templateData\`), \`updatedAt\`=NOW() WHERE \`id\`=?`,
+        title || null, city || null, cityGu || city || null, date || null, pages !== undefined ? Number(pages) : null, fileUrl || null, thumbnailUrl || null, status || null, publishTime || null, isActive !== undefined ? (isActive ? 1 : 0) : null, finalEditionType || null, finalTemplateData || null, id
       );
 
       const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM \`epaper_editions\` WHERE \`id\` = ?`, id);

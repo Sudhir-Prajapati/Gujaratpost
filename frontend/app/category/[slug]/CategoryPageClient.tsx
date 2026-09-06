@@ -18,6 +18,7 @@ import { getPublicVideos } from '@/lib/api';
 import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
 
 /* ── Types ────────────────────────────────────────────────── */
 interface Props {
@@ -462,7 +463,7 @@ export default function CategoryPageClient({ articles, category, slug }: Props) 
                       {getArticleLocation(heroArticle)}
                     </span>
                     <h2 className="mt-1 text-xl md:text-[22px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
-                      {getArticleTitle(heroArticle, language)}
+                      <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
                     <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
                       <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground/70" />{getArticleTime(heroArticle)}</span>
@@ -482,7 +483,7 @@ export default function CategoryPageClient({ articles, category, slug }: Props) 
                         {getArticleLocation(subHeroArticle)}
                       </span>
                       <h3 className="mt-0.5 text-[13.5px] md:text-[14px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        {getArticleTitle(subHeroArticle, language)}
+                        <AutoArticleTitle article={subHeroArticle} language={language} />
                       </h3>
                       <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
                         <span>{getArticleTime(subHeroArticle)}</span>

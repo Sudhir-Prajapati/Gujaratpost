@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import SupportModal from '@/components/ui/SupportModal';
 
 type Theme = 'light' | 'dark';
 type Language = 'gu' | 'en' | 'hi';
@@ -13,6 +14,9 @@ interface AppContextType {
   fsLevel: number;
   incFs: () => void;
   decFs: () => void;
+  supportModalOpen: boolean;
+  openSupportModal: () => void;
+  closeSupportModal: () => void;
 }
 
 const AppContext = createContext<AppContextType>({
@@ -23,6 +27,9 @@ const AppContext = createContext<AppContextType>({
   fsLevel: 1,
   incFs: () => {},
   decFs: () => {},
+  supportModalOpen: false,
+  openSupportModal: () => {},
+  closeSupportModal: () => {},
 });
 
 const FONT_SIZES = ['14px', '16px', '18px', '20px'];
@@ -51,7 +58,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
   const [language, setLanguage] = useState<Language>('gu');
   const [fsLevel, setFsLevel] = useState<number>(1);
+  const [supportModalOpen, setSupportModalOpen] = useState(false);
   const hydrated = useRef(false);
+
+  const openSupportModal = () => setSupportModalOpen(true);
+  const closeSupportModal = () => setSupportModalOpen(false);
+
+  useEffect(() => {
+    const handleGlobalSupportOpen = () => setSupportModalOpen(true);
+    window.addEventListener('gp-open-support', handleGlobalSupportOpen);
+    return () => window.removeEventListener('gp-open-support', handleGlobalSupportOpen);
+  }, []);
 
   useEffect(() => {
     let savedTheme: string | null = null;
@@ -135,11 +152,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       fsLevel,
       incFs,
       decFs,
+      supportModalOpen,
+      openSupportModal,
+      closeSupportModal,
     }),
-    [theme, language, fsLevel],
+    [theme, language, fsLevel, supportModalOpen],
   );
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+      <SupportModal isOpen={supportModalOpen} onClose={closeSupportModal} />
+    </AppContext.Provider>
+  );
 }
 
 export const useApp = () => useContext(AppContext);
+
