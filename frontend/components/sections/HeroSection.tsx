@@ -989,6 +989,7 @@ export default function HeroSection({
             fallbackCtaEn="Shop Now"
             fallbackGradient="linear-gradient(135deg,#FF6B35,#C81D25)"
             minHeight={180}
+            enableTributeSlides={true}
           />
 
           {/* YouTube Video Section */}
@@ -3337,6 +3338,7 @@ function CityHyperlocalSection({
             fallbackCtaEn="Apply Now"
             fallbackGradient="linear-gradient(135deg,#0f3d70,#001f3f)"
             minHeight={180}
+            enableTributeSlides={false}
           />
 
           {/* WhatsApp Channel widget */}
@@ -4414,6 +4416,7 @@ function PopularStoriesSection({
         fallbackCtaEn="Recharge Now"
         fallbackGradient="linear-gradient(135deg,#5D3FD3,#4A2CA8)"
         minHeight={265}
+        enableTributeSlides={false}
       />
 
     </div>
@@ -6470,6 +6473,7 @@ export function WorldSection({ language }: { language: Language }) {
             fallbackCtaEn="Learn More"
             fallbackGradient="#0E8044"
             minHeight={180}
+            enableTributeSlides={false}
           />
 
           {/* Dynamic Foreign Currency Widget */}

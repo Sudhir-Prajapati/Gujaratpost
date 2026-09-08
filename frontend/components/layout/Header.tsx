@@ -320,33 +320,23 @@ export default function Header() {
       return { label: labelEn, labelGu, labelHi, href };
     };
 
-    // GLOBAL type → Row 1 main nav bar (sorted by headerOrder desc)
-    const row1Cats = dbCategories
-      .filter((c) => c.showInHeader !== false && (!c.headerType || c.headerType === 'GLOBAL'))
-      .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
-
-    // OTHER type → "અન્ย" dropdown (sorted by headerOrder desc)
-    const otherCats = dbCategories
-      .filter((c) => c.showInHeader !== false && c.headerType === 'OTHER')
+    // Unified Header Categories: all active header categories (excluding GUJARAT cities for DistrictBar)
+    const headerCats = dbCategories
+      .filter((c) => c.showInHeader !== false && c.headerType !== 'GUJARAT')
       .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
 
     const homeLink = { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' };
 
-    const nonHomeRow1Links = row1Cats
+    const nonHomeLinks = headerCats
       .map(mapCategory)
       .filter((l) => l.href !== '/');
 
-    // Home + up to 14 GLOBAL categories in main nav bar (Max 15 total links in Row 1)
-    const row1MainLinks = nonHomeRow1Links.slice(0, 14);
-    const row1OverflowLinks = nonHomeRow1Links.slice(14);
+    // Top 14 categories + Home = 15 total links in main navbar before "અન્ય" (matching Image 3)
+    const mainNavLinks = nonHomeLinks.slice(0, 14);
+    // Categories from index 14 onwards (item #15+) go into "અન્ય" dropdown (matching Image 4)
+    const dropdownLinks = nonHomeLinks.slice(14);
 
-    const mainNav = [homeLink, ...row1MainLinks];
-
-    // OTHER-typed categories + any Row 1 overflow categories (beyond 15) go into "અન્ય" dropdown
-    const dropdownLinks = [
-      ...otherCats.map(mapCategory),
-      ...row1OverflowLinks,
-    ];
+    const mainNav = [homeLink, ...mainNavLinks];
 
     return { navLinks: mainNav, otherLinks: dropdownLinks };
   }, [dbCategories]);
@@ -436,7 +426,7 @@ export default function Header() {
 
 
         {/* Logo + Controls */}
-        <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-4 px-2.5 sm:px-4 py-2 sm:py-2.5 relative">
+        <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-1.5 sm:gap-4 px-2 sm:px-4 py-2 sm:py-2.5 relative">
           {/* Slogan on top, Logo below */}
           <div className="flex flex-col items-start gap-0.5 select-none shrink-0">
             {/* Slogan */}
@@ -448,14 +438,14 @@ export default function Header() {
 
             {/* Logo */}
             <a href="/" className="logo-3d group flex shrink-0 items-center">
-              <span className="logo-3d-inner relative block h-10 sm:h-12 lg:h-16 w-32 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300">
+              <span className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300">
                 <Image
                   src={gpLogo}
                   alt="Gujarat Post"
                   fill
                   priority
                   unoptimized
-                  sizes="(max-width: 640px) 128px, (max-width: 1024px) 176px, 224px"
+                  sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
                   className="object-cover"
                 />
               </span>
@@ -534,7 +524,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setSearchOpen(true)}
-              className="md:hidden flex h-8.5 w-8.5 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
+              className="md:hidden flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
               aria-label="Search"
             >
               <Search className="h-4 w-4" />
@@ -545,21 +535,26 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setLanguageOpen((value) => !value)}
-                className={`inline-flex h-8.5 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2.5 sm:px-4 text-xs sm:text-sm font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
+                className={`inline-flex h-8 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2 sm:px-4 text-[11px] sm:text-sm font-bold sm:font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
                   }`}
                 aria-label="Switch language"
                 aria-expanded={languageOpen}
               >
                 {/* Globe icon */}
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M2 12h20" />
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
-                <span className="truncate max-w-[65px] sm:max-w-none">
+                {/* Desktop label */}
+                <span className="hidden sm:inline">
                   {languageChosen ? languageLabels[language] : 'Language'}
                 </span>
-                <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
+                {/* Mobile label - compact to fit header controls without pushing the hamburger button off */}
+                <span className="sm:hidden">
+                  {languageChosen ? (language === 'gu' ? 'ગુજ' : language === 'hi' ? 'हि' : 'EN') : 'Lang'}
+                </span>
+                <ChevronDown className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
               </button>
 
               {languageOpen && (
@@ -605,7 +600,7 @@ export default function Header() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="inline-flex h-8.5 w-8.5 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
+              className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
               aria-label="Toggle dark mode"
             >
               {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
@@ -622,7 +617,7 @@ export default function Header() {
                   setAuthModalOpen(true);
                 }
               }}
-              className="inline-flex h-8.5 w-8.5 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
+              className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
               aria-label="Sign In"
               title="Sign In"
             >
@@ -633,7 +628,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => setMenuOpen((value) => !value)}
-              className="inline-flex h-8.5 w-8.5 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95"
+              className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95"
               aria-label="Open menu"
             >
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}

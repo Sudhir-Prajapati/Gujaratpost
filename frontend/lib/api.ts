@@ -634,20 +634,26 @@ export async function getMarketRates(): Promise<any> {
   };
 }
 
+import { fetchLiveCityWeather } from './weather';
+
 /**
  * Fetch live Weather data
  */
 export async function getPublicWeather(city?: string): Promise<any> {
+  const live = await fetchLiveCityWeather(city);
   return {
-    city: 'અમદાવાદ',
-    cityEn: 'Ahmedabad',
-    temp: 32,
-    humidity: 68,
-    windSpeed: 14,
-    conditionGu: 'આંશિક વાદળછાયું',
-    conditionEn: 'Partly cloudy',
-    weatherCode: 2,
-    updatedAt: new Date().toISOString(),
+    city: live.city,
+    cityEn: live.cityEn,
+    temp: parseInt(live.currentTemp.replace(/[^0-9]/g, ''), 10) || 32,
+    high: live.high,
+    low: live.low,
+    humidity: parseInt(live.humidity?.replace(/[^0-9]/g, '') || '60', 10),
+    windSpeed: parseInt(live.windSpeed?.replace(/[^0-9]/g, '') || '12', 10),
+    conditionGu: live.condition,
+    conditionEn: live.conditionEn,
+    weatherCode: live.weatherCode,
+    icon: live.icon,
+    updatedAt: live.updatedAt,
   };
 }
 
@@ -695,4 +701,43 @@ export async function getPublicSupportDetails(): Promise<any | null> {
   }
   return null;
 }
+
+export interface TributeItem {
+  id: string;
+  type: 'BIRTHDAY' | 'SHRADHANJALI';
+  name: string;
+  photo?: string | null;
+  date?: string | null;
+  info?: string | null;
+  templateId: string;
+  isActive: boolean;
+  order: number;
+  startDate?: string | null;
+  endDate?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PublicTributesResponse {
+  birthdays: TributeItem[];
+  shradhanjalis: TributeItem[];
+  all: TributeItem[];
+}
+
+/**
+ * Fetch public Birthday & Shradhanjali tributes for the homepage ad carousel
+ */
+export async function getPublicTributes(): Promise<PublicTributesResponse> {
+  try {
+    const url = `${API_BASE_URL}/tributes?t=${Date.now()}`;
+    const json = await fetchCachedJson<any>(url, 30 * 1000); // 30 sec cache
+    if (json && json.success && json.data) {
+      return json.data;
+    }
+  } catch (error: any) {
+    console.warn('Failed to fetch public tributes:', error?.message || error);
+  }
+  return { birthdays: [], shradhanjalis: [], all: [] };
+}
+
 

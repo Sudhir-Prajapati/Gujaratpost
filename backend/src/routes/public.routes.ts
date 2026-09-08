@@ -13,6 +13,7 @@ import { AdController } from '../controllers/ad.controller.js';
 import { EPaperController } from '../controllers/epaper.controller.js';
 import { GalleryController } from '../controllers/gallery.controller.js';
 import { SupportController } from '../controllers/support.controller.js';
+import { TributeController } from '../controllers/tribute.controller.js';
 import { autoPublishDueArticles } from '../controllers/article.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 
@@ -53,6 +54,12 @@ router.get('/epaper/cities', EPaperController.getCities);
  */
 router.get('/ads', AdController.getAllAds);
 router.get('/ads/:section', AdController.getAdBySection);
+
+/**
+ * GET /api/public/tributes
+ * Fetch active birthdays and shradhanjalis for homepage ad carousel
+ */
+router.get('/tributes', TributeController.getPublicTributes);
 
 /**
  * GET /api/public/hero-settings
@@ -447,9 +454,9 @@ router.get('/categories', async (req, res, next) => {
     if (showInHeader) where.showInHeader = true;
     if (showInHome) where.showInHome = true;
 
-    let orderBy: any = { displayOrder: 'desc' };
-    if (showInHeader) orderBy = { headerOrder: 'desc' };
-    else if (showInHome) orderBy = { homeOrder: 'desc' };
+    let orderBy: any = [{ displayOrder: 'desc' }, { id: 'asc' }];
+    if (showInHeader) orderBy = [{ headerOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
+    else if (showInHome) orderBy = [{ homeOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
 
     const allCategories = await prisma.category.findMany({
       where,

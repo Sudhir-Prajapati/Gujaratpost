@@ -1,11 +1,10 @@
-'use client';
-
 import React from 'react';
 import { Edit3 } from 'lucide-react';
+import { useEpaperReadOnly } from './EpaperReadOnlyContext';
 
 interface EditableTextSlotProps {
-  value: string;
-  onChange: (newVal: string) => void;
+  value?: string;
+  onChange?: (newVal: string) => void;
   isSelected?: boolean;
   onSelect?: () => void;
   maxLength?: number;
@@ -14,10 +13,11 @@ interface EditableTextSlotProps {
   placeholder?: string;
   multiline?: boolean;
   style?: React.CSSProperties;
+  readOnly?: boolean;
 }
 
 export const EditableTextSlot: React.FC<EditableTextSlotProps> = ({
-  value,
+  value = '',
   onChange,
   isSelected,
   onSelect,
@@ -26,15 +26,27 @@ export const EditableTextSlot: React.FC<EditableTextSlotProps> = ({
   tagName = 'p',
   placeholder = 'લખાણ દાખલ કરો...',
   style,
+  readOnly,
 }) => {
+  const contextReadOnly = useEpaperReadOnly();
+  const isReadOnly = Boolean(readOnly ?? (contextReadOnly || (!onChange && !onSelect)));
+
+  const Tag = tagName as any;
+
+  if (isReadOnly) {
+    return (
+      <Tag className={className} style={style}>
+        {value || ''}
+      </Tag>
+    );
+  }
+
   const isOverflow = maxLength ? value.length > maxLength : false;
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onSelect) onSelect();
   };
-
-  const Tag = tagName as any;
 
   return (
     <div

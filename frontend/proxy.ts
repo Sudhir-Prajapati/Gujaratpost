@@ -14,10 +14,32 @@ interface TokenPayload {
   role: string;
 }
 
+// All valid admin roles — users with any other role are denied access entirely
+const VALID_ADMIN_ROLES = new Set([
+  "SUPER_ADMIN",
+  "EDITOR",
+  "REPORTER",
+  "SEO",
+  "ADVERTISEMENT",
+  "PHOTOGRAPHER",
+]);
+
 // Map roles to their permitted admin path prefixes
 const ROLE_PERMISSIONS: Record<string, string[]> = {
   SUPER_ADMIN: ["/admin"], // Super admin can access all admin routes
-  EDITOR: ["/admin/articles", "/admin/categories", "/admin/gallery", "/admin/videos", "/admin/reels", "/admin/web-stories", "/admin/stats"],
+  EDITOR: [
+    "/admin/articles",
+    "/admin/categories",
+    "/admin/gallery",
+    "/admin/videos",
+    "/admin/reels",
+    "/admin/web-stories",
+    "/admin/epaper",
+    "/admin/hero",
+    "/admin/support",
+    "/admin/stats",
+    "/admin/tributes",
+  ],
   REPORTER: ["/admin/articles"],
   SEO: ["/admin/seo"],
   ADVERTISEMENT: ["/admin/ads"],
@@ -26,19 +48,25 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const token = request.cookies.get("access_token")?.value;
-  console.log("DEBUG - proxy JWT_SECRET:", process.env.JWT_SECRET ? "exists (len " + process.env.JWT_SECRET.length + ")" : "undefined");
-  console.log("DEBUG - proxy token:", token);
+  let token = request.cookies.get("access_token")?.value;
+
+  // Fallback to Authorization header if cookie not present in request
+  if (!token) {
+    const authHeader = request.headers.get("authorization");
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.substring(7).trim();
+    }
+  }
+
   if (token) {
     try {
       const parts = token.split('.');
       if (parts.length === 3) {
         const payloadStr = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
         const payload = JSON.parse(payloadStr);
-        console.log("DEBUG - proxy token payload:", payload);
       }
     } catch (e: any) {
-      console.log("DEBUG - failed to decode payload:", e.message);
+      // Ignored
     }
   }
 
@@ -86,6 +114,20 @@ export async function proxy(request: NextRequest) {
       userRole = (payload as any).role || "EDITOR";
       userEmail = (payload as any).email || "";
       userId = (payload as any).userId || "";
+    }
+
+    // Validate that the role in the token is a known admin role
+    // This prevents any user with a non-admin role from accessing admin routes
+    if (!VALID_ADMIN_ROLES.has(userRole)) {
+      console.warn(`[Proxy] Access denied for role "${userRole}" (email: ${userEmail}) — not a valid admin role.`);
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Access denied. You do not have permission to access the admin portal." }, { status: 401 });
+      }
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("error", "unauthorized_role");
+      const response = NextResponse.redirect(loginUrl);
+      response.cookies.delete("access_token");
+      return response;
     }
 
     // Check permissions

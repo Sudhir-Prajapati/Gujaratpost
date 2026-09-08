@@ -27,6 +27,7 @@ import {
   ArrowLeft,
   Sparkles,
   Heart,
+  Gift,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -54,6 +55,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/articles',
       '/admin/hero',
       '/admin/ads',
+      '/admin/tributes',
       '/admin/categories',
       '/admin/gallery',
       '/admin/videos',
@@ -74,6 +76,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin',
       '/admin/articles',
       '/admin/hero',
+      '/admin/tributes',
       '/admin/categories',
       '/admin/gallery',
       '/admin/videos',
@@ -104,7 +107,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
     badgeBg: 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/30',
     badgeText: 'text-amber-600 dark:text-amber-400',
     defaultPath: '/admin/ads',
-    permittedPaths: ['/admin/ads'],
+    permittedPaths: ['/admin/ads', '/admin/tributes'],
   },
   PHOTOGRAPHER: {
     title: 'Photographer',
@@ -167,6 +170,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Articles (સમાચાર)', href: '/admin/articles', icon: FileText },
     { label: 'Hero Section (મુખ્ય સમાચાર)', href: '/admin/hero', icon: LayoutTemplate },
     { label: 'Advertisements (જાહેરાતો)', href: '/admin/ads', icon: Megaphone },
+    { label: 'Birthday & Shradhanjali (શુભેચ્છા / શ્રદ્ધાંજલિ)', href: '/admin/tributes', icon: Gift },
     { label: 'Categories (કેટેગરીઝ)', href: '/admin/categories', icon: Layers },
     { label: 'Gallery (ફોટો ગેલેરી)', href: '/admin/gallery', icon: ImageIcon },
     { label: 'Videos (વીડિયોઝ)', href: '/admin/videos', icon: Video },

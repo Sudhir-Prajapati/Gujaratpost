@@ -29,6 +29,12 @@ function LoginForm() {
     if (emailParam) {
       setEmail(emailParam);
     }
+
+    // Handle redirect from proxy when role is not permitted
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'unauthorized_role') {
+      setError('Your account does not have permission to access the admin portal. Please contact your system administrator.');
+    }
   }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -77,7 +83,13 @@ function LoginForm() {
         setPasswordError(true);
 
         if (response.status === 401 || response.status === 400) {
+          const backendMsg = result?.message || result?.error || '';
+          if (backendMsg.toLowerCase().includes('permission') || backendMsg.toLowerCase().includes('access denied')) {
+            throw new Error('Your account does not have permission to access the admin portal. Please contact your system administrator.');
+          }
           throw new Error('Incorrect email address or password. Please verify your credentials and try again.');
+        } else if (response.status === 403) {
+          throw new Error('Your account does not have permission to access the admin portal. Please contact your system administrator.');
         } else if (response.status === 429) {
           throw new Error('Too many login attempts. Please wait a few minutes before trying again.');
         } else if (response.status >= 500) {

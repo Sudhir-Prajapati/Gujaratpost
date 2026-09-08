@@ -13,6 +13,7 @@ import { EPaperController } from '../controllers/epaper.controller.js';
 import { AdController } from '../controllers/ad.controller.js';
 import { AiController } from '../controllers/ai.controller.js';
 import { SupportController } from '../controllers/support.controller.js';
+import { TributeController } from '../controllers/tribute.controller.js';
 import uploadRoutes from './upload.routes.js';
 
 import { requireAuth } from '../middleware/auth.middleware.js';
@@ -183,6 +184,16 @@ router.delete('/ads/:id', requireAuth, AdController.deleteAd);
 // ==========================================
 router.get('/support', requireAuth, requireRole(Role.SUPER_ADMIN), SupportController.getSupportSettings);
 router.put('/support', requireAuth, requireRole(Role.SUPER_ADMIN), SupportController.updateSupportSettings);
+
+// ==========================================
+// 16. Birthday & Shradhanjali Management (SUPER_ADMIN, EDITOR)
+// ==========================================
+const tributeRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+router.get('/tributes', requireAuth, requireRole(tributeRoles), TributeController.getAllTributes);
+router.post('/tributes', requireAuth, requireRole(tributeRoles), TributeController.createTribute);
+router.put('/tributes/:id', requireAuth, requireRole(tributeRoles), TributeController.updateTribute);
+router.put('/tributes/:id/toggle', requireAuth, requireRole(tributeRoles), TributeController.toggleActive);
+router.delete('/tributes/:id', requireAuth, requireRole(tributeRoles), TributeController.deleteTribute);
 
 export default router;
 

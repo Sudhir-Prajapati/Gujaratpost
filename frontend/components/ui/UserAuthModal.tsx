@@ -27,8 +27,8 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
   const emailInputRef = useRef<HTMLInputElement>(null);
   const otpInputRef = useRef<HTMLInputElement>(null);
 
-  // OTP Timers: 10-minute validity, 60-second resend cooldown
-  const [timeLeft, setTimeLeft] = useState<number>(600); // 10 minutes in seconds
+  // OTP Timers: 5-minute validity, 60-second resend cooldown
+  const [timeLeft, setTimeLeft] = useState<number>(300); // 5 minutes in seconds
   const [resendCooldown, setResendCooldown] = useState<number>(60); // 60 seconds resend cooldown
 
   // Statuses
@@ -145,8 +145,8 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
         return;
       }
 
-      // Reset timers (10 mins validity, 60s resend cooldown)
-      setTimeLeft(600);
+      // Reset timers (5 mins validity, 60s resend cooldown)
+      setTimeLeft(300);
       setResendCooldown(60);
       setStep('otp');
       setSuccessMessage(
@@ -247,7 +247,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
       if (!resOtp.ok) {
         throw new Error(jsonOtp.message || 'Failed to resend OTP.');
       }
-      setTimeLeft(600);
+      setTimeLeft(300);
       setResendCooldown(60);
       setSuccessMessage(
         language === 'gu' ? 'તમારા ઇમેઇલ પર નવો ઓટીપી મોકલ્યો છે.' : 'New OTP sent to your email.'

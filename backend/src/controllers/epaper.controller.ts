@@ -13,61 +13,108 @@ function sanitizePdfUrl(url?: string | null): string {
   return url;
 }
 
-let epaperTablesEnsured = false;
-async function ensureEPaperTablesExist() {
-  if (epaperTablesEnsured) return;
-  try {
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS \`epaper_editions\` (
-        \`id\` VARCHAR(191) NOT NULL,
-        \`title\` VARCHAR(255) NOT NULL DEFAULT 'City Edition',
-        \`city\` VARCHAR(255) NOT NULL,
-        \`cityGu\` VARCHAR(255) NULL,
-        \`cityHi\` VARCHAR(255) NULL,
-        \`date\` VARCHAR(50) NOT NULL,
-        \`pages\` INT NOT NULL DEFAULT 24,
-        \`fileUrl\` TEXT NOT NULL,
-        \`thumbnailUrl\` TEXT NULL,
-        \`status\` VARCHAR(50) NOT NULL DEFAULT 'PUBLISHED',
-        \`publishTime\` VARCHAR(50) NULL DEFAULT '06:00 AM',
-        \`isActive\` TINYINT(1) NOT NULL DEFAULT 1,
-        \`editionType\` VARCHAR(50) NOT NULL DEFAULT 'PDF',
-        \`templateData\` LONGTEXT NULL,
-        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-        \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-        PRIMARY KEY (\`id\`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `);
-
-    // Safely ensure columns and indexes exist if table already created without them
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE \`epaper_editions\` ADD COLUMN \`editionType\` VARCHAR(50) NOT NULL DEFAULT 'PDF';`);
-    } catch (_) {}
-    try {
-      await prisma.$executeRawUnsafe(`ALTER TABLE \`epaper_editions\` ADD COLUMN \`templateData\` LONGTEXT NULL;`);
-    } catch (_) {}
-    try {
-      await prisma.$executeRawUnsafe(`CREATE INDEX \`idx_epaper_city_date\` ON \`epaper_editions\` (\`city\`(100), \`date\`, \`status\`);`);
-    } catch (_) {}
-    try {
-      await prisma.$executeRawUnsafe(`CREATE INDEX \`idx_epaper_active_status\` ON \`epaper_editions\` (\`isActive\`, \`status\`, \`date\`);`);
-    } catch (_) {}
-
-    await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS \`epaper_cities\` (
-        \`id\` VARCHAR(191) NOT NULL,
-        \`city\` VARCHAR(255) NOT NULL,
-        \`cityGu\` VARCHAR(255) NULL,
-        \`cityHi\` VARCHAR(255) NULL,
-        \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-        \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
-        PRIMARY KEY (\`id\`)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-    `);
-    epaperTablesEnsured = true;
-  } catch (err) {
-    console.warn('ePaper tables ensure warning:', err);
+function sanitizeThumbnailUrl(url?: string | null): string {
+  if (!url) return '';
+  if (url.startsWith('blob:')) return '';
+  // Ensure image URLs on Cloudinary are served as images, not raw files
+  if (url.includes('res.cloudinary.com') && url.includes('/raw/upload/')) {
+    if (/\.(jpg|jpeg|png|webp|gif|jfif|svg|avif)$/i.test(url)) {
+      return url.replace('/raw/upload/', '/image/upload/');
+    }
   }
+  return url;
+}
+
+let tableEnsured = false;
+let tableEnsuringPromise: Promise<void> | null = null;
+
+async function ensureEPaperTablesExist(): Promise<void> {
+  if (tableEnsured) return;
+  if (tableEnsuringPromise) return tableEnsuringPromise;
+
+  tableEnsuringPromise = (async () => {
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS \`epaper_editions\` (
+          \`id\` VARCHAR(191) NOT NULL,
+          \`title\` VARCHAR(255) NOT NULL DEFAULT 'City Edition',
+          \`city\` VARCHAR(255) NOT NULL,
+          \`cityGu\` VARCHAR(255) NULL,
+          \`cityHi\` VARCHAR(255) NULL,
+          \`date\` VARCHAR(50) NOT NULL,
+          \`pages\` INT NOT NULL DEFAULT 24,
+          \`fileUrl\` TEXT NOT NULL,
+          \`thumbnailUrl\` TEXT NULL,
+          \`status\` VARCHAR(50) NOT NULL DEFAULT 'PUBLISHED',
+          \`publishTime\` VARCHAR(50) NULL DEFAULT '06:00 AM',
+          \`isActive\` TINYINT(1) NOT NULL DEFAULT 1,
+          \`editionType\` VARCHAR(50) NOT NULL DEFAULT 'PDF',
+          \`templateData\` LONGTEXT NULL,
+          \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `).catch(() => null);
+
+      // Check if editionType column exists before ALTER TABLE
+      const editionTypeCols: any[] = (await prisma.$queryRawUnsafe(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'epaper_editions' AND COLUMN_NAME = 'editionType'`
+      ).catch(() => [])) as any[];
+      if (!editionTypeCols || editionTypeCols.length === 0) {
+        await prisma.$executeRawUnsafe(
+          `ALTER TABLE \`epaper_editions\` ADD COLUMN \`editionType\` VARCHAR(50) NOT NULL DEFAULT 'PDF';`
+        ).catch(() => null);
+      }
+
+      // Check if templateData column exists before ALTER TABLE
+      const templateCols: any[] = (await prisma.$queryRawUnsafe(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'epaper_editions' AND COLUMN_NAME = 'templateData'`
+      ).catch(() => [])) as any[];
+      if (!templateCols || templateCols.length === 0) {
+        await prisma.$executeRawUnsafe(
+          `ALTER TABLE \`epaper_editions\` ADD COLUMN \`templateData\` LONGTEXT NULL;`
+        ).catch(() => null);
+      }
+
+      // Check if idx_epaper_city_date index exists before CREATE INDEX
+      const cityDateIdx: any[] = (await prisma.$queryRawUnsafe(
+        `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'epaper_editions' AND INDEX_NAME = 'idx_epaper_city_date'`
+      ).catch(() => [])) as any[];
+      if (!cityDateIdx || cityDateIdx.length === 0) {
+        await prisma.$executeRawUnsafe(
+          `CREATE INDEX \`idx_epaper_city_date\` ON \`epaper_editions\` (\`city\`(100), \`date\`, \`status\`);`
+        ).catch(() => null);
+      }
+
+      // Check if idx_epaper_active_status index exists before CREATE INDEX
+      const activeStatusIdx: any[] = (await prisma.$queryRawUnsafe(
+        `SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'epaper_editions' AND INDEX_NAME = 'idx_epaper_active_status'`
+      ).catch(() => [])) as any[];
+      if (!activeStatusIdx || activeStatusIdx.length === 0) {
+        await prisma.$executeRawUnsafe(
+          `CREATE INDEX \`idx_epaper_active_status\` ON \`epaper_editions\` (\`isActive\`, \`status\`, \`date\`);`
+        ).catch(() => null);
+      }
+
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS \`epaper_cities\` (
+          \`id\` VARCHAR(191) NOT NULL,
+          \`city\` VARCHAR(255) NOT NULL,
+          \`cityGu\` VARCHAR(255) NULL,
+          \`cityHi\` VARCHAR(255) NULL,
+          \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `).catch(() => null);
+
+      tableEnsured = true;
+    } catch (err) {
+      console.warn('ePaper tables ensure warning:', err);
+    }
+  })();
+
+  return tableEnsuringPromise;
 }
 
 async function getEPaperDelegate() {
@@ -124,7 +171,7 @@ export class EPaperController {
       const sanitized = (editions || []).map((ed: any) => ({
         ...ed,
         fileUrl: sanitizePdfUrl(ed.fileUrl),
-        thumbnailUrl: sanitizePdfUrl(ed.thumbnailUrl),
+        thumbnailUrl: sanitizeThumbnailUrl(ed.thumbnailUrl),
       }));
 
       return sendSuccess(res, { editions: sanitized }, 'Public E-Papers fetched successfully');
@@ -178,7 +225,7 @@ export class EPaperController {
       const sanitized = (editions || []).map((ed: any) => ({
         ...ed,
         fileUrl: sanitizePdfUrl(ed.fileUrl),
-        thumbnailUrl: sanitizePdfUrl(ed.thumbnailUrl),
+        thumbnailUrl: sanitizeThumbnailUrl(ed.thumbnailUrl),
       }));
 
       return sendSuccess(res, { editions: sanitized }, 'Admin E-Papers fetched successfully');

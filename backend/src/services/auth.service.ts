@@ -57,7 +57,13 @@ export class AuthService {
       throw new UnauthorizedError('Your account has been suspended. Please contact support.');
     }
 
-    // 4. Generate Access and Refresh Tokens
+    // 4. Check admin role — only staff with a valid admin role can access the portal
+    const ALLOWED_ADMIN_ROLES = ['SUPER_ADMIN', 'EDITOR', 'REPORTER', 'SEO', 'ADVERTISEMENT', 'PHOTOGRAPHER'];
+    if (!ALLOWED_ADMIN_ROLES.includes(user.role)) {
+      throw new UnauthorizedError('Access denied. You do not have permission to access the admin portal.');
+    }
+
+    // 5. Generate Access and Refresh Tokens — user is verified as an authorized admin
     const userPayload: TokenPayload = {
       userId: user.id,
       email: user.email,
@@ -72,7 +78,7 @@ export class AuthService {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // 5. Save session in database & cache
+    // 6. Save session in database & cache
     await SessionRepository.createSession({
       userId: user.id,
       tokenHash: hashedJti,

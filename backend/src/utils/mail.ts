@@ -143,7 +143,7 @@ export const sendOtpEmail = async (toEmail: string, otp: string): Promise<boolea
               <span class="otp-code">${formattedOtp}</span>
             </div>
             
-            <div class="expiry">⚠️ આ OTP આગામી 10 મિનિટ સુધી જ માન્ય રહેશે. (Valid for 10 minutes)</div>
+            <div class="expiry">⚠️ આ OTP આગામી 5 મિનિટ સુધી જ માન્ય રહેશે. (Valid for 5 minutes)</div>
             
             <p class="notice">જો તમે આ OTP વિનંતી નથી કરી, તો આ ઇમેઇલને અગણિત કરો. સુરક્ષા માટે આ કોડ કોઇની સાથે શેર કરશો નહીં.</p>
           </div>

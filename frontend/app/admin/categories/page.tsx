@@ -936,7 +936,7 @@ export default function CategoriesPage() {
                 }`}
               >
                 <Layers className="h-3.5 w-3.5" />
-                <span>Header Navbar (2 Rows) ({orderList.filter(c => (c.showInHeader !== false) && c.isActive).length})</span>
+                <span>Header Navbar ({orderList.filter(c => (c.showInHeader !== false) && c.isActive).length})</span>
               </button>
 
               <button
@@ -1033,186 +1033,154 @@ export default function CategoriesPage() {
                 </div>
               )}
 
-              {/* TAB 2: HEADER NAVBAR SEPARATED INTO ROW 1 AND ROW 2 */}
+              {/* TAB 2: HEADER NAVBAR UNIFIED (MAIN BAR & "અન્ય" DROPDOWN) */}
               {orderTab === 'header' && (
                 <div className="space-y-6">
-                  {/* SECTION A: ROW 1 (PRIMARY NAVBAR) */}
-                  <div className="space-y-2.5 p-4 rounded-2xl bg-zinc-900 text-white border border-zinc-800">
-                    <div className="flex items-center justify-between border-b border-zinc-800 pb-2">
+                  {/* UNIFIED HEADER NAVIGATION BAR (MAIN BAR & "અન્ય" DROPDOWN) */}
+                  <div className="space-y-3 p-4 rounded-2xl bg-zinc-900 text-white border border-zinc-800">
+                    <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
                       <div className="flex items-center gap-2">
-                        <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                        <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
                         <h4 className="font-black text-xs uppercase tracking-wider text-red-400">
-                          Row 1: Primary Header Navigation Bar
+                          Header Navigation Bar (Main Bar &amp; "અન્ય" Dropdown)
                         </h4>
                       </div>
-                      <span className="text-[10px] text-zinc-400 font-bold">
-                        ({orderList.filter(c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL')).length} items)
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      {orderList
-                        .filter(c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))
-                        .sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0))
-                        .map((item, idx, row1Arr) => (
-                          <div
-                            key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item.id)}
-                            onDragOver={(e) => handleDragOver(e, item.id)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))}
-                            onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
-                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
-                              draggedItemId === item.id
-                                ? 'opacity-40 border-dashed border-red-500 bg-zinc-800/90 text-zinc-100'
-                                : dragOverItemId === item.id
-                                  ? 'border-red-400 bg-zinc-700 text-zinc-100 scale-[1.01]'
-                                  : 'bg-zinc-800/90 border-zinc-700 text-zinc-100 hover:border-red-500/50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <GripVertical className="h-4 w-4 text-zinc-500 shrink-0 cursor-grab hover:text-white" />
-                              <span className="h-6 px-2 rounded bg-red-600 text-white font-black text-xs flex items-center justify-center shrink-0 font-mono">
-                                #{idx + 1}
-                              </span>
-                              <span
-                                className="h-3 w-3 rounded-full shrink-0"
-                                style={{ backgroundColor: item.color || '#10b981' }}
-                              />
-                              <div className="min-w-0">
-                                <span className="font-extrabold text-xs text-white">
-                                  {item.nameGu || item.name}
-                                </span>
-                                <span className="text-[10px] text-zinc-400 font-mono ml-2">#{item.headerOrder ?? item.displayOrder ?? 0}</span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-2 shrink-0">
-                              <input
-                                type="number"
-                                value={item.headerOrder ?? item.displayOrder ?? idx + 1}
-                                onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
-                                className="w-12 rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-center text-xs font-mono font-bold text-white"
-                              />
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => moveSubsetItem(item, 'up', c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))}
-                                  disabled={idx === 0}
-                                  className="p-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white disabled:opacity-30 cursor-pointer"
-                                  title="Move UP in Primary Row 1"
-                                >
-                                  <ArrowUp className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => moveSubsetItem(item, 'down', c => (c.showInHeader !== false) && c.isActive && (!c.headerType || c.headerType === 'GLOBAL'))}
-                                  disabled={idx === row1Arr.length - 1}
-                                  className="p-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white disabled:opacity-30 cursor-pointer"
-                                  title="Move DOWN in Primary Row 1"
-                                >
-                                  <ArrowDown className="h-3.5 w-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-
-                  {/* SECTION B: OTHER DROPDOWN ("અન્ય" Menu) */}
-                  <div className="space-y-2.5 p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 text-purple-900 dark:text-purple-200">
-                    <div className="flex items-center justify-between border-b border-purple-500/30 pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2 py-0.5 rounded bg-purple-600 text-white font-black text-[10px]">
-                          ↓ DROPDOWN
+                      <div className="flex items-center gap-2 text-[10px] font-bold">
+                        <span className="px-2 py-0.5 rounded bg-red-600/30 text-red-400 border border-red-500/30">
+                          Top 14 in Bar (+ Home = 15)
                         </span>
-                        <h4 className="font-black text-xs uppercase tracking-wider text-purple-700 dark:text-purple-300">
-                          "અન્ય" (Other) Dropdown Menu
-                        </h4>
+                        <span className="px-2 py-0.5 rounded bg-purple-600/30 text-purple-300 border border-purple-500/30">
+                          #15+ in "અન્ય" Dropdown
+                        </span>
+                        <span className="text-zinc-400 font-mono">
+                          ({orderList.filter(c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT').length} items)
+                        </span>
                       </div>
-                      <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400">
-                        ({orderList.filter(c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER').length} items)
+                    </div>
+
+                    {/* Built-in Home Pin Card */}
+                    <div className="flex items-center justify-between gap-3 p-2 rounded-xl bg-zinc-950/60 border border-zinc-800 text-zinc-300 select-none">
+                      <div className="flex items-center gap-2.5">
+                        <span className="h-5 px-2 rounded bg-zinc-800 text-zinc-300 font-mono font-black text-[10px] flex items-center justify-center">
+                          FIXED
+                        </span>
+                        <Home className="h-4 w-4 text-red-500 shrink-0" />
+                        <span className="font-black text-xs text-white">
+                          હોમ (Home)
+                        </span>
+                        <span className="text-[10px] text-zinc-500 font-mono">/ (Built-in Position #1)</span>
+                      </div>
+                      <span className="text-[10px] font-semibold text-zinc-500 italic pr-2">
+                        Always sits at start of Main Header
                       </span>
                     </div>
-                    <p className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold pb-1">
-                      These categories appear inside the "અન્ય" (More) dropdown in the top header navigation bar.
-                    </p>
 
                     <div className="space-y-2">
                       {orderList
-                        .filter(c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')
+                        .filter(c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')
                         .sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0))
-                        .map((item, idx, otherArr) => (
-                          <div
-                            key={item.id}
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, item.id)}
-                            onDragOver={(e) => handleDragOver(e, item.id)}
-                            onDragLeave={handleDragLeave}
-                            onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')}
-                            onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
-                            className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
-                              draggedItemId === item.id
-                                ? 'opacity-40 border-dashed border-purple-500 bg-white/90 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
-                                : dragOverItemId === item.id
-                                  ? 'border-purple-400 bg-purple-50 dark:bg-purple-950/30 text-zinc-900 dark:text-zinc-100 scale-[1.01]'
-                                  : 'bg-white/90 dark:bg-zinc-800 border-purple-300 dark:border-purple-900/40 text-zinc-900 dark:text-zinc-100 hover:border-purple-500'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3 min-w-0">
-                              <GripVertical className="h-4 w-4 text-zinc-400 shrink-0 cursor-grab hover:text-purple-700" />
-                              <span className="h-6 px-2 rounded bg-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0 font-mono">
-                                #{idx + 1}
-                              </span>
-                              <span
-                                className="h-3 w-3 rounded-full shrink-0"
-                                style={{ backgroundColor: item.color || '#a855f7' }}
-                              />
-                              <div className="min-w-0">
-                                <span className="font-extrabold text-xs">
-                                  {item.nameGu || item.name}
-                                </span>
-                                <span className="text-[10px] text-zinc-400 font-mono ml-2">#{item.headerOrder ?? item.displayOrder ?? 0}</span>
-                              </div>
-                            </div>
+                        .map((item, idx, headerArr) => {
+                          const isMainBar = idx < 14;
+                          const isFirstDropdown = idx === 14;
 
-                            <div className="flex items-center gap-2 shrink-0">
-                              <input
-                                type="number"
-                                value={item.headerOrder ?? item.displayOrder ?? idx + 1}
-                                onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
-                                className="w-12 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1.5 py-0.5 text-center text-xs font-mono font-bold"
-                              />
-                              <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => moveSubsetItem(item, 'up', c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')}
-                                  disabled={idx === 0}
-                                  className="p-1 rounded bg-purple-100 dark:bg-zinc-700 hover:bg-purple-200 dark:hover:bg-zinc-600 text-purple-900 dark:text-white disabled:opacity-30 cursor-pointer"
-                                  title="Move UP in Other Dropdown"
-                                >
-                                  <ArrowUp className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => moveSubsetItem(item, 'down', c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER')}
-                                  disabled={idx === otherArr.length - 1}
-                                  className="p-1 rounded bg-purple-100 dark:bg-zinc-700 hover:bg-purple-200 dark:hover:bg-zinc-600 text-purple-900 dark:text-white disabled:opacity-30 cursor-pointer"
-                                  title="Move DOWN in Other Dropdown"
-                                >
-                                  <ArrowDown className="h-3.5 w-3.5" />
-                                </button>
+                          return (
+                            <div key={item.id} className="space-y-2">
+                              {/* DIVIDER BETWEEN TOP 15 IN MAIN BAR AND DROPDOWN */}
+                              {isFirstDropdown && (
+                                <div className="my-3 p-3 rounded-xl bg-gradient-to-r from-red-950/50 via-purple-950/50 to-purple-900/40 border border-purple-500/40 flex flex-wrap items-center justify-between gap-2 shadow-sm">
+                                  <div className="flex items-center gap-2">
+                                    <span className="px-2 py-0.5 rounded bg-red-600 text-white font-black text-[10px] uppercase tracking-wide">
+                                      👆 TOP 15 MAIN NAV BAR
+                                    </span>
+                                    <span className="text-[11px] font-bold text-zinc-300">
+                                      Items #1–14 appear directly before "અન્ય"
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-bold text-purple-300">
+                                      Items #15+ appear inside "અન્ય" dropdown
+                                    </span>
+                                    <span className="px-2 py-0.5 rounded bg-purple-600 text-white font-black text-[10px] uppercase tracking-wide">
+                                      👇 "અન્ય" DROPDOWN
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* REORDERABLE CATEGORY ROW */}
+                              <div
+                                draggable
+                                onDragStart={(e) => handleDragStart(e, item.id)}
+                                onDragOver={(e) => handleDragOver(e, item.id)}
+                                onDragLeave={handleDragLeave}
+                                onDrop={() => handleDropSubset(item, c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')}
+                                onDragEnd={() => { setDraggedItemId(null); setDragOverItemId(null); }}
+                                className={`flex items-center justify-between gap-3 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${
+                                  draggedItemId === item.id
+                                    ? 'opacity-40 border-dashed border-red-500 bg-zinc-800/90 text-zinc-100'
+                                    : dragOverItemId === item.id
+                                      ? isMainBar ? 'border-red-400 bg-zinc-700 text-zinc-100 scale-[1.01]' : 'border-purple-400 bg-zinc-700 text-zinc-100 scale-[1.01]'
+                                      : isMainBar
+                                        ? 'bg-zinc-800/90 border-zinc-700 text-zinc-100 hover:border-red-500/50'
+                                        : 'bg-purple-950/20 border-purple-900/50 text-zinc-100 hover:border-purple-500/60'
+                                }`}
+                              >
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <GripVertical className="h-4 w-4 text-zinc-500 shrink-0 cursor-grab hover:text-white" />
+                                  <span className={`h-6 px-2 rounded font-black text-xs flex items-center justify-center shrink-0 font-mono text-white ${
+                                    isMainBar ? 'bg-red-600' : 'bg-purple-600'
+                                  }`}>
+                                    #{idx + 1}
+                                  </span>
+                                  <span
+                                    className="h-3 w-3 rounded-full shrink-0"
+                                    style={{ backgroundColor: item.color || (isMainBar ? '#10b981' : '#a855f7') }}
+                                  />
+                                  <div className="min-w-0">
+                                    <span className="font-extrabold text-xs text-white">
+                                      {item.nameGu || item.name}
+                                    </span>
+                                    <span className="text-[10px] text-zinc-400 font-mono ml-2">#{item.headerOrder ?? item.displayOrder ?? 0}</span>
+                                    <span className={`ml-2 text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                      isMainBar ? 'bg-red-950 text-red-300 border border-red-800/40' : 'bg-purple-950 text-purple-300 border border-purple-800/40'
+                                    }`}>
+                                      {isMainBar ? `Main Bar #${idx + 2}` : `Dropdown #${idx - 13}`}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex items-center gap-2 shrink-0">
+                                  <input
+                                    type="number"
+                                    value={item.headerOrder ?? item.displayOrder ?? idx + 1}
+                                    onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
+                                    className="w-12 rounded border border-zinc-700 bg-zinc-900 px-1.5 py-0.5 text-center text-xs font-mono font-bold text-white"
+                                  />
+                                  <div className="flex items-center gap-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => moveSubsetItem(item, 'up', c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')}
+                                      disabled={idx === 0}
+                                      className="p-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white disabled:opacity-30 cursor-pointer"
+                                      title="Move UP in Header Navigation"
+                                    >
+                                      <ArrowUp className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => moveSubsetItem(item, 'down', c => (c.showInHeader !== false) && c.isActive && c.headerType !== 'GUJARAT')}
+                                      disabled={idx === headerArr.length - 1}
+                                      className="p-1 rounded bg-zinc-700 hover:bg-zinc-600 text-white disabled:opacity-30 cursor-pointer"
+                                      title="Move DOWN in Header Navigation"
+                                    >
+                                      <ArrowDown className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      {orderList.filter(c => (c.showInHeader !== false) && c.isActive && c.headerType === 'OTHER').length === 0 && (
-                        <div className="text-center py-4 text-purple-500 dark:text-purple-400 text-xs font-semibold">
-                          No categories in the Other dropdown yet. Go to the main table and set a category&apos;s Header Nav to "↓ Other Dropdown".
-                        </div>
-                      )}
+                          );
+                        })}
                     </div>
                   </div>
 

@@ -26,9 +26,11 @@ import {
   ZoomOut,
   Download,
   FileCode,
+  Sparkles,
+  ArrowRight,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
-import { formatEpaperPdfUrl, formatEpaperDownloadUrl } from '@/lib/media';
+import { formatEpaperPdfUrl, formatEpaperDownloadUrl, sanitizeImageUrl } from '@/lib/media';
 import {
   EPaperEdition,
   CityItem,
@@ -44,6 +46,11 @@ import {
   clearLegacyLocalStorage,
 } from '@/lib/epaper';
 import { NewspaperTemplateBuilder } from '@/components/epaper/NewspaperTemplateBuilder';
+import { Page1Front } from '@/components/epaper/Page1Front';
+import { Page2Gujarat } from '@/components/epaper/Page2Gujarat';
+import { Page3Business } from '@/components/epaper/Page3Business';
+import { Page4Sports } from '@/components/epaper/Page4Sports';
+import { EpaperReadOnlyProvider } from '@/components/epaper/EpaperReadOnlyContext';
 
 function formatDateLabel(dateStr: string): string {
   try {
@@ -128,6 +135,23 @@ export default function AdminEPaperPage() {
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [isActive, setIsActive] = useState(true);
 
+  // Form validation & duplicate check
+  const isDuplicateEdition = editions.some(
+    (ed) =>
+      ed.id !== editingEdition?.id &&
+      ed.date === date &&
+      ed.city.toLowerCase() === city.trim().toLowerCase() &&
+      (ed.title || '').trim().toLowerCase() === (title.trim() || `${city.toUpperCase()} EDITION`).toLowerCase()
+  );
+
+  const formValidationError = (() => {
+    if (!city.trim()) return 'કૃપા કરીને શહેર પસંદ કરો (Please select a city)';
+    if (!title.trim()) return 'કૃપા કરીને આવૃત્તિનું નામ લખો (Please enter an edition title)';
+    if (!date) return 'કૃપા કરીને પ્રકાશન તારીખ પસંદ કરો (Please select a publication date)';
+    if (isDuplicateEdition) return 'આ તારીખે આ નામનું ઈ-પેપર પહેલેથી જ બનાવાયેલ છે! (Edition with this name already exists for this date)';
+    return null;
+  })();
+
   // Input Mode selectors: 'link' vs 'file'
   const [pdfInputMode, setPdfInputMode] = useState<'link' | 'file'>('file');
   const [thumbInputMode, setThumbInputMode] = useState<'link' | 'file'>('file');
@@ -158,15 +182,19 @@ export default function AdminEPaperPage() {
 
 
   // Load editions and cities from API
-  const loadData = async () => {
+  const loadData = async (filterDate?: string, filterCity?: string, filterStatus?: string) => {
     setLoading(true);
     clearLegacyLocalStorage();
 
+    const d = filterDate !== undefined ? filterDate : selectedDateFilter;
+    const c = filterCity !== undefined ? filterCity : selectedCityFilter;
+    const s = filterStatus !== undefined ? filterStatus : selectedStatusFilter;
+
     const [fetchedEditions, fetchedCities] = await Promise.all([
       fetchAdminEPapers({
-        city: selectedCityFilter,
-        date: selectedDateFilter,
-        status: selectedStatusFilter,
+        city: c,
+        date: d,
+        status: s,
         search,
       }),
       fetchEPaperCities(),
@@ -192,11 +220,25 @@ export default function AdminEPaperPage() {
   const [activeReaderEdition, setActiveReaderEdition] = useState<EPaperEdition | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [readerViewMode, setReaderViewMode] = useState<'TEMPLATE' | 'PDF'>('TEMPLATE');
+
+  const calculateFitZoom = () => {
+    if (typeof window !== 'undefined') {
+      const availableWidth = window.innerWidth < 640 ? window.innerWidth - 16 : window.innerWidth - 64;
+      return Math.min(100, Math.max(25, Math.floor((availableWidth / 1224) * 100)));
+    }
+    return 100;
+  };
 
   const openReader = (ed: EPaperEdition) => {
     setActiveReaderEdition(ed);
     setCurrentPage(1);
-    setZoomLevel(100);
+    setReaderViewMode(ed.templateData ? 'TEMPLATE' : 'PDF');
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setZoomLevel(calculateFitZoom());
+    } else {
+      setZoomLevel(100);
+    }
   };
 
   const closeReader = () => {
@@ -223,11 +265,14 @@ export default function AdminEPaperPage() {
   useEffect(() => {
     if (modalOpen || addCityModalOpen || !!deleteId || !!activeReaderEdition) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     };
   }, [modalOpen, addCityModalOpen, deleteId, activeReaderEdition]);
 
@@ -494,8 +539,8 @@ export default function AdminEPaperPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!city.trim() || !date) {
-      showToast('error', 'City name and date are required.');
+    if (formValidationError) {
+      showToast('error', formValidationError);
       return;
     }
 
@@ -620,17 +665,23 @@ export default function AdminEPaperPage() {
     }
   };
 
-  const handleBuilderPublish = async (templateData: any, pageImages: string[]) => {
+  const handleBuilderPublish = async (
+    templateData: any,
+    pageImages: string[],
+    pdfUrl?: string,
+    pdfBlob?: Blob,
+    uploadedThumbnailUrl?: string
+  ) => {
     const finalTitle = title.trim() || `${city.toUpperCase()} EDITION`;
-    const primaryImage = pageImages[0] || thumbnailUrl || fileUrl || '';
+    const primaryThumb = uploadedThumbnailUrl || pageImages[0] || thumbnailUrl || '';
     const payload: Partial<EPaperEdition> = {
       title: finalTitle,
       city: city.trim(),
       cityGu: cityGu.trim() || city.trim(),
       date,
       pages: 4,
-      fileUrl: primaryImage,
-      thumbnailUrl: primaryImage,
+      fileUrl: pdfUrl || primaryThumb,
+      thumbnailUrl: primaryThumb,
       status: 'PUBLISHED',
       publishTime,
       isActive: true,
@@ -643,17 +694,22 @@ export default function AdminEPaperPage() {
       const res = await updateEPaperEdition(targetId, payload);
       if (res?.edition) {
         showToast('success', `"${finalTitle}" અખબાર સફળતાપૂર્વક પબ્લિશ થયું!`);
-        setBuilderOpen(false);
-        loadData();
+        setSelectedDateFilter(date);
+        setSelectedCityFilter('ALL');
+        setSelectedStatusFilter('ALL');
+        loadData(date, 'ALL', 'ALL');
       } else {
         showToast('error', res?.error || 'પબ્લિશ કરવામાં ક્ષતિ.');
       }
     } else {
       const res = await createEPaperEdition(payload);
       if (res?.edition) {
+        setBuilderEdition(res.edition);
         showToast('success', `"${finalTitle}" અખબાર સફળતાપૂર્વક પબ્લિશ થયું!`);
-        setBuilderOpen(false);
-        loadData();
+        setSelectedDateFilter(date);
+        setSelectedCityFilter('ALL');
+        setSelectedStatusFilter('ALL');
+        loadData(date, 'ALL', 'ALL');
       } else {
         showToast('error', res?.error || 'પબ્લિશ કરવામાં ક્ષતિ.');
       }
@@ -661,6 +717,10 @@ export default function AdminEPaperPage() {
   };
 
   if (builderOpen) {
+    if (formValidationError && !builderEdition) {
+      setBuilderOpen(false);
+      return null;
+    }
     let parsedData = null;
     if (builderEdition?.templateData) {
       try {
@@ -676,8 +736,12 @@ export default function AdminEPaperPage() {
         onSaveDraft={handleBuilderSaveDraft}
         onPublish={handleBuilderPublish}
         onBackToDashboard={() => {
+          const targetDate = date || getTodayDateStr();
+          setSelectedDateFilter(targetDate);
+          setSelectedCityFilter('ALL');
+          setSelectedStatusFilter('ALL');
           setBuilderOpen(false);
-          loadData();
+          loadData(targetDate, 'ALL', 'ALL');
         }}
       />
     );
@@ -763,17 +827,16 @@ export default function AdminEPaperPage() {
       <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-3.5 sm:p-5 space-y-4">
         <div className="flex flex-col gap-3.5 sm:gap-4">
           
-          {/* Top Filter Row: Date Selector & Status Filter */}
-          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3.5 sm:gap-4">
-            
-            {/* Date Selector */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-              <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 shrink-0">
-                <CalendarDays className="h-4 w-4 text-[#B3121B]" />
-                Select Date:
-              </span>
+          {/* Top Filter Row: Date Selector & Search Box */}
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              {/* Date Selector */}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 shrink-0 mr-1">
+                  <CalendarDays className="h-4 w-4 text-[#B3121B]" />
+                  Select Date:
+                </span>
 
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                 <input
                   type="date"
                   value={selectedDateFilter === 'ALL' ? '' : selectedDateFilter}
@@ -793,36 +856,9 @@ export default function AdminEPaperPage() {
                   All Dates
                 </button>
               </div>
-            </div>
-
-            {/* Status Filter & Search Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-              <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0">Status:</span>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => setSelectedStatusFilter('ALL')}
-                    className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-700 border border-zinc-200 dark:border-zinc-800'}`}
-                  >
-                    All Status
-                  </button>
-                  <button
-                    onClick={() => setSelectedStatusFilter('PUBLISHED')}
-                    className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'PUBLISHED' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-zinc-900 text-emerald-600 border border-emerald-200'}`}
-                  >
-                    Published
-                  </button>
-                  <button
-                    onClick={() => setSelectedStatusFilter('DRAFT')}
-                    className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'DRAFT' ? 'bg-amber-600 text-white' : 'bg-white dark:bg-zinc-900 text-amber-600 border border-amber-200'}`}
-                  >
-                    Drafts
-                  </button>
-                </div>
-              </div>
 
               {/* Search Box */}
-              <div className="relative w-full sm:w-64">
+              <div className="relative w-full lg:w-72">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                 <input
                   type="text"
@@ -834,6 +870,30 @@ export default function AdminEPaperPage() {
               </div>
             </div>
 
+            {/* Status Filter Row */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
+              <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">Status:</span>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  onClick={() => setSelectedStatusFilter('ALL')}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-700 border border-zinc-200 dark:border-zinc-800'}`}
+                >
+                  All Status
+                </button>
+                <button
+                  onClick={() => setSelectedStatusFilter('PUBLISHED')}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'PUBLISHED' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-zinc-900 text-emerald-600 border border-emerald-200'}`}
+                >
+                  Published
+                </button>
+                <button
+                  onClick={() => setSelectedStatusFilter('DRAFT')}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'DRAFT' ? 'bg-amber-600 text-white' : 'bg-white dark:bg-zinc-900 text-amber-600 border border-amber-200'}`}
+                >
+                  Drafts
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -882,6 +942,17 @@ export default function AdminEPaperPage() {
 
           <div className="flex flex-wrap justify-center gap-3 mt-6">
             <button
+              onClick={() => {
+                setSelectedDateFilter('ALL');
+                setSelectedCityFilter('ALL');
+                loadData('ALL', 'ALL', 'ALL');
+              }}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-zinc-800 text-white text-xs font-black hover:bg-zinc-700 transition shadow-md cursor-pointer"
+            >
+              <CalendarDays className="h-4 w-4" />
+              તમામ તારીખો જુઓ (View All Dates)
+            </button>
+            <button
               onClick={() => openAdd(selectedCityFilter !== 'ALL' ? selectedCityFilter : undefined, selectedDateFilter !== 'ALL' ? selectedDateFilter : undefined)}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#B3121B] text-white text-xs font-black hover:bg-[#8e0e15] transition shadow-md cursor-pointer"
             >
@@ -902,51 +973,75 @@ export default function AdminEPaperPage() {
                 onClick={() => openReader(edition)}
                 className="relative aspect-[3/4] w-full overflow-hidden bg-slate-200 dark:bg-zinc-800 cursor-pointer"
               >
-                {isImageUrl(edition.thumbnailUrl) ? (
-                  <img
-                    src={edition.thumbnailUrl}
-                    alt={edition.title || edition.city}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : isImageUrl(edition.fileUrl) ? (
-                  <img
-                    src={edition.fileUrl}
-                    alt={edition.title || edition.city}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : edition.fileUrl && edition.fileUrl.includes('res.cloudinary.com') ? (
-                  <img
-                    src={edition.fileUrl.replace(/\.pdf$/i, '.jpg')}
-                    alt={edition.title || edition.city}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : edition.fileUrl && (isPdfUrl(edition.fileUrl) || edition.fileUrl.includes('/uploads/')) ? (
-                  <iframe
-                    src={formatEpaperPdfUrl(edition.fileUrl, 1)}
-                    className="h-full w-full object-cover pointer-events-none"
-                    title={edition.title || edition.city}
-                  />
-                ) : (
-                  <div className="flex h-full w-full flex-col items-center justify-between p-6 text-center bg-gradient-to-b from-slate-50 to-slate-200 dark:from-zinc-900 dark:to-zinc-950">
-                    <div className="w-full flex justify-between items-center text-[10px] font-black text-slate-400 border-b border-slate-300 dark:border-zinc-800 pb-2">
-                      <span>GUJARAT POST</span>
-                      <span>{edition.date}</span>
+                {(() => {
+                  let thumbSrc = '';
+                  if (isImageUrl(edition.thumbnailUrl)) {
+                    thumbSrc = sanitizeImageUrl(edition.thumbnailUrl);
+                  } else if (isImageUrl(edition.fileUrl)) {
+                    thumbSrc = sanitizeImageUrl(edition.fileUrl);
+                  } else if (edition.fileUrl && edition.fileUrl.includes('res.cloudinary.com')) {
+                    thumbSrc = edition.fileUrl.replace(/\.pdf$/i, '.jpg');
+                  } else if (edition.templateData) {
+                    try {
+                      const p = typeof edition.templateData === 'string' ? JSON.parse(edition.templateData) : edition.templateData;
+                      thumbSrc = p?.page1?.leadStory?.image || p?.page1?.mainHeadline?.image || '';
+                    } catch (_) {}
+                  }
+
+                  if (thumbSrc) {
+                    return (
+                      <img
+                        src={thumbSrc}
+                        alt={edition.title || edition.city}
+                        onError={(e) => {
+                          let fallback = '';
+                          if (edition.templateData) {
+                            try {
+                              const p = typeof edition.templateData === 'string' ? JSON.parse(edition.templateData) : edition.templateData;
+                              fallback = p?.page1?.leadStory?.image || p?.page1?.mainHeadline?.image || '';
+                            } catch (_) {}
+                          }
+                          if (fallback && e.currentTarget.src !== fallback) {
+                            e.currentTarget.src = fallback;
+                          }
+                        }}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    );
+                  }
+
+                  if (edition.fileUrl && (isPdfUrl(edition.fileUrl) || edition.fileUrl.includes('/uploads/'))) {
+                    return (
+                      <iframe
+                        src={formatEpaperPdfUrl(edition.fileUrl, 1)}
+                        className="h-full w-full object-cover pointer-events-none"
+                        title={edition.title || edition.city}
+                      />
+                    );
+                  }
+
+                  return (
+                    <div className="flex h-full w-full flex-col items-center justify-between p-6 text-center bg-gradient-to-b from-slate-50 to-slate-200 dark:from-zinc-900 dark:to-zinc-950">
+                      <div className="w-full flex justify-between items-center text-[10px] font-black text-slate-400 border-b border-slate-300 dark:border-zinc-800 pb-2">
+                        <span>GUJARAT POST</span>
+                        <span>{edition.date}</span>
+                      </div>
+                      <div className="my-auto py-4 space-y-2">
+                        <Newspaper className="h-16 w-16 mx-auto text-[#B3121B] opacity-80" />
+                        <h3 className="text-base font-black text-slate-900 dark:text-white uppercase leading-tight px-2">
+                          {edition.title || `${edition.city} EDITION`}
+                        </h3>
+                        <span className="inline-block bg-[#B3121B]/10 text-[#B3121B] text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-[#B3121B]/20">
+                          {edition.pages || 24} PAGES E-PAPER
+                        </span>
+                      </div>
+                      <div className="w-full pt-2 border-t border-slate-300 dark:border-zinc-800 text-[10px] font-bold text-slate-500 flex items-center justify-between">
+                        <span>{edition.cityGu || edition.city}</span>
+                        <span>{edition.publishTime || '06:00 AM'}</span>
+                      </div>
                     </div>
-                    <div className="my-auto py-4 space-y-2">
-                      <Newspaper className="h-16 w-16 mx-auto text-[#B3121B] opacity-80" />
-                      <h3 className="text-base font-black text-slate-900 dark:text-white uppercase leading-tight px-2">
-                        {edition.title || `${edition.city} EDITION`}
-                      </h3>
-                      <span className="inline-block bg-[#B3121B]/10 text-[#B3121B] text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-[#B3121B]/20">
-                        {edition.pages || 24} PAGES E-PAPER
-                      </span>
-                    </div>
-                    <div className="w-full pt-2 border-t border-slate-300 dark:border-zinc-800 text-[10px] font-bold text-slate-500 flex items-center justify-between">
-                      <span>{edition.cityGu || edition.city}</span>
-                      <span>{edition.publishTime || '06:00 AM'}</span>
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Status Badges */}
                 <div className="absolute top-3 right-3 z-10 flex items-center gap-1.5">
@@ -969,6 +1064,18 @@ export default function AdminEPaperPage() {
                 <span className="text-[11px] font-bold text-muted-foreground">{edition.date}</span>
 
                 <div className="flex items-center gap-1">
+                  {edition.fileUrl && !edition.fileUrl.startsWith('blob:') && (
+                    <a
+                      href={formatEpaperDownloadUrl(edition.fileUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1.5 rounded-lg bg-red-600/10 text-red-600 hover:bg-red-600/20 font-bold transition cursor-pointer flex items-center gap-1"
+                      title="PDF ખોલો / ડાઉનલોડ કરો"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      <span className="text-[10px] font-black uppercase">PDF</span>
+                    </a>
+                  )}
                   <button
                     onClick={() => openReader(edition)}
                     className="p-1.5 rounded-lg bg-muted hover:bg-muted/70 text-foreground font-bold transition cursor-pointer"
@@ -1145,63 +1252,73 @@ export default function AdminEPaperPage() {
             <form onSubmit={handleSave} className="px-6 py-5 space-y-5">
 
               {/* Dual Creation Mode Options */}
-              <div className="p-3.5 bg-gradient-to-r from-blue-50/70 to-indigo-50/70 dark:from-zinc-950/60 dark:to-zinc-900/60 rounded-2xl border border-blue-200/80 dark:border-zinc-800 space-y-2.5">
-                <label className="block text-xs font-black text-blue-950 dark:text-blue-200 uppercase tracking-wider">
-                  આવૃત્તિ બનાવવાની પદ્ધતિ (Select Edition Mode) *
-                </label>
+              <div className="p-4 bg-zinc-50 dark:bg-zinc-900/60 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">
+                    આવૃત્તિ બનાવવાની પદ્ધતિ (Select Creation Method) *
+                  </label>
+                  <span className="text-[10px] font-bold text-zinc-500 bg-white dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
+                    Step 1
+                  </span>
+                </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Option A: Dynamic Interactive Builder */}
                   <button
                     type="button"
                     onClick={() => setEditionCreationOption('TEMPLATE')}
-                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
+                    className={`relative p-3.5 rounded-2xl text-left border-2 transition-all cursor-pointer ${
                       editionCreationOption === 'TEMPLATE'
-                        ? 'bg-white dark:bg-zinc-900 border-[#B3121B] shadow-md ring-2 ring-[#B3121B]/20'
-                        : 'bg-white/60 dark:bg-zinc-900/50 border-zinc-200 hover:border-[#B3121B]'
+                        ? 'bg-red-50/50 dark:bg-red-950/20 border-[#B3121B] shadow-md ring-2 ring-[#B3121B]/15'
+                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]/40'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 text-xs font-black text-zinc-900 dark:text-white">
-                      <Newspaper className="h-4 w-4 text-[#B3121B] shrink-0" />
-                      <span>ઓપ્શન ૨ — Dynamic Template</span>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-red-600/10 flex items-center justify-center shrink-0">
+                          <Newspaper className="h-4 w-4 text-[#B3121B]" />
+                        </div>
+                        <span className="text-xs font-black text-zinc-900 dark:text-white">
+                          ૪-પૃષ્ઠ ટેમ્પલેટ બિલ્ડર
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-[#B3121B] text-white px-2 py-0.5 rounded-full shadow-xs">
+                        ભલામણ કરેલ
+                      </span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 mt-1 leading-snug">
-                      ૪-પૃષ્ઠ ટેમ્પલેટ બિલ્ડરમાં સમાચાર સંપાદિત કરો.
+                    <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 leading-snug">
+                      વેબસાઇટ આર્ટિકલ્સ ૧-ક્લિકમાં ભરીને આધુનિક ૪-પેજ અખબાર તૈયાર કરો.
                     </p>
                   </button>
 
+                  {/* Option B: Upload PDF */}
                   <button
                     type="button"
                     onClick={() => setEditionCreationOption('PDF')}
-                    className={`p-3 rounded-xl text-left border transition-all cursor-pointer ${
+                    className={`relative p-3.5 rounded-2xl text-left border-2 transition-all cursor-pointer ${
                       editionCreationOption === 'PDF'
-                        ? 'bg-white dark:bg-zinc-900 border-blue-600 shadow-md ring-2 ring-blue-500/20'
-                        : 'bg-white/60 dark:bg-zinc-900/50 border-zinc-200 hover:border-blue-400'
+                        ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-600 shadow-md ring-2 ring-blue-500/15'
+                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-400'
                     }`}
                   >
-                    <div className="flex items-center gap-1.5 text-xs font-black text-zinc-900 dark:text-white">
-                      <Upload className="h-4 w-4 text-blue-600 shrink-0" />
-                      <span>ઓપ્શન ૧ — PDF Upload</span>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-2">
+                        <div className="h-8 w-8 rounded-xl bg-blue-600/10 flex items-center justify-center shrink-0">
+                          <Upload className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <span className="text-xs font-black text-zinc-900 dark:text-white">
+                          તૈયાર PDF અપલોડ
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-blue-600/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                        PDF Mode
+                      </span>
                     </div>
-                    <p className="text-[10px] text-zinc-500 mt-1 leading-snug">
-                      તૈયાર PDF ફાઇલ અથવા લિંક અપલોડ કરો.
+                    <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 leading-snug">
+                      તૈયાર અખબારની PDF ફાઇલ અપલોડ કરો અથવા લિંક પેસ્ટ કરો.
                     </p>
                   </button>
                 </div>
-
-                {editionCreationOption === 'TEMPLATE' && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setModalOpen(false);
-                      setBuilderEdition(editingEdition);
-                      setBuilderOpen(true);
-                    }}
-                    className="w-full mt-2 py-2.5 px-4 bg-[#B3121B] hover:bg-[#8e0e15] text-white rounded-xl text-xs font-black shadow-md flex items-center justify-center gap-2 cursor-pointer transition"
-                  >
-                    <Newspaper className="h-4 w-4" />
-                    <span>૪-પૃષ્ઠ ટેમ્પલેટ બિલ્ડર ખોલો (Open 4-Page Newspaper Builder)</span>
-                  </button>
-                )}
               </div>
 
               {/* Status Selector: Draft vs Published */}
@@ -1264,25 +1381,13 @@ export default function AdminEPaperPage() {
                   placeholder="e.g. AHMEDABAD CITY, AHMEDABAD EAST, CITY LIFE, etc."
                   required
                   className={`w-full px-4 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-950/30 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 ${
-                    editions.some(
-                      (ed) =>
-                        ed.id !== editingEdition?.id &&
-                        ed.date === date &&
-                        ed.city.toLowerCase() === city.trim().toLowerCase() &&
-                        (ed.title || '').trim().toLowerCase() === (title.trim() || `${city.toUpperCase()} EDITION`).toLowerCase()
-                    )
+                    isDuplicateEdition
                       ? 'border-red-500 focus:ring-red-500/30'
                       : 'border-zinc-200 dark:border-zinc-800 focus:ring-[#B3121B]/30'
                   }`}
                 />
 
-                {editions.some(
-                  (ed) =>
-                    ed.id !== editingEdition?.id &&
-                    ed.date === date &&
-                    ed.city.toLowerCase() === city.trim().toLowerCase() &&
-                    (ed.title || '').trim().toLowerCase() === (title.trim() || `${city.toUpperCase()} EDITION`).toLowerCase()
-                ) && (
+                {isDuplicateEdition && (
                   <p className="text-[11px] font-black text-red-600 dark:text-red-400 mt-1.5 flex items-center gap-1">
                     <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600" />
                     આ તારીખે આ નામનું ઈ-પેપર પહેલેથી જ બનાવાયેલ છે! (Edition with this name already exists for this date)
@@ -1419,90 +1524,151 @@ export default function AdminEPaperPage() {
 
 
 
-              {/* PDF ATTACHMENT */}
-              <div className="border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl bg-zinc-50/50 dark:bg-zinc-950/20 space-y-3">
-                <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
-                  Newspaper PDF Source (પસંદ કરો: લિંક અથવા ફાઇલ અપલોડ) *
-                </label>
+              {/* CONDITIONAL CONTENT: TEMPLATE BUILDER LAUNCHER vs PDF ATTACHMENT */}
+              {editionCreationOption === 'TEMPLATE' ? (
+                <div
+                  className={`p-4 rounded-2xl space-y-3 transition border ${
+                    formValidationError
+                      ? 'bg-zinc-50/80 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800'
+                      : 'bg-gradient-to-br from-red-50 via-rose-50 to-amber-50 dark:from-red-950/30 dark:via-zinc-900 dark:to-zinc-900 border-red-200 dark:border-red-900/40'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-xs font-black text-red-900 dark:text-red-300">
+                      <Sparkles className="h-4 w-4 text-[#B3121B]" />
+                      <span>૪-પૃષ્ઠ ડિજિટલ અખબાર બિલ્ડર તૈયાર છે</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 rounded-full border border-red-200 dark:border-red-800">
+                      {cityGu || city || 'શહેર'} • {formatDateLabel(date)}
+                    </span>
+                  </div>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                    તમે {cityGu || city || 'પસંદ કરેલ'} શહેર અને {formatDateLabel(date)} તારીખ પસંદ કરેલ છે. બિલ્ડરમાં તમે ૧-ક્લિકમાં સમાચાર હેડલાઇન, ફોટા અને વેબસાઇટ આર્ટિકલ્સ સીધા ઇમ્પોર્ટ કરી શકશો.
+                  </p>
 
-                <div className="grid grid-cols-2 gap-2 bg-zinc-200/80 dark:bg-zinc-800/80 p-1 rounded-xl">
+                  {formValidationError && (
+                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-xs font-bold text-red-600 dark:text-red-400 flex items-start gap-2 shadow-xs">
+                      <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
+                      <div>
+                        <p className="font-black text-red-700 dark:text-red-400">
+                          {formValidationError}
+                        </p>
+                        <p className="text-[11px] font-semibold text-red-600/80 dark:text-red-400/80 mt-0.5">
+                          ભૂલ હોવાને કારણે ૪-પૃષ્ઠ બિલ્ડર ખોલી શકાશે નહીં. કૃપા કરીને પહેલાં ઉપરની ભૂલ સુધારો. (Cannot open 4-page builder while validation error exists)
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <button
                     type="button"
-                    onClick={() => setPdfInputMode('link')}
-                    className={`py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${pdfInputMode === 'link' ? 'bg-[#B3121B] text-white shadow-md' : 'text-zinc-600'}`}
+                    disabled={Boolean(formValidationError)}
+                    onClick={() => {
+                      if (formValidationError) {
+                        showToast('error', formValidationError);
+                        return;
+                      }
+                      setModalOpen(false);
+                      setBuilderEdition(editingEdition);
+                      setBuilderOpen(true);
+                    }}
+                    className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition ${
+                      formValidationError
+                        ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed border border-zinc-300 dark:border-zinc-700 shadow-none'
+                        : 'bg-gradient-to-r from-[#B3121B] via-red-600 to-[#8e0e15] hover:opacity-95 text-white shadow-lg shadow-red-900/20 cursor-pointer transform active:scale-98'
+                    }`}
                   >
-                    <LinkIcon className="h-3.5 w-3.5" />
-                    Option 1: PDF Link
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPdfInputMode('file')}
-                    className={`py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${pdfInputMode === 'file' ? 'bg-[#B3121B] text-white shadow-md' : 'text-zinc-600'}`}
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Option 2: Upload File
+                    <Newspaper className="h-4 w-4" />
+                    <span>૪-પૃષ્ઠ ટેમ્પલેટ બિલ્ડર ખોલો (Open 4-Page Newspaper Builder)</span>
+                    <ArrowRight className="h-4 w-4" />
                   </button>
                 </div>
+              ) : (
+                /* PDF ATTACHMENT */
+                <div className="border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl bg-zinc-50/50 dark:bg-zinc-950/20 space-y-3">
+                  <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
+                    Newspaper PDF Source (પસંદ કરો: લિંક અથવા ફાઇલ અપલોડ) *
+                  </label>
 
-                {pdfInputMode === 'link' ? (
-                  <input
-                    type="url"
-                    value={fileUrl}
-                    onChange={(e) => setFileUrl(e.target.value)}
-                    placeholder="https://example.com/newspaper.pdf"
-                    className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white text-xs font-semibold"
-                  />
-                ) : (
-                  <div>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      className="hidden"
-                      onChange={handleUploadFile}
-                    />
-                    <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${fileUrl ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-zinc-300 bg-white'}`}>
-                      {fileUrl ? (
-                        <div className="space-y-2">
-                          <div className="flex items-center justify-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-400">
-                            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                            <span>PDF File Selected & Ready!</span>
-                          </div>
-                          <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 truncate max-w-full px-2 bg-white dark:bg-zinc-900 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900">
-                            {fileUrl}
-                          </p>
-                          <div className="flex justify-center gap-2 pt-1">
-                            <button
-                              type="button"
-                              onClick={() => fileInputRef.current?.click()}
-                              disabled={uploading}
-                              className="px-3.5 py-1.5 rounded-lg bg-zinc-800 text-white text-xs font-bold hover:bg-zinc-900 cursor-pointer"
-                            >
-                              {uploading ? 'Uploading...' : 'Change PDF File'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setFileUrl('')}
-                              className="px-3.5 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 cursor-pointer"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={uploading}
-                          className="px-4 py-2 rounded-xl bg-[#B3121B] text-white text-xs font-black hover:bg-[#8e0e15] cursor-pointer"
-                        >
-                          {uploading ? 'Uploading...' : 'Browse PDF File'}
-                        </button>
-                      )}
-                    </div>
+                  <div className="grid grid-cols-2 gap-2 bg-zinc-200/80 dark:bg-zinc-800/80 p-1 rounded-xl">
+                    <button
+                      type="button"
+                      onClick={() => setPdfInputMode('link')}
+                      className={`py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${pdfInputMode === 'link' ? 'bg-[#B3121B] text-white shadow-md' : 'text-zinc-600'}`}
+                    >
+                      <LinkIcon className="h-3.5 w-3.5" />
+                      Option 1: PDF Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPdfInputMode('file')}
+                      className={`py-2 px-3 rounded-lg text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${pdfInputMode === 'file' ? 'bg-[#B3121B] text-white shadow-md' : 'text-zinc-600'}`}
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Option 2: Upload File
+                    </button>
                   </div>
-                )}
-              </div>
+
+                  {pdfInputMode === 'link' ? (
+                    <input
+                      type="url"
+                      value={fileUrl}
+                      onChange={(e) => setFileUrl(e.target.value)}
+                      placeholder="https://example.com/newspaper.pdf"
+                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white text-xs font-semibold"
+                    />
+                  ) : (
+                    <div>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.png,.jpg,.jpeg"
+                        className="hidden"
+                        onChange={handleUploadFile}
+                      />
+                      <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${fileUrl ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-zinc-300 bg-white'}`}>
+                        {fileUrl ? (
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-400">
+                              <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                              <span>PDF File Selected & Ready!</span>
+                            </div>
+                            <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 truncate max-w-full px-2 bg-white dark:bg-zinc-900 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900">
+                              {fileUrl}
+                            </p>
+                            <div className="flex justify-center gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploading}
+                                className="px-3.5 py-1.5 rounded-lg bg-zinc-800 text-white text-xs font-bold hover:bg-zinc-900 cursor-pointer"
+                              >
+                                {uploading ? 'Uploading...' : 'Change PDF File'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setFileUrl('')}
+                                className="px-3.5 py-1.5 rounded-lg bg-red-100 text-red-600 text-xs font-bold hover:bg-red-200 cursor-pointer"
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploading}
+                            className="px-4 py-2 rounded-xl bg-[#B3121B] text-white text-xs font-black hover:bg-[#8e0e15] cursor-pointer"
+                          >
+                            {uploading ? 'Uploading...' : 'Browse PDF File'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Submit Buttons */}
               <div className="flex justify-end gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
@@ -1515,11 +1681,21 @@ export default function AdminEPaperPage() {
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || uploading || uploadingThumb}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#B3121B] text-white text-xs font-black hover:bg-[#8e0e15] disabled:opacity-60 transition cursor-pointer shadow-md"
+                  disabled={saving || uploading || uploadingThumb || Boolean(formValidationError)}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#B3121B] text-white text-xs font-black hover:bg-[#8e0e15] disabled:opacity-50 disabled:cursor-not-allowed transition cursor-pointer shadow-md"
                 >
                   {(saving || uploading || uploadingThumb) && <Loader2 className="h-4 w-4 animate-spin" />}
-                  {uploading ? 'Uploading PDF File...' : uploadingThumb ? 'Uploading Thumbnail...' : editingEdition ? 'Save Changes' : status === 'PUBLISHED' ? 'Publish Edition' : 'Save as Draft'}
+                  {uploading
+                    ? 'Uploading PDF File...'
+                    : uploadingThumb
+                    ? 'Uploading Thumbnail...'
+                    : editionCreationOption === 'TEMPLATE'
+                    ? (editingEdition ? 'Save Changes' : status === 'PUBLISHED' ? 'Publish Edition' : 'Save as Draft')
+                    : editingEdition
+                    ? 'Save Changes'
+                    : status === 'PUBLISHED'
+                    ? 'Publish Edition'
+                    : 'Save as Draft'}
                 </button>
               </div>
             </form>
@@ -1613,27 +1789,86 @@ export default function AdminEPaperPage() {
 
       {/* ─── INTERACTIVE E-PAPER READER MODAL ─── */}
       {activeReaderEdition && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-2 sm:p-4">
-          <div className="relative flex h-full max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-0 sm:p-4">
+          <div className="relative flex h-full max-h-[100dvh] sm:max-h-[96vh] w-full max-w-6xl flex-col overflow-hidden rounded-none sm:rounded-3xl border-0 sm:border border-slate-800 bg-slate-900 shadow-2xl">
             
             {/* Reader Header */}
-            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-4 py-3 text-white">
-              <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-xl bg-red-600 flex items-center justify-center font-black">
-                  <Newspaper className="h-5 w-5" />
+            <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950 px-3 sm:px-4 py-2.5 text-white gap-2 shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl bg-red-600 flex items-center justify-center font-black shrink-0">
+                  <Newspaper className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
-                <div>
-                  <h3 className="text-base font-black leading-none">
+                <div className="min-w-0">
+                  <h3 className="text-xs sm:text-base font-black leading-tight truncate">
                     Gujarat Post — {activeReaderEdition.title || activeReaderEdition.cityGu || activeReaderEdition.city}
                   </h3>
-                  <p className="text-xs text-slate-400 font-semibold mt-1">
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-semibold mt-0.5">
                     {formatDateLabel(activeReaderEdition.date)} • {activeReaderEdition.pages || 24} Pages
                   </p>
                 </div>
               </div>
 
               {/* Toolbar Controls */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                {/* Zoom Controls */}
+                <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs shadow-inner">
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel((z) => Math.max(25, z - 10))}
+                    className="p-1 sm:p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel(calculateFitZoom())}
+                    className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-bold text-amber-400 hover:text-white hover:bg-slate-800/50 rounded-lg transition cursor-pointer"
+                    title="Fit to Screen"
+                  >
+                    ફિટ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel(100)}
+                    className="px-1.5 sm:px-2 py-0.5 text-[10px] sm:text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800/50 rounded-lg transition cursor-pointer hidden xs:inline-block"
+                    title="100% Size"
+                  >
+                    100%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+                    className="p-1 sm:p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                {/* Mode Selector (Broadsheet vs PDF) if both exist */}
+                {activeReaderEdition.templateData && activeReaderEdition.fileUrl && (
+                  <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-0.5 text-xs shadow-inner">
+                    <button
+                      type="button"
+                      onClick={() => setReaderViewMode('TEMPLATE')}
+                      className={`px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer ${
+                        readerViewMode === 'TEMPLATE' ? 'bg-red-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      ઈ-પેપર
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReaderViewMode('PDF')}
+                      className={`px-2 py-1 rounded-lg text-[10px] sm:text-xs font-bold transition cursor-pointer ${
+                        readerViewMode === 'PDF' ? 'bg-red-600 text-white shadow-xs' : 'text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      PDF
+                    </button>
+                  </div>
+                )}
 
                 {activeReaderEdition.fileUrl && !activeReaderEdition.fileUrl.startsWith('blob:') && (
                   <a
@@ -1641,55 +1876,89 @@ export default function AdminEPaperPage() {
                     download="GujaratPost_EPaper.pdf"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 rounded-xl bg-red-600 px-3.5 py-1.5 text-xs font-black text-white hover:bg-red-700 transition"
+                    className="flex items-center gap-1 rounded-xl bg-red-600 px-2.5 sm:px-3.5 py-1.5 text-xs font-black text-white hover:bg-red-700 transition"
+                    title="Download PDF"
                   >
-                    <Download className="h-4 w-4" />
+                    <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     <span className="hidden sm:inline">PDF</span>
                   </a>
                 )}
 
                 <button
                   onClick={closeReader}
-                  className="rounded-xl p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                  className="rounded-xl p-1.5 sm:p-2 text-slate-400 hover:bg-slate-800 hover:text-white transition cursor-pointer"
+                  title="Close"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
             </div>
 
-            {/* Reader Canvas */}
+            {/* Reader Canvas with Smooth Multi-directional Touch Scrolling */}
             <div
               ref={readerCanvasRef}
-              onScroll={(e) => {
-                const target = e.currentTarget;
-                const scrollPosition = target.scrollTop;
-                const totalScrollHeight = target.scrollHeight - target.clientHeight;
-                const totalPages = activeReaderEdition?.pages || 24;
-                if (totalScrollHeight > 0 && totalPages > 1) {
-                  const calculatedPage = Math.min(
-                    totalPages,
-                    Math.max(1, Math.round((scrollPosition / totalScrollHeight) * (totalPages - 1)) + 1)
-                  );
-                  if (calculatedPage !== currentPage) {
-                    setCurrentPage(calculatedPage);
-                  }
-                }
-              }}
-              className="relative flex-1 overflow-auto bg-slate-950 p-4 flex items-start justify-center"
+              className="relative flex-1 overflow-auto touch-pan-x touch-pan-y bg-slate-950 p-2 sm:p-4 flex items-start justify-center"
+              style={{ WebkitOverflowScrolling: 'touch' }}
             >
-              {isPdfUrl(activeReaderEdition.fileUrl) || activeReaderEdition.fileUrl?.includes('/uploads/') ? (
-                <iframe
-                  key={`${activeReaderEdition.id}-p${currentPage}`}
-                  src={formatEpaperPdfUrl(activeReaderEdition.fileUrl, currentPage)}
-                  className="bg-white border-0 shadow-2xl rounded-xl transition-all duration-200"
-                  style={{
-                    width: `${Math.round(850 * (zoomLevel / 100))}px`,
-                    height: `${Math.round(1150 * (zoomLevel / 100))}px`,
-                    maxWidth: '95vw',
-                  }}
-                  title={`Gujarat Post E-Paper Page ${currentPage}`}
-                />
-              ) : (
+              {readerViewMode === 'TEMPLATE' && activeReaderEdition.templateData ? (() => {
+                  let parsed: any = null;
+                  try {
+                    parsed = typeof activeReaderEdition.templateData === 'string'
+                      ? JSON.parse(activeReaderEdition.templateData)
+                      : activeReaderEdition.templateData;
+                  } catch (_) {}
+                  if (parsed) {
+                    return (
+                      <div
+                        className="shrink-0 transition-transform duration-150 origin-top mx-auto my-auto"
+                        style={{
+                          width: `${1224 * (zoomLevel / 100)}px`,
+                          height: `${1815 * (zoomLevel / 100)}px`,
+                          minWidth: `${1224 * (zoomLevel / 100)}px`,
+                          minHeight: `${1815 * (zoomLevel / 100)}px`,
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: '1224px',
+                            height: '1815px',
+                            transform: `scale(${zoomLevel / 100})`,
+                            transformOrigin: 'top left',
+                          }}
+                          className="bg-white shadow-2xl rounded overflow-hidden"
+                        >
+                          <EpaperReadOnlyProvider value={true}>
+                            {currentPage === 1 && <Page1Front data={parsed.page1} onChange={() => {}} />}
+                            {currentPage === 2 && <Page2Gujarat data={parsed.page2} onChange={() => {}} />}
+                            {currentPage === 3 && <Page3Business data={parsed.page3} onChange={() => {}} />}
+                            {currentPage === 4 && <Page4Sports data={parsed.page4} onChange={() => {}} />}
+                          </EpaperReadOnlyProvider>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })() : (isPdfUrl(activeReaderEdition.fileUrl) || activeReaderEdition.fileUrl?.includes('/uploads/')) ? (
+                  <div
+                    className="shrink-0 flex flex-col items-center justify-start mx-auto my-2"
+                    style={{
+                      width: `${Math.round(850 * (zoomLevel / 100))}px`,
+                      minHeight: `${Math.round(1350 * (zoomLevel / 100))}px`,
+                      maxWidth: '95vw',
+                    }}
+                  >
+                    <iframe
+                      key={`${activeReaderEdition.id}-p${currentPage}`}
+                      src={formatEpaperPdfUrl(activeReaderEdition.fileUrl, currentPage)}
+                      className="bg-white border-0 shadow-2xl rounded-xl w-full"
+                      style={{
+                        height: `${Math.round(1350 * (zoomLevel / 100))}px`,
+                        minHeight: '900px',
+                      }}
+                      title={`Gujarat Post E-Paper Page ${currentPage}`}
+                    />
+                  </div>
+                ) : (
                   <div className="relative mx-auto w-[680px] max-w-full min-h-[900px] rounded-lg bg-white p-8 text-slate-900 shadow-2xl border border-slate-300 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between border-b-4 border-slate-950 pb-2">
@@ -1727,17 +1996,18 @@ export default function AdminEPaperPage() {
             </div>
 
             {/* Bottom Nav */}
-            <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950 px-6 py-3 text-white">
+            <div className="flex items-center justify-between border-t border-slate-800 bg-slate-950 px-3 sm:px-6 py-2.5 text-white gap-2 shrink-0">
               <button
                 disabled={currentPage <= 1}
                 onClick={() => handlePageChange(currentPage - 1)}
-                className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-xs font-black hover:bg-slate-700 disabled:opacity-40 transition cursor-pointer"
+                className="flex items-center gap-1 rounded-xl bg-slate-800 px-3 sm:px-4 py-2 text-xs font-black hover:bg-slate-700 disabled:opacity-40 transition cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Previous Page
+                <span className="hidden sm:inline">Previous Page</span>
+                <span className="sm:hidden">પાછળ</span>
               </button>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <span className="text-xs font-bold text-slate-400">Page</span>
                 <select
                   value={currentPage}
@@ -1756,9 +2026,10 @@ export default function AdminEPaperPage() {
               <button
                 disabled={currentPage >= (activeReaderEdition.pages || 24)}
                 onClick={() => handlePageChange(currentPage + 1)}
-                className="flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-black text-white hover:bg-red-700 disabled:opacity-40 transition cursor-pointer"
+                className="flex items-center gap-1 rounded-xl bg-red-600 px-3 sm:px-4 py-2 text-xs font-black text-white hover:bg-red-700 disabled:opacity-40 transition cursor-pointer"
               >
-                Next Page
+                <span className="hidden sm:inline">Next Page</span>
+                <span className="sm:hidden">આગળ</span>
                 <ChevronRight className="h-4 w-4" />
               </button>
             </div>

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Play, VolumeX } from 'lucide-react';
-import { getPublicAdBySection } from '@/lib/api';
+import { ExternalLink, Play, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getPublicAdBySection, getPublicTributes, TributeItem } from '@/lib/api';
+import TributeCard from '@/components/tributes/TributeCard';
 import type { Language } from '@/types';
 
 export interface SidebarAdBannerProps {
@@ -18,7 +19,13 @@ export interface SidebarAdBannerProps {
   fallbackGradient?: string;
   minHeight?: number;
   className?: string;
+  enableTributeSlides?: boolean;
 }
+
+type SlideItem =
+  | { type: 'AD'; data: any }
+  | { type: 'BIRTHDAY'; data: TributeItem }
+  | { type: 'SHRADHANJALI'; data: TributeItem };
 
 export default function SidebarAdBanner({
   slot,
@@ -32,22 +39,89 @@ export default function SidebarAdBanner({
   fallbackGradient = 'linear-gradient(135deg,#FF6B35,#C81D25)',
   minHeight = 180,
   className = '',
+  enableTributeSlides = true,
 }: SidebarAdBannerProps) {
+  // Only allow birthday & shradhanjali tributes in the main home page first ad (SIDEBAR_HERO_TOP)
+  const allowTributes = Boolean(enableTributeSlides && slot === 'SIDEBAR_HERO_TOP');
+
   const [adData, setAdData] = useState<any>(null);
+  const [tributes, setTributes] = useState<{ birthdays: TributeItem[]; shradhanjalis: TributeItem[] }>({
+    birthdays: [],
+    shradhanjalis: [],
+  });
   const [loading, setLoading] = useState<boolean>(true);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState<number>(0);
+  const [isHovered, setIsHovered] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
-    getPublicAdBySection(slot).then((data) => {
+    Promise.all([
+      getPublicAdBySection(slot),
+      allowTributes ? getPublicTributes() : Promise.resolve({ birthdays: [], shradhanjalis: [], all: [] }),
+    ]).then(([adRes, tributesRes]) => {
       if (isMounted) {
-        setAdData(data);
+        setAdData(adRes);
+        if (tributesRes && allowTributes) {
+          setTributes({
+            birthdays: tributesRes.birthdays || [],
+            shradhanjalis: tributesRes.shradhanjalis || [],
+          });
+        }
         setLoading(false);
       }
     });
+
     return () => {
       isMounted = false;
     };
-  }, [slot]);
+  }, [slot, allowTributes]);
+
+  // Construct Slide Sequence:
+  // 1. First: Ad
+  // 2. If have birthday: show Birthday(s)
+  // 3. If have shradhanjali: after that show Shradhanjali(s)
+  // Strictly restricted to SIDEBAR_HERO_TOP only
+  const slides: SlideItem[] = [{ type: 'AD', data: adData }];
+
+  if (allowTributes) {
+    if (tributes.birthdays && tributes.birthdays.length > 0) {
+      tributes.birthdays.forEach((b) => {
+        slides.push({ type: 'BIRTHDAY', data: b });
+      });
+    }
+    if (tributes.shradhanjalis && tributes.shradhanjalis.length > 0) {
+      tributes.shradhanjalis.forEach((s) => {
+        slides.push({ type: 'SHRADHANJALI', data: s });
+      });
+    }
+  }
+
+  // Auto-play sliding interval (5 seconds)
+  useEffect(() => {
+    if (slides.length <= 1 || isHovered) return;
+
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [slides.length, isHovered]);
+
+  // Ensure currentSlideIndex stays valid if slides change
+  const activeIndex = currentSlideIndex >= slides.length ? 0 : currentSlideIndex;
+  const currentSlide = slides[activeIndex];
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentSlideIndex((prev) => (prev - 1 + slides.length) % slides.length);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
+  };
 
   const hasCustomMedia =
     adData &&
@@ -67,18 +141,28 @@ export default function SidebarAdBanner({
     mediaUrl.includes('youtube.com') ||
     mediaUrl.includes('youtu.be');
 
-  // Custom Uploaded Media Render
-  if (hasCustomMedia) {
-    return (
-      <div className={`ad-slot w-full ${className}`}>
-        <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest mb-1 text-center select-none">
-          {language === 'gu' ? 'જાહેરાત' : 'Advertisement'}
-        </p>
+  // Fallback Styled Card content
+  const title = language === 'gu' ? fallbackTitleGu : fallbackTitleEn;
+  const tag = language === 'gu' ? fallbackTagGu : fallbackTagEn;
+  const cta = language === 'gu' ? fallbackCtaGu : fallbackCtaEn;
+
+  // Header Title for current slide
+  let headerLabel = language === 'gu' ? 'જાહેરાત' : 'Advertisement';
+  if (currentSlide.type === 'BIRTHDAY') {
+    headerLabel = language === 'gu' ? '🎂 જન્મદિવસની હાર્દિક શુભકામના' : '🎂 Birthday Wishes';
+  } else if (currentSlide.type === 'SHRADHANJALI') {
+    headerLabel = language === 'gu' ? '🕊️ ભાવપૂર્ણ શ્રદ્ધાંજલિ / સ્મૃતિ' : '🕊️ In Loving Memory';
+  }
+
+  // Render Ad Slide Content
+  const renderAdContent = () => {
+    if (hasCustomMedia) {
+      return (
         <a
           href={redirectLink && redirectLink !== '#' ? redirectLink : undefined}
           target={redirectLink && redirectLink !== '#' ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="group relative flex flex-col w-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-red-500/30"
+          className="group relative flex flex-col w-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-red-500/30 block"
           style={{ minHeight }}
         >
           {isVideo ? (
@@ -128,21 +212,12 @@ export default function SidebarAdBanner({
             )}
           </div>
         </a>
-      </div>
-    );
-  }
+      );
+    }
 
-  // Fallback Styled Card Render
-  const title = language === 'gu' ? fallbackTitleGu : fallbackTitleEn;
-  const tag = language === 'gu' ? fallbackTagGu : fallbackTagEn;
-  const cta = language === 'gu' ? fallbackCtaGu : fallbackCtaEn;
-
-  return (
-    <div className={`ad-slot w-full ${className}`}>
-      <p className="text-[9px] font-semibold text-muted-foreground uppercase tracking-widest mb-1 text-center select-none">
-        {language === 'gu' ? 'જાહેરાત' : 'Advertisement'}
-      </p>
-      <div className="ad-inner">
+    // Default Fallback Styled Ad
+    return (
+      <div className="ad-inner w-full">
         <div
           className="ad-creative rounded-xl p-5 text-white flex flex-col justify-between shadow-sm relative overflow-hidden"
           style={{
@@ -168,6 +243,91 @@ export default function SidebarAdBanner({
           </button>
         </div>
       </div>
+    );
+  };
+
+  return (
+    <div
+      className={`ad-slot w-full relative ${className}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Dynamic Slide Category Header */}
+      <div className="flex items-center justify-between mb-1 px-1">
+        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider select-none truncate">
+          {headerLabel}
+        </p>
+
+        {slides.length > 1 && (
+          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 select-none">
+            {activeIndex + 1} / {slides.length}
+          </span>
+        )}
+      </div>
+
+      {/* Main Slide Carousel Container */}
+      <div className="relative w-full rounded-xl overflow-hidden group">
+        {/* Active Slide Renderer */}
+        <div className="w-full transition-opacity duration-300">
+          {currentSlide.type === 'AD' ? (
+            renderAdContent()
+          ) : (
+            <TributeCard tribute={currentSlide.data} minHeight={minHeight} />
+          )}
+        </div>
+
+        {/* Carousel Prev/Next Arrow Buttons (Only when 2+ slides exist) */}
+        {slides.length > 1 && (
+          <>
+            <button
+              onClick={handlePrev}
+              type="button"
+              aria-label="Previous Slide"
+              className="absolute left-1.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 cursor-pointer shadow"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleNext}
+              type="button"
+              aria-label="Next Slide"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-black/60 hover:bg-black/80 text-white backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20 cursor-pointer shadow"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {/* Carousel Pagination Indicator Dots */}
+      {slides.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5 mt-2">
+          {slides.map((s, idx) => {
+            const isActive = idx === activeIndex;
+            let dotColor = 'bg-[#B3121B] dark:bg-red-500';
+            if (s.type === 'BIRTHDAY') {
+              dotColor = 'bg-amber-500 dark:bg-amber-400';
+            } else if (s.type === 'SHRADHANJALI') {
+              dotColor = 'bg-stone-600 dark:bg-stone-400';
+            }
+
+            return (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setCurrentSlideIndex(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                  isActive
+                    ? `w-5 ${dotColor}`
+                    : 'w-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                }`}
+              />
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
+

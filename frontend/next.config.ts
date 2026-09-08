@@ -28,9 +28,10 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
-    const backendUrl = rawUrl && rawUrl.startsWith('http')
+    let backendUrl = rawUrl && rawUrl.startsWith('http')
       ? rawUrl.replace(/\/api\/?.*$/, '')
       : "http://127.0.0.1:5000";
+    backendUrl = backendUrl.replace('://localhost:', '://127.0.0.1:');
     return [
       {
         source: "/api/:path*",

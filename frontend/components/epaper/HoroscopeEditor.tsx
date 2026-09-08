@@ -37,7 +37,7 @@ export const HoroscopeEditor: React.FC<HoroscopeEditorProps> = ({ horoscope, onC
               rows={2}
               value={item.prediction}
               onChange={(e) => handlePredictionChange(idx, e.target.value)}
-              className="w-full p-1.5 border border-slate-200 rounded text-xs focus:ring-1 focus:ring-purple-500 resize-none"
+              className="w-full p-2 bg-white border border-slate-300 rounded text-xs text-slate-900 font-medium leading-relaxed focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none placeholder:text-slate-400 shadow-xs"
               placeholder={`${item.signGu} રાશિફળ...`}
             />
           </div>

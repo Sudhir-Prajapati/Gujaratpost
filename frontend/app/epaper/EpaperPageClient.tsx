@@ -12,8 +12,11 @@ import {
   MapPin,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   ZoomIn,
   ZoomOut,
+  RotateCcw,
+  Check,
   X,
   FileText,
   Loader2,
@@ -29,7 +32,8 @@ import {
   getDateOffsetStr,
   clearLegacyLocalStorage,
 } from '@/lib/epaper';
-import { formatEpaperPdfUrl, formatEpaperDownloadUrl } from '@/lib/media';
+import { formatEpaperPdfUrl, formatEpaperDownloadUrl, sanitizeImageUrl } from '@/lib/media';
+import { EpaperReadOnlyProvider } from '@/components/epaper/EpaperReadOnlyContext';
 import { Page1Front } from '@/components/epaper/Page1Front';
 import { Page2Gujarat } from '@/components/epaper/Page2Gujarat';
 import { Page3Business } from '@/components/epaper/Page3Business';
@@ -59,10 +63,12 @@ export default function EpaperPageClient() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [todayHasNoEditions, setTodayHasNoEditions] = useState(false);
 
-  // Reader Modal state
+  // Reader Modal state (Sandesh E-Paper Reader UX)
   const [activeReaderEdition, setActiveReaderEdition] = useState<EPaperEdition | null>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [zoomLevel, setZoomLevel] = useState<number>(80);
+  const [pageDropdownOpen, setPageDropdownOpen] = useState<boolean>(false);
+  const [readerViewMode, setReaderViewMode] = useState<'TEMPLATE' | 'PDF'>('TEMPLATE');
 
   // Load editions & cities from backend API
   const todayStr = getTodayDateStr();
@@ -108,15 +114,18 @@ export default function EpaperPageClient() {
   useEffect(() => {
     if (activeReaderEdition) {
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.position = 'fixed';
       document.body.style.width = '100%';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
     }
     return () => {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
       document.body.style.position = '';
       document.body.style.width = '';
     };
@@ -127,27 +136,94 @@ export default function EpaperPageClient() {
   const openReader = (ed: EPaperEdition) => {
     setActiveReaderEdition(ed);
     setCurrentPage(1);
-    setZoomLevel(100);
+    setPageDropdownOpen(false);
+    setReaderViewMode(ed.templateData ? 'TEMPLATE' : 'PDF');
+
+    // Smart default zoom: broadsheet standard width is 1224px
+    if (typeof window !== 'undefined') {
+      const w = window.innerWidth;
+      if (w >= 1600) setZoomLevel(90);
+      else if (w >= 1300) setZoomLevel(80);
+      else if (w >= 1050) setZoomLevel(70);
+      else if (w >= 768) setZoomLevel(60);
+      else setZoomLevel(Math.min(100, Math.max(25, Math.floor(((w - 16) / 1224) * 100))));
+    } else {
+      setZoomLevel(80);
+    }
   };
 
   const closeReader = () => {
     setActiveReaderEdition(null);
+    setPageDropdownOpen(false);
   };
 
   const handlePageChange = (newPage: number) => {
     if (!activeReaderEdition) return;
-    const totalPages = activeReaderEdition.pages || 24;
+    const totalPages = activeReaderEdition.pages || 4;
     const targetPage = Math.max(1, Math.min(totalPages, newPage));
     setCurrentPage(targetPage);
 
     if (readerCanvasRef.current) {
-      const container = readerCanvasRef.current;
-      const totalScrollHeight = container.scrollHeight - container.clientHeight;
-      if (totalScrollHeight > 0 && totalPages > 1) {
-        const targetScroll = ((targetPage - 1) / (totalPages - 1)) * totalScrollHeight;
-        container.scrollTo({ top: targetScroll, behavior: 'smooth' });
+      readerCanvasRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  // Keyboard navigation inside reader
+  useEffect(() => {
+    if (!activeReaderEdition) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't intercept if user is typing in an input
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement)?.tagName)) return;
+
+      const totalPages = activeReaderEdition.pages || 4;
+      if (e.key === 'ArrowLeft') {
+        setCurrentPage((prev) => Math.max(1, prev - 1));
+      } else if (e.key === 'ArrowRight') {
+        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+      } else if (e.key === 'Escape') {
+        closeReader();
+      } else if (e.key === '+' || e.key === '=') {
+        setZoomLevel((prev) => Math.min(150, prev + 10));
+      } else if (e.key === '-') {
+        setZoomLevel((prev) => Math.max(40, prev - 10));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeReaderEdition]);
+
+  const handleSwitchCityInReader = async (cityKey: string) => {
+    setSelectedCity(cityKey);
+    // Find matching edition in loaded editions
+    const match = editions.find(
+      (e) =>
+        e.city.toLowerCase() === cityKey.toLowerCase() ||
+        (e.cityGu && e.cityGu.toLowerCase() === cityKey.toLowerCase())
+    );
+    if (match) {
+      setActiveReaderEdition(match);
+      setCurrentPage(1);
+      setReaderViewMode(match.templateData ? 'TEMPLATE' : 'PDF');
+    } else {
+      const fetched = await fetchPublicEPapers({ city: cityKey, date: selectedDate });
+      if (fetched.length > 0) {
+        setEditions(fetched);
+        setActiveReaderEdition(fetched[0]);
+        setCurrentPage(1);
+        setReaderViewMode(fetched[0].templateData ? 'TEMPLATE' : 'PDF');
       }
     }
+  };
+
+  const formatIsoToDdMmYyyy = (isoDate: string) => {
+    if (!isoDate) return '';
+    const parts = isoDate.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    return isoDate;
   };
 
   const formatDateDisplay = (dateStr: string) => {
@@ -504,9 +580,41 @@ export default function EpaperPageClient() {
                             {/* Newspaper front page — portrait aspect */}
                             <div className="relative w-full overflow-hidden bg-slate-100 dark:bg-zinc-950" style={{ aspectRatio: '3/4' }}>
                               {isImageUrl(edition.thumbnailUrl) ? (
-                                <img src={edition.thumbnailUrl} alt={displayTitle} className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]" />
+                                <img
+                                  src={sanitizeImageUrl(edition.thumbnailUrl)}
+                                  alt={displayTitle}
+                                  onError={(e) => {
+                                    let fallback = '';
+                                    if (edition.templateData) {
+                                      try {
+                                        const p = typeof edition.templateData === 'string' ? JSON.parse(edition.templateData) : edition.templateData;
+                                        fallback = p?.page1?.leadStory?.image || p?.page1?.mainHeadline?.image || '';
+                                      } catch (_) {}
+                                    }
+                                    if (fallback && e.currentTarget.src !== fallback) {
+                                      e.currentTarget.src = fallback;
+                                    }
+                                  }}
+                                  className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+                                />
                               ) : isImageUrl(edition.fileUrl) ? (
-                                <img src={edition.fileUrl} alt={displayTitle} className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]" />
+                                <img
+                                  src={sanitizeImageUrl(edition.fileUrl)}
+                                  alt={displayTitle}
+                                  onError={(e) => {
+                                    let fallback = '';
+                                    if (edition.templateData) {
+                                      try {
+                                        const p = typeof edition.templateData === 'string' ? JSON.parse(edition.templateData) : edition.templateData;
+                                        fallback = p?.page1?.leadStory?.image || p?.page1?.mainHeadline?.image || '';
+                                      } catch (_) {}
+                                    }
+                                    if (fallback && e.currentTarget.src !== fallback) {
+                                      e.currentTarget.src = fallback;
+                                    }
+                                  }}
+                                  className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+                                />
                               ) : edition.fileUrl && edition.fileUrl.includes('res.cloudinary.com') ? (
                                 <img src={edition.fileUrl.replace(/\.pdf$/i, '.jpg')} alt={displayTitle} className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]" />
                               ) : edition.fileUrl && (isPdfUrl(edition.fileUrl) || edition.fileUrl.includes('/uploads/')) ? (
@@ -541,177 +649,410 @@ export default function EpaperPageClient() {
         })()}
       </section>
 
+      {/* ─── SANDESH-STYLE INTERACTIVE E-PAPER READER MODAL ─── */}
+      {activeReaderEdition && (() => {
+        const parsedTemplate = (() => {
+          if (!activeReaderEdition.templateData) return null;
+          try {
+            return typeof activeReaderEdition.templateData === 'string'
+              ? JSON.parse(activeReaderEdition.templateData)
+              : activeReaderEdition.templateData;
+          } catch {
+            return null;
+          }
+        })();
 
-      {/* ─── INTERACTIVE E-PAPER READER MODAL ─── */}
-      {activeReaderEdition && (
-        <div className="fixed inset-0 z-[9999] flex flex-col bg-slate-950">
+        const totalPages = activeReaderEdition.pages || (parsedTemplate ? 4 : 24);
+        const activeCityName = activeReaderEdition.city || 'Ahmedabad';
+        const activeCityGu = activeReaderEdition.cityGu || activeCityName;
 
-          {/* ── Reader Header ── */}
-          <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900 px-4 py-2.5 text-white shrink-0">
-            {/* Left: Logo + title */}
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="h-8 w-8 rounded-lg bg-red-600 flex items-center justify-center shrink-0">
-                <Newspaper className="h-4 w-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="text-sm font-black leading-tight truncate">
-                  Gujarat Post — {activeReaderEdition.cityGu || activeReaderEdition.city}
-                </h3>
-                <p className="text-[11px] text-slate-400 font-semibold leading-tight">
-                  {formatDateDisplay(activeReaderEdition.date)} • {activeReaderEdition.pages || 24} {getLocalized(language, { en: 'Pages', gu: 'પેજ', hi: 'पेज' })}
-                </p>
-              </div>
-            </div>
+        const readerCityTabs = [
+          { key: 'Ahmedabad', labelEn: 'AHMEDABAD', labelGu: 'અમદાવાદ' },
+          { key: 'Surat', labelEn: 'SURAT CITY', labelGu: 'સુરત' },
+          { key: 'Rajkot', labelEn: 'RAJKOT CITY', labelGu: 'રાજકોટ' },
+          { key: 'Vadodara', labelEn: 'VADODARA', labelGu: 'વડોદરા' },
+          { key: 'Bhavnagar', labelEn: 'BHAVNAGAR', labelGu: 'ભાવનગર' },
+          { key: 'Bhuj', labelEn: 'BHUJ', labelGu: 'ભુજ' },
+          { key: 'Gandhinagar', labelEn: 'GANDHINAGAR', labelGu: 'ગાંધીનગર' },
+          { key: 'Jamnagar', labelEn: 'JAMNAGAR', labelGu: 'જામનગર' },
+        ];
 
-            {/* Right: Download + Close */}
-            <div className="flex items-center gap-2 shrink-0">
-              {activeReaderEdition.fileUrl && (
-                <a
-                  href={formatEpaperDownloadUrl(activeReaderEdition.fileUrl)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-black text-white hover:bg-red-700 transition"
+        const pageTitles: Record<number, { en: string; gu: string }> = {
+          1: { en: 'Front Page', gu: 'મુખ્ય પૃષ્ઠ' },
+          2: { en: 'Gujarat News', gu: 'રાજ્ય સમાચાર' },
+          3: { en: 'Business', gu: 'વેપાર & અર્થતંત્ર' },
+          4: { en: 'Sports', gu: 'રમતગમત / સ્પોર્ટ્સ' },
+        };
+
+        return (
+          <div className="fixed inset-0 z-[9999] flex flex-col bg-[#EAECF0] text-slate-900 select-none">
+
+            {/* ── 1. Top Crimson Red Navigation Bar ── */}
+            <header className="bg-[#B3121B] text-white flex items-center justify-between px-3 sm:px-6 py-2 shrink-0 shadow-md">
+              {/* Left: Home & Current Opened E-Paper City Only */}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={closeReader}
+                  className="px-3 py-1 text-xs font-black uppercase tracking-wider text-white hover:bg-black/20 rounded-lg transition shrink-0 flex items-center gap-1.5 cursor-pointer"
+                  title="Return to E-Paper Home"
                 >
-                  <Download className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">PDF</span>
-                </a>
-              )}
-              <button
-                onClick={closeReader}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
+                  <Newspaper className="h-4 w-4" />
+                  <span>HOME</span>
+                </button>
+                <span className="text-white/40">|</span>
 
-          {/* ── Reader Canvas (full remaining height) ── */}
-          <div
-            ref={readerCanvasRef}
-            className="flex-1 overflow-auto bg-slate-950"
-            onScroll={(e) => {
-              const target = e.currentTarget;
-              const scrollPosition = target.scrollTop;
-              const totalScrollHeight = target.scrollHeight - target.clientHeight;
-              const totalPages = activeReaderEdition?.pages || 24;
-              if (totalScrollHeight > 0 && totalPages > 1) {
-                const calculatedPage = Math.min(
-                  totalPages,
-                  Math.max(1, Math.round((scrollPosition / totalScrollHeight) * (totalPages - 1)) + 1)
-                );
-                if (calculatedPage !== currentPage) setCurrentPage(calculatedPage);
-              }
-            }}
-          >
-            <div
-              className="min-h-full flex items-start justify-center py-4"
-              style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
-            >
-              {activeReaderEdition.templateData ? (() => {
-                let parsed: any = null;
-                try {
-                  parsed = typeof activeReaderEdition.templateData === 'string'
-                    ? JSON.parse(activeReaderEdition.templateData)
-                    : activeReaderEdition.templateData;
-                } catch (_) {}
+                {/* Only Show the Opened E-Paper City */}
+                <div className="px-3 py-1 text-xs font-black uppercase tracking-wider bg-black/25 text-white rounded-lg shadow-xs border-b-2 border-white flex items-center gap-1.5">
+                  <span>{activeCityName.toUpperCase()} {activeCityName.toLowerCase().endsWith('city') ? '' : 'CITY'}</span>
+                </div>
+              </div>
 
-                if (parsed) {
-                  return (
-                    <div className="bg-white shadow-2xl overflow-hidden rounded">
-                      {currentPage === 1 && <Page1Front data={parsed.page1} onChange={() => {}} />}
-                      {currentPage === 2 && <Page2Gujarat data={parsed.page2} onChange={() => {}} />}
-                      {currentPage === 3 && <Page3Business data={parsed.page3} onChange={() => {}} />}
-                      {currentPage === 4 && <Page4Sports data={parsed.page4} onChange={() => {}} />}
+              {/* Right: Close button */}
+              <div className="flex items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={closeReader}
+                  className="p-1.5 text-white/80 hover:text-white hover:bg-black/20 rounded-lg transition cursor-pointer flex items-center gap-1"
+                  title="Close E-Paper (Esc)"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </header>
+
+            {/* ── 2. Sub-Header Toolbar (Sandesh Controls Bar) ── */}
+            <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-xs shrink-0 z-30">
+              
+              {/* Left Group: Page Dropdown + City Title */}
+              <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                {/* Red Page Dropdown Button */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setPageDropdownOpen(!pageDropdownOpen)}
+                    className="bg-[#B3121B] hover:bg-[#990e15] text-white px-3 sm:px-3.5 py-1.5 rounded font-black text-xs flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                  >
+                    <span>Page {currentPage}</span>
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${pageDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {pageDropdownOpen && (
+                    <div className="absolute left-0 top-full mt-1.5 w-56 rounded-lg bg-white border border-slate-200 shadow-xl py-1.5 z-50 animate-in fade-in zoom-in-95">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((pNum) => {
+                        const isSelected = currentPage === pNum;
+                        const label = pageTitles[pNum]
+                          ? `${pageTitles[pNum].gu} (${pageTitles[pNum].en})`
+                          : `પેજ ${pNum}`;
+                        return (
+                          <button
+                            key={pNum}
+                            type="button"
+                            onClick={() => {
+                              handlePageChange(pNum);
+                              setPageDropdownOpen(false);
+                            }}
+                            className={`w-full px-3.5 py-2 text-left text-xs font-bold flex items-center justify-between transition ${
+                              isSelected ? 'bg-red-50 text-[#B3121B]' : 'text-slate-700 hover:bg-slate-50'
+                            }`}
+                          >
+                            <span>Page {pNum}: {label}</span>
+                            {isSelected && <Check className="h-3.5 w-3.5 text-[#B3121B]" />}
+                          </button>
+                        );
+                      })}
                     </div>
-                  );
-                }
+                  )}
+                </div>
 
-                return null;
-              })() : null}
+                {/* Big Center Title: Ahmedabad City */}
+                <div className="min-w-0">
+                  <h2 className="text-lg sm:text-2xl font-black text-slate-800 tracking-tight leading-none truncate">
+                    {activeCityName} City
+                  </h2>
+                </div>
+              </div>
 
-              {!activeReaderEdition.templateData && (isPdfUrl(activeReaderEdition.fileUrl) || activeReaderEdition.fileUrl?.includes('/uploads/')) ? (
-                <iframe
-                  key={`${activeReaderEdition.id}-p${currentPage}`}
-                  src={formatEpaperPdfUrl(activeReaderEdition.fileUrl, currentPage)}
-                  className="w-[calc(100vw-2rem)] max-w-[900px] bg-white border-0 shadow-2xl"
-                  style={{ height: 'calc((100vw - 2rem) * 1.414)', maxHeight: '90vh' }}
-                  title={`Gujarat Post E-Paper Page ${currentPage}`}
-                />
-              ) : !activeReaderEdition.templateData && isImageUrl(activeReaderEdition.fileUrl) ? (
-                <img
-                  src={activeReaderEdition.fileUrl}
-                  alt={`Gujarat Post E-Paper`}
-                  className="w-full max-w-[900px] h-auto shadow-2xl"
-                />
-              ) : !activeReaderEdition.templateData && isImageUrl(activeReaderEdition.thumbnailUrl) ? (
-                <img
-                  src={activeReaderEdition.thumbnailUrl}
-                  alt={`Gujarat Post E-Paper`}
-                  className="w-full max-w-[900px] h-auto shadow-2xl"
-                />
-              ) : !activeReaderEdition.templateData && (
-                /* Fallback: newspaper mock layout */
-                <div className="w-full max-w-[750px] bg-white text-slate-900 shadow-2xl p-8 rounded-lg">
-                  <div className="flex items-center justify-between border-b-4 border-slate-950 pb-3 mb-6">
-                    <h2 className="text-4xl font-black tracking-tighter text-red-600">GUJARAT POST</h2>
-                    <div className="text-right text-xs font-black uppercase text-slate-700">
-                      <div>{activeReaderEdition.cityGu || activeReaderEdition.city} Edition</div>
-                      <div className="text-[10px] text-slate-500">{activeReaderEdition.date} • Page {currentPage}</div>
+              {/* Center / Right Controls: Pagination, Zoom, Date, PDF Download */}
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                
+                {/* Pagination Pills: « 1 2 3 4 » */}
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    className={`h-8 w-8 rounded text-xs font-black flex items-center justify-center border transition ${
+                      currentPage > 1
+                        ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 cursor-pointer'
+                        : 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
+                    }`}
+                    title="Previous Page (પાછળ)"
+                  >
+                    «
+                  </button>
+
+                  {Array.from({ length: Math.min(totalPages, 6) }, (_, i) => i + 1).map((pNum) => (
+                    <button
+                      key={pNum}
+                      type="button"
+                      onClick={() => handlePageChange(pNum)}
+                      className={`h-8 min-w-[32px] px-2 rounded text-xs font-black transition cursor-pointer ${
+                        currentPage === pNum
+                          ? 'bg-[#B3121B] text-white border border-[#B3121B] shadow-sm'
+                          : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  ))}
+
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    className={`h-8 w-8 rounded text-xs font-black flex items-center justify-center border transition ${
+                      currentPage < totalPages
+                        ? 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100 cursor-pointer'
+                        : 'border-slate-200 bg-slate-100 text-slate-300 cursor-not-allowed'
+                    }`}
+                    title="Next Page (આગળ)"
+                  >
+                    »
+                  </button>
+                </div>
+
+                {/* Zoom Controls (Sandesh style ZOOM pill) */}
+                <div className="flex items-center gap-1 bg-white border border-slate-300 rounded px-2 py-1 shadow-xs">
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel((z) => Math.max(40, z - 10))}
+                    className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition cursor-pointer"
+                    title="Zoom Out"
+                  >
+                    <ZoomOut className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="text-xs font-black text-slate-800 min-w-[42px] text-center select-none">
+                    {zoomLevel}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setZoomLevel((z) => Math.min(150, z + 10))}
+                    className="p-1 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded transition cursor-pointer"
+                    title="Zoom In"
+                  >
+                    <ZoomIn className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof window !== 'undefined') {
+                        const w = window.innerWidth;
+                        if (w >= 1600) setZoomLevel(90);
+                        else if (w >= 1300) setZoomLevel(80);
+                        else if (w >= 1050) setZoomLevel(70);
+                        else setZoomLevel(55);
+                      } else {
+                        setZoomLevel(80);
+                      }
+                    }}
+                    className="text-[10px] font-black text-[#B3121B] hover:underline pl-1.5 border-l border-slate-200 uppercase cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                </div>
+
+                {/* Date Display Pill: 08-09-2026 📅 */}
+                <div className="flex items-center gap-1.5 bg-white border border-slate-300 rounded px-2.5 py-1.5 shadow-xs text-xs font-bold text-slate-700 select-none">
+                  <span>{formatIsoToDdMmYyyy(activeReaderEdition.date)}</span>
+                  <CalendarDays className="h-3.5 w-3.5 text-slate-400" />
+                </div>
+
+                {/* Mode Indicator: Only E-Paper */}
+                <div className="flex items-center bg-[#B3121B] text-white px-3 py-1.5 rounded font-black text-xs shadow-xs select-none">
+                  <span>ઈ-પેપર</span>
+                </div>
+
+                {/* PDF Download Button */}
+                {activeReaderEdition.fileUrl && (
+                  <a
+                    href={formatEpaperDownloadUrl(activeReaderEdition.fileUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[#B3121B] hover:bg-[#990e15] text-white px-3 py-1.5 rounded font-black text-xs flex items-center gap-1.5 shadow-sm transition"
+                    title="Download Newspaper PDF"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    <span>PDF</span>
+                  </a>
+                )}
+
+              </div>
+            </div>
+
+            {/* ── 3. Main Workspace (Left Thumbnails Rail + Center Broadsheet) ── */}
+            <div className="flex-1 flex overflow-hidden relative bg-[#EAECF0]">
+
+              {/* ── Left Sidebar: Vertical Page Thumbnails Rail (Sandesh Style) ── */}
+              <aside className="hidden sm:flex w-32 sm:w-40 md:w-44 bg-white border-r border-slate-200 flex-col shrink-0 overflow-y-auto p-2.5 space-y-3.5 shadow-sm scrollbar-thin z-10">
+                <div className="text-[10px] font-black uppercase text-slate-400 tracking-wider text-center border-b border-slate-100 pb-1.5">
+                  તમામ પેજ ({totalPages})
+                </div>
+
+                {Array.from({ length: Math.min(totalPages, 4) }, (_, i) => i + 1).map((pNum) => (
+                  <div
+                    key={pNum}
+                    onClick={() => handlePageChange(pNum)}
+                    className={`cursor-pointer group flex flex-col items-center bg-white rounded border-2 transition-all duration-150 overflow-hidden shadow-xs hover:shadow-md shrink-0 ${
+                      currentPage === pNum
+                        ? 'border-[#B3121B] ring-2 ring-red-400/40 shadow-md scale-[1.01]'
+                        : 'border-slate-200 hover:border-red-300 opacity-90 hover:opacity-100'
+                    }`}
+                  >
+                    {/* Miniature Page Content Preview */}
+                    <div className="relative w-28 sm:w-36 h-36 sm:h-44 bg-white overflow-hidden select-none pointer-events-none border-b border-slate-100">
+                      {pNum === 1 && (activeReaderEdition.thumbnailUrl || (activeReaderEdition.fileUrl && activeReaderEdition.fileUrl.includes("res.cloudinary.com"))) ? (
+                        <img
+                          src={activeReaderEdition.thumbnailUrl || activeReaderEdition.fileUrl.replace(/\.pdf$/i, ".jpg")}
+                          alt={`Page ${pNum}`}
+                          className="w-full h-full object-cover object-top"
+                        />
+                      ) : parsedTemplate ? (
+                        <div
+                          style={{
+                            width: "1000px",
+                            height: "1414px",
+                            transform: "scale(0.14)",
+                            transformOrigin: "top left",
+                          }}
+                          className="pointer-events-none select-none bg-white"
+                        >
+                          <EpaperReadOnlyProvider value={true}>
+                            {pNum === 1 && <Page1Front data={parsedTemplate.page1} onChange={() => {}} readOnly={true} />}
+                            {pNum === 2 && <Page2Gujarat data={parsedTemplate.page2} onChange={() => {}} readOnly={true} />}
+                            {pNum === 3 && <Page3Business data={parsedTemplate.page3} onChange={() => {}} readOnly={true} />}
+                            {pNum === 4 && <Page4Sports data={parsedTemplate.page4} onChange={() => {}} readOnly={true} />}
+                          </EpaperReadOnlyProvider>
+                        </div>
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-2 bg-slate-50 text-slate-400">
+                          <FileText className="h-8 w-8 mb-1 text-slate-300" />
+                          <span className="text-[10px] font-bold text-slate-500">પેજ {pNum}</span>
+                        </div>
+                      )}
+                    </div>
+                    {/* Red Bottom Badge: PAGE 1, PAGE 2, etc. */}
+                    <div
+                      className={`w-full py-1 text-center text-[10px] font-black uppercase tracking-wider transition ${
+                        currentPage === pNum
+                          ? 'bg-[#B3121B] text-white'
+                          : 'bg-slate-700 text-white group-hover:bg-[#B3121B]'
+                      }`}
+                    >
+                      PAGE {pNum}
                     </div>
                   </div>
-                  <div className="space-y-4">
-                    <span className="inline-block bg-red-600 text-white text-[11px] font-black uppercase px-3 py-1 rounded">
-                      PAGE {currentPage} • {getLocalized(language, { en: 'MAIN EDITION', gu: 'મુખ્ય અંક', hi: 'मुख्य संस्करण' })}
-                    </span>
-                    <h3 className="text-2xl font-black text-slate-950 leading-tight">
-                      {activeReaderEdition.title || `${activeReaderEdition.cityGu || activeReaderEdition.city} Edition`}
-                    </h3>
-                    <p className="text-slate-500 text-sm">{activeReaderEdition.date}</p>
+                ))}
+              </aside>
+
+              {/* ── Center Canvas: Broadsheet Viewport flanked by floating nav arrows ── */}
+              <div
+                ref={readerCanvasRef}
+                className="flex-1 overflow-auto touch-pan-x touch-pan-y flex items-start justify-center p-2 sm:p-8 relative scrollbar-thin"
+                style={{ WebkitOverflowScrolling: 'touch' }}
+              >
+                {/* Floating Left Arrow Button (<) */}
+                <button
+                  type="button"
+                  disabled={currentPage <= 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  title="Previous Page (પાછળનું પેજ)"
+                  className="sticky left-2 sm:left-4 top-1/2 -translate-y-1/2 z-20 h-16 w-8 sm:h-20 sm:w-10 rounded-r-lg sm:rounded-lg bg-[#B3121B] hover:bg-[#990e15] text-white flex items-center justify-center shadow-xl transition-all duration-150 disabled:opacity-0 disabled:pointer-events-none cursor-pointer shrink-0 mr-2"
+                >
+                  <ChevronLeft className="h-6 w-6 stroke-[3]" />
+                </button>
+
+                {/* Scaled Broadsheet Paper (Full 1224px width, No Cutoff) */}
+                <div
+                  className="flex flex-col items-center mx-auto shrink-0 relative"
+                  style={{
+                    width: `${1224 * (zoomLevel / 100)}px`,
+                    height: `${1815 * (zoomLevel / 100)}px`,
+                  }}
+                >
+                  <div
+                    className="bg-white shadow-2xl rounded border border-slate-300 overflow-hidden w-[1224px] min-w-[1224px] max-w-[1224px] select-text shrink-0"
+                    style={{
+                      transform: `scale(${zoomLevel / 100})`,
+                      transformOrigin: 'top left',
+                    }}
+                  >
+                    <EpaperReadOnlyProvider value={true}>
+                      {readerViewMode === 'TEMPLATE' && parsedTemplate ? (
+                        <>
+                          {currentPage === 1 && <Page1Front data={parsedTemplate.page1} onChange={() => {}} readOnly={true} />}
+                          {currentPage === 2 && <Page2Gujarat data={parsedTemplate.page2} onChange={() => {}} readOnly={true} />}
+                          {currentPage === 3 && <Page3Business data={parsedTemplate.page3} onChange={() => {}} readOnly={true} />}
+                          {currentPage === 4 && <Page4Sports data={parsedTemplate.page4} onChange={() => {}} readOnly={true} />}
+                        </>
+                      ) : activeReaderEdition.fileUrl && (isPdfUrl(activeReaderEdition.fileUrl) || activeReaderEdition.fileUrl.includes('/uploads/')) ? (
+                        <iframe
+                          key={`${activeReaderEdition.id}-p${currentPage}`}
+                          src={formatEpaperPdfUrl(activeReaderEdition.fileUrl, currentPage)}
+                          className="w-[1224px] bg-white border-0"
+                          style={{ height: '1815px' }}
+                          title={`Gujarat Post E-Paper Page ${currentPage}`}
+                        />
+                      ) : isImageUrl(activeReaderEdition.fileUrl) ? (
+                        <img
+                          src={activeReaderEdition.fileUrl}
+                          alt={`Gujarat Post E-Paper`}
+                          className="w-[1224px] h-auto shadow-2xl"
+                        />
+                      ) : isImageUrl(activeReaderEdition.thumbnailUrl) ? (
+                        <img
+                          src={activeReaderEdition.thumbnailUrl}
+                          alt={`Gujarat Post E-Paper`}
+                          className="w-[1224px] h-auto shadow-2xl"
+                        />
+                      ) : (
+                        <div className="w-[1224px] min-h-[1815px] bg-white text-slate-900 p-12 flex flex-col justify-between">
+                          <div className="border-b-4 border-slate-950 pb-4">
+                            <h2 className="text-5xl font-black text-red-600 tracking-tight">ગુજરાત પોસ્ટ</h2>
+                            <div className="flex justify-between text-xs font-bold text-slate-600 mt-2">
+                              <span>{activeCityGu || activeCityName} આવૃત્તિ</span>
+                              <span>તારીખ: {activeReaderEdition.date} • પેજ {currentPage}</span>
+                            </div>
+                          </div>
+                          <div className="my-auto text-center py-20 space-y-4">
+                            <h3 className="text-3xl font-black text-slate-800">
+                              {activeReaderEdition.title || `${activeCityGu || activeCityName} આવૃત્તિ`}
+                            </h3>
+                            <p className="text-slate-500 font-medium">આ પેજ પર કોઈ સામગ્રી ઉપલબ્ધ નથી.</p>
+                          </div>
+                        </div>
+                      )}
+                    </EpaperReadOnlyProvider>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
 
-          {/* ── Bottom Navigation Bar ── */}
-          <div className="flex items-center justify-between border-t border-slate-800 bg-slate-900 px-4 py-2.5 text-white shrink-0">
-            <button
-              disabled={currentPage <= 1}
-              onClick={() => handlePageChange(currentPage - 1)}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3.5 py-2 text-xs font-black hover:bg-slate-700 disabled:opacity-40 transition"
-            >
-              <ChevronLeft className="h-4 w-4" />
-              {getLocalized(language, { en: 'Previous', gu: 'પાછળ', hi: 'पिछला' })}
-            </button>
+                {/* Floating Right Arrow Button (>) */}
+                <button
+                  type="button"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  title="Next Page (આગળનું પેજ)"
+                  className="sticky right-2 sm:right-4 top-1/2 -translate-y-1/2 z-20 h-16 w-8 sm:h-20 sm:w-10 rounded-l-lg sm:rounded-lg bg-[#B3121B] hover:bg-[#990e15] text-white flex items-center justify-center shadow-xl transition-all duration-150 disabled:opacity-0 disabled:pointer-events-none cursor-pointer shrink-0 ml-2"
+                >
+                  <ChevronRight className="h-6 w-6 stroke-[3]" />
+                </button>
+              </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-400">{getLocalized(language, { en: 'Page', gu: 'પેજ', hi: 'पेज' })}</span>
-              <select
-                value={currentPage}
-                onChange={(e) => handlePageChange(Number(e.target.value))}
-                className="bg-slate-800 text-white text-xs font-bold px-2 py-1.5 rounded-lg border border-slate-700 focus:outline-none cursor-pointer"
-              >
-                {Array.from({ length: activeReaderEdition.pages || 24 }, (_, i) => i + 1).map((pNum) => (
-                  <option key={pNum} value={pNum}>{pNum}</option>
-                ))}
-              </select>
-              <span className="text-xs font-bold text-slate-400">
-                {getLocalized(language, { en: 'of', gu: 'માંથી', hi: 'का' })} {activeReaderEdition.pages || 24}
-              </span>
             </div>
 
-            <button
-              disabled={currentPage >= (activeReaderEdition.pages || 24)}
-              onClick={() => handlePageChange(currentPage + 1)}
-              className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3.5 py-2 text-xs font-black text-white hover:bg-red-700 disabled:opacity-40 transition"
-            >
-              {getLocalized(language, { en: 'Next', gu: 'આગળ', hi: 'अगला' })}
-              <ChevronRight className="h-4 w-4" />
-            </button>
           </div>
-
-        </div>
-      )}
+        );
+      })()}
     </main>
   );
 }

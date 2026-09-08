@@ -61,6 +61,45 @@ export function clearLegacyLocalStorage(): void {
   } catch {}
 }
 
+// Helper to safely parse JSON from Response without throwing on HTML/text/500 errors
+async function safeParseJson<T = any>(res: Response): Promise<{ ok: boolean; status: number; data?: T; error?: string }> {
+  const status = res.status;
+  const contentType = res.headers.get('content-type') || '';
+
+  if (!res.ok) {
+    let errorMsg = `Server returned status ${status}`;
+    if (contentType.includes('application/json')) {
+      try {
+        const errJson = await res.json();
+        errorMsg = errJson?.message || errJson?.error || errorMsg;
+      } catch (_) {}
+    } else {
+      try {
+        const text = await res.text();
+        if (text && text.length < 150) errorMsg = text.trim();
+      } catch (_) {}
+    }
+    return { ok: false, status, error: errorMsg };
+  }
+
+  if (contentType.includes('application/json')) {
+    try {
+      const data = await res.json();
+      return { ok: true, status, data };
+    } catch (err: any) {
+      return { ok: false, status, error: `Invalid JSON response: ${err?.message}` };
+    }
+  }
+
+  try {
+    const text = await res.text();
+    const data = JSON.parse(text);
+    return { ok: true, status, data };
+  } catch (err: any) {
+    return { ok: false, status, error: `Invalid JSON response: ${err?.message}` };
+  }
+}
+
 // API Functions
 export async function fetchPublicEPapers(params?: { city?: string; date?: string; search?: string }): Promise<EPaperEdition[]> {
   clearLegacyLocalStorage();
@@ -71,12 +110,15 @@ export async function fetchPublicEPapers(params?: { city?: string; date?: string
     if (params?.search) query.append('search', params.search);
 
     const res = await fetch(getBackendApiUrl(`/api/public/epaper?${query.toString()}`), { cache: 'no-store' });
-    const json = await res.json();
-    if (json?.data?.editions && Array.isArray(json.data.editions)) {
-      return json.data.editions;
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data?.editions && Array.isArray(result.data.data.editions)) {
+      return result.data.data.editions;
+    }
+    if (!result.ok) {
+      console.warn('Public epapers fetch warning:', result.error);
     }
   } catch (err) {
-    console.error('Failed to fetch public epapers from API', err);
+    console.warn('Failed to fetch public epapers from API:', err);
   }
   return [];
 }
@@ -91,12 +133,21 @@ export async function fetchAdminEPapers(params?: { city?: string; date?: string;
     if (params?.search) query.append('search', params.search);
 
     const res = await authFetch(getBackendApiUrl(`/api/admin/epaper?${query.toString()}`));
-    const json = await res.json();
-    if (json?.data?.editions && Array.isArray(json.data.editions)) {
-      return json.data.editions;
+    
+    // If unauthorized or forbidden, exit cleanly without throwing
+    if (res.status === 401 || res.status === 403) {
+      return [];
+    }
+
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data?.editions && Array.isArray(result.data.data.editions)) {
+      return result.data.data.editions;
+    }
+    if (!result.ok) {
+      console.warn('Failed to fetch admin epapers from API:', result.error);
     }
   } catch (err) {
-    console.error('Failed to fetch admin epapers from API', err);
+    console.warn('Failed to fetch admin epapers from API:', err);
   }
   return [];
 }
@@ -108,15 +159,18 @@ export async function createEPaperEdition(data: Partial<EPaperEdition>): Promise
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (json?.data?.edition) {
-      return { edition: json.data.edition };
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data?.edition) {
+      return { edition: result.data.data.edition };
     }
-    if (json?.error || json?.message) {
-      return { error: json.error || json.message };
+    if (result.data?.error || result.data?.message) {
+      return { error: result.data.error || result.data.message };
+    }
+    if (!result.ok) {
+      return { error: result.error || `Error ${result.status}` };
     }
   } catch (err: any) {
-    console.error('Failed to create epaper edition via API', err);
+    console.warn('Failed to create epaper edition via API:', err);
     return { error: err?.message || 'Server error creating epaper edition' };
   }
   return null;
@@ -129,15 +183,19 @@ export async function updateEPaperEdition(id: string, data: Partial<EPaperEditio
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    const json = await res.json();
-    if (json?.data?.edition) {
-      return { edition: json.data.edition };
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data?.edition) {
+      return { edition: result.data.data.edition };
     }
-    if (json?.error) {
-      return { error: json.error };
+    if (result.data?.error || result.data?.message) {
+      return { error: result.data.error || result.data.message };
     }
-  } catch (err) {
-    console.error('Failed to update epaper edition via API', err);
+    if (!result.ok) {
+      return { error: result.error || `Error ${result.status}` };
+    }
+  } catch (err: any) {
+    console.warn('Failed to update epaper edition via API:', err);
+    return { error: err?.message || 'Server error updating epaper edition' };
   }
   return null;
 }
@@ -147,10 +205,10 @@ export async function deleteEPaperEdition(id: string): Promise<boolean> {
     const res = await authFetch(getBackendApiUrl(`/api/admin/epaper/${id}`), {
       method: 'DELETE',
     });
-    const json = await res.json();
-    return json?.success || false;
+    const result = await safeParseJson(res);
+    return (result.ok && result.data?.success) || false;
   } catch (err) {
-    console.error('Failed to delete epaper edition via API', err);
+    console.warn('Failed to delete epaper edition via API:', err);
   }
   return false;
 }
@@ -158,16 +216,16 @@ export async function deleteEPaperEdition(id: string): Promise<boolean> {
 export async function fetchEPaperCities(): Promise<CityItem[]> {
   try {
     const res = await fetch(getBackendApiUrl('/api/public/epaper/cities'), { cache: 'no-store' });
-    const json = await res.json();
-    if (json?.data?.cities && Array.isArray(json.data.cities)) {
-      return json.data.cities.map((c: any) => ({
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data?.cities && Array.isArray(result.data.data.cities)) {
+      return result.data.data.cities.map((c: any) => ({
         id: c.id || c.city.toLowerCase().replace(/[^a-z0-9]/g, '-'),
         city: c.city,
         cityGu: c.cityGu || c.city,
       }));
     }
   } catch (err) {
-    console.error('Failed to fetch cities from API', err);
+    console.warn('Failed to fetch cities from API:', err);
   }
   return DEFAULT_CITIES_LIST;
 }
@@ -179,13 +237,13 @@ export async function createEPaperCity(cityName: string): Promise<CityItem | nul
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ city: cityName, cityGu: cityName }),
     });
-    const json = await res.json();
-    if (json?.data?.city) {
-      const c = json.data.city;
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data?.city) {
+      const c = result.data.data.city;
       return { id: c.id || c.city, city: c.city, cityGu: c.cityGu || c.city };
     }
   } catch (err) {
-    console.error('Failed to create city via API', err);
+    console.warn('Failed to create city via API:', err);
   }
   return null;
 }
@@ -195,10 +253,10 @@ export async function deleteEPaperCity(cityIdOrName: string): Promise<boolean> {
     const res = await authFetch(getBackendApiUrl(`/api/admin/epaper/cities/${encodeURIComponent(cityIdOrName)}`), {
       method: 'DELETE',
     });
-    const json = await res.json();
-    return json?.success || false;
+    const result = await safeParseJson(res);
+    return (result.ok && result.data?.success) || false;
   } catch (err) {
-    console.error('Failed to delete city via API', err);
+    console.warn('Failed to delete city via API:', err);
   }
   return false;
 }

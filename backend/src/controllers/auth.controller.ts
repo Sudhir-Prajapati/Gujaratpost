@@ -115,9 +115,9 @@ export class AuthController {
         );
       }
 
-      // 2. Reader: Generate OTP and store in memory
+      // 2. Reader: Generate OTP and store in memory (5 minutes validity)
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000;
+      const expiresAt = Date.now() + 5 * 60 * 1000;
 
       otpStore.set(cleanEmail, { otp: generatedOtp, expiresAt });
       console.log(`[OTP SENT] Verification code for ${cleanEmail}: ${generatedOtp}`);
