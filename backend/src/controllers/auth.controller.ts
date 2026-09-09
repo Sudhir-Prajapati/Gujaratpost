@@ -25,7 +25,7 @@ export class AuthController {
    */
   static async login(req: Request, res: Response, next: NextFunction) {
     try {
-      const { email, password } = req.body;
+      const { email, password, rememberMe } = req.body;
 
       if (!email || !password) {
         throw new BadRequestError('Email and password are required');
@@ -34,27 +34,40 @@ export class AuthController {
       const userAgent = req.headers['user-agent'] || null;
       const ipAddress = req.ip || req.socket.remoteAddress || null;
 
+      const isRemembered = Boolean(rememberMe);
+
       const result = await AuthService.login({
         email,
         password,
         userAgent,
         ipAddress,
+        rememberMe: isRemembered,
       });
+
+      const maxAgeMs = isRemembered
+        ? 7 * 24 * 60 * 60 * 1000 // 7 days (604,800,000 ms)
+        : 24 * 60 * 60 * 1000;    // 24 hours (86,400,000 ms)
 
       // Set cookies
       res.cookie('access_token', result.accessToken, {
         ...cookieOptions,
-        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        maxAge: maxAgeMs,
       });
 
       res.cookie('refresh_token', result.refreshToken, {
         ...cookieOptions,
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        maxAge: maxAgeMs,
       });
 
       return sendSuccess(
         res,
-        { user: result.user, accessToken: result.accessToken, refreshToken: result.refreshToken },
+        {
+          user: result.user,
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+          expiresIn: isRemembered ? '7 days' : '24 hours',
+          maxAgeSeconds: isRemembered ? 7 * 24 * 60 * 60 : 24 * 60 * 60,
+        },
         'Logged in successfully'
       );
     } catch (error) {

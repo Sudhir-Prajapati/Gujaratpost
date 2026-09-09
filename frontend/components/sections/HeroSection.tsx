@@ -988,7 +988,7 @@ export default function HeroSection({
             fallbackCtaGu="હમણાં ખરીદો"
             fallbackCtaEn="Shop Now"
             fallbackGradient="linear-gradient(135deg,#FF6B35,#C81D25)"
-            minHeight={180}
+            minHeight={210}
             enableTributeSlides={true}
           />
 

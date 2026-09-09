@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { ExternalLink, Play, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExternalLink, VolumeX, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getPublicAdBySection, getPublicTributes, TributeItem } from '@/lib/api';
 import TributeCard from '@/components/tributes/TributeCard';
 import type { Language } from '@/types';
@@ -18,12 +18,13 @@ export interface SidebarAdBannerProps {
   fallbackCtaEn: string;
   fallbackGradient?: string;
   minHeight?: number;
+  fixedHeight?: number;
   className?: string;
   enableTributeSlides?: boolean;
 }
 
 type SlideItem =
-  | { type: 'AD'; data: any }
+  | { type: 'AD'; data: { image?: string; link?: string; mediaType?: string; title?: string } | null }
   | { type: 'BIRTHDAY'; data: TributeItem }
   | { type: 'SHRADHANJALI'; data: TributeItem };
 
@@ -37,10 +38,14 @@ export default function SidebarAdBanner({
   fallbackCtaGu,
   fallbackCtaEn,
   fallbackGradient = 'linear-gradient(135deg,#FF6B35,#C81D25)',
-  minHeight = 180,
+  minHeight = 210,
+  fixedHeight,
   className = '',
   enableTributeSlides = true,
 }: SidebarAdBannerProps) {
+  // Lock the banner height so changing slides NEVER causes the container size to jump
+  const bannerHeight = fixedHeight || (minHeight ? Math.max(minHeight, 210) : 210);
+
   // Only allow birthday & shradhanjali tributes in the main home page first ad (SIDEBAR_HERO_TOP)
   const allowTributes = Boolean(enableTributeSlides && slot === 'SIDEBAR_HERO_TOP');
 
@@ -69,6 +74,8 @@ export default function SidebarAdBanner({
         }
         setLoading(false);
       }
+    }).catch(() => {
+      if (isMounted) setLoading(false);
     });
 
     return () => {
@@ -77,11 +84,44 @@ export default function SidebarAdBanner({
   }, [slot, allowTributes]);
 
   // Construct Slide Sequence:
-  // 1. First: Ad
+  // 1. All available ad images (image1, image2, image3)
   // 2. If have birthday: show Birthday(s)
   // 3. If have shradhanjali: after that show Shradhanjali(s)
-  // Strictly restricted to SIDEBAR_HERO_TOP only
-  const slides: SlideItem[] = [{ type: 'AD', data: adData }];
+  const slides: SlideItem[] = [];
+
+  const adItems: { image: string; link: string; mediaType?: string; title?: string }[] = [];
+  if (adData && adData.isActive) {
+    if (adData.image1 && adData.image1.trim() !== '') {
+      adItems.push({
+        image: adData.image1.trim(),
+        link: adData.link1 ? adData.link1.trim() : '#',
+        mediaType: adData.mediaType,
+        title: adData.title,
+      });
+    }
+    if (adData.image2 && adData.image2.trim() !== '') {
+      adItems.push({
+        image: adData.image2.trim(),
+        link: adData.link2 ? adData.link2.trim() : '#',
+        mediaType: adData.mediaType,
+        title: adData.title,
+      });
+    }
+    if (adData.image3 && adData.image3.trim() !== '') {
+      adItems.push({
+        image: adData.image3.trim(),
+        link: adData.link3 ? adData.link3.trim() : '#',
+        mediaType: adData.mediaType,
+        title: adData.title,
+      });
+    }
+  }
+
+  if (adItems.length > 0) {
+    adItems.forEach((item) => slides.push({ type: 'AD', data: item }));
+  } else {
+    slides.push({ type: 'AD', data: null }); // Fallback styled creative card
+  }
 
   if (allowTributes) {
     if (tributes.birthdays && tributes.birthdays.length > 0) {
@@ -107,9 +147,9 @@ export default function SidebarAdBanner({
     return () => clearInterval(interval);
   }, [slides.length, isHovered]);
 
-  // Ensure currentSlideIndex stays valid if slides change
+  // Ensure currentSlideIndex stays valid if slides array changes
   const activeIndex = currentSlideIndex >= slides.length ? 0 : currentSlideIndex;
-  const currentSlide = slides[activeIndex];
+  const currentSlide = slides[activeIndex] || slides[0] || { type: 'AD', data: null };
 
   const handlePrev = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -122,24 +162,6 @@ export default function SidebarAdBanner({
     e.stopPropagation();
     setCurrentSlideIndex((prev) => (prev + 1) % slides.length);
   };
-
-  const hasCustomMedia =
-    adData &&
-    adData.isActive &&
-    adData.image1 &&
-    adData.image1.trim() !== '';
-
-  const mediaUrl = hasCustomMedia ? adData.image1.trim() : '';
-  const redirectLink = hasCustomMedia && adData.link1 ? adData.link1.trim() : '#';
-  const mediaType = hasCustomMedia
-    ? (adData.mediaType || 'IMAGE').toUpperCase()
-    : 'IMAGE';
-
-  const isVideo =
-    mediaType === 'VIDEO' ||
-    /\.(mp4|webm|mov|mkv)(\?.*)?$/i.test(mediaUrl) ||
-    mediaUrl.includes('youtube.com') ||
-    mediaUrl.includes('youtu.be');
 
   // Fallback Styled Card content
   const title = language === 'gu' ? fallbackTitleGu : fallbackTitleEn;
@@ -154,19 +176,30 @@ export default function SidebarAdBanner({
     headerLabel = language === 'gu' ? '🕊️ ભાવપૂર્ણ શ્રદ્ધાંજલિ / સ્મૃતિ' : '🕊️ In Loving Memory';
   }
 
-  // Render Ad Slide Content
-  const renderAdContent = () => {
-    if (hasCustomMedia) {
+  // Render Ad Slide Content (strictly locked to bannerHeight)
+  const renderAdContent = (slideData: { image?: string; link?: string; mediaType?: string; title?: string } | null) => {
+    const hasMedia = Boolean(slideData && slideData.image && slideData.image.trim() !== '');
+    const mediaUrl = hasMedia ? slideData!.image!.trim() : '';
+    const redirectLink = hasMedia && slideData!.link ? slideData!.link!.trim() : '#';
+    const mediaType = hasMedia ? (slideData!.mediaType || 'IMAGE').toUpperCase() : 'IMAGE';
+
+    const isVideo =
+      mediaType === 'VIDEO' ||
+      /\.(mp4|webm|mov|mkv)(\?.*)?$/i.test(mediaUrl) ||
+      mediaUrl.includes('youtube.com') ||
+      mediaUrl.includes('youtu.be');
+
+    if (hasMedia) {
       return (
         <a
           href={redirectLink && redirectLink !== '#' ? redirectLink : undefined}
           target={redirectLink && redirectLink !== '#' ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="group relative flex flex-col w-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-red-500/30 block"
-          style={{ minHeight }}
+          className="group relative flex flex-col w-full h-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-red-500/30 block select-none"
+          style={{ height: bannerHeight }}
         >
           {isVideo ? (
-            <div className="relative w-full h-full min-h-[inherit] bg-black overflow-hidden flex items-center justify-center" style={{ minHeight }}>
+            <div className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center">
               {mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be') ? (
                 <iframe
                   src={`${mediaUrl.replace('watch?v=', 'embed/')}?autoplay=1&mute=1&loop=1&playlist=${mediaUrl.split('v=')[1] || ''}`}
@@ -191,14 +224,14 @@ export default function SidebarAdBanner({
               </div>
             </div>
           ) : (
-            <div className="relative w-full h-full min-h-[inherit] overflow-hidden" style={{ minHeight }}>
+            <div className="relative w-full h-full overflow-hidden">
               <Image
                 src={mediaUrl}
-                alt="Advertisement"
+                alt={slideData?.title || 'Advertisement'}
                 fill
                 unoptimized={mediaUrl.startsWith('http')}
                 className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 320px"
+                sizes="(max-width: 768px) 100vw, 340px"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
             </div>
@@ -217,27 +250,27 @@ export default function SidebarAdBanner({
 
     // Default Fallback Styled Ad
     return (
-      <div className="ad-inner w-full">
+      <div className="ad-inner w-full h-full" style={{ height: bannerHeight }}>
         <div
-          className="ad-creative rounded-xl p-5 text-white flex flex-col justify-between shadow-sm relative overflow-hidden"
+          className="ad-creative rounded-xl p-4 text-white flex flex-col justify-between shadow-sm relative overflow-hidden w-full h-full select-none"
           style={{
             background: fallbackGradient.includes('linear-gradient')
               ? fallbackGradient
               : undefined,
-            minHeight,
+            height: bannerHeight,
           }}
         >
           <div>
-            <div className="ad-brand font-black text-xl uppercase tracking-wide select-none">
+            <div className="ad-brand font-black text-lg uppercase tracking-wide select-none">
               {title}
             </div>
-            <div className="ad-tag text-[13px] font-bold mt-2 leading-snug text-white/95">
+            <div className="ad-tag text-[12px] font-bold mt-1.5 leading-snug text-white/95 line-clamp-2">
               {tag}
             </div>
           </div>
           <button
             type="button"
-            className="ad-cta bg-white text-slate-900 rounded-full px-5 py-2 text-[12px] font-black transition duration-200 hover:-translate-y-0.5 hover:shadow-lg w-max mt-4 shadow-sm"
+            className="ad-cta bg-white text-slate-900 rounded-full px-4 py-1.5 text-[11px] font-black transition duration-200 hover:-translate-y-0.5 hover:shadow-lg w-max mt-2 shadow-sm"
           >
             {cta} ↗
           </button>
@@ -246,33 +279,54 @@ export default function SidebarAdBanner({
     );
   };
 
+  if (loading) {
+    return (
+      <div className={`ad-slot w-full relative ${className}`}>
+        <div className="flex items-center justify-between mb-1.5 px-1 h-5">
+          <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
+        </div>
+        <div
+          className="relative w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800/60 animate-pulse border border-slate-200 dark:border-slate-800"
+          style={{ height: bannerHeight }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div
       className={`ad-slot w-full relative ${className}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Dynamic Slide Category Header */}
-      <div className="flex items-center justify-between mb-1 px-1">
+      {/* Dynamic Slide Category Header (Fixed Height to prevent shifts) */}
+      <div className="flex items-center justify-between mb-1.5 px-1 h-5">
         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider select-none truncate">
           {headerLabel}
         </p>
 
         {slides.length > 1 && (
-          <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 select-none">
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 select-none">
             {activeIndex + 1} / {slides.length}
           </span>
         )}
       </div>
 
-      {/* Main Slide Carousel Container */}
-      <div className="relative w-full rounded-xl overflow-hidden group">
+      {/* Main Slide Carousel Container (Strictly locked to bannerHeight) */}
+      <div
+        className="relative w-full rounded-xl overflow-hidden group shadow-sm"
+        style={{ height: bannerHeight, minHeight: bannerHeight, maxHeight: bannerHeight }}
+      >
         {/* Active Slide Renderer */}
-        <div className="w-full transition-opacity duration-300">
+        <div className="w-full h-full transition-opacity duration-300">
           {currentSlide.type === 'AD' ? (
-            renderAdContent()
+            renderAdContent(currentSlide.data)
           ) : (
-            <TributeCard tribute={currentSlide.data} minHeight={minHeight} />
+            <TributeCard
+              tribute={currentSlide.data}
+              className="w-full h-full"
+              minHeight={bannerHeight}
+            />
           )}
         </div>
 
@@ -299,9 +353,9 @@ export default function SidebarAdBanner({
         )}
       </div>
 
-      {/* Carousel Pagination Indicator Dots */}
+      {/* Carousel Pagination Indicator Dots (Fixed Height) */}
       {slides.length > 1 && (
-        <div className="flex items-center justify-center gap-1.5 mt-2">
+        <div className="flex items-center justify-center gap-1.5 mt-2 h-3">
           {slides.map((s, idx) => {
             const isActive = idx === activeIndex;
             let dotColor = 'bg-[#B3121B] dark:bg-red-500';
@@ -330,4 +384,3 @@ export default function SidebarAdBanner({
     </div>
   );
 }
-

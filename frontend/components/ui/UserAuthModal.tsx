@@ -1,10 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { X, User, Mail, ArrowRight, CheckCircle2, LogOut, Shield, AlertCircle, Loader2, KeyRound, Edit2, RefreshCw, Clock } from 'lucide-react';
+import { X, User, Mail, ArrowRight, CheckCircle2, LogOut, AlertCircle, Loader2, KeyRound, Edit2, RefreshCw, Clock } from 'lucide-react';
 import { SocialIcon } from './SocialLinks';
 
 interface UserAuthModalProps {
@@ -21,6 +20,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
 
   // Input states & refs
   const [email, setEmail] = useState('');
+  const [canSubmit, setCanSubmit] = useState(false);
   const [otp, setOtp] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
@@ -36,16 +36,22 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  // Auto focus input on step change
+  // Auto focus input on step change & sync input values
   useEffect(() => {
     if (isOpen) {
       if (step === 'email') {
-        setTimeout(() => emailInputRef.current?.focus(), 150);
+        if (emailInputRef.current) {
+          if (email) {
+            emailInputRef.current.value = email;
+            setCanSubmit(email.trim().length > 0);
+          }
+          setTimeout(() => emailInputRef.current?.focus(), 60);
+        }
       } else if (step === 'otp') {
-        setTimeout(() => otpInputRef.current?.focus(), 150);
+        setTimeout(() => otpInputRef.current?.focus(), 60);
       }
     }
-  }, [isOpen, step]);
+  }, [isOpen, step, email]);
 
   // OTP Expiry & Resend Countdown Effect
   useEffect(() => {
@@ -97,7 +103,8 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
     e.preventDefault();
     setError(null);
 
-    const cleanEmail = email.trim();
+    const cleanEmail = (emailInputRef.current?.value || email).trim();
+    setEmail(cleanEmail);
 
     // 1. Email format validation
     if (!cleanEmail) {
@@ -176,8 +183,8 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
       return;
     }
 
-    const cleanEmail = email.trim();
-    const cleanOtp = otp.trim();
+    const cleanEmail = (emailInputRef.current?.value || email).trim();
+    const cleanOtp = (otpInputRef.current?.value || otp).trim();
 
     if (!cleanOtp || cleanOtp.length < 4) {
       setError(
@@ -238,10 +245,11 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
     setError(null);
     setIsSubmitting(true);
     try {
+      const cleanEmail = (emailInputRef.current?.value || email).trim();
       const resOtp = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim() }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
       const jsonOtp = await resOtp.json();
       if (!resOtp.ok) {
@@ -266,6 +274,8 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
     localStorage.removeItem('gp_user_verified');
     setUserEmail(null);
     setEmail('');
+    setCanSubmit(false);
+    if (emailInputRef.current) emailInputRef.current.value = '';
     setOtp('');
     setStep('email');
   };
@@ -292,12 +302,12 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:justify-end sm:pt-14 sm:pr-8 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 sm:justify-end sm:pt-14 sm:pr-8 bg-black/60 backdrop-blur-xs">
       {/* Backdrop click to close */}
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal Box */}
-      <div className="relative w-full max-w-[360px] rounded-3xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 animate-in zoom-in-95 duration-200 z-10 flex flex-col items-center text-center overflow-hidden">
+      <div className="relative w-full max-w-[360px] rounded-3xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 z-10 flex flex-col items-center text-center overflow-hidden">
         
         {/* Close Button */}
         <button
@@ -311,13 +321,11 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
 
         {/* Network Static Normal Logo */}
         <div className="mb-4 flex flex-col items-center">
-          <div className="relative h-13 w-48 overflow-hidden flex items-center justify-center">
-            <Image
+          <div className="relative h-11 w-44 flex items-center justify-center">
+            <img
               src="/assets/gujarat-post-logo-chip.png"
               alt="Gujarat Post"
-              fill
-              priority
-              className="object-contain"
+              className="h-full w-auto object-contain"
             />
           </div>
         </div>
@@ -363,20 +371,30 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none z-10" />
                 <input
                   ref={emailInputRef}
+                  id="gp-user-email-input"
+                  name="email"
                   type="email"
-                  value={email}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  defaultValue={email}
                   onChange={(e) => {
-                    setEmail(e.target.value);
+                    const val = e.target.value;
+                    const hasVal = val.trim().length > 0;
+                    if (hasVal !== canSubmit) {
+                      setCanSubmit(hasVal);
+                    }
                     if (error) setError(null);
                   }}
                   placeholder={texts.enterEmail}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-xs md:text-sm font-semibold text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] transition-colors duration-150 shadow-xs"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-xs md:text-sm font-semibold text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs"
                 />
               </div>
 
               <button
                 type="submit"
-                disabled={isSubmitting || !email.trim()}
+                disabled={isSubmitting || !canSubmit}
                 className="w-full py-3 px-4 rounded-xl bg-[#B3121B] hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition transform active:scale-98 cursor-pointer disabled:opacity-50"
               >
                 {isSubmitting ? (
@@ -461,16 +479,22 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
                 <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none z-10" />
                 <input
                   ref={otpInputRef}
+                  id="gp-user-otp-input"
+                  name="otp"
                   type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
                   maxLength={6}
-                  value={otp}
+                  defaultValue={otp}
                   onChange={(e) => {
-                    setOtp(e.target.value.replace(/\D/g, ''));
+                    const cleaned = e.target.value.replace(/\D/g, '');
+                    e.target.value = cleaned;
+                    setOtp(cleaned);
                     if (error) setError(null);
                   }}
                   placeholder="------"
                   disabled={timeLeft === 0}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-center font-mono text-lg font-black tracking-[0.4em] text-zinc-900 dark:text-white placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] transition-colors duration-150 shadow-xs disabled:opacity-50"
+                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-center font-mono text-lg font-black tracking-[0.4em] text-zinc-900 dark:text-white placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs disabled:opacity-50"
                 />
               </div>
 

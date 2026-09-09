@@ -1,17 +1,14 @@
+import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
-import dotenv from 'dotenv';
 import path from 'path';
 import fs from 'fs';
 import { connectRedis, redisClient } from './config/redis.js';
 import { prisma } from './config/prisma.js';
 import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
-
-// Load environment variables
-dotenv.config();
 
 const app = express(); 
 const PORT = process.env.PORT || 5000;

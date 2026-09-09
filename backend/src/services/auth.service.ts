@@ -37,8 +37,9 @@ export class AuthService {
     password: string;
     userAgent?: string | null;
     ipAddress?: string | null;
+    rememberMe?: boolean;
   }): Promise<AuthResponse> {
-    const { email, password, userAgent, ipAddress } = params;
+    const { email, password, userAgent, ipAddress, rememberMe } = params;
 
     // 1. Find user by email
     const user = await UserRepository.findByEmail(email);
@@ -70,13 +71,15 @@ export class AuthService {
       role: user.role,
     };
 
-    const accessToken = signAccessToken(userPayload);
-    const { token: refreshToken, jti } = signRefreshToken(user.id);
+    // If "Remember me for 7 days" is selected: 7 days, otherwise 24 hours
+    const expiryStr = rememberMe ? '7d' : '24h';
+    const accessToken = signAccessToken(userPayload, expiryStr);
+    const { token: refreshToken, jti } = signRefreshToken(user.id, expiryStr);
     const hashedJti = this.hashJti(jti);
 
-    // Refresh Token expires in 7 days
+    // Refresh Token / Session expires in 7 days (or 24 hours)
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + (rememberMe ? 7 : 1));
 
     // 6. Save session in database & cache
     await SessionRepository.createSession({

@@ -26,11 +26,11 @@ export interface RefreshTokenPayload {
 }
 
 /**
- * Signs a short-lived access JWT.
+ * Signs an access JWT with standard or custom expiry (e.g. 24h or 7d).
  */
-export const signAccessToken = (payload: TokenPayload): string => {
+export const signAccessToken = (payload: TokenPayload, customExpiry?: string): string => {
   return jwt.sign(payload, getJwtSecret(), {
-    expiresIn: getJwtAccessExpiry() as any,
+    expiresIn: (customExpiry || getJwtAccessExpiry()) as any,
   });
 };
 
@@ -42,12 +42,12 @@ export const verifyAccessToken = (token: string): TokenPayload => {
 };
 
 /**
- * Signs a long-lived refresh JWT and returns the token and its unique JTI.
+ * Signs a refresh JWT with standard or custom expiry and returns the token and its unique JTI.
  */
-export const signRefreshToken = (userId: string): { token: string; jti: string } => {
+export const signRefreshToken = (userId: string, customExpiry?: string): { token: string; jti: string } => {
   const jti = crypto.randomUUID();
   const token = jwt.sign({ userId, jti }, getJwtSecret(), {
-    expiresIn: getJwtRefreshExpiry() as any,
+    expiresIn: (customExpiry || getJwtRefreshExpiry()) as any,
   });
   return { token, jti };
 };
