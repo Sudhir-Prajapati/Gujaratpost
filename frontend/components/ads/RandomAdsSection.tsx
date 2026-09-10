@@ -24,108 +24,11 @@ export interface RandomAdItem {
   buttonHi?: string;
 }
 
-const FALLBACK_RANDOM_ADS: RandomAdItem[] = [
-  {
-    id: 'f1',
-    image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: 'રોજિંદા ઉપયોગ માટે પરફેક્ટ ટોપ શોધવાનું બંધ કરો',
-    titleEn: 'Stop searching for the perfect top for daily use',
-    titleHi: 'दैनिक उपयोग के लिए सही टॉप की तलाश बंद करें',
-    descriptionGu: 'નરમ કાપડ, આકર્ષક સિલુએટ્સ અને કાલાતીત વિગતો આખો દિવસ તમને સ્ટાઇલિશ અને આરામદાયક રાખવા માટે તૈયાર કરવામાં આવ્યા છે...',
-    descriptionEn: 'Soft fabrics, attractive silhouettes and timeless details designed to keep you stylish all day long...',
-    descriptionHi: 'मुलायम कपड़े, आकर्षक कट और बेहतरीन स्टाइल आपको पूरे दिन आरामदायक रखने के लिए...',
-    sourceGu: 'વ્યાપારી | પ્રાયોજિત',
-    sourceEn: 'Merchant | Sponsored',
-    sourceHi: 'व्यापारी | प्रायोजित',
-    buttonGu: 'હવે ખરીદો',
-    buttonEn: 'Shop Now',
-    buttonHi: 'अभी खरीदें',
-  },
-  {
-    id: 'f2',
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: 'મહિલાએ તેના પૂર્વ પ્રેમીએ આપેલી વીંટી વેચી, જ્વેલરીએ કહ્યું \'આ સાચું ન હોઈ શકે\'',
-    titleEn: 'Woman sold ring given by ex-partner, jeweler said \'this cannot be true\'',
-    titleHi: 'महिला ने अपने पूर्व प्रेमी द्वारा दी गई अंगूठी बेची, जौहरी ने कहा \'यह सच नहीं हो सकता\'',
-    sourceGu: 'લાઇવ ડેઇલી | પ્રાયોજિત',
-    sourceEn: 'Live Daily | Sponsored',
-    sourceHi: 'लाइव डेली | प्रायोजित',
-  },
-  {
-    id: 'f3',
-    image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: 'કોર્પોરેટ કર્મચારીઓ માટે ફાઇનાન્સ કોર્સ',
-    titleEn: 'Finance course for corporate employees',
-    titleHi: 'कॉर्पोरेट कर्मचारियों के लिए वित्त पाठ्यक्रम',
-    descriptionGu: 'કોર્પોરેટ કર્મચારીઓ માટે ખાસ ડિઝાઇન કરેલા ફાઇનાન્સ અભ્યાસક્રમો',
-    descriptionEn: 'Specially designed finance courses for corporate professionals',
-    descriptionHi: 'कॉर्पोरेट कर्मचारियों के लिए विशेष रूप से डिज़ाइन किए गए वित्त पाठ्यक्रम',
-    sourceGu: 'વેબસો | પ્રાયોજિત',
-    sourceEn: 'Webso | Sponsored',
-    sourceHi: 'वेबसो | प्रायोजित',
-    buttonGu: 'હવે ખરીદો',
-    buttonEn: 'Shop Now',
-    buttonHi: 'अभी खरीदें',
-  },
-  {
-    id: 'f4',
-    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: '૨૦ સેલિબ્રિટી ટ્રાન્સફોર્મેશન જેણે હોલીવુડને સ્તબ્ધ કરી દીધું',
-    titleEn: '20 celebrity transformations that stunned Hollywood',
-    titleHi: '20 सेलिब्रिटी ट्रांसफॉर्मेशन जिन्होंने हॉलीवुड को चौंका दिया',
-    sourceGu: 'રાજ્ય ન્યૂઝ | પ્રાયોજિત',
-    sourceEn: 'State News | Sponsored',
-    sourceHi: 'राज्य न्यूज | प्रायोजित',
-  },
-  {
-    id: 'f5',
-    image: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: 'મારી કંપનીના બાર્બેક્યુમાં પતિએ મને નકામી કહી, પછી મેં તેના CEOને આ વાત કહી',
-    titleEn: 'Husband called me useless at company BBQ, then I told his CEO this',
-    titleHi: 'कंपनी के बारबेक्यू में पति ने मुझे बेकार कहा, फिर मैंने उनके सीईओ को यह बात बताई',
-    sourceGu: 'બીચ રાઇડર | પ્રાયોજિત',
-    sourceEn: 'Beach Rider | Sponsored',
-    sourceHi: 'बीच राइडर | प्रायोजित',
-  },
-  {
-    id: 'f6',
-    image: 'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: 'આ નવી સ્માર્ટ વોચ દેશભરમાં ધૂમ મચાવી રહી છે',
-    titleEn: 'This new smartwatch is creating waves across the country',
-    titleHi: 'यह नई स्मार्टवॉच देशभर में धूम मचा रही है',
-    descriptionGu: 'પસંદ પડે તેવી લક્ઝરી ઘડિયાળોની નવી પેઢી સાથે તમારા સ્વાસ્થ્યને ટ્રેક કરો અને ફિટ રહો.',
-    descriptionEn: 'Track your health and stay fit with a new generation of luxury smartwatches.',
-    descriptionHi: 'स्मार्ट स्वास्थ्य ट्रैकिंग और आधुनिक डिजाइन के साथ फिट रहें।',
-    sourceGu: 'સ્માર્ટ ટેક | પ્રાયોજિત',
-    sourceEn: 'Smart Tech | Sponsored',
-    sourceHi: 'સ્માર્ટ ટેક | प्रायोजित',
-    buttonGu: 'હવે ઓર્ડર કરો',
-    buttonEn: 'Order Now',
-    buttonHi: 'अभी ऑर्डर करें',
-  },
-  {
-    id: 'f7',
-    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80',
-    link: '#',
-    titleGu: 'પાસપોર્ટ વગર તમે મુલાકાત લઈ શકો તેવા સુંદર ટાપુ રિસોર્ટ્સ',
-    titleEn: 'Beautiful island resorts you can visit without a passport',
-    titleHi: 'बिना पासपोर्ट के आप जिन खूबसूरत द्वीप रिसॉर्ट्स की यात्रा कर सकते हैं',
-    sourceGu: 'પ્રવાસન ડેસ્ક | પ્રાયોજિત',
-    sourceEn: 'Travel Desk | Sponsored',
-    sourceHi: 'पर्यटन डेस्क | प्रायोजित',
-  },
-];
-
 export default function RandomAdsSection() {
   const { language } = useApp();
-  const [adItems, setAdItems] = useState<RandomAdItem[]>(FALLBACK_RANDOM_ADS);
+  const [adItems, setAdItems] = useState<RandomAdItem[]>([]);
   const [visibleSectionsCount, setVisibleSectionsCount] = useState<number>(1);
+  const [isLoadingNext, setIsLoadingNext] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -178,20 +81,7 @@ export default function RandomAdsSection() {
       .catch(() => {});
   }, []);
 
-  // Chunk items into 7 ads per section
-  const sectionsCount = Math.max(1, Math.ceil(adItems.length / 7));
-  const sections: RandomAdItem[][] = [];
-
-  for (let i = 0; i < sectionsCount; i++) {
-    const chunk = adItems.slice(i * 7, (i + 1) * 7);
-    while (chunk.length < 7) {
-      chunk.push(FALLBACK_RANDOM_ADS[chunk.length % FALLBACK_RANDOM_ADS.length]);
-    }
-    sections.push(chunk);
-  }
-
   const totalSections = Math.max(1, Math.ceil(adItems.length / 7));
-  const [isLoadingNext, setIsLoadingNext] = useState(false);
 
   // Trigger loading Section 2 when user reaches the bottom/end of Section 1 on scroll
   useEffect(() => {
@@ -214,6 +104,26 @@ export default function RandomAdsSection() {
     observer.observe(el);
     return () => observer.disconnect();
   }, [visibleSectionsCount, totalSections, isLoadingNext]);
+
+  // If no dynamic ads exist from the API, render nothing
+  if (adItems.length === 0) {
+    return null;
+  }
+
+  // Chunk items into 7 ads per section
+  const sectionsCount = Math.max(1, Math.ceil(adItems.length / 7));
+  const sections: RandomAdItem[][] = [];
+
+  for (let i = 0; i < sectionsCount; i++) {
+    const chunk = adItems.slice(i * 7, (i + 1) * 7);
+    while (chunk.length < 7 && adItems.length > 0) {
+      chunk.push({
+        ...adItems[chunk.length % adItems.length],
+        id: `dyn-chunk-pad-${i}-${chunk.length}`,
+      });
+    }
+    sections.push(chunk);
+  }
 
   const getTitle = (item: RandomAdItem) => {
     if (language === 'hi') return item.titleHi || item.titleGu || item.titleEn;

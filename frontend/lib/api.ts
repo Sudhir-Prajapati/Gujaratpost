@@ -81,8 +81,10 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
 
   const fetchPromise = (async () => {
     const controller = new AbortController();
-    // 15-second timeout so API calls fail fast and trigger fallbacks without hanging Next.js SSR
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    // 12s for SSR to prevent server hangs; 25s in browser so concurrent client requests do not abort prematurely
+    const timeoutDuration = typeof window === 'undefined' ? 12000 : 25000;
+    const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
+    const startMs = Date.now();
 
     try {
       const res = await fetch(url, {
@@ -110,7 +112,7 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
 
       apiCache.set(url, { timestamp: Date.now(), data: json });
       return json;
-    } catch (error) {
+    } catch (error: any) {
       clearTimeout(timeoutId);
       throw error;
     }
@@ -122,7 +124,15 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
     const data = await fetchPromise;
     return data as T;
   } catch (error: any) {
-    console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
+    if (error?.name === 'AbortError') {
+      if (typeof window === 'undefined') {
+        console.warn(`SSR fetch timed out for ${url}`);
+      } else {
+        console.debug(`Fetch aborted for ${url}`);
+      }
+    } else {
+      console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
+    }
     return null;
   } finally {
     inFlightRequests.delete(url);
@@ -309,11 +319,14 @@ export const YOUTUBE_CHANNEL_HANDLE = '@Gujaratpostnews';
  * Fetch live YouTube channel videos & shorts dynamically from YouTube RSS Feed (@Gujaratpostnews)
  */
 export async function fetchLiveYouTubeChannelVideos(): Promise<{ videos: Video[]; shorts: Video[] }> {
+  // During server-side rendering (SSR), do not block HTML generation by scraping external YouTube.
+  // The database videos already provide immediate content. Client-side components fetch fresh live YouTube uploads dynamically.
+  if (typeof window === 'undefined') {
+    return { videos: [], shorts: [] };
+  }
+
   try {
-    // Call our server-side Next.js API route (avoids CORS issues with direct RSS fetch)
-    const baseUrl = typeof window !== 'undefined'
-      ? window.location.origin
-      : (process.env.NEXT_PUBLIC_APP_URL || 'https://gujaratpost.vercel.app');
+    const baseUrl = window.location.origin;
     const apiUrl = `${baseUrl}/api/youtube-videos`;
 
     const res = await fetchCachedJson<any>(apiUrl, 300000); // 5-minute cache
@@ -335,6 +348,10 @@ export async function fetchLiveYouTubeChannelVideos(): Promise<{ videos: Video[]
  * Strictly deduplicated by youtubeId.
  */
 export async function getPublicVideos(type?: string): Promise<Video[]> {
+  // Skip on SSR — video sections are 'use client' and load after mount.
+  // Calling this from a server component causes 12s timeouts.
+  if (typeof window === 'undefined') return [];
+
   const combined: Video[] = [];
   const seenIds = new Set<string>();
 
@@ -342,6 +359,15 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
     if (item?.youtubeId) return item.youtubeId.trim();
     if (item?.id) return item.id.replace(/^yt-live-/, '').trim();
     return '';
+  };
+
+  // Fix broken frame0.jpg thumbnails → hqdefault.jpg (frame0 returns gray placeholder)
+  const fixThumbnail = (thumb: string | null | undefined, youtubeId?: string): string => {
+    if (!thumb || thumb.includes('frame0.jpg')) {
+      const id = youtubeId || '';
+      return id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : (thumb || '');
+    }
+    return thumb;
   };
 
   try {
@@ -383,13 +409,18 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
             duration: (liveMatch.duration && liveMatch.duration !== '10:00' && liveMatch.duration !== '0:00' && liveMatch.duration !== '0:58')
               ? liveMatch.duration
               : (dbv.duration || liveMatch.duration),
-            thumbnail: dbv.thumbnail || liveMatch.thumbnail,
+            // ✅ Fix frame0.jpg thumbnails from old DB records
+            thumbnail: fixThumbnail(dbv.thumbnail || liveMatch.thumbnail, key),
             titleGu: dbv.titleGu || liveMatch.titleGu || dbv.title,
             titleHi: dbv.titleHi || liveMatch.titleHi || dbv.title,
             isFeatured: dbv.isFeatured ?? liveMatch.isFeatured ?? false,
           });
         } else {
-          combined.push(dbv);
+          combined.push({
+            ...dbv,
+            // ✅ Fix frame0.jpg thumbnails from old DB records
+            thumbnail: fixThumbnail(dbv.thumbnail, key),
+          });
         }
       }
     }
@@ -399,7 +430,10 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
       const key = getCleanKey(lv);
       if (key && !seenIds.has(key)) {
         seenIds.add(key);
-        combined.push(lv);
+        combined.push({
+          ...lv,
+          thumbnail: fixThumbnail(lv.thumbnail, key),
+        });
       }
     }
   } catch (error: any) {
@@ -408,6 +442,7 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
 
   return combined;
 }
+
 
 /**
  * Fetch photo gallery items from Express Backend API
@@ -676,7 +711,7 @@ export async function getPublicAds(): Promise<any[]> {
 export async function getPublicAdBySection(section: string): Promise<any | null> {
   try {
     const url = `${API_BASE_URL}/ads/${encodeURIComponent(section)}`;
-    const json = await fetchCachedJson<any>(url, 5 * 60 * 1000); // 5 minutes cache
+    const json = await fetchCachedJson<any>(url, 30 * 1000); // 30 seconds cache — refresh quickly when admin adds/changes ads
     if (json && json.success && json.data?.ad) {
       return json.data.ad;
     }
@@ -739,5 +774,4 @@ export async function getPublicTributes(): Promise<PublicTributesResponse> {
   }
   return { birthdays: [], shradhanjalis: [], all: [] };
 }
-
 

@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { Bookmark, Eye, Heart, MessageCircle, MoreHorizontal, Play, Send, Volume2 } from 'lucide-react';
 import { formatViews, getLocalized } from '@/data';
@@ -57,14 +56,34 @@ export default function ShortsPageClient() {
 
             return (
               <article key={item.key} className="relative h-[calc(100svh-92px)] min-h-[620px] snap-start overflow-hidden bg-black">
-                <Image
-                  src={item.thumbnail}
-                  alt={item.title || 'Short Video'}
-                  fill
-                  priority={index < 2}
-                  sizes="(max-width: 640px) 100vw, 460px"
-                  className="object-cover"
-                />
+                {(() => {
+                  // Extract YouTube video ID from stored fields
+                  const ytId = item.youtubeId || '';
+                  // Use DB thumbnail if it's valid and NOT a broken frame0
+                  const thumbSrc = (item.thumbnail && item.thumbnail.startsWith('http') && !item.thumbnail.includes('frame0.jpg'))
+                    ? item.thumbnail
+                    : ytId ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg` : '';
+                  if (!thumbSrc) return null;
+                  return (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={thumbSrc}
+                      alt={item.title || 'Short Video'}
+                      className="absolute inset-0 h-full w-full object-cover"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        if (img.src.includes('maxresdefault')) {
+                          img.src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
+                        } else if (img.src.includes('hqdefault')) {
+                          img.src = `https://i.ytimg.com/vi/${ytId}/mqdefault.jpg`;
+                        } else if (img.src.includes('mqdefault')) {
+                          img.src = `https://i.ytimg.com/vi/${ytId}/sddefault.jpg`;
+                        }
+                      }}
+                      loading={index < 2 ? 'eager' : 'lazy'}
+                    />
+                  );
+                })()}
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/15 to-black/20" />
 
                 <div className="absolute left-4 right-20 top-4 flex items-center justify-between gap-3">

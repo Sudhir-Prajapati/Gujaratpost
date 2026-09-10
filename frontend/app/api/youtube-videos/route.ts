@@ -90,7 +90,7 @@ function parseRelativeTime(text: string): string {
 // Extract full high quality thumbnail for YouTube Shorts / Videos
 function extractThumbnail(node: any, videoId: string, isShort: boolean): string {
   if (isShort) {
-    return `https://i.ytimg.com/vi/${videoId}/frame0.jpg`;
+    return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
   }
   if (node?.thumbnailViewModel?.image?.sources?.length) {
     const srcs = node.thumbnailViewModel.image.sources;
@@ -116,17 +116,29 @@ function extractThumbnail(node: any, videoId: string, isShort: boolean): string 
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
+// Fetch with AbortController timeout
+async function fetchWithTimeout(url: string, options: RequestInit & { next?: any } = {}, timeoutMs = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 // Scrape YouTube channel page tab directly with multi-batch continuation for ALL channel Shorts/Videos
 async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
   try {
     const url = `https://www.youtube.com/${CHANNEL_HANDLE}/${tab}`;
-    const res = await fetch(url, {
+    const res = await fetchWithTimeout(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept-Language': 'en-US,en;q=0.9',
       },
       next: { revalidate: 300 },
-    });
+    }, 8000);
 
     if (!res.ok) return [];
 
@@ -298,13 +310,13 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
         const apiKey = apiKeyMatch?.[1];
         let pageCount = 0;
 
-        while (currentContinuation && apiKey && pageCount < 5) {
+        while (currentContinuation && apiKey && pageCount < 2) {
           pageCount++;
           const nextToken = currentContinuation;
           currentContinuation = '';
 
           try {
-            const contRes = await fetch(`https://www.youtube.com/youtubei/v1/browse?key=${apiKey}`, {
+            const contRes = await fetchWithTimeout(`https://www.youtube.com/youtubei/v1/browse?key=${apiKey}`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -375,10 +387,10 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
 // Fallback RSS parser if page scraping fails
 async function fetchRssFeed(): Promise<{ videos: any[]; shorts: any[] }> {
   const rssUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${YOUTUBE_CHANNEL_ID}`;
-  const rssRes = await fetch(rssUrl, {
+  const rssRes = await fetchWithTimeout(rssUrl, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; GujaratPost/1.0)' },
     next: { revalidate: 300 },
-  });
+  }, 6000);
 
   if (!rssRes.ok) return { videos: [], shorts: [] };
 
@@ -439,11 +451,45 @@ async function fetchRssFeed(): Promise<{ videos: any[]; shorts: any[] }> {
   return { videos, shorts };
 }
 
+// Memory cache & in-flight deduplication to prevent duplicate scraping and ensure instant responses
+interface CacheStore {
+  timestamp: number;
+  data: any[];
+}
+const memoryCache = new Map<string, CacheStore>();
+const inFlightRequests = new Map<string, Promise<any[]>>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get('type'); // 'video' | 'short' | null for all
+  const cacheKey = type || 'all';
 
-  try {
+  // 1. Check in-memory cache
+  const cached = memoryCache.get(cacheKey);
+  const now = Date.now();
+  if (cached && (now - cached.timestamp) < CACHE_TTL_MS) {
+    return NextResponse.json(
+      { success: true, data: cached.data, cached: true },
+      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+    );
+  }
+
+  // 2. In-flight request deduplication (prevents 5 simultaneous requests from doing 5 YouTube scrapes)
+  if (inFlightRequests.has(cacheKey)) {
+    try {
+      const data = await inFlightRequests.get(cacheKey)!;
+      return NextResponse.json(
+        { success: true, data, cached: true },
+        { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+      );
+    } catch {
+      // Fall through to perform fresh fetch
+    }
+  }
+
+  // 3. Perform fetch
+  const fetchTask = (async () => {
     let result: any[] = [];
 
     if (type === 'video') {
@@ -455,10 +501,13 @@ export async function GET(request: NextRequest) {
         result = rss.videos;
       }
     } else if (type === 'short') {
-      const [channelShorts, rss] = await Promise.all([fetchChannelTab('shorts'), fetchRssFeed()]);
+      const [channelShorts, rss] = await Promise.all([
+        fetchChannelTab('shorts').catch(() => []),
+        fetchRssFeed().catch(() => ({ videos: [], shorts: [] })),
+      ]);
       const combined = [...channelShorts];
       const seen = new Set(channelShorts.map((s) => s.youtubeId));
-      for (const r of rss.shorts) {
+      for (const r of (rss.shorts || [])) {
         if (!seen.has(r.youtubeId)) {
           combined.push(r);
         }
@@ -469,20 +518,43 @@ export async function GET(request: NextRequest) {
         videoUrl: `https://www.youtube.com/shorts/${item.youtubeId}`,
       }));
     } else {
-      const [v, s] = await Promise.all([fetchChannelTab('videos'), fetchChannelTab('shorts')]);
+      const [v, s] = await Promise.all([
+        fetchChannelTab('videos').catch(() => []),
+        fetchChannelTab('shorts').catch(() => []),
+      ]);
       if (v.length > 0 || s.length > 0) {
         result = [...v, ...s];
       } else {
-        const rss = await fetchRssFeed();
-        result = [...rss.videos, ...rss.shorts];
+        const rss = await fetchRssFeed().catch(() => ({ videos: [], shorts: [] }));
+        result = [...(rss.videos || []), ...(rss.shorts || [])];
       }
     }
 
-    return NextResponse.json({ success: true, data: result }, {
-      headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
-    });
+    // Save to memory cache if we got results, or if cache is empty
+    if (result.length > 0 || !memoryCache.has(cacheKey)) {
+      memoryCache.set(cacheKey, { timestamp: Date.now(), data: result });
+    }
+
+    return result;
+  })();
+
+  inFlightRequests.set(cacheKey, fetchTask);
+
+  try {
+    const result = await fetchTask;
+    return NextResponse.json(
+      { success: true, data: result },
+      { headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' } }
+    );
   } catch (err: any) {
-    console.error('YouTube fetch error:', err?.message || err);
+    console.warn('YouTube fetch error:', err?.message || err);
+    // If we have stale cache, serve it instead of failing
+    if (cached) {
+      return NextResponse.json({ success: true, data: cached.data, stale: true });
+    }
     return NextResponse.json({ success: false, data: [], error: err?.message }, { status: 200 });
+  } finally {
+    inFlightRequests.delete(cacheKey);
   }
 }
+

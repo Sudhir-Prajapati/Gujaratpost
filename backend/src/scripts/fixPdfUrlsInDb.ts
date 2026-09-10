@@ -30,7 +30,8 @@ async function fixPdfUrls() {
     let modified = false;
 
     // Find all PDF URLs in content
-    const pdfRegex = /(https:\/\/res\.cloudinary\.com\/dvcffkyjz\/(?:image|raw)\/upload\/[^\s"'<>]+?\.pdf)/gi;
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || '[^\\/]+';
+    const pdfRegex = new RegExp(`(https:\\/\\/res\\.cloudinary\\.com\\/${cloudName}\\/(?:image|raw)\\/upload\\/[^\\s"'<>]+?\\.pdf)`, 'gi');
     
     const allMatches = [
       ...content.matchAll(pdfRegex),

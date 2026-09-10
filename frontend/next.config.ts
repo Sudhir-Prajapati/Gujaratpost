@@ -12,6 +12,9 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  // Allow HMR connections from 127.0.0.1 (same machine, different origin format)
+  allowedDevOrigins: ['127.0.0.1', 'localhost', '192.168.1.16'],
+
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -34,8 +37,20 @@ const nextConfig: NextConfig = {
     backendUrl = backendUrl.replace('://localhost:', '://127.0.0.1:');
     return [
       {
-        source: "/api/:path*",
-        destination: `${backendUrl}/api/:path*`,
+        source: "/api/public/:path*",
+        destination: `${backendUrl}/api/public/:path*`,
+      },
+      {
+        source: "/api/auth/:path*",
+        destination: `${backendUrl}/api/auth/:path*`,
+      },
+      {
+        source: "/api/admin/:path*",
+        destination: `${backendUrl}/api/admin/:path*`,
+      },
+      {
+        source: "/api/health",
+        destination: `${backendUrl}/api/health`,
       },
       {
         source: "/uploads/:path*",

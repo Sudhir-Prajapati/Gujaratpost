@@ -253,9 +253,9 @@ export default function WebStoriesPage() {
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <BookOpen className="text-primary" />
-            Web Stories
+          <h1 className="text-2xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+            <BookOpen className="text-red-600 h-6 w-6" />
+            <span>Web Stories</span>
           </h1>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
             Manage your image-based web stories. You can upload up to 5 images per story.
@@ -263,9 +263,9 @@ export default function WebStoriesPage() {
         </div>
         <button
           onClick={openAddModal}
-          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-primary text-white px-4 py-2.5 rounded-lg hover:bg-primary/90 transition-colors font-bold text-sm shrink-0"
+          className="group w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-5 py-2.5 rounded-xl font-bold text-sm shrink-0 shadow-md shadow-red-600/25 hover:shadow-lg hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer"
         >
-          <Plus size={18} />
+          <Plus size={18} className="transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
           <span>Add Web Story</span>
         </button>
       </div>
@@ -281,12 +281,12 @@ export default function WebStoriesPage() {
       <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-            <Loader2 size={32} className="animate-spin mb-4 text-primary" />
+            <Loader2 size={32} className="animate-spin mb-4 text-red-600" />
             <p>Loading web stories...</p>
           </div>
         ) : stories.length === 0 ? (
           <div className="text-center py-20 px-4">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 text-red-600 mb-4">
               <BookOpen size={32} />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No Web Stories Yet</h3>
@@ -295,9 +295,9 @@ export default function WebStoriesPage() {
             </p>
             <button
               onClick={openAddModal}
-              className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-colors font-bold text-sm"
+              className="group inline-flex items-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-md shadow-red-600/25 hover:shadow-lg hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 transition-all duration-200 cursor-pointer"
             >
-              <Plus size={18} />
+              <Plus size={18} className="transition-transform duration-200 group-hover:rotate-90 group-hover:scale-110" />
               <span>Add Web Story</span>
             </button>
           </div>
@@ -357,7 +357,7 @@ export default function WebStoriesPage() {
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => openEditModal(story)}
-                              className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
                               title="Edit"
                             >
                               <Edit2 size={16} />
@@ -554,7 +554,7 @@ export default function WebStoriesPage() {
               <button
                 onClick={handleSave}
                 disabled={saving || !heading || !image1}
-                className="flex items-center gap-2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 active:bg-red-800 text-white px-6 py-2.5 rounded-xl font-bold transition-all duration-200 shadow-md shadow-red-600/25 hover:shadow-lg hover:shadow-red-600/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 disabled:opacity-50 disabled:pointer-events-none disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer"
               >
                 {saving ? (
                   <>

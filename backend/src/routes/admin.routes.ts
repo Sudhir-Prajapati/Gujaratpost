@@ -53,6 +53,11 @@ router.get('/authors', requireAuth, requireRole(authorRoles), AuthorController.g
 // 4. Articles / Posts (SUPER_ADMIN, EDITOR, REPORTER, SEO, ADVERTISEMENT)
 // ==========================================
 const articleRoles = [Role.SUPER_ADMIN, Role.EDITOR, Role.REPORTER, Role.SEO, Role.ADVERTISEMENT];
+router.get('/articles/old-count', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.countOldArticles);
+router.delete('/articles/bulk-delete-old', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.bulkDeleteOldArticles);
+router.get('/articles/range-list', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.listArticlesInRange);
+router.get('/articles/range-count', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.countArticlesInRange);
+router.delete('/articles/bulk-delete-range', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.bulkDeleteArticlesInRange);
 router.get('/articles', requireAuth, requireRole(articleRoles), ArticleController.getAllArticles);
 router.get('/articles/:id', requireAuth, requireRole(articleRoles), ArticleController.getArticleById);
 router.post('/articles', requireAuth, requireRole(articleRoles), ArticleController.createArticle);

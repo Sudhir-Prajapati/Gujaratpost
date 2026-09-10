@@ -8,7 +8,7 @@ let tableEnsuringPromise: Promise<void> | null = null;
 
 // In-memory ads cache to prevent hitting MySQL on every ad banner render
 const adsCache = new Map<string, { timestamp: number; data: any }>();
-const ADS_CACHE_TTL_MS = 60 * 1000; // 60 seconds
+const ADS_CACHE_TTL_MS = 10 * 1000; // 10 seconds
 
 export function invalidateAdsCache() {
   adsCache.clear();

@@ -93,7 +93,6 @@ import { useApp } from '@/components/AppProvider';
 import { useAutoTranslate, useAutoTranslateHtml } from '@/lib/translate';
 import Advertisement from '@/components/ads/Advertisement';
 import { toGu } from '@/lib/utils';
-import { NativeAdsSection } from '@/components/sections/HeroSection';
 import { getBackendApiUrl, getHeroSettings } from '@/lib/api';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
@@ -1414,7 +1413,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               <button
                 type="button"
                 onClick={() => window.print()}
-                title={uiLabel(language, { en: 'Print', gu: 'àªªà«àª°àª¿àª¨à«àªŸ', hi: 'à¤ªà¥à¤°à¤¿à¤‚à¤Ÿ' })}
+                title={uiLabel(language, { en: 'Print', gu: 'àªªà« àª°àª¿àª¨à« àªŸ', hi: 'à¤ªà¥ à¤°à¤¿à¤‚à¤Ÿ' })}
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
               >
                 <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current stroke-2 shrink-0 transition-transform duration-300 group-hover:rotate-[-12deg]" strokeLinecap="round" strokeLinejoin="round">
@@ -1427,7 +1426,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               <button
                 type="button"
                 onClick={copyUrl}
-                title={copied ? uiLabel(language, { en: 'Copied', gu: 'àª•à«‰àªªàª¿ àª¥àªˆ', hi: 'à¤•à¥‰à¤ªà¥€ à¤¹à¥à¤†' }) : uiLabel(language, { en: 'Copy Link', gu: 'àª²àª¿àª‚àª• àª•à«‰àªªàª¿ àª•àª°à«‹', hi: 'à¤²à¤¿à¤‚à¤• à¤•à¥‰à¤ªà¥€ à¤•à¤°à¥‡à¤‚' })}
+                title={copied ? uiLabel(language, { en: 'Copied', gu: 'àª•à«‰àªªàª¿ àª¥àªˆ', hi: 'à¤•à¥‰à¤ªà¥€ à¤¹à¥ à¤†' }) : uiLabel(language, { en: 'Copy Link', gu: 'àª²àª¿àª‚àª• àª•à«‰àªªàª¿ àª•àª°à«‹', hi: 'à¤²à¤¿à¤‚à¤• à¤•à¥‰à¤ªà¥€ à¤•àª°à¥‡à¤‚' })}
                 className={`group relative flex items-center justify-center w-11 h-11 rounded-full border transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm ${copied
                   ? 'border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 shadow-[0_8px_20px_rgba(16,185,129,0.35)] scale-110'
                   : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-[#B3121B] hover:text-[#B3121B] hover:shadow-[0_8px_20px_rgba(179,18,27,0.35)]'
@@ -1502,7 +1501,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <div>
                     <ArticleContentBody html={formattedArticleBodyHtml} />
                     {/* Horizontal Ad Banner placed directly after article description */}
-                    <AdSectionBanner section="ARTICLE_BOTTOM" fallbackToDefault className="my-6" />
+                    <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
                   </div>
                 );
               }
@@ -1512,7 +1511,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <ArticleContentBody html={topHtml} />
 
                   {/* IN_ARTICLE Ad Banner displayed inside description BEFORE the "àªµàª§à« àªµàª¾àª‚àªšà«‹" button */}
-                  <AdSectionBanner section="IN_ARTICLE" fallbackToDefault className="my-6" />
+                  <AdSectionBanner section="IN_ARTICLE" className="my-6" />
 
                   {!isContentExpanded ? (
                     <div className="relative pt-2 pb-2">
@@ -1536,7 +1535,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                       <ArticleContentBody html={bottomHtml} />
 
                       {/* Horizontal Ad Banner placed directly after full article description */}
-                      <AdSectionBanner section="ARTICLE_BOTTOM" fallbackToDefault className="my-6" />
+                      <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
 
                       {/* Collapse / Read Less Button */}
                       <div className="flex justify-center pt-6 pb-2">
@@ -2054,9 +2053,6 @@ const streamCity = uiLabel(language, { en: 'Ahmedabad', gu: 'àª…àª®àª¦
             </div>
           </aside>
         </div>
-
-        {/* Sponsored Native Ads Section (Infinite Lazy Loaded Scroll) */}
-        <NativeAdsSection language={language} />
       </div>
       <div style={{ height: '50px' }} />
     </>

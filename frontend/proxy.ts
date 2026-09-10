@@ -32,6 +32,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "/admin/categories",
     "/admin/gallery",
     "/admin/videos",
+    "/admin/shorts",
     "/admin/reels",
     "/admin/web-stories",
     "/admin/epaper",
@@ -207,5 +208,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin", "/admin/:path*", "/api/admin/:path*"],
 };

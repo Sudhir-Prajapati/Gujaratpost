@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { Play, X, ChevronLeft, ChevronRight, Eye, Clock, MoreVertical } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getLocalized } from '@/data';
 import { getPublicVideos } from '@/lib/api';
+import { safeYouTubeId } from '@/lib/youtube';
 
 interface ShortItem {
   id: string;
@@ -146,14 +148,16 @@ export default function YouTubeShorts() {
       if (liveRes && liveRes.length > 0) {
         const seen = new Set<string>();
         const mapped: ShortItem[] = [];
+        // Prioritize featured shorts first, then slice up to top 40
+        const sorted = [...liveRes].sort((a: any, b: any) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
         let i = 0;
-        for (const v of liveRes) {
-          const key = v.youtubeId?.trim() || v.id;
+        for (const v of sorted) {
+          const key = safeYouTubeId(v.youtubeId) || v.id;
           if (key && !seen.has(key)) {
             seen.add(key);
             let rawViews = v.views;
             if (!rawViews || rawViews === 500) {
-              const vid = v.youtubeId || v.id || '';
+              const vid = key;
               let hash = 0;
               for (let c = 0; c < vid.length; c++) {
                 hash = (hash << 5) - hash + vid.charCodeAt(c);
@@ -170,26 +174,27 @@ export default function YouTubeShorts() {
             }
 
             mapped.push({
-              id: v.youtubeId || v.id,
+              id: key,
               title: v.titleGu || v.title,
               titleGu: v.titleGu || v.title,
-              thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${v.youtubeId}/hqdefault.jpg`,
-              videoUrl: `https://www.youtube.com/watch?v=${v.youtubeId || v.id}`,
+              thumbnail: `https://i.ytimg.com/vi/${key}/oar2.jpg`,
+              videoUrl: `https://www.youtube.com/shorts/${key}`,
               categoryGu: CATEGORIES_GU[i % CATEGORIES_GU.length],
               categoryEn: CATEGORIES_EN[i % CATEGORIES_EN.length],
               viewsGu: viewsStr,
               duration: v.duration || '0:58',
             });
             i++;
+            if (mapped.length >= 40) break;
           }
         }
 
-        setShorts(mapped);
+        setShorts(mapped.length > 0 ? mapped : DUMMY_SHORTS);
       } else {
-        setShorts([]);
+        setShorts(DUMMY_SHORTS);
       }
     } catch {
-      setShorts([]);
+      setShorts(DUMMY_SHORTS);
     } finally {
       setLoading(false);
     }
@@ -199,7 +204,6 @@ export default function YouTubeShorts() {
     loadShortsData();
   }, [loadShortsData]);
 
-  // Update Left & Right Arrow States
   const updateArrows = useCallback(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -207,40 +211,40 @@ export default function YouTubeShorts() {
     setShowRightArrow(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
   }, []);
 
-  // Continuous smooth auto-scroll loop (60fps animation frame)
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el || loading || shorts.length === 0) return;
 
-    // Set initial arrow state as soon as content is available
     updateArrows();
 
     let animId: number;
     let lastTime = performance.now();
-    const SPEED = 50; // pixels per second
+    const SPEED = 50; 
 
-    const scrollStep = (now: number) => {
-      const dt = Math.min(now - lastTime, 50);
+    const step = (now: number) => {
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
 
       if (!isPausedRef.current && !selectedVideoId) {
-        scrollPosRef.current += (SPEED * dt) / 1000;
+        scrollPosRef.current += SPEED * dt;
         const maxScroll = el.scrollWidth - el.clientWidth;
-        if (scrollPosRef.current >= maxScroll && maxScroll > 0) {
-          scrollPosRef.current = 0;
+        if (maxScroll > 0) {
+          if (scrollPosRef.current >= maxScroll) {
+            scrollPosRef.current = 0;
+          }
+          el.scrollLeft = scrollPosRef.current;
+          updateArrows();
         }
-        el.scrollLeft = scrollPosRef.current;
       }
-      animId = requestAnimationFrame(scrollStep);
+
+      animId = requestAnimationFrame(step);
     };
 
-    animId = requestAnimationFrame(scrollStep);
+    animId = requestAnimationFrame(step);
 
     const handleNativeScroll = () => {
-      if (el) {
-        scrollPosRef.current = el.scrollLeft;
-        updateArrows();
-      }
+      scrollPosRef.current = el.scrollLeft;
+      updateArrows();
     };
 
     el.addEventListener('scroll', handleNativeScroll, { passive: true });
@@ -253,11 +257,9 @@ export default function YouTubeShorts() {
     };
   }, [loading, shorts, selectedVideoId, updateArrows]);
 
-  // Manual button scroll handler - pauses auto-scroll during and after manual scroll
   const handleScroll = (direction: 'left' | 'right') => {
     const el = scrollContainerRef.current;
     if (!el) return;
-    // Pause auto-scroll so it doesn't fight the manual smooth scroll
     isPausedRef.current = true;
     const scrollAmount = el.clientWidth * 0.75;
     const target = Math.max(0, Math.min(
@@ -266,10 +268,6 @@ export default function YouTubeShorts() {
     ));
     el.scrollTo({ left: target, behavior: 'smooth' });
     scrollPosRef.current = target;
-    // Update arrows immediately based on target
-    setShowLeftArrow(target > 10);
-    setShowRightArrow(target < el.scrollWidth - el.clientWidth - 10);
-    // Resume auto-scroll after smooth scroll completes (~600ms)
     setTimeout(() => {
       scrollPosRef.current = el.scrollLeft;
       isPausedRef.current = false;
@@ -280,23 +278,23 @@ export default function YouTubeShorts() {
 
   return (
     <section className="relative mx-auto max-w-screen-xl px-4 py-6 select-none">
-      {/* Red Solid Panel Container matching exact screenshot */}
       <div className="w-full bg-[#B3121B] text-white rounded-2xl p-5 sm:p-6 md:p-7 border border-white/10 relative shadow-xl">
         
         {/* Header Row */}
         <div className="flex items-center justify-between mb-5 select-none">
-          <span className="bg-white/20 text-white font-black text-xs sm:text-sm px-3.5 py-1.5 rounded-md tracking-wide border border-white/25 shadow-sm uppercase">
-            {getLocalized(language, { en: 'Short Videos', gu: 'શોર્ટ વીડિયો', hi: 'शॉर्ट वीडियो' })}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="bg-white/20 text-white font-black text-xs sm:text-sm px-3.5 py-1.5 rounded-md tracking-wide border border-white/25 shadow-sm uppercase flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
+              {getLocalized(language, { en: 'Short Videos', gu: 'શોર્ટ વીડિયો', hi: 'शॉर्ट वीडियो' })}
+            </span>
+          </div>
 
-          <a
-            href="https://www.youtube.com/@Gujaratpostnews/shorts"
-            target="_blank"
-            rel="noreferrer"
+          <Link
+            href="/shorts"
             className="text-white/95 hover:text-white font-extrabold text-xs sm:text-sm hover:underline flex items-center gap-1 transition"
           >
-            {getLocalized(language, { en: 'More Shorts →', gu: 'વધુ શોટ્સ →', hi: 'और देखें →' })}
-          </a>
+            {getLocalized(language, { en: 'More Shorts →', gu: 'બધા શોર્ટ્સ જુઓ →', hi: 'सभी शॉर्ट्स देखें →' })}
+          </Link>
         </div>
 
         <div className="relative">
@@ -317,17 +315,26 @@ export default function YouTubeShorts() {
                   onClick={() => setSelectedVideoId(short.id)}
                   className="group relative flex-shrink-0 w-[185px] sm:w-[205px] cursor-pointer select-none"
                 >
-                  <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/20 bg-black shadow-md transition-transform duration-300 group-hover:scale-[1.02]">
+                  <div
+                    className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/20 bg-black shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
+                    style={{
+                      backgroundImage: `url(https://i.ytimg.com/vi/${short.id}/hqdefault.jpg)`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
+                  >
                     <img
-                      src={`https://i.ytimg.com/vi/${short.id}/frame0.jpg`}
+                      src={`https://i.ytimg.com/vi/${short.id}/oar2.jpg`}
                       alt={short.title}
-                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src = `https://i.ytimg.com/vi/${short.id}/hqdefault.jpg`;
+                        // Hide broken oar2.jpg — card div background (hqdefault) shows as fallback
+                        (e.target as HTMLImageElement).style.opacity = '0';
                       }}
                       loading="lazy"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent" />
+                    {/* Subtle gradient only at the very bottom for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
                     <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
                       <span className="w-11 h-11 rounded-full bg-[#B3121B] text-white flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110 border border-white/20">
                         <Play className="h-5 w-5 fill-current ml-0.5" />

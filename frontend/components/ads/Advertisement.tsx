@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowUpRight, BarChart3, Megaphone, Users, ExternalLink } from 'lucide-react';
+import { ExternalLink, Megaphone } from 'lucide-react';
 import { getPublicAdBySection } from '@/lib/api';
 
 interface AdProps {
   position?: 'header' | 'sidebar' | 'in-article' | 'footer' | 'banner' | string;
   section?: string;
   className?: string;
+  /** When true, shows a branded fallback ad if admin hasn't configured one. Default: false */
+  showFallback?: boolean;
 }
 
 const adSizes: Record<string, { h: number; label: string }> = {
@@ -44,22 +45,26 @@ const isValidMediaUrl = (url: string | null | undefined): boolean => {
   }
 };
 
-export default function Advertisement({ position, section, className = '' }: AdProps) {
+export default function Advertisement({ position, section, className = '', showFallback = false }: AdProps) {
   const targetSection = section || (position === 'header' ? 'HEADER' : position === 'sidebar' ? 'SIDEBAR_HERO_TOP' : 'AFTER_HERO');
   const effectivePos = position || sectionToPosMap[targetSection] || 'sidebar';
   const sizeConfig = adSizes[effectivePos] || adSizes['sidebar'];
-  const { h, label } = sizeConfig;
+  const { h } = sizeConfig;
   const vertical = effectivePos === 'sidebar' || effectivePos === 'in-article';
 
   const [adData, setAdData] = useState<any>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
     getPublicAdBySection(targetSection).then((data) => {
       if (isMounted) {
         setAdData(data);
+        setLoaded(true);
       }
-    }).catch(() => {});
+    }).catch(() => {
+      if (isMounted) setLoaded(true);
+    });
     return () => {
       isMounted = false;
     };
@@ -123,46 +128,49 @@ export default function Advertisement({ position, section, className = '' }: AdP
     );
   }
 
-  // Fallback default styled banner card
+  // No active dynamic ad configured — show fallback if requested
+  if (!loaded) return null;
+  if (!showFallback) return null;
+
+  // Branded default fallback advertisement
+  const isWide = !vertical;
   return (
     <aside
       aria-label="Advertisement"
-      className={`group relative isolate overflow-hidden rounded-xl border border-slate-200 bg-[#0c1729] text-white shadow-sm ${className}`}
+      className={`group relative overflow-hidden rounded-xl border border-dashed border-red-300/60 dark:border-red-800/50 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm transition-all duration-300 hover:border-red-400/70 hover:shadow-md ${className}`}
       style={{ minHeight: h }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_12%_20%,rgba(225,29,46,0.35),transparent_38%),linear-gradient(120deg,transparent,rgba(255,255,255,0.06))]" />
-      <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-[22px] border-white/[0.045]" />
-      <div className="absolute bottom-1 right-2 text-[8px] font-bold uppercase tracking-widest text-white/28">Ad · {label}</div>
-
-      <div className={`relative flex min-h-full w-full ${vertical ? 'flex-col items-start justify-center p-6' : 'items-center justify-between gap-4 px-5 py-3 sm:px-7'}`} style={{ minHeight: h }}>
-        <div className={`flex min-w-0 ${vertical ? 'flex-col items-start' : 'items-center gap-4'}`}>
-          <span className={`grid shrink-0 place-items-center rounded-xl bg-accent shadow-lg shadow-red-950/40 ${vertical ? 'mb-5 h-12 w-12' : 'h-10 w-10'}`}>
-            <Megaphone className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-red-300">Grow with Gujarat Post</p>
-            <h2 className={`${vertical ? 'mt-2 text-2xl' : 'mt-0.5 text-base sm:text-xl'} font-black leading-tight tracking-tight`}>
-              Put your brand in front of Gujarat.
-            </h2>
-            {vertical && (
-              <p className="mt-3 max-w-xs text-sm leading-5 text-white/55">Reach engaged readers across news, video, social and e-paper.</p>
-            )}
-          </div>
+      <div
+        className={`flex ${isWide ? 'flex-row items-center gap-4 px-6' : 'flex-col items-center justify-center gap-3 py-6 px-4'} h-full w-full`}
+        style={{ minHeight: h }}
+      >
+        {/* Icon */}
+        <div className={`flex items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30 ${isWide ? 'h-10 w-10 flex-shrink-0' : 'h-14 w-14'}`}>
+          <Megaphone className={`text-red-600 dark:text-red-400 ${isWide ? 'h-5 w-5' : 'h-7 w-7'}`} />
         </div>
 
-        {vertical && (
-          <div className="mt-5 flex items-center gap-5 border-y border-white/10 py-3 text-xs font-bold text-white/70">
-            <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-red-400" /> 2M+ readers</span>
-            <span className="inline-flex items-center gap-1.5"><BarChart3 className="h-4 w-4 text-red-400" /> High impact</span>
-          </div>
-        )}
+        {/* Text */}
+        <div className={`${isWide ? 'flex-1' : 'text-center'}`}>
+          <p className={`font-black text-red-700 dark:text-red-400 leading-tight ${isWide ? 'text-sm' : 'text-base'}`}>
+            Advertise with Gujarat Post
+          </p>
+          <p className={`text-red-600/70 dark:text-red-500/70 font-medium mt-0.5 ${isWide ? 'text-xs' : 'text-[13px]'}`}>
+            તમારી જાહેરાત અહીં મૂકો
+          </p>
+        </div>
 
-        <Link
-          href="/advertise"
-          className={`${vertical ? 'mt-5' : ''} inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-4 py-2 text-xs font-black text-slate-950 transition duration-200 group-hover:-translate-y-0.5 group-hover:shadow-lg`}
+        {/* CTA */}
+        <a
+          href="mailto:ads@gujaratpost.in"
+          className={`flex-shrink-0 rounded-full bg-red-600 hover:bg-red-700 text-white font-black shadow transition-all duration-200 hover:scale-105 active:scale-95 ${isWide ? 'px-4 py-1.5 text-xs' : 'px-5 py-2 text-xs mt-1'}`}
         >
-          Advertise now <ArrowUpRight className="h-3.5 w-3.5" />
-        </Link>
+          Contact Us ↗
+        </a>
+      </div>
+
+      {/* AD Badge */}
+      <div className="absolute top-2 right-2 flex items-center gap-1 rounded bg-red-600/80 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+        <span>AD</span>
       </div>
     </aside>
   );

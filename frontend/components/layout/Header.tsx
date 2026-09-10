@@ -24,6 +24,7 @@ import DistrictBar from './DistrictBar';
 import gpLogo from '../../public/Gujarat Post Logo.gif';
 import { getPublicCategories } from '@/lib/api';
 import UserAuthModal from '@/components/ui/UserAuthModal';
+import { prefetchSupportDetails } from '@/components/ui/SupportModal';
 
 const languageLabels = {
   gu: 'ગુજરાતી',
@@ -110,6 +111,10 @@ const CATEGORY_TRANSLATIONS: Record<string, { en: string; hi: string; gu: string
   'lifestyle': { en: 'Lifestyle', hi: 'लाइफस्टाइल', gu: 'લાઇફસ્ટાઇલ' },
   'gold-silver': { en: 'Gold - Silver', hi: 'गोल्ड - सिल्वर', gu: 'ગોલ્ડ - સિલ્વર' },
   'webstory': { en: 'Webstory', hi: 'वेब स्टोरीज', gu: 'વેબસ્ટોરી' },
+  'election-2027': { en: 'Election 2027', hi: 'चुनाव 2027', gu: 'ચૂંટણી 2027' },
+  'election': { en: 'Election 2027', hi: 'चुनाव 2027', gu: 'ચૂંટણી 2027' },
+  'podcasts': { en: 'Podcast', hi: 'पॉडकास्ट', gu: 'પોડકાસ્ટ' },
+  'podcast': { en: 'Podcast', hi: 'पॉडकास्ट', gu: 'પોડકાસ્ટ' },
 };
 
 export default function Header() {
@@ -313,9 +318,9 @@ export default function Header() {
       else if (slugLower === 'web-stories' || slugLower === 'webstory') href = '/web-stories';
 
       const staticTrans = CATEGORY_TRANSLATIONS[slugLower];
-      const labelEn = c.nameEn || (staticTrans ? staticTrans.en : c.name);
-      const labelGu = c.nameGu || (staticTrans ? staticTrans.gu : c.name);
-      const labelHi = c.nameHi || (staticTrans ? staticTrans.hi : c.name);
+      const labelEn = (staticTrans && staticTrans.en) || c.nameEn || c.name;
+      const labelGu = (staticTrans && staticTrans.gu) || c.nameGu || c.name;
+      const labelHi = (staticTrans && staticTrans.hi) || c.nameHi || c.name;
 
       return { label: labelEn, labelGu, labelHi, href };
     };
@@ -718,6 +723,7 @@ export default function Header() {
                     setMenuOpen(false);
                     openSupportModal();
                   }}
+                  onMouseEnter={prefetchSupportDetails}
                   className="flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 p-2 text-xs font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer"
                 >
                   <Heart className="h-3.5 w-3.5 fill-current animate-pulse text-white" />
@@ -791,66 +797,41 @@ export default function Header() {
           className="hidden border-t border-border bg-card/98 md:block"
           aria-label="Main navigation"
         >
-          <div className="mx-auto max-w-screen-2xl px-2 xl:px-4 flex items-center gap-2 relative">
+          <div className="mx-auto max-w-[1700px] px-1.5 sm:px-2 xl:px-3 flex items-center gap-1 xl:gap-1.5 relative">
             {/* Main scrollable navigation list */}
             <div className="min-w-0 max-w-full overflow-hidden">
-              <ul className="flex items-center gap-0 overflow-x-auto scrollbar-none">                {navLinks.map((link) => {
-                const active = isActive(link.href);
-                return (
-                  <li key={`${link.href}-${language}`} className="shrink-0">
-                    <a
-                      href={link.href}
-                      className={`relative flex h-11 items-center whitespace-nowrap px-1.5 xl:px-2 2xl:px-2.5 text-[13px] xl:text-[14px] font-bold tracking-tight transition-colors duration-150 ${active
-                        ? 'text-accent'
-                        : 'text-foreground hover:text-accent'
-                        }`}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      {link.href === '/' ? (
-                        <span className="flex items-center gap-1.5">
-                          <Home className="h-4 w-4 shrink-0 text-accent" />
-                          <span>{getNavLabel(link)}</span>
-                        </span>
-                      ) : (
-                        getNavLabel(link)
-                      )}
-                      {/* Active indicator – thick red underline */}
-                      {active && (
-                        <span
-                          className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent"
-                          aria-hidden="true"
-                        />
-                      )}
-                    </a>
-                  </li>
-                );
-              })}
-
-                {/* Other / અન્ય Dropdown Trigger */}
-                {/* <li
-                  ref={triggerRef}
-                  className="relative shrink-0"
-                  onMouseEnter={() => {
-                    setOtherMenuOpen(true);
-                    const rect = triggerRef.current?.getBoundingClientRect();
-                    const navWrapper = triggerRef.current?.closest('.max-w-screen-2xl');
-                    const navRect = navWrapper?.getBoundingClientRect();
-                    if (rect && navRect) {
-                      setDropdownLeft(rect.left - navRect.left);
-                    }
-                  }}
-                  onMouseLeave={() => setOtherMenuOpen(false)}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOtherMenuOpen(!otherMenuOpen)}
-                    className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 xl:px-3 text-[14px] 2xl:text-[15px] font-bold tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
-                      }`}
-                  >
-                    <span key={language}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
-                    <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
-                  </button>
-                </li> */}
+              <ul className="flex items-center gap-0 overflow-x-auto scrollbar-none">
+                {navLinks.map((link) => {
+                  const active = isActive(link.href);
+                  return (
+                    <li key={`${link.href}-${language}`} className="shrink-0">
+                      <a
+                        href={link.href}
+                        className={`relative flex h-11 items-center whitespace-nowrap px-1 sm:px-1.5 xl:px-2 2xl:px-2.5 text-[12.5px] xl:text-[13px] 2xl:text-[14px] font-bold tracking-tight transition-colors duration-150 ${active
+                          ? 'text-accent'
+                          : 'text-foreground hover:text-accent'
+                          }`}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        {link.href === '/' ? (
+                          <span className="flex items-center gap-1.5">
+                            <Home className="h-4 w-4 shrink-0 text-accent" />
+                            <span>{getNavLabel(link)}</span>
+                          </span>
+                        ) : (
+                          getNavLabel(link)
+                        )}
+                        {/* Active indicator – thick red underline */}
+                        {active && (
+                          <span
+                            className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </a>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
 
@@ -861,7 +842,7 @@ export default function Header() {
               onMouseEnter={() => {
                 setOtherMenuOpen(true);
                 const rect = triggerRef.current?.getBoundingClientRect();
-                const navWrapper = triggerRef.current?.closest('.max-w-screen-2xl');
+                const navWrapper = triggerRef.current?.closest('nav > div');
                 const navRect = navWrapper?.getBoundingClientRect();
                 if (rect && navRect) {
                   setDropdownLeft(rect.left - navRect.left);
@@ -872,7 +853,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setOtherMenuOpen(!otherMenuOpen)}
-                className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-1.5 xl:px-2 2xl:px-2.5 text-[13px] xl:text-[14px] font-bold tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
+                className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-1 sm:px-1.5 xl:px-2 2xl:px-2.5 text-[12.5px] xl:text-[13px] 2xl:text-[14px] font-bold tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
                   }`}
               >
                 <span key={language}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
@@ -881,12 +862,13 @@ export default function Header() {
             </div>
 
             {/* Non-scrollable controls pinned to the right (Support Us & E-Paper CTAs) */}
-            <div className="ml-auto flex items-center gap-2.5 shrink-0 pl-3 border-l border-border/40 h-11 relative">
+            <div className="ml-auto flex items-center gap-1.5 xl:gap-2 shrink-0 pl-2 xl:pl-3 border-l border-border/40 h-11 relative">
               {/* Support Us CTA */}
               <button
                 type="button"
                 onClick={openSupportModal}
-                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-3 text-xs font-black text-white shadow-md shadow-red-900/20 ring-1 ring-red-600/40 transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-95 cursor-pointer"
+                onMouseEnter={prefetchSupportDetails}
+                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-2.5 xl:px-3 text-xs font-black text-white shadow-md shadow-red-900/20 ring-1 ring-red-600/40 transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-95 cursor-pointer"
               >
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
                 <Heart className="h-3.5 w-3.5 shrink-0 fill-current text-white animate-pulse" />
@@ -896,7 +878,7 @@ export default function Header() {
               {/* E-Paper CTA */}
               <a
                 href="/epaper"
-                className="group relative inline-flex h-9 items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-accent to-red-700 px-4 text-xs font-black text-white shadow-md shadow-red-900/30 ring-1 ring-red-700/40 transition-all duration-200 hover:shadow-lg hover:shadow-red-900/40 hover:scale-[1.03] active:scale-95"
+                className="group relative inline-flex h-9 items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-accent to-red-700 px-3 xl:px-4 text-xs font-black text-white shadow-md shadow-red-900/30 ring-1 ring-red-700/40 transition-all duration-200 hover:shadow-lg hover:shadow-red-900/40 hover:scale-[1.03] active:scale-95"
               >
                 {/* shimmer sweep on hover */}
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />

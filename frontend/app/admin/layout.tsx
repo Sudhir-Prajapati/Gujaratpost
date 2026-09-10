@@ -28,6 +28,8 @@ import {
   Sparkles,
   Heart,
   Gift,
+  Film,
+  Trash2,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -59,11 +61,13 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/categories',
       '/admin/gallery',
       '/admin/videos',
+      '/admin/shorts',
       '/admin/reels',
       '/admin/web-stories',
       '/admin/epaper',
       '/admin/users',
       '/admin/support',
+      '/admin/cleanup',
     ],
   },
   EDITOR: {
@@ -80,6 +84,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/categories',
       '/admin/gallery',
       '/admin/videos',
+      '/admin/shorts',
       '/admin/reels',
       '/admin/web-stories',
       '/admin/epaper',
@@ -174,6 +179,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Categories (કેટેગરીઝ)', href: '/admin/categories', icon: Layers },
     { label: 'Gallery (ફોટો ગેલેરી)', href: '/admin/gallery', icon: ImageIcon },
     { label: 'Videos (વીડિયોઝ)', href: '/admin/videos', icon: Video },
+    { label: 'Shorts (શોર્ટ વીડિયો)', href: '/admin/shorts', icon: Film },
     { label: 'Reels (રિલ્સ)', href: '/admin/reels', icon: Smartphone },
     { label: 'Web Stories (વેબ સ્ટોરીઝ)', href: '/admin/web-stories', icon: BookOpen },
     { label: 'E-Paper (ઈ-પેપર)', href: '/admin/epaper', icon: Newspaper },
@@ -292,6 +298,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </Link>
             );
           })}
+
+          {/* Super Admin Only: Data Cleanup — separated by a divider */}
+          {userRole === 'SUPER_ADMIN' && (
+            <>
+              <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
+              <Link
+                href="/admin/cleanup"
+                onClick={() => setSidebarOpen(false)}
+                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 ${
+                  pathname === '/admin/cleanup'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-900/30'
+                    : 'text-red-500 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30'
+                }`}
+              >
+                <Trash2 className="h-5 w-5 shrink-0" />
+                <span className="truncate">Data Cleanup (ડેટા સાફ)</span>
+              </Link>
+            </>
+          )}
         </nav>
 
         {/* Footer Logout Button */}

@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { BadRequestError } from '../utils/errors.js';
+import { invalidateHeroSettingsCache } from './hero.controller.js';
+import { clearPublicRoutesCache } from '../routes/public.routes.js';
 
 function slugify(text: string): string {
   return text
@@ -86,6 +88,8 @@ export async function syncArticleToHeroSettings(postId: string, isFeatured?: boo
           trendingNewsIds: JSON.stringify(trendingNewsIds),
         },
       });
+      invalidateHeroSettingsCache();
+      clearPublicRoutesCache();
     }
   } catch (err) {
     console.warn('syncArticleToHeroSettings non-fatal error:', err);
@@ -101,7 +105,7 @@ export async function autoPublishDueArticles() {
 
   try {
     const now = new Date();
-    await prisma.post.updateMany({
+    const updated = await prisma.post.updateMany({
       where: {
         status: 'SCHEDULED',
         scheduledAt: { lte: now },
@@ -110,6 +114,10 @@ export async function autoPublishDueArticles() {
         status: 'PUBLISHED',
       },
     });
+    if (updated.count > 0) {
+      invalidateHeroSettingsCache();
+      clearPublicRoutesCache();
+    }
   } catch (err) {
     console.error('Error auto-publishing due articles:', err);
   }
@@ -308,6 +316,16 @@ export class ArticleController {
         throw new BadRequestError('Title, content, categoryId, and authorId are required.');
       }
 
+      if (status === 'SCHEDULED' || scheduledAt) {
+        if (!scheduledAt) {
+          throw new BadRequestError('Scheduled publish date & time is required for scheduled articles.');
+        }
+        const schedTime = new Date(scheduledAt).getTime();
+        if (isNaN(schedTime) || schedTime <= Date.now() - 10000) {
+          throw new BadRequestError('Scheduled publish date & time must be set in the future (later than current time).');
+        }
+      }
+
       let assignedArticleNum: number;
       if (articleNumber !== undefined && articleNumber !== null && String(articleNumber).trim() !== '') {
         const num = parseInt(String(articleNumber), 10);
@@ -426,6 +444,9 @@ export class ArticleController {
         await syncArticleToHeroSettings(post.id, post.isFeatured, post.isTrending);
       }
 
+      clearPublicRoutesCache();
+      invalidateHeroSettingsCache();
+
       return sendSuccess(res, { article: post }, 'Article created successfully.', 201);
     } catch (error) {
       next(error);
@@ -499,7 +520,15 @@ export class ArticleController {
       if (featuredImage !== undefined) updateData.featuredImage = featuredImage.trim();
       if (status !== undefined) updateData.status = status;
       if (scheduledAt !== undefined) {
-        updateData.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
+        if (scheduledAt) {
+          const schedTime = new Date(scheduledAt).getTime();
+          if (isNaN(schedTime) || schedTime <= Date.now() - 10000) {
+            throw new BadRequestError('Scheduled publish date & time must be set in the future (later than current time).');
+          }
+          updateData.scheduledAt = new Date(scheduledAt);
+        } else {
+          updateData.scheduledAt = null;
+        }
       }
       if (categoryId !== undefined) updateData.categoryId = categoryId;
       if (authorId !== undefined) updateData.authorId = authorId;
@@ -584,6 +613,9 @@ export class ArticleController {
         await syncArticleToHeroSettings(updated.id, updated.isFeatured, updated.isTrending);
       }
 
+      clearPublicRoutesCache();
+      invalidateHeroSettingsCache();
+
       return sendSuccess(res, { article: updated }, 'Article updated successfully.');
     } catch (error) {
       next(error);
@@ -605,7 +637,153 @@ export class ArticleController {
         where: { id },
       });
 
+      clearPublicRoutesCache();
+      invalidateHeroSettingsCache();
+
       return sendSuccess(res, null, 'Article deleted successfully.');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [SUPER_ADMIN] Count articles older than a given cutoff date (preview before bulk delete).
+   * Query: GET /api/admin/articles/old-count?before=YYYY-MM-DD
+   */
+  static async countOldArticles(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { before } = req.query as { before?: string };
+      if (!before) {
+        return res.status(400).json({ success: false, message: 'before date is required (YYYY-MM-DD)' });
+      }
+      const cutoff = new Date(`${before}T23:59:59.999Z`);
+      if (isNaN(cutoff.getTime())) {
+        return res.status(400).json({ success: false, message: 'Invalid date format' });
+      }
+      const count = await prisma.post.count({
+        where: { createdAt: { lte: cutoff } },
+      });
+      return sendSuccess(res, { count, before, cutoff: cutoff.toISOString() }, `${count} articles found before ${before}`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [SUPER_ADMIN] Bulk delete all articles older than a given cutoff date.
+   * Body: DELETE /api/admin/articles/bulk-delete-old  { before: 'YYYY-MM-DD', confirm: true }
+   */
+  static async bulkDeleteOldArticles(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { before, confirm } = req.body as { before?: string; confirm?: boolean };
+      if (!before) {
+        return res.status(400).json({ success: false, message: 'before date is required (YYYY-MM-DD)' });
+      }
+      if (!confirm) {
+        return res.status(400).json({ success: false, message: 'confirm must be true to proceed with bulk deletion' });
+      }
+      const cutoff = new Date(`${before}T23:59:59.999Z`);
+      if (isNaN(cutoff.getTime())) {
+        return res.status(400).json({ success: false, message: 'Invalid date format' });
+      }
+      const result = await prisma.post.deleteMany({
+        where: { createdAt: { lte: cutoff } },
+      });
+      clearPublicRoutesCache();
+      invalidateHeroSettingsCache();
+      return sendSuccess(res, { deleted: result.count, before }, `${result.count} articles deleted successfully.`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [SUPER_ADMIN] List articles within a date range for preview.
+   * GET /api/admin/articles/range-list?from=YYYY-MM-DD&to=YYYY-MM-DD&page=1&limit=20
+   */
+  static async listArticlesInRange(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { from, to, page = '1', limit = '20' } = req.query as Record<string, string>;
+      if (!from || !to) {
+        return res.status(400).json({ success: false, message: 'from and to dates are required (YYYY-MM-DD)' });
+      }
+      const fromDate = new Date(`${from}T00:00:00.000Z`);
+      const toDate = new Date(`${to}T23:59:59.999Z`);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ success: false, message: 'Invalid date format' });
+      }
+      const pageNum = Math.max(1, parseInt(page, 10));
+      const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+      const where = { createdAt: { gte: fromDate, lte: toDate } };
+      const [articles, total] = await Promise.all([
+        prisma.post.findMany({
+          where,
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            status: true,
+            createdAt: true,
+            author: { select: { name: true } },
+          },
+          orderBy: { createdAt: 'desc' },
+          skip: (pageNum - 1) * limitNum,
+          take: limitNum,
+        }),
+        prisma.post.count({ where }),
+      ]);
+      return sendSuccess(res, { articles, total, page: pageNum, limit: limitNum, from, to }, `${total} articles in range`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [SUPER_ADMIN] Count articles within a date range.
+   * GET /api/admin/articles/range-count?from=YYYY-MM-DD&to=YYYY-MM-DD
+   */
+  static async countArticlesInRange(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { from, to } = req.query as { from?: string; to?: string };
+      if (!from || !to) {
+        return res.status(400).json({ success: false, message: 'from and to dates are required (YYYY-MM-DD)' });
+      }
+      const fromDate = new Date(`${from}T00:00:00.000Z`);
+      const toDate = new Date(`${to}T23:59:59.999Z`);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ success: false, message: 'Invalid date format' });
+      }
+      const count = await prisma.post.count({ where: { createdAt: { gte: fromDate, lte: toDate } } });
+      return sendSuccess(res, { count, from, to }, `${count} articles between ${from} and ${to}`);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * [SUPER_ADMIN] Bulk delete all articles within a date range.
+   * DELETE /api/admin/articles/bulk-delete-range  body: { from, to, confirm: true }
+   */
+  static async bulkDeleteArticlesInRange(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { from, to, confirm } = req.body as { from?: string; to?: string; confirm?: boolean };
+      if (!from || !to) {
+        return res.status(400).json({ success: false, message: 'from and to dates are required (YYYY-MM-DD)' });
+      }
+      if (!confirm) {
+        return res.status(400).json({ success: false, message: 'confirm must be true to proceed' });
+      }
+      const fromDate = new Date(`${from}T00:00:00.000Z`);
+      const toDate = new Date(`${to}T23:59:59.999Z`);
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return res.status(400).json({ success: false, message: 'Invalid date format' });
+      }
+      const result = await prisma.post.deleteMany({
+        where: { createdAt: { gte: fromDate, lte: toDate } },
+      });
+      clearPublicRoutesCache();
+      invalidateHeroSettingsCache();
+      return sendSuccess(res, { deleted: result.count, from, to }, `${result.count} articles deleted successfully.`);
     } catch (error) {
       next(error);
     }

@@ -1,14 +1,15 @@
 import HeroSection from "@/components/sections/HeroSection";
-import { getPublicArticles, getPublicVideos, getHeroSettings, getPublicCategories } from "@/lib/api";
+import { getPublicArticles, getHeroSettings, getPublicCategories } from "@/lib/api";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function HomePage() {
-  const [articlesRes, heroSettings, videos, categories] = await Promise.all([
+  // Videos are NOT fetched here — YouTubeLatest/Shorts are 'use client' components
+  // that fetch data after mount. Fetching videos during SSR caused 12s timeouts.
+  const [articlesRes, heroSettings, categories] = await Promise.all([
     getPublicArticles({ limit: 60, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     getHeroSettings().catch(() => null),
-    getPublicVideos('video').catch(() => []),
     getPublicCategories({ showInHome: true }).catch(() => []),
   ]);
 
@@ -19,7 +20,7 @@ export default async function HomePage() {
       {/* Main 3-column portal layout containing all active sections */}
       <HeroSection
         initialArticles={articles}
-        initialVideos={Array.isArray(videos) ? videos : []}
+        initialVideos={[]}
         initialHeroSettings={heroSettings}
         initialCategories={Array.isArray(categories) ? categories : []}
       />

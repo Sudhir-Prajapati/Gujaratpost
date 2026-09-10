@@ -450,7 +450,29 @@ export default function HeroSection({
   const [allCategoriesDB, setAllCategoriesDB] = useState<any[]>(initialCategoriesDB);
 
   useEffect(() => {
-    // Fetch main articles pool, hero slots settings, videos, market rates, weather, AND categories in parallel
+    // If we already have initial articles and hero settings passed from SSR,
+    // only fetch client-dynamic data (weather & market rates) on mount.
+    // Heavy datasets (articles, hero settings, categories, videos) are already populated!
+    const hasInitialData = initialArticles && initialArticles.length > 0 && initialHeroSettings;
+
+    if (hasInitialData) {
+      if (typeof window !== 'undefined') {
+        (window as any).__gpDataReady = true;
+        window.dispatchEvent(new CustomEvent('gp-data-ready'));
+      }
+      setIsInitialLoading(false);
+
+      Promise.all([
+        getMarketRates(),
+        getPublicWeather('ahmedabad'),
+      ]).then(([marketRes, weatherRes]: any[]) => {
+        if (weatherRes) setWeatherData(weatherRes);
+        if (marketRes) setMarketRates(marketRes);
+      }).catch((err) => console.warn('Error loading weather/rates:', err));
+      return;
+    }
+
+    // Fallback if SSR had empty data (e.g. direct client route navigation)
     Promise.all([
       getPublicArticles({ limit: 60 }),
       getHeroSettings(),
@@ -498,7 +520,7 @@ export default function HeroSection({
         const trendingArts = arts.filter((a: Article) => a.isTrending);
         const popularPool = fillPool([...trendingArts, ...customPopularArts], arts, 10);
         setTrendingArtDB(popularPool);
-        const mostReadPool = customMostReadArts.length > 0 ? customMostReadArts : arts.slice(0, 5);
+        const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : arts).slice(0, 3);
         setMostReadArtDB(mostReadPool);
         setGujaratArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'gujarat' || a.category?.toLowerCase() === 'state').slice(0, 16));
         setCrimeArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'crime').slice(0, 4));
@@ -588,6 +610,14 @@ export default function HeroSection({
         view="all"
         initialArticles={articlesList}
         initialPopularNews={initialHeroSettings?.popularNewsArticles || (initialHeroSettings as any)?.setting?.popularNewsArticles}
+        initialMostRead={
+          articlesList.length >= 5
+            ? [
+                ...(initialHeroSettings?.mostReadArticles || []),
+                ...articlesList.filter((a) => !(initialHeroSettings?.mostReadArticles || []).some((m: any) => m.id === a.id)),
+              ].slice(0, 5)
+            : undefined
+        }
       />
     ),
     instagram: <InstagramStories key="instagram" />,
@@ -685,7 +715,7 @@ export default function HeroSection({
     weather: <WeatherDashboardSection key="weather" language={language} />,
     shorts: (
       <Fragment key="shorts-frag">
-        <VideoDesk videos={(videosList.length > 0 ? videosList : initialVideos || []).slice(0, 7)} language={language} onlyShorts={true} />
+        <YouTubeShorts key="youtube-shorts" />
         <AdSectionBanner section="AFTER_VIDEOS" />
       </Fragment>
     ),
@@ -1081,7 +1111,7 @@ export default function HeroSection({
             </div>
 
             <div className="flex flex-col divide-y divide-border">
-              {(mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, 5).map((art, idx) => (
+              {(mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, 3).map((art, idx) => (
                 <Link
                   key={art.id}
                   href={`/news/${art.slug}`}
@@ -1523,146 +1553,8 @@ function getInfiniteAds(count: number): NativeAd[] {
 const MAX_GROUPS = 5;
 const MAX_ADS_COUNT = MAX_GROUPS * 7;
 
-export function NativeAdsSection({ language }: { language: Language }) {
-  const [loadedCount, setLoadedCount] = useState(7);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const isLoadingRef = useRef(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const sentinelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || loadedCount >= MAX_ADS_COUNT) return;
-
-    let timer: NodeJS.Timeout | null = null;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry.isIntersecting && !isLoadingRef.current) {
-          isLoadingRef.current = true;
-          setIsLoadingMore(true);
-
-          timer = setTimeout(() => {
-            setLoadedCount((prev) => Math.min(prev + 7, MAX_ADS_COUNT));
-            isLoadingRef.current = false;
-            setIsLoadingMore(false);
-          }, 400);
-        }
-      },
-      {
-        root: null,
-        rootMargin: '200px',
-        threshold: 0.01
-      }
-    );
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
-
-    return () => {
-      observer.disconnect();
-      if (timer) clearTimeout(timer);
-    };
-  }, [loadedCount]);
-
-  const visibleAds = getInfiniteAds(loadedCount);
-  const groups: NativeAd[][] = [];
-  for (let i = 0; i < visibleAds.length; i += 7) {
-    groups.push(visibleAds.slice(i, i + 7));
-  }
-  const limitedGroups = groups.slice(0, MAX_GROUPS);
-
-  return (
-    <section id="infinite-ads-section" ref={containerRef} className="mx-auto max-w-screen-xl px-4 py-8 select-none border-t border-border/40 mt-8">
-      {/* Styles for smooth load-in transitions and custom scrollbar */}
-      <style>{`
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(24px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .animate-slideUp {
-          animation: slideUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
-      `}</style>
-
-      <div className="flex items-center gap-2 mb-6 select-none">
-        <span className="h-[2px] flex-1 bg-neutral-200 dark:bg-neutral-800" />
-        <span className="text-[11px] font-black uppercase text-muted-foreground tracking-wider px-3 bg-background relative z-10">
-          {language === 'gu' ? 'તમને આ પણ ગમશે' : 'RECOMMENDED FOR YOU'}
-        </span>
-        <span className="h-[2px] flex-1 bg-neutral-200 dark:bg-neutral-800" />
-      </div>
-
-      <div className="space-y-6 border border-neutral-200/30 dark:border-neutral-800/40 rounded-xl p-4 bg-neutral-50/10 dark:bg-neutral-900/5">
-        {limitedGroups.map((group, groupIndex) => {
-          const row1 = group.slice(0, 2);
-          const row2 = group.slice(2, 5);
-          const row3 = group.slice(5, 7);
-          const animClass = groupIndex > 0 ? 'animate-slideUp' : '';
-
-          return (
-            <div key={groupIndex} className="space-y-6">
-              {/* Divider between batches */}
-              {groupIndex > 0 && (
-                <div className="flex items-center gap-2 py-4 select-none animate-slideUp">
-                  <span className="h-[1.5px] flex-1 bg-neutral-200 dark:bg-neutral-800" />
-                  <span className="text-[10px] font-black uppercase text-muted-foreground/80 tracking-widest px-3">
-                    {groupIndex % 2 === 1
-                      ? (language === 'gu' ? 'વધુ પ્રાયોજિત લિંક્સ' : 'MORE SPONSORED LINKS')
-                      : (language === 'gu' ? 'તમને રસ પડી શકે તેવી વધુ કડીઓ' : 'MORE LINKS FOR YOU')}
-                  </span>
-                  <span className="h-[1.5px] flex-1 bg-neutral-200 dark:bg-neutral-800" />
-                </div>
-              )}
-
-              {/* ROW A: 2 Columns */}
-              {row1.length > 0 && (
-                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-6 ${animClass}`}>
-                  {row1.map((ad) => (
-                    <AdCard key={ad.id} ad={ad} language={language} isRow2={false} />
-                  ))}
-                </div>
-              )}
-
-              {/* ROW B: 3 Columns */}
-              {row2.length > 0 && (
-                <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6 ${animClass}`}>
-                  {row2.map((ad) => (
-                    <AdCard key={ad.id} ad={ad} language={language} isRow2={true} />
-                  ))}
-                </div>
-              )}
-
-              {/* ROW C: 2 Columns */}
-              {row3.length > 0 && (
-                <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-6 ${groupIndex > 0 ? '' : 'animate-slideUp'}`}>
-                  {row3.map((ad) => (
-                    <AdCard key={ad.id} ad={ad} language={language} isRow2={false} />
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-        {/* Sentinel for Infinite Scroll Trigger (Stops after 5 component groups) */}
-        {loadedCount < MAX_ADS_COUNT && (
-          <div ref={sentinelRef} className="h-12 w-full flex items-center justify-center mt-6">
-            <div className="flex items-center gap-2 text-xs text-neutral-400 font-bold select-none">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B] animate-ping" />
-              <span>{language === 'gu' ? 'વધુ લોડ થઈ રહ્યું છે...' : 'Loading more recommendations...'}</span>
-            </div>
-          </div>
-        )}
-      </div>
-    </section>
-  );
+export function NativeAdsSection({ language }: { language?: any }) {
+  return null;
 }
 
 /* --- Video Desk Section ---------------------------------------------------- */
@@ -7939,8 +7831,7 @@ function PhotoGallerySection({ language }: { language: Language }) {
         </div>
       </section>
 
-      {/* Short Videos Section — Placed right after Photo Gallery */}
-      <YouTubeShorts />
+      {/* End Photo Gallery Section */}
     </>
   );
 }

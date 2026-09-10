@@ -13,7 +13,6 @@ import {
   getArticleTitle, getCategoryLabel, getRelativeTime 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
-import { NativeAdsSection } from '@/components/sections/HeroSection';
 
 const ReadingProgressBar = memo(function ReadingProgressBar() {
   const [progress, setProgress] = useState(0);
@@ -551,9 +550,6 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             </div>
           </aside>
         </div>
-
-        {/* Sponsored Native Ads Section */}
-        <NativeAdsSection language={language} />
       </div>
       <div style={{ height: '50px' }} />
     </>

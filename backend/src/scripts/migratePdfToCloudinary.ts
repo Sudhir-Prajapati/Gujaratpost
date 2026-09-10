@@ -1,13 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { v2 as cloudinary } from 'cloudinary';
-import { prisma } from '../config/prisma';
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dvcffkyjz',
-  api_key: process.env.CLOUDINARY_API_KEY || '495845865934762',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'ea99jiIs2CS9jRYnPpTmF9PjNIM',
-});
+import { cloudinary } from '../config/cloudinary.js';
+import { prisma } from '../config/prisma.js';
 
 async function migratePdfFiles() {
   console.log('🚀 Starting PDF Cloudinary Migration...');

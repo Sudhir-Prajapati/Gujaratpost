@@ -119,8 +119,6 @@ export default function SidebarAdBanner({
 
   if (adItems.length > 0) {
     adItems.forEach((item) => slides.push({ type: 'AD', data: item }));
-  } else {
-    slides.push({ type: 'AD', data: null }); // Fallback styled creative card
   }
 
   if (allowTributes) {
@@ -291,6 +289,10 @@ export default function SidebarAdBanner({
         />
       </div>
     );
+  }
+
+  if (slides.length === 0) {
+    return null;
   }
 
   return (

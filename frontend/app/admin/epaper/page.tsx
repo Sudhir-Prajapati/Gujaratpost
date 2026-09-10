@@ -128,7 +128,7 @@ export default function AdminEPaperPage() {
   const [city, setCity] = useState('');
   const [cityGu, setCityGu] = useState('');
   const [date, setDate] = useState(getTodayDateStr());
-  const [publishTime, setPublishTime] = useState('06:00 AM');
+  const [publishTime, setPublishTime] = useState(() => { const n = new Date(); const h = n.getHours(); const m = String(n.getMinutes()).padStart(2, '0'); const p = h >= 12 ? 'PM' : 'AM'; return `${String(h % 12 || 12).padStart(2, '0')}:${m} ${p}`; });
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED'>('PUBLISHED');
   const [pages, setPages] = useState(24);
   const [fileUrl, setFileUrl] = useState('');
@@ -295,7 +295,7 @@ export default function AdminEPaperPage() {
     setCityGu(found ? (found.cityGu || found.city) : targetCityName);
     setTitle(`${englishName.toUpperCase()} CITY`);
     setDate(prefillDate || (selectedDateFilter !== 'ALL' ? selectedDateFilter : getTodayDateStr()));
-    setPublishTime('06:00 AM');
+    const _now = new Date(); setPublishTime(`${String(_now.getHours() % 12 || 12).padStart(2,'0')}:${String(_now.getMinutes()).padStart(2,'0')} ${_now.getHours() >= 12 ? 'PM' : 'AM'}`);
     setStatus('PUBLISHED');
     setPages(24);
     setFileUrl('');
@@ -1433,6 +1433,7 @@ export default function AdminEPaperPage() {
                           type="date"
                           value={date}
                           onChange={(e) => setDate(e.target.value)}
+                          min={getTodayDateStr()}
                           required
                           className="w-full pl-9 pr-2 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white"
                         />
@@ -1449,14 +1450,38 @@ export default function AdminEPaperPage() {
                           type="time"
                           value={formatTo24Hour(publishTime)}
                           onChange={(e) => setPublishTime(formatTo12Hour(e.target.value))}
+                          min={date === getTodayDateStr() ? (() => { const n = new Date(); return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; })() : undefined}
                           required
-                          className="w-full pl-9 pr-2 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white cursor-pointer"
+                          className={`w-full pl-9 pr-2 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white cursor-pointer ${
+                            date === getTodayDateStr() && (() => {
+                              const now = new Date();
+                              const [h, m] = formatTo24Hour(publishTime).split(':');
+                              return parseInt(h, 10) < now.getHours() || (parseInt(h, 10) === now.getHours() && parseInt(m, 10) < now.getMinutes());
+                            })() ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'
+                          }`}
                         />
                       </div>
+                      {/* Error: past time — rendered outside relative div to keep clock icon centered */}
+                      {date === getTodayDateStr() && (() => {
+                        const now = new Date();
+                        const [h24, m24] = formatTo24Hour(publishTime).split(':');
+                        const ph = parseInt(h24, 10);
+                        const pm = parseInt(m24, 10);
+                        const nowH = now.getHours();
+                        const nowM = now.getMinutes();
+                        if (ph > nowH || (ph === nowH && pm >= nowM)) return null;
+                        const cp = nowH >= 12 ? 'PM' : 'AM';
+                        const ch12 = String(nowH % 12 || 12).padStart(2, '0');
+                        const cm12 = String(nowM).padStart(2, '0');
+                        return (
+                          <p className="mt-1 text-[10.5px] font-bold text-red-600 dark:text-red-400 flex items-center gap-1">
+                            ⚠️ સમય પૂર્ણ થઈ ગયો છે. ઓછામાં ઓછો {ch12}:{cm12} {cp} પસંદ કરો.
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
 
-                  {/* Preset Time Buttons */}
                   <div className="flex flex-wrap items-center gap-1.5 pt-1">
                     <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 mr-1">જલ્દી સમય પસંદ કરો:</span>
                     {[
@@ -1467,19 +1492,43 @@ export default function AdminEPaperPage() {
                       '01:00 PM',
                       '05:00 PM',
                       '07:00 PM',
-                    ].map((presetTime) => (
-                      <button
-                        key={presetTime}
-                        type="button"
-                        onClick={() => {
-                          setPublishTime(presetTime);
-                          showToast('success', `Time set to ${presetTime}`);
-                        }}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition cursor-pointer ${publishTime === presetTime ? 'bg-amber-600 text-white border-amber-600' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-amber-500'}`}
-                      >
-                        {presetTime}
-                      </button>
-                    ))}
+                    ].map((presetTime) => {
+                      // Disable preset if today is selected and preset time is before current time
+                      const isToday = date === getTodayDateStr();
+                      let isPast = false;
+                      if (isToday) {
+                        const now = new Date();
+                        const [timePart, period] = presetTime.split(' ');
+                        const [hStr, mStr] = timePart.split(':');
+                        let ph = parseInt(hStr, 10);
+                        const pm = parseInt(mStr, 10);
+                        if (period === 'PM' && ph !== 12) ph += 12;
+                        if (period === 'AM' && ph === 12) ph = 0;
+                        isPast = ph < now.getHours() || (ph === now.getHours() && pm <= now.getMinutes());
+                      }
+                      return (
+                        <button
+                          key={presetTime}
+                          type="button"
+                          disabled={isPast}
+                          onClick={() => {
+                            if (!isPast) {
+                              setPublishTime(presetTime);
+                              showToast('success', `Time set to ${presetTime}`);
+                            }
+                          }}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${
+                            isPast
+                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-50'
+                              : publishTime === presetTime
+                              ? 'bg-amber-600 text-white border-amber-600 cursor-pointer'
+                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 cursor-pointer'
+                          }`}
+                        >
+                          {presetTime}
+                        </button>
+                      );
+                    })}
                   </div>
 
                   {/* Auto-publish info note */}
@@ -1515,6 +1564,8 @@ export default function AdminEPaperPage() {
                       type="date"
                       value={date}
                       onChange={(e) => setDate(e.target.value)}
+                      min={getTodayDateStr()}
+                      max={getDateOffsetStr(6)}
                       required
                       className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/30 text-xs font-bold text-zinc-900 dark:text-white"
                     />

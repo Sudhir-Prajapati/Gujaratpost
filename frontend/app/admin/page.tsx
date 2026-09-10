@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -71,6 +71,7 @@ export default function AdminDashboard() {
   const [userName, setUserName] = useState<string>('Editor');
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [dbArticles, setDbArticles] = useState<any[]>([]);
+
 
   // Compute live Most Read Articles dynamically from database
   const mostReadArticles = useMemo(() => {
@@ -284,7 +285,7 @@ export default function AdminDashboard() {
     {
       label: 'Total Articles',
       value: data ? formatNumber(data.articles.total) : '0',
-      description: `${data?.articles.published || 0} published • ${data?.articles.draft || 0} drafts`,
+      description: `${data?.articles.published || 0} published â€¢ ${data?.articles.draft || 0} drafts`,
       icon: FileText,
       gradient: 'from-blue-600 to-indigo-600',
       bgLight: 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30',
@@ -353,7 +354,7 @@ export default function AdminDashboard() {
     { label: 'Advertisements', href: '/admin/advertisements', icon: Zap, bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-100' },
     { label: 'Gallery Media', href: '/admin/gallery', icon: ImageIcon, bg: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 hover:bg-purple-100' },
     { label: 'Videos Stream', href: '/admin/videos', icon: Video, bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 hover:bg-rose-100' },
-    { label: 'Shorts & Reels', href: '/admin/shorts', icon: Film, bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 hover:bg-emerald-100' },
+    { label: 'YouTube Shorts', href: '/admin/shorts', icon: Film, bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 hover:bg-emerald-100' },
     { label: 'E-Paper Releases', href: '/admin/epaper', icon: Newspaper, bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 hover:bg-indigo-100' },
   ];
 
@@ -372,7 +373,7 @@ export default function AdminDashboard() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span>LIVE EDITORIAL SYSTEM</span>
-              <span className="text-zinc-400">•</span>
+              <span className="text-zinc-400">â€¢</span>
               <span className="text-red-400 font-semibold">{userRole || 'ADMIN'}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
@@ -451,7 +452,7 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* ─── PENDING REVIEW QUEUE ─── */}
+      {/* â”€â”€â”€ PENDING REVIEW QUEUE â”€â”€â”€ */}
       {data && data.pendingReporterArticles.length > 0 && (
         <div className="rounded-3xl border border-rose-300/80 bg-gradient-to-r from-rose-50/80 via-rose-50/30 to-amber-50/50 p-6 shadow-md dark:border-rose-900/40 dark:from-rose-950/20 dark:to-zinc-900">
           <div className="flex items-center justify-between mb-4">
@@ -590,7 +591,7 @@ export default function AdminDashboard() {
                       </p>
                       <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400 mt-1 uppercase tracking-wide">
                         <span>By {art.author?.name || 'Staff'}</span>
-                        <span>•</span>
+                        <span>â€¢</span>
                         <span className="text-zinc-600 dark:text-zinc-300">{art.category?.name || 'General'}</span>
                       </div>
                     </div>
@@ -690,7 +691,7 @@ export default function AdminDashboard() {
                     <span className="flex items-center gap-1 text-emerald-600 font-extrabold">
                       <Eye className="h-3.5 w-3.5" /> {formatNumber(art.views)} views
                     </span>
-                    <span>•</span>
+                    <span>â€¢</span>
                     <span>Published: {new Date(art.publishedAt || art.createdAt).toLocaleDateString('en-IN')}</span>
                   </div>
                 </div>
@@ -716,4 +717,3 @@ export default function AdminDashboard() {
     </div>
   );
 }
-

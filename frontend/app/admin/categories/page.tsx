@@ -22,6 +22,7 @@ import {
   ExternalLink,
   AlertCircle,
   Navigation,
+  Lock,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch, clearApiCache } from '@/lib/api';
 
@@ -129,7 +130,6 @@ export default function CategoriesPage() {
   const [showInHome, setShowInHome] = useState(true);
   const [showInHeader, setShowInHeader] = useState(true);
   const [headerType, setHeaderType] = useState('GLOBAL');
-  const [formLang, setFormLang] = useState<'en' | 'gu' | 'hi'>('en');
 
   // Temporary list state for Reorder Modal
   const [orderList, setOrderList] = useState<CategoryData[]>([]);
@@ -173,22 +173,21 @@ export default function CategoriesPage() {
     setIcon('');
     setColor('#10b981'); // default color emerald
     const minOrder = categories.length > 0 ? Math.min(...categories.map(c => c.displayOrder ?? 0)) : 10;
-    const endOrder = minOrder > 5 ? minOrder - 5 : Math.min(minOrder - 1, 0);
+    const endOrder = Math.max(0, minOrder > 5 ? minOrder - 5 : minOrder > 0 ? minOrder - 1 : 0);
     setDisplayOrder(endOrder);
     setIsActive(true);
     setShowInHome(true);
     setShowInHeader(true);
     setHeaderType('GLOBAL');
-    setFormLang('en');
     setModalOpen(true);
   };
 
   // Open modal for Edit
   const openEdit = (cat: CategoryData) => {
-    setSelectedCategory(cat);
-    setName(cat.name);
-    setNameGu(cat.nameGu || '');
-    setNameHi(cat.nameHi || '');
+    const primaryName = cat.nameGu || cat.name || cat.nameHi || '';
+    setName(primaryName);
+    setNameGu(cat.nameGu || primaryName);
+    setNameHi(cat.nameHi || primaryName);
     setSlug(cat.slug);
     setIcon(cat.icon || '');
     setColor(cat.color || '#10b981');
@@ -197,7 +196,6 @@ export default function CategoriesPage() {
     setShowInHome(cat.showInHome !== undefined ? cat.showInHome : true);
     setShowInHeader(cat.showInHeader !== undefined ? cat.showInHeader : true);
     setHeaderType(cat.headerType || 'GLOBAL');
-    setFormLang('en');
     setModalOpen(true);
   };
 
@@ -597,7 +595,7 @@ export default function CategoriesPage() {
           </button>
           <button
             onClick={() => openOrderManager('all')}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-750 transition-all shadow-xs cursor-pointer whitespace-nowrap w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white hover:bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:hover:!bg-zinc-700 dark:text-white dark:hover:!text-white px-4 py-2.5 text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer whitespace-nowrap w-full sm:w-auto"
             title="Reorder Home Page and Header Sections"
           >
             <ArrowUpDown className="h-4 w-4 text-red-600 shrink-0" />
@@ -1359,7 +1357,7 @@ export default function CategoriesPage() {
               <button
                 type="button"
                 onClick={() => setOrderModalOpen(false)}
-                className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-50 dark:border-zinc-800 cursor-pointer"
+                className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -1399,88 +1397,29 @@ export default function CategoriesPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden min-h-0 mt-4">
-              <div className="space-y-4 overflow-y-auto flex-1 pr-2 pb-4">
-                {/* Language switcher tabs */}
-                <div className="flex border-b border-zinc-150 dark:border-zinc-800 mb-2 sticky top-0 bg-white dark:bg-zinc-900 z-10 pt-1">
-                  {(['en', 'gu', 'hi'] as const).map((lang) => (
-                    <button
-                      key={lang}
-                      type="button"
-                      onClick={() => setFormLang(lang)}
-                      className={`px-4 py-2 text-xs font-bold border-b-2 transition-all ${
-                        formLang === lang 
-                          ? 'border-red-600 text-red-600 font-black' 
-                          : 'border-transparent text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
-                      }`}
-                    >
-                      {lang === 'en' ? 'English' : lang === 'gu' ? 'ગુજરાતી' : 'हिन्दी'}
-                    </button>
-                  ))}
+              <div className="space-y-4 overflow-y-auto flex-1 p-1 pl-1.5 pr-2.5 pb-4">
+                {/* Single Category Name */}
+                <div>
+                  <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                    Category Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Weather / વરસાદ"
+                    value={name || nameGu || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setName(val);
+                      setNameGu(val);
+                      setNameHi(val);
+                      if (!selectedCategory) {
+                        setSlug(slugifyText(val));
+                      }
+                    }}
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                    required
+                  />
                 </div>
-
-                {formLang === 'en' && (
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                      Category Name (EN) <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. Weather"
-                      value={name}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setName(val);
-                        if (!selectedCategory) {
-                          setSlug(slugifyText(val));
-                        }
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
-                      required
-                    />
-                  </div>
-                )}
-
-                {formLang === 'gu' && (
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                      Name (GU)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. વરસાદ / હવામાન"
-                      value={nameGu}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNameGu(val);
-                        if (!selectedCategory) {
-                          setSlug(slugifyText(val));
-                        }
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
-                    />
-                  </div>
-                )}
-
-                {formLang === 'hi' && (
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                      Name (HI)
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="e.g. मौसम / बारिश"
-                      value={nameHi}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setNameHi(val);
-                        if (!selectedCategory) {
-                          setSlug(slugifyText(val));
-                        }
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
-                    />
-                  </div>
-                )}
 
                 <div>
                   <div className="flex items-center justify-between mb-2">
@@ -1509,24 +1448,30 @@ export default function CategoriesPage() {
                   />
                 </div>
 
-                {/* Display Order */}
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
+                {/* Display Order (Auto-Generated & Read-Only) */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
                       Display Order Index
                     </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={displayOrder}
-                      onChange={(e) => setDisplayOrder(Math.max(0, Number(e.target.value) || 0))}
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white font-mono"
-                      title="Higher number = visible first, lower number = visible last"
-                    />
-                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-                      Defaulted to the <strong className="text-zinc-900 dark:text-white">END of the category list</strong> (lowest position). Higher numbers appear first, lower numbers appear last.
-                    </p>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                      <Lock className="h-3 w-3 text-zinc-500" /> Auto-Generated
+                    </span>
                   </div>
+                  <input
+                    type="text"
+                    readOnly
+                    disabled
+                    value={
+                      selectedCategory
+                        ? `Position #${categories.findIndex(c => c.id === selectedCategory.id) + 1} of ${categories.length} (Order Index: ${displayOrder})`
+                        : `Position #${categories.length + 1} (End of list, Order Index: ${displayOrder})`
+                    }
+                    className="w-full rounded-xl border border-zinc-200 bg-zinc-100/90 dark:border-zinc-800 dark:bg-zinc-950/60 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 cursor-not-allowed select-none font-mono"
+                  />
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                    Order is automatically managed. To change sequence, use the visual <strong className="text-red-600 dark:text-red-400">⚡ Reorder Categories</strong> tool on this page.
+                  </p>
                 </div>
 
                 {/* Visibility and Active Toggles */}
@@ -1709,7 +1654,7 @@ export default function CategoriesPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-50 dark:border-zinc-800 cursor-pointer"
+                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
                 >
                   Cancel
                 </button>

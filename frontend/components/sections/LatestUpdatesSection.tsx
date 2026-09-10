@@ -30,9 +30,22 @@ export default function LatestUpdatesSection({
   const [latestNews, setLatestNews] = useState<Article[]>(
     initialArticles ? initialArticles.slice(0, 10) : []
   );
-  const [mostRead, setMostRead] = useState<Article[]>(
-    initialMostRead || (initialArticles && initialArticles.length > 10 ? initialArticles.slice(10, 16) : [])
-  );
+  const [mostRead, setMostRead] = useState<Article[]>(() => {
+    const pool: Article[] = [
+      ...(initialMostRead || []),
+      ...(initialArticles || []),
+    ];
+    const top5: Article[] = [];
+    const seen = new Set<string>();
+    for (const a of pool) {
+      if (a && a.id && !seen.has(a.id)) {
+        seen.add(a.id);
+        top5.push(a);
+        if (top5.length >= 5) break;
+      }
+    }
+    return top5;
+  });
   const [popularArticles, setPopularArticles] = useState<Article[]>(
     initialPopularNews || []
   );
@@ -57,29 +70,56 @@ export default function LatestUpdatesSection({
     if (initialArticles && initialArticles.length > 0) {
       const sortedLatest = sortArticlesByLatest(initialArticles);
       setLatestNews(sortedLatest.slice(0, 10));
-      if (initialMostRead && initialMostRead.length > 0) {
-        setMostRead(initialMostRead);
-      } else {
-        setMostRead(initialArticles.length > 10 ? initialArticles.slice(10, 16) : initialArticles.slice(0, 6));
+
+      const pool: Article[] = [
+        ...(initialMostRead || []),
+        ...initialArticles,
+      ];
+      const top5: Article[] = [];
+      const seen = new Set<string>();
+      for (const a of pool) {
+        if (a && a.id && !seen.has(a.id)) {
+          seen.add(a.id);
+          top5.push(a);
+          if (top5.length >= 5) break;
+        }
       }
+      setMostRead(top5);
     }
     if (initialPopularNews && initialPopularNews.length > 0) {
       setPopularArticles(initialPopularNews);
     }
 
     Promise.all([
-      getPublicArticles({ limit: 20, sort: 'latest' }),
+      getPublicArticles({ limit: 30, sort: 'latest' }),
       getHeroSettings(),
     ]).then(([res, heroRes]: any[]) => {
       if (res && res.articles && res.articles.length > 0) {
         const sortedLatest = sortArticlesByLatest(res.articles);
         setLatestNews(sortedLatest.slice(0, 10));
       }
-      if (heroRes && Array.isArray(heroRes.mostReadArticles) && heroRes.mostReadArticles.length > 0) {
-        setMostRead(heroRes.mostReadArticles);
-      } else if (res && res.articles && (!initialMostRead || initialMostRead.length === 0)) {
-        setMostRead(res.articles.length > 10 ? res.articles.slice(10, 16) : res.articles.slice(0, 6));
+
+      // Guarantee Top 5 Most Read articles in Latest Updates sidebar widget
+      const heroMostRead: Article[] = (heroRes && Array.isArray(heroRes.mostReadArticles)) ? heroRes.mostReadArticles : [];
+      const candidatePool: Article[] = [
+        ...heroMostRead,
+        ...((heroRes && Array.isArray(heroRes.popularNewsArticles)) ? heroRes.popularNewsArticles : []),
+        ...((res && Array.isArray(res.articles)) ? res.articles : []),
+        ...(initialArticles || []),
+      ];
+
+      const top5MostRead: Article[] = [];
+      const seenIds = new Set<string>();
+
+      for (const art of candidatePool) {
+        if (art && art.id && !seenIds.has(art.id)) {
+          seenIds.add(art.id);
+          top5MostRead.push(art);
+          if (top5MostRead.length >= 5) break;
+        }
       }
+
+      setMostRead(top5MostRead);
 
       // Fetch Admin-managed Popular News Articles for "લોકપ્રિય સમાચાર"
       if (heroRes && Array.isArray(heroRes.popularNewsArticles) && heroRes.popularNewsArticles.length > 0) {

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { v2 as cloudinary } from 'cloudinary';
+import { cloudinary } from '../config/cloudinary.js';
 
 const router = Router();
 
@@ -31,13 +31,6 @@ function getPdfPageCount(filePath: string): number {
   }
   return 24;
 }
-
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 't6pf4kyu',
-  api_key: process.env.CLOUDINARY_API_KEY || '683952475537554',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'SeCrA1OZ6g7oqKLPEfBFZ9L8XvY',
-});
 
 // Disk storage for 100% reliable file saving before Cloudinary stream upload
 const diskStorage = multer.diskStorage({

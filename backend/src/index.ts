@@ -4,15 +4,46 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import path from 'path';
-import fs from 'fs';
+import { execSync } from 'child_process';
+import type { Server } from 'http';
 import { connectRedis, redisClient } from './config/redis.js';
 import { prisma } from './config/prisma.js';
 import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 
-const app = express(); 
+// Extend globalThis so TypeScript knows about our stored HTTP server reference
+declare global {
+  // eslint-disable-next-line no-var
+  var __httpServer: Server | undefined;
+}
+
+/**
+ * On Windows: kill any process currently holding the given port.
+ * This prevents EADDRINUSE errors when nodemon restarts the backend.
+ */
+function killPortIfBusy(port: number): void {
+  try {
+    const result = execSync(
+      `netstat -ano | findstr :${port} | findstr LISTENING`,
+      { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
+    ).trim();
+    if (result) {
+      // Last column is PID
+      const pid = result.trim().split(/\s+/).pop();
+      if (pid && /^\d+$/.test(pid)) {
+        execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+        console.log(`🔧 Cleared stale process (PID ${pid}) from port ${port}.`);
+      }
+    }
+  } catch {
+    // Port is free — nothing to kill, ignore error
+  }
+}
+
+const app = express();
 const PORT = process.env.PORT || 5000;
 // Reload trigger: Tributes feature enabled
+
 
 // Trust proxy header configuration (crucial for accurate IP rate limiting downstream)
 app.set('trust proxy', true);
@@ -90,23 +121,29 @@ const bootstrap = async () => {
     });
     console.log('Successfully connected to MySQL database via Prisma.');
 
-    // 3. Start listening with automatic retry if port is busy during nodemon reload
+    // 3. Kill any stale process on the port, then start listening
+    killPortIfBusy(Number(PORT));
+
     const listenWithRetry = (portNum: number, attempts = 0) => {
       const server = app.listen(portNum, '0.0.0.0', () => {
         console.log(`🚀 Gujarat Post backend running on port http://localhost:${portNum}`);
       });
 
+      // Store server reference globally so graceful shutdown can close it
+      globalThis.__httpServer = server;
+
       server.on('error', (err: any) => {
         if (err.code === 'EADDRINUSE') {
           console.warn(`\n⚠️  Port ${portNum} is currently in use.`);
-          if (attempts < 3) {
-            console.log(`   Retrying in 1.5 seconds... (Attempt ${attempts + 1}/3)`);
+          if (attempts < 5) {
+            const delay = 2000 + attempts * 1000; // 2s, 3s, 4s, 5s, 6s
+            console.log(`   Retrying in ${delay / 1000}s... (Attempt ${attempts + 1}/5)`);
             setTimeout(() => {
+              killPortIfBusy(portNum); // try to clear port before each retry
               listenWithRetry(portNum, attempts + 1);
-            }, 1500);
+            }, delay);
           } else {
             console.error(`   Could not bind to port ${portNum} after multiple retries.`);
-            console.error(`   Run this in terminal to clear it: taskkill /F /PID $(netstat -ano | findstr :${portNum} | awk '{print $5}' | head -1)`);
             process.exit(1);
           }
         } else {
@@ -119,24 +156,32 @@ const bootstrap = async () => {
   } catch (error) {
     console.error('Bootstrap warning:', error);
     // Start listening anyway so backend stays online
-    app.listen(Number(PORT), '0.0.0.0', () => {
+    const fallbackServer = app.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Gujarat Post backend running on port http://localhost:${PORT}`);
     });
+    globalThis.__httpServer = fallbackServer;
   }
 };
 
 bootstrap();
 
-// Graceful shutdown handling
+// Graceful shutdown handling — MUST close HTTP server first to release the port
 const gracefulShutdown = async (signal: string) => {
   console.log(`\nReceived ${signal}. Starting graceful shutdown...`);
 
   try {
-    // Disconnect Prisma Client
+    // 1. Close HTTP server first so the port is released immediately
+    const server = (globalThis as any).__httpServer;
+    if (server) {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      console.log('HTTP server closed.');
+    }
+
+    // 2. Disconnect Prisma Client
     await prisma.$disconnect();
     console.log('MySQL connection closed.');
 
-    // Disconnect Redis Client
+    // 3. Disconnect Redis Client
     if (redisClient.isOpen) {
       await redisClient.disconnect();
       console.log('Redis connection closed.');
@@ -147,11 +192,10 @@ const gracefulShutdown = async (signal: string) => {
     console.error('Error during graceful shutdown:', error);
     process.exit(1);
   }
-};  
+};
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.once('SIGUSR2', () => {
   gracefulShutdown('SIGUSR2');
 });
-

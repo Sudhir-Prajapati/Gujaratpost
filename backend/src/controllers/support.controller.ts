@@ -16,14 +16,18 @@ const DEFAULT_SUPPORT_SETTING = {
   noteHi: 'GPay, PhonePe, Paytm या किसी भी UPI ऐप से स्कैन करके सपोर्ट कर सकते हैं।',
 };
 
+let cachedSupportSetting: any = null;
+let lastCacheTime = 0;
+const CACHE_TTL_MS = 30 * 1000; // 30 seconds in-memory cache
+
 export class SupportController {
   /**
    * Get Support details (Public & Admin)
    */
   static async getSupportSettings(req: Request, res: Response) {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
+    if (cachedSupportSetting && (Date.now() - lastCacheTime < CACHE_TTL_MS)) {
+      return sendSuccess(res, cachedSupportSetting, 'Support settings retrieved successfully.');
+    }
 
     try {
       let setting = await (prisma as any).supportSetting.findUnique({
@@ -36,10 +40,15 @@ export class SupportController {
         });
       }
 
+      cachedSupportSetting = setting;
+      lastCacheTime = Date.now();
+
       return sendSuccess(res, setting, 'Support settings retrieved successfully.');
     } catch (error: any) {
       console.error('Error fetching support settings:', error);
-      // Return default configuration gracefully
+      if (cachedSupportSetting) {
+        return sendSuccess(res, cachedSupportSetting, 'Support settings retrieved (cached).');
+      }
       return sendSuccess(res, DEFAULT_SUPPORT_SETTING, 'Support settings fallback.');
     }
   }
@@ -90,6 +99,9 @@ export class SupportController {
           noteHi: noteHi ?? '',
         },
       });
+
+      cachedSupportSetting = updated;
+      lastCacheTime = Date.now();
 
       return sendSuccess(res, updated, 'Support settings updated successfully.');
     } catch (error: any) {

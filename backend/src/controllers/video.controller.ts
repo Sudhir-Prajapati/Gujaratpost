@@ -280,7 +280,7 @@ export async function scrapeYouTubeShortsFeed(): Promise<any[]> {
                 title: rawTitle,
                 titleGu: rawTitle,
                 titleHi: rawTitle,
-                thumbnail: `https://i.ytimg.com/vi/${videoId}/frame0.jpg`,
+                thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
                 duration: '0:58',
                 type: 'short',
               });
@@ -297,7 +297,7 @@ export async function scrapeYouTubeShortsFeed(): Promise<any[]> {
                 title: rawTitle,
                 titleGu: rawTitle,
                 titleHi: rawTitle,
-                thumbnail: `https://i.ytimg.com/vi/${videoId}/frame0.jpg`,
+                thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
                 duration: '0:58',
                 type: 'short',
               });
@@ -322,7 +322,7 @@ export async function scrapeYouTubeShortsFeed(): Promise<any[]> {
           title: 'Gujarat Post Short',
           titleGu: 'Gujarat Post Short',
           titleHi: 'Gujarat Post Short',
-          thumbnail: `https://i.ytimg.com/vi/${videoId}/frame0.jpg`,
+          thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
           duration: '0:58',
           type: 'short',
         });
@@ -350,7 +350,7 @@ export async function syncYouTubeShortsToDatabase(): Promise<{ syncedCount: numb
 
   for (let i = 0; i < ytShorts.length; i++) {
     const item = ytShorts[i];
-    const isTop20 = i < 20;
+    const isTop40 = i < 40;
     const simulatedDate = new Date(now.getTime() - i * 3600 * 1000 * 3);
 
     const matches = await prisma.video.findMany({
@@ -370,12 +370,12 @@ export async function syncYouTubeShortsToDatabase(): Promise<{ syncedCount: numb
           embedUrl: `https://www.youtube.com/embed/${item.youtubeId}`,
           duration: '0:58',
           type: 'short',
-          isFeatured: isTop20,
+          isFeatured: isTop40,
           publishedAt: simulatedDate,
         },
       });
 
-      if (isTop20) featuredIds.push(primary.id);
+      if (isTop40) featuredIds.push(primary.id);
 
       // Remove duplicate rows
       if (matches.length > 1) {
@@ -396,14 +396,14 @@ export async function syncYouTubeShortsToDatabase(): Promise<{ syncedCount: numb
           embedUrl: `https://www.youtube.com/embed/${item.youtubeId}`,
           duration: '0:58',
           type: 'short',
-          isFeatured: isTop20,
+          isFeatured: isTop40,
           channel: 'Gujarat Post News',
           views: 0,
           publishedAt: simulatedDate,
         },
       });
       newCount++;
-      if (isTop20) featuredIds.push(created.id);
+      if (isTop40) featuredIds.push(created.id);
     }
   }
 

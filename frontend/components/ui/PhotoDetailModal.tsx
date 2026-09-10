@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight, Link2, Check, MessageCircle, Phone, Globe, Mail } from 'lucide-react';
 import { Photo, Language } from '@/types';
 import { getLocalized } from '@/data';
+import Advertisement from '@/components/ads/Advertisement';
 
 // Custom share helper
 const shareUrl = (platform: string, url: string, text: string) => {
@@ -270,44 +271,8 @@ export default function PhotoDetailModal({ photos, activeIndex, onClose, languag
               </div>
             </div>
 
-            {/* Simulated Gujarat Post Business Advertisement (Matches Screenshot Theme) */}
-            <div className="rounded-xl border border-border bg-card p-4 shadow-sm relative overflow-hidden group">
-              <div className="absolute top-0 right-0 bg-red-600 text-white font-black text-[8px] uppercase px-2 py-0.5 rounded-bl">
-                Ad
-              </div>
-              <div className="flex items-center gap-1.5 text-accent text-[9px] font-black uppercase tracking-widest mb-2">
-                <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent" />
-                Gujarat Post
-              </div>
-              <h5 className="text-xs font-black text-foreground mb-1 leading-snug">
-                Business Advertisement
-              </h5>
-              <p className="text-[10px] font-semibold text-muted-foreground leading-relaxed mb-3">
-                Reach lakhs of daily readers across Gujarat. Feature your businesses on our News Portal & Facebook Page.
-              </p>
-              
-              <div className="space-y-1.5 border-t border-border pt-3">
-                <a href="tel:+919909907227" className="flex items-center gap-2 text-[10px] font-bold text-foreground hover:text-accent transition">
-                  <Phone className="h-3.5 w-3.5 text-accent shrink-0" />
-                  +91 99099 07227
-                </a>
-                <a href="mailto:info@gujaratpost.in" className="flex items-center gap-2 text-[10px] font-bold text-foreground hover:text-accent transition">
-                  <Mail className="h-3.5 w-3.5 text-accent shrink-0" />
-                  info@gujaratpost.in
-                </a>
-                <a href="https://gujaratpost.in" target="_blank" rel="noreferrer" className="flex items-center gap-2 text-[10px] font-bold text-foreground hover:text-accent transition">
-                  <Globe className="h-3.5 w-3.5 text-accent shrink-0" />
-                  www.gujaratpost.in
-                </a>
-              </div>
-
-              <a 
-                href="mailto:info@gujaratpost.in" 
-                className="mt-4 inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent text-white px-3 py-2 text-xs font-black hover:bg-accent/90 transition shadow-sm"
-              >
-                Advertise Now
-              </a>
-            </div>
+            {/* Dynamic Advertisement from API (if configured in Admin) */}
+            <Advertisement position="sidebar" />
 
           </div>
 

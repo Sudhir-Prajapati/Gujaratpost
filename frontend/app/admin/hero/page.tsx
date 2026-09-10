@@ -672,8 +672,8 @@ export default function HeroManagerPage() {
       showToast('Article already in Most Read list', false);
       return;
     }
-    if (mostReadArticles.length >= 5) {
-      showToast('⚠️ Limit reached (5 articles max for Most Read). Please remove one first.', false);
+    if (mostReadArticles.length >= 3) {
+      showToast('⚠️ Limit reached (3 articles max for Most Read). Please remove one first.', false);
       return;
     }
     setMostReadArticles((prev) => [...prev, art]);
@@ -904,8 +904,14 @@ export default function HeroManagerPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 mt-3 sm:mt-0 shrink-0">
-          <Link href="/" target="_blank" className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-semibold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 transition">
-            <Eye className="h-4 w-4" /> Preview Homepage <ArrowUpRight className="h-3.5 w-3.5" />
+          <Link
+            href="/"
+            target="_blank"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white hover:bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-white px-3.5 py-2 text-sm font-semibold transition-all shadow-xs cursor-pointer"
+          >
+            <Eye className="h-4 w-4 text-zinc-600 dark:text-zinc-300" />
+            <span>Preview Homepage</span>
+            <ArrowUpRight className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-400" />
           </Link>
         </div>
       </div>
@@ -1268,7 +1274,7 @@ export default function HeroManagerPage() {
           </div>
 
           {/* ════════════════════════════════════════════════════════════════
-             MOST READ 5 POSITIONS MANAGEMENT (સૌથી વધુ વંચાયેલા)
+             MOST READ 3 POSITIONS MANAGEMENT (સૌથી વધુ વંચાયેલા)
              ════════════════════════════════════════════════════════════════ */}
           <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800 mb-6 gap-4">
@@ -1276,14 +1282,14 @@ export default function HeroManagerPage() {
                 <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <span className="text-xl">🔥</span>
                   <h3 className="text-base font-black text-zinc-900 dark:text-white">
-                    Most Read 5 Positions (સૌથી વધુ વંચાયેલા)
+                    Most Read 3 Positions (સૌથી વધુ વંચાયેલા)
                   </h3>
                   <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:border-amber-800 shrink-0">
-                    {mostReadArticles.length} / 5 Positions
+                    {mostReadArticles.length} / 3 Positions
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500 font-medium mt-1">
-                  Manage the 5 articles displayed in the "સૌથી વધુ વંચાયેલા" (Most Read) sidebar widget on the homepage. Move up / down to reorder rank #1 to #5.
+                  Manage the 3 articles displayed in the "સૌથી વધુ વંચાયેલા" (Most Read) sidebar widget on the homepage. Move up / down to reorder rank #1 to #3.
                 </p>
               </div>
 
@@ -1294,20 +1300,20 @@ export default function HeroManagerPage() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0"
               >
                 {savingMostRead ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                {savingMostRead ? 'Saving Most Read...' : 'Save Most Read 5 Positions'}
+                {savingMostRead ? 'Saving Most Read...' : 'Save Most Read 3 Positions'}
               </button>
             </div>
 
             {/* Quick Article Search to Add Position */}
             <div className="mb-6 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 border border-zinc-200 dark:border-zinc-700">
               <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-2">
-                ➕ Add Article to Most Read 5 Positions (સૌથી વધુ વંચાયેલા)
+                ➕ Add Article to Most Read 3 Positions (સૌથી વધુ વંચાયેલા)
               </p>
               <ArticleSearchBox
                 allArticles={allArticles}
                 excluded={mostReadArticles.map((a) => a.id)}
                 maxLimit={100}
-                placeholder={mostReadArticles.length >= 5 ? '[ Limit 5 reached — remove an article to add new ]' : 'Search latest 100 articles by title or #articleNumber to add to Most Read...'}
+                placeholder={mostReadArticles.length >= 3 ? '[ Limit 3 reached — remove an article to add new ]' : 'Search latest 100 articles by title or #articleNumber to add to Most Read...'}
                 onSelect={(art) => handleAddMostReadArticle(art)}
               />
             </div>

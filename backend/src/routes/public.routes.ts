@@ -2,7 +2,7 @@ import { Router } from 'express';
 import path from 'path';
 import fs from 'fs';
 import zlib from 'zlib';
-import { v2 as cloudinary } from 'cloudinary';
+import { cloudinary } from '../config/cloudinary.js';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { withDbRetry } from '../utils/db.js';
@@ -17,13 +17,33 @@ import { TributeController } from '../controllers/tribute.controller.js';
 import { autoPublishDueArticles } from '../controllers/article.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dvcffkyjz',
-  api_key: process.env.CLOUDINARY_API_KEY || '495845865934762',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'ea99jiIs2CS9jRYnPpTmF9PjNIM',
-});
-
 const router = Router();
+
+const publicCache = new Map<string, { timestamp: number; payload: any }>();
+
+export function clearPublicRoutesCache() {
+  publicCache.clear();
+}
+
+function cacheResponse(ttlSeconds: number) {
+  return (req: any, res: any, next: any) => {
+    if (req.method !== 'GET') return next();
+    const key = req.originalUrl || req.url;
+    const cached = publicCache.get(key);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < ttlSeconds * 1000) {
+      return res.status(200).json(cached.payload);
+    }
+    const originalJson = res.json.bind(res);
+    res.json = (body: any) => {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
+        publicCache.set(key, { timestamp: Date.now(), payload: body });
+      }
+      return originalJson(body);
+    };
+    next();
+  };
+}
 
 function sanitizeUrlInContent(text?: string | null): string {
   if (!text) return '';
@@ -52,14 +72,14 @@ router.get('/epaper/cities', EPaperController.getCities);
  * GET /api/public/ads
  * GET /api/public/ads/:section
  */
-router.get('/ads', AdController.getAllAds);
-router.get('/ads/:section', AdController.getAdBySection);
+router.get('/ads', cacheResponse(10), AdController.getAllAds);
+router.get('/ads/:section', cacheResponse(10), AdController.getAdBySection);
 
 /**
  * GET /api/public/tributes
  * Fetch active birthdays and shradhanjalis for homepage ad carousel
  */
-router.get('/tributes', TributeController.getPublicTributes);
+router.get('/tributes', cacheResponse(60), TributeController.getPublicTributes);
 
 /**
  * GET /api/public/hero-settings
@@ -71,14 +91,14 @@ router.get('/hero-settings', HeroController.getHeroSettings);
  * GET /api/public/reels
  * Fetch public active Instagram reels
  */
-router.get('/reels', InstagramReelController.getAllReels);
+router.get('/reels', cacheResponse(60), InstagramReelController.getAllReels);
 
 
 /**
  * GET /api/public/articles
  * Fetch articles list directly from MySQL database with optional filters
  */
-router.get('/articles', async (req, res, next) => {
+router.get('/articles', cacheResponse(30), async (req, res, next) => {
   try {
     await autoPublishDueArticles();
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
@@ -439,7 +459,7 @@ router.get('/authors', async (req, res, next) => {
  * GET /api/public/categories
  * Fetch list of categories
  */
-router.get('/categories', async (req, res, next) => {
+router.get('/categories', cacheResponse(60), async (req, res, next) => {
   try {
     const showInHeader = req.query.showInHeader === 'true';
     const showInHome = req.query.showInHome === 'true';
@@ -480,10 +500,11 @@ router.get('/categories', async (req, res, next) => {
  * GET /api/public/videos
  * Fetch videos list
  */
-router.get('/videos', async (req, res, next) => {
+router.get('/videos', cacheResponse(60), async (req, res, next) => {
   try {
     const type = req.query.type as string;
     const isFeatured = req.query.isFeatured;
+    const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
     const where: any = {};
     if (type) where.type = type;
     if (isFeatured !== undefined) where.isFeatured = isFeatured === 'true';
@@ -491,6 +512,7 @@ router.get('/videos', async (req, res, next) => {
     const videos = await prisma.video.findMany({
       where,
       orderBy: [{ isFeatured: 'desc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
+      take: limit,
     });
 
     const uniqueVideos: typeof videos = [];
@@ -509,11 +531,12 @@ router.get('/videos', async (req, res, next) => {
   }
 });
 
+
 /**
  * GET /api/public/gallery
  * Fetch photo gallery photos
  */
-router.get('/gallery', GalleryController.getAllPhotos);
+router.get('/gallery', cacheResponse(60), GalleryController.getAllPhotos);
 
 /**
  * GET /api/public/stories

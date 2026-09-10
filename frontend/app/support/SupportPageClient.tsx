@@ -20,13 +20,13 @@ interface SupportDetails {
 }
 
 const DEFAULT_SUPPORT_DETAILS: SupportDetails = {
-  qrCodeImage: '',
-  upiId: 'gujaratpost@upi',
+  qrCodeImage: 'https://res.cloudinary.com/dvcffkyjz/image/upload/v1788698965/gujarat-post/sqOLXMWIq41rUH75OzCeLTn6O53Lp2qAEoLrEmQyYhN9tb9qHgPLLNU_4vfr5AKlXUGZmQOMuoA_0EuITU52Th_O4oWxwQX18p_3ynxqMmj_hgW9Rbeyv2B_MW6INh1r2Iv6_Ax_6_GuWnux6tMUoFoE821xd1bkcMhD6YuJmPY_1788698963884_5349_sfxbsu.jpg',
+  upiId: 'gujaratpost@upi.commm',
   accountName: 'Gujarat Post Media Pvt Ltd',
-  accountNumber: '9924038640',
-  ifscCode: 'HDFC0001234',
-  bankName: 'BOB Bank',
-  branchName: 'Main Branch, SG Highway, Ahmedabad',
+  accountNumber: '8799067881',
+  ifscCode: 'BKCC0001234',
+  bankName: 'BKC Bank',
+  branchName: 'Main Branch, Naroda, Ahmedabad',
   noteGu: 'GPay, PhonePe, Paytm અથવા કોઈપણ UPI એપ વડે સ્કેન કરી સપોર્ટ આપી શકો છો.',
   noteEn: 'Scan the QR Code via GPay, PhonePe, Paytm or any UPI app to support.',
   noteHi: 'GPay, PhonePe, Paytm या किसी भी UPI ऐप से स्कैन करके सपोर्ट कर सकते हैं।',
@@ -37,15 +37,26 @@ export default function SupportPageClient() {
   const [activeTab, setActiveTab] = useState<'upi' | 'bank'>('upi');
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [copiedBank, setCopiedBank] = useState(false);
-  const [data, setData] = useState<SupportDetails>(DEFAULT_SUPPORT_DETAILS);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<SupportDetails>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem('gp_support_settings');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && parsed.upiId) return parsed;
+        }
+      } catch {}
+    }
+    return DEFAULT_SUPPORT_DETAILS;
+  });
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchSupport = async () => {
       try {
         let resData: any = null;
         try {
-          const res = await fetch('/api/public/support?t=' + Date.now(), { cache: 'no-store' });
+          const res = await fetch('/api/public/support');
           if (res.ok) {
             const json = await res.json();
             if (json?.success && json?.data) resData = json.data;
@@ -55,7 +66,7 @@ export default function SupportPageClient() {
         if (!resData) {
           try {
             const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/public';
-            const res = await fetch(`${backendUrl}/support?t=${Date.now()}`, { cache: 'no-store' });
+            const res = await fetch(`${backendUrl}/support`);
             if (res.ok) {
               const json = await res.json();
               if (json?.success && json?.data) resData = json.data;

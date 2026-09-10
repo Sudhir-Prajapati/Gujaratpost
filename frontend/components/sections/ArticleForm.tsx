@@ -258,7 +258,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [quoteCiteGu, setQuoteCiteGu] = useState('');
   const [quoteCiteHi, setQuoteCiteHi] = useState('');
 
-  const [fieldErrors, setFieldErrors] = useState<{ slug?: boolean; title?: boolean; category?: boolean; author?: boolean }>({});
+  const [fieldErrors, setFieldErrors] = useState<{ slug?: boolean; title?: boolean; category?: boolean; author?: boolean; scheduledAt?: boolean }>({});
+  const [scheduledAtError, setScheduledAtError] = useState<string | null>(null);
 
   interface ExtraImageSlot {
   id: string;
@@ -415,7 +416,7 @@ interface ExtraDescriptionSlot {
   // Tags (Stored as comma separated string in client, sent as object array to backend)
   const [tagsString, setTagsString] = useState('');
 
-  // Live dynamic current local date-time string (YYYY-MM-THH:mm)
+  // Live dynamic current local date-time string (YYYY-MM-DDTHH:mm)
   const getCurrentLocalMinDateTime = () => {
     const now = new Date();
     return new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -425,6 +426,26 @@ interface ExtraDescriptionSlot {
   const getFutureDefaultIso = () => {
     const nextHour = new Date(Date.now() + 3600000);
     return new Date(nextHour.getTime() - nextHour.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  };
+
+  // Validate scheduled publish date & time against current time
+  const validateScheduledTime = (dateTimeString: string): string | null => {
+    if (!dateTimeString || !dateTimeString.trim()) return null;
+    const selectedTimestamp = new Date(dateTimeString).getTime();
+    if (isNaN(selectedTimestamp)) {
+      return 'Invalid date and time format.';
+    }
+    const now = new Date();
+    // Check if the selected time is before or equal to current time (5s buffer for interaction)
+    if (selectedTimestamp <= now.getTime() - 5000) {
+      const formattedNow = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      const isToday = new Date(dateTimeString).toDateString() === now.toDateString();
+      if (isToday) {
+        return `Selected time is before the current time (${formattedNow}). Scheduled time must be set in the future.`;
+      }
+      return 'Scheduled publish date & time cannot be in the past. Please select a future date and time.';
+    }
+    return null;
   };
 
   // Live Article Preview Toggle State
@@ -1142,16 +1163,27 @@ interface ExtraDescriptionSlot {
       return;
     }
 
-    if (status === 'SCHEDULED') {
-      if (!scheduledAt) {
-        setError('Please select a Scheduled Publish Date & Time.');
+    if (status === 'SCHEDULED' || (scheduledAt && scheduledAt.trim() !== '')) {
+      if (!scheduledAt || !scheduledAt.trim()) {
+        const msg = 'Please select a Scheduled Publish Date & Time.';
+        setError(msg);
+        setScheduledAtError(msg);
+        setFieldErrors((prev) => ({ ...prev, scheduledAt: true }));
         setLoading(false);
+        setTimeout(() => {
+          document.getElementById('field-scheduledAt')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
         return;
       }
-      const schedTime = new Date(scheduledAt).getTime();
-      if (isNaN(schedTime) || schedTime <= Date.now()) {
-        setError('Scheduled publish date & time must be set in the future (later than current time).');
+      const timeErr = validateScheduledTime(scheduledAt);
+      if (timeErr) {
+        setError(timeErr);
+        setScheduledAtError(timeErr);
+        setFieldErrors((prev) => ({ ...prev, scheduledAt: true }));
         setLoading(false);
+        setTimeout(() => {
+          document.getElementById('field-scheduledAt')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 50);
         return;
       }
     }
@@ -1666,54 +1698,6 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
       {/* Form Content Panel - Line-by-Line Flow */}
       <form onSubmit={handleSubmit} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-6">
 
-        {/* LINE 0: Article Primary Language Selector */}
-        <div>
-          <label className="block text-xs font-extrabold uppercase tracking-wider text-zinc-700 dark:text-zinc-300 mb-1.5">
-            Article Primary Language <span className="text-red-500">*</span>
-          </label>
-          <div className="flex flex-wrap items-center gap-3">
-            {[
-              { id: 'gu', label: 'Gujarati (ગુજરાતી)', flag: '🇮🇳' },
-              { id: 'en', label: 'English', flag: '🌍' },
-              { id: 'hi', label: 'Hindi (હિન્દી)', flag: '🇮🇳' },
-            ].map((item) => {
-              const active = articleLanguage === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => {
-                    setArticleLanguage(item.id as 'gu' | 'en' | 'hi');
-                    setContentLang(item.id as 'gu' | 'en' | 'hi');
-                  }}
-                  className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer ${
-                    active
-                      ? 'bg-red-600 text-white shadow-md ring-2 ring-red-600/30'
-                      : 'border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-zinc-300 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  <span>{item.flag}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              onClick={translateDraftToSelectedLanguage}
-              disabled={translatingLanguage}
-              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs font-bold text-blue-700 transition-all hover:border-blue-300 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 dark:hover:bg-blue-950/70"
-              title="Translate existing Gujarati, Hindi, or English draft fields into the selected primary language"
-            >
-              {translatingLanguage ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Globe className="h-3.5 w-3.5" />
-              )}
-              <span>{translatingLanguage ? 'Translating...' : 'Translate to selected language'}</span>
-            </button>
-          </div>
-          <p className="text-[11px] text-zinc-400 mt-1.5">Select the main writing language, then translate the existing draft fields into that language if needed.</p>
-        </div>
 
         {/* LINE 1: News Name (In English / Slug) */}
         <div id="field-slug">
@@ -2642,8 +2626,19 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   value={status || 'DRAFT'}
                   onChange={(val) => {
                     setStatus(val as any);
-                    if (val === 'SCHEDULED' && (!scheduledAt || scheduledAt < getCurrentLocalMinDateTime())) {
-                      setScheduledAt(getFutureDefaultIso());
+                    if (val === 'SCHEDULED') {
+                      if (!scheduledAt) {
+                        setScheduledAt(getFutureDefaultIso());
+                        setScheduledAtError(null);
+                        setFieldErrors((prev) => ({ ...prev, scheduledAt: false }));
+                      } else {
+                        const err = validateScheduledTime(scheduledAt);
+                        setScheduledAtError(err);
+                        setFieldErrors((prev) => ({ ...prev, scheduledAt: Boolean(err) }));
+                      }
+                    } else if (val === 'PUBLISHED') {
+                      setScheduledAtError(null);
+                      setFieldErrors((prev) => ({ ...prev, scheduledAt: false }));
                     }
                   }}
                   options={[
@@ -2659,30 +2654,79 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             </div>
 
             {status !== 'PUBLISHED' && (
-              <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
-                  Scheduled Publish Date & Time ⏰
-                </label>
+              <div id="field-scheduledAt">
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className={`block text-xs uppercase tracking-wider ${
+                    scheduledAtError || fieldErrors.scheduledAt
+                      ? 'font-black text-red-600 dark:text-red-400'
+                      : 'font-bold text-zinc-500 dark:text-zinc-400'
+                  }`}>
+                    Scheduled Publish Date & Time ⏰
+                  </label>
+                  {scheduledAt && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setScheduledAt('');
+                        setScheduledAtError(null);
+                        setFieldErrors((prev) => ({ ...prev, scheduledAt: false }));
+                        if (status === 'SCHEDULED') setStatus('DRAFT');
+                      }}
+                      className="text-[11px] font-semibold text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
                 <input
                   type="datetime-local"
                   min={getCurrentLocalMinDateTime()}
                   value={scheduledAt}
                   onChange={(e) => {
-                    setScheduledAt(e.target.value);
-                    if (e.target.value && status !== 'SCHEDULED') {
+                    const val = e.target.value;
+                    setScheduledAt(val);
+                    const err = validateScheduledTime(val);
+                    setScheduledAtError(err);
+                    setFieldErrors((prev) => ({ ...prev, scheduledAt: Boolean(err) }));
+                    if (val && status !== 'SCHEDULED' && !err) {
                       setStatus('SCHEDULED');
                     }
                   }}
                   onBlur={(e) => {
-                    if (e.target.value && e.target.value < getCurrentLocalMinDateTime()) {
-                      setScheduledAt(getFutureDefaultIso());
-                    }
+                    const err = validateScheduledTime(e.target.value);
+                    setScheduledAtError(err);
+                    setFieldErrors((prev) => ({ ...prev, scheduledAt: Boolean(err) }));
                   }}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 mt-1.5 px-4 py-3 text-sm font-mono text-zinc-900 focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className={`w-full rounded-xl border mt-1.5 px-4 py-3 text-sm font-mono focus:outline-none transition-all ${
+                    scheduledAtError || fieldErrors.scheduledAt
+                      ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
+                      : 'border-zinc-200 bg-zinc-50/50 text-zinc-900 focus:border-primary dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white'
+                  }`}
                 />
-                <p className="text-[10px] text-zinc-400 mt-1">
-                  Article will automatically become visible on the public website when this time arrives.
-                </p>
+                {scheduledAtError || fieldErrors.scheduledAt ? (
+                  <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2.5 dark:border-red-900/60 dark:bg-red-950/30 text-xs font-bold text-red-600 dark:text-red-400 flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p>{scheduledAtError || 'Scheduled publish date & time must be in the future.'}</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const futureIso = getFutureDefaultIso();
+                          setScheduledAt(futureIso);
+                          setScheduledAtError(null);
+                          setFieldErrors((prev) => ({ ...prev, scheduledAt: false }));
+                        }}
+                        className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 underline hover:text-blue-700 dark:text-blue-400 cursor-pointer"
+                      >
+                        ⚡ Set to 1 hour from now
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-zinc-400 mt-1">
+                    Article will automatically become visible on the public website when this time arrives.
+                  </p>
+                )}
               </div>
             )}
 
