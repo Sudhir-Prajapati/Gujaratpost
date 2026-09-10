@@ -1,7 +1,7 @@
 import { CATEGORY_META, categorySlugMapping } from "@/data";
 import { getPublicArticles, getPublicCategories } from "@/lib/api";
 import CategoryPageClient from "./CategoryPageClient";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 // Force dynamic rendering — always fetch fresh articles from the backend API
 export const dynamic = 'force-dynamic';
@@ -48,7 +48,24 @@ export default async function CategoryPage({
   const limit = parseInt(resolvedSearchParams?.limit || "40", 10);
 
   const resolvedSlug = categorySlugMapping[slug] || slug;
-  
+
+  // Direct multimedia / special category routes to their dedicated pages
+  if (resolvedSlug === 'videos' || resolvedSlug === 'video') {
+    redirect('/videos');
+  }
+  if (resolvedSlug === 'shorts') {
+    redirect('/shorts');
+  }
+  if (resolvedSlug === 'podcasts') {
+    redirect('/videos?tab=podcast');
+  }
+  if (resolvedSlug === 'photos' || resolvedSlug === 'photo-gallery') {
+    redirect('/photos');
+  }
+  if (resolvedSlug === 'epaper') {
+    redirect('/epaper');
+  }
+
   // 1. Fetch category details directly from Express Backend API
   const dbCategories = await getPublicCategories().catch(() => []);
   const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);

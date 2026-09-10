@@ -348,9 +348,6 @@ export async function fetchLiveYouTubeChannelVideos(): Promise<{ videos: Video[]
  * Strictly deduplicated by youtubeId.
  */
 export async function getPublicVideos(type?: string): Promise<Video[]> {
-  // Skip on SSR — video sections are 'use client' and load after mount.
-  // Calling this from a server component causes 12s timeouts.
-  if (typeof window === 'undefined') return [];
 
   const combined: Video[] = [];
   const seenIds = new Set<string>();

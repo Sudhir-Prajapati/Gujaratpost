@@ -465,10 +465,14 @@ export default function HeroSection({
       Promise.all([
         getMarketRates(),
         getPublicWeather('ahmedabad'),
-      ]).then(([marketRes, weatherRes]: any[]) => {
+        getPublicVideos('video'),
+      ]).then(([marketRes, weatherRes, videoRes]: any[]) => {
         if (weatherRes) setWeatherData(weatherRes);
         if (marketRes) setMarketRates(marketRes);
-      }).catch((err) => console.warn('Error loading weather/rates:', err));
+        if (videoRes && videoRes.length > 0) {
+          setVideosList(videoRes);
+        }
+      }).catch((err) => console.warn('Error loading weather/rates/videos:', err));
       return;
     }
 
@@ -1576,14 +1580,14 @@ function VideoDesk({ videos, language, showShorts = true, onlyShorts = false }: 
   const [featuredIndex, setFeaturedIndex] = useState(0);
   const [featuredHovered, setFeaturedHovered] = useState(false);
 
-  // Auto-change the featured video every 6 seconds if no video is playing and not hovered
+  // Auto-change the featured video every 2 seconds if no video is playing and not hovered
   useEffect(() => {
-    if (playId || featuredHovered) return;
+    if (playId || featuredHovered || !videos || !videos.length) return;
     const interval = setInterval(() => {
       setFeaturedIndex((prev) => (prev + 1) % Math.min(videos.length, 6));
     }, 2000);
     return () => clearInterval(interval);
-  }, [playId, featuredHovered, videos.length]);
+  }, [playId, featuredHovered, videos]);
 
   // Auto-scroll the right sidebar using setInterval (checks ref each tick)
   useEffect(() => {
@@ -1616,34 +1620,6 @@ function VideoDesk({ videos, language, showShorts = true, onlyShorts = false }: 
     return () => cancelAnimationFrame(animId);
   }, [onlyShorts, playId]);
 
-  if (!videos.length) return null;
-
-  // Restrict VideoDesk to ONLY featured videos if featured videos exist in database/admin
-  const featuredOnly = videos.filter(v => (v as any).isFeatured);
-  const sourcePool = featuredOnly.length > 0 ? featuredOnly : videos;
-
-  // Hard filter: exclude Shorts when showShorts=false (extra safety layer)
-  const displayVideos = !showShorts
-    ? sourcePool.filter(v => v.type === 'video' || !v.type)
-    : onlyShorts
-      ? sourcePool.filter(v => v.type === 'short')
-      : sourcePool;
-
-
-  if (!displayVideos.length) return null;
-
-  const featuredVideo = displayVideos[featuredIndex % displayVideos.length];
-  // Filter out current featured video from sidebar list to avoid duplication
-  const sidebarVideos = displayVideos.filter((_, idx) => idx !== (featuredIndex % displayVideos.length)).slice(0, 15);
-
-  const handleSidebarClick = (youtubeId: string, id: string) => {
-    setPlayId(youtubeId);
-    const originalIndex = videos.findIndex(vid => vid.id === id);
-    if (originalIndex !== -1) {
-      setFeaturedIndex(originalIndex);
-    }
-  };
-
   const updateArrows = () => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -1672,6 +1648,31 @@ function VideoDesk({ videos, language, showShorts = true, onlyShorts = false }: 
       behavior: 'smooth',
     });
   };
+
+  const handleSidebarClick = (youtubeId: string, id: string) => {
+    setPlayId(youtubeId);
+    const originalIndex = (videos || []).findIndex(vid => vid.id === id);
+    if (originalIndex !== -1) {
+      setFeaturedIndex(originalIndex);
+    }
+  };
+
+  // Restrict VideoDesk to ONLY featured videos if featured videos exist in database/admin
+  const featuredOnly = (videos || []).filter(v => (v as any).isFeatured);
+  const sourcePool = featuredOnly.length > 0 ? featuredOnly : (videos || []);
+
+  // Hard filter: exclude Shorts when showShorts=false (extra safety layer)
+  const displayVideos = !showShorts
+    ? sourcePool.filter(v => v.type === 'video' || !v.type)
+    : onlyShorts
+      ? sourcePool.filter(v => v.type === 'short')
+      : sourcePool;
+
+  if (!videos || !videos.length || !displayVideos.length) return null;
+
+  const featuredVideo = displayVideos[featuredIndex % displayVideos.length];
+  // Filter out current featured video from sidebar list to avoid duplication
+  const sidebarVideos = displayVideos.filter((_, idx) => idx !== (featuredIndex % displayVideos.length)).slice(0, 15);
 
   if (onlyShorts) {
     const customShorts = [
