@@ -359,11 +359,15 @@ export default function HeroSection({
   initialVideos = [],
   initialHeroSettings = null,
   initialCategories = [],
+  initialMarketRates = null,
+  initialWeatherData = null,
 }: {
   initialArticles?: Article[];
   initialVideos?: any[];
   initialHeroSettings?: any;
   initialCategories?: any[];
+  initialMarketRates?: any;
+  initialWeatherData?: any;
 }) {
   const { language } = useApp();
   const [videoMode, setVideoMode] = useState<'latest' | 'live'>('latest');
@@ -427,9 +431,10 @@ export default function HeroSection({
 
   const initialHeroPool = computeHeroPoolList(initialArticles, initialHeroSettings);
 
+  const initialCustomTrendingArts: Article[] = (initialHeroSettings?.trendingNewsArticles || []).filter(isPublicArticle);
   const initialCustomPopularArts: Article[] = (initialHeroSettings?.popularNewsArticles || []).filter(isPublicArticle);
   const initialCustomMostReadArts: Article[] = (initialHeroSettings?.mostReadArticles || []).filter(isPublicArticle);
-  const initialPopularPool = fillPool([...initTrending, ...initialCustomPopularArts], publishedInitialArticles, 10);
+  const initialPopularPool = fillPool([...initialCustomTrendingArts, ...initTrending, ...initialCustomPopularArts], publishedInitialArticles, 10);
   const initialMostReadPool = initialCustomMostReadArts.length > 0 ? initialCustomMostReadArts : publishedInitialArticles.slice(0, 5);
 
   const initialCategoriesDB = Array.isArray(initialCategories)
@@ -450,11 +455,11 @@ export default function HeroSection({
   const [businessArtDB, setBusinessArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'business').slice(0, 4));
   const [sportsArtDB, setSportsArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'sports').slice(0, 7));
   const [dynamicTrendingTopics, setDynamicTrendingTopics] = useState<string[]>(initialHeroSettings?.trendingTopics || initialHeroSettings?.setting?.trendingTopics || []);
-  const [marketRates, setMarketRates] = useState<any>({
+  const [marketRates, setMarketRates] = useState<any>(initialMarketRates || {
     gold: { price: '₹74,850', change: '▲ ₹450', purity: '24 Karat', unit: '10 Grams' },
     silver: { price: '₹84,200', change: '— Stable', purity: '999 Fine', unit: '1 Kg' },
   });
-  const [weatherData, setWeatherData] = useState<any>({
+  const [weatherData, setWeatherData] = useState<any>(initialWeatherData || {
     city: 'અમદાવાદ',
     cityEn: 'Ahmedabad',
     temp: 32,
@@ -471,7 +476,7 @@ export default function HeroSection({
 
   useEffect(() => {
     // If we already have initial articles and hero settings passed from SSR,
-    // only fetch client-dynamic data (weather & market rates) on mount.
+    // only fetch client-dynamic data if missing.
     // Heavy datasets (articles, hero settings, categories, videos) are already populated!
     const hasInitialData = initialArticles && initialArticles.length > 0 && initialHeroSettings;
 
@@ -482,17 +487,23 @@ export default function HeroSection({
       }
       setIsInitialLoading(false);
 
-      Promise.all([
-        getMarketRates(),
-        getPublicWeather('ahmedabad'),
-        getPublicVideos('video'),
-      ]).then(([marketRes, weatherRes, videoRes]: any[]) => {
-        if (weatherRes) setWeatherData(weatherRes);
-        if (marketRes) setMarketRates(marketRes);
-        if (videoRes && videoRes.length > 0) {
-          setVideosList(videoRes);
-        }
-      }).catch((err) => console.warn('Error loading weather/rates/videos:', err));
+      const needsMarket = !initialMarketRates;
+      const needsWeather = !initialWeatherData;
+      const needsVideos = !initialVideos || initialVideos.length === 0;
+
+      if (needsMarket || needsWeather || needsVideos) {
+        Promise.all([
+          needsMarket ? getMarketRates().catch(() => null) : Promise.resolve(null),
+          needsWeather ? getPublicWeather('ahmedabad').catch(() => null) : Promise.resolve(null),
+          needsVideos ? getPublicVideos('video').catch(() => null) : Promise.resolve(null),
+        ]).then(([marketRes, weatherRes, videoRes]: any[]) => {
+          if (weatherRes) setWeatherData(weatherRes);
+          if (marketRes) setMarketRates(marketRes);
+          if (videoRes && videoRes.length > 0) {
+            setVideosList(videoRes);
+          }
+        }).catch((err) => console.warn('Error loading weather/rates/videos:', err));
+      }
       return;
     }
 
@@ -539,10 +550,11 @@ export default function HeroSection({
 
         const heroPool = computeHeroPoolList(arts, heroRes);
         setTopStories(heroPool);
+        const customTrendingArts: Article[] = (heroRes?.trendingNewsArticles || []).filter(Boolean);
         const customPopularArts: Article[] = (heroRes?.popularNewsArticles || []).filter(Boolean);
         const customMostReadArts: Article[] = (heroRes?.mostReadArticles || []).filter(Boolean);
         const trendingArts = arts.filter((a: Article) => a.isTrending);
-        const popularPool = fillPool([...trendingArts, ...customPopularArts], arts, 10);
+        const popularPool = fillPool([...customTrendingArts, ...trendingArts, ...customPopularArts], arts, 10);
         setTrendingArtDB(popularPool);
         const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : arts).slice(0, 3);
         setMostReadArtDB(mostReadPool);
@@ -624,7 +636,7 @@ export default function HeroSection({
     national: <NationalSection key="national" language={language} />,
     trending: (
       <Fragment key="trending-frag">
-        <TrendingSection key="trending" />
+        <TrendingSection key="trending" initialArticles={trendingArtDB} />
         <AdSectionBanner section="AFTER_TRENDING" />
       </Fragment>
     ),
@@ -645,8 +657,8 @@ export default function HeroSection({
       />
     ),
     instagram: <InstagramStories key="instagram" />,
-    world: <WorldSection key="world" language={language} />,
-    politics: <PoliticsSection key="politics" language={language} />,
+    world: <WorldSection key="world" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'world' || (a as any).categorySlug?.toLowerCase() === 'world')} />,
+    politics: <PoliticsSection key="politics" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'politics' || (a as any).categorySlug?.toLowerCase() === 'politics' || a.category?.toLowerCase() === 'rajkaran')} />,
     webstory: (
       <Fragment key="webstory-frag">
         <WebStoriesSection key="webstory" />
@@ -657,7 +669,7 @@ export default function HeroSection({
       <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
           <div className="flex flex-col gap-10 min-w-0">
-            <CrimeSection language={language} view="content" />
+            <CrimeSection language={language} view="content" initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'crime' || (a as any).categorySlug?.toLowerCase() === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
           </div>
           <div className="flex flex-col gap-6 sticky top-20 select-none">
             <div>
@@ -721,15 +733,15 @@ export default function HeroSection({
               </div>
             </div>
 
-            <CrimeSection language={language} view="sidebar" />
+            <CrimeSection language={language} view="sidebar" initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'crime' || (a as any).categorySlug?.toLowerCase() === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
           </div>
         </div>
       </section>
     ),
-    entertainment: <EntertainTechLifeSection key="entertainment" language={language} />,
+    entertainment: <EntertainTechLifeSection key="entertainment" language={language} initialArticles={publishedInitialArticles} />,
     technology: null,
     health: null,
-    'fact-check': <FactCheckSection key="fact-check" language={language} />,
+    'fact-check': <FactCheckSection key="fact-check" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'fact-check' || a.category?.toLowerCase() === 'factcheck' || (a as any).categorySlug?.toLowerCase() === 'fact-check' || (a as any).categorySlug?.toLowerCase() === 'factcheck')} />,
     photos: (
       <Fragment key="photos-frag">
         <PhotoGallerySection language={language} />
@@ -1196,6 +1208,7 @@ export default function HeroSection({
               <DynamicCategorySection
                 category={categoryObj || slug}
                 language={language}
+                initialArticles={publishedInitialArticles}
               />
             )}
           </Fragment>

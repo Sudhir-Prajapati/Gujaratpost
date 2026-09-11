@@ -3,7 +3,7 @@ import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { BadRequestError } from '../utils/errors.js';
 import { invalidateHeroSettingsCache } from './hero.controller.js';
-import { clearPublicRoutesCache } from '../routes/public.routes.js';
+import { clearPublicRoutesCache } from '../utils/publicCache.js';
 
 function slugify(text: string): string {
   return text

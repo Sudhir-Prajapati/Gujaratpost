@@ -127,17 +127,17 @@ const mockNationalColumns = [
 ];
 
 /* --- National Section ("દેશ" Zone) ----------------------------- */
-export default function NationalSection({ language }: { language: Language }) {
-  const [dbNationalArticles, setDbNationalArticles] = useState<Article[]>([]);
+export default function NationalSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
+  const [dbNationalArticles, setDbNationalArticles] = useState<Article[]>(initialArticles || []);
 
   useEffect(() => {
-    // Fetch national articles directly with categorySlug filter so we get all of them
+    if (initialArticles && initialArticles.length >= 3) return;
     getPublicArticles({ categorySlug: 'national', limit: 12 }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
         setDbNationalArticles(res.articles);
       }
     });
-  }, []);
+  }, [initialArticles]);
 
   const top3 = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];
@@ -232,7 +232,7 @@ export default function NationalSection({ language }: { language: Language }) {
             {[bottomGrid.col1[rowIdx], bottomGrid.col2[rowIdx], bottomGrid.col3[rowIdx]].map((sub, colIdx) => {
               if (!sub) return <div key={colIdx} />;
               return (
-                <Link key={sub.id} href={`/news/${sub.slug}`} className="group flex gap-3 hover:bg-muted/10 transition-colors p-1 min-w-0">
+                <Link key={`${sub.id}-${rowIdx}-${colIdx}`} href={`/news/${sub.slug}`} className="group flex gap-3 hover:bg-muted/10 transition-colors p-1 min-w-0">
                   <div className="relative h-[56px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
                     <ArticleMedia src={sub.image} alt={sub.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
                   </div>

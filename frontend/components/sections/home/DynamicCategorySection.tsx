@@ -27,7 +27,7 @@ const CATEGORY_SYNONYMS: Record<string, string[]> = {
 };
 
 /* ─── Dynamic Generic Category Section ─────────────────────────────────── */
-export default function DynamicCategorySection({ category, language }: { category: any; language: Language }) {
+export default function DynamicCategorySection({ category, language, initialArticles }: { category: any; language: Language; initialArticles?: Article[] }) {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -40,53 +40,77 @@ export default function DynamicCategorySection({ category, language }: { categor
     const slugLower = catSlug.toLowerCase().trim();
     const synonyms = CATEGORY_SYNONYMS[slugLower] || [slugLower];
 
-    Promise.all([
-      getPublicArticles({ categorySlug: catSlug, limit: 20 }),
-      synonyms.length > 1 ? getPublicArticles({ limit: 40 }) : Promise.resolve({ articles: [] })
-    ]).then(([res1, res2]) => {
-      const combined = [...(res1?.articles || []), ...(res2?.articles || [])];
-      const uniqueMap = new Map();
-      combined.forEach(a => { if (a && a.id) uniqueMap.set(a.id, a); });
-      const allFetched = Array.from(uniqueMap.values());
+    const targetSlug = slugLower;
+    const targetName = (typeof category === 'object' ? (category?.name || '') : catSlug).toLowerCase().trim();
+    const targetGu = (typeof category === 'object' ? (category?.nameGu || '') : catSlug).toLowerCase().trim();
+    const searchTerms = Array.from(new Set([targetSlug, targetName, targetGu, ...synonyms.map(s => s.toLowerCase())])).filter(Boolean);
 
-      const targetSlug = slugLower;
-      const targetName = (typeof category === 'object' ? (category?.name || '') : catSlug).toLowerCase().trim();
-      const targetGu = (typeof category === 'object' ? (category?.nameGu || '') : catSlug).toLowerCase().trim();
-      const searchTerms = Array.from(new Set([targetSlug, targetName, targetGu, ...synonyms.map(s => s.toLowerCase())])).filter(Boolean);
+    const filterFn = (art: any) => {
+      const artCatSlug = (art.category?.slug || art.categorySlug || art.category || '').toLowerCase().trim();
+      const artCatName = (art.category?.name || art.categoryName || '').toLowerCase().trim();
+      const artCatNameGu = (art.category?.nameGu || '').toLowerCase().trim();
+      const artCatId = art.category?.id || art.categoryId;
 
-      const categoryFiltered = allFetched.filter((art: any) => {
-        const artCatSlug = (art.category?.slug || art.categorySlug || '').toLowerCase().trim();
-        const artCatName = (art.category?.name || art.categoryName || '').toLowerCase().trim();
-        const artCatNameGu = (art.category?.nameGu || '').toLowerCase().trim();
-        const artCatId = art.category?.id || art.categoryId;
+      const artTitle = (art.title || '').toLowerCase();
+      const artTitleGu = (art.titleGu || '').toLowerCase();
+      const artExcerptGu = (art.excerptGu || art.excerpt || '').toLowerCase();
 
-        const artTitle = (art.title || '').toLowerCase();
-        const artTitleGu = (art.titleGu || '').toLowerCase();
-        const artExcerptGu = (art.excerptGu || art.excerpt || '').toLowerCase();
+      return searchTerms.some(term => {
+        if (!term || term.length < 2) return false;
+        return (
+          artCatSlug === term ||
+          artCatName === term ||
+          artCatNameGu === term ||
+          (category?.id && artCatId === category.id) ||
+          (term.length >= 3 && (artTitle.includes(term) || artTitleGu.includes(term) || artExcerptGu.includes(term)))
+        );
+      });
+    };
 
-        return searchTerms.some(term => {
-          if (!term || term.length < 2) return false;
-          return (
-            artCatSlug === term ||
-            artCatName === term ||
-            artCatNameGu === term ||
-            (category?.id && artCatId === category.id) ||
-            (term.length >= 3 && (artTitle.includes(term) || artTitleGu.includes(term) || artExcerptGu.includes(term)))
-          );
+    if (initialArticles && initialArticles.length > 0) {
+      const matched = initialArticles.filter(filterFn);
+      if (matched.length >= 3) {
+        const sortedMatched = [...matched].sort((a, b) => {
+          const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+          const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+          return bTime - aTime;
         });
-      });
+        setArticles(sortedMatched);
+        setLoading(false);
+        return;
+      }
+    }
 
-      // Sort explicitly by publishedAt / createdAt descending (MOST RECENTLY UPLOADED ARTICLE FIRST)
+    getPublicArticles({ categorySlug: catSlug, limit: 12 }).then((res1) => {
+      let combined = res1?.articles || [];
+      if (combined.length < 3 && synonyms.length > 1) {
+        getPublicArticles({ limit: 20 }).then((res2) => {
+          const combined2 = [...combined, ...(res2?.articles || [])];
+          const uniqueMap = new Map();
+          combined2.forEach(a => { if (a && a.id) uniqueMap.set(a.id, a); });
+          const categoryFiltered = Array.from(uniqueMap.values()).filter(filterFn);
+          const sorted = [...categoryFiltered].sort((a, b) => {
+            const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+            const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+            return bTime - aTime;
+          });
+          setArticles(sorted);
+          setLoading(false);
+        });
+        return;
+      }
+      const categoryFiltered = combined.filter(filterFn);
       const sorted = [...categoryFiltered].sort((a, b) => {
-        const timeA = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-        const timeB = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
-        return timeB - timeA;
+        const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+        const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+        return bTime - aTime;
       });
-
       setArticles(sorted);
-    }).catch((e) => console.warn(`Error loading articles for category ${catSlug}:`, e))
-      .finally(() => setLoading(false));
-  }, [catSlug, category]);
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [catSlug, initialArticles]);
+
+
 
   const catNameGu = typeof category === 'object' ? (category?.nameGu || category?.name || catSlug) : catSlug;
   const catNameHi = typeof category === 'object' ? (category?.nameHi || category?.name || catSlug) : catSlug;
@@ -221,9 +245,9 @@ export default function DynamicCategorySection({ category, language }: { categor
 
           {/* Side Cards List (5 cols) */}
           <div className="lg:col-span-5 flex flex-col divide-y divide-border/50 bg-card border border-border/80 rounded-xl p-4 shadow-sm">
-            {sideArticles.map((art) => (
+            {sideArticles.map((art, sIdx) => (
               <Link
-                key={art.id}
+                key={`dyn-${category}-${art.id}-${sIdx}`}
                 href={`/news/${art.slug}`}
                 className="group flex gap-3 py-3 first:pt-0 last:pb-0 hover:bg-muted/10 transition-colors"
               >
