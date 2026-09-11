@@ -23,6 +23,7 @@ declare global {
  * This prevents EADDRINUSE errors when nodemon restarts the backend.
  */
 function killPortIfBusy(port: number): void {
+  if (process.platform !== 'win32') return;
   try {
     const result = execSync(
       `netstat -ano | findstr :${port} | findstr LISTENING`,
@@ -108,26 +109,14 @@ app.use(errorHandler);
 // Boot the server and establish database connections
 const bootstrap = async () => {
   try {
-    // 1. Establish Redis connection
-    await connectRedis();
-    if (redisClient.isOpen) {
-      console.log('Successfully connected to Redis database.');
-    } else {
-      console.warn('Redis is offline. Operating in database-only fallback mode.');
-    }
-
-    // 2. Validate Prisma connection to MySQL
-    await prisma.$connect().catch((dbErr) => {
-      console.warn('MySQL initial connection warning (will retry automatically):', dbErr?.message || dbErr);
-    });
-    console.log('Successfully connected to MySQL database via Prisma.');
-
-    // 3. Kill any stale process on the port, then start listening
+    // 1. Kill any stale process on the port (Windows dev only)
     killPortIfBusy(Number(PORT));
 
+    // 2. Bind HTTP server IMMEDIATELY on 0.0.0.0:PORT
+    // This allows cloud platform port-scanners (Render, Railway, etc.) to detect the open port instantly without timing out.
     const listenWithRetry = (portNum: number, attempts = 0) => {
       const server = app.listen(portNum, '0.0.0.0', () => {
-        console.log(`🚀 Gujarat Post backend running on port http://localhost:${portNum}`);
+        console.log(`🚀 Gujarat Post backend running on http://0.0.0.0:${portNum}`);
       });
 
       // Store server reference globally so graceful shutdown can close it
@@ -154,11 +143,33 @@ const bootstrap = async () => {
     };
 
     listenWithRetry(Number(PORT));
+
+    // 3. Establish Redis connection in background (non-blocking)
+    connectRedis()
+      .then(() => {
+        if (redisClient.isOpen) {
+          console.log('Successfully connected to Redis database.');
+        } else {
+          console.warn('Redis is offline. Operating in database-only fallback mode.');
+        }
+      })
+      .catch((err) => {
+        console.warn('Redis connection notice (running without cache):', err?.message || err);
+      });
+
+    // 4. Validate Prisma connection to MySQL in background (non-blocking)
+    prisma.$connect()
+      .then(() => {
+        console.log('Successfully connected to MySQL database via Prisma.');
+      })
+      .catch((dbErr) => {
+        console.warn('MySQL initial connection warning (will retry automatically):', dbErr?.message || dbErr);
+      });
   } catch (error) {
     console.error('Bootstrap warning:', error);
     // Start listening anyway so backend stays online
     const fallbackServer = app.listen(Number(PORT), '0.0.0.0', () => {
-      console.log(`Gujarat Post backend running on port http://localhost:${PORT}`);
+      console.log(`Gujarat Post backend running on http://0.0.0.0:${PORT}`);
     });
     globalThis.__httpServer = fallbackServer;
   }
