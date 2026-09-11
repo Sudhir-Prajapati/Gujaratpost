@@ -442,8 +442,8 @@ export default function Header() {
             </div>
 
             {/* Logo */}
-            <a href="/" className="logo-3d group flex shrink-0 items-center">
-              <span className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300">
+            <a href="/" className="logo-3d group relative flex shrink-0 items-center">
+              <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300">
                 <Image
                   src={gpLogo}
                   alt="Gujarat Post"
@@ -453,7 +453,7 @@ export default function Header() {
                   sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
                   className="object-cover"
                 />
-              </span>
+              </div>
             </a>
           </div>
 

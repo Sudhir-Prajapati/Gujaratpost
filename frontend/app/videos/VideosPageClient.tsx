@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { Clock, Eye, Play, Bell, Radio } from 'lucide-react';
+import { Clock, Eye, Play, Bell, Radio, X, Volume2, VolumeX } from 'lucide-react';
 import { formatViews, getLocalized } from '@/data';
 import { getPublicVideos } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
 import { useApp } from '@/components/AppProvider';
+import { useIsApk } from '@/lib/useIsApk';
+import ApkVideoPlayer from '@/components/apk/ApkVideoPlayer';
 import { toGu } from '@/lib/utils';
 
 type TabType = 'video' | 'short' | 'exclusive' | 'bulletin';
@@ -26,6 +28,33 @@ export default function VideosPageClient() {
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [videoList, setVideoList] = useState<any[]>([]);
   const [shortsList, setShortsList] = useState<any[]>([]);
+  const { isApk } = useIsApk();
+  const [apkModalVideoId, setApkModalVideoId] = useState<string | null>(null);
+  const [apkSelectedVideo, setApkSelectedVideo] = useState<any | null>(null);
+  const [apkModalMuted, setApkModalMuted] = useState(false);
+  const apkModalIframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  const closeApkModal = () => setApkModalVideoId(null);
+
+  const toggleApkModalAudio = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setApkModalMuted((prev) => {
+      const next = !prev;
+      try {
+        apkModalIframeRef.current?.contentWindow?.postMessage(
+          JSON.stringify({ event: 'command', func: next ? 'mute' : 'unMute', args: '' }),
+          '*'
+        );
+        if (!next) {
+          apkModalIframeRef.current?.contentWindow?.postMessage(
+            JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }),
+            '*'
+          );
+        }
+      } catch {}
+      return next;
+    });
+  };
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -276,13 +305,13 @@ export default function VideosPageClient() {
                   {playingVideoId === featuredVideo.id ? (
                     <iframe
                       className="absolute inset-0 h-full w-full"
-                      src={`https://www.youtube.com/embed/${safeYouTubeId(featuredVideo.youtubeId)}?autoplay=1&controls=1&mute=0&rel=0`}
+                      src={`https://www.youtube.com/embed/${safeYouTubeId(featuredVideo.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                       title={featuredVideo.titleGu}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                       allowFullScreen
                     />
                   ) : (
-                    <div className="relative w-full h-full cursor-pointer" onClick={() => setPlayingVideoId(featuredVideo.id)}>
+                    <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(featuredVideo.youtubeId)); setApkSelectedVideo(featuredVideo); } else { setPlayingVideoId(featuredVideo.id); } }}>
                       <Image
                         src={featuredVideo.thumbnail}
                         alt={featuredVideo.titleGu}
@@ -333,13 +362,13 @@ export default function VideosPageClient() {
                       {playingVideoId === item.id ? (
                         <iframe
                           className="absolute inset-0 h-full w-full"
-                          src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?autoplay=1&controls=1&mute=0&rel=0`}
+                          src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                           title={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                           allowFullScreen
                         />
                       ) : (
-                        <div className="relative w-full h-full cursor-pointer" onClick={() => setPlayingVideoId(item.id)}>
+                        <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { setPlayingVideoId(item.id); } }}>
                           <Image
                             src={item.thumbnail}
                             alt={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
@@ -499,13 +528,13 @@ export default function VideosPageClient() {
                     {playingVideoId === item.id ? (
                       <iframe
                         className="absolute inset-0 h-full w-full"
-                        src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?autoplay=1&controls=1&mute=0&rel=0`}
+                        src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                         title={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                         allowFullScreen
                       />
                     ) : (
-                      <div className="relative w-full h-full cursor-pointer" onClick={() => setPlayingVideoId(item.id)}>
+                      <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { setPlayingVideoId(item.id); } }}>
                         <Image
                           src={item.thumbnail}
                           alt={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
@@ -556,13 +585,13 @@ export default function VideosPageClient() {
                     {playingVideoId === item.id ? (
                       <iframe
                         className="absolute inset-0 h-full w-full"
-                        src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?autoplay=1&controls=1&mute=0&rel=0`}
+                        src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                         title={item.titleGu}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                         allowFullScreen
                       />
                     ) : (
-                      <div className="relative w-full h-full cursor-pointer" onClick={() => setPlayingVideoId(item.id)}>
+                      <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { setPlayingVideoId(item.id); } }}>
                         <Image
                           src={item.thumbnail}
                           alt={item.titleGu}
@@ -600,6 +629,17 @@ export default function VideosPageClient() {
         </div>
 
       </div>
+
+      {/* APK: YouTube-style video player (player at top + related below) */}
+      {isApk && apkModalVideoId && (
+        <ApkVideoPlayer
+          videoId={apkModalVideoId}
+          initialVideo={apkSelectedVideo}
+          allVideos={cleanVideos.filter((v) => v.youtubeId !== apkModalVideoId).slice(0, 20)}
+          onClose={() => { setApkModalVideoId(null); setApkSelectedVideo(null); }}
+          onSelectVideo={(ytId, video) => { setApkModalVideoId(ytId); setApkSelectedVideo(video || null); }}
+        />
+      )}
     </div>
   );
 }

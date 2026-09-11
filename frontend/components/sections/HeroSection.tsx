@@ -40,6 +40,9 @@ import CategorySection from '@/components/sections/CategorySection';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import VideoSection from '@/components/sections/VideoSection';
+import { useIsApk } from '@/lib/useIsApk';
+import ApkHomeFeed from '@/components/apk/ApkHomeFeed';
+import ApkHomeSkeleton from '@/components/apk/ApkHomeSkeleton';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const stripHtmlTags = (str?: string) => (str || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '');
@@ -448,6 +451,7 @@ export default function HeroSection({
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(!initialArticles.length);
   const [orderedCategorySlugs, setOrderedCategorySlugs] = useState<string[]>(initialCategorySlugs.length > 0 ? initialCategorySlugs : ['gujarat', 'national', 'world', 'politics', 'crime']);
   const [allCategoriesDB, setAllCategoriesDB] = useState<any[]>(initialCategoriesDB);
+  const { isApk } = useIsApk();
 
   useEffect(() => {
     // If we already have initial articles and hero settings passed from SSR,
@@ -810,6 +814,23 @@ export default function HeroSection({
     return Array.from(uniqueMap.values());
   }, [uniqueTopStories, articlesList, initialArticles]);
 
+  // DEDICATED ANDROID APK FEED:
+  // Shows ONLY inside the installed Android APK (TWA).
+  // Standard Desktop & Mobile Web Browsers render the standard portal below.
+  if (isApk) {
+    if (isInitialLoading || !topStories.length || !articlesList.length) {
+      return <ApkHomeSkeleton />;
+    }
+    return (
+      <ApkHomeFeed
+        articles={articlesList}
+        videos={videosList}
+        categories={allCategoriesDB}
+      />
+    );
+  }
+
+  // STANDARD WEB & MOBILE BROWSER (100% UNTOUCHED):
   if (isInitialLoading || !topStories.length) {
     return <HeroSectionSkeleton language={language} />;
   }

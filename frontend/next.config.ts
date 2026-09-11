@@ -15,6 +15,9 @@ const nextConfig: NextConfig = {
   // Allow HMR connections from 127.0.0.1 (same machine, different origin format)
   allowedDevOrigins: ['127.0.0.1', 'localhost', '192.168.1.16'],
 
+  // Disable dev indicators overlay to suppress DevTools pointer capture errors in console
+  devIndicators: false,
+
   images: {
     unoptimized: true,
     remotePatterns: [

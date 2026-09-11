@@ -2,6 +2,7 @@ import { Article, Author, NavItem, Photo, Video, Language } from '@/types';
 import { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, slugify } from '@/lib/utils';
 
 export { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, slugify };
+export type { Article, Author, NavItem, Photo, Video, Language };
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://gujaratpost.com';
 

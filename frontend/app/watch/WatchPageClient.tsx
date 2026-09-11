@@ -19,6 +19,7 @@ import { formatViews, getLocalized } from '@/data';
 import { getPublicVideos } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import Footer from '@/components/layout/Footer';
+import { useIsApk } from '@/lib/useIsApk';
 
 interface YoutubePlayerProps {
   youtubeId: string;
@@ -33,7 +34,7 @@ function YoutubePlayer({ youtubeId, title, initialMuted, iframeRef }: YoutubePla
       ref={iframeRef}
       id="active-iframe"
       className="absolute inset-0 h-full w-full object-cover pointer-events-none"
-      src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&controls=0&mute=${initialMuted ? 1 : 0}&loop=1&playlist=${youtubeId}&rel=0`}
+      src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&controls=1&mute=0&loop=1&playlist=${youtubeId}&rel=0`}
       title={title}
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowFullScreen
@@ -47,11 +48,12 @@ const MAX_FEED_ITEMS = 16;
 
 export default function WatchPageClient() {
   const { language } = useApp();
+  const { isApk } = useIsApk();
   const [videoList, setVideoList] = useState<any[]>([]);
   const [itemCount, setItemCount] = useState(INITIAL_ITEMS);
   const [activeIndex, setActiveIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [liked, setLiked] = useState<Set<string>>(() => new Set());
   const [saved, setSaved] = useState<Set<string>>(() => new Set());
   const [sharedKey, setSharedKey] = useState<string | null>(null);
@@ -412,7 +414,7 @@ export default function WatchPageClient() {
             </article>
           );
         })}
-        {itemCount >= MAX_FEED_ITEMS && (
+        {!isApk && itemCount >= MAX_FEED_ITEMS && (
           <div
             // No data-index so the observer treats this as the footer sentinel
             ref={(node) => {

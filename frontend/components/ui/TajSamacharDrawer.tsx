@@ -2,10 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { getPublicArticles } from '@/lib/api';
 import { Article } from '@/types';
 import { Megaphone, X, Clock } from 'lucide-react';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import { useIsApk } from '@/lib/useIsApk';
 
 // Helper to resolve absolute or relative image URLs cleanly
 function getFullImageUrl(url?: string | null): string {
@@ -128,30 +130,37 @@ const FALLBACK_ARTICLES: Partial<Article>[] = [
 ];
 
 export default function TajSamacharDrawer() {
+  const pathname = usePathname();
+  const { isApk } = useIsApk();
   const [isOpen, setIsOpen] = useState(false);
-  const [articles, setArticles] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [articles, setArticles] = useState<any[]>(FALLBACK_ARTICLES);
+  const [loading, setLoading] = useState(false);
+  const [hasFetched, setHasFetched] = useState(false);
   const [page, setPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  // Initial load of latest news
+  if (pathname?.startsWith('/admin') || (isApk && pathname?.startsWith('/shorts'))) {
+    return null;
+  }
+
+  // Lazy load latest news only when user opens drawer
   useEffect(() => {
+    if (!isOpen || hasFetched) return;
     let isMounted = true;
     async function loadLatestNews() {
       try {
         setLoading(true);
         const res = await getPublicArticles({ page: 1, limit: 15 });
         if (isMounted) {
+          setHasFetched(true);
           if (res?.articles && res.articles.length > 0) {
             setArticles(res.articles);
             if (res.articles.length < 15) setHasMore(false);
-          } else {
-            setArticles(FALLBACK_ARTICLES);
           }
         }
       } catch (err) {
-        if (isMounted) setArticles(FALLBACK_ARTICLES);
+        // Keeps fallback articles safely
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -162,7 +171,7 @@ export default function TajSamacharDrawer() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [isOpen, hasFetched]);
 
   // Fetch more articles seamlessly in the background as user reaches ~7th article
   const loadMoreArticles = async () => {
@@ -226,7 +235,7 @@ export default function TajSamacharDrawer() {
       `}</style>
 
       {/* Floating Megaphone Button (Bottom Left) */}
-      <div className="fixed bottom-6 left-6 z-[9990] flex items-center gap-3">
+      <div className={`fixed ${isApk ? 'bottom-[72px] left-4 z-45' : 'bottom-6 left-6 z-[9990]'} flex items-center gap-3`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
           aria-label="તાજા સમાચાર (Latest News)"
@@ -234,13 +243,21 @@ export default function TajSamacharDrawer() {
           className="relative group flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
         >
           {/* Periodic pulse ring animation (expands every 4 seconds) */}
-          <span className="absolute -inset-1 rounded-full bg-red-600/60 animate-periodic-ping pointer-events-none" />          <Megaphone className="w-5 h-5 text-white relative z-10 transition-transform group-hover:rotate-12" />
+          <span className="absolute -inset-1 rounded-full bg-red-600/60 animate-periodic-ping pointer-events-none" />
+          <Megaphone className="w-5 h-5 text-white relative z-10 transition-transform group-hover:rotate-12" />
         </button>
       </div>
 
       {/* Latest News Floating Drawer / Modal Box */}
       {isOpen && (
-        <div className="fixed bottom-24 left-4 sm:left-6 z-[9995] w-[calc(100vw-32px)] sm:w-[410px] max-h-[82vh] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-red-900/20 overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-4">
+        <>
+          {isApk && (
+            <div
+              className="fixed inset-0 bg-black/50 backdrop-blur-xs z-[9994] animate-in fade-in duration-200"
+              onClick={() => setIsOpen(false)}
+            />
+          )}
+          <div className={`fixed ${isApk ? 'bottom-[72px] left-3 right-3 max-h-[76vh]' : 'bottom-24 left-4 sm:left-6 w-[calc(100vw-32px)] sm:w-[410px] max-h-[82vh]'} z-[9995] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-red-900/20 overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-4`}>
 
           {/* Header Bar - Red & Black Theme (Bigger & Vertically Centered) */}
           <div className="bg-gradient-to-r from-red-700 via-red-600 to-black text-white px-5 py-3 flex items-center justify-between shadow-md relative overflow-hidden min-h-[48px]">
@@ -338,7 +355,8 @@ export default function TajSamacharDrawer() {
               </>
             )}
           </div>
-        </div>
+          </div>
+        </>
       )}
     </>
   );

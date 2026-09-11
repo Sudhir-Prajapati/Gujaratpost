@@ -134,12 +134,19 @@ export class HeroController {
         let slot3Id = heroSetting?.slot3Id;
 
         // Fetch backup featured or published posts in case any slot is missing
-        const fallbackPosts = await prisma.post.findMany({
-          where: { status: 'PUBLISHED' },
-          orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-          take: 10,
-          select: heroPostSelect,
-        });
+        let fallbackPosts: any[] = [];
+        try {
+          fallbackPosts = await withDbRetry(() =>
+            prisma.post.findMany({
+              where: { status: 'PUBLISHED' },
+              orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+              take: 10,
+              select: heroPostSelect,
+            })
+          );
+        } catch (dbErr: any) {
+          console.warn('Warning: fallbackPosts query error:', dbErr?.message);
+        }
 
         const fallbackFormatted = fallbackPosts.map(formatPost);
 
@@ -151,11 +158,17 @@ export class HeroController {
 
         const postsMap = new Map<string, any>();
         if (targetIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: targetIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
-          posts.forEach((p) => postsMap.set(p.id, formatPost(p)));
+          try {
+            const posts = await withDbRetry(() =>
+              prisma.post.findMany({
+                where: { id: { in: targetIds }, status: 'PUBLISHED' },
+                select: heroPostSelect,
+              })
+            );
+            posts.forEach((p) => postsMap.set(p.id, formatPost(p)));
+          } catch (postsErr: any) {
+            console.warn('Warning: targetPosts query error:', postsErr?.message);
+          }
         }
 
         const s1 = (slot1Id ? postsMap.get(slot1Id) : null) || fallbackFormatted[0] || null;

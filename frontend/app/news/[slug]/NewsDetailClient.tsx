@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState, useCallback, memo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useIsApk } from '@/lib/useIsApk';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 
@@ -574,6 +576,83 @@ interface Props {
 
 export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
   const { language } = useApp();
+  const router = useRouter();
+  const { isApk } = useIsApk();
+  const touchStartX = useRef<number | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const isSwiping = useRef(false);
+  const [swipeFeedback, setSwipeFeedback] = useState<'left' | 'right' | null>(null);
+
+  // Prefetch adjacent articles in APK mode for instant swipe transitions
+  useEffect(() => {
+    if (!isApk) return;
+    const nextArt = related?.[0] || trending?.[0];
+    const otherArt = related?.[1] || trending?.[1];
+    if (nextArt?.slug) router.prefetch(`/news/${nextArt.slug}`);
+    if (otherArt?.slug) router.prefetch(`/news/${otherArt.slug}`);
+  }, [isApk, related, trending, router]);
+
+  // Swipe right / left gesture to open other article (APK only)
+  useEffect(() => {
+    if (!isApk) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest('iframe') ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('button') ||
+        target.closest('a') ||
+        target.closest('.no-swipe')
+      ) {
+        return;
+      }
+      touchStartX.current = e.touches[0].clientX;
+      touchStartY.current = e.touches[0].clientY;
+      isSwiping.current = true;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (!isSwiping.current || touchStartX.current === null || touchStartY.current === null) return;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+
+      const diffX = endX - touchStartX.current;
+      const diffY = endY - touchStartY.current;
+
+      touchStartX.current = null;
+      touchStartY.current = null;
+      isSwiping.current = false;
+
+      // Swipe threshold: moved at least 50px horizontally, and angle is predominantly horizontal
+      if (Math.abs(diffX) > 50 && Math.abs(diffX) > Math.abs(diffY) * 1.3) {
+        if (diffX > 0) {
+          // Swiped right (Left-to-right slice)
+          const targetArticle = related?.[0] || trending?.[0];
+          if (targetArticle?.slug) {
+            setSwipeFeedback('right');
+            router.push(`/news/${targetArticle.slug}`);
+          }
+        } else {
+          // Swiped left (Right-to-left slice)
+          const targetArticle = related?.[1] || related?.[0] || trending?.[0];
+          if (targetArticle?.slug) {
+            setSwipeFeedback('left');
+            router.push(`/news/${targetArticle.slug}`);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isApk, related, trending, router]);
   const [mounted, setMounted] = useState(false);
   const [progress, setProgress] = useState(0);
   const [saved, setSaved] = useState(false);
@@ -1368,7 +1447,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 href={`https://wa.me/?text=${encodeURIComponent(`${title} ${articleUrl}`)}`}
                 target="_blank"
                 rel="noreferrer"
-                title={uiLabel(language, { en: 'WhatsApp', gu: 'àªµà«‹àªŸà«àª¸àªàªª', hi: 'à¤µà¥à¤¹à¤¾à¤Ÿà¥à¤¸à¤à¤ª' })}
+                title={uiLabel(language, { en: 'WhatsApp', gu: 'વોટ્સએપ', hi: 'व्हाट्सएप' })}
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(37,211,102,0.35)] hover:border-[#25D366]"
               >
                 <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
@@ -1382,7 +1461,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 href="https://profile.dailyhunt.in/gujaratpost"
                 target="_blank"
                 rel="noreferrer"
-                title={uiLabel(language, { en: 'Dailyhunt', gu: 'àª¡à«‡àª‡àª²à«€àª¹àª¨à«àªŸ', hi: 'à¤¡à¥‡à¤²à¥€à¤¹à¤‚à¤¤' })}
+                title={uiLabel(language, { en: 'Dailyhunt', gu: 'ડેઈલીહન્ટ', hi: 'डेलीहंट' })}
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(251,188,5,0.35)] hover:border-[#FBBC05]"
               >
                 <svg viewBox="0 0 48 48" className="w-[21px] h-[21px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
@@ -1444,7 +1523,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 )}
               </button>
 
-              {/* Save / Bookmark */}
+              {/* Save / Bookmark (Hidden in APK view) */}
+              {!isApk && (
               <button
                 type="button"
                 onClick={handleToggleSave}
@@ -1458,6 +1538,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
               </button>
+              )}
 
               {/* Audio / Speaker */}
               <button
@@ -2055,6 +2136,20 @@ const streamCity = uiLabel(language, { en: 'Ahmedabad', gu: 'àª…àª®àª¦
         </div>
       </div>
       <div style={{ height: '50px' }} />
+      {/* APK Swipe Floating Notification / Indicator */}
+      {isApk && (
+        <div className="fixed bottom-16 left-1/2 -translate-x-1/2 z-40 pointer-events-none select-none">
+          {swipeFeedback ? (
+            <div className="bg-black/90 text-white text-xs font-bold px-4 py-2 rounded-full backdrop-blur-md shadow-2xl flex items-center gap-2 border border-white/20 animate-in fade-in zoom-in-95">
+              <span>{language === 'hi' ? 'अगला लेख लोड हो रहा है...' : language === 'en' ? 'Loading next article...' : 'આગલો લેખ લોડ થઈ રહ્યો છે...'}</span>
+            </div>
+          ) : (
+            <div className="bg-black/70 text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full backdrop-blur-md shadow-lg border border-white/10 flex items-center gap-1.5 opacity-75">
+              <span>{language === 'hi' ? '⇄ स्वाइप करें: अन्य लेख पढ़ें' : language === 'en' ? '⇄ Swipe to read next article' : '⇄ સ્વાઇપ કરો: બીજો લેખ વાંચો'}</span>
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }

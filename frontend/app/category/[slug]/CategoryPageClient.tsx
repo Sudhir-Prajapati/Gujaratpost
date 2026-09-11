@@ -19,6 +19,8 @@ import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
+import { useIsApk } from '@/lib/useIsApk';
+import ApkCategoryFeed from '@/components/apk/ApkCategoryFeed';
 
 /* ── Types ────────────────────────────────────────────────── */
 interface Props {
@@ -39,9 +41,29 @@ const GUJARAT_MOCK_TAGS = {
 };
 
 /* ══════════════════════════════════════════════════════════════
-   CATEGORY PAGE CLIENT
+   CATEGORY PAGE CLIENT (Dispatcher: APK vs Web)
    ══════════════════════════════════════════════════════════════ */
-export default function CategoryPageClient({ articles, category, slug }: Props) {
+export default function CategoryPageClient(props: Props) {
+  const { isApk } = useIsApk();
+
+  // DEDICATED ANDROID MOBILE APK VIEW:
+  // Delivers instant, native mobile app performance and clean design for Android APK.
+  if (isApk) {
+    return (
+      <ApkCategoryFeed
+        articles={props.articles}
+        category={props.category}
+        trending={props.trending}
+        slug={props.slug}
+      />
+    );
+  }
+
+  // STANDARD WEB & MOBILE BROWSER VIEW (100% UNTOUCHED):
+  return <WebCategoryPageClient {...props} />;
+}
+
+function WebCategoryPageClient({ articles, category, slug }: Props) {
   const { language } = useApp();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');

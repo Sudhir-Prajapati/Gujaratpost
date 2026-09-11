@@ -66,8 +66,20 @@ export default async function CategoryPage({
     redirect('/epaper');
   }
 
-  // 1. Fetch category details directly from Express Backend API
-  const dbCategories = await getPublicCategories().catch(() => []);
+  // 1. Fetch category metadata, category articles, and trending articles concurrently in parallel
+  const [dbCategories, catRes, trendingRes] = await Promise.all([
+    getPublicCategories().catch(() => []),
+    getPublicArticles({
+      categorySlug: resolvedSlug,
+      page,
+      limit,
+    }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({
+      isTrending: true,
+      limit: 10,
+    }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+  ]);
+
   const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);
   const fallbackCat = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
 
@@ -83,13 +95,6 @@ export default async function CategoryPage({
     icon: dbCat?.icon || "newspaper",
     color: dbCat?.color || "#dc2626",
   };
-
-  // 2. Fetch dynamic category articles from Backend API — latest first (updatedAt desc)
-  const catRes = await getPublicArticles({
-    categorySlug: resolvedSlug,
-    page,
-    limit,
-  }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
 
   let rawArticles = catRes?.articles || [];
   let total = catRes?.total || 0;
@@ -113,11 +118,6 @@ export default async function CategoryPage({
     return bTime - aTime;
   });
 
-  // 3. Fetch dynamic trending articles from Backend API
-  const trendingRes = await getPublicArticles({
-    isTrending: true,
-    limit: 10,
-  }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
   const trending = trendingRes?.articles || [];
 
   return (

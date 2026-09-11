@@ -71,20 +71,16 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
     return cached.data as T;
   }
 
-  if (inFlightRequests.has(url)) {
-    try {
-      return (await inFlightRequests.get(url)) as T;
-    } catch {
-      return null;
-    }
+  const existing = inFlightRequests.get(url);
+  if (existing) {
+    return existing as Promise<T | null>;
   }
 
-  const fetchPromise = (async () => {
+  const fetchPromise = (async (): Promise<T | null> => {
     const controller = new AbortController();
     // 12s for SSR to prevent server hangs; 25s in browser so concurrent client requests do not abort prematurely
     const timeoutDuration = typeof window === 'undefined' ? 12000 : 25000;
     const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
-    const startMs = Date.now();
 
     try {
       const res = await fetch(url, {
@@ -111,32 +107,30 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
       }
 
       apiCache.set(url, { timestamp: Date.now(), data: json });
-      return json;
+      return json as T;
     } catch (error: any) {
       clearTimeout(timeoutId);
-      throw error;
+      const isAbort = error?.name === 'AbortError' || error?.message?.includes('aborted');
+      if (isAbort) {
+        if (typeof window === 'undefined') {
+          console.warn(`SSR fetch timed out for ${url}`);
+        } else {
+          console.debug(`Fetch aborted for ${url}`);
+        }
+      } else {
+        const isClientAbort = typeof window !== 'undefined' && (error?.message === 'Failed to fetch' || error?.name === 'TypeError');
+        if (!isClientAbort) {
+          console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
+        }
+      }
+      return null;
+    } finally {
+      inFlightRequests.delete(url);
     }
   })();
 
   inFlightRequests.set(url, fetchPromise);
-
-  try {
-    const data = await fetchPromise;
-    return data as T;
-  } catch (error: any) {
-    if (error?.name === 'AbortError') {
-      if (typeof window === 'undefined') {
-        console.warn(`SSR fetch timed out for ${url}`);
-      } else {
-        console.debug(`Fetch aborted for ${url}`);
-      }
-    } else {
-      console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
-    }
-    return null;
-  } finally {
-    inFlightRequests.delete(url);
-  }
+  return fetchPromise;
 }
 
 /**

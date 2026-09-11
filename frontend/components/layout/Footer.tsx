@@ -189,7 +189,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         </div>
                         <Link
                             href="/"
-                            className="inline-block relative h-12 w-48 overflow-hidden rounded-lg transition-transform duration-200 hover:scale-[1.02]"
+                            className="relative block h-12 w-48 overflow-hidden rounded-lg transition-transform duration-200 hover:scale-[1.02]"
                         >
                             <Image
                                 src="/assets/logoblack.png"

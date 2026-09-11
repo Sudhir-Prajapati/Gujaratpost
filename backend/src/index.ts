@@ -42,7 +42,7 @@ function killPortIfBusy(port: number): void {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Reload trigger: Tributes feature enabled
+// Reload trigger: Redis and Prisma resilience applied
 
 
 // Trust proxy header configuration (crucial for accurate IP rate limiting downstream)
@@ -198,4 +198,13 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.once('SIGUSR2', () => {
   gracefulShutdown('SIGUSR2');
+});
+
+// Prevent transient network glitches or socket drops from crashing the Node.js server
+process.on('unhandledRejection', (reason: any) => {
+  console.warn('⚠️  Captured unhandled rejection (server continues safely):', reason?.message || reason);
+});
+
+process.on('uncaughtException', (err: any) => {
+  console.error('⚠️  Captured uncaught exception (server continues safely):', err?.message || err);
 });

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '@/components/AppProvider';
+import AqiSkeleton from '@/components/aqi/AqiSkeleton';
 import { getPublicArticles } from '@/lib/api';
 import {
   Search,
@@ -406,6 +407,10 @@ export default function AqiPage() {
     return { needleX: Number(x.toFixed(2)), needleY: Number(y.toFixed(2)) };
   }, [liveAqi]);
 
+  if (!mounted || (loadingAqi && !liveAqi)) {
+    return <AqiSkeleton />;
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6 space-y-10 font-sans">
       
@@ -425,45 +430,71 @@ export default function AqiPage() {
 
       {/* ── Top Header Controls & File Tabs Stack ── */}
       <div className="space-y-0 relative">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* File Tabs popping out from card top-left */}
           <div className="flex items-end select-none">
             <button
               type="button"
               onClick={() => setActiveTab('aqi')}
-              className={`flex items-center gap-2.5 px-8 py-3.5 rounded-t-2xl text-sm sm:text-base font-extrabold transition-all border-t border-x cursor-pointer ${
+              className={`flex items-center gap-1.5 sm:gap-2.5 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-t-xl sm:rounded-t-2xl text-xs sm:text-base font-extrabold transition-all border-t border-x cursor-pointer ${
                 activeTab === 'aqi'
                   ? 'bg-white border-neutral-200 text-neutral-900 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] dark:bg-zinc-900 dark:border-zinc-800 dark:text-white z-20'
-                  : 'bg-black text-white border-transparent hover:bg-neutral-800 dark:bg-zinc-800 dark:text-zinc-300'
+                  : 'bg-neutral-100/90 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 border-neutral-200/70 dark:bg-zinc-850 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-800'
               }`}
             >
-              <Wind className="w-4 h-4 text-red-600" />
+              <Wind className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeTab === 'aqi' ? 'text-red-600' : 'text-neutral-400 dark:text-zinc-500'}`} />
               <span>AQI</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveTab('weather')}
-              className={`flex items-center gap-2.5 px-8 py-3.5 rounded-t-2xl text-sm sm:text-base font-extrabold transition-all border-t border-x cursor-pointer ${
+              className={`flex items-center gap-1.5 sm:gap-2.5 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-t-xl sm:rounded-t-2xl text-xs sm:text-base font-extrabold transition-all border-t border-x cursor-pointer ${
                 activeTab === 'weather'
                   ? 'bg-white border-neutral-200 text-neutral-900 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] dark:bg-zinc-900 dark:border-zinc-800 dark:text-white z-20'
-                  : 'bg-black text-white border-transparent hover:bg-neutral-800 dark:bg-zinc-800 dark:text-zinc-300'
+                  : 'bg-neutral-100/90 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 border-neutral-200/70 dark:bg-zinc-850 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-800'
               }`}
             >
-              <Sun className="w-4 h-4 text-amber-400" />
+              <Sun className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeTab === 'weather' ? 'text-amber-500' : 'text-neutral-400 dark:text-zinc-500'}`} />
               <span>{language === 'gu' ? 'હવામાન' : language === 'hi' ? 'मौसम' : 'Weather'}</span>
             </button>
           </div>
 
           {/* Search Bar Top Right */}
-          <div className="relative w-48 sm:w-64 mb-2">
+          <div className="relative w-32 sm:w-64 mb-1 sm:mb-2 flex-shrink-0">
             <input
               type="text"
-              placeholder={language === 'gu' ? 'તમારું શહેર શોધો...' : language === 'hi' ? 'अपना शहर खोजें...' : 'Search city...'}
+              placeholder={language === 'gu' ? 'શહેર શોધો...' : language === 'hi' ? 'शहर खोजें...' : 'Search city...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white dark:bg-zinc-900 border border-neutral-300 dark:border-zinc-700 rounded-xl py-2 pl-9 pr-3 text-xs font-bold text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-red-600 shadow-xs"
+              className="w-full bg-white dark:bg-zinc-900 border border-neutral-300 dark:border-zinc-700 rounded-xl py-1.5 sm:py-2 pl-7 sm:pl-9 pr-2.5 sm:pr-3 text-xs font-bold text-neutral-800 dark:text-neutral-100 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-red-600 shadow-xs"
             />
-            <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <Search className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-400 absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+
+            {/* Quick dropdown for city suggestions when searching */}
+            {searchQuery.trim().length > 0 && (
+              <div className="absolute right-0 top-full mt-1 w-48 sm:w-64 max-h-56 overflow-y-auto bg-white dark:bg-zinc-900 border border-neutral-200 dark:border-zinc-700 rounded-xl shadow-xl z-50 py-1 divide-y divide-neutral-100 dark:divide-zinc-800">
+                {filteredCities.length > 0 ? (
+                  filteredCities.map((city) => (
+                    <button
+                      key={city.nameEn}
+                      type="button"
+                      onClick={() => {
+                        setSelectedCity(city);
+                        setSearchQuery('');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-red-50 hover:text-red-700 dark:hover:bg-zinc-800 flex items-center justify-between transition-colors"
+                    >
+                      <span>{getCityName(city)}</span>
+                      <span className="text-[10px] text-neutral-400 font-normal">{city.nameEn}</span>
+                    </button>
+                  ))
+                ) : (
+                  <div className="px-3 py-2 text-xs text-neutral-400">
+                    {language === 'gu' ? 'કોઈ પરિણામ નથી' : 'No city found'}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

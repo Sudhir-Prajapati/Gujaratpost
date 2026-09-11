@@ -409,7 +409,7 @@ export default function YouTubeLatest() {
             {/* Video Player Embed */}
             <iframe
               className="h-full w-full"
-              src={`https://www.youtube.com/embed/${selectedVideoId}?autoplay=1&rel=0&modestbranding=1`}
+              src={`https://www.youtube.com/embed/${selectedVideoId}?enablejsapi=1&autoplay=1&mute=0&controls=1&rel=0&playsinline=1&modestbranding=1`}
               title="YouTube video player"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               referrerPolicy="strict-origin-when-cross-origin"
