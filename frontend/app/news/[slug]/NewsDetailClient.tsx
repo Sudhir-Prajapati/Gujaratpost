@@ -7,6 +7,11 @@ import { useRouter } from 'next/navigation';
 import { useIsApk } from '@/lib/useIsApk';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
+import dynamic from 'next/dynamic';
+import ArticleShareAudioBar from './components/ArticleShareAudioBar';
+import RelatedStoriesSection from './components/RelatedStoriesSection';
+
+const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
 
 const ReadingProgressBar = memo(function ReadingProgressBar() {
   const [progress, setProgress] = useState(0);
@@ -1436,126 +1441,19 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               </figcaption>
             </figure>
 
-            <div className="share-row-custom select-none flex flex-wrap gap-3 items-center mb-6 p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm">
-              <span className="lbl font-black text-neutral-900 dark:text-neutral-100 mr-1 text-[14px] tracking-wide uppercase flex items-center gap-1.5 select-none">
-                <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-ping" />
-                {uiLabel(language, { en: 'Share:', gu: 'àª¶à«‡àª° àª•àª°à«‹:', hi: 'à¤¶à¥‡à¤¯à¤° à¤•à¤°à¥‡à¤‚:' })}
-              </span>
-
-              {/* WhatsApp */}
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`${title} ${articleUrl}`)}`}
-                target="_blank"
-                rel="noreferrer"
-                title={uiLabel(language, { en: 'WhatsApp', gu: 'વોટ્સએપ', hi: 'व्हाट्सएप' })}
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(37,211,102,0.35)] hover:border-[#25D366]"
-              >
-                <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-                  <path fill="#25D366" d="M12.01 0a12 12 0 0 0-10.4 18l-1.6 5.8 6-1.6a12 12 0 1 0 6-22.2z" />
-                  <path fill="#FFF" d="M16.9 14.1c-.3-.1-1.6-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.5 0-.2-.1-.4-.2-.6-.2-.4-.7-1.7-1-2.3-.3-.6-.6-.5-.8-.5H8c-.2 0-.6.1-.9.4C6.8 7.3 6 8.1 6 9.8c0 1.7 1.2 3.4 1.4 3.6.2.2 2.4 3.7 5.9 5.2.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.5-.3z" />
-                </svg>
-              </a>
-
-              {/* Dailyhunt */}
-              <a
-                href="https://profile.dailyhunt.in/gujaratpost"
-                target="_blank"
-                rel="noreferrer"
-                title={uiLabel(language, { en: 'Dailyhunt', gu: 'ડેઈલીહન્ટ', hi: 'डेलीहंट' })}
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(251,188,5,0.35)] hover:border-[#FBBC05]"
-              >
-                <svg viewBox="0 0 48 48" className="w-[21px] h-[21px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-                  <path fill="#093492" d="M20.99 12.49 C21.62 14.48 21.86 21.86 21.86 21.86 C21.86 21.86 14.15 21.83 12.51 21.18 C8.59 19.61 5.5 17.07 5.5 13.08 C5.5 9.13 8.64 5.64 12.94 5.64 C17.17 5.64 19.77 8.69 20.99 12.49 Z" />
-                  <path fill="#FBBC05" d="M35.51 20.99 C33.52 21.62 26.14 21.86 26.14 21.86 C26.14 21.86 26.17 14.15 26.82 12.51 C28.39 8.59 30.93 5.5 34.92 5.5 C38.87 5.5 42.36 8.64 42.36 12.94 C42.36 17.17 39.31 19.77 35.51 20.99 Z" />
-                  <path fill="#ED1C24" d="M27.01 35.51 C26.38 33.52 26.14 26.14 26.14 26.14 C26.14 26.14 33.85 26.17 35.49 26.82 C39.41 28.39 42.5 30.93 42.5 34.92 C42.5 38.87 39.36 42.36 35.06 42.36 C30.83 42.36 28.23 39.31 27.01 35.51 Z" />
-                  <path fill="#47B609" d="M12.49 27.01 C14.48 26.38 21.86 26.14 21.86 26.14 C21.86 26.14 21.83 33.85 21.18 35.49 C19.61 39.41 17.07 42.5 13.08 42.5 C9.13 42.5 5.64 39.36 5.64 35.06 C5.64 30.83 8.69 28.23 12.49 27.01 Z" />
-                </svg>
-              </a>
-
-              {/* Google News */}
-              <a
-                href="https://news.google.com/search?q=Gujarat+Post"
-                target="_blank"
-                rel="noreferrer"
-                title={uiLabel(language, { en: 'Google News', gu: 'àª—à«‚àª—àª² àª¨à«àª¯à«‚àª', hi: 'à¤—à¥‚à¤—à¤² à¤¨à¥à¤¯à¥‚à¤œà¤¼' })}
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(66,133,244,0.35)] hover:border-[#4285F4]"
-              >
-                <svg viewBox="0 0 24 24" className="w-[19px] h-[19px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-                  <rect x="2" y="2" width="8" height="20" rx="1.5" fill="#4285F4" />
-                  <rect x="12" y="3" width="10" height="3.5" rx="1" fill="#EA4335" />
-                  <rect x="12" y="9" width="10" height="3.5" rx="1" fill="#FBBC05" />
-                  <rect x="12" y="15" width="10" height="6" rx="1" fill="#34A853" />
-                </svg>
-              </a>
-
-              {/* Print */}
-              <button
-                type="button"
-                onClick={() => window.print()}
-                title={uiLabel(language, { en: 'Print', gu: 'àªªà« àª°àª¿àª¨à« àªŸ', hi: 'à¤ªà¥ à¤°à¤¿à¤‚à¤Ÿ' })}
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400"
-              >
-                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current stroke-2 shrink-0 transition-transform duration-300 group-hover:rotate-[-12deg]" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
-                  <rect x="6" y="14" width="12" height="8" />
-                </svg>
-              </button>
-
-              {/* Copy Link */}
-              <button
-                type="button"
-                onClick={copyUrl}
-                title={copied ? uiLabel(language, { en: 'Copied', gu: 'àª•à«‰àªªàª¿ àª¥àªˆ', hi: 'à¤•à¥‰à¤ªà¥€ à¤¹à¥ à¤†' }) : uiLabel(language, { en: 'Copy Link', gu: 'àª²àª¿àª‚àª• àª•à«‰àªªàª¿ àª•àª°à«‹', hi: 'à¤²à¤¿à¤‚à¤• à¤•à¥‰à¤ªà¥€ à¤•àª°à¥‡à¤‚' })}
-                className={`group relative flex items-center justify-center w-11 h-11 rounded-full border transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm ${copied
-                  ? 'border-emerald-500 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 shadow-[0_8px_20px_rgba(16,185,129,0.35)] scale-110'
-                  : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-[#B3121B] hover:text-[#B3121B] hover:shadow-[0_8px_20px_rgba(179,18,27,0.35)]'
-                  }`}
-              >
-                {copied ? (
-                  <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current stroke-[2.5] shrink-0 animate-bounce">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : (
-                  <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] fill-none stroke-current stroke-2 shrink-0 transition-transform duration-300 group-hover:rotate-[15deg]" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                  </svg>
-                )}
-              </button>
-
-              {/* Save / Bookmark (Hidden in APK view) */}
-              {!isApk && (
-              <button
-                type="button"
-                onClick={handleToggleSave}
-                title={saved ? uiLabel(language, { en: 'Saved', gu: 'àª¸àª¾àªšàªµà«‡àª²à«àª‚', hi: 'à¤¸à¤¹à¥‡à¤œà¤¾ à¤—à¤¯à¤¾' }) : uiLabel(language, { en: 'Save', gu: 'àª¸àª¾àªšàªµà«‹', hi: 'à¤¸à¤¹à¥‡à¤œà¥‡à¤‚' })}
-                className={`group relative flex items-center justify-center w-11 h-11 rounded-full border transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm ${saved
-                  ? 'border-[#B3121B] bg-red-50 text-[#B3121B] dark:bg-red-950/40 shadow-[0_8px_20px_rgba(179,18,27,0.35)]'
-                  : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-[#B3121B] hover:text-[#B3121B] hover:shadow-[0_8px_20px_rgba(179,18,27,0.35)]'
-                  }`}
-              >
-                <svg viewBox="0 0 24 24" className={`w-[18px] h-[18px] shrink-0 ${saved ? 'fill-current' : 'fill-none'} stroke-current stroke-2 transition-transform duration-300 group-hover:scale-110`} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-              </button>
-              )}
-
-              {/* Audio / Speaker */}
-              <button
-                type="button"
-                onClick={toggleAudio}
-                title={speaking ? uiLabel(language, { en: 'Stop', gu: 'àª¬àª‚àª§ àª•àª°à«‹', hi: 'à¤°à¥‹à¤•à¥‡à¤‚' }) : uiLabel(language, { en: 'Audio', gu: 'àª“àª¡àª¿àª¯à«‹', hi: 'à¤‘à¤¡à¤¿à¤¯à¥‹' })}
-                className={`group relative flex items-center justify-center w-11 h-11 rounded-full border transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm ${speaking
-                  ? 'border-[#B3121B] bg-red-50 text-[#B3121B] dark:bg-red-950/40 shadow-[0_8px_20px_rgba(179,18,27,0.35)] animate-pulse'
-                  : 'border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 hover:border-[#B3121B] hover:text-[#B3121B] hover:shadow-[0_8px_20px_rgba(179,18,27,0.35)]'
-                  }`}
-              >
-                <svg viewBox="0 0 24 24" className={`w-[18px] h-[18px] fill-none stroke-current stroke-2 shrink-0 transition-transform duration-300 ${speaking ? 'animate-bounce' : 'group-hover:rotate-[12deg]'}`} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M11 5L6 9H2v6h4l5 4V5z" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                </svg>
-              </button>
-            </div>
+            <ArticleShareAudioBar
+              title={title}
+              articleUrl={articleUrl}
+              language={language}
+              copied={copied}
+              copyUrl={copyUrl}
+              saved={saved}
+              handleToggleSave={handleToggleSave}
+              speaking={speaking}
+              toggleAudio={toggleAudio}
+              isApk={isApk}
+              uiLabel={uiLabel}
+            />
 
             {/* Article Main Content Body â€” with "àªµàª§à« àªµàª¾àª‚àªšà«‹" (Read More) expand button */}
             {(() => {
@@ -1733,408 +1631,39 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           </aside>
         </div>
 
-        <section className="art-related select-none w-full mt-8">
-          {/* Section Header */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex items-center gap-1.5">
-              <span className="block w-[4px] h-6 rounded-full bg-[#B3121B]"></span>
-            </div>
-            <h2 className="text-xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
-              {uiLabel(language, { en: 'Related Stories', gu: 'àª¸àª‚àª¬àª‚àª§àª¿àª¤ àª¸àª®àª¾àªšàª¾àª°', hi: 'à¤¸à¤‚à¤¬à¤‚à¤§à¤¿à¤¤ à¤–à¤¬à¤°à¥‡à¤‚' })}
-            </h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-neutral-200 dark:from-neutral-700 to-transparent"></div>
-          </div>
+        <RelatedStoriesSection
+          article={article}
+          related={related}
+          language={language}
+          savedIds={savedIds}
+          relatedLimit={relatedLimit}
+          setRelatedLimit={setRelatedLimit}
+          getCardThumbnail={getCardThumbnail}
+          DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+          uiLabel={uiLabel}
+        />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {related.slice(0, relatedLimit).map((item, index) => {
-              const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
-              const isSaved = savedIds.includes(item.id);
-              return (
-                <div key={item.id} className="zoomhost relative group flex flex-col">
-                  <Link href={`/news/${item.slug}`} className="s-standard flex flex-col group">
-                    <div className="imgwrap relative aspect-[3/2] overflow-hidden rounded-md mb-2 bg-neutral-100 dark:bg-neutral-800">
-                      <Image
-                        src={getCardThumbnail(item, index)}
-                        alt={item.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover transition duration-300 group-hover:scale-105"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-                        }}
-                      />
-                      {isSaved && (
-                        <span className="absolute top-2 right-2 z-10 bg-white/90 dark:bg-black/90 p-1.5 rounded-full text-xs shadow-md">
-                          🔖
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span className="kick mb-1 mt-0.5">{itemCategory}</span>
-                      <h3 className="line-clamp-3 leading-snug text-foreground hover:text-accent transition-colors">
-                        <AutoArticleTitle article={item} language={language} />
-                      </h3>
-                      <div className="meta select-none">
-                        <span suppressHydrationWarning>{formatDate(item.publishedAt, language)}</span>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="flex justify-center mt-8">
-            {relatedLimit < related.length ? (
-              <button
-                type="button"
-                onClick={() => setRelatedLimit((prev) => prev + 4)}
-                className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-sm hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
-              >
-                {uiLabel(language, { en: 'View More', gu: 'àªµàª§à« àªœà«àª“', hi: 'à¤…à¤§à¤¿à¤• à¤¦à¥‡à¤–à¥‡à¤‚' })}
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-y-0.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-            ) : (
-              <Link
-                href={`/category/${(article.category || 'all').toLowerCase().replace(/\s+/g, '-')}`}
-                className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-sm hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
-              >
-                {uiLabel(language, { en: 'View All News', gu: 'àª¬àª§àª¾ àª¸àª®àª¾àªšàª¾àª° àªœà«àª“', hi: 'à¤¸à¤­à¥€ à¤¸à¤®à¤¾à¤šà¤¾à¤° à¤¦à¥‡à¤–à¥‡à¤‚' })}
-                <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-x-0.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="9 18 15 12 9 6" />
-                </svg>
-              </Link>
-            )}
-          </div>
-        </section>
-
-        <div className="article-grid mt-8 border-t border-neutral-200 dark:border-neutral-800 !pt-8" suppressHydrationWarning>
-          <article className="article-stream-container select-none w-full" suppressHydrationWarning>
-            <div className="space-y-5" suppressHydrationWarning>
-              {mounted && (() => {
-                // Global set to track used Read Also article IDs across all stream items
-                const usedReadAlsoIds = new Set<string>();
-
-                return streamList.map((streamArticle) => {
-                  const streamCategory = normalizeDisplayText(getCategoryLabel(streamArticle, language));
-                  const streamBody = getArticleContent(streamArticle, language);
-                  const streamParagraphs = parseArticleBodyBlocks(streamBody);
-const streamCity = uiLabel(language, { en: 'Ahmedabad', gu: 'àª…àª®àª¦àª¾àªµàª¾àª¦', hi: 'à¤…à¤¹à¤®à¤¦à¤¾à¤¬à¤¾à¤¦' });
-
-                  const mainId = String(article.id);
-                  const streamArtId = String(streamArticle.id);
-
-                  // Calculate compulsory 4 Read Also articles ensuring 4 STRICTLY DIFFERENT categories
-                  const rawPool = [...mostReadArticles, ...trending, ...related].filter(
-                    (a, idx, self) => String(a.id) !== mainId && String(a.id) !== streamArtId && self.findIndex(t => String(t.id) === String(a.id)) === idx
-                  );
-
-                  const streamCatSlug = (streamArticle.category || '').toLowerCase().replace(/\s+/g, '-');
-                  const streamCatName = (streamArticle.category || '').toLowerCase().trim() || 'general';
-
-                  // Prefer unused articles first
-                  let availablePool = rawPool.filter(cand => !usedReadAlsoIds.has(String(cand.id)));
-                  if (availablePool.length < 4) {
-                    availablePool = rawPool.filter(cand => String(cand.id) !== streamArtId);
-                  }
-
-                  // Group candidates by unique category name
-                  const byCategory = new Map<string, Article[]>();
-                  for (const cand of availablePool) {
-                    const cSlug = (cand.category || '').toLowerCase().replace(/\s+/g, '-');
-                    const cName = (cand.category || '').toLowerCase().trim() || 'general';
-
-                    if ((cSlug === streamCatSlug || cName === streamCatName) && availablePool.length >= 8) {
-                      continue;
-                    }
-                    if (!byCategory.has(cName)) {
-                      byCategory.set(cName, []);
-                    }
-                    byCategory.get(cName)!.push(cand);
-                  }
-
-                  if (byCategory.size < 4) {
-                    for (const cand of availablePool) {
-                      const cName = (cand.category || '').toLowerCase().trim() || 'general';
-                      if (!byCategory.has(cName)) {
-                        byCategory.set(cName, []);
-                      }
-                      byCategory.get(cName)!.push(cand);
-                    }
-                  }
-
-                  const categoryTopArticles: Article[] = [];
-                  for (const [, catArts] of byCategory.entries()) {
-                    const sortedCatArts = [...catArts].sort((a, b) => {
-                      const isMostReadA = mostReadArticles.some(m => m.id === a.id) ? 20 : 0;
-                      const isMostReadB = mostReadArticles.some(m => m.id === b.id) ? 20 : 0;
-                      const scoreA = isMostReadA + (a.isTrending ? 10 : 0) + (a.isFeatured ? 5 : 0) + Math.min((a.views || 0) / 100, 5);
-                      const scoreB = isMostReadB + (b.isTrending ? 10 : 0) + (b.isFeatured ? 5 : 0) + Math.min((b.views || 0) / 100, 5);
-                      return scoreB - scoreA;
-                    });
-                    categoryTopArticles.push(sortedCatArts[0]);
-                  }
-
-                  categoryTopArticles.sort((a, b) => {
-                    const isMostReadA = mostReadArticles.some(m => m.id === a.id) ? 20 : 0;
-                    const isMostReadB = mostReadArticles.some(m => m.id === b.id) ? 20 : 0;
-                    const scoreA = isMostReadA + (a.isTrending ? 10 : 0) + (a.isFeatured ? 5 : 0) + Math.min((a.views || 0) / 100, 5);
-                    const scoreB = isMostReadB + (b.isTrending ? 10 : 0) + (b.isFeatured ? 5 : 0) + Math.min((b.views || 0) / 100, 5);
-                    return scoreB - scoreA;
-                  });
-
-                  const readAlsoArticles = categoryTopArticles.slice(0, 4);
-
-                  if (readAlsoArticles.length < 4) {
-                    for (const cand of availablePool) {
-                      if (readAlsoArticles.length >= 4) break;
-                      if (!readAlsoArticles.some(r => r.id === cand.id)) {
-                        readAlsoArticles.push(cand);
-                      }
-                    }
-                  }
-
-                  readAlsoArticles.forEach(a => usedReadAlsoIds.add(String(a.id)));
-
-                  return (
-                    <div key={streamArticle.id} className="article-stream-item border-b border-neutral-200 dark:border-neutral-800 pb-5 last:border-b-0 text-left flex flex-col items-start w-full">
-                      <nav className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium mb-3 w-full text-left justify-start">
-                        <Link href="/" className="hover:text-[var(--red)] transition-colors">
-{uiLabel(language, { en: 'Home', gu: 'àª¹à«‹àª®', hi: 'à¤¹à¥‹à¤®' })}
-                        </Link>
-                        <span>/</span>
-                        <Link href={`/category/${streamArticle.category.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-[var(--red)] transition-colors">
-                          {streamCategory}
-                        </Link>
-                        <span>/</span>
-                        <span>{streamCity}</span>
-                        <span className="mx-0.5">:</span>
-                        <span className="text-red-700 dark:text-red-400 font-bold">
-                          <AutoArticleTitle article={streamArticle} language={language} />
-                        </span>
-                      </nav>
-
-                      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground tracking-tight mb-4 text-left w-full">
-                        <AutoArticleTitle article={streamArticle} language={language} />
-                      </h2>
-
-                      <div className="relative aspect-[16/9] w-full overflow-hidden bg-black rounded-lg shadow-sm mb-6 mt-4">
-                        <Image
-                          src={streamArticle.image}
-                          alt={getArticleTitle(streamArticle, language)}
-                          fill
-                          sizes="(max-width: 1024px) 100vw, 760px"
-                          className="object-cover"
-                        />
-                      </div>
-
-                      <div className="article-body space-y-4 text-[16px] leading-relaxed text-foreground mb-6 text-left w-full">
-                        {streamParagraphs.map((p, pIdx) => {
-                          const trimmed = p.trim();
-                          if (!trimmed) return null;
-
-                          if (trimmed.startsWith('> ') || trimmed.startsWith('>"') || trimmed.startsWith('> "')) {
-                            const lines = trimmed.split('\n');
-                            const quoteText = lines
-                              .filter((l) => l.startsWith('>') && !l.includes('> â€”') && !l.includes('> -'))
-                              .map((l) => l.replace(/^>\s*"?/, '').replace(/"?$/, ''))
-                              .join(' ');
-                            const citeLine = lines.find((l) => l.includes('> â€”') || l.includes('> -'));
-                            const citeText = citeLine ? citeLine.replace(/^>\s*â€”\s*/, '').replace(/^>\s*-\s*/, '').trim() : '';
-
-                            return (
-                              <blockquote key={pIdx} className="my-6 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 p-4 dark:bg-neutral-900/60 shadow-sm">
-                                <p className="text-base font-bold text-neutral-900 dark:text-white leading-relaxed">
-                                  &quot;<TranslatedInlineText text={quoteText || trimmed.replace(/^>\s*/, '')} language={language} />&quot;
-                                </p>
-                                {citeText && (
-                                  <cite className="block mt-2 text-xs font-bold text-neutral-600 dark:text-neutral-400 not-italic">
-                                    — {citeText}
-                                  </cite>
-                                )}
-                              </blockquote>
-                            );
-                          }
-
-                          const cleanedParagraph = sanitizeParagraphHtml(trimmed, language);
-                          if (!cleanedParagraph) return null;
-
-                          return (
-                            <TranslatedParagraph
-                              key={pIdx}
-                              rawHtml={cleanedParagraph}
-                              language={language}
-                            />
-                          );
-                        })}
-                      </div>
-
-                      {readAlsoArticles.length > 0 && (
-                        <div className="w-full mt-4 mb-5">
-                          {/* Section header */}
-                          <div className="flex items-center gap-3 mb-3">
-                            <div className="flex items-center gap-2">
-                              <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
-                            </div>
-                            <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
-{uiLabel(language, { en: 'Read Also', gu: 'àª† àªªàª£ àªµàª¾àª‚àªšà«‹', hi: 'à¤¯à¤¹ à¤­à¥€ à¤ªà¤¢à¤¼à¥‡à¤‚' })}
-                            </h4>
-                            <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {readAlsoArticles.map((raArt, index) => {
-                              const raCat = normalizeDisplayText(getCategoryLabel(raArt, language) || raArt.category || '');
-                              return (
-                                <Link
-                                  key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
-                                  href={`/news/${raArt.slug}`}
-                                  className="group flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#B3121B]/30 hover:shadow-[0_4px_20px_rgba(179,18,27,0.1)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.15)] hover:-translate-y-0.5 transition-all duration-300 text-left"
-                                >
-                                  {/* Thumbnail Image */}
-                                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
-                                    <Image
-                                      src={getCardThumbnail(raArt, index)}
-                                      alt={getArticleTitle(raArt, language)}
-                                      fill
-                                      sizes="90px"
-                                      className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                      onError={(e) => {
-                                        (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-                                      }}
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                                  </div>
-                                  {/* Content */}
-                                  <div className="min-w-0 flex-1 flex flex-col gap-1">
-                                    <span className="block text-[10.5px] font-black uppercase tracking-wider text-[#B3121B] opacity-85">{raCat}</span>
-                                    <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
-                                      <AutoArticleTitle article={raArt} language={language} />
-                                    </p>
-                                  </div>
-                                  {/* Arrow indicator */}
-<span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] transition-colors duration-200 text-sm">→</span>
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-
-                      <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
-                        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-{uiLabel(language, { en: 'Topics:', gu: 'àªŸà«‹àªªàª¿àª•à«àª¸:', hi: 'à¤µà¤¿à¤·à¤¯:' })}
-                        </span>
-                        {getStreamTags(streamArticle).map((tag, tIdx) => (
-                          <Link
-                            key={tIdx}
-                            href={getTopicHref(tag)}
-                            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-                          >
-                            {normalizeDisplayText(tag)}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                });
-              })()}
-            </div>
-
-            {/* Read Also Section for Primary Article */}
-            {related.length > 0 && (
-              <div className="w-full mt-6 mb-6">
-                {/* Section header */}
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
-                    <span className="block w-[3px] h-3.5 rounded-full bg-[#B3121B]/40"></span>
-                  </div>
-                  <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
-{uiLabel(language, { en: 'Read Also', gu: 'àª† àªªàª£ àªµàª¾àª‚àªšà«‹', hi: 'à¤¯à¤¹ à¤­à¥€ à¤ªà¤¢à¤¼à¥‡à¤‚' })}
-                  </h4>
-                  <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {related.slice(0, 4).map((raArt, index) => {
-                    const raCat = normalizeDisplayText(getCategoryLabel(raArt, language));
-                    return (
-                      <Link
-                        key={`bottom-ra-${raArt.id}-${index}`}
-                        href={`/news/${raArt.slug}`}
-                        className="group flex gap-3 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-[#B3121B]/30 hover:shadow-[0_4px_20px_rgba(179,18,27,0.1)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.15)] hover:-translate-y-0.5 transition-all duration-300 items-start text-left"
-                      >
-                        <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
-                          <Image
-                            src={getCardThumbnail(raArt, index)}
-                            alt={getArticleTitle(raArt, language)}
-                            fill
-                            sizes="90px"
-                            className="object-cover transition-transform duration-500 group-hover:scale-110"
-                            onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/90x70/e2e8f0/94a3b8?text=GP'; }}
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </div>
-                        <div className="min-w-0 flex-1 flex flex-col gap-1">
-                          <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#B3121B] opacity-80">{raCat}</span>
-                          <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
-                            <AutoArticleTitle article={raArt} language={language} />
-                          </p>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Topics Tags for Primary Article */}
-            <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
-              <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-{uiLabel(language, { en: 'Topics:', gu: 'àªŸà«‹àªªàª¿àª•à«àª¸:', hi: 'à¤µà¤¿à¤·à¤¯:' })}
-              </span>
-              {(language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)).map((tag, tIdx) => (
-                <Link
-                  key={tIdx}
-                  href={getTopicHref(tag)}
-                  className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-                >
-                  {normalizeDisplayText(tag)}
-                </Link>
-              ))}
-            </div>
-          </article>
-
-          <aside className="select-none h-fit sticky top-[100px]" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
-            {/* Heading and recommended stories stick together below header */}
-            <div className="wtitle mb-3">
-              <span className="d"></span>
-<span>{uiLabel(language, { en: 'Recommended Stories', gu: 'àª¤àª®àª¾àª°àª¾ àª®àª¾àªŸà«‡ àª­àª²àª¾àª®àª£', hi: 'à¤†à¤ªà¤•à¥‡ à¤²à¤¿à¤ à¤…à¤¨à¥à¤¶à¤‚à¤¸à¤¿à¤¤' })}</span>
-            </div>
-            <div className="space-y-0">
-              {sidebarRecommendedPool.slice(0, 4).map((item, index) => {
-                const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
-                return (
-                  <Link key={item.id} href={`/news/${item.slug}`} className="s-compact hover:opacity-85 transition-opacity">
-                    <div>
-                      <span className="kick">{itemCategory}</span>
-                      <h3><AutoArticleTitle article={item} language={language} /></h3>
-                      <div className="meta">
-                        <span suppressHydrationWarning>{formatDate(item.publishedAt)}</span>
-                      </div>
-                    </div>
-                    <div className="imgwrap">
-                      <Image src={getCardThumbnail(item, index)} alt={item.title} fill sizes="92px" className="object-cover" />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </aside>
-        </div>
-      </div>
+        <ArticleInfiniteStream
+          mounted={mounted}
+          streamList={streamList}
+          article={article}
+          language={language}
+          mostReadArticles={mostReadArticles}
+          trending={trending}
+          related={related}
+          savedIds={savedIds}
+          getCardThumbnail={getCardThumbnail}
+          DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+          uiLabel={uiLabel}
+          getArticleContent={getArticleContent}
+          parseArticleBodyBlocks={parseArticleBodyBlocks}
+          sanitizeParagraphHtml={sanitizeParagraphHtml}
+          getStreamTags={getStreamTags}
+          getTopicHref={getTopicHref}
+          TranslatedInlineText={TranslatedInlineText}
+          TranslatedParagraph={TranslatedParagraph}
+          sidebarRecommendedPool={sidebarRecommendedPool}
+        /></div>
       <div style={{ height: '50px' }} />
       {/* APK Swipe Floating Notification / Indicator */}
       {isApk && (

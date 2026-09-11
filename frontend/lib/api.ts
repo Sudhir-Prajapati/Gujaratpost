@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { Article, Video, Photo } from '@/types';
 import { PHOTOS } from '@/data';
 
@@ -82,11 +83,23 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
     const timeoutDuration = typeof window === 'undefined' ? 12000 : 25000;
     const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 
+    const isServer = typeof window === 'undefined';
+    const revalidateSeconds = cacheTtlMs > 0 ? Math.max(10, Math.round(cacheTtlMs / 1000)) : 0;
+
+    const fetchOptions: RequestInit = {
+      signal: controller.signal,
+    };
+
+    if (isServer && revalidateSeconds > 0) {
+      // Safe Next.js Data Cache revalidation for public read requests during SSR
+      (fetchOptions as any).next = { revalidate: revalidateSeconds };
+    } else {
+      // Explicitly bypass cache for dynamic/zero-TTL requests
+      fetchOptions.cache = 'no-store';
+    }
+
     try {
-      const res = await fetch(url, {
-        cache: 'no-store',
-        signal: controller.signal,
-      });
+      const res = await fetch(url, fetchOptions);
       clearTimeout(timeoutId);
 
       if (!res.ok) {
@@ -186,10 +199,10 @@ export async function getPublicArticles(options: {
 /**
  * Fetch single article details by slug or ID from Express Backend API
  */
-export async function getPublicArticleBySlug(slug: string): Promise<Article | null> {
+export const getPublicArticleBySlug = cache(async (slug: string): Promise<Article | null> => {
   try {
     const url = `${API_BASE_URL}/articles/${slug}`;
-    const json = await fetchCachedJson<any>(url);
+    const json = await fetchCachedJson<any>(url, 120 * 1000);
 
     if (json?.success && json.data?.article) {
       return json.data.article;
@@ -266,7 +279,7 @@ export async function getPublicArticleBySlug(slug: string): Promise<Article | nu
   if (match) return match;
 
   return null;
-}
+});
 
 /**
  * Fetch list of categories from Express Backend API
@@ -701,8 +714,20 @@ export async function getPublicAds(): Promise<any[]> {
 
 export async function getPublicAdBySection(section: string): Promise<any | null> {
   try {
+    const formatted = (section || '').toUpperCase().trim();
+
+    // 1. Check/fetch the single consolidated batch endpoint GET /api/public/ads
+    // Because fetchCachedJson automatically merges in-flight requests,
+    // all AdSectionBanner instances mounting concurrently share EXACTLY 1 network request!
+    const allAds = await getPublicAds();
+    if (Array.isArray(allAds) && allAds.length > 0) {
+      const match = allAds.find((ad: any) => (ad?.section || '').toUpperCase().trim() === formatted);
+      if (match) return match;
+    }
+
+    // 2. Safe fallback to individual section query if not found in batch
     const url = `${API_BASE_URL}/ads/${encodeURIComponent(section)}`;
-    const json = await fetchCachedJson<any>(url, 30 * 1000); // 30 seconds cache — refresh quickly when admin adds/changes ads
+    const json = await fetchCachedJson<any>(url, 30 * 1000);
     if (json && json.success && json.data?.ad) {
       return json.data.ad;
     }

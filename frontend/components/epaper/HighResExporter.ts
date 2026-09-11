@@ -1,6 +1,5 @@
 'use client';
 
-import { jsPDF } from 'jspdf';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
 
 /**
@@ -99,6 +98,7 @@ export async function buildPdfFromImages(
   filename: string = 'GujaratPost_EPaper.pdf'
 ): Promise<{ pdfBlob: Blob; pdfDataUri: string }> {
   // Broadsheet dimensions matching newspaper template (1224 x 1815 pt)
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'pt',

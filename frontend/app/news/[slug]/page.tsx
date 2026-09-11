@@ -4,17 +4,10 @@ import { SITE_URL } from "@/data";
 import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import NewsDetailClient from "./NewsDetailClient";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 120;
 
 export async function generateStaticParams() {
-  try {
-    const res = await getPublicArticles({ limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
-    const articles = res?.articles || [];
-    return articles.map((article) => ({ slug: article.slug }));
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {

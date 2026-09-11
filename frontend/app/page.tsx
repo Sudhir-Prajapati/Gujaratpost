@@ -1,8 +1,7 @@
 import HeroSection from "@/components/sections/HeroSection";
 import { getPublicArticles, getHeroSettings, getPublicCategories, getPublicVideos } from "@/lib/api";
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function HomePage() {
   const [articlesRes, heroSettings, categories, videosRes] = await Promise.all([

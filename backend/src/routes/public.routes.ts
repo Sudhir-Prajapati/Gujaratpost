@@ -19,24 +19,57 @@ import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../service
 const router = Router();
 
 const publicCache = new Map<string, { timestamp: number; payload: any }>();
+const MAX_PUBLIC_CACHE_ENTRIES = 500;
+
+// Bounded Search Cache for public article search (TTL: 60s, max 200 entries)
+const searchCache = new Map<string, { timestamp: number; payload: any }>();
+const MAX_SEARCH_CACHE_ENTRIES = 200;
+const SEARCH_CACHE_TTL_MS = 60 * 1000;
 
 export function clearPublicRoutesCache() {
   publicCache.clear();
+  searchCache.clear();
+}
+
+function getNormalizedSearchCacheKey(req: any): string {
+  const q = ((req.query.query as string) || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const page = String(req.query.page || '1').trim();
+  const limit = String(req.query.limit || '30').trim();
+  const sort = String(req.query.sort || 'latest').trim().toLowerCase();
+  const categorySlug = String(req.query.categorySlug || '').trim().toLowerCase();
+  const language = String(req.query.language || '').trim().toLowerCase();
+  const location = String(req.query.location || '').trim().toLowerCase();
+  const isTrending = String(req.query.isTrending || '').trim();
+  const isBreaking = String(req.query.isBreaking || '').trim();
+  const isFeatured = String(req.query.isFeatured || '').trim();
+
+  return `search:${q}|p:${page}|l:${limit}|s:${sort}|c:${categorySlug}|lng:${language}|loc:${location}|tr:${isTrending}|br:${isBreaking}|ft:${isFeatured}`;
 }
 
 function cacheResponse(ttlSeconds: number) {
   return (req: any, res: any, next: any) => {
     if (req.method !== 'GET') return next();
-    const key = req.originalUrl || req.url;
-    const cached = publicCache.get(key);
+
+    const isSearchQuery = Boolean(req.query && req.query.query);
+    const targetCache = isSearchQuery ? searchCache : publicCache;
+    const ttlMs = isSearchQuery ? SEARCH_CACHE_TTL_MS : ttlSeconds * 1000;
+    const maxEntries = isSearchQuery ? MAX_SEARCH_CACHE_ENTRIES : MAX_PUBLIC_CACHE_ENTRIES;
+    const key = isSearchQuery ? getNormalizedSearchCacheKey(req) : (req.originalUrl || req.url);
+
+    const cached = targetCache.get(key);
     const now = Date.now();
-    if (cached && now - cached.timestamp < ttlSeconds * 1000) {
+    if (cached && now - cached.timestamp < ttlMs) {
       return res.status(200).json(cached.payload);
     }
+
     const originalJson = res.json.bind(res);
     res.json = (body: any) => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
-        publicCache.set(key, { timestamp: Date.now(), payload: body });
+        if (targetCache.size >= maxEntries) {
+          const oldestKey = targetCache.keys().next().value;
+          if (oldestKey) targetCache.delete(oldestKey);
+        }
+        targetCache.set(key, { timestamp: Date.now(), payload: body });
       }
       return originalJson(body);
     };

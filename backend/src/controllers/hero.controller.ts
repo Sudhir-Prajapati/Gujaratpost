@@ -129,56 +129,12 @@ export class HeroController {
           heroSetting = null;
         }
 
+        // 1. Parse all IDs from heroSetting
         let slot1Id = heroSetting?.slot1Id;
         let slot2Id = heroSetting?.slot2Id;
         let slot3Id = heroSetting?.slot3Id;
 
-        // Fetch backup featured or published posts in case any slot is missing
-        let fallbackPosts: any[] = [];
-        try {
-          fallbackPosts = await withDbRetry(() =>
-            prisma.post.findMany({
-              where: { status: 'PUBLISHED' },
-              orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-              take: 10,
-              select: heroPostSelect,
-            })
-          );
-        } catch (dbErr: any) {
-          console.warn('Warning: fallbackPosts query error:', dbErr?.message);
-        }
-
-        const fallbackFormatted = fallbackPosts.map(formatPost);
-
-        if (!slot1Id && fallbackPosts[0]) slot1Id = fallbackPosts[0].id;
-        if (!slot2Id && fallbackPosts[1]) slot2Id = fallbackPosts[1].id;
-        if (!slot3Id && fallbackPosts[2]) slot3Id = fallbackPosts[2].id;
-
-        const targetIds = [slot1Id, slot2Id, slot3Id].filter((id): id is string => Boolean(id));
-
-        const postsMap = new Map<string, any>();
-        if (targetIds.length > 0) {
-          try {
-            const posts = await withDbRetry(() =>
-              prisma.post.findMany({
-                where: { id: { in: targetIds }, status: 'PUBLISHED' },
-                select: heroPostSelect,
-              })
-            );
-            posts.forEach((p) => postsMap.set(p.id, formatPost(p)));
-          } catch (postsErr: any) {
-            console.warn('Warning: targetPosts query error:', postsErr?.message);
-          }
-        }
-
-        const s1 = (slot1Id ? postsMap.get(slot1Id) : null) || fallbackFormatted[0] || null;
-        const s2 = (slot2Id ? postsMap.get(slot2Id) : null) || fallbackFormatted[1] || null;
-        const s3 = (slot3Id ? postsMap.get(slot3Id) : null) || fallbackFormatted[2] || null;
-
-        const slots = [s1, s2, s3];
-
         const DEFAULT_TOPICS = ['ચૂંટણી 2026', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડાયમંડ ઉદ્યોગ', 'ટ્રાફિક'];
-
         let parsedTopics = DEFAULT_TOPICS;
         if (heroSetting?.trendingTopics) {
           try {
@@ -197,41 +153,6 @@ export class HeroController {
           }
         }
 
-        let trendingNewsArticles: any[] = [];
-        if (parsedTrendingNewsIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: parsedTrendingNewsIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
-          const map = new Map<string, any>();
-          posts.forEach((p) => map.set(p.id, formatPost(p)));
-          trendingNewsArticles = parsedTrendingNewsIds
-            .map((id) => map.get(id))
-            .filter(Boolean);
-        }
-
-        if (trendingNewsArticles.length === 0) {
-          const defaultTrendingPosts = await prisma.post.findMany({
-            where: { status: 'PUBLISHED' },
-            orderBy: [{ isTrending: 'desc' }, { createdAt: 'desc' }],
-            take: 10,
-            select: heroPostSelect,
-          });
-          trendingNewsArticles = defaultTrendingPosts.map(formatPost);
-          parsedTrendingNewsIds = trendingNewsArticles.map((a: any) => a.id);
-        }
-
-        // Ensure all active published isTrending posts are merged at the top of trendingNewsArticles
-        const allTrendingPosts = await prisma.post.findMany({
-          where: { isTrending: true, status: 'PUBLISHED' },
-          orderBy: [{ createdAt: 'desc' }],
-          take: 10,
-          select: heroPostSelect,
-        });
-        const formattedTrending = allTrendingPosts.map(formatPost);
-        const combinedTrending = [...formattedTrending, ...trendingNewsArticles];
-        trendingNewsArticles = combinedTrending.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
-
         let parsedPopularNewsIds: string[] = [];
         if (heroSetting?.popularNewsIds) {
           try {
@@ -239,30 +160,6 @@ export class HeroController {
           } catch {
             parsedPopularNewsIds = [];
           }
-        }
-
-        let popularNewsArticles: any[] = [];
-        if (parsedPopularNewsIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
-          const map = new Map<string, any>();
-          posts.forEach((p) => map.set(p.id, formatPost(p)));
-          popularNewsArticles = parsedPopularNewsIds
-            .map((id) => map.get(id))
-            .filter(Boolean);
-        }
-
-        if (popularNewsArticles.length === 0) {
-          const defaultPopularPosts = await prisma.post.findMany({
-            where: { status: 'PUBLISHED' },
-            orderBy: { createdAt: 'desc' },
-            take: 12,
-            select: heroPostSelect,
-          });
-          popularNewsArticles = defaultPopularPosts.map(formatPost);
-          parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
         }
 
         let parsedHeroGridIds: string[] = [];
@@ -274,41 +171,6 @@ export class HeroController {
           }
         }
 
-        let heroGridArticles: any[] = [];
-        if (parsedHeroGridIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: parsedHeroGridIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
-          const map = new Map<string, any>();
-          posts.forEach((p) => map.set(p.id, formatPost(p)));
-          heroGridArticles = parsedHeroGridIds
-            .map((id) => map.get(id))
-            .filter(Boolean);
-        }
-
-        if (heroGridArticles.length === 0) {
-          const defaultHeroPosts = await prisma.post.findMany({
-            where: { status: 'PUBLISHED' },
-            orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
-            take: 16,
-            select: heroPostSelect,
-          });
-          heroGridArticles = defaultHeroPosts.map(formatPost);
-          parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
-        }
-
-        // Ensure all active published isFeatured posts are merged at the top of heroGridArticles
-        const allFeaturedPosts = await prisma.post.findMany({
-          where: { isFeatured: true, status: 'PUBLISHED' },
-          orderBy: [{ createdAt: 'desc' }],
-          take: 6,
-          select: heroPostSelect,
-        });
-        const formattedFeatured = allFeaturedPosts.map(formatPost);
-        const combinedHeroGrid = [...formattedFeatured, ...heroGridArticles];
-        heroGridArticles = combinedHeroGrid.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
-
         let parsedMostReadIds: string[] = [];
         if ((heroSetting as any)?.mostReadIds) {
           try {
@@ -318,27 +180,175 @@ export class HeroController {
           }
         }
 
+        // 2. Collect all target IDs into a single Set for 1 batch query
+        const rawSlotIds = [slot1Id, slot2Id, slot3Id].filter((id): id is string => Boolean(id));
+        const allTargetIds = Array.from(new Set([
+          ...rawSlotIds,
+          ...parsedTrendingNewsIds,
+          ...parsedPopularNewsIds,
+          ...parsedHeroGridIds,
+          ...parsedMostReadIds,
+        ]));
+
+        // 3. Parallel Stage: Execute all queries concurrently via Promise.all
+        // - Query A: Batch fetch all target articles by ID (replaces 5 separate queries)
+        // - Query B: Top featured & published fallback (take 16) - serves slot fallbacks, heroGrid fallbacks
+        // - Query C: Active featured posts (take 6) - merged into heroGrid
+        // - Query D: Active trending posts (take 10) - merged into trending
+        // - Query E: Popular fallback (take 12) - conditional
+        // - Query F: Most-read fallback (take 3) - conditional
+        const [
+          targetPostsRes,
+          featuredFallbackRes,
+          activeFeaturedRes,
+          activeTrendingRes,
+          popularFallbackRes,
+          mostReadFallbackRes,
+        ] = await Promise.all([
+          // Query A: All target IDs in 1 query
+          allTargetIds.length > 0
+            ? withDbRetry(() =>
+                prisma.post.findMany({
+                  where: { id: { in: allTargetIds }, status: 'PUBLISHED' },
+                  select: heroPostSelect,
+                })
+              ).catch(() => [])
+            : Promise.resolve([]),
+
+          // Query B: Featured fallback for slots and heroGrid
+          withDbRetry(() =>
+            prisma.post.findMany({
+              where: { status: 'PUBLISHED' },
+              orderBy: [{ isFeatured: 'desc' }, { createdAt: 'desc' }],
+              take: 16,
+              select: heroPostSelect,
+            })
+          ).catch(() => []),
+
+          // Query C: Active featured posts
+          withDbRetry(() =>
+            prisma.post.findMany({
+              where: { isFeatured: true, status: 'PUBLISHED' },
+              orderBy: [{ createdAt: 'desc' }],
+              take: 6,
+              select: heroPostSelect,
+            })
+          ).catch(() => []),
+
+          // Query D: Active trending posts
+          withDbRetry(() =>
+            prisma.post.findMany({
+              where: { isTrending: true, status: 'PUBLISHED' },
+              orderBy: [{ createdAt: 'desc' }],
+              take: 10,
+              select: heroPostSelect,
+            })
+          ).catch(() => []),
+
+          // Query E: Popular fallback (only if needed)
+          parsedPopularNewsIds.length === 0
+            ? withDbRetry(() =>
+                prisma.post.findMany({
+                  where: { status: 'PUBLISHED' },
+                  orderBy: { createdAt: 'desc' },
+                  take: 12,
+                  select: heroPostSelect,
+                })
+              ).catch(() => [])
+            : Promise.resolve([]),
+
+          // Query F: Most-read fallback (only if needed)
+          parsedMostReadIds.length === 0
+            ? withDbRetry(() =>
+                prisma.post.findMany({
+                  where: { status: 'PUBLISHED' },
+                  orderBy: [{ views: 'desc' }, { createdAt: 'desc' }],
+                  take: 3,
+                  select: heroPostSelect,
+                })
+              ).catch(() => [])
+            : Promise.resolve([]),
+        ]);
+
+        // 4. Assemble lookups in memory
+        const postsMap = new Map<string, any>();
+        targetPostsRes.forEach((p: any) => postsMap.set(p.id, formatPost(p)));
+        featuredFallbackRes.forEach((p: any) => {
+          if (!postsMap.has(p.id)) {
+            postsMap.set(p.id, formatPost(p));
+          }
+        });
+
+        const fallbackFormatted = featuredFallbackRes.map(formatPost);
+
+        // Resolve Slots
+        if (!slot1Id && fallbackFormatted[0]) slot1Id = fallbackFormatted[0].id;
+        if (!slot2Id && fallbackFormatted[1]) slot2Id = fallbackFormatted[1].id;
+        if (!slot3Id && fallbackFormatted[2]) slot3Id = fallbackFormatted[2].id;
+
+        const s1 = (slot1Id ? postsMap.get(slot1Id) : null) || fallbackFormatted[0] || null;
+        const s2 = (slot2Id ? postsMap.get(slot2Id) : null) || fallbackFormatted[1] || null;
+        const s3 = (slot3Id ? postsMap.get(slot3Id) : null) || fallbackFormatted[2] || null;
+        const slots = [s1, s2, s3];
+
+        // Resolve Trending News (preserving order and fallback)
+        let trendingNewsArticles: any[] = [];
+        if (parsedTrendingNewsIds.length > 0) {
+          trendingNewsArticles = parsedTrendingNewsIds
+            .map((id) => postsMap.get(id))
+            .filter(Boolean);
+        }
+
+        if (trendingNewsArticles.length === 0) {
+          const defaultTrending = activeTrendingRes.length > 0 ? activeTrendingRes : fallbackFormatted.slice(0, 10);
+          trendingNewsArticles = defaultTrending.map(formatPost);
+          parsedTrendingNewsIds = trendingNewsArticles.map((a: any) => a.id);
+        }
+
+        const formattedTrending = activeTrendingRes.map(formatPost);
+        const combinedTrending = [...formattedTrending, ...trendingNewsArticles];
+        trendingNewsArticles = combinedTrending.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+
+        // Resolve Popular News (preserving order and fallback)
+        let popularNewsArticles: any[] = [];
+        if (parsedPopularNewsIds.length > 0) {
+          popularNewsArticles = parsedPopularNewsIds
+            .map((id) => postsMap.get(id))
+            .filter(Boolean);
+        }
+
+        if (popularNewsArticles.length === 0) {
+          popularNewsArticles = (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted.slice(0, 12)).map(formatPost);
+          parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+        }
+
+        // Resolve Hero Grid (preserving order, active featured top merge, and fallback)
+        let heroGridArticles: any[] = [];
+        if (parsedHeroGridIds.length > 0) {
+          heroGridArticles = parsedHeroGridIds
+            .map((id) => postsMap.get(id))
+            .filter(Boolean);
+        }
+
+        if (heroGridArticles.length === 0) {
+          heroGridArticles = fallbackFormatted.slice(0, 16);
+          parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
+        }
+
+        const formattedFeatured = activeFeaturedRes.map(formatPost);
+        const combinedHeroGrid = [...formattedFeatured, ...heroGridArticles];
+        heroGridArticles = combinedHeroGrid.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+
+        // Resolve Most Read (preserving order and fallback)
         let mostReadArticles: any[] = [];
         if (parsedMostReadIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: parsedMostReadIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
-          const map = new Map<string, any>();
-          posts.forEach((p) => map.set(p.id, formatPost(p)));
           mostReadArticles = parsedMostReadIds
-            .map((id) => map.get(id))
+            .map((id) => postsMap.get(id))
             .filter(Boolean);
         }
 
         if (mostReadArticles.length === 0) {
-          const defaultMostReadPosts = await prisma.post.findMany({
-            where: { status: 'PUBLISHED' },
-            orderBy: [{ views: 'desc' }, { createdAt: 'desc' }],
-            take: 3,
-            select: heroPostSelect,
-          });
-          mostReadArticles = defaultMostReadPosts.map(formatPost);
+          mostReadArticles = (mostReadFallbackRes.length > 0 ? mostReadFallbackRes : fallbackFormatted.slice(0, 3)).map(formatPost);
           parsedMostReadIds = mostReadArticles.map((a: any) => a.id);
         }
 
