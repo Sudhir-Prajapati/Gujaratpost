@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Noto_Sans_Gujarati, Hind_Vadodara } from "next/font/google";
 import { AppProvider } from "@/components/AppProvider";
@@ -19,9 +19,21 @@ const hindVadodara = Hind_Vadodara({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  themeColor: "#B3121B",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://gujaratpost.example.com"),
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Gujarat Post",
+  },
   title: {
     default: "Gujarat Post - Gujarati News Portal",
     template: "%s | Gujarat Post",
