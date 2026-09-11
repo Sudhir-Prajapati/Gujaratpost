@@ -717,8 +717,8 @@ export async function getPublicAdBySection(section: string): Promise<any | null>
  */
 export async function getPublicSupportDetails(): Promise<any | null> {
   try {
-    const url = `${API_BASE_URL}/support?t=${Date.now()}`;
-    const json = await fetchCachedJson<any>(url, 0);
+    const url = `${API_BASE_URL}/support`;
+    const json = await fetchCachedJson<any>(url, 60 * 1000);
     if (json && json.success && json.data) {
       return json.data;
     }

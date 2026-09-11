@@ -14,7 +14,6 @@ import { EPaperController } from '../controllers/epaper.controller.js';
 import { GalleryController } from '../controllers/gallery.controller.js';
 import { SupportController } from '../controllers/support.controller.js';
 import { TributeController } from '../controllers/tribute.controller.js';
-import { autoPublishDueArticles } from '../controllers/article.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 
 const router = Router();
@@ -62,7 +61,7 @@ function sanitizeSingleUrl(url?: string | null): string {
 }
 
 // Public Support Details route
-router.get('/support', SupportController.getSupportSettings);
+router.get('/support', cacheResponse(60), SupportController.getSupportSettings);
 
 // Public E-Paper routes
 router.get('/epaper', EPaperController.getPublicEditions);
@@ -100,9 +99,10 @@ router.get('/reels', cacheResponse(60), InstagramReelController.getAllReels);
  */
 router.get('/articles', cacheResponse(30), async (req, res, next) => {
   try {
-    await autoPublishDueArticles();
+    // autoPublishDueArticles() was removed from this read-path in Phase 1.
+    // It now runs exclusively in a background setInterval in index.ts.
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
-    const limit = Math.max(1, parseInt(req.query.limit as string) || 120);
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 30);
     const skip = (page - 1) * limit;
 
     const query = (req.query.query as string) || '';
@@ -216,6 +216,9 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         { priority: 'desc' },
       ];
 
+    // Phase 1 optimisation: content fields (content, contentGu, contentHi) are NOT
+    // included in list responses — they are large @db.Text columns that article cards
+    // never display. They are still returned by the single-article detail endpoint.
     const publicArticleSelect = {
       id: true,
       slug: true,
@@ -278,6 +281,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       total = posts.length;
     }
 
+    // Phase 1: content/contentGu/contentHi intentionally omitted from list response.
+    // The detail endpoint (/articles/:slug) still returns full content.
     const articles = posts.map((p) => ({
       id: p.id,
       slug: p.slug,
@@ -288,9 +293,6 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       excerpt: p.excerpt || '',
       excerptGu: p.excerptGu || '',
       excerptHi: p.excerptHi || '',
-      content: sanitizeUrlInContent((p as any).content),
-      contentGu: sanitizeUrlInContent((p as any).contentGu),
-      contentHi: sanitizeUrlInContent((p as any).contentHi),
       image: sanitizeSingleUrl(p.featuredImage),
       featuredImage: sanitizeSingleUrl(p.featuredImage),
       category: p.category.name,
@@ -542,7 +544,7 @@ router.get('/gallery', cacheResponse(60), GalleryController.getAllPhotos);
  * GET /api/public/stories
  * Fetch Instagram stories with slides
  */
-router.get('/stories', async (req, res, next) => {
+router.get('/stories', cacheResponse(300), async (req, res, next) => {
   try {
     const stories = await prisma.instagramStory.findMany({
       include: { slides: true },
@@ -558,7 +560,7 @@ router.get('/stories', async (req, res, next) => {
  * GET /api/public/webstories
  * Fetch web stories
  */
-router.get('/webstories', async (req, res, next) => {
+router.get('/webstories', cacheResponse(300), async (req, res, next) => {
   try {
     const webstories = await prisma.webStory.findMany({
       orderBy: { createdAt: 'desc' },
@@ -734,7 +736,7 @@ router.get('/live-center', async (req, res) => {
  * GET /api/public/tickers
  * Fetch breaking ticker items
  */
-router.get('/tickers', async (req, res, next) => {
+router.get('/tickers', cacheResponse(120), async (req, res, next) => {
   try {
     const customTickers = await prisma.breakingTickerItem.findMany({
       orderBy: { createdAt: 'desc' },
@@ -803,13 +805,31 @@ router.get('/tickers', async (req, res, next) => {
  * GET /api/public/rss
  * Generate RSS 2.0 XML feed of published news articles
  */
+// Dedicated RSS cache (returns XML, not JSON — cannot use cacheResponse() middleware)
+let rssCache: { xml: string; timestamp: number } | null = null;
+const RSS_CACHE_TTL_MS = 300 * 1000; // 300 seconds
+
 router.get('/rss', async (req, res, next) => {
   try {
+    const now = Date.now();
+    if (rssCache && now - rssCache.timestamp < RSS_CACHE_TTL_MS) {
+      res.set('Content-Type', 'text/xml; charset=utf-8');
+      return res.status(200).send(rssCache.xml);
+    }
+
     const articles = await prisma.post.findMany({
       where: { status: 'PUBLISHED' },
       take: 50,
       orderBy: { createdAt: 'desc' },
-      include: { category: true, author: true }
+      select: {
+        slug: true,
+        title: true,
+        titleGu: true,
+        excerpt: true,
+        excerptGu: true,
+        createdAt: true,
+        category: { select: { name: true, nameGu: true } },
+      },
     });
 
     const baseUrl = process.env.CLIENT_URL || 'https://gujaratpost.com';
@@ -844,6 +864,9 @@ router.get('/rss', async (req, res, next) => {
 
     rssXml += `  </channel>\n</rss>`;
 
+    // Cache the generated XML
+    rssCache = { xml: rssXml, timestamp: now };
+
     res.set('Content-Type', 'text/xml; charset=utf-8');
     return res.status(200).send(rssXml);
   } catch (error) {
@@ -855,7 +878,7 @@ router.get('/rss', async (req, res, next) => {
  * GET /api/public/astrology
  * Fetch Astrology signs predictions
  */
-router.get('/astrology', async (req, res, next) => {
+router.get('/astrology', cacheResponse(3600), async (req, res, next) => {
   try {
     const signs = await fetchLiveDailyAstrologySigns();
     return sendSuccess(res, { signs }, 'Automated daily astrology predictions retrieved');
@@ -864,16 +887,10 @@ router.get('/astrology', async (req, res, next) => {
   }
 });
 /**
- * GET /api/public/reels
- * Fetch active Instagram reels
- */
-router.get('/reels', InstagramReelController.getAllReels);
-
-/**
  * GET /api/public/web-stories
  * Fetch active Web Stories
  */
-router.get('/web-stories', WebStoryController.getAll);
+router.get('/web-stories', cacheResponse(300), WebStoryController.getAll);
 
 /**
  * GET /api/public/download-pdf

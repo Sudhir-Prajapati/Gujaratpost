@@ -10,6 +10,7 @@ import { connectRedis, redisClient } from './config/redis.js';
 import { prisma } from './config/prisma.js';
 import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
+import { autoPublishDueArticles } from './controllers/article.controller.js';
 
 // Extend globalThis so TypeScript knows about our stored HTTP server reference
 declare global {
@@ -164,6 +165,23 @@ const bootstrap = async () => {
 };
 
 bootstrap();
+
+// ── Background: auto-publish scheduled articles every 5 minutes ──────────────
+// This is the canonical location for this job. The inline call on the articles
+// read-path (public.routes.ts) has been removed in Phase 1 so that DB writes
+// never block read requests.
+setInterval(async () => {
+  try {
+    await autoPublishDueArticles();
+  } catch (err: any) {
+    console.warn('Background autoPublish error (non-fatal):', err?.message || err);
+  }
+}, 5 * 60 * 1000); // every 5 minutes
+// Run once immediately on startup so newly-due scheduled articles are published
+// as soon as the server boots (without waiting for the first 5-minute tick).
+autoPublishDueArticles().catch((err: any) => {
+  console.warn('Startup autoPublish error (non-fatal):', err?.message || err);
+});
 
 // Graceful shutdown handling — MUST close HTTP server first to release the port
 const gracefulShutdown = async (signal: string) => {
