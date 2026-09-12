@@ -231,7 +231,7 @@ const FACT_CHECK_ARTICLES = [
     excerpt: 'Medical experts and WHO debunk widely circulated social media claims that hot lemon water is 10,000 times stronger than chemotherapy.',
     excerptGu: 'ગરમ લીંબુ પાણી કીમોથેરાપી કરતાં ૧૦,૦૦૦ ગણું વધુ અસરકારક હોવાના દાવાને તબીબોએ તદ્દન ભ્રામક અને અજ્ઞાનતાપૂર્ણ ગણાવ્યો છે.',
     excerptHi: 'गर्म नींबू पानी कीमोथेरेपी से 10,000 गुना अधिक प्रभावी होने का दावा डॉक्टरों द्वारा पूरी तरह खारिज कर दिया गया है।',
-    featuredImage: 'https://images.unsplash.com/photo-1534531141161-e49d1182749e?w=1200&q=80',
+    featuredImage: 'https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=1200&q=80',
     content: `<p><strong>Claim:</strong> A forwarded WhatsApp text claims boiling lemon slices in hot water destroys all cancer cells and is 10,000 times more powerful than medical chemotherapy.</p>
 <h2>Fact Check Analysis</h2>
 <p>Oncologists and World Health Organization (WHO) medical panels emphasize that while lemons contain Vitamin C and antioxidants supporting immunity, there is zero scientific evidence that lemon water cures cancer.</p>

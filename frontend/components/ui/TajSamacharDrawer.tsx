@@ -140,10 +140,6 @@ export default function TajSamacharDrawer() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  if (pathname?.startsWith('/admin') || (isApk && pathname?.startsWith('/shorts'))) {
-    return null;
-  }
-
   // Lazy load latest news only when user opens drawer
   useEffect(() => {
     if (!isOpen || hasFetched) return;
@@ -172,6 +168,10 @@ export default function TajSamacharDrawer() {
       isMounted = false;
     };
   }, [isOpen, hasFetched]);
+
+  if (pathname?.startsWith('/admin') || (isApk && pathname?.startsWith('/shorts'))) {
+    return null;
+  }
 
   // Fetch more articles seamlessly in the background as user reaches ~7th article
   const loadMoreArticles = async () => {
