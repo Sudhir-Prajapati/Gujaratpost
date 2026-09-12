@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 import {
   Search, ChevronDown, Home, MapPin, Video, Zap,
   AlertTriangle, Landmark, Briefcase, Trophy, Laptop, Sparkles, Check,
-  Sun, Moon, User, Heart
+  Sun, Moon, User
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import UserAuthModal from '@/components/ui/UserAuthModal';
@@ -28,7 +28,7 @@ const CATEGORIES = [
 
 export default function ApkHeader() {
   const pathname = usePathname();
-  const { language, setLanguage, apkTheme, toggleApkTheme, openSupportModal } = useApp();
+  const { language, setLanguage, apkTheme, toggleApkTheme } = useApp();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement | null>(null);
@@ -123,19 +123,8 @@ export default function ApkHeader() {
           </Link>
         </div>
 
-        {/* Right: Support Us + User Login + Theme Toggle + Search + Language Selector */}
+        {/* Right: User Login + Theme Toggle + Search + Language Selector */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Support Us Button ("❤️ સપોર્ટ કરો") */}
-          <button
-            type="button"
-            onClick={openSupportModal}
-            className="flex items-center gap-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 border border-white/30 px-2.5 py-1 rounded-full text-white text-[11px] font-black active:scale-95 transition cursor-pointer shadow-md shrink-0"
-            title={language === 'hi' ? 'सपोर्ट करें' : language === 'en' ? 'Support Us' : 'સપોર્ટ કરો'}
-          >
-            <Heart className="w-3 h-3 fill-rose-100 text-rose-100 animate-pulse" />
-            <span className="leading-none">{language === 'hi' ? 'सपोर्ट करें' : language === 'en' ? 'Support Us' : 'સપોર્ટ કરો'}</span>
-          </button>
-
           {/* User Sign In / Profile Icon Button */}
           <button
             type="button"
