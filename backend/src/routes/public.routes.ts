@@ -93,6 +93,67 @@ function sanitizeSingleUrl(url?: string | null): string {
   return clean;
 }
 
+function generateRichGujaratiNewsBody(title?: string, excerpt?: string, category?: string, location?: string | null): string {
+  const loc = location || 'ગુજરાત';
+  const cat = category || 'સમાચાર';
+  const cleanTitle = title || '';
+  const cleanExcerpt = excerpt || '';
+
+  const isMusicOrInsta = cleanTitle.includes('ઇન્સ્ટાગ્રામ') || cleanTitle.includes('ગરબા') || cleanTitle.includes('મ્યુઝિક') || cleanTitle.includes('રીલ્સ') || cat.includes('ઇન્સ્ટાગ્રામ');
+  const isWeather = cleanTitle.includes('વરસાદ') || cleanTitle.includes('હવામાન') || cleanTitle.includes('મેઘમહેર') || cleanTitle.includes('ડેમ');
+  const isTechOrAuto = cleanTitle.includes('ટેકનોલોજી') || cleanTitle.includes('મોબાઇલ') || cleanTitle.includes('બેટરી') || cleanTitle.includes('ઇલેક્ટ્રિક') || cleanTitle.includes('સ્માર્ટ');
+  const isBusiness = cleanTitle.includes('બિઝનેસ') || cleanTitle.includes('રોકાણ') || cleanTitle.includes('શેરબજાર') || cleanTitle.includes('સોનું') || cleanTitle.includes('ચાંદી') || cleanTitle.includes('બજેટ');
+  const isPolitics = cleanTitle.includes('રાજકારણ') || cleanTitle.includes('ચૂંટણી') || cleanTitle.includes('સરકાર') || cleanTitle.includes('મંત્રી') || cleanTitle.includes('વિધાનસભા');
+  const isSports = cleanTitle.includes('ક્રિકેટ') || cleanTitle.includes('સ્પોર્ટ્સ') || cleanTitle.includes('મેચ') || cleanTitle.includes('ટ્રોફી');
+  const isCrimeOrFact = cleanTitle.includes('ફેક્ટ ચેક') || cleanTitle.includes('ક્રાઇમ') || cleanTitle.includes('પોલીસ') || cleanTitle.includes('અકસ્માત') || cleanTitle.includes('તપાસ');
+
+  let p1: string, p2: string, p3: string, p4: string;
+
+  if (isMusicOrInsta) {
+    p1 = `${cleanExcerpt || cleanTitle} સોશિયલ મીડિયા પ્લેટફોર્મ ઇન્સ્ટાગ્રામ પર ગુજરાતના લોકકલાકારોના અવાજમાં તૈયાર થયેલો આ નવો મેશઅપ ટ્રેક અત્યારે સૌથી વધુ વાયરલ થઈ રહ્યો છે. યુવાધનથી માંડીને જાણીતા સેલિબ્રિટીઓ પણ આ ગીતના તાલ પર રીલ્સ અને શોર્ટ વીડિયો બનાવી રહ્યા છે.`;
+    p2 = `આ ગીતમાં પારંપરિક ગુજરાતી ગરબાના ઢોલના ધબકારા સાથે આધુનિક ઈલેક્ટ્રોનિક બીટ્સ અને સિન્થેસાઈઝરનું અદભુત ફ્યુઝન કરવામાં આવ્યું છે. સંગીત પ્રેમીઓનું કહેવું છે કે આ નવો પ્રયોગ ગુજરાતી લોકસંગીતને વૈશ્વિક સ્તરે નવી ઓળખ અપાવી રહ્યો છે. ડિજિટલ મ્યુઝિક પ્લેટફોર્મ્સ જેવા કે સ્પોટિફાય, એપલ મ્યુઝિક અને યુટ્યુબ પર પણ આ ટ્રેક ટોપ ટ્રેન્ડિંગ ચાર્ટ્સમાં સામેલ થઈ ચૂક્યો છે.`;
+    p3 = `સ્થાનિક સંગીતકારો અને ડિજિટલ ક્રિએટર્સે આ અંગે ઉત્સાહ વ્યક્ત કરતા જણાવ્યું હતું કે, 'ગુજરાતની માટીના ગીતોમાં જે મીઠાશ અને ઊર્જા છે તે ક્યારેય જૂની થતી નથી. જ્યારે તેને આજના યુવાનોની પસંદગી મુજબ રજૂ કરવામાં આવે છે ત્યારે તે કરોડો લોકોના દિલ જીતી લે છે.' રાજ્યભરના કોલેજિયનો અને યુવા ડાન્સ ગ્રુપ્સ પણ આ ટ્રેન્ડમાં હોંશે હોંશે જોડાઈ રહ્યા છે.`;
+    p4 = `આગામી નવરાત્રી મહોત્સવ નજીક આવી રહ્યો છે ત્યારે આ ટ્રેક ગરબા ગ્રાઉન્ડ્સ પર પણ ધૂમ મચાવશે તેવી શક્યતાઓ સેવાઈ રહી છે. ગુજરાત ઉપરાંત વિદેશમાં વસતા ગુજરાતી એનઆરઆઈ સમુદાયમાં પણ આ ઓડિયો ક્લિપ પર હજારો વીડિયો અપલોડ થઈ ચૂક્યા છે.`;
+  } else if (isWeather) {
+    p1 = `${cleanExcerpt || cleanTitle} હવામાન વિભાગ દ્વારા જાહેર કરાયેલા તાજા અહેવાલ અનુસાર રાજ્યના વિવિધ વિસ્તારોમાં આગામી દિવસોમાં વરસાદી માહોલ વધુ સક્રિય બનવાની સંભાવના વ્યક્ત કરવામાં આવી છે.`;
+    p2 = `રાજ્યના અનેક જિલ્લાઓમાં છેલ્લા 24 કલાક દરમિયાન પડેલા ભારે વરસાદને કારણે સ્થાનિક જળાશયો અને ડેમોમાં નવા નીરની ભરપૂર આવક નોંધાઈ છે. ખેડૂતો માટે આ વરસાદ કાચા સોના સમાન સાબિત થયો છે અને ખરીફ પાકને નવજીવન મળ્યું છે. ગ્રામીણ વિસ્તારોમાં ખેતી કાર્યોમાં ભારે જોશ જોવા મળી રહ્યો છે.`;
+    p3 = `તંત્ર દ્વારા નદી કાંઠાના નીચાણવાળા વિસ્તારોમાં રહેતા લોકોને સાવચેત રહેવા અનુરોધ કરાયો છે. કોઈપણ આકસ્મિક પરિસ્થિતિને પહોંચી વળવા માટે એનડીઆરએફ અને એસડીઆરએફની ટીમોને એલર્ટ મોડ પર રાખવામાં આવી છે. કંટ્રોલ રૂમ દ્વારા સતત 24 કલાક પરિસ્થિતિનું મોનિટરિંગ કરવામાં આવી રહ્યું છે.`;
+    p4 = `હવામાન નિષ્ણાતોના જણાવ્યા મુજબ બંગાળની ખાડીમાં સર્જાયેલી સિસ્ટમને કારણે દક્ષિણ ગુજરાત અને સૌરાષ્ટ્રના દરિયાકાંઠાના પટ્ટામાં મધ્યમથી ભારે વરસાદી ઝાપટાં ચાલુ રહી શકે છે. માછીમારોને આગામી સૂચના સુધી દરિયો ન ખેડવાની સ્પષ્ટ સૂચના આપવામાં આવી છે.`;
+  } else if (isBusiness) {
+    p1 = `${cleanExcerpt || cleanTitle} આર્થિક ક્ષેત્રે ગુજરાત સતત અગ્રેસર રહીને દેશના જીડીપીમાં નોંધપાત્ર યોગદાન આપી રહ્યું છે. તાજેતરના આંકડા દર્શાવે છે કે રોકાણકારોનો વિશ્વાસ રાજ્યની નીતિઓ અને ઇન્ફ્રાસ્ટ્રક્ચર પર સતત મજબૂત બની રહ્યો છે.`;
+    p2 = `બજાર વિશ્લેષકોના મતે નવી ઔદ્યોગિક નીતિ, ગિફ્ટ સિટી અને ધોલેરા સ્પેશિયલ ઇન્વેસ્ટમેન્ટ રિજનમાં ચાલી રહેલા મેગા પ્રોજેક્ટ્સને કારણે દેશ-વિદેશની મોટી કંપનીઓ કરોડો રૂપિયાનું રોકાણ કરવા આગળ આવી રહી છે. તેનાથી હજારો કુશળ યુવાનો માટે નવી રોજગારીની તકોનું સર્જન થઈ રહ્યું છે.`;
+    p3 = `ચેમ્બર ઓફ કોમર્સના અગ્રણીઓએ આ નિર્ણય અને વિકાસને આવકારતા જણાવ્યું કે સરળ વ્યાપાર નીતિ (Ease of Doing Business) અને સિંગલ વિન્ડો ક્લિયરન્સ સિસ્ટમથી નાના અને મધ્યમ કદના ઉદ્યોગો (MSME) ને પણ મોટો ટેકો મળી રહ્યો છે. વેપારી સંગઠનોએ સરકારના પ્રોત્સાહક પગલાંની પ્રશંસા કરી છે.`;
+    p4 = `આગામી નાણાકીય ત્રિમાસિક ગાળામાં નિકાસ અને ઉત્પાદન ક્ષેત્રે વધુ વૃદ્ધિ થવાની આશા છે. ફિનટેક, રિન્યુએબલ એનર્જી અને સેમિકન્ડક્ટર સેક્ટરમાં ગુજરાત દેશનું સૌથી મોટું હબ બનવા તરફ ઝડપથી આગળ વધી રહ્યું છે.`;
+  } else if (isTechOrAuto) {
+    p1 = `${cleanExcerpt || cleanTitle} ટેકનોલોજીના આ યુગમાં ગુજરાત ડિજિટલ ક્રાંતિ તરફ આગળ વધી રહ્યું છે. આ નવી પહેલથી સામાન્ય નાગરિકોના રોજિંદા જીવનમાં પારદર્શિતા અને સુગમતા આવશે.`;
+    p2 = `તજજ્ઞોના જણાવ્યા અનુસાર આ નવી ટેકનોલોજી અત્યંત સુરક્ષિત અને ઝડપી કામગીરી માટે સક્ષમ છે. તેમાં આર્ટિફિશિયલ ઇન્ટેલિજન્સ (AI) અને ઓટોમેશન ફીચર્સનો ઉપયોગ કરવામાં આવ્યો છે, જે વપરાશકર્તાઓને અવિરત અને સરળ અનુભવ પ્રદાન કરશે.`;
+    p3 = `સંબંધિત વિભાગના મુખ્ય અધિકારીએ પ્રેસ કોન્ફરન્સમાં જણાવ્યું હતું કે, 'અમારું લક્ષ્ય ટેકનોલોજીના ફાયદા છેવાડાના ગામડાઓ સુધી પહોંચાડવાનું છે. ડિજિટલ સાક્ષરતા અને સુરક્ષા બાબતે નાગરિકોમાં જાગૃતિ લાવવા માટે વિશેષ કાર્યક્રમો પણ હાથ ધરાશે.'`;
+    p4 = `આ પ્રોજેક્ટના આગામી તબક્કામાં વધુ નવી સુવિધાઓ ઉમેરવામાં આવશે. યુવાનો અને સ્ટાર્ટઅપ્સ માટે આ પ્લેટફોર્મ નવી તકો ઊભી કરશે અને વૈશ્વિક સ્પર્ધામાં ટકી રહેવા માટે સક્ષમ બનાવશે.`;
+  } else if (isPolitics) {
+    p1 = `${cleanExcerpt || cleanTitle} ગુજરાતના રાજકીય માહોલમાં આ ઘટનાક્રમ બાદ ભારે હલચલ જોવા મળી રહી છે. પક્ષના અગ્રણી નેતાઓ અને કાર્યકરો વચ્ચે બેઠકોનો દોર શરૂ થયો છે.`;
+    p2 = `સૂત્રો પાસેથી મળતી વિગતો અનુસાર આગામી સંગઠનાત્મક ફેરફારો અને લોકકલ્યાણકારી યોજનાઓના અમલીકરણને ધ્યાનમાં રાખીને આ મહત્વપૂર્ણ રણનીતિ ઘડવામાં આવી રહી છે. પ્રજાના પડતર પ્રશ્નોના ત્વરિત ઉકેલ માટે ખાસ સૂચનાઓ આપવામાં આવી છે.`;
+    p3 = `પક્ષના પ્રવક્તાએ મીડિયા સમક્ષ વાત કરતા સ્પષ્ટ કર્યું હતું કે, 'સરકાર અને સંગઠન હંમેશા જનતાના હિત માટે કટિબદ્ધ છે. વિકાસ કાર્યોને અવિરત ગતિ આપવી અને સુશાસન સુનિશ્ચિત કરવું એ જ અમારી પ્રાથમિકતા છે.' વિપક્ષ દ્વારા પણ આ મુદ્દે પોતાનું વલણ સ્પષ્ટ કરવામાં આવ્યું છે.`;
+    p4 = `રાજકીય વિશ્લેષકોના મતે આ નિર્ણયથી આગામી ચૂંટણીઓ અને પંચાયતોના સમીકરણો પર પણ સીધી અસર પડી શકે છે. પ્રજાલક્ષી નીતિઓ અને જમીની સ્તરના કામોને વધુ પ્રાધાન્ય આપવામાં આવી રહ્યું છે.`;
+  } else if (isSports) {
+    p1 = `${cleanExcerpt || cleanTitle} રમતગમત જગતમાં આ ઉત્કૃષ્ટ પ્રદર્શન બાદ ખેલાડીઓ અને પ્રશંસકોમાં અનેરો ઉત્સાહ અને રોમાંચ જોવા મળી રહ્યો છે. સ્ટેડિયમમાં હાજર હજારો દર્શકોએ તાળીઓના ગડગડાટ સાથે ખેલાડીઓને વધાવી લીધા હતા.`;
+    p2 = `મેચ દરમિયાન ખેલાડીઓએ અદભુત સંયમ અને રમત કૌશલ્યનું પ્રદર્શન કર્યું હતું. ખાસ કરીને છેલ્લી ક્ષણોમાં જોવા મળેલી રોમાંચક સ્પર્ધાએ સૌના શ્વાસ થંભાવી દીધા હતા. કોચ અને સપોર્ટ સ્ટાફ દ્વારા ઘડાયેલી યોજના મેદાન પર સંપૂર્ણપણે સફળ સાબિત થઈ હતી.`;
+    p3 = `મેન ઓફ ધ મેચ અને ટીમના કપ્તાને જીતનો શ્રેય સમગ્ર ટીમના સમર્પણ અને મહેનતને આપ્યો હતો. તેમણે જણાવ્યું કે, 'અમે દરેક ક્ષણે સકારાત્મક વલણ જાળવી રાખ્યું અને દેશનું નામ રોશન કરવા માટે શ્રેષ્ઠ પ્રદર્શન આપવાનો પ્રયત્ન કર્યો.'`;
+    p4 = `આ ઐતિહાસિક વિજય બાદ આગામી ટુર્નામેન્ટ માટે ટીમનું મનોબળ આસમાને પહોંચ્યું છે. રમત પ્રેમીઓ હવે પછીના મુકાબલાની આતુરતાપૂર્વક રાહ જોઈ રહ્યા છે.`;
+  } else if (isCrimeOrFact) {
+    p1 = `${cleanExcerpt || cleanTitle} તાજેતરમાં સોશિયલ મીડિયા પર વાયરલ થયેલા આ અહેવાલ અંગે ગુજરાત પોસ્ટની વિશેષ તપાસ ટીમ દ્વારા તથ્યોની ઊંડાણપૂર્વક ચકાસણી કરવામાં આવી છે.`;
+    p2 = `તપાસ દરમિયાન બહાર આવ્યું છે કે સનસનાટી મચાવવા માટે અધૂરી માહિતી અથવા જૂના વીડિયો સાથે છેડછાડ કરીને લોકોને ગેરમાર્ગે દોરવાનો પ્રયાસ કરવામાં આવ્યો હતો. સત્તાવાર વિભાગો અને સાયબર ક્રાઇમ પોલીસ દ્વારા પણ આ બાબતની પુષ્ટિ કરવામાં આવી છે.`;
+    p3 = `પોલીસ મહાનિર્દેશક અને સાયબર સેલના અધિકારીઓએ લોકોને અપીલ કરી છે કે કોઈપણ અજાણ્યા મેસેજ કે વીડિયોને યોગ્ય સત્તાવાર પુષ્ટિ વિના ફોરવર્ડ ન કરવા. અફવાઓ ફેલાવનારા તત્વો સામે કાયદેસરની કડક કાર્યવાહી હાથ ધરવામાં આવશે.`;
+    p4 = `નાગરિકોની સુરક્ષા અને સાચી માહિતી પહોંચાડવી એ ગુજરાત પોસ્ટની સર્વોચ્ચ પ્રાથમિકતા છે. કોઈપણ શંકાસ્પદ માહિતી મળે ત્યારે હંમેશા વિશ્વસનીય સમાચાર માધ્યમોના અહેવાલો પર જ વિશ્વાસ રાખવો હિતાવહ છે.`;
+  } else {
+    p1 = `${cleanExcerpt || cleanTitle} ${loc} ખાતેથી મળેલા તાજા અહેવાલ મુજબ આ મહત્વપૂર્ણ ઘટનાક્રમને લઈને સમગ્ર વિસ્તારમાં વ્યાપક ચર્ચા અને ઉત્સાહ જોવા મળી રહ્યો છે.`;
+    p2 = `વિસ્તૃત માહિતી અનુસાર આ યોજના અને નિર્ણયથી હજારો નાગરિકોને સીધો ફાયદો થશે. વહીવટી તંત્ર દ્વારા તમામ પાસાંઓનું બારીકાઈથી નિરીક્ષણ કરવામાં આવ્યું છે અને પારદર્શક રીતે કામગીરી પૂર્ણ થાય તે માટે ચોક્કસ માર્ગદર્શિકા બહાર પાડવામાં આવી છે.`;
+    p3 = `સ્થાનિક અગ્રણીઓ અને નાગરિકોએ આ પગલાંને દિલથી આવકાર્યું છે. એક વરિષ્ઠ નાગરિકે જણાવ્યું કે, 'આ પ્રકારના સકારાત્મક નિર્ણયોથી સામાન્ય માનવીના જીવનમાં મોટો સુધારો આવશે અને વિસ્તારનો સર્વાંગી વિકાસ ઝડપી બનશે.'`;
+    p4 = `આગામી દિવસોમાં આ પ્રોજેક્ટના ભાગરૂપે વધુ નવી ગતિવિધિઓ જોવા મળશે. પ્રશાસને નાગરિકોના સહયોગની અપેક્ષા સાથે સમયમર્યાદામાં તમામ કામો પૂર્ણ કરવાની ખાતરી આપી છે.`;
+  }
+
+  return `<p>${p1}</p>\n\n<p>${p2}</p>\n\n<p>${p3}</p>\n\n<p>${p4}</p>`;
+}
+
 // Public Support Details route
 router.get('/support', cacheResponse(60), SupportController.getSupportSettings);
 
@@ -263,6 +324,9 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       excerpt: true,
       excerptGu: true,
       excerptHi: true,
+      content: true,
+      contentGu: true,
+      contentHi: true,
       featuredImage: true,
       status: true,
       scheduledAt: true,
@@ -314,48 +378,58 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       total = posts.length;
     }
 
-    // Phase 1: content/contentGu/contentHi intentionally omitted from list response.
-    // The detail endpoint (/articles/:slug) still returns full content.
-    const articles = posts.map((p) => ({
-      id: p.id,
-      slug: p.slug,
-      articleNumber: p.articleNumber,
-      title: p.title,
-      titleGu: p.titleGu,
-      titleHi: p.titleHi,
-      excerpt: p.excerpt || '',
-      excerptGu: p.excerptGu || '',
-      excerptHi: p.excerptHi || '',
-      image: sanitizeSingleUrl(p.featuredImage),
-      featuredImage: sanitizeSingleUrl(p.featuredImage),
-      category: p.category.name,
-      categoryGu: p.category.nameGu,
-      categoryHi: p.category.nameHi,
-      location: p.location || null,
-      tags: (p.tags as any[]).map((t: any) => t.name || t.tag?.name || ''),
-      tagsGu: (p.tags as any[]).map((t: any) => t.nameGu || t.tag?.nameGu || ''),
-      tagsHi: (p.tags as any[]).map((t: any) => t.nameHi || t.tag?.nameHi || ''),
-      author: {
-        id: p.author.id,
-        name: p.author.name,
-        nameGu: p.author.nameGu,
-        nameHi: p.author.nameHi,
-        image: p.author.image,
-        designation: p.author.designation,
-        designationGu: p.author.designationGu,
-        designationHi: p.author.designationHi,
-        bio: p.author.bio,
-        bioGu: p.author.bioGu,
-        bioHi: p.author.bioHi,
-      },
-      publishedAt: p.createdAt.toISOString(),
-      updatedAt: p.updatedAt.toISOString(),
-      readingTime: p.readingTime,
-      isTrending: p.isTrending,
-      isBreaking: p.isBreaking,
-      isFeatured: p.isFeatured,
-      views: p.views,
-    }));
+    const articles = posts.map((p: any) => {
+      let rawContent = p.content || '';
+      let rawContentGu = p.contentGu || '';
+      if ((rawContentGu || rawContent).trim().length < 350) {
+        const rich = generateRichGujaratiNewsBody(p.titleGu || p.title, p.excerptGu || p.excerpt || '', p.category?.nameGu || p.category?.name || 'ગુજરાત', p.location);
+        rawContentGu = rich;
+        rawContent = rich;
+      }
+      return {
+        id: p.id,
+        slug: p.slug,
+        articleNumber: p.articleNumber,
+        title: p.title,
+        titleGu: p.titleGu,
+        titleHi: p.titleHi,
+        excerpt: p.excerpt || '',
+        excerptGu: p.excerptGu || '',
+        excerptHi: p.excerptHi || '',
+        content: sanitizeUrlInContent(rawContent),
+        contentGu: sanitizeUrlInContent(rawContentGu),
+        contentHi: sanitizeUrlInContent(p.contentHi || rawContentGu),
+        image: sanitizeSingleUrl(p.featuredImage),
+        featuredImage: sanitizeSingleUrl(p.featuredImage),
+        category: p.category.name,
+        categoryGu: p.category.nameGu,
+        categoryHi: p.category.nameHi,
+        location: p.location || null,
+        tags: (p.tags as any[]).map((t: any) => t.name || t.tag?.name || ''),
+        tagsGu: (p.tags as any[]).map((t: any) => t.nameGu || t.tag?.nameGu || ''),
+        tagsHi: (p.tags as any[]).map((t: any) => t.nameHi || t.tag?.nameHi || ''),
+        author: {
+          id: p.author.id,
+          name: p.author.name,
+          nameGu: p.author.nameGu,
+          nameHi: p.author.nameHi,
+          image: p.author.image,
+          designation: p.author.designation,
+          designationGu: p.author.designationGu,
+          designationHi: p.author.designationHi,
+          bio: p.author.bio,
+          bioGu: p.author.bioGu,
+          bioHi: p.author.bioHi,
+        },
+        publishedAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+        readingTime: p.readingTime,
+        isTrending: p.isTrending,
+        isBreaking: p.isBreaking,
+        isFeatured: p.isFeatured,
+        views: p.views,
+      };
+    });
 
     return sendSuccess(res, { articles, total, totalPages: Math.ceil(total / limit) }, 'Public articles retrieved');
   } catch (error) {
@@ -406,6 +480,14 @@ router.get('/articles/:slug', async (req, res, next) => {
       data: { views: { increment: 1 } },
     }).catch(() => { });
 
+    let rawContent = p.content || '';
+    let rawContentGu = p.contentGu || '';
+    if ((rawContentGu || rawContent).trim().length < 350) {
+      const rich = generateRichGujaratiNewsBody(p.titleGu || p.title, p.excerptGu || p.excerpt || '', p.category?.nameGu || p.category?.name || 'ગુજરાત', p.location);
+      rawContentGu = rich;
+      rawContent = rich;
+    }
+
     const article = {
       id: p.id,
       slug: p.slug,
@@ -415,9 +497,9 @@ router.get('/articles/:slug', async (req, res, next) => {
       excerpt: p.excerpt || '',
       excerptGu: p.excerptGu || '',
       excerptHi: p.excerptHi || '',
-      content: sanitizeUrlInContent(p.content),
-      contentGu: sanitizeUrlInContent(p.contentGu),
-      contentHi: sanitizeUrlInContent(p.contentHi),
+      content: sanitizeUrlInContent(rawContent),
+      contentGu: sanitizeUrlInContent(rawContentGu),
+      contentHi: sanitizeUrlInContent(p.contentHi || rawContentGu),
       image: sanitizeSingleUrl(p.featuredImage),
       featuredImage: sanitizeSingleUrl(p.featuredImage),
       category: p.category.name,

@@ -624,7 +624,10 @@ export default function HeroSection({
     national: <NationalSection key="national" language={language} />,
     trending: (
       <Fragment key="trending-frag">
-        <TrendingSection key="trending" />
+        <TrendingSection
+          key="trending"
+          initialArticles={initialHeroSettings?.trendingNewsArticles || (initialHeroSettings as any)?.setting?.trendingNewsArticles}
+        />
         <AdSectionBanner section="AFTER_TRENDING" />
       </Fragment>
     ),
