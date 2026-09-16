@@ -3,6 +3,7 @@ import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { withDbRetry } from '../utils/db.js';
 import { redisClient } from '../config/redis.js';
+import { clearPublicRoutesCache } from '../utils/publicCache.js';
 
 const heroPostSelect = {
   id: true,
@@ -82,6 +83,7 @@ const HERO_CACHE_TTL_MS = 60 * 1000; // 60s in-memory TTL
 export function invalidateHeroSettingsCache() {
   heroSettingsMemCache = null;
   heroSettingsInFlightPromise = null;
+  clearPublicRoutesCache();
   if (redisClient.isOpen) {
     redisClient.del('cache:hero_settings').catch(() => {});
   }
@@ -336,8 +338,10 @@ export class HeroController {
         }
 
         const formattedFeatured = activeFeaturedRes.map(formatPost);
-        const combinedHeroGrid = [...formattedFeatured, ...heroGridArticles];
-        heroGridArticles = combinedHeroGrid.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+        const combinedHeroGrid = [...heroGridArticles, ...formattedFeatured];
+        heroGridArticles = combinedHeroGrid
+          .filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx)
+          .slice(0, 16);
 
         // Resolve Most Read (preserving order and fallback)
         let mostReadArticles: any[] = [];

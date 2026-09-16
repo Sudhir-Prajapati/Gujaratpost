@@ -158,16 +158,17 @@ const mockPoliticsBottomCards = [
 ];
 
 /* --- Politics Section ("રાજકારણ" Zone) ----------------------------- */
-export default function PoliticsSection({ language }: { language: Language }) {
-  const [dbPoliticsArticles, setDbPoliticsArticles] = useState<Article[]>([]);
+export default function PoliticsSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
+  const [dbPoliticsArticles, setDbPoliticsArticles] = useState<Article[]>(initialArticles || []);
 
   useEffect(() => {
+    if (initialArticles && initialArticles.length >= 3) return;
     getPublicArticles({ categorySlug: 'politics', limit: 12 }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
         setDbPoliticsArticles(res.articles);
       }
     });
-  }, []);
+  }, [initialArticles]);
 
   const top3 = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];

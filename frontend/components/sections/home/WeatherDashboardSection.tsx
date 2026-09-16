@@ -29,61 +29,23 @@ export default function WeatherDashboardSection({ language }: { language: Langua
 
   useEffect(() => {
     const fetchLiveData = async () => {
-      const cities = ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot'];
-      const updatedW = { ...weatherData };
-      const updatedA = { ...aqiData };
-
-      await Promise.all(
-        cities.map(async (city) => {
-          const coords = CITY_COORDS[city];
-          if (!coords) return;
-
-          try {
-            const wRes = await fetch(
-              `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m`
-            );
-            if (wRes.ok) {
-              const wJson = await wRes.json();
-              if (wJson?.current) {
-                const c = wJson.current;
-                const parsed = parseWmoCode(c.weather_code);
-                updatedW[city] = {
-                  temp: String(Math.round(c.temperature_2m * 10) / 10),
-                  desc: parsed.desc,
-                  descGu: parsed.descGu,
-                  icon: parsed.icon,
-                  humidity: `${c.relative_humidity_2m}%`,
-                  wind: `${Math.round(c.wind_speed_10m)} km/h`,
-                };
-              }
+      try {
+        const res = await fetch('/api/weather-multi');
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.success && json?.data) {
+            const { weatherData: wData, aqiData: aData } = json.data;
+            if (wData && Object.keys(wData).length > 0) {
+              setWeatherData((prev) => ({ ...prev, ...wData }));
             }
-          } catch { }
-
-          try {
-            const aRes = await fetch(
-              `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${coords.lat}&longitude=${coords.lon}&current=us_aqi,pm10,pm2_5`
-            );
-            if (aRes.ok) {
-              const aJson = await aRes.json();
-              if (aJson?.current) {
-                const c = aJson.current;
-                const val = Math.round(c.us_aqi || 65);
-                const parsedAqi = parseAqi(val);
-                updatedA[city] = {
-                  value: val,
-                  label: parsedAqi.label,
-                  labelGu: parsedAqi.labelGu,
-                  pm25: Math.round(c.pm2_5 || 22),
-                  pm10: Math.round(c.pm10 || 45),
-                };
-              }
+            if (aData && Object.keys(aData).length > 0) {
+              setAqiData((prev) => ({ ...prev, ...aData }));
             }
-          } catch { }
-        })
-      );
-
-      setWeatherData(updatedW);
-      setAqiData(updatedA);
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch multi-city weather:', err);
+      }
 
       const now = new Date();
       const formatted = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;

@@ -17,16 +17,22 @@ import { DEMO_IMAGES, getMockTime, getMockTitle, getMockRelativeTime, toGuLocal 
 export default function CrimeSection({
   language,
   view = 'all',
+  initialArticles,
+  initialWeather,
+  initialAstrology,
 }: {
   language: Language;
   view?: 'content' | 'sidebar' | 'all';
+  initialArticles?: Article[];
+  initialWeather?: any;
+  initialAstrology?: ZodiacSign[];
 }) {
   const [slideIdx, setSlideIdx] = useState(0);
   const [popularStartIndex, setPopularStartIndex] = useState(0);
   const [selectedZodiac, setSelectedZodiac] = useState<ZodiacSign | null>(null);
-  const [astrologySigns, setAstrologySigns] = useState<ZodiacSign[]>(ZODIAC_SIGNS);
-  const [dbCrimeArticles, setDbCrimeArticles] = useState<Article[]>([]);
-  const [weatherData, setWeatherData] = useState<any>({
+  const [astrologySigns, setAstrologySigns] = useState<ZodiacSign[]>(initialAstrology || ZODIAC_SIGNS);
+  const [dbCrimeArticles, setDbCrimeArticles] = useState<Article[]>(initialArticles || []);
+  const [weatherData, setWeatherData] = useState<any>(initialWeather || {
     city: 'અમદાવાદ',
     cityEn: 'Ahmedabad',
     temp: 32,
@@ -37,22 +43,28 @@ export default function CrimeSection({
   });
 
   useEffect(() => {
-    getPublicArticles({ categorySlug: 'crime', limit: 25 }).then((crimeRes) => {
-      if (crimeRes && crimeRes.articles && crimeRes.articles.length > 0) {
-        setDbCrimeArticles(crimeRes.articles);
-      }
-    });
-    getPublicWeather('ahmedabad').then((wRes) => {
-      if (wRes) {
-        setWeatherData(wRes);
-      }
-    });
-    getPublicAstrology().then((signs) => {
-      if (Array.isArray(signs) && signs.length > 0) {
-        setAstrologySigns(signs);
-      }
-    });
-  }, []);
+    if (!initialArticles || initialArticles.length < 3) {
+      getPublicArticles({ categorySlug: 'crime', limit: 25 }).then((crimeRes) => {
+        if (crimeRes && crimeRes.articles && crimeRes.articles.length > 0) {
+          setDbCrimeArticles(crimeRes.articles);
+        }
+      });
+    }
+    if (!initialWeather) {
+      getPublicWeather('ahmedabad').then((wRes) => {
+        if (wRes) {
+          setWeatherData(wRes);
+        }
+      });
+    }
+    if (!initialAstrology) {
+      getPublicAstrology().then((signs) => {
+        if (Array.isArray(signs) && signs.length > 0) {
+          setAstrologySigns(signs);
+        }
+      });
+    }
+  }, [initialArticles, initialWeather, initialAstrology]);
 
   const mockSlides = [
     {
@@ -383,7 +395,7 @@ export default function CrimeSection({
           const subArt = list[subIdx] || list[(c * 3 + s) % list.length];
           if (subArt) {
             subs.push({
-              id: subArt.id,
+              id: `${subArt.id}-c${c}-s${s}`,
               slug: subArt.slug,
               image: subArt.image || DEMO_IMAGES[s % DEMO_IMAGES.length],
               title: getLocalized(language, { en: subArt.title, gu: subArt.titleGu || subArt.title, hi: (subArt as any).titleHi || subArt.title }),
@@ -506,9 +518,9 @@ export default function CrimeSection({
         {/* List side updates (Text lists only, no images, matching the screen!) */}
         <div className="flex flex-col min-w-0 md:border-l md:border-border/60 md:pl-6 gap-0">
 
-          {rightList.map((item) => (
+          {rightList.map((item, idx) => (
             <Link
-              key={item.id}
+              key={`${item.id}-${idx}`}
               href={`/news/${item.slug}`}
               className="group flex flex-col py-2 border-b border-border/40 last:border-b-0"
             >
@@ -554,9 +566,9 @@ export default function CrimeSection({
             </Link>
 
             <div className="flex flex-col divide-y divide-border/40 border-t border-border/40 mt-1">
-              {col.subs.slice(0, 3).map((sub) => (
+              {col.subs.slice(0, 3).map((sub, sIdx) => (
                 <Link
-                  key={sub.id}
+                  key={`${col.colId}-${sub.id}-${sIdx}`}
                   href={`/news/${sub.slug}`}
                   className="group py-3 flex items-center gap-3"
                 >

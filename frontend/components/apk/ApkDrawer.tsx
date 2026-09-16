@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { X, Globe, Sun, Moon } from 'lucide-react';
+import { X, Globe, Sun, Moon, User, Heart } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
+import UserAuthModal from '@/components/ui/UserAuthModal';
 import gpLogo from '../../public/Gujarat Post Logo.gif';
 
 interface ApkDrawerProps {
@@ -132,7 +133,21 @@ const APK_SOCIAL_LINKS = [
 
 export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
   const pathname = usePathname();
-  const { language, setLanguage, apkTheme, toggleApkTheme } = useApp();
+  const { language, setLanguage, apkTheme, toggleApkTheme, openSupportModal } = useApp();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const email = localStorage.getItem('gp_user_email');
+      const isVerified = localStorage.getItem('gp_user_verified') === 'true';
+      if (email && isVerified) {
+        setUserEmail(email);
+      } else {
+        setUserEmail(null);
+      }
+    }
+  }, [isOpen, authModalOpen]);
 
   // Lock body scroll and prevent background scrolling while drawer is open
   useEffect(() => {
@@ -193,6 +208,40 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
             aria-label="Close menu"
           >
             <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* User Account & Support Us Quick Action Bar */}
+        <div className="p-3 bg-red-50/70 dark:bg-red-950/20 border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-2">
+          {/* User Sign In / Profile Button */}
+          <button
+            type="button"
+            onClick={() => setAuthModalOpen(true)}
+            className="py-2 px-2.5 rounded-xl bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 flex items-center gap-2 hover:border-[#B3121B]/40 active:scale-95 transition shadow-2xs cursor-pointer overflow-hidden"
+          >
+            <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/40 text-[#B3121B] flex items-center justify-center shrink-0">
+              <User className="w-3.5 h-3.5" />
+            </div>
+            <div className="flex flex-col text-left min-w-0">
+              <span className="text-[11px] font-black leading-none truncate">
+                {userEmail ? 'મારું એકાઉન્ટ' : (language === 'hi' ? 'साइन इन करें' : language === 'en' ? 'Sign In' : 'સાઇન ઇન')}
+              </span>
+              <span className="text-[9px] text-gray-400 font-semibold truncate leading-tight mt-0.5">
+                {userEmail || (language === 'hi' ? 'ईमेल से लॉगिन' : language === 'en' ? 'Email Login' : 'ઇમેઇલ લોગિન')}
+              </span>
+            </div>
+          </button>
+
+          {/* Support Us Button */}
+          <button
+            type="button"
+            onClick={() => {
+              openSupportModal();
+            }}
+            className="py-2 px-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white flex items-center justify-center gap-1.5 font-black text-xs shadow-md active:scale-95 transition cursor-pointer"
+          >
+            <Heart className="w-4 h-4 fill-rose-100 text-rose-100 animate-pulse shrink-0" />
+            <span className="truncate">{language === 'hi' ? 'सपोर्ट करें' : language === 'en' ? 'Support Us' : 'સપોર્ટ કરો'}</span>
           </button>
         </div>
 
@@ -335,6 +384,13 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
           © 2026 Gujarat Post. All rights reserved.
         </div>
       </div>
+
+      {/* User Login / Email Sign-In Modal */}
+      <UserAuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        language={language}
+      />
     </div>
   );
 }

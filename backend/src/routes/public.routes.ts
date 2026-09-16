@@ -18,18 +18,14 @@ import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../service
 
 const router = Router();
 
-const publicCache = new Map<string, { timestamp: number; payload: any }>();
-const MAX_PUBLIC_CACHE_ENTRIES = 500;
-
-// Bounded Search Cache for public article search (TTL: 60s, max 200 entries)
-const searchCache = new Map<string, { timestamp: number; payload: any }>();
-const MAX_SEARCH_CACHE_ENTRIES = 200;
-const SEARCH_CACHE_TTL_MS = 60 * 1000;
-
-export function clearPublicRoutesCache() {
-  publicCache.clear();
-  searchCache.clear();
-}
+import {
+  publicCache,
+  MAX_PUBLIC_CACHE_ENTRIES,
+  searchCache,
+  MAX_SEARCH_CACHE_ENTRIES,
+  SEARCH_CACHE_TTL_MS,
+  clearPublicRoutesCache,
+} from '../utils/publicCache.js';
 
 function getNormalizedSearchCacheKey(req: any): string {
   const q = ((req.query.query as string) || '').trim().toLowerCase().replace(/\s+/g, ' ');
@@ -55,6 +51,8 @@ function cacheResponse(ttlSeconds: number) {
     const ttlMs = isSearchQuery ? SEARCH_CACHE_TTL_MS : ttlSeconds * 1000;
     const maxEntries = isSearchQuery ? MAX_SEARCH_CACHE_ENTRIES : MAX_PUBLIC_CACHE_ENTRIES;
     const key = isSearchQuery ? getNormalizedSearchCacheKey(req) : (req.originalUrl || req.url);
+
+    res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=300`);
 
     const cached = targetCache.get(key);
     const now = Date.now();
@@ -178,7 +176,7 @@ router.get('/tributes', cacheResponse(60), TributeController.getPublicTributes);
  * GET /api/public/hero-settings
  * Get hero section settings and assigned articles in exact slot order
  */
-router.get('/hero-settings', HeroController.getHeroSettings);
+router.get('/hero-settings', cacheResponse(60), HeroController.getHeroSettings);
 
 /**
  * GET /api/public/reels
@@ -441,7 +439,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
  * GET /api/public/articles/:slug
  * Fetch single article details by slug or ID
  */
-router.get('/articles/:slug', async (req, res, next) => {
+router.get('/articles/:slug', cacheResponse(60), async (req, res, next) => {
   try {
     const { slug } = req.params;
     const now = new Date();
@@ -747,17 +745,11 @@ router.get('/market-rates', async (req, res) => {
 });
 
 let liveCenterCache: { data: any; timestamp: number } | null = null;
+let isLiveCenterUpdating = false;
 
-/**
- * GET /api/public/live-center
- * Fetch real live Stock Market, Fuel Prices, Exchange Rates, and Sports Scores via public APIs
- */
-router.get('/live-center', async (req, res) => {
-  const NOW = Date.now();
-  if (liveCenterCache && NOW - liveCenterCache.timestamp < 2 * 60 * 1000) {
-    return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
-  }
-
+async function fetchFreshLiveCenterData() {
+  if (isLiveCenterUpdating) return;
+  isLiveCenterUpdating = true;
   try {
     const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
 
@@ -840,11 +832,34 @@ router.get('/live-center', async (req, res) => {
       updatedAt: new Date().toISOString(),
     };
 
-    liveCenterCache = { data: payload, timestamp: NOW };
-    return sendSuccess(res, payload, 'Real live market and sports data retrieved via public APIs');
+    liveCenterCache = { data: payload, timestamp: Date.now() };
   } catch (err: any) {
-    return sendSuccess(res, null, 'Fallback live center data');
+    // Keep existing cache on fetch error if available
+  } finally {
+    isLiveCenterUpdating = false;
   }
+}
+
+/**
+ * GET /api/public/live-center
+ * Fetch real live Stock Market, Fuel Prices, Exchange Rates, and Sports Scores via public APIs
+ */
+router.get('/live-center', cacheResponse(120), async (req, res) => {
+  const NOW = Date.now();
+  if (liveCenterCache) {
+    const isStale = NOW - liveCenterCache.timestamp >= 2 * 60 * 1000;
+    if (isStale) {
+      fetchFreshLiveCenterData().catch(() => {});
+    }
+    return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
+  }
+
+  await fetchFreshLiveCenterData();
+  const freshCache = liveCenterCache as { data: any; timestamp: number } | null;
+  if (freshCache) {
+    return sendSuccess(res, freshCache.data, 'Real live market and sports data retrieved via public APIs');
+  }
+  return sendSuccess(res, null, 'Fallback live center data');
 });
 
 /**

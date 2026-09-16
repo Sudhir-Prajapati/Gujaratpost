@@ -146,6 +146,8 @@ model Post {
   @@index([isFeatured, status, createdAt])
   @@index([isBreaking, status, createdAt])
   @@index([status, views, createdAt])
+  @@index([status, articleNumber])
+  @@index([categoryId, status, articleNumber])
   @@map("posts")
 }
 

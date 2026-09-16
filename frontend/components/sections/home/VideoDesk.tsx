@@ -98,9 +98,12 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     }
   };
 
-  // Restrict VideoDesk to ONLY featured videos if featured videos exist in database/admin
-  const featuredOnly = (videos || []).filter(v => (v as any).isFeatured);
-  const sourcePool = featuredOnly.length > 0 ? featuredOnly : (videos || []);
+  // Prioritize featured videos first, but include ALL videos from database
+  const sourcePool = [...(videos || [])].sort((a, b) => {
+    const aFeat = (a as any).isFeatured ? 1 : 0;
+    const bFeat = (b as any).isFeatured ? 1 : 0;
+    return bFeat - aFeat;
+  });
 
   // Hard filter: exclude Shorts when showShorts=false (extra safety layer)
   const displayVideos = !showShorts
@@ -113,7 +116,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
 
   const featuredVideo = displayVideos[featuredIndex % displayVideos.length];
   // Filter out current featured video from sidebar list to avoid duplication
-  const sidebarVideos = displayVideos.filter((_, idx) => idx !== (featuredIndex % displayVideos.length)).slice(0, 15);
+  const sidebarVideos = displayVideos.filter((_, idx) => idx !== (featuredIndex % displayVideos.length)).slice(0, 30);
 
   if (onlyShorts) {
     const customShorts = [

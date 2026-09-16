@@ -10,7 +10,7 @@ import { getPublicCategories, getPublicArticles } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 /* ─── Entertainment · Tech · Health 3-Column Section ─────────────────── */
-export default function EntertainTechLifeSection({ language }: { language: Language }) {
+export default function EntertainTechLifeSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
   const [categories, setCategories] = useState<any[]>([]);
   const [categoryArticlesMap, setCategoryArticlesMap] = useState<Record<string, Article[]>>({});
   const [loading, setLoading] = useState(true);
@@ -47,8 +47,18 @@ export default function EntertainTechLifeSection({ language }: { language: Langu
 
         setCategories(finalCats);
 
-        // Fetch articles for each of the 3 target categories in parallel
+        // Fetch articles for each of the 3 target categories in parallel (skip if initialArticles has matching items)
         const articlePromises = finalCats.map(async (cat: any) => {
+          const targetSlug = (cat.slug || '').toLowerCase();
+          if (initialArticles && initialArticles.length > 0) {
+            const matched = initialArticles.filter((a: any) => {
+              const cSlug = (a.category?.slug || a.categorySlug || a.category || '').toLowerCase();
+              return cSlug === targetSlug || (targetSlug === 'manoranjan' && (cSlug === 'entertainment' || cSlug === 'manoranjan'));
+            });
+            if (matched.length >= 2) {
+              return { slug: cat.slug, articles: matched.slice(0, 4) };
+            }
+          }
           try {
             const res = await getPublicArticles({ categorySlug: cat.slug, limit: 4 });
             return { slug: cat.slug, articles: res.articles || [] };
@@ -67,7 +77,7 @@ export default function EntertainTechLifeSection({ language }: { language: Langu
       })
       .catch((err) => console.warn('Error loading 3-column dynamic section:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [initialArticles]);
 
   type DisplayItem = { id?: string; slug?: string; img: string; title: string; titleGu: string; age: string };
 

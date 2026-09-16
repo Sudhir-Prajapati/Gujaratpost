@@ -7,9 +7,10 @@ import { usePathname } from 'next/navigation';
 import {
   Search, ChevronDown, Home, MapPin, Video, Zap,
   AlertTriangle, Landmark, Briefcase, Trophy, Laptop, Sparkles, Check,
-  Sun, Moon
+  Sun, Moon, User
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
+import UserAuthModal from '@/components/ui/UserAuthModal';
 import gpLogo from '../../public/Gujarat Post Logo.gif';
 
 const CATEGORIES = [
@@ -29,6 +30,7 @@ export default function ApkHeader() {
   const pathname = usePathname();
   const { language, setLanguage, apkTheme, toggleApkTheme } = useApp();
   const [langMenuOpen, setLangMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const langMenuRef = useRef<HTMLDivElement | null>(null);
 
   // Smart scroll effect: Hide header on scroll down, reveal on scroll up
@@ -121,8 +123,19 @@ export default function ApkHeader() {
           </Link>
         </div>
 
-        {/* Right: Theme Toggle + Search + Language Selector */}
+        {/* Right: User Login + Theme Toggle + Search + Language Selector */}
         <div className="flex items-center gap-1.5 shrink-0">
+          {/* User Sign In / Profile Icon Button */}
+          <button
+            type="button"
+            onClick={() => setAuthModalOpen(true)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-black/25 hover:bg-black/40 border border-white/20 text-white active:scale-90 transition shadow-xs shrink-0 cursor-pointer"
+            title={language === 'hi' ? 'साइन इन करें' : language === 'en' ? 'Sign In' : 'સાઇન ઇન કરો'}
+            aria-label="User sign in"
+          >
+            <User className="w-4 h-4 text-white" />
+          </button>
+
           {/* Dark / Light Mode Toggle Button */}
           <button
             type="button"
@@ -290,6 +303,13 @@ export default function ApkHeader() {
           })}
         </div>
       )}
+
+      {/* User Login / Email Sign-In Modal */}
+      <UserAuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        language={language}
+      />
     </header>
   );
 }

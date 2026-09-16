@@ -7,6 +7,16 @@ import NewsDetailClient from "./NewsDetailClient";
 export const revalidate = 120;
 
 export async function generateStaticParams() {
+  try {
+    const res = await getPublicArticles({ limit: 50 });
+    if (res && Array.isArray(res.articles)) {
+      return res.articles.map((art: any) => ({
+        slug: art.slug,
+      }));
+    }
+  } catch (err) {
+    console.warn('Failed to pre-generate static params for news detail pages:', err);
+  }
   return [];
 }
 
@@ -55,13 +65,15 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
   // Dynamically fetch related articles and calculate smart relevance scores
   const categorySlug = (article.category || '').toLowerCase().replace(/\s+/g, '-');
-  const [catRes, fallbackRes] = await Promise.all([
+  const [catRes, fallbackRes, trendingRes] = await Promise.all([
     getPublicArticles({ categorySlug, limit: 20 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     getPublicArticles({ limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ isTrending: true, limit: 20 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const categoryArticles = catRes?.articles || [];
   const fallbackArticles = fallbackRes?.articles || [];
+  const trending = trendingRes?.articles || [];
 
   const currentTags = new Set([
     ...(article.tags || []),
@@ -116,9 +128,6 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
   scoredRelated.sort((a, b) => b.score - a.score);
 
   const related = scoredRelated.map((entry) => entry.item);
-
-  const trendingRes = await getPublicArticles({ isTrending: true, limit: 20 }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
-  const trending = trendingRes?.articles || [];
 
   const articleUrl = `${SITE_URL}/news/${article.slug}`;
   const structuredData = {

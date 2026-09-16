@@ -77,10 +77,11 @@ const mockFactCheckList = [
 ];
 
 /* --- Fact Check Section ("ફેક્ટ ચેક" Zone) ----------------------------- */
-export default function FactCheckSection({ language }: { language: Language }) {
-  const [factCheckArticles, setFactCheckArticles] = useState<Article[]>([]);
+export default function FactCheckSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
+  const [factCheckArticles, setFactCheckArticles] = useState<Article[]>(initialArticles || []);
 
   useEffect(() => {
+    if (initialArticles && initialArticles.length >= 3) return;
     getPublicArticles({ categorySlug: 'fact-check', limit: 9 }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
         setFactCheckArticles(res.articles);
@@ -92,7 +93,7 @@ export default function FactCheckSection({ language }: { language: Language }) {
         });
       }
     });
-  }, []);
+  }, [initialArticles]);
 
   const getStatusInfo = (art: any) => {
     const tagStr = (art.tagsGu?.[0] || art.tags?.[0] || art.titleGu || art.title || '').toLowerCase();

@@ -161,16 +161,17 @@ const mockWorldCards = [
 ];
 
 /* --- World Section ("વિશ્વ" Zone) ----------------------------- */
-export default function WorldSection({ language }: { language: Language }) {
-  const [dbWorldArticles, setDbWorldArticles] = useState<Article[]>([]);
+export default function WorldSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
+  const [dbWorldArticles, setDbWorldArticles] = useState<Article[]>(initialArticles || []);
 
   useEffect(() => {
+    if (initialArticles && initialArticles.length >= 3) return;
     getPublicArticles({ categorySlug: 'world', limit: 10 }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
         setDbWorldArticles(res.articles);
       }
     });
-  }, []);
+  }, [initialArticles]);
 
   const featured = useMemo(() => {
     if (dbWorldArticles.length > 0) {
