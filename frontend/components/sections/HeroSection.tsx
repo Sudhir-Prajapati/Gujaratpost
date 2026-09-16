@@ -837,12 +837,16 @@ export default function HeroSection({
   // Shows ONLY inside the installed Android APK (TWA).
   // Standard Desktop & Mobile Web Browsers render the standard portal below.
   if (isApk) {
-    if (isInitialLoading || !topStories.length || !articlesList.length) {
+    const feedArticles = articlesList.length > 0
+      ? articlesList
+      : (middleColumnPool.length > 0 ? middleColumnPool : uniqueTopStories);
+
+    if (isInitialLoading && feedArticles.length === 0) {
       return <ApkHomeSkeleton />;
     }
     return (
       <ApkHomeFeed
-        articles={articlesList}
+        articles={feedArticles}
         videos={videosList}
         categories={allCategoriesDB}
       />

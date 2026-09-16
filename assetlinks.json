@@ -1,8 +1,22 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "app.vercel.gujaratpost.twa",
-        "sha256_cert_fingerprints": ["0D:FF:AB:48:D8:9F:23:81:ED:87:B4:B0:38:46:58:DA:0B:38:5E:F9:7E:C7:F1:B1:EB:09:FE:B6:B9:AC:34:68"]
-      }
-    }]
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.gujaratpost.twa",
+      "sha256_cert_fingerprints": [
+        "0D:FF:AB:48:D8:9F:23:81:ED:87:B4:B0:38:46:58:DA:0B:38:5E:F9:7E:C7:F1:B1:EB:09:FE:B6:B9:AC:34:68"
+      ]
+    }
+  },
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.gujaratpost.app",
+      "sha256_cert_fingerprints": [
+        "0D:FF:AB:48:D8:9F:23:81:ED:87:B4:B0:38:46:58:DA:0B:38:5E:F9:7E:C7:F1:B1:EB:09:FE:B6:B9:AC:34:68"
+      ]
+    }
+  }
+]

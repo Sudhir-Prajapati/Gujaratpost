@@ -306,7 +306,7 @@ export class HeroController {
         }
 
         const formattedTrending = activeTrendingRes.map(formatPost);
-        const combinedTrending = [...formattedTrending, ...trendingNewsArticles];
+        const combinedTrending = [...trendingNewsArticles, ...formattedTrending];
         trendingNewsArticles = combinedTrending.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
 
         // Resolve Popular News (preserving order and fallback)

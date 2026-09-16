@@ -30,3 +30,9 @@ yarn-error.log*
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# Keystores & Signing Secrets
+*.jks
+*.keystore
+signing-key-info.txt
+local.properties
+

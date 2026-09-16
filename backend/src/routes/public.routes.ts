@@ -1138,4 +1138,25 @@ router.get('/download-pdf', async (req: any, res: any) => {
   }
 });
 
+router.get('/download-apk', (req, res) => {
+  const candidatePaths = [
+    path.resolve(process.cwd(), '..', 'frontend', 'public', 'GujaratPost.apk'),
+    path.resolve(process.cwd(), '..', 'GujaratPost.apk'),
+    path.resolve(process.cwd(), '..', '..', 'GujaratPost.apk'),
+  ];
+
+  for (const p of candidatePaths) {
+    if (fs.existsSync(p)) {
+      const stat = fs.statSync(p);
+      res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+      res.setHeader('Content-Disposition', 'attachment; filename="GujaratPost.apk"');
+      res.setHeader('Content-Length', stat.size);
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      return res.sendFile(p);
+    }
+  }
+
+  return res.status(404).json({ error: 'APK file not found' });
+});
+
 export default router;

@@ -25,7 +25,7 @@ const DEMO_CARD_IMAGES = [
 
 function getDistinctArticleImage(article: Article, index: number): string {
   const raw = (article as any).featuredImage || article.image || (article as any).thumbnail;
-  if (raw && typeof raw === 'string' && raw.trim() !== '') {
+  if (raw && typeof raw === 'string' && raw.trim() !== '' && !raw.includes('photo-1599930113854')) {
     return raw.trim();
   }
   return DEMO_CARD_IMAGES[index % DEMO_CARD_IMAGES.length];
