@@ -182,18 +182,18 @@ export default function RandomAdsSection() {
                   href={item1.link !== '#' ? item1.link : undefined}
                   target={item1.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col sm:flex-row gap-4 bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full sm:w-[45%] aspect-[4/3] shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item1.image}
                       alt={getTitle(item1)}
                       fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="flex flex-col justify-between min-w-0 flex-1 py-1">
+                  <div className="flex flex-col justify-between flex-1">
                     <div>
                       <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item1)}
@@ -222,18 +222,18 @@ export default function RandomAdsSection() {
                   href={item2.link !== '#' ? item2.link : undefined}
                   target={item2.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col sm:flex-row gap-4 bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full sm:w-[45%] aspect-[4/3] shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item2.image}
                       alt={getTitle(item2)}
                       fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="flex flex-col justify-between min-w-0 flex-1 py-1">
+                  <div className="flex flex-col justify-between flex-1">
                     <div>
                       <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item2)}
@@ -257,13 +257,13 @@ export default function RandomAdsSection() {
                   rel="noopener noreferrer"
                   className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-muted mb-3">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item3.image}
                       alt={getTitle(item3)}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
@@ -297,13 +297,13 @@ export default function RandomAdsSection() {
                   rel="noopener noreferrer"
                   className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-muted mb-3">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item4.image}
                       alt={getTitle(item4)}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
@@ -327,13 +327,13 @@ export default function RandomAdsSection() {
                   rel="noopener noreferrer"
                   className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full aspect-[16/10] overflow-hidden rounded-xl bg-muted mb-3">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item5.image}
                       alt={getTitle(item5)}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
@@ -358,18 +358,18 @@ export default function RandomAdsSection() {
                   href={item6.link !== '#' ? item6.link : undefined}
                   target={item6.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col sm:flex-row gap-4 bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full sm:w-[45%] aspect-[4/3] shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item6.image}
                       alt={getTitle(item6)}
                       fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="flex flex-col justify-between min-w-0 flex-1 py-1">
+                  <div className="flex flex-col justify-between flex-1">
                     <div>
                       <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item6)}
@@ -398,18 +398,18 @@ export default function RandomAdsSection() {
                   href={item7.link !== '#' ? item7.link : undefined}
                   target={item7.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col sm:flex-row gap-4 bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full sm:w-[45%] aspect-[4/3] shrink-0 overflow-hidden rounded-xl bg-muted">
+                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
                     <Image
                       src={item7.image}
                       alt={getTitle(item7)}
                       fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                      className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
-                  <div className="flex flex-col justify-between min-w-0 flex-1 py-1">
+                  <div className="flex flex-col justify-between flex-1">
                     <div>
                       <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item7)}

@@ -248,18 +248,19 @@ export default function ApkHomeFeed({
   // Section data slices
   const currentHero = heroArticles[activeSlide] || articles[0];
   const topNewsArticles = useMemo(() => articles.slice(5, 13), [articles]);
+  const mostReadArticles = useMemo(() => articles.slice(13, 17), [articles]);
   const feedVideos = useMemo(() => videos.slice(0, 10), [videos]);
 
   const remainingArticles = useMemo(() => {
     const seen = new Set<string>();
-    // Exclude hero & top news articles so they aren't repeated in the feed
-    articles.slice(0, 13).forEach((a) => {
+    // Exclude hero, top news, and most read articles so they aren't repeated in the feed
+    articles.slice(0, 17).forEach((a) => {
       if (a?.id) seen.add(String(a.id));
       if (a?.slug) seen.add(String(a.slug));
     });
 
     const list: Article[] = [];
-    const candidates = [...articles.slice(13), ...extraArticles];
+    const candidates = [...articles.slice(17), ...extraArticles];
     for (const art of candidates) {
       if (!art) continue;
       const key = String(art.id || art.slug || '');
@@ -272,9 +273,10 @@ export default function ApkHomeFeed({
 
   // Dynamic UI labels based on active language
   const topNewsTitle = language === 'hi' ? 'टॉप समाचार' : language === 'en' ? 'Top News' : 'ટોપ સમાચાર';
+  const mostReadTitle = language === 'hi' ? 'सबसे ज्यादा पढ़े गए' : language === 'en' ? 'Most Read' : 'સૌથી વધુ વંચાયેલા';
   const viewAllText = language === 'hi' ? 'सभी देखें' : language === 'en' ? 'View All' : 'બધા જુઓ';
   const videosTitle = language === 'hi' ? 'वीडियो' : language === 'en' ? 'VIDEOS' : 'વીડિયો';
-  const latestFeedTitle = language === 'hi' ? 'ताज़ा समाचार फ़ीड' : language === 'en' ? 'Latest News Feed' : 'તાજા સમાચાર ફિડ';
+  const latestFeedTitle = language === 'hi' ? 'તાज़ा સમાચાર फ़ीड' : language === 'en' ? 'Latest News Feed' : 'તાજા સમાચાર ફિડ';
   const latestBadgeText = language === 'hi' ? 'नवीनतम' : language === 'en' ? 'Latest' : 'નવીનતમ';
   const loadingMoreText = language === 'hi' ? 'और समाचार लोड हो रहे हैं...' : language === 'en' ? 'Loading more news...' : 'વધુ સમાચાર લોડ થઈ રહ્યા છે...';
   const allLoadedText = language === 'hi' ? '— सभी समाचार लोड हो गए —' : language === 'en' ? '— All news loaded —' : '— તમામ સમાચાર લોડ થઈ ગયા —';
@@ -508,6 +510,49 @@ export default function ApkHomeFeed({
                 </div>
               );
             })}
+          </div>
+        </div>
+      )}
+
+      {/* ── 2.7. "સૌથી વધુ વંચાયેલા" (MOST READ) SECTION ───────────── */}
+      {mostReadArticles.length > 0 && (
+        <div className="my-2 px-3.5">
+          <div className="py-1.5 flex items-center justify-between">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#B3121B]" />
+              <h3 className="font-black text-[15px] text-gray-900 dark:text-gray-100 tracking-tight">
+                {mostReadTitle}
+              </h3>
+            </div>
+            <Link
+              href="/category/trending"
+              className="text-xs font-bold text-[#B3121B] hover:text-[#9B0F17] flex items-center gap-0.5"
+            >
+              <span>{viewAllText}</span>
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          <div className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-200/90 dark:border-gray-800 shadow-xs divide-y divide-gray-100 dark:divide-gray-800/80 overflow-hidden">
+            {mostReadArticles.map((art, idx) => (
+              <Link
+                key={`apk-most-read-${art.id || idx}`}
+                href={`/news/${art.slug || art.id}`}
+                className="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition active:bg-gray-100"
+              >
+                <span className="font-serif font-black text-xl text-[#B3121B] w-5 shrink-0 text-center select-none">
+                  {idx + 1}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-[13px] leading-snug text-gray-900 dark:text-gray-100 line-clamp-2">
+                    <AutoArticleTitle article={art} language={language} />
+                  </h4>
+                  <span className="text-[10.5px] text-gray-400 dark:text-gray-500 font-medium mt-0.5 block">
+                    <AutoTranslateString text={art.category || 'સમાચાર'} language={language} />
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}

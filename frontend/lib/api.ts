@@ -451,9 +451,13 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
 /**
  * Fetch photo gallery items from Express Backend API
  */
-export async function getPublicGallery(): Promise<any[]> {
+export async function getPublicGallery(params?: { limit?: number; page?: number }): Promise<any[]> {
   try {
-    const url = `${API_BASE_URL}/gallery`;
+    const query = new URLSearchParams();
+    if (params?.limit) query.set('limit', String(params.limit));
+    if (params?.page) query.set('page', String(params.page));
+    const qs = query.toString();
+    const url = `${API_BASE_URL}/gallery${qs ? `?${qs}` : ''}`;
     const json = await fetchCachedJson<any>(url, 60 * 1000);
     if (json?.success && json.data?.photos && json.data.photos.length > 0) {
       return json.data.photos;
@@ -465,6 +469,25 @@ export async function getPublicGallery(): Promise<any[]> {
   }
 
   return PHOTOS;
+}
+
+/**
+ * Fetch single photo gallery item from Express Backend API
+ */
+export async function getPublicGalleryPhoto(id: string): Promise<any | null> {
+  try {
+    const url = `${API_BASE_URL}/gallery/${encodeURIComponent(id)}`;
+    const json = await fetchCachedJson<any>(url, 60 * 1000);
+    if (json?.success && json.data?.photo) {
+      return json.data.photo;
+    }
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for single photo:', error?.message || error);
+    }
+  }
+
+  return null;
 }
 
 /**

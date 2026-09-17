@@ -1,11 +1,42 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Camera } from 'lucide-react';
 import { PHOTOS, getLocalized } from '@/data';
 import { useApp } from '@/components/AppProvider';
+
+const FALLBACK_NEWS_IMAGES = [
+  'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
+];
+
+function PhotoCardImage({ src: rawSrc, alt, index }: { src?: string; alt: string; index: number }) {
+  const fallback = FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length];
+  const [src, setSrc] = useState(rawSrc || fallback);
+
+  useEffect(() => {
+    setSrc(rawSrc || fallback);
+  }, [rawSrc, fallback]);
+
+  return (
+    <Image 
+      src={src} 
+      alt={alt} 
+      fill 
+      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" 
+      className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.08] group-hover:rotate-1" 
+      onError={() => setSrc(fallback)}
+    />
+  );
+}
 
 interface PhotosClientProps {
   initialPhotos: any[];
@@ -68,12 +99,10 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
               href={`/photos/${photo.id}`} 
               className={`group relative block w-full overflow-hidden rounded-2xl shadow-md border border-border/10 bg-card aspect-[16/10.5] md:aspect-auto transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-[#B3121B]/12 hover:border-[#B3121B]/35 ${getGridClasses(index)}`}
             >
-              <Image 
+              <PhotoCardImage 
                 src={photo.src} 
                 alt={photo.alt || 'Gallery Photo'} 
-                fill 
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" 
-                className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.08] group-hover:rotate-1" 
+                index={index}
               />
               {/* Soft dark gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/5" />

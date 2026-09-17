@@ -47,7 +47,6 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             <h1 className="line-clamp-3 text-xl font-black leading-tight text-white md:text-4xl lg:text-5xl">{title}</h1>
             <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-semibold text-white/85">
               <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatTime(article.publishedAt)}</span>
-              <span>{formatDate(article.publishedAt)}</span>
             </div>
           </div>
         </div>
@@ -80,10 +79,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
         <div className="min-w-0 flex-1">
           <span className="cat-badge mb-1" style={{ background: categoryColor }}>{category}</span>
           <h3 className="line-clamp-2 text-[15px] font-black leading-snug text-foreground">{title}</h3>
-          <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
-            <Clock className="h-3 w-3" />
-            <span>{formatDate(article.publishedAt)}</span>
-          </div>
+
         </div>
       </Link>
     );
@@ -97,7 +93,6 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
         </div>
         <div className="min-w-0">
           <p className="line-clamp-2 text-sm font-black leading-snug text-foreground">{title}</p>
-          <p className="mt-1 text-xs font-semibold text-muted-foreground">{formatDate(article.publishedAt)}</p>
         </div>
       </Link>
     );
@@ -132,11 +127,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           <h3 className="line-clamp-2 text-[13.5px] md:text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors mt-0.5 tracking-tight">
             {title}
           </h3>
-          <div className="mt-1.5 flex items-center gap-2 text-[10px] font-semibold text-muted-foreground">
-            <span>{relativeTime}</span>
-            <span>·</span>
-            <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5 text-muted-foreground/75" />{formatTime(article.publishedAt)}</span>
-          </div>
+
         </div>
       </Link>
     );
@@ -151,10 +142,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
       <div className="p-2">
         <span className="cat-badge mb-0.5" style={{ background: categoryColor, fontSize: '0.6rem', padding: '0.1rem 0.45rem' }}>{category}</span>
         <h3 className="line-clamp-2 text-[12px] font-black leading-snug text-foreground mt-0.5">{title}</h3>
-        <div className="mt-1 flex items-center justify-between text-[10px] font-semibold text-muted-foreground">
-          <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{formatDate(article.publishedAt)}</span>
-          <span>{formatTime(article.publishedAt)}</span>
-        </div>
+
       </div>
     </Link>
   );

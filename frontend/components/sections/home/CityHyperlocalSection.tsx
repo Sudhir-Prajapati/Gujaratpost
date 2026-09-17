@@ -7,6 +7,7 @@ import { Clock, Eye, ChevronRight, ChevronLeft, MapPin, Sparkles, TrendingUp, Fl
 import type { Article, Language } from '@/types';
 import { formatTime, getLocalized } from '@/data';
 import { getTrendingTopicHref } from '@/lib/utils';
+import { getPublicArticles } from '@/lib/api';
 import SidebarAdBanner from '@/components/ads/SidebarAdBanner';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
@@ -121,6 +122,55 @@ export default function CityHyperlocalSection({
 }) {
   const [slideIdx, setSlideIdx] = useState(0);
   const [activeTab, setActiveTab] = useState('અમદાવાદ');
+  const [fetchedCityArticles, setFetchedCityArticles] = useState<Record<string, Article[]>>({});
+
+  const citySlugMap: Record<string, string> = useMemo(() => ({
+    'અમદાવાદ': 'ahmedabad',
+    'સુરત': 'surat',
+    'વડોદરા': 'vadodara',
+    'રાજકોટ': 'rajkot',
+    'ગાંધીનગર': 'gandhinagar',
+    'અન્ય': 'gujarat',
+  }), []);
+
+  // Fetch dedicated articles for activeTab if not yet populated
+  useEffect(() => {
+    const slug = citySlugMap[activeTab];
+    if (!slug) return;
+    if (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length >= 8) return;
+
+    let isMounted = true;
+    getPublicArticles({ categorySlug: slug, limit: 12 }).then((res) => {
+      if (isMounted && res?.articles && res.articles.length > 0) {
+        setFetchedCityArticles((prev) => ({
+          ...prev,
+          [activeTab]: res.articles,
+        }));
+      }
+    }).catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, citySlugMap, fetchedCityArticles]);
+
+  // Pre-load all city tabs in parallel on mount so tab switching is instantaneous
+  useEffect(() => {
+    const tabs = ['અમદાવાદ', 'વડોદરા', 'સુરત', 'રાજકોટ', 'ગાંધીનગર', 'અન્ય'];
+    tabs.forEach((tab) => {
+      const slug = citySlugMap[tab];
+      if (slug) {
+        getPublicArticles({ categorySlug: slug, limit: 12 }).then((res) => {
+          if (res?.articles && res.articles.length > 0) {
+            setFetchedCityArticles((prev) => {
+              if (prev[tab] && prev[tab].length >= res.articles.length) return prev;
+              return { ...prev, [tab]: res.articles };
+            });
+          }
+        }).catch(() => {});
+      }
+    });
+  }, [citySlugMap]);
 
   // Handle tab change — reset slide index
   const handleTabChange = (tab: string) => {
@@ -808,19 +858,24 @@ export default function CityHyperlocalSection({
   };
 
 
-  const tabApiArticles = useMemo(() => getArticlesForTab(activeTab), [getArticlesForTab, activeTab]);
+  const tabApiArticles = useMemo(() => {
+    if (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length > 0) {
+      return fetchedCityArticles[activeTab];
+    }
+    return getArticlesForTab(activeTab);
+  }, [fetchedCityArticles, activeTab, getArticlesForTab]);
 
   const realSlides: SlideItem[] = useMemo(() => {
     return tabApiArticles.slice(0, 3).map((art: Article) => ({
       id: art.id,
       slug: art.slug,
-      image: art.image || '/assets/demo/1.jpg',
+      image: art.image || (art as any).featuredImage || '/assets/demo/1.jpg',
       titleGu: art.titleGu || art.title,
       title: art.title,
       titleHi: art.titleHi || art.title,
-      relativeTimeGu: formatTime(art.publishedAt),
-      relativeTime: formatTime(art.publishedAt),
-      relativeTimeHi: formatTime(art.publishedAt),
+      relativeTimeGu: formatTime(art.publishedAt || (art as any).createdAt),
+      relativeTime: formatTime(art.publishedAt || (art as any).createdAt),
+      relativeTimeHi: formatTime(art.publishedAt || (art as any).createdAt),
       categoryGu: getArtCategoryNameGu(art, activeTab),
       category: getArtCategoryNameEn(art, activeTab),
       categoryHi: (art as any).categoryHi || activeTab,
@@ -829,7 +884,9 @@ export default function CityHyperlocalSection({
       excerptGu: art.excerptGu || art.excerpt || art.title,
       excerpt: art.excerpt || art.title,
       excerptHi: art.excerptHi || art.excerpt || art.title,
-      tags: (art.tags as any) && (art.tags as any).length > 0 ? (art.tags as any) : [activeTab, 'સમાચાર', 'લાઇવ'],
+      tags: (art.tags as any) && (art.tags as any).length > 0
+        ? (art.tags as any).map((t: any) => typeof t === 'string' ? t : t.tag?.nameGu || t.tag?.name || t.name || t)
+        : [activeTab, 'સમાચાર', 'લાઇવ'],
     }));
   }, [tabApiArticles, activeTab]);
 
@@ -837,13 +894,13 @@ export default function CityHyperlocalSection({
     return tabApiArticles.slice(3, 8).map((art: Article) => ({
       id: art.id,
       slug: art.slug,
-      image: art.image || '/assets/demo/2.jpg',
+      image: art.image || (art as any).featuredImage || '/assets/demo/2.jpg',
       titleGu: art.titleGu || art.title,
       title: art.title,
       titleHi: art.titleHi || art.title,
-      relativeTimeGu: formatTime(art.publishedAt),
-      relativeTime: formatTime(art.publishedAt),
-      relativeTimeHi: formatTime(art.publishedAt),
+      relativeTimeGu: formatTime(art.publishedAt || (art as any).createdAt),
+      relativeTime: formatTime(art.publishedAt || (art as any).createdAt),
+      relativeTimeHi: formatTime(art.publishedAt || (art as any).createdAt),
       categoryGu: getArtCategoryNameGu(art, activeTab),
       category: getArtCategoryNameEn(art, activeTab),
       categoryHi: (art as any).categoryHi || activeTab,

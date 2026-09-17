@@ -193,10 +193,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
                 <h3 className="line-clamp-3 text-[11px] md:text-[11.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
                   <AutoArticleTitle article={article} language={language} />
                 </h3>
-                <div className="mt-2.5 pt-1.5 border-t border-border/40 flex items-center gap-1 text-[9px] font-bold text-muted-foreground/80">
-                  <Clock className="h-3 w-3 text-muted-foreground/50 shrink-0" />
-                  <span className="truncate">{formatDate(article.publishedAt)}</span>
-                </div>
+
               </div>
             </Link>
           ))}

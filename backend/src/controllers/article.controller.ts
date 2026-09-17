@@ -201,7 +201,31 @@ export class ArticleController {
       const [articles, total] = await Promise.all([
         prisma.post.findMany({
           where,
-          include: {
+          select: {
+            id: true,
+            slug: true,
+            articleNumber: true,
+            title: true,
+            titleGu: true,
+            titleHi: true,
+            excerpt: true,
+            excerptGu: true,
+            excerptHi: true,
+            featuredImage: true,
+            status: true,
+            scheduledAt: true,
+            authorId: true,
+            categoryId: true,
+            location: true,
+            readingTime: true,
+            priority: true,
+            isTrending: true,
+            isBreaking: true,
+            isFeatured: true,
+            views: true,
+            createdAt: true,
+            updatedAt: true,
+            language: true,
             category: {
               select: {
                 id: true,
@@ -218,8 +242,8 @@ export class ArticleController {
             tags: true,
           },
           orderBy: [
-            { articleNumber: 'desc' },
             { createdAt: 'desc' },
+            { articleNumber: 'desc' },
           ],
           skip,
           take: limit,

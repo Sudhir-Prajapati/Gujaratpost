@@ -37,7 +37,7 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
     }
   }, [section, initialAd]);
 
-  // Still loading — render nothing (silent)
+  // Still loading — render nothing (null matches on both SSR and client first render)
   if (loading) {
     return null;
   }

@@ -28,27 +28,20 @@ const CATEGORY_SYNONYMS: Record<string, string[]> = {
 
 /* ─── Dynamic Generic Category Section ─────────────────────────────────── */
 export default function DynamicCategorySection({ category, language, initialArticles }: { category: any; language: Language; initialArticles?: Article[] }) {
-  const [articles, setArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const catSlug = typeof category === 'string' ? category : (category?.slug || '');
 
-  useEffect(() => {
-    if (!catSlug) return;
-    setLoading(true);
+  const slugLower = catSlug.toLowerCase().trim();
+  const synonyms = CATEGORY_SYNONYMS[slugLower] || [slugLower];
+  const targetSlug = slugLower;
+  const targetName = (typeof category === 'object' ? (category?.name || '') : catSlug).toLowerCase().trim();
+  const targetGu = (typeof category === 'object' ? (category?.nameGu || '') : catSlug).toLowerCase().trim();
+  const searchTerms = useMemo(() => Array.from(new Set([targetSlug, targetName, targetGu, ...synonyms.map(s => s.toLowerCase())])).filter(Boolean), [targetSlug, targetName, targetGu, slugLower]);
 
-    const slugLower = catSlug.toLowerCase().trim();
-    const synonyms = CATEGORY_SYNONYMS[slugLower] || [slugLower];
-
-    const targetSlug = slugLower;
-    const targetName = (typeof category === 'object' ? (category?.name || '') : catSlug).toLowerCase().trim();
-    const targetGu = (typeof category === 'object' ? (category?.nameGu || '') : catSlug).toLowerCase().trim();
-    const searchTerms = Array.from(new Set([targetSlug, targetName, targetGu, ...synonyms.map(s => s.toLowerCase())])).filter(Boolean);
-
-    const filterFn = (art: any) => {
+  const filterFn = useMemo(() => {
+    return (art: any) => {
       const artCatSlug = (art.category?.slug || art.categorySlug || art.category || '').toLowerCase().trim();
       const artCatName = (art.category?.name || art.categoryName || '').toLowerCase().trim();
-      const artCatNameGu = (art.category?.nameGu || '').toLowerCase().trim();
+      const artCatNameGu = (art.category?.nameGu || art.categoryGu || '').toLowerCase().trim();
       const artCatId = art.category?.id || art.categoryId;
 
       const artTitle = (art.title || '').toLowerCase();
@@ -66,39 +59,34 @@ export default function DynamicCategorySection({ category, language, initialArti
         );
       });
     };
+  }, [searchTerms, category?.id]);
 
-    if (initialArticles && initialArticles.length > 0) {
-      const matched = initialArticles.filter(filterFn);
-      if (matched.length >= 3) {
-        const sortedMatched = [...matched].sort((a, b) => {
-          const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-          const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
-          return bTime - aTime;
-        });
-        setArticles(sortedMatched);
-        setLoading(false);
-        return;
-      }
+  const initialMatched = useMemo(() => {
+    if (!initialArticles || initialArticles.length === 0 || !catSlug) return [];
+    const matched = initialArticles.filter(filterFn);
+    return [...matched].sort((a, b) => {
+      const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+      const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+  }, [initialArticles, catSlug, filterFn]);
+
+  const [articles, setArticles] = useState<Article[]>(initialMatched);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!catSlug) return;
+    if (initialMatched.length >= 3) {
+      setArticles(initialMatched);
+      return;
     }
 
+    let isMounted = true;
+    setLoading(true);
+
     getPublicArticles({ categorySlug: catSlug, limit: 12 }).then((res1) => {
+      if (!isMounted) return;
       let combined = res1?.articles || [];
-      if (combined.length < 3 && synonyms.length > 1) {
-        getPublicArticles({ limit: 20 }).then((res2) => {
-          const combined2 = [...combined, ...(res2?.articles || [])];
-          const uniqueMap = new Map();
-          combined2.forEach(a => { if (a && a.id) uniqueMap.set(a.id, a); });
-          const categoryFiltered = Array.from(uniqueMap.values()).filter(filterFn);
-          const sorted = [...categoryFiltered].sort((a, b) => {
-            const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-            const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
-            return bTime - aTime;
-          });
-          setArticles(sorted);
-          setLoading(false);
-        });
-        return;
-      }
       const categoryFiltered = combined.filter(filterFn);
       const sorted = [...categoryFiltered].sort((a, b) => {
         const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
@@ -107,10 +95,12 @@ export default function DynamicCategorySection({ category, language, initialArti
       });
       setArticles(sorted);
       setLoading(false);
-    }).catch(() => setLoading(false));
-  }, [catSlug, initialArticles]);
+    }).catch(() => {
+      if (isMounted) setLoading(false);
+    });
 
-
+    return () => { isMounted = false; };
+  }, [catSlug, initialMatched, filterFn]);
 
   const catNameGu = typeof category === 'object' ? (category?.nameGu || category?.name || catSlug) : catSlug;
   const catNameHi = typeof category === 'object' ? (category?.nameHi || category?.name || catSlug) : catSlug;
@@ -118,41 +108,13 @@ export default function DynamicCategorySection({ category, language, initialArti
 
   const categoryTitle = language === 'gu' ? catNameGu : (language === 'hi' ? catNameHi : catNameEn);
 
-  if (loading) {
-    return (
-      <section className="mx-auto max-w-screen-xl px-4 mt-10 animate-pulse">
-        <div className="h-8 w-48 rounded bg-muted/60 mb-6" />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 h-64 rounded-xl bg-muted/30" />
-          <div className="lg:col-span-5 h-64 rounded-xl bg-muted/30" />
-        </div>
-      </section>
-    );
+  // Return null if still loading or if no articles exist — prevents layout shift and skeleton flicker
+  if (loading && articles.length === 0) {
+    return null;
   }
 
   if (articles.length === 0) {
-    return (
-      <section className="mx-auto max-w-screen-xl px-4 mt-10">
-        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4 select-none">
-          <span className="bg-[#B3121B] text-white px-5 py-2 text-[16px] md:text-[18px] font-black rounded-lg leading-none tracking-tight">
-            {categoryTitle}
-          </span>
-          <Link
-            href={`/category/${catSlug}`}
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
-          >
-            {language === 'gu' ? 'બધા જુઓ →' : 'View All →'}
-          </Link>
-        </div>
-        <div className="p-8 rounded-xl border border-dashed border-border/80 text-center text-muted-foreground bg-muted/10">
-          <p className="text-sm font-extrabold">
-            {language === 'gu'
-              ? `"${categoryTitle}" કેટેગરીમાં ટૂંક સમયમાં નવા સમાચાર મૂકવામાં આવશે`
-              : `Latest articles for "${categoryTitle}" will be published soon`}
-          </p>
-        </div>
-      </section>
-    );
+    return null;
   }
 
   const lead = articles[0]; // FIRST COME LATEST UPLOADED ARTICLE
@@ -200,10 +162,7 @@ export default function DynamicCategorySection({ category, language, initialArti
               <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed font-medium">
                 <AutoArticleExcerpt article={lead} language={language} />
               </p>
-              <div className="flex items-center gap-2 pt-2 text-xs text-muted-foreground font-semibold border-t border-border/40">
-                <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                <span>{formatDate(lead.publishedAt || (lead as any).createdAt, language)}</span>
-              </div>
+
             </div>
           </Link>
         </div>
@@ -234,10 +193,7 @@ export default function DynamicCategorySection({ category, language, initialArti
                   <p className="text-xs md:text-sm text-muted-foreground mt-1.5 line-clamp-2 font-medium">
                     <AutoArticleExcerpt article={lead} language={language} />
                   </p>
-                  <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground font-semibold">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                    <span>{formatDate(lead.publishedAt || (lead as any).createdAt, language)}</span>
-                  </div>
+
                 </div>
               </Link>
             </div>
@@ -262,10 +218,7 @@ export default function DynamicCategorySection({ category, language, initialArti
                   <h4 className="text-[13px] font-extrabold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                     <AutoArticleTitle article={art} language={language} />
                   </h4>
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-semibold mt-1">
-                    <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                    <span>{formatDate(art.publishedAt || (art as any).createdAt, language)}</span>
-                  </div>
+
                 </div>
               </Link>
             ))}

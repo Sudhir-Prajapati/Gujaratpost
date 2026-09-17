@@ -185,6 +185,22 @@ router.get('/hero-settings', cacheResponse(60), HeroController.getHeroSettings);
 router.get('/reels', cacheResponse(60), InstagramReelController.getAllReels);
 
 
+const CATEGORY_ALIASES: Record<string, string> = {
+  india: 'national',
+  desh: 'national',
+  bharat: 'national',
+  state: 'gujarat',
+  'state-news': 'gujarat',
+  factcheck: 'fact-check',
+  'fact check': 'fact-check',
+  othercities: 'other-cities',
+  international: 'world',
+  'web-stories': 'webstory',
+  webstories: 'webstory',
+  rain: 'weather',
+  varsad: 'weather',
+};
+
 /**
  * GET /api/public/articles
  * Fetch articles list directly from MySQL database with optional filters
@@ -209,36 +225,53 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         { status: 'PUBLISHED' },
         { status: 'SCHEDULED', scheduledAt: { lte: now } }
       ],
-      AND: [
-        {
-          OR: [
-            { scheduledAt: null },
-            { scheduledAt: { lte: now } }
-          ]
-        }
-      ],
     };
 
     if (query) {
       const cleanQuery = query.replace(/^#/, '').trim();
       const numQuery = parseInt(cleanQuery, 10);
-      where.AND.push({
-        OR: [
-          { title: { contains: cleanQuery } },
-          { titleGu: { contains: cleanQuery } },
-          { titleHi: { contains: cleanQuery } },
-          { excerpt: { contains: cleanQuery } },
-          { excerptGu: { contains: cleanQuery } },
-          { excerptHi: { contains: cleanQuery } },
-          { content: { contains: cleanQuery } },
-          { contentGu: { contains: cleanQuery } },
-          { contentHi: { contains: cleanQuery } },
-          { location: { contains: cleanQuery } },
-          { tags: { some: { tag: { name: { contains: cleanQuery } } } } },
-          { tags: { some: { tag: { nameGu: { contains: cleanQuery } } } } },
-          ...(!isNaN(numQuery) && numQuery > 0 ? [{ articleNumber: numQuery }] : []),
-        ],
+
+      const matchingTags = await prisma.tag.findMany({
+        where: {
+          OR: [
+            { name: { contains: cleanQuery } },
+            { nameGu: { contains: cleanQuery } },
+            { slug: { contains: cleanQuery } },
+          ],
+        },
+        select: { id: true },
+        take: 20,
       });
+
+      let tagPostIds: string[] = [];
+      if (matchingTags.length > 0) {
+        const postTags = await prisma.postTag.findMany({
+          where: { tagId: { in: matchingTags.map((t) => t.id) } },
+          select: { postId: true },
+          take: 200,
+        });
+        tagPostIds = postTags.map((pt) => pt.postId);
+      }
+
+      const orConditions: any[] = [
+        { title: { contains: cleanQuery } },
+        { titleGu: { contains: cleanQuery } },
+        { titleHi: { contains: cleanQuery } },
+        { excerpt: { contains: cleanQuery } },
+        { excerptGu: { contains: cleanQuery } },
+        { location: { contains: cleanQuery } },
+      ];
+
+      if (tagPostIds.length > 0) {
+        orConditions.push({ id: { in: tagPostIds } });
+      }
+
+      if (!isNaN(numQuery) && numQuery > 0) {
+        orConditions.push({ articleNumber: numQuery });
+      }
+
+      if (!where.AND) where.AND = [];
+      where.AND.push({ OR: orConditions });
     }
 
     const locationParam = (req.query.location as string) || '';
@@ -248,47 +281,64 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     }
 
     if (categorySlug) {
-      const slugLower = categorySlug.toLowerCase().trim();
+      let slugLower = categorySlug.toLowerCase().trim();
+      if (CATEGORY_ALIASES[slugLower]) {
+        slugLower = CATEGORY_ALIASES[slugLower];
+      }
+
       if (slugLower === 'other-cities' || slugLower === 'othercities') {
+        const otherCitiesCats = await prisma.category.findMany({
+          where: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } },
+          select: { id: true },
+        });
+        if (!where.AND) where.AND = [];
         where.AND.push({
           OR: [
-            { category: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } } },
+            { categoryId: { in: otherCitiesCats.map((c) => c.id) } },
             { location: { notIn: ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'] } },
           ],
         });
       } else {
-        where.AND.push({
-          OR: [
-            {
-              category: {
-                OR: [
-                  { slug: slugLower },
-                  { name: categorySlug },
-                  { nameGu: categorySlug },
-                ],
-              },
-            },
-            { location: { contains: slugLower } },
-            {
-              tags: {
-                some: {
-                  tag: {
-                    OR: [
-                      { slug: slugLower },
-                      { name: categorySlug },
-                      { nameGu: categorySlug },
-                    ],
-                  },
-                },
-              },
-            },
-          ],
+        // 1. Direct Category check (indexed lookup)
+        const category = await prisma.category.findFirst({
+          where: {
+            OR: [
+              { slug: slugLower },
+              { name: categorySlug },
+              { nameGu: categorySlug },
+            ],
+          },
+          select: { id: true },
         });
-      }
-    }
 
-    if (where.AND.length === 0) {
-      delete where.AND;
+        if (category) {
+          where.categoryId = category.id;
+        } else {
+          // 2. Direct Tag check (e.g. topic/tag clicked)
+          const tag = await prisma.tag.findFirst({
+            where: {
+              OR: [
+                { slug: slugLower },
+                { name: categorySlug },
+                { nameGu: categorySlug },
+              ],
+            },
+            select: { id: true },
+          });
+
+          if (tag) {
+            const postTags = await prisma.postTag.findMany({
+              where: { tagId: tag.id },
+              select: { postId: true },
+              take: 200,
+            });
+            where.id = { in: postTags.map((pt) => pt.postId) };
+          } else {
+            // 3. Fallback to location match
+            where.location = { contains: slugLower };
+          }
+        }
+      }
     }
 
     if (isTrending) where.isTrending = true;
@@ -298,19 +348,21 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
     const orderByClause: any = (sortParam === 'latest')
-      ? [{ articleNumber: 'desc' }, { createdAt: 'desc' }]
+      ? [{ articleNumber: 'desc' }]
+      : (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
+      ? [{ views: 'desc' }, { articleNumber: 'desc' }]
       : isFeatured
       ? [{ createdAt: 'desc' }]
       : [
         { isFeatured: 'desc' },
         { articleNumber: 'desc' },
-        { createdAt: 'desc' },
-        { priority: 'desc' },
       ];
 
-    // Phase 1 optimisation: content fields (content, contentGu, contentHi) are NOT
+    // Optimisation: content fields (content, contentGu, contentHi) are NOT
     // included in list responses — they are large @db.Text columns that article cards
     // never display. They are still returned by the single-article detail endpoint.
+    // Excluding them prevents MySQL from allocating massive temporary filesort tables
+    // on disk (/var/lib/mysql/temp), eliminating "OS errno 28 - No space left on device".
     const publicArticleSelect = {
       id: true,
       slug: true,
@@ -322,9 +374,6 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       excerpt: true,
       excerptGu: true,
       excerptHi: true,
-      content: true,
-      contentGu: true,
-      contentHi: true,
       featuredImage: true,
       status: true,
       scheduledAt: true,
@@ -357,8 +406,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       ])
     );
 
-    // Fallback: If query returned 0 articles (e.g. strict location or new category), fallback to latest published articles
-    if (posts.length === 0) {
+    // Fallback: If query returned 0 articles (only for general feed, never for specific category or search query)
+    if (posts.length === 0 && !categorySlug && !query) {
       const fallbackWhere: any = {
         OR: [
           { status: 'PUBLISHED' },
@@ -369,7 +418,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         prisma.post.findMany({
           where: fallbackWhere,
           select: publicArticleSelect,
-          orderBy: [{ createdAt: 'desc' }],
+          orderBy: [{ articleNumber: 'desc' }],
           take: limit,
         })
       );
@@ -652,6 +701,12 @@ router.get('/videos', cacheResponse(60), async (req, res, next) => {
  * Fetch photo gallery photos
  */
 router.get('/gallery', cacheResponse(60), GalleryController.getAllPhotos);
+
+/**
+ * GET /api/public/gallery/:id
+ * Fetch single gallery photo by ID
+ */
+router.get('/gallery/:id', cacheResponse(60), GalleryController.getPhotoById);
 
 /**
  * GET /api/public/stories

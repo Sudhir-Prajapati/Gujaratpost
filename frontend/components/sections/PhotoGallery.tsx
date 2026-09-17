@@ -12,6 +12,17 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 const CATS = ['TRAVEL', 'SPORTS', 'FESTIVAL', 'CITY', 'CULTURE', 'POLITICS', 'NATURE', 'LIFESTYLE', 'TECH'];
 
 /* ─── Loading Skeleton ────────────────────────────────────────────────────── */
+const FALLBACK_NEWS_IMAGES = [
+  'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
+];
+
 function GallerySkeleton() {
   return (
     <section className="py-6 bg-background select-none">
@@ -24,6 +35,27 @@ function GallerySkeleton() {
         </div>
       </div>
     </section>
+  );
+}
+
+function SafeGalleryImage({ src: initialSrc, alt, index }: { src: string; alt: string; index: number }) {
+  const fallback = FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length];
+  const [src, setSrc] = useState(initialSrc || fallback);
+
+  useEffect(() => {
+    setSrc(initialSrc || fallback);
+  }, [initialSrc, fallback]);
+
+  return (
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(max-width: 768px) 100vw, 280px"
+      quality={90}
+      className="object-cover transition-transform duration-700 group-hover:scale-105"
+      onError={() => setSrc(fallback)}
+    />
   );
 }
 
@@ -170,14 +202,7 @@ export default function PhotoGallery() {
                   <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 animate-pulse" />
 
                   {/* Image */}
-                  <Image
-                    src={hqSrc(photo.src)}
-                    alt={photo.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 280px"
-                    quality={90}
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  <SafeGalleryImage src={hqSrc(photo.src)} alt={photo.alt} index={index} />
 
                   {/* Dark Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />

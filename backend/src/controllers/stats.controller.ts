@@ -16,6 +16,19 @@ export class StatsController {
         }
       };
 
+      const statsArticleSelect = {
+        id: true,
+        title: true,
+        titleGu: true,
+        slug: true,
+        status: true,
+        views: true,
+        createdAt: true,
+        updatedAt: true,
+        category: { select: { id: true, name: true, nameGu: true } },
+        author: { select: { id: true, name: true, nameGu: true } },
+      };
+
       const [
         totalArticles,
         publishedArticles,
@@ -43,10 +56,10 @@ export class StatsController {
         safeVal(() => prisma.galleryPhoto.count(), 0),
         safeVal(() => prisma.video.count(), 0),
         safeVal(() => prisma.session.count({ where: { expiresAt: { gt: new Date() } } }), 0),
-        safeVal(() => prisma.post.findMany({ where: { status: 'DRAFT' }, take: 5, orderBy: { updatedAt: 'desc' }, include: { category: true, author: true } }), []),
-        safeVal(() => prisma.post.findMany({ where: { status: 'IN_REVIEW' }, take: 5, orderBy: { updatedAt: 'desc' }, include: { category: true, author: true } }), []),
-        safeVal(() => prisma.post.findMany({ where: { status: 'PUBLISHED' }, take: 5, orderBy: [{ createdAt: 'desc' }, { articleNumber: 'desc' }], include: { category: true, author: true } }), []),
-        safeVal(() => prisma.post.findMany({ where: { isTrending: true }, take: 5, orderBy: { updatedAt: 'desc' }, include: { category: true, author: true } }), []),
+        safeVal(() => prisma.post.findMany({ where: { status: 'DRAFT' }, take: 5, orderBy: { updatedAt: 'desc' }, select: statsArticleSelect }), []),
+        safeVal(() => prisma.post.findMany({ where: { status: 'IN_REVIEW' }, take: 5, orderBy: { updatedAt: 'desc' }, select: statsArticleSelect }), []),
+        safeVal(() => prisma.post.findMany({ where: { status: 'PUBLISHED' }, take: 5, orderBy: [{ articleNumber: 'desc' }], select: statsArticleSelect }), []),
+        safeVal(() => prisma.post.findMany({ where: { isTrending: true }, take: 5, orderBy: { updatedAt: 'desc' }, select: statsArticleSelect }), []),
         safeVal(() => prisma.user.findMany({ take: 5, orderBy: { updatedAt: 'desc' } }), []),
       ]);
 

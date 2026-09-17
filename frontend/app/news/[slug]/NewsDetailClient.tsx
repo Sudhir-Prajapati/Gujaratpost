@@ -1297,15 +1297,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                       {authorName}
                     </Link>
                   </div>
-                  <div className="text-[12px] text-[var(--ink-3)] mt-[2px]" suppressHydrationWarning>
-                    {language === 'gu' ? (
-                      <span suppressHydrationWarning>પ્રકાશિત: {formatDate(article.publishedAt)}, {formatTime(article.publishedAt)} · <span className="text-[var(--red)] font-bold" suppressHydrationWarning>અપડેટ: {getRelativeTime((article as any).updatedAt || article.publishedAt, 'gu')}</span></span>
-                    ) : language === 'hi' ? (
-                      <span suppressHydrationWarning>प्रकाशित: {formatDate(article.publishedAt)}, {formatTime(article.publishedAt)} · <span className="text-[var(--red)] font-bold" suppressHydrationWarning>अपडेट: {getRelativeTime((article as any).updatedAt || article.publishedAt, 'hi')}</span></span>
-                    ) : (
-<span suppressHydrationWarning>Published: {formatDate(article.publishedAt)}, {formatTime(article.publishedAt)} · <span className="text-[var(--red)] font-bold" suppressHydrationWarning>Updated: {getRelativeTime((article as any).updatedAt || article.publishedAt, 'en')}</span></span>
-                    )}
-                  </div>
+
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
@@ -1577,9 +1569,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                         <div>
                           <span className="kick">{itemCategory}</span>
                           <h3><AutoArticleTitle article={item} language={language} /></h3>
-                          <div className="meta">
-                            <span suppressHydrationWarning>{formatDate(item.publishedAt, language)}</span>
-                          </div>
+
                         </div>
                         <div className="imgwrap">
                           <Image src={getCardThumbnail(item, index)} alt={item.title} fill sizes="92px" className="object-cover" />

@@ -38,6 +38,7 @@ const heroPostSelect = {
   isTrending: true,
   isBreaking: true,
   readingTime: true,
+  views: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -70,6 +71,7 @@ function formatPost(p: any) {
     isTrending: p.isTrending,
     isBreaking: p.isBreaking,
     readingTime: p.readingTime,
+    views: p.views ?? 0,
     publishedAt: p.publishedAt || p.createdAt,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
@@ -265,7 +267,7 @@ export class HeroController {
                 prisma.post.findMany({
                   where: { status: 'PUBLISHED' },
                   orderBy: [{ views: 'desc' }, { createdAt: 'desc' }],
-                  take: 3,
+                  take: 10,
                   select: heroPostSelect,
                 })
               ).catch(() => [])
@@ -352,7 +354,7 @@ export class HeroController {
         }
 
         if (mostReadArticles.length === 0) {
-          mostReadArticles = (mostReadFallbackRes.length > 0 ? mostReadFallbackRes : fallbackFormatted.slice(0, 3)).map(formatPost);
+          mostReadArticles = (mostReadFallbackRes.length > 0 ? mostReadFallbackRes : fallbackFormatted.slice(0, 10)).map(formatPost);
           parsedMostReadIds = mostReadArticles.map((a: any) => a.id);
         }
 

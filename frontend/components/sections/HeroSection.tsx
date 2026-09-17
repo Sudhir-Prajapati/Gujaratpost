@@ -47,18 +47,22 @@ import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/com
 
 import dynamic from 'next/dynamic';
 
-const VideoDesk = dynamic(() => import('./home/VideoDesk'));
-const CityHyperlocalSection = dynamic(() => import('./home/CityHyperlocalSection'));
-const CrimeSection = dynamic(() => import('./home/CrimeSection'));
-const PoliticsSection = dynamic(() => import('./home/PoliticsSection'));
-const FactCheckSection = dynamic(() => import('./home/FactCheckSection'));
-const NationalSection = dynamic(() => import('./home/NationalSection'));
-const WorldSection = dynamic(() => import('./home/WorldSection'));
-const LiveCenterSection = dynamic(() => import('./home/LiveCenterSection'));
-const WeatherDashboardSection = dynamic(() => import('./home/WeatherDashboardSection'));
+const Skeleton = ({ h = 'h-[200px]' }: { h?: string }) => (
+  <div className={`w-full ${h} animate-pulse rounded-2xl bg-muted/40`} />
+);
+
+const VideoDesk = dynamic(() => import('./home/VideoDesk'), { loading: () => <Skeleton h="h-[160px]" /> });
+const CityHyperlocalSection = dynamic(() => import('./home/CityHyperlocalSection'), { loading: () => <Skeleton h="h-[280px]" /> });
+const CrimeSection = dynamic(() => import('./home/CrimeSection'), { loading: () => <Skeleton h="h-[280px]" /> });
+const PoliticsSection = dynamic(() => import('./home/PoliticsSection'), { loading: () => <Skeleton h="h-[280px]" /> });
+const FactCheckSection = dynamic(() => import('./home/FactCheckSection'), { loading: () => <Skeleton h="h-[200px]" /> });
+const NationalSection = dynamic(() => import('./home/NationalSection'), { loading: () => <Skeleton h="h-[280px]" /> });
+const WorldSection = dynamic(() => import('./home/WorldSection'), { loading: () => <Skeleton h="h-[280px]" /> });
+const LiveCenterSection = dynamic(() => import('./home/LiveCenterSection'), { loading: () => <Skeleton h="h-[200px]" /> });
+const WeatherDashboardSection = dynamic(() => import('./home/WeatherDashboardSection'), { loading: () => <Skeleton h="h-[200px]" /> });
 const DynamicCategorySection = dynamic(() => import('./home/DynamicCategorySection'));
-const EntertainTechLifeSection = dynamic(() => import('./home/EntertainTechLifeSection'));
-const PhotoGallerySection = dynamic(() => import('./home/PhotoGallerySection'));
+const EntertainTechLifeSection = dynamic(() => import('./home/EntertainTechLifeSection'), { loading: () => <Skeleton h="h-[280px]" /> });
+const PhotoGallerySection = dynamic(() => import('./home/PhotoGallerySection'), { loading: () => <Skeleton h="h-[420px]" /> });
 
 
 const stripHtmlTags = (str?: string) => (str || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '');
@@ -649,19 +653,12 @@ export default function HeroSection({
         view="all"
         initialArticles={articlesList}
         initialPopularNews={initialHeroSettings?.popularNewsArticles || (initialHeroSettings as any)?.setting?.popularNewsArticles}
-        initialMostRead={
-          articlesList.length >= 5
-            ? [
-                ...(initialHeroSettings?.mostReadArticles || []),
-                ...articlesList.filter((a) => !(initialHeroSettings?.mostReadArticles || []).some((m: any) => m.id === a.id)),
-              ].slice(0, 5)
-            : undefined
-        }
+        initialMostRead={initialHeroSettings?.mostReadArticles || undefined}
       />
     ),
     instagram: <InstagramStories key="instagram" />,
     world: <WorldSection key="world" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'world' || (a as any).categorySlug?.toLowerCase() === 'world')} />,
-    politics: <PoliticsSection key="politics" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'politics' || (a as any).categorySlug?.toLowerCase() === 'politics' || a.category?.toLowerCase() === 'rajkaran')} />,
+    politics: <PoliticsSection key="politics" language={language} initialArticles={publishedInitialArticles.filter((a) => { const cs = ((a as any).category?.slug || (a as any).categorySlug || '').toLowerCase(); return cs === 'politics' || cs === 'rajkaran'; })} />,
     webstory: (
       <Fragment key="webstory-frag">
         <WebStoriesSection key="webstory" />
@@ -1037,14 +1034,6 @@ export default function HeroSection({
                           <AutoArticleTitle article={art} language={language} />
                         </h3>
                         <div className="flex items-center gap-1.5 mt-1 md:mt-2.5 text-[10.5px] text-muted-foreground font-semibold">
-                          <span>
-                            {language === 'gu'
-                              ? (art.relativeTimeGu || formatDate(art.publishedAt, 'gu'))
-                              : language === 'hi'
-                                ? (art.relativeTimeHi || formatDate(art.publishedAt, 'hi'))
-                                : (art.relativeTime || formatDate(art.publishedAt, 'en'))}
-                          </span>
-                          <span>•</span>
                           <span className="flex items-center gap-1">
                             <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
                             <span>

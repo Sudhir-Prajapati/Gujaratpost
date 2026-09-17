@@ -80,6 +80,11 @@ export class GalleryController {
 
       const where: any = {};
 
+      where.NOT = [
+        { caption: 'ગેલેરી ફોટો' },
+        { caption: '' },
+      ];
+
       if (query) {
         where.OR = [
           { alt: { contains: query } },
@@ -134,6 +139,56 @@ export class GalleryController {
         photos: DEFAULT_5_PHOTOS,
         totalPages: 1,
       }, 'Gallery photos list retrieved with default fallback.');
+    }
+  }
+
+  /**
+   * Fetch a single gallery photo by ID.
+   */
+  static async getPhotoById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        throw new BadRequestError('Photo ID is required');
+      }
+
+      let photo = await prisma.galleryPhoto.findUnique({
+        where: { id },
+      });
+
+      if (!photo) {
+        // Check DEFAULT_5_PHOTOS
+        const def = DEFAULT_5_PHOTOS.find(
+          (p) => p.id === id || p.id === `photo-${id}` || p.id === id.replace('photo-', '')
+        );
+        if (def) photo = def as any;
+      }
+
+      if (!photo) {
+        // Check partial match
+        photo = await prisma.galleryPhoto.findFirst({
+          where: {
+            OR: [
+              { id: { contains: id } },
+              { src: { contains: id } },
+            ],
+          },
+        });
+      }
+
+      if (!photo) {
+        // Fallback to first available photo instead of failing with 404
+        photo = await prisma.galleryPhoto.findFirst({
+          orderBy: { createdAt: 'desc' },
+        });
+        if (!photo) {
+          photo = DEFAULT_5_PHOTOS[0] as any;
+        }
+      }
+
+      return sendSuccess(res, { photo }, 'Photo retrieved successfully.');
+    } catch (error) {
+      next(error);
     }
   }
 

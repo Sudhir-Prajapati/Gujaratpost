@@ -30,7 +30,41 @@ export default function RelatedStoriesSection({
   DEMO_THUMBNAILS,
   uiLabel,
 }: RelatedStoriesSectionProps) {
-  if (!related || related.length === 0) return null;
+  const displayRelated = React.useMemo(() => {
+    const seenIds = new Set<string>();
+    const seenSlugs = new Set<string>();
+    const seenTitles = new Set<string>();
+
+    const currId = String(article?.id || '');
+    const currSlug = String(article?.slug || '').trim().toLowerCase();
+    const currTitle = String(article?.title || article?.titleGu || '').trim().toLowerCase();
+
+    const result: Article[] = [];
+    for (const item of (related || [])) {
+      if (!item) continue;
+      const itemId = String(item.id || '');
+      const itemSlug = String(item.slug || '').trim().toLowerCase();
+      const itemTitle = String(item.title || item.titleGu || '').trim().toLowerCase();
+
+      // Exclude active article
+      if (itemId === currId || (currSlug && itemSlug === currSlug) || (currTitle && itemTitle === currTitle)) {
+        continue;
+      }
+
+      // Exclude duplicates by ID, slug, or title
+      if ((itemId && seenIds.has(itemId)) || (itemSlug && seenSlugs.has(itemSlug)) || (itemTitle && seenTitles.has(itemTitle))) {
+        continue;
+      }
+
+      if (itemId) seenIds.add(itemId);
+      if (itemSlug) seenSlugs.add(itemSlug);
+      if (itemTitle) seenTitles.add(itemTitle);
+      result.push(item);
+    }
+    return result;
+  }, [related, article?.id, article?.slug, article?.title, article?.titleGu]);
+
+  if (!displayRelated || displayRelated.length === 0) return null;
 
   return (
     <section className="art-related select-none w-full mt-8">
@@ -46,7 +80,7 @@ export default function RelatedStoriesSection({
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {related.slice(0, relatedLimit).map((item, index) => {
+        {displayRelated.slice(0, relatedLimit).map((item, index) => {
           const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
           const isSaved = savedIds.includes(item.id);
           return (
@@ -74,9 +108,7 @@ export default function RelatedStoriesSection({
                   <h3 className="line-clamp-3 leading-snug text-foreground hover:text-accent transition-colors">
                     <AutoArticleTitle article={item} language={language} />
                   </h3>
-                  <div className="meta select-none">
-                    <span suppressHydrationWarning>{formatDate(item.publishedAt, language)}</span>
-                  </div>
+
                 </div>
               </Link>
             </div>
@@ -85,7 +117,7 @@ export default function RelatedStoriesSection({
       </div>
 
       <div className="flex justify-center mt-8">
-        {relatedLimit < related.length ? (
+        {relatedLimit < displayRelated.length ? (
           <button
             type="button"
             onClick={() => setRelatedLimit((prev) => prev + 4)}

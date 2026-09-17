@@ -39,6 +39,17 @@ const DEMO_THUMBNAILS = [
   'https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&auto=format&fit=crop&q=80',
 ];
 
+const FALLBACK_NEWS_IMAGES = [
+  'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
+];
+
 function getCardThumbnail(art: any, index: number = 0): string {
   const raw = art?.image || art?.featuredImage || art?.thumbnail || art?.src;
   if (
@@ -51,6 +62,80 @@ function getCardThumbnail(art: any, index: number = 0): string {
   }
   return DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
 }
+
+const FilmstripThumb = memo(function FilmstripThumb({
+  item,
+  idx,
+  isActive,
+  onClick,
+}: {
+  item: any;
+  idx: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const fallback = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
+  const [src, setSrc] = useState(item.src || fallback);
+
+  useEffect(() => {
+    setSrc(item.src || fallback);
+  }, [item.src, fallback]);
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative aspect-[4/3] h-16 shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+        isActive
+          ? 'border-[#B3121B] ring-2 ring-[#B3121B]/30 scale-105 shadow-md'
+          : 'border-transparent opacity-65 hover:opacity-100 hover:border-neutral-300 dark:hover:border-neutral-700'
+      }`}
+    >
+      <Image
+        src={src}
+        alt={item.alt || item.captionGu || `Thumbnail ${idx + 1}`}
+        fill
+        sizes="100px"
+        className="object-cover"
+        onError={() => setSrc(fallback)}
+      />
+      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.2 text-[9px] font-black text-white">
+        #{idx + 1}
+      </span>
+    </button>
+  );
+});
+
+const SidebarThumb = memo(function SidebarThumb({
+  item,
+  index,
+  itemTitle,
+}: {
+  item: any;
+  index: number;
+  itemTitle: string;
+}) {
+  const initial = getCardThumbnail(item, index);
+  const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+  const [src, setSrc] = useState(initial);
+
+  useEffect(() => {
+    setSrc(getCardThumbnail(item, index));
+  }, [item, index]);
+
+  return (
+    <div className="imgwrap">
+      <Image
+        src={src}
+        alt={itemTitle}
+        fill
+        sizes="92px"
+        className="object-cover"
+        onError={() => setSrc(fallback)}
+      />
+    </div>
+  );
+});
 
 const MOCK_DESCRIPTIONS: Record<string, { en: string; gu: string; hi: string; category: { en: string; gu: string; hi: string } }> = {
   ph1: {
@@ -96,9 +181,10 @@ interface Props {
   photo?: any;
   allPhotos: any[];
   trending: any[];
+  photoUrl?: string;
 }
 
-export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos: dbAllPhotos, trending: dbTrending }: Props) {
+export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos: dbAllPhotos, trending: dbTrending, photoUrl: propPhotoUrl }: Props) {
   const { language } = useApp();
   const router = useRouter();
   const [saved, setSaved] = useState(false);
@@ -110,7 +196,13 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const activeIndex = photosList.findIndex((item) => item.id === photo?.id);
   const currentPhotoIndex = activeIndex >= 0 ? activeIndex : 0;
   
-  const photoUrl = typeof window !== 'undefined' ? window.location.href : 'https://gujaratpost.com/photos';
+  const photoUrl = propPhotoUrl || `https://gujaratpost.com/photos/${photo?.id || activeId}`;
+
+  const mainFallback = FALLBACK_NEWS_IMAGES[currentPhotoIndex % FALLBACK_NEWS_IMAGES.length];
+  const [mainImgSrc, setMainImgSrc] = useState(photo?.src || mainFallback);
+  useEffect(() => {
+    setMainImgSrc(photo?.src || mainFallback);
+  }, [photo?.src, mainFallback]);
 
   const nextIndex = photosList.length > 0 ? (currentPhotoIndex + 1) % photosList.length : 0;
   const prevIndex = photosList.length > 0 ? (currentPhotoIndex - 1 + photosList.length) % photosList.length : 0;
@@ -140,7 +232,8 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
   const copyUrl = async () => {
     try {
-      await navigator.clipboard.writeText(photoUrl);
+      const urlToCopy = typeof window !== 'undefined' ? window.location.href : photoUrl;
+      await navigator.clipboard.writeText(urlToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -208,12 +301,13 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
           <div className="relative h-[85vh] w-[92vw] max-w-6xl">
             <Image
-              src={photo.src}
+              src={mainImgSrc}
               alt={photo.alt || caption}
               fill
               sizes="100vw"
               className="object-contain"
               priority
+              onError={() => setMainImgSrc(mainFallback)}
             />
 
             {/* Prev / Next controls in lightbox */}
@@ -327,8 +421,8 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             </div>
 
             {/* Share Row matching NewsDetailClient */}
-            <div className="share-row-custom select-none flex flex-wrap gap-3 items-center mb-6 p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm">
-              <span className="lbl font-black text-neutral-900 dark:text-neutral-100 mr-1 text-[14px] tracking-wide uppercase flex items-center gap-1.5 select-none">
+            <div className="share-row-custom select-none flex flex-wrap gap-3 items-center mb-6 p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm" suppressHydrationWarning>
+              <span className="lbl font-black text-neutral-900 dark:text-neutral-100 mr-1 text-[14px] tracking-wide uppercase flex items-center gap-1.5 select-none" suppressHydrationWarning>
                 <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-ping" />
                 {language === 'gu' ? 'શેર કરો:' : language === 'hi' ? 'શેર કરેં:' : 'Share:'}
               </span>
@@ -339,6 +433,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 target="_blank"
                 rel="noreferrer"
                 title="WhatsApp"
+                suppressHydrationWarning
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(37,211,102,0.35)] hover:border-[#25D366]"
               >
                 <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
@@ -353,6 +448,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 target="_blank"
                 rel="noreferrer"
                 title="Facebook"
+                suppressHydrationWarning
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(24,119,242,0.35)] hover:border-[#1877F2]"
               >
                 <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
@@ -366,6 +462,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 target="_blank"
                 rel="noreferrer"
                 title="Post on X"
+                suppressHydrationWarning
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_8px_20px_rgba(255,255,255,0.2)] hover:border-black dark:hover:border-white"
               >
                 <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] shrink-0 text-neutral-900 dark:text-neutral-100 transition-transform duration-300 group-hover:rotate-[-12deg] group-hover:scale-110">
@@ -408,12 +505,13 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             <figure className="article-fig">
               <div className="imgwrap relative aspect-[16/10] overflow-hidden bg-black/90 rounded-xl shadow-md group">
                 <Image 
-                  src={photo.src} 
+                  src={mainImgSrc} 
                   alt={photo.alt || caption} 
                   fill 
                   sizes="(max-width: 1024px) 100vw, 66vw"
                   className="object-contain" 
                   priority
+                  onError={() => setMainImgSrc(mainFallback)}
                 />
 
                 {/* Top Right Fullscreen Button */}
@@ -470,27 +568,13 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 {photosList.map((item, idx) => {
                   const isActive = item.id === photo.id;
                   return (
-                    <button
+                    <FilmstripThumb
                       key={item.id}
-                      type="button"
+                      item={item}
+                      idx={idx}
+                      isActive={isActive}
                       onClick={() => router.push(`/photos/${item.id}`)}
-                      className={`relative aspect-[4/3] h-16 shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                        isActive 
-                          ? 'border-[#B3121B] ring-2 ring-[#B3121B]/30 scale-105 shadow-md' 
-                          : 'border-transparent opacity-65 hover:opacity-100 hover:border-neutral-300 dark:hover:border-neutral-700'
-                      }`}
-                    >
-                      <Image
-                        src={item.src}
-                        alt={item.alt || `Thumbnail ${idx + 1}`}
-                        fill
-                        sizes="100px"
-                        className="object-cover"
-                      />
-                      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.2 text-[9px] font-black text-white">
-                        #{idx + 1}
-                      </span>
-                    </button>
+                    />
                   );
                 })}
               </div>
@@ -506,7 +590,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             {/* Topics Tags Bar matching NewsDetailClient */}
             <div className="flex flex-wrap items-center gap-2 mt-8 select-none border-t border-neutral-200 dark:border-neutral-800 pt-5">
               <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-                {language === 'gu' ? 'ટોપિક્સ:' : language === 'hi' ? 'विषय:' : 'Topics:'}
+                {language === 'gu' ? 'ટોપિક્સ:' : language === 'hi' ? 'विषય:' : 'Topics:'}
               </span>
               {tags.map((tag, tIdx) => (
                 <Link
@@ -541,9 +625,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                         <span>{formatDate(item.createdAt || '2026-08-12')}</span>
                       </div>
                     </div>
-                    <div className="imgwrap">
-                      <Image src={getCardThumbnail(item, index)} alt={itemTitle} fill sizes="92px" className="object-cover" />
-                    </div>
+                    <SidebarThumb item={item} index={index} itemTitle={itemTitle} />
                   </Link>
                 );
               })}

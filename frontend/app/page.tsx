@@ -1,7 +1,8 @@
 import HeroSection from "@/components/sections/HeroSection";
 import { getPublicArticles, getHeroSettings, getPublicCategories, getPublicVideos, getMarketRates, getPublicWeather } from "@/lib/api";
 
-export const revalidate = 60;
+// Next.js ISR cache revalidation interval (30 seconds)
+export const revalidate = 30;
 
 const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> =>
   Promise.race([

@@ -4,7 +4,7 @@ import { SITE_URL } from "@/data";
 import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import NewsDetailClient from "./NewsDetailClient";
 
-export const revalidate = 120;
+export const revalidate = 30;
 
 export async function generateStaticParams() {
   try {
@@ -81,10 +81,37 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
     ...(article.tagsHi || []),
   ].map((t) => t?.toLowerCase().trim()).filter(Boolean));
 
+  const currentId = String(article.id || '');
+  const currentSlug = String(article.slug || '').trim().toLowerCase();
+  const currentTitle = String(article.title || article.titleGu || '').trim().toLowerCase();
+
   const allCandidates = [...categoryArticles, ...fallbackArticles];
-  const uniqueCandidates = allCandidates.filter(
-    (a, idx, self) => a.id !== article.id && self.findIndex((t) => t.id === a.id) === idx
-  );
+  const seenIds = new Set<string>();
+  const seenSlugs = new Set<string>();
+  const seenTitles = new Set<string>();
+
+  const uniqueCandidates: typeof allCandidates = [];
+  for (const a of allCandidates) {
+    if (!a) continue;
+    const aId = String(a.id || '');
+    const aSlug = String(a.slug || '').trim().toLowerCase();
+    const aTitle = String(a.title || a.titleGu || '').trim().toLowerCase();
+
+    // Strictly skip if it matches the current active article
+    if (aId === currentId || (currentSlug && aSlug === currentSlug) || (currentTitle && aTitle === currentTitle)) {
+      continue;
+    }
+
+    // Strictly skip if already seen by ID, slug, or title
+    if ((aId && seenIds.has(aId)) || (aSlug && seenSlugs.has(aSlug)) || (aTitle && seenTitles.has(aTitle))) {
+      continue;
+    }
+
+    if (aId) seenIds.add(aId);
+    if (aSlug) seenSlugs.add(aSlug);
+    if (aTitle) seenTitles.add(aTitle);
+    uniqueCandidates.push(a);
+  }
 
   const scoredRelated = uniqueCandidates.map((item) => {
     let score = 0;

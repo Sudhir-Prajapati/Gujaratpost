@@ -44,7 +44,7 @@ function killPortIfBusy(port: number): void {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-// Reload trigger: Redis and Prisma resilience applied
+// Reload trigger: Redis caches cleared and server restarted at 2026-09-17T13:41:00Z
 
 
 // Trust proxy header configuration (crucial for accurate IP rate limiting downstream)
@@ -86,6 +86,13 @@ app.use('/uploads', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   express_static(req, res, next);
+});
+
+// Fallback for missing uploads: seamlessly redirect to original media on gujaratpost.in
+app.use('/uploads/:filename', (req, res) => {
+  const filename = req.params.filename;
+  if (!filename) return res.status(404).send('Not Found');
+  return res.redirect(302, `https://gujaratpost.in/news/${encodeURIComponent(filename)}`);
 });
 
 // Root endpoint status check

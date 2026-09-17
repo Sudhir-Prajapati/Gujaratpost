@@ -361,9 +361,7 @@ export default function ArticleInfiniteStream({
                 <div>
                   <span className="kick">{itemCategory}</span>
                   <h3><AutoArticleTitle article={item} language={language} /></h3>
-                  <div className="meta">
-                    <span suppressHydrationWarning>{formatDate(item.publishedAt)}</span>
-                  </div>
+
                 </div>
                 <div className="imgwrap">
                   <Image src={getCardThumbnail(item, index)} alt={item.title} fill sizes="92px" className="object-cover" />

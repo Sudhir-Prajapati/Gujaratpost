@@ -31,14 +31,14 @@ export default function LatestUpdatesSection({
     initialArticles ? initialArticles.slice(0, 10) : []
   );
   const [mostRead, setMostRead] = useState<Article[]>(() => {
+    const latestIdSet = new Set((initialArticles || []).slice(0, 10).map((a) => a.id));
     const pool: Article[] = [
       ...(initialMostRead || []),
-      ...(initialArticles || []),
     ];
     const top5: Article[] = [];
     const seen = new Set<string>();
     for (const a of pool) {
-      if (a && a.id && !seen.has(a.id)) {
+      if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id)) {
         seen.add(a.id);
         top5.push(a);
         if (top5.length >= 5) break;
@@ -69,16 +69,17 @@ export default function LatestUpdatesSection({
   useEffect(() => {
     if (initialArticles && initialArticles.length > 0) {
       const sortedLatest = sortArticlesByLatest(initialArticles);
-      setLatestNews(sortedLatest.slice(0, 10));
+      const top10Latest = sortedLatest.slice(0, 10);
+      setLatestNews(top10Latest);
 
+      const latestIdSet = new Set(top10Latest.map((a) => a.id));
       const pool: Article[] = [
         ...(initialMostRead || []),
-        ...initialArticles,
       ];
       const top5: Article[] = [];
       const seen = new Set<string>();
       for (const a of pool) {
-        if (a && a.id && !seen.has(a.id)) {
+        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id)) {
           seen.add(a.id);
           top5.push(a);
           if (top5.length >= 5) break;
@@ -93,26 +94,33 @@ export default function LatestUpdatesSection({
     Promise.all([
       getPublicArticles({ limit: 30, sort: 'latest' }),
       getHeroSettings(),
-    ]).then(([res, heroRes]: any[]) => {
+      getPublicArticles({ limit: 12, sort: 'views' }),
+    ]).then(([res, heroRes, mostViewedRes]: any[]) => {
+      let currentLatest: Article[] = [];
       if (res && res.articles && res.articles.length > 0) {
-        const sortedLatest = sortArticlesByLatest(res.articles);
-        setLatestNews(sortedLatest.slice(0, 10));
+        currentLatest = sortArticlesByLatest(res.articles).slice(0, 10);
+        setLatestNews(currentLatest);
+      } else if (initialArticles && initialArticles.length > 0) {
+        currentLatest = sortArticlesByLatest(initialArticles).slice(0, 10);
       }
+
+      const latestIdSet = new Set(currentLatest.map((a) => a.id));
 
       // Guarantee Top 5 Most Read articles in Latest Updates sidebar widget
       const heroMostRead: Article[] = (heroRes && Array.isArray(heroRes.mostReadArticles)) ? heroRes.mostReadArticles : [];
+      const viewedArticles: Article[] = (mostViewedRes && Array.isArray(mostViewedRes.articles)) ? mostViewedRes.articles : [];
+
       const candidatePool: Article[] = [
         ...heroMostRead,
+        ...viewedArticles,
         ...((heroRes && Array.isArray(heroRes.popularNewsArticles)) ? heroRes.popularNewsArticles : []),
-        ...((res && Array.isArray(res.articles)) ? res.articles : []),
-        ...(initialArticles || []),
       ];
 
       const top5MostRead: Article[] = [];
       const seenIds = new Set<string>();
 
       for (const art of candidatePool) {
-        if (art && art.id && !seenIds.has(art.id)) {
+        if (art && art.id && !seenIds.has(art.id) && !latestIdSet.has(art.id)) {
           seenIds.add(art.id);
           top5MostRead.push(art);
           if (top5MostRead.length >= 5) break;
@@ -326,11 +334,7 @@ export default function LatestUpdatesSection({
                 <h3 className="text-[12px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                   <AutoArticleTitle article={art} language={language} />
                 </h3>
-                <span className="text-muted-foreground font-semibold text-[10px] md:text-[11px] mt-1">
-                  {language === 'gu'
-                    ? (art.relativeTimeGu || formatDate(art.publishedAt, 'gu'))
-                    : (art.relativeTime || formatDate(art.publishedAt, 'en'))}
-                </span>
+
               </Link>
             );
           })}
