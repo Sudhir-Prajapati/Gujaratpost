@@ -202,17 +202,14 @@ export default function PhotoGallerySection({ language }: { language: Language }
   }, []);
 
   const allPhotos = photos.length >= 2 ? photos : PHOTOS.slice(0, 20);
-  const strip1 = allPhotos.slice(0, 5);
-  const strip2 = allPhotos.slice(5, 10).length >= 3
-    ? allPhotos.slice(5, 10)
-    : allPhotos.slice(0, 5);
+  const strip1 = allPhotos.slice(0, 10);
 
   return (
     <>
       <section className="py-6 bg-background select-none">
         <div className="mx-auto max-w-screen-xl px-4">
 
-          {/* ── Row 1 Header: ફોટો ગેલેરી ── */}
+          {/* ── Header: ફોટો ગેલેરી ── */}
           <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-5">
             <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
               {language === 'gu' ? 'ફોટો   ગેલેરી' : language === 'hi' ? 'फोटो   गैलरी' : 'Photo   Gallery'}
@@ -225,35 +222,13 @@ export default function PhotoGallerySection({ language }: { language: Language }
             </Link>
           </div>
 
-          {/* Strip 1 — scrolls LEFT, red accent */}
+          {/* Strip — scrolls LEFT, red accent */}
           <GalleryScrollStrip
             galleryList={strip1}
             language={language}
             direction="left"
             offsetIndex={0}
             accentColor="#B3121B"
-          />
-
-          {/* ── Row 2 Header: તાજી તસવીરો ── */}
-          <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mt-8 mb-5">
-            <span className="bg-[#1a56db] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
-              {language === 'gu' ? 'તાજી   તસવીરો' : language === 'hi' ? 'ताजी   तस्वीरें' : 'Latest   Photos'}
-            </span>
-            <Link
-              href="/photos"
-              className="text-[#1a56db] hover:text-blue-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
-            >
-              {language === 'gu' ? 'બધી તસવીરો →' : 'All Photos →'}
-            </Link>
-          </div>
-
-          {/* Strip 2 — scrolls RIGHT, blue accent, different photos */}
-          <GalleryScrollStrip
-            galleryList={strip2}
-            language={language}
-            direction="right"
-            offsetIndex={5}
-            accentColor="#1a56db"
           />
 
         </div>

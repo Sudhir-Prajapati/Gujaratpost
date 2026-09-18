@@ -166,6 +166,15 @@ export class ArticleController {
             { category: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } } },
             { location: { notIn: ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'] } },
           ];
+        } else if (catSlugLower === 'world' || catSlugLower === 'international' || catSlugLower === 'videsh') {
+          where.OR = [
+            { category: { slug: { in: ['world', 'international'] } } },
+            { location: { contains: 'international' } },
+          ];
+        } else if (catSlugLower === 'entertainment' || catSlugLower === 'entertainment-life-style') {
+          where.OR = [
+            { category: { slug: { in: ['entertainment', 'entertainment-life-style'] } } },
+          ];
         } else {
           where.OR = [
             { category: { slug: catSlugLower } },

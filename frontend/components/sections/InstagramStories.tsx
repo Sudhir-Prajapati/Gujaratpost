@@ -176,9 +176,9 @@ const DEMO_REELS: ReelItem[] = [
   },
 ];
 
-export default function InstagramStories() {
+export default function InstagramStories({ initialReels }: { initialReels?: ReelItem[] }) {
   const { language } = useApp();
-  const [reels, setReels] = useState<ReelItem[]>([]);
+  const [reels, setReels] = useState<ReelItem[]>(initialReels || []);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const scrollPosRef = useRef<number>(0);
   const isPausedRef = useRef<boolean>(false);
@@ -186,6 +186,8 @@ export default function InstagramStories() {
   const [showRightArrow, setShowRightArrow] = useState(true);
 
   useEffect(() => {
+    // Only fetch if no initial reels were provided server-side
+    if (initialReels && initialReels.length > 0) return;
     getPublicReels().then((res) => {
       if (res && res.length > 0) {
         setReels(res);

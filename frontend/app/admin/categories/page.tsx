@@ -305,25 +305,21 @@ export default function CategoriesPage() {
     const targetIdxInSubset = direction === 'up' ? idxInSubset - 1 : idxInSubset + 1;
     if (targetIdxInSubset < 0 || targetIdxInSubset >= subset.length) return;
 
-    const targetItem = subset[targetIdxInSubset];
-    const orderCurrent = getOrd(itemToMove);
-    const orderTarget = getOrd(targetItem);
+    const newSubset = [...subset];
+    const [movedItem] = newSubset.splice(idxInSubset, 1);
+    newSubset.splice(targetIdxInSubset, 0, movedItem);
 
-    let newOrderCurrent = orderTarget;
-    let newOrderTarget = orderCurrent;
+    // Re-assign clean strictly descending order numbers
+    const maxOrder = Math.max(...subset.map(s => getOrd(s)), newSubset.length * 10, 100);
+    const updatedOrderList = [...orderList];
+    newSubset.forEach((item, index) => {
+      const idx = updatedOrderList.findIndex(c => c.id === item.id);
+      if (idx !== -1) {
+        updatedOrderList[idx] = { ...updatedOrderList[idx], [orderProp]: maxOrder - (index * 5) };
+      }
+    });
 
-    if (newOrderCurrent === newOrderTarget) {
-      if (direction === 'up') newOrderCurrent = orderTarget + 1;
-      else newOrderCurrent = Math.max(0, orderTarget - 1);
-    }
-
-    setOrderList((prev) =>
-      prev.map((c) => {
-        if (c.id === itemToMove.id) return { ...c, [orderProp]: newOrderCurrent };
-        if (c.id === targetItem.id) return { ...c, [orderProp]: newOrderTarget };
-        return c;
-      })
-    );
+    setOrderList(updatedOrderList);
   };
 
   // Direct order input change in order manager modal
@@ -347,13 +343,6 @@ export default function CategoriesPage() {
   const handleSaveAllOrders = async () => {
     setSavingOrder(true);
     try {
-      const getOrd = (c: CategoryData) => {
-        if (orderTab === 'header') return c.headerOrder ?? c.displayOrder ?? 0;
-        if (orderTab === 'home') return c.homeOrder ?? c.displayOrder ?? 0;
-        return c.displayOrder ?? 0;
-      };
-      const orderProp = orderTab === 'header' ? 'headerOrder' : orderTab === 'home' ? 'homeOrder' : 'displayOrder';
-
       const itemsPayload = orderList.map((item, idx) => ({
         id: item.id,
         displayOrder: Math.max(0, item.displayOrder ?? (orderList.length - idx)),
@@ -372,6 +361,9 @@ export default function CategoriesPage() {
       const sorted = (json.data || []).sort((a: CategoryData, b: CategoryData) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
       setCategories(sorted);
       clearApiCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gp-categories-updated'));
+      }
       setOrderModalOpen(false);
     } catch (err: any) {
       alert('Error saving section orders: ' + err.message);
@@ -525,23 +517,32 @@ export default function CategoriesPage() {
     const newOrderOther = cat.displayOrder ?? index;
 
     try {
+      const payloadCurrent: any = { ...cat, displayOrder: newOrderCurrent };
+      if (cat.showInHome) payloadCurrent.homeOrder = newOrderCurrent;
+      const payloadOther: any = { ...otherCat, displayOrder: newOrderOther };
+      if (otherCat.showInHome) payloadOther.homeOrder = newOrderOther;
+
       await authFetch(getBackendApiUrl(`/api/admin/categories/${cat.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...cat, displayOrder: newOrderCurrent }),
+        body: JSON.stringify(payloadCurrent),
       });
       await authFetch(getBackendApiUrl(`/api/admin/categories/${otherCat.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...otherCat, displayOrder: newOrderOther }),
+        body: JSON.stringify(payloadOther),
       });
 
       setCategories((prev) => {
         const nextList = [...prev];
-        nextList[index] = { ...cat, displayOrder: newOrderCurrent };
-        nextList[targetIndex] = { ...otherCat, displayOrder: newOrderOther };
-        return nextList.sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+        nextList[index] = { ...cat, ...payloadCurrent };
+        nextList[targetIndex] = { ...otherCat, ...payloadOther };
+        return nextList.sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
       });
+      clearApiCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gp-categories-updated'));
+      }
     } catch (err: any) {
       alert('Failed to reorder categories: ' + err.message);
     }
@@ -1790,7 +1791,7 @@ export default function CategoriesPage() {
                       </span>
                       {categories
                         .filter((c) => (c.showInHeader !== undefined ? c.showInHeader : true) && c.isActive && c.headerType !== 'GUJARAT')
-                        .sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0))
+                        .sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0))
                         .map((c) => (
                           <div
                             key={c.id}
@@ -1798,7 +1799,7 @@ export default function CategoriesPage() {
                           >
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color || '#10b981' }} />
                             <span>{c.nameGu || c.name}</span>
-                            <span className="text-[10px] text-zinc-400 font-mono">#{c.displayOrder ?? 0}</span>
+                            <span className="text-[10px] text-zinc-400 font-mono">#{c.headerOrder ?? c.displayOrder ?? 0}</span>
                           </div>
                         ))}
                     </div>
@@ -1820,7 +1821,7 @@ export default function CategoriesPage() {
                       </span>
                       {categories
                         .filter((c) => (c.showInHeader !== undefined ? c.showInHeader : true) && c.isActive && c.headerType === 'GUJARAT')
-                        .sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0))
+                        .sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0))
                         .map((c) => (
                           <div
                             key={c.id}
@@ -1828,7 +1829,7 @@ export default function CategoriesPage() {
                           >
                             <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: c.color || '#f59e0b' }} />
                             <span>{c.nameGu || c.name}</span>
-                            <span className="text-[10px] text-zinc-400 font-mono">#{c.displayOrder ?? 0}</span>
+                            <span className="text-[10px] text-zinc-400 font-mono">#{c.headerOrder ?? c.displayOrder ?? 0}</span>
                           </div>
                         ))}
                     </div>
@@ -1855,7 +1856,7 @@ export default function CategoriesPage() {
                         if (previewFilter === 'hidden') return !c.isActive || ((c.showInHome === false) && (c.showInHeader === false));
                         return true;
                       })
-                      .sort((a, b) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0))
+                      .sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0))
                       .map((cat, idx) => {
                         const inHome = (cat.showInHome !== undefined ? cat.showInHome : true) && cat.isActive;
                         const inHeader = (cat.showInHeader !== undefined ? cat.showInHeader : true) && cat.isActive;
@@ -1877,7 +1878,7 @@ export default function CategoriesPage() {
                                     style={{ backgroundColor: cat.color || '#10b981' }}
                                   />
                                   <span className="font-mono font-black text-xs text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-200 dark:border-red-900/40">
-                                    #{cat.displayOrder ?? idx + 1}
+                                    #{cat.homeOrder ?? cat.displayOrder ?? idx + 1}
                                   </span>
                                 </div>
                                 <span className={`px-2 py-0.5 rounded text-[9px] font-black ${inHome ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>

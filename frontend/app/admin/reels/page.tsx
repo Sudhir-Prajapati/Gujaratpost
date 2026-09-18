@@ -11,7 +11,9 @@ import {
   Eye, 
   RefreshCw,
   Smartphone,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Link as LinkIcon
 } from 'lucide-react';
 
 interface ReelData {
@@ -55,13 +57,17 @@ export default function ReelsPage() {
   const [query, setQuery] = useState('');
 
   // Modals state
-  const [previewReel, setPreviewReel] = useState<ReelData | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   // Sync state
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
+
+  // URL sync state
+  const [reelUrlInput, setReelUrlInput] = useState('');
+  const [syncingUrl, setSyncingUrl] = useState(false);
+  const [showUrlBox, setShowUrlBox] = useState(false);
 
   // Fetch top 50 newest Reels from DB
   const loadReels = async () => {
@@ -108,6 +114,36 @@ export default function ReelsPage() {
     }
   };
 
+  // Sync single or multiple reels by URL (without cookies)
+  const handleSyncByUrl = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!reelUrlInput.trim()) return;
+
+    setSyncingUrl(true);
+    try {
+      const res = await authFetch(getBackendApiUrl('/api/admin/reels/sync-url'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: reelUrlInput.trim() }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        clearApiCache();
+        const msg = json.message || '✅ Reel synced successfully using URL!';
+        setSyncMsg(msg);
+        setReelUrlInput('');
+        setShowUrlBox(false);
+        setTimeout(() => setSyncMsg(null), 6000);
+        await loadReels();
+      } else {
+        alert(json.error || 'Failed to sync reel by URL');
+      }
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSyncingUrl(false);
+    }
+  };
 
   useEffect(() => {
     loadReels();
@@ -164,22 +200,84 @@ export default function ReelsPage() {
             </span>
           </h1>
           <p className="text-xs sm:text-sm text-zinc-500 mt-1">
-            Auto-synced directly from official @gujaratpost.in Instagram account.
+            Auto-synced directly from official @gujaratpost.in Instagram account or added via Reel URL without cookies.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto shrink-0">
+        <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 flex-wrap">
+          <button
+            onClick={() => setShowUrlBox((prev) => !prev)}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all shadow-sm cursor-pointer"
+            title="Add a single reel by URL"
+          >
+            <Plus className="h-4 w-4 text-[#B3121B]" />
+            <span>Add Reel by URL</span>
+          </button>
+
           <button
             onClick={() => handleSyncInstagram(false)}
             disabled={syncing}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] hover:bg-red-700 px-4 py-2.5 text-xs sm:text-sm font-bold text-white transition-all shadow-sm shadow-red-600/20 disabled:opacity-50 cursor-pointer active:scale-95 whitespace-nowrap"
-            title="Sync all latest Instagram Reels from @gujaratpost.in"
+            title="Sync all latest Instagram Reels from @gujaratpost.in without cookies"
           >
             <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
             <span>{syncing ? 'Syncing Instagram...' : '⚡ Auto-Sync Instagram Reels'}</span>
           </button>
         </div>
       </div>
+
+      {/* Sync by URL Box */}
+      {showUrlBox && (
+        <form
+          onSubmit={handleSyncByUrl}
+          className="flex flex-col gap-3 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <LinkIcon className="h-4 w-4 text-[#B3121B]" />
+              <span className="text-xs sm:text-sm font-bold text-zinc-900 dark:text-white">
+                Add Instagram Reel(s) by URL (કૂકીઝ વગર ડાયરેક્ટ URL સિંક)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setShowUrlBox(false);
+                setReelUrlInput('');
+              }}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          <p className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            ℹ️ <strong>માહિતી:</strong> Instagram લોગઇન વગર પબ્લિક પ્રોફાઇલ પર ફક્ત ૧૨ લેટેસ્ટ રિલ્સ જ બતાવે છે. અન્ય અથવા જૂની રિલ્સ ઉમેરવા માટે નીચે ૧ કે તેથી વધુ Reel URLs (એક લાઈનમાં એક) પેસ્ટ કરો:
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+            <div className="relative flex-1">
+              <textarea
+                rows={2}
+                placeholder="Paste Instagram Reel URL(s), e.g.&#10;https://www.instagram.com/reel/DSvBjEOEZCv/&#10;https://www.instagram.com/reel/Db2NMohRDw_/"
+                value={reelUrlInput}
+                onChange={(e) => setReelUrlInput(e.target.value)}
+                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 p-3 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B] font-mono resize-y"
+              />
+            </div>
+            <div className="flex sm:flex-col justify-end gap-2 shrink-0">
+              <button
+                type="submit"
+                disabled={syncingUrl || !reelUrlInput.trim()}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] hover:bg-red-700 px-5 py-3 text-xs sm:text-sm font-bold text-white transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                {syncingUrl ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                <span>{syncingUrl ? 'Fetching Reel(s)...' : 'Sync Reel(s)'}</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {/* Sync notification toast banner */}
       {syncMsg && (
@@ -226,7 +324,7 @@ export default function ReelsPage() {
           <div className="flex flex-col items-center justify-center py-20 border rounded-2xl border-dashed bg-white dark:border-zinc-800 dark:bg-zinc-900 text-zinc-400">
             <Smartphone className="h-12 w-12 text-zinc-300 mb-2" />
             <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300">No Instagram reels found</p>
-            <p className="text-xs text-zinc-500 mt-1">Click "⚡ Auto-Sync Instagram Reels" above to fetch latest reels.</p>
+            <p className="text-xs text-zinc-500 mt-1">Click &quot;⚡ Auto-Sync Instagram Reels&quot; above to fetch latest reels.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -248,54 +346,66 @@ export default function ReelsPage() {
                   >
                     {/* Cover Image */}
                     {thumbUrl && (
-                      /* eslint-disable-next-line @next/next/no-img-element */
                       <img
                         src={thumbUrl}
-                        alt={reel.heading}
-                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        alt={reel.heading || 'Instagram Reel'}
+                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          const url = reel.instaUrl || reel.videoUrl || '';
+                          const m = url.match(/(?:p|reel)\/([A-Za-z0-9_-]+)/);
+                          if (m?.[1] && !target.src.includes(`/media/?size=l`)) {
+                            target.src = `https://www.instagram.com/p/${m[1]}/media/?size=l`;
+                          }
+                        }}
                       />
                     )}
 
-                    {/* Dark gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/35 to-black/10" />
+                    {/* Gradient Overlay for Readable Text */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent pointer-events-none" />
 
-                    {/* Center Red Play Button */}
-                    <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-                      <span className="h-10 w-10 bg-[#B3121B] rounded-full flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition">
-                        <Play className="h-4 w-4 fill-current ml-0.5" />
-                      </span>
+                    {/* Instagram badge in top corner */}
+                    <div className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-md">
+                      <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
+                      <span>REEL</span>
                     </div>
 
-                    {/* Title & Actions Overlay at bottom */}
-                    <div className="absolute bottom-0 inset-x-0 p-3 z-10 flex flex-col justify-end space-y-1.5">
-                      <p className="line-clamp-2 text-xs font-bold text-white leading-snug drop-shadow-md">
-                        {reel.headingGu || reel.heading}
+                    {/* Views pill if available */}
+                    {viewsText && (
+                      <div className="absolute top-2.5 right-2.5 flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-white/90 backdrop-blur-md">
+                        <Eye className="h-3 w-3" />
+                        <span>{viewsText}</span>
+                      </div>
+                    )}
+
+                    {/* Play Icon in center on hover */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover:opacity-100 pointer-events-none">
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white/25 text-white backdrop-blur-md shadow-lg scale-90 group-hover:scale-100 transition-transform">
+                        <Play className="h-5 w-5 fill-white ml-0.5" />
+                      </div>
+                    </div>
+
+                    {/* Bottom Metadata */}
+                    <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end text-white">
+                      <p className="line-clamp-2 text-xs font-bold leading-tight drop-shadow-md text-zinc-100 mb-2">
+                        {reel.headingGu || reel.heading || 'Gujarat Post Reel'}
                       </p>
 
-                      <div className="flex items-center justify-between gap-1 mt-1">
-                        <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/90 drop-shadow">
-                          {viewsText ? (
-                            <span className="flex items-center gap-1">
-                              <Eye className="h-3 w-3 text-white/80" />
-                              {viewsText} views
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Smartphone className="h-3 w-3 text-pink-400" />
-                              Insta Reel
-                            </span>
-                          )}
-                        </div>
+                      <div className="flex items-center justify-between pt-1 border-t border-white/15">
+                        <span className="text-[10px] text-zinc-300 font-medium">
+                          {reel.createdAt ? new Date(reel.createdAt).toLocaleDateString('gu-IN') : 'Recent'}
+                        </span>
 
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           {reel.instaUrl && (
                             <a
                               href={reel.instaUrl}
                               target="_blank"
                               rel="noopener noreferrer"
                               onClick={(e) => e.stopPropagation()}
-                              className="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur"
-                              title="View on Instagram"
+                              className="rounded-lg p-1.5 text-zinc-300 hover:bg-white/20 hover:text-white backdrop-blur transition"
+                              title="Open on Instagram"
                             >
                               <ExternalLink className="h-3.5 w-3.5" />
                             </a>

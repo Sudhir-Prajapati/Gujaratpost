@@ -109,6 +109,7 @@ router.put('/hero-settings', requireAuth, requireRole(heroRoles), HeroController
 const reelRoles = [Role.SUPER_ADMIN, Role.EDITOR];
 router.get('/reels', requireAuth, requireRole(reelRoles), InstagramReelController.getAllReels);
 router.post('/reels/sync', requireAuth, requireRole(reelRoles), InstagramReelController.syncReelsRoute);
+router.post('/reels/sync-url', requireAuth, requireRole(reelRoles), InstagramReelController.syncReelByUrl);
 router.post('/reels', requireAuth, requireRole(reelRoles), InstagramReelController.createReel);
 router.put('/reels/:id', requireAuth, requireRole(reelRoles), InstagramReelController.updateReel);
 router.delete('/reels/:id', requireAuth, requireRole(reelRoles), InstagramReelController.deleteReel);

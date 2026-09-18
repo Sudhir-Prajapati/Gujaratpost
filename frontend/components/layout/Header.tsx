@@ -894,7 +894,7 @@ export default function Header() {
 
             {otherMenuOpen && (
               <div
-                className="absolute z-50 min-w-44 rounded-lg border border-border bg-card p-1.5 shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
+                className="absolute z-50 min-w-48 max-w-64 max-h-[min(480px,75vh)] overflow-y-auto overscroll-contain rounded-xl border border-border/80 bg-card/95 backdrop-blur-md p-1.5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150 [scrollbar-width:thin] [scrollbar-color:rgba(160,160,160,0.4)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent"
                 style={{
                   top: '100%',
                   left: dropdownLeft !== null ? `${dropdownLeft}px` : undefined,
@@ -908,6 +908,7 @@ export default function Header() {
                     <a
                       key={`${link.href}-${language}`}
                       href={link.href}
+                      onClick={() => setOtherMenuOpen(false)}
                       className={`block rounded-md px-3.5 py-2 text-left text-[14px] font-bold transition-colors duration-150 ${active
                         ? 'bg-accent/10 text-accent'
                         : 'text-foreground hover:bg-muted hover:text-accent'

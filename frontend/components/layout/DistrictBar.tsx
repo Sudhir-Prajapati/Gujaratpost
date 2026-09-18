@@ -18,48 +18,46 @@ export default function DistrictBar() {
   const [gujaratCategories, setGujaratCategories] = useState<any[]>([]);
 
   useEffect(() => {
-    import('@/lib/api').then(({ getPublicCategories }) => {
-      getPublicCategories({ showInHeader: true, headerType: 'GUJARAT' })
-        .then((cats) => {
-          if (cats && Array.isArray(cats)) {
-            setGujaratCategories(cats.sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0)));
-          }
-        })
-        .catch(() => {});
-    });
+    const fetchCats = () => {
+      import('@/lib/api').then(({ getPublicCategories }) => {
+        getPublicCategories({ showInHeader: true, headerType: 'GUJARAT' })
+          .then((cats) => {
+            if (cats && Array.isArray(cats) && cats.length > 0) {
+              setGujaratCategories(cats.sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0)));
+            }
+          })
+          .catch(() => {});
+      });
+    };
+
+    fetchCats();
+    window.addEventListener('focus', fetchCats);
+    window.addEventListener('gp-categories-updated', fetchCats);
+    return () => {
+      window.removeEventListener('focus', fetchCats);
+      window.removeEventListener('gp-categories-updated', fetchCats);
+    };
   }, []);
 
   const displayList = useMemo(() => {
-    const seenSlugs = new Set<string>();
-    const result: Array<{ slug: string; label: string }> = [];
-
-    // 1. Add DB categories with headerType = 'GUJARAT' first
-    gujaratCategories.forEach((cat) => {
-      const slug = (cat.slug || '').toLowerCase();
-      if (!seenSlugs.has(slug)) {
-        seenSlugs.add(slug);
+    if (gujaratCategories && gujaratCategories.length > 0) {
+      return gujaratCategories.map((cat) => {
+        const slug = (cat.slug || '').toLowerCase();
         const distMatch = DISTRICTS.find((d) => d.slug === slug);
         let label = cat.name;
         if (distMatch) {
           label = language === 'hi' ? distMatch.hi : language === 'gu' ? distMatch.gu : distMatch.en;
         } else {
-          label = language === 'hi' ? (cat.nameHi || cat.name) : language === 'gu' ? (cat.nameGu || cat.name) : cat.name;
+          label = language === 'hi' ? (cat.nameHi || cat.name) : language === 'gu' ? (cat.nameGu || cat.name) : (cat.nameGu || cat.name);
         }
-        result.push({ slug: cat.slug, label });
-      }
-    });
+        return { slug: cat.slug, label };
+      });
+    }
 
-    // 2. Add fallback static districts if not already present
-    DISTRICTS.forEach((dist) => {
-      const slug = dist.slug.toLowerCase();
-      if (!seenSlugs.has(slug)) {
-        seenSlugs.add(slug);
-        const label = language === 'hi' ? dist.hi : language === 'gu' ? dist.gu : dist.en;
-        result.push({ slug: dist.slug, label });
-      }
-    });
-
-    return result;
+    return DISTRICTS.map((dist) => ({
+      slug: dist.slug,
+      label: language === 'hi' ? dist.hi : language === 'gu' ? dist.gu : dist.en,
+    }));
   }, [gujaratCategories, language]);
 
   return (

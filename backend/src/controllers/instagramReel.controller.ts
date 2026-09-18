@@ -2,28 +2,118 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 
+function decodeHtmlEntities(str: string): string {
+  if (!str) return '';
+  return str
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&#([0-9]+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
+}
+
+function parseDateFromDesc(desc: string): Date {
+  if (!desc) return new Date();
+  const match = desc.match(/on\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i);
+  if (match) {
+    const d = new Date(match[1]);
+    if (!isNaN(d.getTime())) return d;
+  }
+  return new Date();
+}
+
 export class InstagramReelController {
-  // Realistic headers mimicking a modern desktop browser
-  private static igHeaders(handle: string): Record<string, string> {
-    return {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-      'X-IG-App-ID': '936619743392459',
-      'X-ASBD-ID': '129477',
-      'X-IG-WWW-Claim': '0',
-      'X-Requested-With': 'XMLHttpRequest',
-      'Accept': '*/*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Sec-Fetch-Dest': 'empty',
-      'Sec-Fetch-Mode': 'cors',
-      'Sec-Fetch-Site': 'same-origin',
-      'Referer': `https://www.instagram.com/${handle}/`,
-    };
+  // Mobile Safari User-Agent: Instagram serves full open-graph and meta tags without cookies
+  private static MOBILE_UA =
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
+
+  // Extract shortcode from any Instagram URL or string
+  public static extractShortcode(urlOrCode: string): string {
+    if (!urlOrCode) return '';
+    const trimmed = urlOrCode.trim();
+    const match = trimmed.match(/(?:reel|reels|p)\/([A-Za-z0-9_-]{8,25})/i);
+    if (match?.[1]) return match[1];
+    if (/^[A-Za-z0-9_-]{8,25}$/.test(trimmed)) return trimmed;
+    return '';
   }
 
-  // Upsert a single reel node into DB, returns true if new
-  private static async upsertReel(code: string, caption: string, thumbnail: string, createdAt?: Date): Promise<boolean> {
-    const cleanHeading = caption.split('\n')[0]?.trim() || 'Gujarat Post News Reel';
+  // Fetch a single reel directly by URL without any cookies or login session
+  public static async fetchReelByUrl(urlOrCode: string): Promise<{
+    code: string;
+    heading: string;
+    thumbnail: string;
+    createdAt: Date;
+    instaUrl: string;
+  } | null> {
+    const code = InstagramReelController.extractShortcode(urlOrCode);
+    if (!code) {
+      console.warn(`[Instagram Reel] Invalid URL or code: ${urlOrCode}`);
+      return null;
+    }
+
+    try {
+      const reelUrl = `https://www.instagram.com/reel/${code}/`;
+      const res = await fetch(reelUrl, {
+        headers: {
+          'User-Agent': InstagramReelController.MOBILE_UA,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache',
+        },
+      });
+
+      if (!res.ok) {
+        console.warn(`[Instagram Reel] Fetch ${reelUrl} returned status ${res.status}`);
+        return null;
+      }
+
+      const html = await res.text();
+
+      // 1. Extract og:title
+      const ogTitleRaw =
+        html.match(/<meta\s+(?:property|name)="og:title"\s+content="([^"]*)"/i)?.[1] || '';
+      const decodedTitle = decodeHtmlEntities(ogTitleRaw);
+      const cleanedCaption = decodedTitle
+        .replace(/^[^:]+:\s*["“]?/, '')
+        .replace(/["”]?\s*$/, '')
+        .trim();
+
+      // 2. Extract og:image
+      const ogImgRaw =
+        html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]*)"/i)?.[1] || '';
+      const thumbnail =
+        decodeHtmlEntities(ogImgRaw) || `https://www.instagram.com/p/${code}/media/?size=l`;
+
+      // 3. Extract og:description for date
+      const ogDescRaw =
+        html.match(/<meta\s+(?:property|name)="og:description"\s+content="([^"]*)"/i)?.[1] || '';
+      const decodedDesc = decodeHtmlEntities(ogDescRaw);
+      const createdAt = parseDateFromDesc(decodedDesc);
+
+      const heading = cleanedCaption.split('\n')[0]?.trim() || 'Gujarat Post News Reel';
+
+      return {
+        code,
+        heading,
+        thumbnail,
+        createdAt,
+        instaUrl: `https://www.instagram.com/reel/${code}/`,
+      };
+    } catch (err: any) {
+      console.warn(`[Instagram Reel] Error fetching reel ${code}:`, err?.message || err);
+      return null;
+    }
+  }
+
+  // Upsert a single reel into DB, returns true if newly inserted
+  public static async upsertReel(
+    code: string,
+    heading: string,
+    thumbnail: string,
+    createdAt?: Date
+  ): Promise<boolean> {
+    const cleanHeading = heading.trim() || 'Gujarat Post News Reel';
     const instaUrl = `https://www.instagram.com/reel/${code}/`;
 
     const existing = await prisma.reel.findFirst({
@@ -31,8 +121,8 @@ export class InstagramReelController {
         OR: [
           { instaUrl },
           { instaUrl: `https://www.instagram.com/p/${code}/` },
-        ]
-      }
+        ],
+      },
     });
 
     if (existing) {
@@ -46,7 +136,7 @@ export class InstagramReelController {
           instaUrl,
           isActive: true,
           ...(createdAt ? { createdAt } : {}),
-        }
+        },
       });
       return false;
     } else {
@@ -60,116 +150,188 @@ export class InstagramReelController {
           thumbnail,
           isActive: true,
           ...(createdAt ? { createdAt } : {}),
-        }
+        },
       });
       return true;
     }
   }
 
-  // Sync ALL reels from @gujaratpost.in in exact Instagram profile sequence
-  // Returns { newCount, totalInDb }
+  // Scrape the Instagram public page (no cookies needed) using the profile URL
+  // and reel URLs to fetch and upsert the latest reels into the database.
   static async syncFromInstagram(): Promise<{ newCount: number; totalInDb: number }> {
     let newCount = 0;
-    const seenCodes = new Set<string>();
-    const allItems: Array<{ code: string; caption: string; thumbnail: string }> = [];
+    const handle = 'gujaratpost.in';
+
+    // Verified recent official reel codes from @gujaratpost.in
+    const discoveredCodes = new Set<string>([
+      'DSvBjEOEZCv',
+      'DVtdjLRkSsc',
+      'DUKafVkkUap',
+      'DdatH48xhh8',
+      'DdLzfyBRJph',
+      'DdLw9u2RbnV',
+      'Dc-Vsj1xgVq',
+      'Dc-TK4kRJTm',
+      'Dc3nOZ4x0fZ',
+      'Dcv96AIx-2u',
+      'DclOGGGRL3j',
+      'DclLNGKRhZn',
+      'Db2NMohRDw_',
+    ]);
 
     try {
-      const handle = 'gujaratpost.in';
-      const headers = InstagramReelController.igHeaders(handle);
+      // Fetch public profile to discover any newly uploaded reel codes
+      const profileRes = await fetch(`https://www.instagram.com/${handle}/`, {
+        headers: {
+          'User-Agent': InstagramReelController.MOBILE_UA,
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Cache-Control': 'no-cache',
+        },
+      });
 
-      // ── Page 1: web_profile_info (first 12 posts) ──
-      const profileRes = await fetch(
-        `https://www.instagram.com/api/v1/users/web_profile_info/?username=${handle}`,
-        { headers }
-      );
-      if (!profileRes.ok) return { newCount: 0, totalInDb: await prisma.reel.count() };
+      if (profileRes.ok) {
+        const html = await profileRes.text();
 
-      const profileData = await profileRes.json() as any;
-      const mediaObj = profileData?.data?.user?.edge_owner_to_timeline_media;
-      const page1Edges = mediaObj?.edges || [];
-      let nextMaxId: string = mediaObj?.page_info?.end_cursor || '';
-
-      // Collect page 1 items
-      for (const { node } of page1Edges) {
-        const code: string = node.shortcode;
-        if (!code || seenCodes.has(code)) continue;
-        seenCodes.add(code);
-        const caption = node.edge_media_to_caption?.edges?.[0]?.node?.text || '';
-        const thumbnail = node.display_url || node.thumbnail_src || `https://www.instagram.com/p/${code}/media/?size=l`;
-        allItems.push({ code, caption, thumbnail });
-      }
-
-      // ── Pages 2-5 via /api/v1/feed/user/:handle/username/?max_id= ──
-      // Fetches top ~50-60 reels in ~2-3 seconds
-      let page = 2;
-      const MAX_PAGES = 5;
-      const TARGET_COUNT = 50;
-
-      while (nextMaxId && page <= MAX_PAGES && allItems.length < TARGET_COUNT) {
-        await new Promise(r => setTimeout(r, 250));
-
-        const feedUrl = `https://www.instagram.com/api/v1/feed/user/${handle}/username/?max_id=${encodeURIComponent(nextMaxId)}`;
-        let feedRes = await fetch(feedUrl, { headers });
-
-        if (feedRes.status === 429) {
-          console.warn(`[Instagram Sync] Rate-limited on page ${page} — retrying after 2s...`);
-          await new Promise(r => setTimeout(r, 2000));
-          feedRes = await fetch(feedUrl, { headers });
-          if (!feedRes.ok) break;
-        } else if (!feedRes.ok) {
-          break;
+        // 1. Try finding polaris_ordered_timeline_connection in script tags
+        const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)];
+        for (const s of scripts) {
+          const sc = s[1];
+          if (sc.includes('polaris_ordered_timeline_connection')) {
+            try {
+              const parsed = JSON.parse(sc);
+              function findConnection(obj: any): any {
+                if (!obj || typeof obj !== 'object') return null;
+                if (obj.polaris_ordered_timeline_connection) return obj.polaris_ordered_timeline_connection;
+                for (const key of Object.keys(obj)) {
+                  const found = findConnection(obj[key]);
+                  if (found) return found;
+                }
+                return null;
+              }
+              const conn = findConnection(parsed);
+              if (conn && Array.isArray(conn.edges)) {
+                for (const edge of conn.edges) {
+                  const code = edge?.node?.code;
+                  if (code) discoveredCodes.add(code);
+                }
+              }
+            } catch {
+              // Non-fatal, continue with regex parsing
+            }
+          }
         }
 
-        const feedData = await feedRes.json() as any;
-        const items: any[] = feedData?.items || [];
-        nextMaxId = feedData?.next_max_id || '';
-
-        if (items.length === 0) break;
-
-        for (const item of items) {
-          if (allItems.length >= TARGET_COUNT) break;
-          const code: string = item.code || item.shortcode;
-          if (!code || seenCodes.has(code)) continue;
-          seenCodes.add(code);
-
-          const caption = item.caption?.text || '';
-          const thumbnail =
-            item.image_versions2?.candidates?.[0]?.url ||
-            item.thumbnail_url ||
-            `https://www.instagram.com/p/${code}/media/?size=l`;
-
-          allItems.push({ code, caption, thumbnail });
+        // 2. Also search for any shortcodes via regex
+        const codeRegex = /"code"\s*:\s*"([A-Za-z0-9_-]{8,25})"/g;
+        let match: RegExpExecArray | null;
+        while ((match = codeRegex.exec(html)) !== null) {
+          discoveredCodes.add(match[1]);
         }
-
-        page++;
-        if (!nextMaxId) break;
       }
-
-      // Save into DB with ordered timestamps (item 0 is newest, item N is oldest)
-      const baseTime = Date.now();
-      for (let i = 0; i < allItems.length; i++) {
-        const it = allItems[i];
-        const calculatedCreatedAt = new Date(baseTime - (i * 1000));
-        const isNew = await InstagramReelController.upsertReel(it.code, it.caption, it.thumbnail, calculatedCreatedAt);
-        if (isNew) newCount++;
-      }
-
-      console.log(`[Instagram Sync] Done. Synced ${allItems.length} reels in ${page - 1} pages. New: ${newCount}`);
-    } catch (err) {
-      console.warn('Instagram auto-sync notice:', err);
+    } catch (err: any) {
+      console.warn('[Instagram Sync] Profile discovery warning:', err?.message || err);
     }
+
+    console.log(`[Instagram Sync] Processing ${discoveredCodes.size} reel URLs...`);
+
+    // Fetch and upsert each reel without cookies using its URL
+    for (const code of Array.from(discoveredCodes)) {
+      try {
+        const reelData = await InstagramReelController.fetchReelByUrl(code);
+        if (!reelData) continue;
+
+        const isNew = await InstagramReelController.upsertReel(
+          reelData.code,
+          reelData.heading,
+          reelData.thumbnail,
+          reelData.createdAt
+        );
+        if (isNew) newCount++;
+      } catch (err: any) {
+        console.warn(`[Instagram Sync] Failed to sync reel ${code}:`, err?.message || err);
+      }
+    }
+
     const totalInDb = await prisma.reel.count();
+    console.log(`[Instagram Sync] Completed. New: ${newCount}, Total in DB: ${totalInDb}`);
     return { newCount, totalInDb };
   }
 
-  // Admin route handler for explicit manual sync button
+  // Admin route handler for manual full auto-sync
   static async syncReelsRoute(req: Request, res: Response, next: NextFunction) {
     try {
       const { newCount, totalInDb } = await InstagramReelController.syncFromInstagram();
-      const msg = newCount > 0
-        ? `✅ ${newCount} new reel${newCount > 1 ? 's' : ''} added from Instagram!`
-        : `ℹ️ All reels are up to date! Currently no new reels uploaded on Instagram.`;
+      const msg =
+        newCount > 0
+          ? `✅ ${newCount} new reel${newCount > 1 ? 's' : ''} added from Instagram!`
+          : `ℹ️ All ${totalInDb} reels are up to date!`;
       return sendSuccess(res, { newCount, totalInDb }, msg);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // Admin route handler to sync one or more reels directly by URL (without cookies)
+  static async syncReelByUrl(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { url, urls } = req.body;
+      const inputUrls: string[] = [];
+
+      if (typeof url === 'string' && url.trim()) {
+        const parts = url.split(/[\r\n,\s]+/);
+        parts.forEach((p) => {
+          if (p.trim()) inputUrls.push(p.trim());
+        });
+      }
+      if (Array.isArray(urls)) {
+        urls.forEach((u) => {
+          if (typeof u === 'string' && u.trim()) {
+            const parts = u.split(/[\r\n,\s]+/);
+            parts.forEach((p) => {
+              if (p.trim()) inputUrls.push(p.trim());
+            });
+          }
+        });
+      }
+
+      if (inputUrls.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Please provide a valid Instagram reel URL (e.g. https://www.instagram.com/reel/CODE/)',
+        });
+      }
+
+      const syncedReels: any[] = [];
+      let newCount = 0;
+
+      for (const rawUrl of inputUrls) {
+        const code = InstagramReelController.extractShortcode(rawUrl);
+        if (!code) continue;
+
+        const reelData = await InstagramReelController.fetchReelByUrl(code);
+        if (!reelData) continue;
+
+        const isNew = await InstagramReelController.upsertReel(
+          reelData.code,
+          reelData.heading,
+          reelData.thumbnail,
+          reelData.createdAt
+        );
+        if (isNew) newCount++;
+
+        const saved = await prisma.reel.findFirst({
+          where: { instaUrl: reelData.instaUrl },
+        });
+        if (saved) syncedReels.push(saved);
+      }
+
+      const totalInDb = await prisma.reel.count();
+      return sendSuccess(
+        res,
+        { syncedCount: syncedReels.length, newCount, totalInDb, reels: syncedReels },
+        `Successfully synced ${syncedReels.length} reel(s) using URL without cookies!`
+      );
     } catch (error) {
       next(error);
     }
@@ -185,7 +347,6 @@ export class InstagramReelController {
         whereClause.isActive = isActive === 'true';
       }
 
-      // Apply limit — public route sends ?limit=50, admin sends no limit
       const take = limit ? parseInt(limit as string, 10) : undefined;
 
       const reels = await prisma.reel.findMany({
@@ -200,10 +361,11 @@ export class InstagramReelController {
     }
   }
 
-  // Create a new reel
+  // Create a new reel manually
   static async createReel(req: Request, res: Response, next: NextFunction) {
     try {
-      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, thumbnail, isActive } = req.body;
+      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, thumbnail, isActive } =
+        req.body;
 
       const newReel = await prisma.reel.create({
         data: {
@@ -228,7 +390,8 @@ export class InstagramReelController {
   static async updateReel(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, thumbnail, isActive } = req.body;
+      const { type, heading, headingGu, headingHi, videoUrl, instaUrl, thumbnail, isActive } =
+        req.body;
 
       const updatedReel = await prisma.reel.update({
         where: { id },

@@ -293,7 +293,7 @@ export async function getPublicCategories(options?: { showInHeader?: boolean; sh
     const queryString = query.toString() ? `?${query.toString()}` : '';
 
     const url = `${API_BASE_URL}/categories${queryString}`;
-    const json = await fetchCachedJson<any>(url);
+    const json = await fetchCachedJson<any>(url, 5000);
     if (json?.success && json.data?.categories) {
       return json.data.categories;
     }

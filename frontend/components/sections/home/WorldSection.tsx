@@ -8,8 +8,41 @@ import type { Article, Language } from '@/types';
 import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import SidebarAdBanner from '@/components/ads/SidebarAdBanner';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { stripHtmlTags, DEMO_IMAGES, getMockRelativeTime } from './homeHelpers';
+
+const WORLD_SLUGS = ['world', 'international', 'videsh'];
+
+function isWorldArticle(art: Article): boolean {
+  const slug = (
+    (art as any).category?.slug ||
+    (art as any).categorySlug ||
+    (art as any).category ||
+    ''
+  ).toLowerCase().trim();
+  const name = (
+    (art as any).category?.name ||
+    (art as any).categoryName ||
+    ''
+  ).toLowerCase().trim();
+  const nameGu = (
+    (art as any).category?.nameGu ||
+    (art as any).categoryGu ||
+    ''
+  ).toLowerCase().trim();
+  const loc = (art.location || '').toLowerCase().trim();
+
+  return (
+    WORLD_SLUGS.includes(slug) ||
+    WORLD_SLUGS.includes(name) ||
+    nameGu.includes('વિશ્વ') ||
+    nameGu.includes('વિદેશ') ||
+    name.includes('world') ||
+    name.includes('international') ||
+    loc === 'international'
+  );
+}
 
 /* --- Dynamic Foreign Exchange Rates Widget ──────────────────────────────── */
 function CurrencyRatesWidget({ language }: { language: Language }) {
@@ -162,15 +195,47 @@ const mockWorldCards = [
 
 /* --- World Section ("વિશ્વ" Zone) ----------------------------- */
 export default function WorldSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
-  const [dbWorldArticles, setDbWorldArticles] = useState<Article[]>(initialArticles || []);
+  const initialWorld = useMemo(() => {
+    return (initialArticles || []).filter(isWorldArticle);
+  }, [initialArticles]);
+
+  const [dbWorldArticles, setDbWorldArticles] = useState<Article[]>(initialWorld);
+  const [loading, setLoading] = useState(initialWorld.length < 5);
 
   useEffect(() => {
-    if (initialArticles && initialArticles.length >= 3) return;
-    getPublicArticles({ categorySlug: 'world', limit: 10 }).then((res) => {
-      if (res && res.articles && res.articles.length > 0) {
-        setDbWorldArticles(res.articles);
+    const preFetched = (initialArticles || []).filter(isWorldArticle);
+    if (preFetched.length >= 5) {
+      setDbWorldArticles(preFetched.slice(0, 10));
+      setLoading(false);
+      return;
+    }
+
+    Promise.all([
+      getPublicArticles({ categorySlug: 'world', sort: 'latest', limit: 10 }).catch(() => null),
+      getPublicArticles({ categorySlug: 'international', sort: 'latest', limit: 10 }).catch(() => null),
+    ]).then(([res1, res2]) => {
+      const combined = [
+        ...(res1?.articles || []),
+        ...(res2?.articles || []),
+        ...preFetched,
+      ];
+      const seen = new Set<string>();
+      const unique = combined.filter((a) => {
+        if (!a?.id || seen.has(a.id)) return false;
+        seen.add(a.id);
+        return true;
+      });
+      unique.sort(
+        (a, b) =>
+          new Date(b.publishedAt || (b as any).createdAt || 0).getTime() -
+          new Date(a.publishedAt || (a as any).createdAt || 0).getTime()
+      );
+
+      if (unique.length > 0) {
+        setDbWorldArticles(unique.slice(0, 10));
       }
-    });
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, [initialArticles]);
 
   const featured = useMemo(() => {
@@ -179,8 +244,8 @@ export default function WorldSection({ language, initialArticles }: { language: 
       return {
         id: art.id,
         slug: art.slug,
-        image: art.image || DEMO_IMAGES[0],
-        categoryGu: art.categoryGu || art.category || 'વિશ્વ',
+        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[0],
+        categoryGu: (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || 'વિશ્વ',
         article: art as Article,
         titleGu: art.titleGu || art.title,
         excerptGu: art.excerptGu || art.excerpt || '',
@@ -205,8 +270,8 @@ export default function WorldSection({ language, initialArticles }: { language: 
       list.push({
         id: art.id,
         slug: art.slug,
-        image: art.image || DEMO_IMAGES[1],
-        categoryGu: art.categoryGu || art.category || 'વિશ્વ',
+        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[1],
+        categoryGu: (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || 'વિશ્વ',
         article: art,
         titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
@@ -228,7 +293,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
       });
     }
     return list;
-  }, [dbWorldArticles]);
+  }, [dbWorldArticles, language]);
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-4">
@@ -259,7 +324,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
             {/* Content Left */}
             <div className="flex flex-col justify-center min-w-0 order-2 md:order-1">
               <span className="text-red-600 font-extrabold text-[12px] md:text-[13px] mb-2 select-none uppercase tracking-wide">
-                {featured.categoryGu}
+                <AutoTranslateString text={featured.categoryGu} language={language} />
               </span>
               <h3 className="text-[17px] md:text-[19px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
                 {featured.article
@@ -275,12 +340,10 @@ export default function WorldSection({ language, initialArticles }: { language: 
 
             {/* Image Right with Watermark */}
             <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-muted order-1 md:order-2">
-              <Image
+              <ArticleMedia
                 src={featured.image}
                 alt={featured.titleGu}
-                fill
-                sizes="(max-width: 768px) 100vw, 30vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                className="transition-transform duration-300 group-hover:scale-[1.02]"
               />
               <span className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9.5px] font-black px-2 py-0.5 rounded-sm select-none tracking-tight">
                 {featured.watermarkGu}
@@ -297,12 +360,10 @@ export default function WorldSection({ language, initialArticles }: { language: 
                   className="group flex flex-col"
                 >
                   <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
-                    <Image
+                    <ArticleMedia
                       src={card.image}
                       alt={card.titleGu}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 20vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                   <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase leading-none">
@@ -316,12 +377,11 @@ export default function WorldSection({ language, initialArticles }: { language: 
                 </Link>
                 <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-muted-foreground font-semibold">
                   <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  <span>{card.time}</span>
+                  <span suppressHydrationWarning>{card.time}</span>
                 </div>
               </div>
             ))}
           </div>
-
         </div>
 
         {/* Right Column: Widgets */}

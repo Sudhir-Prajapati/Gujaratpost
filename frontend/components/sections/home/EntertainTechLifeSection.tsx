@@ -10,12 +10,45 @@ import { getPublicCategories, getPublicArticles } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 /* ─── Entertainment · Tech · Health 3-Column Section ─────────────────── */
-export default function EntertainTechLifeSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
+export default function EntertainTechLifeSection({
+  language,
+  initialArticles,
+  initialCategoryArticles = {},
+}: {
+  language: Language;
+  initialArticles?: Article[];
+  initialCategoryArticles?: Record<string, Article[]>;
+}) {
+  // Pre-build the initial category articles map from server-provided data
+  const buildInitialMap = (): Record<string, Article[]> => {
+    const map: Record<string, Article[]> = {};
+    // health
+    if (initialCategoryArticles['health'] && initialCategoryArticles['health'].length > 0) {
+      map['health'] = initialCategoryArticles['health'].slice(0, 4);
+    }
+    // entertainment / manoranjan
+    const entertainmentKey = initialCategoryArticles['manoranjan']?.length ? 'manoranjan' : 'entertainment';
+    if (initialCategoryArticles[entertainmentKey] && initialCategoryArticles[entertainmentKey].length > 0) {
+      map['manoranjan'] = initialCategoryArticles[entertainmentKey].slice(0, 4);
+    }
+    // technology
+    if (initialCategoryArticles['technology'] && initialCategoryArticles['technology'].length > 0) {
+      map['technology'] = initialCategoryArticles['technology'].slice(0, 4);
+    }
+    return map;
+  };
+
   const [categories, setCategories] = useState<any[]>([]);
-  const [categoryArticlesMap, setCategoryArticlesMap] = useState<Record<string, Article[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [categoryArticlesMap, setCategoryArticlesMap] = useState<Record<string, Article[]>>(buildInitialMap);
+  const [loading, setLoading] = useState(Object.keys(buildInitialMap()).length < 3);
 
   useEffect(() => {
+    // Check which categories still need articles fetched
+    const existingMap = categoryArticlesMap;
+    const needsHealth = !existingMap['health'] || existingMap['health'].length < 2;
+    const needsEntertain = !existingMap['manoranjan'] || existingMap['manoranjan'].length < 2;
+    const needsTech = !existingMap['technology'] || existingMap['technology'].length < 2;
+
     getPublicCategories()
       .then(async (cats) => {
         const TARGET_SLUGS = ['health', 'entertainment', 'manoranjan', 'technology'];
@@ -47,16 +80,24 @@ export default function EntertainTechLifeSection({ language, initialArticles }: 
 
         setCategories(finalCats);
 
-        // Fetch articles for each of the 3 target categories in parallel (skip if initialArticles has matching items)
+        // Fetch articles only for categories that don't have pre-fetched data
         const articlePromises = finalCats.map(async (cat: any) => {
           const targetSlug = (cat.slug || '').toLowerCase();
+          const needsThis = targetSlug === 'health' ? needsHealth : targetSlug === 'manoranjan' || targetSlug === 'entertainment' ? needsEntertain : needsTech;
+
+          // Use existing pre-fetched data if available
+          if (!needsThis) {
+            const key = targetSlug === 'entertainment' ? 'manoranjan' : targetSlug;
+            return { slug: targetSlug, articles: existingMap[key] || [] };
+          }
+
           if (initialArticles && initialArticles.length > 0) {
             const matched = initialArticles.filter((a: any) => {
               const cSlug = (a.category?.slug || a.categorySlug || a.category || '').toLowerCase();
               return cSlug === targetSlug || (targetSlug === 'manoranjan' && (cSlug === 'entertainment' || cSlug === 'manoranjan'));
             });
             if (matched.length >= 2) {
-              return { slug: cat.slug, articles: matched.slice(0, 4) };
+              return { slug: targetSlug, articles: matched.slice(0, 4) };
             }
           }
           try {
@@ -69,7 +110,7 @@ export default function EntertainTechLifeSection({ language, initialArticles }: 
         });
 
         const results = await Promise.all(articlePromises);
-        const map: Record<string, Article[]> = {};
+        const map: Record<string, Article[]> = { ...existingMap };
         results.forEach((r) => {
           map[r.slug] = r.articles;
         });
@@ -77,7 +118,7 @@ export default function EntertainTechLifeSection({ language, initialArticles }: 
       })
       .catch((err) => console.warn('Error loading 3-column dynamic section:', err))
       .finally(() => setLoading(false));
-  }, [initialArticles]);
+  }, []);
 
   type DisplayItem = { id?: string; slug?: string; img: string; title: string; titleGu: string; age: string };
 

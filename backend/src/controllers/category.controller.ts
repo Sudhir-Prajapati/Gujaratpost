@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { BadRequestError, ConflictError } from '../utils/errors.js';
+import { clearPublicRoutesCache } from '../utils/publicCache.js';
 
 export class CategoryController {
   /**
@@ -87,6 +88,7 @@ export class CategoryController {
         },
       });
 
+      clearPublicRoutesCache();
       return sendSuccess(res, category, 'Category created successfully.', 201);
     } catch (error) {
       next(error);
@@ -134,6 +136,13 @@ export class CategoryController {
       if (showInHeader !== undefined) updateData.showInHeader = showInHeader;
       if (headerType !== undefined) updateData.headerType = headerType;
 
+      if (req.body.homeOrder !== undefined) {
+        updateData.homeOrder = typeof req.body.homeOrder === 'number' ? req.body.homeOrder : parseInt(req.body.homeOrder) || 0;
+      }
+      if (req.body.headerOrder !== undefined) {
+        updateData.headerOrder = typeof req.body.headerOrder === 'number' ? req.body.headerOrder : parseInt(req.body.headerOrder) || 0;
+      }
+
       const checkName = updateData.name || category.name;
       const checkNameGu = updateData.nameGu || category.nameGu;
       const checkSlug = slug && typeof slug === 'string' ? slug.trim().toLowerCase() : category.slug;
@@ -163,6 +172,7 @@ export class CategoryController {
         data: updateData,
       });
 
+      clearPublicRoutesCache();
       return sendSuccess(res, updated, 'Category updated successfully.');
     } catch (error) {
       next(error);
@@ -206,10 +216,18 @@ export class CategoryController {
         })
       );
 
+      let orderBy: any = [{ displayOrder: 'desc' }];
+      if (target === 'home') {
+        orderBy = [{ homeOrder: 'desc' }, { displayOrder: 'desc' }];
+      } else if (target === 'header') {
+        orderBy = [{ headerOrder: 'desc' }, { displayOrder: 'desc' }];
+      }
+
       const categories = await prisma.category.findMany({
-        orderBy: { displayOrder: 'desc' },
+        orderBy,
       });
 
+      clearPublicRoutesCache();
       return sendSuccess(res, categories, 'Categories reordered successfully.');
     } catch (error) {
       next(error);
@@ -235,6 +253,7 @@ export class CategoryController {
         where: { id },
       });
 
+      clearPublicRoutesCache();
       return sendSuccess(res, null, 'Category deleted successfully.');
     } catch (error) {
       next(error);

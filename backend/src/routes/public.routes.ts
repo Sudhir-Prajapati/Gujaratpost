@@ -195,6 +195,8 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'fact check': 'fact-check',
   othercities: 'other-cities',
   international: 'world',
+  videsh: 'world',
+  'entertainment-life-style': 'entertainment',
   'web-stories': 'webstory',
   webstories: 'webstory',
   rain: 'weather',
@@ -299,20 +301,54 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           ],
         });
       } else {
-        // 1. Direct Category check (indexed lookup)
-        const category = await prisma.category.findFirst({
+        // 1. Direct Category check (indexed lookup supporting aliases and combined slugs)
+        const matchingCategories = await prisma.category.findMany({
           where: {
             OR: [
               { slug: slugLower },
               { name: categorySlug },
               { nameGu: categorySlug },
+              ...(slugLower === 'world' || slugLower === 'international'
+                ? [{ slug: 'world' }, { slug: 'international' }, { name: 'World' }, { name: 'International' }, { nameGu: 'વિશ્વ' }]
+                : []),
+              ...(slugLower === 'entertainment' || slugLower === 'entertainment-life-style'
+                ? [{ slug: 'entertainment' }, { slug: 'entertainment-life-style' }, { name: 'Entertainment' }]
+                : []),
             ],
           },
           select: { id: true },
         });
 
-        if (category) {
-          where.categoryId = category.id;
+        // Special case: crime category has 0 legacy posts — posts are spread across
+        // gujarat/others/ahmedabad etc. with crime keywords in titles.
+        // Do a keyword-based OR search across title fields instead.
+        if (slugLower === 'crime') {
+          if (!where.AND) where.AND = [];
+          where.AND.push({
+            OR: [
+              { titleGu: { contains: 'ક્રાઇ' } },
+              { titleGu: { contains: 'ધરપકડ' } },
+              { titleGu: { contains: 'હત્યા' } },
+              { titleGu: { contains: 'ગુન' } },
+              { titleGu: { contains: 'પોલીસ' } },
+              { titleGu: { contains: 'કૌભાંડ' } },
+              { titleGu: { contains: 'લૂંટ' } },
+              { titleGu: { contains: 'સ્મગ' } },
+              { titleGu: { contains: 'ડ્રગ' } },
+              { titleGu: { contains: 'ઝડપાય' } },
+              { titleGu: { contains: 'જપ્ત' } },
+              { titleGu: { contains: 'ફ્રોડ' } },
+              { title: { contains: 'crime' } },
+              { title: { contains: 'police' } },
+              { title: { contains: 'arrest' } },
+              { title: { contains: 'murder' } },
+              { title: { contains: 'fraud' } },
+              { title: { contains: 'seized' } },
+              { title: { contains: 'smuggling' } },
+            ],
+          });
+        } else if (matchingCategories.length > 0) {
+          where.categoryId = { in: matchingCategories.map((c) => c.id) };
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
           const tag = await prisma.tag.findFirst({
@@ -348,11 +384,13 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
     const orderByClause: any = (sortParam === 'latest')
-      ? [{ articleNumber: 'desc' }]
+      ? [{ articleNumber: 'desc' }, { createdAt: 'desc' }]
       : (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
       ? [{ views: 'desc' }, { articleNumber: 'desc' }]
       : isFeatured
       ? [{ createdAt: 'desc' }]
+      : (categorySlug)
+      ? [{ articleNumber: 'desc' }, { createdAt: 'desc' }]
       : [
         { isFeatured: 'desc' },
         { articleNumber: 'desc' },
@@ -647,10 +685,11 @@ router.get('/categories', cacheResponse(60), async (req, res, next) => {
       orderBy,
     });
 
-    // Apply headerType filter in JavaScript (column exists in DB but Prisma
-    // client type definitions may not include it until next prisma generate)
+    // Apply headerType filter in JavaScript
     const categories = allCategories.filter((c: any) => {
-      if (headerType && c.headerType && c.headerType !== headerType) return false;
+      if (headerType) {
+        return (c.headerType || '').toUpperCase() === headerType.toUpperCase();
+      }
       return true;
     });
 

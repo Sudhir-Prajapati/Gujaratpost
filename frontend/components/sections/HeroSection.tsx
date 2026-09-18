@@ -358,6 +358,17 @@ function makeHomeImagesUnique<T extends Article>(sections: T[][]): T[][] {
 /* ===========================================================================
    Main HeroSection -- tv9gujarati.com style 3-column layout
 =========================================================================== */
+// Helper to safely extract category slug from article (handles object or string)
+function getCatSlug(a: any): string {
+  if (!a) return '';
+  const cat = (a as any).category;
+  if (cat && typeof cat === 'object') {
+    return ((cat.slug || cat.name || '')).toLowerCase();
+  }
+  const slug = (a as any).categorySlug || cat || '';
+  return (typeof slug === 'string' ? slug : '').toLowerCase();
+}
+
 export default function HeroSection({
   initialArticles = [],
   initialVideos = [],
@@ -365,6 +376,8 @@ export default function HeroSection({
   initialCategories = [],
   initialMarketRates = null,
   initialWeatherData = null,
+  initialCategoryArticles = {},
+  initialReels = [],
 }: {
   initialArticles?: Article[];
   initialVideos?: any[];
@@ -372,6 +385,8 @@ export default function HeroSection({
   initialCategories?: any[];
   initialMarketRates?: any;
   initialWeatherData?: any;
+  initialCategoryArticles?: Record<string, Article[]>;
+  initialReels?: any[];
 }) {
   const { language } = useApp();
   const [videoMode, setVideoMode] = useState<'latest' | 'live'>('latest');
@@ -452,12 +467,36 @@ export default function HeroSection({
   const [bottomFeatured, setBottomFeatured] = useState<Article[]>(initialSlots.length > 0 ? initialSlots : initFeatured.slice(0, 3));
   const [trendingArtDB, setTrendingArtDB] = useState<Article[]>(initialPopularPool);
   const [mostReadArtDB, setMostReadArtDB] = useState<Article[]>(initialMostReadPool);
-  const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'gujarat' || a.category?.toLowerCase() === 'state').slice(0, 16));
-  const [crimeArtDB, setCrimeArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'crime').slice(0, 4));
-  const [nationalArtDB, setNationalArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'national' || a.category?.toLowerCase() === 'india').slice(0, 4));
-  const [worldArtDB, setWorldArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'world').slice(0, 4));
-  const [businessArtDB, setBusinessArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'business').slice(0, 4));
-  const [sportsArtDB, setSportsArtDB] = useState<Article[]>(publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'sports').slice(0, 7));
+  const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>(
+    (initialCategoryArticles['gujarat'] && initialCategoryArticles['gujarat'].length > 0)
+      ? initialCategoryArticles['gujarat']
+      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16)
+  );
+  const [crimeArtDB, setCrimeArtDB] = useState<Article[]>(
+    (initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0)
+      ? initialCategoryArticles['crime']
+      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime').slice(0, 4)
+  );
+  const [nationalArtDB, setNationalArtDB] = useState<Article[]>(
+    (initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0)
+      ? initialCategoryArticles['national']
+      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4)
+  );
+  const [worldArtDB, setWorldArtDB] = useState<Article[]>(
+    (initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0)
+      ? initialCategoryArticles['world']
+      : publishedInitialArticles.filter((a) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4)
+  );
+  const [businessArtDB, setBusinessArtDB] = useState<Article[]>(
+    (initialCategoryArticles['business'] && initialCategoryArticles['business'].length > 0)
+      ? initialCategoryArticles['business']
+      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'business').slice(0, 4)
+  );
+  const [sportsArtDB, setSportsArtDB] = useState<Article[]>(
+    (initialCategoryArticles['sports'] && initialCategoryArticles['sports'].length > 0)
+      ? initialCategoryArticles['sports']
+      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'sports').slice(0, 7)
+  );
   const [dynamicTrendingTopics, setDynamicTrendingTopics] = useState<string[]>(initialHeroSettings?.trendingTopics || initialHeroSettings?.setting?.trendingTopics || []);
   const [marketRates, setMarketRates] = useState<any>(initialMarketRates || {
     gold: { price: '₹74,850', change: '▲ ₹450', purity: '24 Karat', unit: '10 Grams' },
@@ -477,6 +516,35 @@ export default function HeroSection({
   const [orderedCategorySlugs, setOrderedCategorySlugs] = useState<string[]>(initialCategorySlugs.length > 0 ? initialCategorySlugs : ['gujarat', 'national', 'world', 'politics', 'crime']);
   const [allCategoriesDB, setAllCategoriesDB] = useState<any[]>(initialCategoriesDB);
   const { isApk } = useIsApk();
+
+  useEffect(() => {
+    if (initialCategories && Array.isArray(initialCategories) && initialCategories.length > 0) {
+      const filtered = initialCategories
+        .filter((c: any) => c.showInHome !== false && c.isActive !== false)
+        .sort((a: any, b: any) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0));
+      setAllCategoriesDB(filtered);
+    }
+  }, [initialCategories]);
+
+  useEffect(() => {
+    const handleSyncCategories = () => {
+      getPublicCategories({ showInHome: true }).then((cats) => {
+        if (cats && Array.isArray(cats) && cats.length > 0) {
+          const filtered = cats
+            .filter((c: any) => c.showInHome !== false && c.isActive !== false)
+            .sort((a: any, b: any) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0));
+          setAllCategoriesDB(filtered);
+        }
+      }).catch(() => {});
+    };
+
+    window.addEventListener('focus', handleSyncCategories);
+    window.addEventListener('gp-categories-updated', handleSyncCategories);
+    return () => {
+      window.removeEventListener('focus', handleSyncCategories);
+      window.removeEventListener('gp-categories-updated', handleSyncCategories);
+    };
+  }, []);
 
   useEffect(() => {
     // If we already have initial articles and hero settings passed from SSR,
@@ -562,12 +630,12 @@ export default function HeroSection({
         setTrendingArtDB(popularPool);
         const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : arts).slice(0, 3);
         setMostReadArtDB(mostReadPool);
-        setGujaratArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'gujarat' || a.category?.toLowerCase() === 'state').slice(0, 16));
-        setCrimeArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'crime').slice(0, 4));
-        setNationalArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'national' || a.category?.toLowerCase() === 'india').slice(0, 4));
-        setWorldArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'world').slice(0, 4));
-        setBusinessArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'business').slice(0, 4));
-        setSportsArtDB(arts.filter((a: Article) => a.category?.toLowerCase() === 'sports').slice(0, 7));
+        setGujaratArtDB(arts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
+        setCrimeArtDB(arts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 4));
+        setNationalArtDB(arts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4));
+        setWorldArtDB(arts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international'; }).slice(0, 4));
+        setBusinessArtDB(arts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
+        setSportsArtDB(arts.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
       }
 
       if (videoRes && videoRes.length > 0) {
@@ -620,8 +688,27 @@ export default function HeroSection({
   };
 
   const activeOrderedCategories = useMemo(() => {
+    const STATIC_ORDER = [
+      'videos',
+      'gujarat',
+      'national',
+      'latest-news',
+      'trending',
+      'instagram',
+      'world',
+      'politics',
+      'webstory',
+      'crime',
+      'entertainment',
+      'fact-check',
+      'photos',
+      'shorts',
+      'weather',
+      'live-center',
+    ];
+
     if (!allCategoriesDB || !Array.isArray(allCategoriesDB) || allCategoriesDB.length === 0) {
-      return ['videos', 'gujarat', 'national', 'trending', 'latest-news', 'instagram', 'world', 'politics', 'webstory', 'crime', 'entertainment', 'fact-check', 'photos', 'weather', 'shorts', 'live-center'];
+      return STATIC_ORDER;
     }
 
     const homeCats = [...allCategoriesDB].filter(c => c.isActive !== false && c.showInHome !== false);
@@ -637,7 +724,7 @@ export default function HeroSection({
       </div>
     ),
     gujarat: <CityHyperlocalSection key="gujarat" language={language} articles={articlesList} dynamicTrendingTopics={dynamicTrendingTopics} />,
-    national: <NationalSection key="national" language={language} />,
+    national: <NationalSection key="national" language={language} initialArticles={(initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0) ? initialCategoryArticles['national'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; })} />,
     trending: (
       <Fragment key="trending-frag">
         <TrendingSection
@@ -656,9 +743,15 @@ export default function HeroSection({
         initialMostRead={initialHeroSettings?.mostReadArticles || undefined}
       />
     ),
-    instagram: <InstagramStories key="instagram" />,
-    world: <WorldSection key="world" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'world' || (a as any).categorySlug?.toLowerCase() === 'world')} />,
-    politics: <PoliticsSection key="politics" language={language} initialArticles={publishedInitialArticles.filter((a) => { const cs = ((a as any).category?.slug || (a as any).categorySlug || '').toLowerCase(); return cs === 'politics' || cs === 'rajkaran'; })} />,
+    instagram: <InstagramStories key="instagram" initialReels={initialReels} />,
+    world: <WorldSection key="world" language={language} initialArticles={(initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => {
+      const c = ((a as any).category?.slug || (a as any).categorySlug || a.category || '').toLowerCase().trim();
+      const n = ((a as any).category?.name || (a as any).categoryName || '').toLowerCase().trim();
+      const gu = ((a as any).category?.nameGu || (a as any).categoryGu || '').toLowerCase().trim();
+      const loc = (a.location || '').toLowerCase().trim();
+      return c === 'world' || c === 'international' || c === 'videsh' || n === 'world' || n === 'international' || gu.includes('વિશ્વ') || gu.includes('વિદેશ') || loc === 'international';
+    })} />,
+    politics: <PoliticsSection key="politics" language={language} initialArticles={(initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0) ? initialCategoryArticles['politics'] : publishedInitialArticles.filter((a) => { const cs = getCatSlug(a); return cs === 'politics' || cs === 'rajkaran'; })} />,
     webstory: (
       <Fragment key="webstory-frag">
         <WebStoriesSection key="webstory" />
@@ -669,7 +762,7 @@ export default function HeroSection({
       <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
           <div className="flex flex-col gap-10 min-w-0">
-            <CrimeSection language={language} view="content" initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'crime' || (a as any).categorySlug?.toLowerCase() === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
+            <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
           </div>
           <div className="flex flex-col gap-6 sticky top-20 select-none">
             <div>
@@ -733,15 +826,15 @@ export default function HeroSection({
               </div>
             </div>
 
-            <CrimeSection language={language} view="sidebar" initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'crime' || (a as any).categorySlug?.toLowerCase() === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
+            <CrimeSection language={language} view="sidebar" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
           </div>
         </div>
       </section>
     ),
-    entertainment: <EntertainTechLifeSection key="entertainment" language={language} initialArticles={publishedInitialArticles} />,
+    entertainment: <EntertainTechLifeSection key="entertainment" language={language} initialArticles={publishedInitialArticles} initialCategoryArticles={initialCategoryArticles} />,
     technology: null,
     health: null,
-    'fact-check': <FactCheckSection key="fact-check" language={language} initialArticles={publishedInitialArticles.filter((a) => a.category?.toLowerCase() === 'fact-check' || a.category?.toLowerCase() === 'factcheck' || (a as any).categorySlug?.toLowerCase() === 'fact-check' || (a as any).categorySlug?.toLowerCase() === 'factcheck')} />,
+    'fact-check': <FactCheckSection key="fact-check" language={language} initialArticles={(initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0) ? initialCategoryArticles['factcheck'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })} />,
     photos: (
       <Fragment key="photos-frag">
         <PhotoGallerySection language={language} />
