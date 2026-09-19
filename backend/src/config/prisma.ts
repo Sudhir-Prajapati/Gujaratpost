@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
 
 // Use a singleton to avoid multiple Prisma instances during hot-reload in dev
@@ -7,7 +8,22 @@ declare global {
 }
 
 function createPrismaClient(): PrismaClient {
+  const rawUrl = process.env.DATABASE_URL;
+  const dbUrl = rawUrl ? rawUrl.replace(/^["']|["']$/g, '').trim() : undefined;
+
+  if (dbUrl) {
+    try {
+      const parsed = new URL(dbUrl);
+      console.log(`[Prisma] Initializing with database host: ${parsed.hostname}:${parsed.port || 'default'}`);
+    } catch {
+      console.log('[Prisma] Initializing with custom DATABASE_URL.');
+    }
+  } else {
+    console.warn('[Prisma] WARNING: DATABASE_URL environment variable is NOT set!');
+  }
+
   return new PrismaClient({
+    datasources: dbUrl ? { db: { url: dbUrl } } : undefined,
     log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
     errorFormat: 'minimal',
   });

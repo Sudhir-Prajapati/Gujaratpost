@@ -7,7 +7,7 @@ function getJwtSecret(): string {
 }
 
 function getJwtAccessExpiry(): string {
-  return process.env.JWT_ACCESS_EXPIRY || '24h';
+  return process.env.JWT_ACCESS_EXPIRY || process.env.JWT_EXPIRES_IN || '24h';
 }
 
 function getJwtRefreshExpiry(): string {

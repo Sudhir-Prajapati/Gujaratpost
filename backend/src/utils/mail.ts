@@ -206,7 +206,8 @@ export const sendCredentialsEmail = async (
   plainPassword: string,
   role: string
 ): Promise<boolean> => {
-  const loginUrl = process.env.FRONTEND_URL || 'http://localhost:3000/login';
+  const frontendBase = (process.env.FRONTEND_URL || process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/+$/, '');
+  const loginUrl = `${frontendBase}/login`;
 
   const htmlContent = `
     <!DOCTYPE html>
