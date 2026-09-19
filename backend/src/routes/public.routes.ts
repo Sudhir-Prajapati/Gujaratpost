@@ -15,6 +15,7 @@ import { GalleryController } from '../controllers/gallery.controller.js';
 import { SupportController } from '../controllers/support.controller.js';
 import { TributeController } from '../controllers/tribute.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
+import { redisClient } from '../config/redis.js';
 
 const router = Router();
 
@@ -43,7 +44,7 @@ function getNormalizedSearchCacheKey(req: any): string {
 }
 
 function cacheResponse(ttlSeconds: number) {
-  return (req: any, res: any, next: any) => {
+  return async (req: any, res: any, next: any) => {
     if (req.method !== 'GET') return next();
 
     const isSearchQuery = Boolean(req.query && req.query.query);
@@ -54,10 +55,24 @@ function cacheResponse(ttlSeconds: number) {
 
     res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=300`);
 
+    // 1. Fast in-memory check
     const cached = targetCache.get(key);
     const now = Date.now();
     if (cached && now - cached.timestamp < ttlMs) {
       return res.status(200).json(cached.payload);
+    }
+
+    // 2. Redis check
+    const redisKey = `cache:public:${key}`;
+    if (redisClient.isOpen) {
+      try {
+        const fromRedis = await redisClient.get(redisKey);
+        if (fromRedis) {
+          const parsed = JSON.parse(fromRedis);
+          targetCache.set(key, { timestamp: now, payload: parsed });
+          return res.status(200).json(parsed);
+        }
+      } catch {}
     }
 
     const originalJson = res.json.bind(res);
@@ -68,6 +83,10 @@ function cacheResponse(ttlSeconds: number) {
           if (oldestKey) targetCache.delete(oldestKey);
         }
         targetCache.set(key, { timestamp: Date.now(), payload: body });
+
+        if (redisClient.isOpen) {
+          redisClient.setEx(redisKey, ttlSeconds, JSON.stringify(body)).catch(() => {});
+        }
       }
       return originalJson(body);
     };
@@ -221,12 +240,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const isBreaking = req.query.isBreaking === 'true';
     const isFeatured = req.query.isFeatured === 'true';
 
-    const now = new Date();
     const where: any = {
-      OR: [
-        { status: 'PUBLISHED' },
-        { status: 'SCHEDULED', scheduledAt: { lte: now } }
-      ],
+      status: 'PUBLISHED',
     };
 
     if (query) {
@@ -319,35 +334,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           select: { id: true },
         });
 
-        // Special case: crime category has 0 legacy posts — posts are spread across
-        // gujarat/others/ahmedabad etc. with crime keywords in titles.
-        // Do a keyword-based OR search across title fields instead.
-        if (slugLower === 'crime') {
-          if (!where.AND) where.AND = [];
-          where.AND.push({
-            OR: [
-              { titleGu: { contains: 'ક્રાઇ' } },
-              { titleGu: { contains: 'ધરપકડ' } },
-              { titleGu: { contains: 'હત્યા' } },
-              { titleGu: { contains: 'ગુન' } },
-              { titleGu: { contains: 'પોલીસ' } },
-              { titleGu: { contains: 'કૌભાંડ' } },
-              { titleGu: { contains: 'લૂંટ' } },
-              { titleGu: { contains: 'સ્મગ' } },
-              { titleGu: { contains: 'ડ્રગ' } },
-              { titleGu: { contains: 'ઝડપાય' } },
-              { titleGu: { contains: 'જપ્ત' } },
-              { titleGu: { contains: 'ફ્રોડ' } },
-              { title: { contains: 'crime' } },
-              { title: { contains: 'police' } },
-              { title: { contains: 'arrest' } },
-              { title: { contains: 'murder' } },
-              { title: { contains: 'fraud' } },
-              { title: { contains: 'seized' } },
-              { title: { contains: 'smuggling' } },
-            ],
-          });
-        } else if (matchingCategories.length > 0) {
+        if (matchingCategories.length > 0) {
           where.categoryId = { in: matchingCategories.map((c) => c.id) };
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
@@ -426,8 +413,25 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       views: true,
       createdAt: true,
       updatedAt: true,
-      category: true,
-      author: true,
+      category: {
+        select: {
+          id: true,
+          slug: true,
+          name: true,
+          nameGu: true,
+          nameHi: true,
+        },
+      },
+      author: {
+        select: {
+          id: true,
+          name: true,
+          nameGu: true,
+          nameHi: true,
+          image: true,
+          designation: true,
+        },
+      },
       tags: { include: { tag: true } },
     };
 
@@ -447,10 +451,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     // Fallback: If query returned 0 articles (only for general feed, never for specific category or search query)
     if (posts.length === 0 && !categorySlug && !query) {
       const fallbackWhere: any = {
-        OR: [
-          { status: 'PUBLISHED' },
-          { status: 'SCHEDULED', scheduledAt: { lte: now } }
-        ]
+        status: 'PUBLISHED',
       };
       posts = await withDbRetry(() =>
         prisma.post.findMany({
