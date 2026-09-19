@@ -100,9 +100,8 @@ export default function ApkHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-40 select-none shadow-md transition-transform duration-300 ease-in-out ${
-        isVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
-      }`}
+      className={`sticky top-0 z-40 select-none shadow-md transition-transform duration-300 ease-in-out ${isVisible ? 'translate-y-0' : '-translate-y-full pointer-events-none'
+        }`}
     >
       {/* ── TOP RED HEADER BAR ─────────────────────────────────────── */}
       <div className="relative bg-[#B3121B] text-white px-3 py-2 flex items-center justify-between h-14 border-b border-black/10">
@@ -191,11 +190,10 @@ export default function ApkHeader() {
                       setLanguage(item.code as any);
                       setLangMenuOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 font-bold flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-[#B3121B] transition cursor-pointer ${
-                      language === item.code
-                        ? 'text-[#B3121B] bg-red-50/80 dark:bg-red-950/30 font-extrabold'
-                        : 'text-gray-700 dark:text-gray-300'
-                    }`}
+                    className={`w-full text-left px-3 py-2 font-bold flex items-center justify-between hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-[#B3121B] transition cursor-pointer ${language === item.code
+                      ? 'text-[#B3121B] bg-red-50/80 dark:bg-red-950/30 font-extrabold'
+                      : 'text-gray-700 dark:text-gray-300'
+                      }`}
                   >
                     <div className="flex flex-col">
                       <span className="text-xs">{item.label}</span>
@@ -217,11 +215,10 @@ export default function ApkHeader() {
           <Link
             href="/"
             prefetch={true}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${
-              pathname === '/'
-                ? 'bg-[#B3121B] text-white shadow-xs'
-                : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-            }`}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${pathname === '/'
+              ? 'bg-[#B3121B] text-white shadow-xs'
+              : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+              }`}
           >
             <Home className={`w-3.5 h-3.5 ${pathname === '/' ? 'text-white' : 'text-[#B3121B]'}`} />
             <span>{getCatLabel(CATEGORIES[0])}</span>
@@ -231,11 +228,10 @@ export default function ApkHeader() {
           <Link
             href="/news-brief"
             prefetch={true}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${
-              pathname === '/news-brief'
-                ? 'bg-[#B3121B] text-white shadow-xs'
-                : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
-            }`}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${pathname === '/news-brief'
+              ? 'bg-[#B3121B] text-white shadow-xs'
+              : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
+              }`}
           >
             <Image
               src="/rightSide.png"
@@ -253,11 +249,10 @@ export default function ApkHeader() {
           <Link
             href="/aqi"
             prefetch={true}
-            className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${
-              pathname === '/aqi'
-                ? 'bg-[#B3121B] text-white shadow-xs'
-                : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
-            }`}
+            className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${pathname === '/aqi'
+              ? 'bg-[#B3121B] text-white shadow-xs'
+              : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
+              }`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -290,11 +285,10 @@ export default function ApkHeader() {
                 key={idx}
                 href={cat.href}
                 prefetch={true}
-                className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${
-                  isActive
-                    ? 'bg-[#B3121B] text-white shadow-xs'
-                    : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
-                }`}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${isActive
+                  ? 'bg-[#B3121B] text-white shadow-xs'
+                  : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#B3121B]'}`} />
                 <span>{getCatLabel(cat)}</span>
