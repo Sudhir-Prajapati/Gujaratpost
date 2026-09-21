@@ -364,6 +364,8 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                 videoSrc.startsWith('data:video/')
               );
 
+              const thumbUrl = getReelThumbnail(reel);
+
               return (
                 <div
                   key={reel.id}
@@ -371,12 +373,21 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                   className="flex-none w-[140px] sm:w-[165px] cursor-pointer snap-start group"
                 >
                   <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-slate-900/90 dark:border-slate-800 bg-slate-950 shadow-md transition-all duration-300 group-hover:scale-[1.02] group-hover:shadow-xl">
-                    <div className="absolute top-2.5 left-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-[#B3121B] text-white shadow-md">
+                    <div className="absolute top-2.5 left-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#B3121B] text-white shadow-md">
                       <ReelsBadgeIcon className="h-3.5 w-3.5 text-white" />
                     </div>
 
-                    {/* Render Reel Video (HTML5 Video, Instagram Embed, YouTube Shorts, or Dark Video Cover) */}
-                    {isDirectVideo ? (
+                    {/* Thumbnail Image — always shown as full-cover background */}
+                    {thumbUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={thumbUrl}
+                        alt={displayTitle || 'Reel'}
+                        referrerPolicy="no-referrer"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    ) : isDirectVideo ? (
                       <video
                         src={videoSrc!}
                         autoPlay
@@ -385,34 +396,25 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                         playsInline
                         className="absolute inset-0 h-full w-full object-cover"
                       />
-                    ) : instaEmbedUrl ? (
-                      <iframe
-                        src={instaEmbedUrl}
-                        className="absolute inset-0 h-[140%] w-[120%] -top-[20%] -left-[10%] pointer-events-none object-cover border-0"
-                        allow="autoplay; encrypted-media"
-                        title={displayTitle}
-                      />
-                    ) : ytEmbedUrl ? (
-                      <iframe
-                        src={ytEmbedUrl}
-                        className="absolute inset-0 h-full w-full pointer-events-none border-0"
-                        allow="autoplay; encrypted-media"
-                        title={displayTitle}
-                      />
                     ) : (
-                      /* Dark sleek video cover card - NO ORANGE GRADIENT */
-                      <div className="absolute inset-0 h-full w-full bg-slate-900 flex items-center justify-center transition-transform duration-500 group-hover:scale-105">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-slate-900/70 to-black/40" />
-                        <div className="relative z-10 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg border border-white/30 group-hover:bg-[#B3121B] transition-colors">
-                          <svg viewBox="0 0 24 24" className="w-6 h-6 text-white ml-0.5" fill="currentColor">
-                            <path d="M8 5v14l11-7z" />
-                          </svg>
-                        </div>
-                      </div>
+                      /* Dark sleek fallback cover */
+                      <div className="absolute inset-0 h-full w-full bg-slate-900" />
                     )}
 
+                    {/* Dark gradient overlay for readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent z-10" />
+
+                    {/* Center Play Button Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center z-10 opacity-90 group-hover:opacity-100 transition-opacity">
+                      <span className="w-10 h-10 rounded-full bg-[#B3121B] text-white flex items-center justify-center shadow-lg border border-white/20 transition-transform group-hover:scale-110">
+                        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current ml-0.5" aria-hidden="true">
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                      </span>
+                    </div>
+
                     {/* Bottom Title Container Box */}
-                    <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-100 dark:border-slate-800 z-10">
+                    <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-100 dark:border-slate-800 z-20">
                       <div className="flex flex-col min-w-0 flex-1 pr-1">
                         <div className="flex items-center gap-1 mb-0.5">
                           <ReelsBadgeIcon className="h-3 w-3 text-[#B3121B] shrink-0" />
