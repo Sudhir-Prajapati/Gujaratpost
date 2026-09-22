@@ -4,11 +4,10 @@ import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'rea
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, ArrowRight, Flame, Eye, Play, ChevronRight, ChevronLeft, Camera, X, Bookmark, Sun, Cloud, CloudRain, Shield, Trophy, TrendingUp, TrendingDown, Wind, ChevronDown, ArrowUpRight, Thermometer, Droplet, MoreVertical, Fuel, Megaphone, Radio, MapPin, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowRight, Flame, Eye, Play, ChevronRight, ChevronLeft, Camera, X, Bookmark, Sun, Cloud, CloudRain, Shield, Trophy, TrendingUp, TrendingDown, Wind, ChevronDown, ArrowUpRight, Thermometer, Droplet, MoreVertical, Fuel, Megaphone, Radio, MapPin, Sparkles, Loader2 } from 'lucide-react';
 import {
   getArticleTitle,
   getArticleExcerpt,
-  formatTime,
   formatDate,
   formatViews,
   getCategoryLabel,
@@ -563,6 +562,13 @@ export default function HeroSection({
       const needsWeather = !initialWeatherData;
       const needsVideos = !initialVideos || initialVideos.length === 0;
 
+      // Always fetch fresh live YouTube videos on client mount to update views and durations
+      getPublicVideos('video').then((videoRes) => {
+        if (videoRes && videoRes.length > 0) {
+          setVideosList(videoRes);
+        }
+      }).catch(() => {});
+
       if (needsMarket || needsWeather || needsVideos) {
         Promise.all([
           needsMarket ? getMarketRates().catch(() => null) : Promise.resolve(null),
@@ -1002,8 +1008,8 @@ export default function HeroSection({
                     <AutoArticleExcerpt article={uniqueTopStories[0]} language={language} />
                   </p>
                   {/* Meta */}
-                  <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground font-semibold border-t border-border/50 pt-2">
-                    {uniqueTopStories[0].author && (
+                  {uniqueTopStories[0].author && (
+                    <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground font-semibold border-t border-border/50 pt-2">
                       <span className="font-black text-foreground">
                         {getLocalized(language, {
                           en: uniqueTopStories[0].author.name,
@@ -1011,12 +1017,8 @@ export default function HeroSection({
                           hi: uniqueTopStories[0].author.nameHi,
                         })}
                       </span>
-                    )}
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatTime(uniqueTopStories[0].publishedAt)}
-                    </span>
-                  </div>
+                    </div>
+                  )}
                 </Link>
               )}
 
@@ -1126,18 +1128,7 @@ export default function HeroSection({
                         <h3 className="text-[13px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                           <AutoArticleTitle article={art} language={language} />
                         </h3>
-                        <div className="flex items-center gap-1.5 mt-1 md:mt-2.5 text-[10.5px] text-muted-foreground font-semibold">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                            <span>
-                              {language === 'gu'
-                                ? (art.readingTime ? `${art.readingTime} મિનિટ વાંચન` : '૪ મિનિટ વાંચન')
-                                : language === 'hi'
-                                  ? (art.readingTime ? `${art.readingTime} मिनट पठन` : '4 मिनट पठन')
-                                  : (art.readingTime ? `${art.readingTime} min read` : '4 min read')}
-                            </span>
-                          </span>
-                        </div>
+
                       </div>
                     </Link>
                   );

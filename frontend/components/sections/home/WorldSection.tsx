@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, ChevronRight, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
@@ -375,10 +375,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
                       : <AutoTranslateString text={card.titleGu} language={language} />}
                   </h4>
                 </Link>
-                <div className="flex items-center gap-1.5 mt-2.5 text-[11px] text-muted-foreground font-semibold">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  <span suppressHydrationWarning>{card.time}</span>
-                </div>
+
               </div>
             ))}
           </div>

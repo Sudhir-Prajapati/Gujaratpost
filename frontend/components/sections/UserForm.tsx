@@ -411,15 +411,25 @@ export default function UserForm({ userId }: UserFormProps) {
             <div>
               <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Account Status</label>
               <select
-                value={status}
+                value={role === 'SUPER_ADMIN' ? 'ACTIVE' : status}
                 onChange={(e: any) => setStatus(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
+                disabled={role === 'SUPER_ADMIN'}
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="ACTIVE">Active</option>
-                <option value="PENDING_VERIFICATION">Pending Verification</option>
-                <option value="SUSPENDED">Suspended / Deactivated</option>
-                <option value="DELETED">Deleted Status</option>
+                {role !== 'SUPER_ADMIN' && (
+                  <>
+                    <option value="PENDING_VERIFICATION">Pending Verification</option>
+                    <option value="SUSPENDED">Suspended / Deactivated</option>
+                    <option value="DELETED">Deleted Status</option>
+                  </>
+                )}
               </select>
+              {role === 'SUPER_ADMIN' && (
+                <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                  🛡️ Super Admin accounts are permanently protected and must remain Active.
+                </p>
+              )}
             </div>
           </div>
         </div>

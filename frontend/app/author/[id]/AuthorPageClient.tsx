@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, Eye, MapPin, BookOpen } from 'lucide-react';
-import { formatDate, formatViews, getArticleTitle, getCategoryLabel, getLocalized } from '@/data';
+import { Eye, MapPin, BookOpen } from 'lucide-react';
+import { formatViews, getArticleTitle, getCategoryLabel, getLocalized } from '@/data';
 import { getCategoryColor } from '@/lib/utils';
 import { useApp } from '@/components/AppProvider';
 import type { Author, Article } from '@/types';
@@ -135,11 +135,7 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
                     {title}
                   </h3>
                 </div>
-                <div className="mt-4 flex items-center justify-between text-[11px] font-semibold text-muted-foreground border-t border-border/40 pt-2.5 select-none font-sans">
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" />
-                    {formatDate(article.publishedAt)}
-                  </span>
+                <div className="mt-4 flex items-center justify-end text-[11px] font-semibold text-muted-foreground border-t border-border/40 pt-2.5 select-none font-sans">
                   <span className="flex items-center gap-1">
                     <Eye className="h-3 w-3" />
                     {formatViews(article.views)}

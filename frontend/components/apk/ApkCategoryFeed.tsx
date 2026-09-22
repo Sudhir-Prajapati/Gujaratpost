@@ -3,7 +3,7 @@
 import { useState, useMemo, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Share2, Clock, Flame, Sparkles, MapPin, Eye, Check } from 'lucide-react';
+import { Share2, Flame, Sparkles, MapPin, Eye, Check } from 'lucide-react';
 import type { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import { getLocalized, formatDate, formatViews } from '@/data';
@@ -119,12 +119,6 @@ export default function ApkCategoryFeed({
   const heroArticle = filteredArticles[0];
   const streamArticles = filteredArticles.slice(1, visibleCount);
 
-  // Time format helper
-  const getRelativeTime = (art: Article) => {
-    if (language === 'gu') return (art as any).relativeTimeGu || formatDate(art.publishedAt);
-    if (language === 'hi') return (art as any).relativeTimeHi || formatDate(art.publishedAt);
-    return art.relativeTime || formatDate(art.publishedAt);
-  };
 
   return (
     <div className="pb-10 max-w-md mx-auto w-full select-none">
@@ -196,17 +190,12 @@ export default function ApkCategoryFeed({
 
               <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 font-semibold">
                 <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-gray-400" />
-                    {getRelativeTime(heroArticle)}
-                  </span>
                   {heroArticle.views ? (
                     <span className="flex items-center gap-1 text-gray-400">
-                      <span>·</span>
                       <Eye className="w-3 h-3" />
                       {language === 'gu' ? toGu(formatViews(heroArticle.views)) : formatViews(heroArticle.views)}
                     </span>
-                  ) : null}
+                  ) : <span />}
                 </div>
 
                 <button
@@ -251,11 +240,7 @@ export default function ApkCategoryFeed({
                   </h3>
                 </div>
 
-                <div className="mt-2 flex items-center justify-between text-[10px] text-gray-500 dark:text-gray-400 font-semibold">
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-gray-400" />
-                    {getRelativeTime(art)}
-                  </span>
+                <div className="mt-2 flex items-center justify-end text-[10px] text-gray-500 dark:text-gray-400 font-semibold">
 
                   <button
                     type="button"

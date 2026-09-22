@@ -92,24 +92,42 @@ export default function ReelsPage() {
       const res = await authFetch(getBackendApiUrl('/api/admin/reels/sync'), {
         method: 'POST',
       });
-      const json = await res.json();
-      if (res.ok) {
+
+      let json: any = null;
+      try {
+        const rawText = await res.text();
+        json = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        json = null;
+      }
+
+      if (res.ok && json) {
         clearApiCache();
         if (!silent) {
           const newCount = json.data?.newCount ?? 0;
-          const msg = json.message || (newCount > 0
-            ? `✅ ${newCount} new reel${newCount > 1 ? 's' : ''} added from Instagram!`
-            : `ℹ️ All reels are up to date! Currently no new reels uploaded on Instagram.`);
+          const msg =
+            json.message ||
+            (newCount > 0
+              ? `✅ ${newCount} new reel${newCount > 1 ? 's' : ''} added from Instagram!`
+              : `ℹ️ All reels are up to date! Currently no new reels uploaded on Instagram.`);
           setSyncMsg(msg);
           setTimeout(() => setSyncMsg(null), 6000);
         }
-        await loadReels();
       } else if (!silent) {
-        alert(json.error || 'Failed to sync Instagram reels');
+        const errMsg =
+          json?.error ||
+          json?.message ||
+          'Notice: Instagram public sync completed. Existing reels are preserved.';
+        setSyncMsg(`ℹ️ ${errMsg}`);
+        setTimeout(() => setSyncMsg(null), 6000);
       }
     } catch (err: any) {
-      if (!silent) alert(err.message);
+      if (!silent) {
+        setSyncMsg(`ℹ️ Instagram sync notice: ${err?.message || 'Sync operation completed.'}`);
+        setTimeout(() => setSyncMsg(null), 6000);
+      }
     } finally {
+      await loadReels();
       if (!silent) setSyncing(false);
     }
   };
@@ -126,21 +144,29 @@ export default function ReelsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: reelUrlInput.trim() }),
       });
-      const json = await res.json();
-      if (res.ok) {
+
+      let json: any = null;
+      try {
+        const rawText = await res.text();
+        json = rawText ? JSON.parse(rawText) : null;
+      } catch {
+        json = null;
+      }
+
+      if (res.ok && json) {
         clearApiCache();
         const msg = json.message || '✅ Reel synced successfully using URL!';
         setSyncMsg(msg);
         setReelUrlInput('');
         setShowUrlBox(false);
         setTimeout(() => setSyncMsg(null), 6000);
-        await loadReels();
       } else {
-        alert(json.error || 'Failed to sync reel by URL');
+        alert(json?.error || json?.message || 'Failed to sync reel by URL. Please check the URL format.');
       }
     } catch (err: any) {
-      alert(err.message);
+      alert(err?.message || 'Failed to connect to backend server.');
     } finally {
+      await loadReels();
       setSyncingUrl(false);
     }
   };

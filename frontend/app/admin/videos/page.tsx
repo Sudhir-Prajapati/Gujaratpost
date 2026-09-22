@@ -74,6 +74,8 @@ export default function VideosPage() {
   const [importCategoryId, setImportCategoryId] = useState('');
   const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
   const [previewVideo, setPreviewVideo] = useState<VideoData | null>(null);
+  const [deleteTargetVideo, setDeleteTargetVideo] = useState<VideoData | null>(null);
+  const [deletingVideo, setDeletingVideo] = useState(false);
 
   // Tab state: 'saved' = DB videos, 'channel' = live YouTube channel
   const [activeTab, setActiveTab] = useState<'saved' | 'channel'>('saved');
@@ -422,22 +424,24 @@ export default function VideosPage() {
   };
 
   // Delete Video
-  const handleDelete = async (id: string) => {
-    const target = videos.find(v => v.id === id);
-    if (!confirm('Are you sure you want to delete this video?')) return;
+  const confirmDeleteVideo = async () => {
+    if (!deleteTargetVideo) return;
+    setDeletingVideo(true);
     try {
-      const res = await authFetch(getBackendApiUrl(`/api/admin/videos/${id}`), { method: 'DELETE' });
+      const res = await authFetch(getBackendApiUrl(`/api/admin/videos/${deleteTargetVideo.id}`), { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete video');
-      setVideos(prev => prev.filter(v => v.id !== id));
-      if (target) {
-        setFeaturedIds(prev => {
-          const next = new Map(prev);
-          next.delete(safeYouTubeId(target.youtubeId));
-          return next;
-        });
-      }
+      setVideos(prev => prev.filter(v => v.id !== deleteTargetVideo.id));
+      setTotalVideosCount(prev => Math.max(0, prev - 1));
+      setFeaturedIds(prev => {
+        const next = new Map(prev);
+        next.delete(safeYouTubeId(deleteTargetVideo.youtubeId));
+        return next;
+      });
+      setDeleteTargetVideo(null);
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Failed to delete video');
+    } finally {
+      setDeletingVideo(false);
     }
   };
 
@@ -556,9 +560,16 @@ export default function VideosPage() {
                     onClick={() => setPreviewVideo(video)}
                   >
                     <img
-                      src={video.thumbnail}
+                      src={video.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(video.youtubeId)}/hqdefault.jpg`}
                       alt={video.title}
                       className="h-full w-full object-cover transition group-hover:scale-105"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        const cId = safeYouTubeId(video.youtubeId);
+                        if (cId && !img.src.includes('hqdefault.jpg')) {
+                          img.src = `https://i.ytimg.com/vi/${cId}/hqdefault.jpg`;
+                        }
+                      }}
                     />
                     <div className="absolute inset-0 bg-black/35 flex items-center justify-center group-hover:bg-black/25 transition">
                       <span className="h-12 w-12 bg-white/95 rounded-full flex items-center justify-center shadow-lg transform group-hover:scale-110 transition duration-300">
@@ -624,7 +635,7 @@ export default function VideosPage() {
                           <Edit2 className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(video.id)}
+                          onClick={() => setDeleteTargetVideo(video)}
                           className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-650 dark:hover:bg-red-950/20"
                           title="Delete video"
                         >
@@ -1064,6 +1075,75 @@ export default function VideosPage() {
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
+          </div>
+        </div>
+      )}
+      {/* ─── CUSTOM DELETE VIDEO CONFIRMATION MODAL ─── */}
+      {deleteTargetVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !deletingVideo && setDeleteTargetVideo(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+            {/* Red Alert Icon */}
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
+              <Trash2 className="h-7 w-7" />
+            </div>
+
+            <h3 className="text-base font-black text-zinc-900 dark:text-white">
+              Delete Video?
+            </h3>
+            <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">
+              વીડિયો ડિલીટ કરવાની ખાતરી
+            </p>
+
+            {/* Video Preview Card */}
+            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+              <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
+                <img
+                  src={deleteTargetVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(deleteTargetVideo.youtubeId)}/hqdefault.jpg`}
+                  alt={deleteTargetVideo.title}
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute bottom-2 right-2 rounded bg-black/80 px-2 py-0.5 text-[10px] font-black text-white uppercase font-mono">
+                  {deleteTargetVideo.type || 'VIDEO'}
+                </span>
+              </div>
+              <div className="p-3">
+                <p className="line-clamp-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  {deleteTargetVideo.titleGu || deleteTargetVideo.title}
+                </p>
+                <p className="mt-1 text-[10px] font-mono text-zinc-400">
+                  YT ID: {deleteTargetVideo.youtubeId}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to delete this video? It will be permanently removed from the website and database.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                disabled={deletingVideo}
+                onClick={() => setDeleteTargetVideo(null)}
+                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel (રદ કરો)
+              </button>
+              <button
+                type="button"
+                disabled={deletingVideo}
+                onClick={confirmDeleteVideo}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] py-2.5 text-xs font-black text-white hover:bg-red-700 shadow-md transition disabled:opacity-50 cursor-pointer"
+              >
+                {deletingVideo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deletingVideo ? 'Deleting...' : 'Delete Video'}
+              </button>
+            </div>
           </div>
         </div>
       )}

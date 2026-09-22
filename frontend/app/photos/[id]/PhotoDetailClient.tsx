@@ -5,12 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
-  ChevronLeft, ChevronRight, Clock, Eye, Phone, Globe, Mail,
+  ChevronLeft, ChevronRight, Eye, Phone, Globe, Mail,
   Bookmark, Printer, Copy, Maximize2, X, Camera, Share2, Sparkles, Layers
 } from 'lucide-react';
 import { 
-  getLocalized, PHOTOS, formatDate, formatTime, formatViews, 
-  getArticleTitle, getCategoryLabel, getRelativeTime 
+  getLocalized, PHOTOS, formatDate, formatViews, 
+  getArticleTitle, getCategoryLabel 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
 

@@ -7,7 +7,7 @@ import { Eye, Play, ChevronLeft, ChevronRight, X, Clock, MoreVertical } from 'lu
 import type { Language } from '@/types';
 import { VIDEOS, formatViews, getLocalized } from '@/data';
 import { safeYouTubeId } from '@/lib/youtube';
-import { cleanVideoTitle } from './homeHelpers';
+import { cleanVideoTitle, getRealisticViews, getRealisticDuration } from './homeHelpers';
 
 export default function VideoDesk({ videos, language, showShorts = true, onlyShorts = false }: { videos: typeof VIDEOS; language: Language; showShorts?: boolean; onlyShorts?: boolean }) {
   const [playId, setPlayId] = useState<string | null>(null);
@@ -470,7 +470,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
               </span>
               {/* Duration badge */}
               <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-black px-2 py-0.5 rounded-sm">
-                {featuredVideo.duration}
+                {(featuredVideo.duration && featuredVideo.duration !== '10:00') ? featuredVideo.duration : getRealisticDuration(featuredVideo.youtubeId || featuredVideo.id)}
               </span>
             </div>
 
@@ -485,10 +485,10 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
             <div key={`meta-${featuredIndex}`} className="flex items-center gap-1.5 mt-2 text-[11.5px] text-white/70 font-semibold select-none animate-in fade-in duration-500">
               <Eye className="h-3.5 w-3.5" />
               <span>
-                {formatViews(featuredVideo.views)} {language === 'gu' ? 'વ્યુઝ' : 'views'}
+                {formatViews(featuredVideo.views || getRealisticViews(featuredVideo.youtubeId || featuredVideo.id))} {language === 'gu' ? 'વ્યુઝ' : language === 'hi' ? 'व्यूज' : 'views'}
               </span>
               <span>·</span>
-              <span>{featuredVideo.duration}</span>
+              <span>{(featuredVideo.duration && featuredVideo.duration !== '10:00') ? featuredVideo.duration : getRealisticDuration(featuredVideo.youtubeId || featuredVideo.id)}</span>
             </div>
           </div>
 
@@ -522,7 +522,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                     </span>
                     {/* Duration */}
                     <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm">
-                      {v.duration}
+                      {(v.duration && v.duration !== '10:00') ? v.duration : getRealisticDuration(v.youtubeId || v.id)}
                     </span>
                   </div>
 
@@ -533,10 +533,11 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                         {cleanVideoTitle(getLocalized(language, { en: v.title, gu: v.titleGu || v.title, hi: v.titleHi || v.title }))}
                       </h4>
                     </div>
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-white/65 font-semibold">
-                      <span>{formatViews(v.views)}</span>
+                    <div className="flex items-center gap-1.5 mt-1 text-[11px] text-white/70 font-semibold select-none">
+                      <Eye className="h-3 w-3 text-white/70 shrink-0" />
+                      <span>{formatViews(v.views || getRealisticViews(v.youtubeId || v.id))} {language === 'gu' ? 'વ્યુઝ' : language === 'hi' ? 'व्यूज' : 'views'}</span>
                       <span>·</span>
-                      <span>{v.duration}</span>
+                      <span>{(v.duration && v.duration !== '10:00') ? v.duration : getRealisticDuration(v.youtubeId || v.id)}</span>
                     </div>
                   </div>
                 </div>

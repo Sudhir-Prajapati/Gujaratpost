@@ -1,11 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Clock, Eye } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { Article } from '@/types';
 import {
   formatDate,
-  formatTime,
   formatViews,
   getArticleExcerpt,
   getArticleTitle,
@@ -45,9 +44,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           <div className="absolute inset-x-0 bottom-0 p-4 md:p-6 z-10">
             <span className="cat-badge mb-2.5" style={{ background: categoryColor }}>{category}</span>
             <h1 className="line-clamp-3 text-xl font-black leading-tight text-white md:text-4xl lg:text-5xl">{title}</h1>
-            <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-semibold text-white/85">
-              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatTime(article.publishedAt)}</span>
-            </div>
+
           </div>
         </div>
       </Link>
@@ -63,7 +60,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           <div className="absolute inset-x-0 bottom-0 p-3 z-10">
             <span className="cat-badge mb-1.5" style={{ background: categoryColor }}>{category}</span>
             <h2 className="line-clamp-2 text-sm sm:text-base font-black leading-snug text-white">{title}</h2>
-            <span className="mt-1.5 flex items-center gap-1 text-xs font-semibold text-white/75"><Clock className="h-3 w-3" />{formatTime(article.publishedAt)}</span>
+
           </div>
         </div>
       </Link>

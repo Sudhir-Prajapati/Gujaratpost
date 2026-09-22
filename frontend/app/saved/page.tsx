@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, Trash2, Bookmark } from 'lucide-react';
-import { formatDate, formatViews, getArticleTitle, getCategoryLabel, getLocalized } from '@/data';
+import { Eye, Trash2, Bookmark } from 'lucide-react';
+import { formatViews, getArticleTitle, getCategoryLabel, getLocalized } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import { getCategoryColor } from '@/lib/utils';
 import { useApp } from '@/components/AppProvider';
@@ -131,11 +131,7 @@ export default function SavedPage() {
                       </h3>
                     </Link>
                   </div>
-                  <div className="mt-4 flex items-center justify-between text-[11px] font-semibold text-muted-foreground border-t border-border/40 pt-2.5 select-none font-sans">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {formatDate(article.publishedAt)}
-                    </span>
+                  <div className="mt-4 flex items-center justify-end text-[11px] font-semibold text-muted-foreground border-t border-border/40 pt-2.5 select-none font-sans">
                     <span className="flex items-center gap-1">
                       <Eye className="h-3 w-3" />
                       {formatViews(article.views)}

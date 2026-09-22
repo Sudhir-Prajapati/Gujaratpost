@@ -142,6 +142,8 @@ export default function GalleryPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoData | null>(null);
+  const [deleteTargetPhoto, setDeleteTargetPhoto] = useState<PhotoData | null>(null);
+  const [deletingPhoto, setDeletingPhoto] = useState(false);
 
   // Form states for Upload
   const [uploading, setUploading] = useState(false);
@@ -347,15 +349,19 @@ export default function GalleryPage() {
   };
 
   // Delete photo
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this photo from the gallery?')) return;
+  const confirmDeletePhoto = async () => {
+    if (!deleteTargetPhoto) return;
+    setDeletingPhoto(true);
     try {
-      const res = await authFetch(getBackendApiUrl(`/api/admin/gallery/${id}`), { method: 'DELETE' });
+      const res = await authFetch(getBackendApiUrl(`/api/admin/gallery/${deleteTargetPhoto.id}`), { method: 'DELETE' });
       if (!res.ok) throw new Error('Failed to delete photo');
-      setPhotos(prev => prev.filter(p => p.id !== id));
-      showNotification('ઈમેજ સેવ સફળતાપૂર્વક ડિલીટ થઈ ગઈ છે!', 'success');
+      setPhotos(prev => prev.filter(p => p.id !== deleteTargetPhoto.id));
+      showNotification('ઈમેજ સફળતાપૂર્વક ડિલીટ થઈ ગઈ છે!', 'success');
+      setDeleteTargetPhoto(null);
     } catch (err: any) {
       showNotification(err.message || 'ડિલીટ કરવામાં ભૂલ આવી', 'error');
+    } finally {
+      setDeletingPhoto(false);
     }
   };
 
@@ -538,7 +544,7 @@ export default function GalleryPage() {
                   <Edit2 className="h-3.5 w-3.5" />
                 </button>
                 <button
-                  onClick={() => handleDelete(photo.id)}
+                  onClick={() => setDeleteTargetPhoto(photo)}
                   className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 rounded-lg"
                   title="Delete image"
                 >
@@ -966,6 +972,81 @@ export default function GalleryPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* ─── CUSTOM DELETE PHOTO CONFIRMATION MODAL ─── */}
+      {deleteTargetPhoto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !deletingPhoto && setDeleteTargetPhoto(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+            {/* Red Alert Icon */}
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
+              <Trash2 className="h-7 w-7" />
+            </div>
+
+            <h3 className="text-base font-black text-zinc-900 dark:text-white">
+              Delete Gallery Photo?
+            </h3>
+            <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">
+              ગેલેરીમાંથી ફોટો ડિલીટ કરવાની ખાતરી
+            </p>
+
+            {/* Photo Preview Card */}
+            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+              <div className="relative aspect-video w-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
+                {deleteTargetPhoto.src && (
+                  <img
+                    src={deleteTargetPhoto.src}
+                    alt={deleteTargetPhoto.alt || 'Preview'}
+                    className="h-full w-full object-cover"
+                  />
+                )}
+                {deleteTargetPhoto.category && (
+                  <span className="absolute top-2 left-2 rounded-md bg-[#B3121B] px-2 py-0.5 text-[10px] font-black text-white shadow">
+                    {deleteTargetPhoto.category}
+                  </span>
+                )}
+              </div>
+              <div className="p-3">
+                <p className="line-clamp-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                  {deleteTargetPhoto.captionGu || deleteTargetPhoto.caption || 'No caption'}
+                </p>
+                {deleteTargetPhoto.photographer && (
+                  <p className="mt-1 text-[10px] font-semibold text-zinc-400">
+                    📷 {deleteTargetPhoto.photographer}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to delete this photo from the gallery? This action cannot be undone.
+            </p>
+
+            {/* Buttons */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                disabled={deletingPhoto}
+                onClick={() => setDeleteTargetPhoto(null)}
+                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel (રદ કરો)
+              </button>
+              <button
+                type="button"
+                disabled={deletingPhoto}
+                onClick={confirmDeletePhoto}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] py-2.5 text-xs font-black text-white hover:bg-red-700 shadow-md transition disabled:opacity-50 cursor-pointer"
+              >
+                {deletingPhoto ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deletingPhoto ? 'Deleting...' : 'Delete Photo'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -17,6 +17,8 @@ import {
   ExternalLink,
   Shield,
   Activity,
+  X,
+  CheckCircle2,
 } from 'lucide-react';
 
 interface UserData {
@@ -52,6 +54,16 @@ export default function UserList() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Custom Modals & Feedback state
+  const [statusModalTarget, setStatusModalTarget] = useState<UserData | null>(null);
+  const [deleteModalTarget, setDeleteModalTarget] = useState<UserData | null>(null);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 5000);
+  };
 
   // Fetch Users
   useEffect(() => {
@@ -94,13 +106,22 @@ export default function UserList() {
     }
   };
 
-  // Toggle user status between ACTIVE and SUSPENDED
-  const handleToggleStatus = async (user: UserData) => {
+  // Open Status Modal (Suspend / Activate)
+  const handleOpenStatusModal = (user: UserData) => {
+    if (user.role === 'SUPER_ADMIN') {
+      showToast('error', 'Super Admin accounts are protected and cannot be suspended.');
+      return;
+    }
+    setStatusModalTarget(user);
+  };
+
+  // Confirm Toggle User Status (Suspend / Activate)
+  const confirmToggleStatus = async () => {
+    if (!statusModalTarget) return;
+    const user = statusModalTarget;
     const nextStatus = user.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-    const actionLabel = nextStatus === 'ACTIVE' ? 'activate' : 'suspend';
-    
-    if (!window.confirm(`Are you sure you want to ${actionLabel} ${user.email}?`)) return;
-    
+    const actionWord = nextStatus === 'ACTIVE' ? 'activated' : 'suspended';
+
     setUpdatingId(user.id);
     try {
       const res = await fetch(`/api/admin/users/${user.id}`, {
@@ -115,19 +136,32 @@ export default function UserList() {
       setUsers((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, status: nextStatus } : u))
       );
+      showToast('success', `Account ${user.email} has been ${actionWord} successfully.`);
+      setStatusModalTarget(null);
     } catch (err: any) {
-      alert(err.message);
+      showToast('error', err.message || 'Failed to update user status.');
     } finally {
       setUpdatingId(null);
     }
   };
 
-  // Handle Deletion (Deactivation)
-  const handleDelete = async (id: string, email: string) => {
-    if (!window.confirm(`Are you sure you want to de-provision ${email}? This will revoke all sessions and mark the account as Deleted.`)) return;
-    setDeletingId(id);
+  // Open De-provision (Delete) Modal
+  const handleOpenDeleteModal = (user: UserData) => {
+    if (user.role === 'SUPER_ADMIN') {
+      showToast('error', 'Super Admin accounts are protected and cannot be deleted.');
+      return;
+    }
+    setDeleteModalTarget(user);
+  };
+
+  // Confirm De-provision (Delete)
+  const confirmDelete = async () => {
+    if (!deleteModalTarget) return;
+    const user = deleteModalTarget;
+
+    setDeletingId(user.id);
     try {
-      const res = await fetch(`/api/admin/users/${id}`, {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
         method: 'DELETE',
       });
       const json = await res.json();
@@ -135,10 +169,12 @@ export default function UserList() {
 
       // Refresh list or update local state status to DELETED
       setUsers((prev) =>
-        prev.map((u) => (u.id === id ? { ...u, status: 'DELETED', sessionCount: 0, author: undefined } : u))
+        prev.map((u) => (u.id === user.id ? { ...u, status: 'DELETED', sessionCount: 0, author: undefined } : u))
       );
+      showToast('success', `Account ${user.email} has been de-provisioned successfully.`);
+      setDeleteModalTarget(null);
     } catch (err: any) {
-      alert(err.message);
+      showToast('error', err.message || 'Failed to delete user.');
     } finally {
       setDeletingId(null);
     }
@@ -369,42 +405,55 @@ export default function UserList() {
                           <Edit2 className="h-4 w-4" />
                         </a>
 
-                        {/* Toggle Status Button */}
-                        {user.status !== 'DELETED' && (
-                          <button
-                            onClick={() => handleToggleStatus(user)}
-                            disabled={updatingId === user.id}
-                            className={`rounded-lg p-1.5 transition-colors ${
-                              user.status === 'ACTIVE'
-                                ? 'text-amber-650 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/20'
-                                : 'text-green-650 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-950/20'
-                            }`}
-                            title={user.status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account'}
+                        {/* Super Admin Protected Badge or Standard Action Buttons */}
+                        {user.role === 'SUPER_ADMIN' ? (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 select-none cursor-default"
+                            title="Super Admin account is permanently protected against suspension and deletion."
                           >
-                            {updatingId === user.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : user.status === 'ACTIVE' ? (
-                              <UserX className="h-4 w-4" />
-                            ) : (
-                              <UserCheck className="h-4 w-4" />
+                            <Shield className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                            <span>Protected</span>
+                          </span>
+                        ) : (
+                          <>
+                            {/* Toggle Status Button */}
+                            {user.status !== 'DELETED' && (
+                              <button
+                                onClick={() => handleOpenStatusModal(user)}
+                                disabled={updatingId === user.id}
+                                className={`rounded-lg p-1.5 transition-colors ${
+                                  user.status === 'ACTIVE'
+                                    ? 'text-amber-650 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/20'
+                                    : 'text-green-650 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-950/20'
+                                }`}
+                                title={user.status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account'}
+                              >
+                                {updatingId === user.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : user.status === 'ACTIVE' ? (
+                                  <UserX className="h-4 w-4" />
+                                ) : (
+                                  <UserCheck className="h-4 w-4" />
+                                )}
+                              </button>
                             )}
-                          </button>
-                        )}
 
-                        {/* Delete Button */}
-                        {user.status !== 'DELETED' && (
-                          <button
-                            onClick={() => handleDelete(user.id, user.email)}
-                            disabled={deletingId === user.id}
-                            className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50"
-                            title="De-provision User"
-                          >
-                            {deletingId === user.id ? (
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
+                            {/* Delete Button */}
+                            {user.status !== 'DELETED' && (
+                              <button
+                                onClick={() => handleOpenDeleteModal(user)}
+                                disabled={deletingId === user.id}
+                                className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50"
+                                title="De-provision User"
+                              >
+                                {deletingId === user.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="h-4 w-4" />
+                                )}
+                              </button>
                             )}
-                          </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -445,6 +494,221 @@ export default function UserList() {
           </div>
         )}
       </div>
+
+      {/* ─── TOAST NOTIFICATION ─── */}
+      {toast && (
+        <div
+          className={`fixed top-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-300 max-w-md ${
+            toast.type === 'success'
+              ? 'bg-emerald-50/95 border-emerald-300 text-emerald-900 dark:bg-emerald-950/90 dark:border-emerald-800 dark:text-emerald-200'
+              : 'bg-red-50/95 border-red-300 text-red-900 dark:bg-red-950/90 dark:border-red-800 dark:text-red-200'
+          }`}
+        >
+          {toast.type === 'success' ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0" />
+          )}
+          <p className="text-xs font-semibold leading-relaxed flex-1">{toast.message}</p>
+          <button
+            onClick={() => setToast(null)}
+            className="rounded-lg p-1 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-black/5 dark:hover:bg-white/10 transition"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
+      {/* ─── CUSTOM SUSPEND / ACTIVATE CONFIRMATION MODAL ─── */}
+      {statusModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !updatingId && setStatusModalTarget(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
+            {/* Close X Button */}
+            <button
+              type="button"
+              disabled={!!updatingId}
+              onClick={() => setStatusModalTarget(null)}
+              className="absolute top-4 right-4 rounded-lg p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Icon Banner */}
+            <div className="flex items-start gap-4">
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-inner shrink-0 ${
+                  statusModalTarget.status === 'ACTIVE'
+                    ? 'bg-amber-100 text-amber-650 dark:bg-amber-950/60 dark:text-amber-400'
+                    : 'bg-emerald-100 text-emerald-650 dark:bg-emerald-950/60 dark:text-emerald-400'
+                }`}
+              >
+                {statusModalTarget.status === 'ACTIVE' ? (
+                  <UserX className="h-6 w-6" />
+                ) : (
+                  <UserCheck className="h-6 w-6" />
+                )}
+              </div>
+
+              <div className="flex-1 min-w-0 pr-4">
+                <h3 className="text-base font-black text-zinc-900 dark:text-white leading-tight">
+                  {statusModalTarget.status === 'ACTIVE'
+                    ? 'Suspend User Account?'
+                    : 'Activate User Account?'}
+                </h3>
+                <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Are you sure you want to{' '}
+                  <strong
+                    className={
+                      statusModalTarget.status === 'ACTIVE'
+                        ? 'text-amber-600 dark:text-amber-400'
+                        : 'text-emerald-600 dark:text-emerald-400'
+                    }
+                  >
+                    {statusModalTarget.status === 'ACTIVE' ? 'suspend' : 'activate'}
+                  </strong>{' '}
+                  the account for:
+                </p>
+                <div className="mt-2.5 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/50 p-2.5 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-zinc-400 shrink-0" />
+                  <span className="text-xs font-mono font-bold text-zinc-900 dark:text-white truncate">
+                    {statusModalTarget.email}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Explanatory Note */}
+            <div className="mt-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 p-3 border border-zinc-200/70 dark:border-zinc-800/70 text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              {statusModalTarget.status === 'ACTIVE' ? (
+                <span>
+                  ⚠️ <strong>Effect:</strong> This user will be immediately logged out of all active sessions and will not be able to log in to the admin portal until reactivated.
+                </span>
+              ) : (
+                <span>
+                  ℹ️ <strong>Effect:</strong> This user will regain full login access with their assigned role ({statusModalTarget.role}) and resume managing content.
+                </span>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={!!updatingId}
+                onClick={() => setStatusModalTarget(null)}
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel (રદ કરો)
+              </button>
+              <button
+                type="button"
+                disabled={!!updatingId}
+                onClick={confirmToggleStatus}
+                className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-xs font-black text-white shadow-md transition disabled:opacity-50 cursor-pointer ${
+                  statusModalTarget.status === 'ACTIVE'
+                    ? 'bg-amber-600 hover:bg-amber-700 shadow-amber-600/20'
+                    : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                }`}
+              >
+                {updatingId ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : statusModalTarget.status === 'ACTIVE' ? (
+                  <UserX className="h-4 w-4" />
+                ) : (
+                  <UserCheck className="h-4 w-4" />
+                )}
+                <span>
+                  {updatingId
+                    ? 'Processing...'
+                    : statusModalTarget.status === 'ACTIVE'
+                    ? 'Suspend Account'
+                    : 'Activate Account'}
+                </span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─── CUSTOM DE-PROVISION / DELETE CONFIRMATION MODAL ─── */}
+      {deleteModalTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !deletingId && setDeleteModalTarget(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
+            {/* Close X Button */}
+            <button
+              type="button"
+              disabled={!!deletingId}
+              onClick={() => setDeleteModalTarget(null)}
+              className="absolute top-4 right-4 rounded-lg p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
+            {/* Icon Banner */}
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner shrink-0">
+                <Trash2 className="h-6 w-6" />
+              </div>
+
+              <div className="flex-1 min-w-0 pr-4">
+                <h3 className="text-base font-black text-zinc-900 dark:text-white leading-tight">
+                  De-provision User Account?
+                </h3>
+                <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                  Are you sure you want to de-provision this user account:
+                </p>
+                <div className="mt-2.5 rounded-xl border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20 p-2.5 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
+                  <span className="text-xs font-mono font-bold text-red-900 dark:text-red-200 truncate">
+                    {deleteModalTarget.email}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Warning Callout */}
+            <div className="mt-4 rounded-xl bg-amber-500/10 dark:bg-amber-500/5 p-3 border border-amber-500/20 text-[11px] text-amber-800 dark:text-amber-300 leading-relaxed flex items-start gap-2">
+              <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+              <span>
+                <strong>Warning:</strong> This will revoke all active login sessions, detach author associations, and permanently mark the account as <strong>Deleted</strong>.
+              </span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={!!deletingId}
+                onClick={() => setDeleteModalTarget(null)}
+                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel (રદ કરો)
+              </button>
+              <button
+                type="button"
+                disabled={!!deletingId}
+                onClick={confirmDelete}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] hover:bg-red-700 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-red-600/20 transition disabled:opacity-50 cursor-pointer"
+              >
+                {deletingId ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                <span>{deletingId ? 'De-provisioning...' : 'De-provision User'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

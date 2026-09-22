@@ -86,14 +86,12 @@ const DetailSlideVideo = memo(function DetailSlideVideo({
 import { Article, Language } from '@/types';
 import {
   formatDate,
-  formatTime,
   formatViews,
   getArticleContent,
   getArticleExcerptHtml,
   getArticleTitle,
   getCategoryLabel,
   getLocalized,
-  getRelativeTime,
   normalizeDisplayText,
 } from '@/data';
 import { useApp } from '@/components/AppProvider';

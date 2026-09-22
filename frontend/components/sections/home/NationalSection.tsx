@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, ChevronRight, TrendingUp } from 'lucide-react';
+import { Eye, ChevronRight, TrendingUp } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
@@ -217,10 +217,7 @@ export default function NationalSection({ language, initialArticles }: { languag
                   : <AutoTranslateString text={item.titleGu} language={language} />}
               </h3>
             </Link>
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-semibold mt-2.5">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-              <span>{item.time}</span>
-            </div>
+
           </div>
         ))}
       </div>
@@ -242,10 +239,7 @@ export default function NationalSection({ language, initialArticles }: { languag
                         ? <AutoArticleTitle article={sub.article} language={language} />
                         : <AutoTranslateString text={sub.titleGu} language={language} />}
                     </h4>
-                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground font-semibold">
-                      <Clock className="h-3 w-3 text-muted-foreground/60" />
-                      <span>{sub.time}</span>
-                    </div>
+
                   </div>
                 </Link>
               );

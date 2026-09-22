@@ -36,6 +36,8 @@ export default function WebStoriesPage() {
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<WebStoryData | null>(null);
+  const [deleteTargetStory, setDeleteTargetStory] = useState<WebStoryData | null>(null);
+  const [deletingStory, setDeletingStory] = useState(false);
 
   // Form states
   const [saving, setSaving] = useState(false);
@@ -183,10 +185,11 @@ export default function WebStoriesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this web story?')) return;
+  const confirmDeleteStory = async () => {
+    if (!deleteTargetStory) return;
+    setDeletingStory(true);
     try {
-      const res = await authFetch(getBackendApiUrl(`/api/admin/web-stories/${id}`), {
+      const res = await authFetch(getBackendApiUrl(`/api/admin/web-stories/${deleteTargetStory.id}`), {
         method: 'DELETE',
       });
       if (!res.ok) {
@@ -194,8 +197,11 @@ export default function WebStoriesPage() {
         throw new Error(json.error || 'Failed to delete');
       }
       loadStories();
+      setDeleteTargetStory(null);
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Failed to delete web story');
+    } finally {
+      setDeletingStory(false);
     }
   };
 
@@ -363,7 +369,7 @@ export default function WebStoriesPage() {
                               <Edit2 size={16} />
                             </button>
                             <button
-                              onClick={() => handleDelete(story.id)}
+                              onClick={() => setDeleteTargetStory(story)}
                               className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                               title="Delete"
                             >
@@ -430,7 +436,7 @@ export default function WebStoriesPage() {
                             <Edit2 size={12} /> Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(story.id)}
+                            onClick={() => setDeleteTargetStory(story)}
                             className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-red-600 bg-red-50 dark:bg-red-900/20 rounded-lg hover:bg-red-600 hover:text-white transition-colors"
                           >
                             <Trash2 size={12} /> Delete
@@ -564,6 +570,86 @@ export default function WebStoriesPage() {
                 ) : (
                   <span>{editModalOpen ? 'Update Story' : 'Save Story'}</span>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ─── CUSTOM DELETE WEB STORY CONFIRMATION MODAL ─── */}
+      {deleteTargetStory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !deletingStory && setDeleteTargetStory(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+            {/* Red Alert Icon */}
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
+              <Trash2 className="h-7 w-7" />
+            </div>
+
+            <h3 className="text-base font-black text-zinc-900 dark:text-white">
+              Delete Web Story?
+            </h3>
+            <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">
+              વેબ સ્ટોરી ડિલીટ કરવાની ખાતરી
+            </p>
+
+            {/* Story Preview Card */}
+            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+              <div className="flex gap-3 p-3 items-center">
+                <div className="w-14 h-20 relative rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-700">
+                  {deleteTargetStory.image1 && (
+                    <Image
+                      src={deleteTargetStory.image1}
+                      alt="Cover"
+                      fill
+                      className="object-cover"
+                    />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white line-clamp-2 leading-snug">
+                    {deleteTargetStory.headingGu || deleteTargetStory.heading}
+                  </h4>
+                  {deleteTargetStory.headingGu && deleteTargetStory.heading !== deleteTargetStory.headingGu && (
+                    <p className="text-zinc-500 dark:text-zinc-400 text-[11px] line-clamp-1 mt-0.5">
+                      {deleteTargetStory.heading}
+                    </p>
+                  )}
+                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold mt-1.5 ${
+                    deleteTargetStory.isActive
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400'
+                      : 'bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
+                  }`}>
+                    {deleteTargetStory.isActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to delete this web story? It will be permanently removed from the website.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                disabled={deletingStory}
+                onClick={() => setDeleteTargetStory(null)}
+                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel (રદ કરો)
+              </button>
+              <button
+                type="button"
+                disabled={deletingStory}
+                onClick={confirmDeleteStory}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] py-2.5 text-xs font-black text-white hover:bg-red-700 shadow-md transition disabled:opacity-50 cursor-pointer"
+              >
+                {deletingStory ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deletingStory ? 'Deleting...' : 'Delete Story'}
               </button>
             </div>
           </div>

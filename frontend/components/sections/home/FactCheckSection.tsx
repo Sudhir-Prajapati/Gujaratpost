@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Shield, Clock, Eye, ChevronRight } from 'lucide-react';
+import { Shield, Eye, ChevronRight } from 'lucide-react';
 import type { Article, Language } from '@/types';
-import { formatTime, getLocalized } from '@/data';
+import { getLocalized } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import { stripHtmlTags, getMockTitle } from './homeHelpers';
 
@@ -123,7 +123,6 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   );
   const featSlug = featArt ? featArt.slug : 'fake-news-alert-free-laptop-scheme-circular-busted-520';
   const featImage = featArt?.image || '/assets/demo/5.jpg';
-  const featTime = featArt ? formatTime(featArt.publishedAt) : (language === 'gu' ? '1 કલાક પહેલાં' : '1 hour ago');
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-10">
@@ -169,10 +168,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
               {featExcerpt}
             </p>
           </Link>
-          <div className="flex items-center gap-1.5 mt-3 text-[11px] text-muted-foreground font-semibold">
-            <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-            <span>{featTime}</span>
-          </div>
+
         </div>
 
         {/* Right Column: Grid of 8 Fact Check items (Spans 2 columns on desktop) */}

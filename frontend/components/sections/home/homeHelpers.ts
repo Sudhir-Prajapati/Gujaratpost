@@ -167,3 +167,25 @@ export function getLocalizedTrendingTags(lang: string) {
   if (lang === 'en') return ['#Election 2026', '#Rain', '#Gold-Silver', '#Cricket', '#Metro', '#Semiconductor', '#Diamond Industry', '#Traffic'];
   return ['#ચૂંટણી 2026', '#વરસાદ', '#સોના-ચાંદી', '#ક્રિકેટ', '#મેટ્રો', '#સેમિકન્ડક્ટર', '#ડાયમંડ ઉદ્યોગ', '#ટ્રાફિક'];
 }
+
+export function getRealisticViews(key?: string): number {
+  let hash = 0;
+  const str = key || 'gujarat-post-video';
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 760) + 180;
+}
+
+export function getRealisticDuration(key?: string): string {
+  let hash = 0;
+  const str = key || 'video-duration';
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i);
+    hash |= 0;
+  }
+  const mins = (Math.abs(hash) % 7) + 2;
+  const secs = (Math.abs(hash >> 3) % 50) + 10;
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}

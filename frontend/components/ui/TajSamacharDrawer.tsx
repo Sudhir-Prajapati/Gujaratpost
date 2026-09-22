@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getPublicArticles } from '@/lib/api';
 import { Article } from '@/types';
-import { Megaphone, X, Clock } from 'lucide-react';
+import { Megaphone, X } from 'lucide-react';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { useIsApk } from '@/lib/useIsApk';
 
@@ -336,10 +336,6 @@ export default function TajSamacharDrawer() {
                         <h4 className="text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors font-gujarati">
                           {item.titleGu || item.title}
                         </h4>
-                        <div className="flex items-center gap-1.5 mt-2 text-[12px] text-gray-500 dark:text-gray-400 font-medium">
-                          <Clock className="w-3.5 h-3.5 text-red-600 dark:text-red-400 flex-shrink-0" />
-                          <span>{timeAgo}</span>
-                        </div>
                       </div>
                     </Link>
                   );

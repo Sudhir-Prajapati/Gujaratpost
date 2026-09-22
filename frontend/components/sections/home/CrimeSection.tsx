@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, Play, ChevronRight, ChevronLeft, Shield, Sun, Cloud, CloudRain, Flame, Thermometer, Droplet, Wind, Sparkles } from 'lucide-react';
+import { Eye, Play, ChevronRight, ChevronLeft, Shield, Sun, Cloud, CloudRain, Flame, Thermometer, Droplet, Wind, Sparkles } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime, getLocationLabel, getLocalized } from '@/data';
 import { getPublicArticles, getPublicWeather, getPublicAstrology } from '@/lib/api';
@@ -501,16 +501,6 @@ export default function CrimeSection({
                   </h3>
                 </Link>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground font-semibold mt-auto pt-2 select-none">
-                <span>
-                  {getLocalized(language, { en: currentSlide.relativeTime, gu: currentSlide.relativeTimeGu, hi: currentSlide.relativeTimeHi })}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  <span>{currentSlide.clockTime}</span>
-                </span>
-              </div>
             </div>
           </div>
         )}
@@ -530,16 +520,6 @@ export default function CrimeSection({
               <h4 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                 {getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
               </h4>
-              <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-muted-foreground font-semibold">
-                <span>
-                  {getLocalized(language, { en: item.relativeTime, gu: item.relativeTimeGu, hi: item.relativeTimeHi })}
-                </span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3 text-muted-foreground/60" />
-                  <span>{item.clockTime}</span>
-                </span>
-              </div>
             </Link>
           ))}
         </div>
@@ -586,9 +566,6 @@ export default function CrimeSection({
                     <h4 className="text-[12.5px] md:text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                       {sub.title}
                     </h4>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-muted-foreground font-semibold select-none">
-                      <span>{sub.time}</span>
-                    </div>
                   </div>
                 </Link>
               ))}

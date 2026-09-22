@@ -476,21 +476,32 @@ export default function ShortsPage() {
                   {/* Vertical 9:16 Aspect Thumbnail Container */}
                   <div
                     className="relative aspect-[9/16] w-full overflow-hidden bg-black cursor-pointer"
+                    style={{
+                      backgroundImage: `url(https://i.ytimg.com/vi/${safeYouTubeId(short.youtubeId)}/hqdefault.jpg)`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center',
+                    }}
                     onClick={() => setPreviewShort(short)}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={short.thumbnail && short.thumbnail.startsWith('http') && !short.thumbnail.includes('frame0')
-                        ? short.thumbnail
-                        : `https://i.ytimg.com/vi/${safeYouTubeId(short.youtubeId)}/hqdefault.jpg`}
+                      src={
+                        short.thumbnail &&
+                        short.thumbnail.startsWith('http') &&
+                        !short.thumbnail.includes('ytimg.com') &&
+                        !short.thumbnail.includes('youtube.com')
+                          ? short.thumbnail
+                          : `https://i.ytimg.com/vi/${safeYouTubeId(short.youtubeId)}/oar2.jpg`
+                      }
                       alt={short.titleGu || short.title}
-                      className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
-                        if (img.src.includes('hqdefault')) {
-                          img.src = `https://i.ytimg.com/vi/${safeYouTubeId(short.youtubeId)}/mqdefault.jpg`;
-                        } else if (img.src.includes('mqdefault')) {
-                          img.src = `https://i.ytimg.com/vi/${safeYouTubeId(short.youtubeId)}/sddefault.jpg`;
+                        const cId = safeYouTubeId(short.youtubeId);
+                        if (img.src.includes('oar2.jpg')) {
+                          img.src = `https://i.ytimg.com/vi/${cId}/hqdefault.jpg`;
+                        } else if (img.src.includes('hqdefault.jpg')) {
+                          img.src = `https://i.ytimg.com/vi/${cId}/mqdefault.jpg`;
                         }
                       }}
                     />
@@ -506,56 +517,59 @@ export default function ShortsPage() {
                     </div>
 
                     {/* Title & Actions Overlay at bottom */}
-                    <div className="absolute bottom-0 inset-x-0 p-3 z-10 flex flex-col justify-end space-y-1.5">
+                    <div className="absolute bottom-0 inset-x-0 p-2.5 sm:p-3 z-10 flex flex-col justify-end space-y-1.5">
                       <p className="line-clamp-2 text-xs font-bold text-white leading-snug drop-shadow-md">
                         {short.titleGu || short.title}
                       </p>
 
-                      <div className="flex items-center justify-between gap-1 mt-1">
-                        <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/90 drop-shadow">
-                          <Eye className="h-3 w-3 text-white/80" />
-                          <span>{short.views ? (short.views >= 1000 ? `${(short.views / 1000).toFixed(1)}K` : `${short.views}`) : '1.2K'} વ્યુ</span>
-                          <span>|</span>
-                          <Clock className="h-3 w-3 text-white/80" />
-                          <span>{short.duration || '0:58'}</span>
-                        </div>
+                      {/* Views & Duration */}
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-zinc-300 drop-shadow">
+                        <Eye className="h-3 w-3 text-zinc-400" />
+                        <span>{short.views ? (short.views >= 1000 ? `${(short.views / 1000).toFixed(1)}K` : `${short.views}`) : '1.2K'} વ્યુ</span>
+                        <span className="text-zinc-500">•</span>
+                        <Clock className="h-3 w-3 text-zinc-400" />
+                        <span>{short.duration || '0:58'}</span>
+                      </div>
 
-                        <div className="flex items-center gap-1">
+                      {/* Action Buttons Row - ALWAYS FULLY VISIBLE */}
+                      <div className="flex items-center justify-between gap-1 pt-1.5 border-t border-white/20">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleFeatured(short);
+                          }}
+                          className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-black backdrop-blur transition cursor-pointer ${
+                            short.isFeatured
+                              ? 'text-yellow-300 bg-yellow-500/25 border border-yellow-400/40 shadow-xs'
+                              : 'text-zinc-200 bg-black/60 hover:bg-white/20 border border-white/15'
+                          }`}
+                          title={short.isFeatured ? 'Remove from Top 40 Featured' : 'Feature in Top 40'}
+                        >
+                          <Star className={`h-3 w-3 ${short.isFeatured ? 'fill-current text-yellow-400' : 'text-zinc-300'}`} />
+                          <span>{short.isFeatured ? 'Top 40' : 'Feature'}</span>
+                        </button>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
                           <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleToggleFeatured(short);
-                            }}
-                            className={`rounded-lg p-1.5 backdrop-blur transition cursor-pointer ${
-                              short.isFeatured
-                                ? 'text-yellow-400 bg-yellow-400/20'
-                                : 'text-white/70 hover:bg-white/20 hover:text-white'
-                            }`}
-                            title={short.isFeatured ? 'Remove from Top 40 Featured' : 'Feature in Top 40'}
-                          >
-                            {short.isFeatured ? (
-                              <Star className="h-3.5 w-3.5 fill-current text-yellow-400" />
-                            ) : (
-                              <StarOff className="h-3.5 w-3.5" />
-                            )}
-                          </button>
-                          <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               openEdit(short);
                             }}
-                            className="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white backdrop-blur cursor-pointer"
-                            title="Edit"
+                            className="rounded-lg p-1.5 text-zinc-200 bg-black/60 hover:bg-white/25 hover:text-white border border-white/15 backdrop-blur transition cursor-pointer"
+                            title="Edit short"
                           >
                             <Edit2 className="h-3.5 w-3.5" />
                           </button>
                           <button
+                            type="button"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(short.id);
                             }}
-                            className="rounded-lg p-1.5 text-red-400 hover:bg-red-950/60 hover:text-red-200 backdrop-blur cursor-pointer"
-                            title="Delete"
+                            className="rounded-lg p-1.5 text-white bg-red-600/90 hover:bg-red-600 border border-red-500 backdrop-blur transition cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                            title="Delete short"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
                           </button>
@@ -657,18 +671,25 @@ export default function ShortsPage() {
                     </div>
 
                     {/* Thumbnail */}
-                    <div className="relative aspect-[9/16] w-full overflow-hidden bg-black">
+                    <div
+                      className="relative aspect-[9/16] w-full overflow-hidden bg-black"
+                      style={{
+                        backgroundImage: `url(https://i.ytimg.com/vi/${cId}/hqdefault.jpg)`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                      }}
+                    >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={`https://i.ytimg.com/vi/${cId}/hqdefault.jpg`}
+                        src={`https://i.ytimg.com/vi/${cId}/oar2.jpg`}
                         alt={cs.title}
-                        className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        className="absolute inset-0 h-full w-full object-cover object-center transition duration-500 group-hover:scale-105"
                         onError={(e) => {
                           const img = e.target as HTMLImageElement;
-                          if (img.src.includes('hqdefault')) {
+                          if (img.src.includes('oar2.jpg')) {
+                            img.src = `https://i.ytimg.com/vi/${cId}/hqdefault.jpg`;
+                          } else if (img.src.includes('hqdefault.jpg')) {
                             img.src = `https://i.ytimg.com/vi/${cId}/mqdefault.jpg`;
-                          } else if (img.src.includes('mqdefault')) {
-                            img.src = `https://i.ytimg.com/vi/${cId}/sddefault.jpg`;
                           }
                         }}
                       />
@@ -811,35 +832,86 @@ export default function ShortsPage() {
       )}
 
       {/* ── DELETE MODAL ── */}
-      {deleteTargetId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
-            <h3 className="text-lg font-black text-zinc-900 dark:text-white">
-              શું તમે આ શોર્ટ વીડિયો ડિલીટ કરવા માંગો છો?
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-2">
-              આ ક્રિયા પૂર્વવત્ કરી શકાશે નહીં. આ શોર્ટ ડેટાબેઝમાંથી કાયમ માટે દૂર કરવામાં આવશે.
-            </p>
+      {deleteTargetId && (() => {
+        const targetShort = shorts.find((s) => s.id === deleteTargetId);
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div
+              className="absolute inset-0"
+              onClick={() => !deleting && setDeleteTargetId(null)}
+            />
+            <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 z-10 animate-in zoom-in-95 duration-200 text-center">
+              {/* Red Alert Icon */}
+              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
+                <Trash2 className="h-7 w-7" />
+              </div>
 
-            <div className="flex justify-end gap-3 pt-5 mt-4 border-t border-zinc-150 dark:border-zinc-800">
-              <button
-                onClick={() => setDeleteTargetId(null)}
-                className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={confirmDeleteShort}
-                disabled={deleting}
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-red-700 disabled:opacity-50 cursor-pointer"
-              >
-                {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
-                <span>{deleting ? 'ડિલીટ થઈ રહ્યું છે...' : 'ડિલીટ કરો (Delete)'}</span>
-              </button>
+              <h3 className="text-base font-black text-zinc-900 dark:text-white">
+                Delete YouTube Short?
+              </h3>
+              <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">
+                શું તમે આ શોર્ટ વીડિયો ડિલીટ કરવા માંગો છો?
+              </p>
+
+              {/* Short Preview Card */}
+              {targetShort && (
+                <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+                  <div className="flex gap-3 p-3 items-center">
+                    <div className="w-14 h-20 relative rounded-lg overflow-hidden bg-black shrink-0 border border-zinc-200 dark:border-zinc-700">
+                      <img
+                        src={
+                          targetShort.thumbnail && targetShort.thumbnail.startsWith('http')
+                            ? targetShort.thumbnail
+                            : `https://i.ytimg.com/vi/${safeYouTubeId(targetShort.youtubeId)}/hqdefault.jpg`
+                        }
+                        alt="Preview"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white line-clamp-2 leading-snug">
+                        {targetShort.titleGu || targetShort.title}
+                      </h4>
+                      <p className="text-zinc-500 dark:text-zinc-400 text-[10px] font-mono mt-1">
+                        YT ID: {targetShort.youtubeId}
+                      </p>
+                      {targetShort.isFeatured && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-red-600 text-white mt-1.5">
+                          ★ TOP 40 FEATURED
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+                આ ક્રિયા પૂર્વવત્ કરી શકાશે નહીં. આ શોર્ટ ડેટાબેઝમાંથી કાયમ માટે દૂર કરવામાં આવશે.
+              </p>
+
+              <div className="mt-6 flex items-center justify-center gap-3">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => setDeleteTargetId(null)}
+                  className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                >
+                  Cancel (રદ કરો)
+                </button>
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={confirmDeleteShort}
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] py-2.5 text-xs font-black text-white hover:bg-red-700 shadow-md transition disabled:opacity-50 cursor-pointer"
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                  <span>{deleting ? 'ડિલીટ થઈ રહ્યું છે...' : 'ડિલીટ કરો (Delete)'}</span>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── PREVIEW MODAL ── */}
       {previewShort && (

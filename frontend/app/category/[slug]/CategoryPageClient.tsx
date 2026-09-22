@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Clock, Play, Video as VideoIcon } from 'lucide-react';
+import { Eye, Play, Video as VideoIcon } from 'lucide-react';
 import { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import {
@@ -127,13 +127,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
       return (art as any).categoryHi || art.tagsHi?.[0] || getCategoryLabel(art, language);
     }
     return art.category || art.tags?.[0] || getCategoryLabel(art, language);
-  };
-
-  /* Get localized relative time / fallback to date */
-  const getArticleTime = (art: Article) => {
-    if (language === 'gu') return (art as any).relativeTimeGu || formatDate(art.publishedAt);
-    if (language === 'hi') return (art as any).relativeTimeHi || formatDate(art.publishedAt);
-    return art.relativeTime || formatDate(art.publishedAt);
   };
 
   /* Get localized views */
@@ -488,8 +481,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
                     <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
-                      <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-muted-foreground/70" />{getArticleTime(heroArticle)}</span>
-                      <span>·</span>
                       <span>{formatDate(heroArticle.publishedAt)}</span>
                     </div>
                   </div>
@@ -508,8 +499,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                         <AutoArticleTitle article={subHeroArticle} language={language} />
                       </h3>
                       <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
-                        <span>{getArticleTime(subHeroArticle)}</span>
-                        <span>·</span>
                         <span>{formatDate(subHeroArticle.publishedAt)}</span>
                       </div>
                     </div>
@@ -544,8 +533,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                         {getArticleTitle(art, language)}
                       </h3>
                       <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
-                        <span>{getArticleTime(art)}</span>
-                        <span>·</span>
                         <span>{formatDate(art.publishedAt)}</span>
                       </div>
                     </div>

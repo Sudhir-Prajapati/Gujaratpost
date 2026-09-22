@@ -116,6 +116,8 @@ export default function AdminAdsPage() {
   const [link3, setLink3] = useState('');
 
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTargetAd, setDeleteTargetAd] = useState<{ id: string; title: string; section: string } | null>(null);
+  const [deletingAd, setDeletingAd] = useState(false);
 
   const fileInputRefs = [
     useRef<HTMLInputElement | null>(null),
@@ -360,19 +362,27 @@ export default function AdminAdsPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this advertisement configuration?')) return;
-
+  const confirmDeleteAd = async () => {
+    if (!deleteTargetAd) return;
+    setDeletingAd(true);
     try {
-      const res = await authFetch(getBackendApiUrl(`/api/admin/ads/${id}`), {
+      const res = await authFetch(getBackendApiUrl(`/api/admin/ads/${deleteTargetAd.id}`), {
         method: 'DELETE',
       });
       const json = await res.json();
       if (json.success) {
-        setAds(ads.filter((a) => a.id !== id));
+        setAds((prev) => prev.filter((a) => a.id !== deleteTargetAd.id));
+        clearApiCache();
+        setSuccessMessage('જાહેરાત સફળતાપૂર્વક ડિલીટ થઈ ગઈ છે!');
+        setDeleteTargetAd(null);
+      } else {
+        setErrorMessage(json.error || json.message || 'Failed to delete ad');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to delete ad:', err);
+      setErrorMessage(err.message || 'Failed to delete ad');
+    } finally {
+      setDeletingAd(false);
     }
   };
 
@@ -1156,7 +1166,7 @@ export default function AdminAdsPage() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(ad.id)}
+                          onClick={() => setDeleteTargetAd({ id: ad.id, title: ad.title || '', section: secLabel })}
                           title="Delete Ad"
                           className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                         >
@@ -1707,6 +1717,69 @@ export default function AdminAdsPage() {
                 className="px-6 py-2.5 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold text-xs sm:text-sm hover:opacity-90 transition shadow-sm"
               >
                 Close Overview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ─── CUSTOM DELETE AD CONFIRMATION MODAL ─── */}
+      {deleteTargetAd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !deletingAd && setDeleteTargetAd(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+            {/* Red Alert Icon */}
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
+              <Trash2 className="h-7 w-7" />
+            </div>
+
+            <h3 className="text-base font-black text-zinc-900 dark:text-white">
+              Delete Advertisement?
+            </h3>
+            <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">
+              જાહેરાત કન્ફિગરેશન ડિલીટ કરવાની ખાતરી
+            </p>
+
+            {/* Target Details Card */}
+            <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-left dark:border-zinc-800 dark:bg-zinc-950/60">
+              <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
+                Slot / Position
+              </div>
+              <div className="text-sm font-extrabold text-zinc-800 dark:text-zinc-100 truncate mt-0.5">
+                {deleteTargetAd.section}
+              </div>
+              {deleteTargetAd.title && (
+                <div className="mt-2 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 text-xs text-zinc-600 dark:text-zinc-300 truncate">
+                  <span className="font-semibold text-zinc-400">Label: </span>
+                  {deleteTargetAd.title}
+                </div>
+              )}
+            </div>
+
+            <p className="mt-3 text-xs font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              Are you sure you want to delete this advertisement? It will be removed from the portal immediately.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex items-center justify-center gap-3">
+              <button
+                type="button"
+                disabled={deletingAd}
+                onClick={() => setDeleteTargetAd(null)}
+                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                Cancel (રદ કરો)
+              </button>
+              <button
+                type="button"
+                disabled={deletingAd}
+                onClick={confirmDeleteAd}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] py-2.5 text-xs font-black text-white hover:bg-red-700 shadow-md transition disabled:opacity-50 cursor-pointer"
+              >
+                {deletingAd ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                {deletingAd ? 'Deleting...' : 'Delete Ad'}
               </button>
             </div>
           </div>

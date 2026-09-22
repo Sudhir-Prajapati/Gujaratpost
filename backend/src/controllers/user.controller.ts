@@ -97,6 +97,16 @@ export class UserController {
   }
 
   /**
+   * Helper: count active Super Admins in the database.
+   */
+  private static async countActiveSuperAdmins(): Promise<number> {
+    const all = await UserRepository.findAll();
+    return all.filter(
+      (u) => u.role === Role.SUPER_ADMIN && u.status === AccountStatus.ACTIVE
+    ).length;
+  }
+
+  /**
    * Update details of an existing user.
    */
   static async updateUser(req: Request, res: Response, next: NextFunction) {
@@ -128,6 +138,36 @@ export class UserController {
         }
         dataToUpdate.passwordHash = await hashPassword(password);
       }
+
+      // --- Super Admin Protection ---
+      if (status || role) {
+        const targetUser = await UserRepository.findById(id);
+        if (targetUser && targetUser.role === Role.SUPER_ADMIN) {
+          const isSuspending = status && status !== AccountStatus.ACTIVE;
+          const isDemoting = role && role !== Role.SUPER_ADMIN;
+
+          // Super Admin accounts are permanently protected and cannot be suspended
+          if (isSuspending) {
+            throw new BadRequestError('Super Admin accounts are protected and cannot be suspended.');
+          }
+
+          // A Super Admin can only be demoted if there is at least one other active Super Admin
+          if (isDemoting) {
+            const activeSuperAdminCount = await UserController.countActiveSuperAdmins();
+            if (activeSuperAdminCount <= 1) {
+              throw new BadRequestError(
+                'Cannot demote the last active Super Admin. Please promote another user to Super Admin first.'
+              );
+            }
+          }
+        }
+
+        // Prevent self-suspension
+        if (status && status !== AccountStatus.ACTIVE && req.user?.userId === id) {
+          throw new BadRequestError('You cannot suspend your own account.');
+        }
+      }
+      // --- End Protection ---
 
       if (role && Object.values(Role).includes(role)) {
         dataToUpdate.role = role as Role;
@@ -165,6 +205,15 @@ export class UserController {
       if (req.user?.userId === id) {
         throw new BadRequestError('Self-deletion is not permitted.');
       }
+
+      // --- Super Admin Protection ---
+      const targetUser = await UserRepository.findById(id);
+      if (targetUser && targetUser.role === Role.SUPER_ADMIN) {
+        throw new BadRequestError(
+          'Super Admin accounts are permanently protected and cannot be deleted.'
+        );
+      }
+      // --- End Protection ---
 
       await UserRepository.delete(id);
       return sendSuccess(res, null, 'User account deleted successfully.');

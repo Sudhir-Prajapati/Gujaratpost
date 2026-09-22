@@ -2,10 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
-import { Clock, Flame, ChevronRight } from 'lucide-react';
 import type { Article, Language } from '@/types';
-import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
@@ -159,10 +156,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
                 <AutoArticleTitle article={art} language={language} />
               </h3>
             </Link>
-            <div className="flex items-center gap-1.5 mb-1 pb-2 border-b border-border/40 text-[10.5px] text-muted-foreground font-semibold">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-              <span suppressHydrationWarning>{formatTime(art.publishedAt)}</span>
-            </div>
+
           </div>
         ))}
       </div>
@@ -196,10 +190,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
                     <h4 className="text-[12.5px] md:text-[13px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                       <AutoArticleTitle article={art} language={language} />
                     </h4>
-                    <div className="flex items-center gap-1.5 mt-2 text-[10.5px] text-muted-foreground font-semibold">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                      <span suppressHydrationWarning>{formatTime(art.publishedAt)}</span>
-                    </div>
+
                   </div>
                 </Link>
               </div>

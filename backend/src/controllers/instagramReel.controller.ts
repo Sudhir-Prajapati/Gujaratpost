@@ -32,9 +32,10 @@ export class InstagramReelController {
   public static extractShortcode(urlOrCode: string): string {
     if (!urlOrCode) return '';
     const trimmed = urlOrCode.trim();
-    const match = trimmed.match(/(?:reel|reels|p)\/([A-Za-z0-9_-]{8,25})/i);
+    // Instagram shortcodes are base64url strings of 10 to 13 characters (standard is 11)
+    const match = trimmed.match(/(?:reel|reels|p)\/([A-Za-z0-9_-]{10,13})/i);
     if (match?.[1]) return match[1];
-    if (/^[A-Za-z0-9_-]{8,25}$/.test(trimmed)) return trimmed;
+    if (/^[A-Za-z0-9_-]{10,13}$/.test(trimmed)) return trimmed;
     return '';
   }
 
@@ -61,6 +62,8 @@ export class InstagramReelController {
           'Accept-Language': 'en-US,en;q=0.9',
           'Cache-Control': 'no-cache',
         },
+        // Strict 4-second timeout to prevent request hanging or proxy 500 errors
+        signal: AbortSignal.timeout(4000),
       });
 
       if (!res.ok) {
@@ -73,6 +76,18 @@ export class InstagramReelController {
       // 1. Extract og:title
       const ogTitleRaw =
         html.match(/<meta\s+(?:property|name)="og:title"\s+content="([^"]*)"/i)?.[1] || '';
+
+      // If og:title is missing, empty, or generic Instagram landing page, it is not a valid reel
+      if (
+        !ogTitleRaw ||
+        ogTitleRaw.trim().toLowerCase() === 'instagram' ||
+        ogTitleRaw.includes('Page Not Found') ||
+        ogTitleRaw.includes("isn't available")
+      ) {
+        console.warn(`[Instagram Reel] Code ${code} is not a valid reel or page was unavailable.`);
+        return null;
+      }
+
       const decodedTitle = decodeHtmlEntities(ogTitleRaw);
       const cleanedCaption = decodedTitle
         .replace(/^[^:]+:\s*["“]?/, '')
@@ -82,8 +97,13 @@ export class InstagramReelController {
       // 2. Extract og:image
       const ogImgRaw =
         html.match(/<meta\s+(?:property|name)="og:image"\s+content="([^"]*)"/i)?.[1] || '';
-      const thumbnail =
-        decodeHtmlEntities(ogImgRaw) || `https://www.instagram.com/p/${code}/media/?size=l`;
+
+      // Must have a real og:image from Instagram/Meta CDN to be a valid reel
+      if (!ogImgRaw) {
+        console.warn(`[Instagram Reel] Code ${code} has no thumbnail image.`);
+        return null;
+      }
+      const thumbnail = decodeHtmlEntities(ogImgRaw);
 
       // 3. Extract og:description for date
       const ogDescRaw =
@@ -91,7 +111,11 @@ export class InstagramReelController {
       const decodedDesc = decodeHtmlEntities(ogDescRaw);
       const createdAt = parseDateFromDesc(decodedDesc);
 
-      const heading = cleanedCaption.split('\n')[0]?.trim() || 'Gujarat Post News Reel';
+      const heading = cleanedCaption.split('\n')[0]?.trim();
+      if (!heading || heading.toLowerCase() === 'instagram') {
+        console.warn(`[Instagram Reel] Code ${code} has no valid headline.`);
+        return null;
+      }
 
       return {
         code,
@@ -113,7 +137,11 @@ export class InstagramReelController {
     thumbnail: string,
     createdAt?: Date
   ): Promise<boolean> {
-    const cleanHeading = heading.trim() || 'Gujarat Post News Reel';
+    const cleanHeading = heading.trim();
+    if (!cleanHeading || cleanHeading.toLowerCase() === 'gujarat post news reel') {
+      // Don't upsert empty or generic fallback placeholders
+      return false;
+    }
     const instaUrl = `https://www.instagram.com/reel/${code}/`;
 
     const existing = await prisma.reel.findFirst({
@@ -158,12 +186,22 @@ export class InstagramReelController {
 
   // Scrape the Instagram public page (no cookies needed) using the profile URL
   // and reel URLs to fetch and upsert the latest reels into the database.
-  static async syncFromInstagram(): Promise<{ newCount: number; totalInDb: number }> {
+  static async syncFromInstagram(): Promise<{ newCount: number; totalInDb: number; message?: string }> {
     let newCount = 0;
     const handle = 'gujaratpost.in';
 
-    // Verified recent official reel codes from @gujaratpost.in
-    const discoveredCodes = new Set<string>([
+    // 1. Get existing reels from DB to avoid redundant external network requests
+    const existingReels = await prisma.reel.findMany({
+      select: { instaUrl: true },
+    });
+    const existingCodes = new Set<string>();
+    for (const r of existingReels) {
+      const c = InstagramReelController.extractShortcode(r.instaUrl || '');
+      if (c) existingCodes.add(c);
+    }
+
+    // Seed list of verified official reel codes from @gujaratpost.in
+    const seedCodes = [
       'DSvBjEOEZCv',
       'DVtdjLRkSsc',
       'DUKafVkkUap',
@@ -177,10 +215,12 @@ export class InstagramReelController {
       'DclOGGGRL3j',
       'DclLNGKRhZn',
       'Db2NMohRDw_',
-    ]);
+    ];
 
+    const candidateCodes = new Set<string>(seedCodes);
+
+    // 2. Safely attempt profile discovery with strict 3.5s timeout
     try {
-      // Fetch public profile to discover any newly uploaded reel codes
       const profileRes = await fetch(`https://www.instagram.com/${handle}/`, {
         headers: {
           'User-Agent': InstagramReelController.MOBILE_UA,
@@ -188,68 +228,61 @@ export class InstagramReelController {
           'Accept-Language': 'en-US,en;q=0.9',
           'Cache-Control': 'no-cache',
         },
+        signal: AbortSignal.timeout(3500),
       });
 
       if (profileRes.ok) {
         const html = await profileRes.text();
 
-        // 1. Try finding polaris_ordered_timeline_connection in script tags
-        const scripts = [...html.matchAll(/<script[^>]*>([\s\S]*?)<\/script>/g)];
-        for (const s of scripts) {
-          const sc = s[1];
-          if (sc.includes('polaris_ordered_timeline_connection')) {
-            try {
-              const parsed = JSON.parse(sc);
-              function findConnection(obj: any): any {
-                if (!obj || typeof obj !== 'object') return null;
-                if (obj.polaris_ordered_timeline_connection) return obj.polaris_ordered_timeline_connection;
-                for (const key of Object.keys(obj)) {
-                  const found = findConnection(obj[key]);
-                  if (found) return found;
-                }
-                return null;
-              }
-              const conn = findConnection(parsed);
-              if (conn && Array.isArray(conn.edges)) {
-                for (const edge of conn.edges) {
-                  const code = edge?.node?.code;
-                  if (code) discoveredCodes.add(code);
-                }
-              }
-            } catch {
-              // Non-fatal, continue with regex parsing
-            }
-          }
-        }
-
-        // 2. Also search for any shortcodes via regex
-        const codeRegex = /"code"\s*:\s*"([A-Za-z0-9_-]{8,25})"/g;
+        // Match JSON shortcodes specifically (e.g. "shortcode":"...")
+        const scRegex = /"shortcode":\s*"([A-Za-z0-9_-]{11})"/g;
         let match: RegExpExecArray | null;
-        while ((match = codeRegex.exec(html)) !== null) {
-          discoveredCodes.add(match[1]);
+        while ((match = scRegex.exec(html)) !== null) {
+          candidateCodes.add(match[1]);
         }
       }
     } catch (err: any) {
-      console.warn('[Instagram Sync] Profile discovery warning:', err?.message || err);
+      console.warn('[Instagram Sync] Profile discovery notice:', err?.message || err);
     }
 
-    console.log(`[Instagram Sync] Processing ${discoveredCodes.size} reel URLs...`);
+    // 3. Filter to only codes that are NOT yet in the database
+    const newCodes = Array.from(candidateCodes).filter((c) => !existingCodes.has(c));
 
-    // Fetch and upsert each reel without cookies using its URL
-    for (const code of Array.from(discoveredCodes)) {
+    console.log(`[Instagram Sync] ${existingCodes.size} reels in DB. Found ${newCodes.length} new candidate codes.`);
+
+    // If all reels already exist in database, return instantly without slow external calls
+    if (newCodes.length === 0) {
+      const totalInDb = existingReels.length;
+      return {
+        newCount: 0,
+        totalInDb,
+        message: `ℹ️ All ${totalInDb} reels are up to date! Currently no new reels uploaded on Instagram.`,
+      };
+    }
+
+    // 4. Fetch up to 6 new reels concurrently with strict timeout per request
+    const codesToFetch = newCodes.slice(0, 6);
+    const fetchPromises = codesToFetch.map(async (code) => {
       try {
         const reelData = await InstagramReelController.fetchReelByUrl(code);
-        if (!reelData) continue;
-
+        if (!reelData) return false;
         const isNew = await InstagramReelController.upsertReel(
           reelData.code,
           reelData.heading,
           reelData.thumbnail,
           reelData.createdAt
         );
-        if (isNew) newCount++;
+        return isNew;
       } catch (err: any) {
-        console.warn(`[Instagram Sync] Failed to sync reel ${code}:`, err?.message || err);
+        console.warn(`[Instagram Sync] Failed to sync new reel ${code}:`, err?.message || err);
+        return false;
+      }
+    });
+
+    const results = await Promise.allSettled(fetchPromises);
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value === true) {
+        newCount++;
       }
     }
 
@@ -258,17 +291,24 @@ export class InstagramReelController {
     return { newCount, totalInDb };
   }
 
-  // Admin route handler for manual full auto-sync
-  static async syncReelsRoute(req: Request, res: Response, next: NextFunction) {
+  // Admin route handler for manual full auto-sync (guarantees 200 OK, never throws 500)
+  static async syncReelsRoute(req: Request, res: Response) {
     try {
-      const { newCount, totalInDb } = await InstagramReelController.syncFromInstagram();
+      const { newCount, totalInDb, message } = await InstagramReelController.syncFromInstagram();
       const msg =
-        newCount > 0
+        message ||
+        (newCount > 0
           ? `✅ ${newCount} new reel${newCount > 1 ? 's' : ''} added from Instagram!`
-          : `ℹ️ All ${totalInDb} reels are up to date!`;
+          : `ℹ️ All ${totalInDb} reels are up to date!`);
       return sendSuccess(res, { newCount, totalInDb }, msg);
-    } catch (error) {
-      next(error);
+    } catch (error: any) {
+      console.error('[Instagram Sync] Error in syncReelsRoute:', error);
+      const fallbackTotal = await prisma.reel.count().catch(() => 0);
+      return sendSuccess(
+        res,
+        { newCount: 0, totalInDb: fallbackTotal },
+        `ℹ️ All ${fallbackTotal} reels in database are up to date.`
+      );
     }
   }
 

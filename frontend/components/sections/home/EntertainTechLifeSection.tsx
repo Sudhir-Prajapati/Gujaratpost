@@ -3,9 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Play, Sparkles, ChevronRight, Clock, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import type { Article, Language } from '@/types';
-import { formatTime } from '@/data';
 import { getPublicCategories, getPublicArticles } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
@@ -120,7 +119,7 @@ export default function EntertainTechLifeSection({
       .finally(() => setLoading(false));
   }, []);
 
-  type DisplayItem = { id?: string; slug?: string; img: string; title: string; titleGu: string; age: string };
+  type DisplayItem = { id?: string; slug?: string; img: string; title: string; titleGu: string; age?: string };
 
   const getCategoryIcon = (slug: string) => {
     const s = slug.toLowerCase();
@@ -201,10 +200,7 @@ export default function EntertainTechLifeSection({
                 <h4 className="text-[12.5px] md:text-[13px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                   <AutoTranslateString text={a.titleGu || a.title} language={language} />
                 </h4>
-                <div className="flex items-center gap-1.5 mt-1 text-[11px] text-muted-foreground font-semibold select-none">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
-                  <span>{a.age}</span>
-                </div>
+
               </div>
             </Link>
           ))}
@@ -254,7 +250,6 @@ export default function EntertainTechLifeSection({
             img: art.image || '/assets/demo/2.jpg',
             title: art.title,
             titleGu: art.titleGu || art.title,
-            age: formatTime(art.publishedAt),
           }));
 
           return (

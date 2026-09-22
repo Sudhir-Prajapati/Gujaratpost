@@ -261,11 +261,11 @@ export default function DataCleanupPage() {
                 {new Intl.NumberFormat('en-IN').format(total)} total
               </span>
             </div>
-            {total > 0 && !confirmStep && !result && (
+            {total > 0 && !result && (
               <button
                 type="button"
                 onClick={() => setConfirmStep(true)}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 text-white text-xs font-black hover:bg-red-700 transition shadow"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black transition shadow shadow-red-600/20 active:scale-95 cursor-pointer"
               >
                 <Trash2 className="h-4 w-4" />
                 બધા ડિલીટ કરો ({new Intl.NumberFormat('en-IN').format(total)})
@@ -278,48 +278,6 @@ export default function DataCleanupPage() {
             <div className="py-12 text-center">
               <Check className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
               <p className="text-sm font-bold text-zinc-500">No articles found in this date range. ✓</p>
-            </div>
-          )}
-
-          {/* Confirmation Box */}
-          {confirmStep && !result && (
-            <div className="m-4 rounded-2xl border-2 border-red-500 dark:border-red-600 bg-red-50 dark:bg-red-950/30 p-5 space-y-4">
-              <div className="flex items-start gap-3">
-                <ShieldAlert className="h-7 w-7 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-base font-black text-red-800 dark:text-red-300">⚠️ Final Confirmation Required</p>
-                  <p className="text-sm text-red-700/80 dark:text-red-400/70 mt-1 leading-relaxed">
-                    You are about to permanently delete{' '}
-                    <strong className="text-red-800 dark:text-red-300">{new Intl.NumberFormat('en-IN').format(total)}</strong>{' '}
-                    articles between <strong>{from}</strong> and <strong>{to}</strong>.
-                    <br />
-                    <span className="font-black text-red-700 dark:text-red-400">This CANNOT be reversed.</span>
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  disabled={deleting}
-                  onClick={handleDelete}
-                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-600 text-white text-sm font-black hover:bg-red-700 transition disabled:opacity-60 disabled:cursor-not-allowed shadow-lg"
-                >
-                  {deleting ? (
-                    <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                  ) : (
-                    <Trash2 className="h-4 w-4" />
-                  )}
-                  {deleting ? 'Deleting...' : 'હા, કાઢો (Yes, Delete Permanently)'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConfirmStep(false)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 text-sm font-black hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
-                >
-                  <X className="h-4 w-4" />
-                  રદ (Cancel)
-                </button>
-              </div>
             </div>
           )}
 
@@ -390,6 +348,105 @@ export default function DataCleanupPage() {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ─── CUSTOM BULK DELETE CONFIRMATION MODAL ─── */}
+      {confirmStep && !result && total !== null && total > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="absolute inset-0"
+            onClick={() => !deleting && setConfirmStep(false)}
+          />
+          <div className="relative w-full max-w-lg rounded-3xl border border-red-200 dark:border-red-900/50 bg-white dark:bg-zinc-900 p-6 sm:p-8 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
+            {/* Close X Button */}
+            <button
+              type="button"
+              disabled={deleting}
+              onClick={() => setConfirmStep(false)}
+              className="absolute top-5 right-5 rounded-xl p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition disabled:opacity-50 cursor-pointer"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            {/* Header Icon + Title */}
+            <div className="flex items-start gap-4">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 shadow-inner shrink-0 mt-0.5">
+                <ShieldAlert className="h-7 w-7" />
+              </div>
+
+              <div className="flex-1 min-w-0 pr-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider bg-red-600 text-white px-2 py-0.5 rounded-full">
+                    Irreversible Action
+                  </span>
+                </div>
+                <h3 className="text-lg font-black text-zinc-900 dark:text-white leading-snug mt-1.5">
+                  બધા આર્ટિકલ્સ ડિલીટ કરવા છે?
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  Permanently delete selected database articles
+                </p>
+              </div>
+            </div>
+
+            {/* Summary Card */}
+            <div className="mt-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/60 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">કુલ આર્ટિકલ્સ (Total Articles):</span>
+                <span className="text-sm font-black text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-2.5 py-0.5 rounded-lg border border-red-200/50 dark:border-red-900/50 font-mono">
+                  {new Intl.NumberFormat('en-IN').format(total)} Articles
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-zinc-200/60 dark:border-zinc-800/60 pt-2.5">
+                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">તારીખ ગાળો (Date Range):</span>
+                <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 font-mono">
+                  {from} → {to}
+                </span>
+              </div>
+            </div>
+
+            {/* Critical Warning Callout */}
+            <div className="mt-4 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 p-4 flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+              <div className="text-xs text-red-800 dark:text-red-300 leading-relaxed font-medium">
+                <p className="font-bold">⚠️ ચેતવણી: આ ક્રિયા પાછી વાળી શકાતી નથી (Permanent)!</p>
+                <p className="mt-0.5 text-red-700/80 dark:text-red-400/80">
+                  આ તારીખ વચ્ચેના તમામ {new Intl.NumberFormat('en-IN').format(total)} આર્ટિકલ્સ ડેટાબેઝમાંથી કાયમ માટે રદ થઈ જશે.
+                </p>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setConfirmStep(false)}
+                className="rounded-xl border border-zinc-200 bg-white px-5 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+              >
+                રદ કરો (Cancel)
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleDelete}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 px-6 py-2.5 text-xs font-black text-white shadow-lg shadow-red-600/30 transition disabled:opacity-50 cursor-pointer active:scale-95"
+              >
+                {deleting ? (
+                  <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+                <span>
+                  {deleting
+                    ? 'ડિલીટ થઈ રહ્યું છે...'
+                    : `હા, બધા ${new Intl.NumberFormat('en-IN').format(total)} આર્ટિકલ્સ કાઢો`}
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

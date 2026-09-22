@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, ChevronRight, ChevronLeft, MapPin, Sparkles, TrendingUp, Flame, Radio } from 'lucide-react';
+import { Eye, ChevronRight, ChevronLeft, MapPin, Sparkles, TrendingUp, Flame, Radio } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime, getLocalized } from '@/data';
 import { getTrendingTopicHref } from '@/lib/utils';
@@ -1063,10 +1063,6 @@ export default function CityHyperlocalSection({
 
                   {/* Meta Details with Inline Tags */}
                   <div className="h-[38px] flex items-center gap-2.5 mt-3.5 text-[11px] text-muted-foreground font-semibold border-b border-border/40 pb-3 mb-3.5 overflow-hidden">
-                    <span>
-                      {getLocalized(language, { en: currentSlide.relativeTime, gu: currentSlide.relativeTimeGu, hi: currentSlide.relativeTimeHi })}
-                    </span>
-                    <span>•</span>
                     <div className="flex flex-wrap gap-1.5">
                       {currentSlide.tags.slice(0, 3).map((tag) => {
                         const tagLabel = getLocalizedTag(tag, language);
@@ -1111,16 +1107,6 @@ export default function CityHyperlocalSection({
                       <h4 className="text-[13px] md:text-[13.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                         <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
                       </h4>
-                    </div>
-                    <div className="flex items-center gap-1.5 mt-1.5 text-[10.5px] text-muted-foreground font-semibold select-none leading-none">
-                      <span>
-                        {getLocalized(language, { en: item.relativeTime, gu: item.relativeTimeGu, hi: item.relativeTimeHi })}
-                      </span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3 text-muted-foreground/60" />
-                        <span>{getMockTime(item.id)}</span>
-                      </span>
                     </div>
                   </div>
                 </Link>

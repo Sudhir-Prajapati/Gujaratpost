@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Clock } from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { getArticleTitle, getCategoryLabel, formatViews, getLocalized, formatDate } from '@/data';
 import { getPublicArticles, getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
@@ -192,11 +192,6 @@ export default function LatestUpdatesSection({
         {/* Column 1 */}
         <div className="relative pl-5 flex flex-col">
           {latestNews.slice(0, 5).map((art, idx) => {
-            const relativeTimeStr = language === 'gu'
-              ? art.relativeTimeGu
-              : language === 'hi'
-                ? art.relativeTimeHi
-                : art.relativeTime;
             const locationTag = getCategoryLabel(art, language);
             const isRedBullet = idx % 2 === 0;
             const mediaSrc = art.image || (art as any).featuredImage || getArticleImage(art);
@@ -219,10 +214,7 @@ export default function LatestUpdatesSection({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1 select-none">
-                    <span className="text-[#B3121B] font-extrabold text-[11.5px] md:text-[12px] whitespace-nowrap">
-                      {relativeTimeStr}
-                    </span>
-                    <span className="text-muted-foreground font-bold text-[11px] md:text-[11.5px] truncate">
+                    <span className="text-[#B3121B] font-extrabold text-[11.5px] md:text-[12px] truncate">
                       {locationTag}
                     </span>
                   </div>
@@ -245,11 +237,6 @@ export default function LatestUpdatesSection({
         {/* Column 2 */}
         <div className="relative pl-5 flex flex-col">
           {latestNews.slice(5, 10).map((art, idx) => {
-            const relativeTimeStr = language === 'gu'
-              ? art.relativeTimeGu
-              : language === 'hi'
-                ? art.relativeTimeHi
-                : art.relativeTime;
             const locationTag = getCategoryLabel(art, language);
             const isRedBullet = idx % 2 === 0;
             const mediaSrc = art.image || (art as any).featuredImage || getArticleImage(art);
@@ -272,10 +259,7 @@ export default function LatestUpdatesSection({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1 select-none">
-                    <span className="text-[#B3121B] font-extrabold text-[11.5px] md:text-[12px] whitespace-nowrap">
-                      {relativeTimeStr}
-                    </span>
-                    <span className="text-muted-foreground font-bold text-[11px] md:text-[11.5px] truncate">
+                    <span className="text-[#B3121B] font-extrabold text-[11.5px] md:text-[12px] truncate">
                       {locationTag}
                     </span>
                   </div>
