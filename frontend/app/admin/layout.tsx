@@ -129,7 +129,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { theme, toggleTheme } = useApp();
 
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -137,6 +137,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isMobile = window.innerWidth < 1024;
+      const saved = localStorage.getItem('admin_sidebar_open');
+      if (saved !== null) {
+        setSidebarOpen(saved === 'true');
+      } else {
+        setSidebarOpen(!isMobile);
+      }
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('admin_sidebar_open', String(next));
+      }
+      return next;
+    });
+  };
 
   useEffect(() => {
     authFetch(getBackendApiUrl('/api/auth/me'))
@@ -236,11 +258,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* ── Sidebar Navigation ── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
+        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 transition-transform duration-300 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
       >
-        {/* Brand Header */}
-        <div className="flex h-16 items-center justify-between px-6 border-b border-zinc-200 dark:border-zinc-800">
+        {/* Brand Header with Close Button */}
+        <div className="flex h-16 items-center justify-between px-5 border-b border-zinc-200 dark:border-zinc-800">
           <Link href={currentRoleMeta?.defaultPath || '/admin'} className="flex items-center gap-2">
             <div className="relative h-10 w-40 overflow-hidden rounded">
               <Image
@@ -253,8 +276,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </div>
           </Link>
           <button
-            onClick={() => setSidebarOpen(false)}
-            className="rounded p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden cursor-pointer"
+            onClick={() => toggleSidebar()}
+            className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer"
+            title="Close sidebar (સાઇડબાર બંધ કરો)"
+            aria-label="Close sidebar"
           >
             <X className="h-5 w-5" />
           </button>
@@ -262,23 +287,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* User Role Card in Sidebar */}
         {userRole && currentRoleMeta && (
-          <div className="mx-4 mt-3 px-3 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between">
+          <div className="mx-3.5 mt-3 px-3.5 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between">
             <div className="min-w-0">
               <div className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-wider">
                 Logged in as
               </div>
-              <div className="text-xs font-black text-zinc-800 dark:text-zinc-200 truncate">
+              <div className="text-[13.5px] font-black text-zinc-800 dark:text-zinc-200 truncate">
                 {userName || 'Admin'}
               </div>
             </div>
-            <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${currentRoleMeta.badgeBg} ${currentRoleMeta.badgeText}`}>
+            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${currentRoleMeta.badgeBg} ${currentRoleMeta.badgeText}`}>
               {currentRoleMeta.titleGu}
             </span>
           </div>
         )}
 
         {/* Navigation Menu (Scrollable) */}
-        <nav className="flex-1 overflow-y-auto min-h-0 space-y-1.5 p-4 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
+        <nav className="flex-1 overflow-y-auto min-h-0 space-y-1.5 p-3.5 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
           {filteredMenuItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href + '/'));
             const Icon = item.icon;
@@ -287,10 +312,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.label}
                 href={item.href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 ${isActive
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    setSidebarOpen(false);
+                  }
+                }}
+                className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-bold transition-all duration-200 ${isActive
                     ? 'bg-[#B3121B] text-white shadow-md shadow-red-900/20'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white'
+                    : 'text-zinc-650 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white'
                   }`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
@@ -305,8 +334,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
               <Link
                 href="/admin/cleanup"
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold transition-all duration-200 ${
+                onClick={() => {
+                  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                    setSidebarOpen(false);
+                  }
+                }}
+                className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-bold transition-all duration-200 ${
                   pathname === '/admin/cleanup'
                     ? 'bg-red-600 text-white shadow-md shadow-red-900/30'
                     : 'text-red-500 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30'
@@ -320,11 +353,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         {/* Footer Logout Button */}
-        <div className="border-t border-zinc-200 p-4 dark:border-zinc-800">
+        <div className="border-t border-zinc-200 p-3.5 dark:border-zinc-800">
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50 cursor-pointer transition-colors"
+            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50 cursor-pointer transition-colors"
           >
             <LogOut className="h-5 w-5 shrink-0" />
             <span>{loggingOut ? 'Signing out...' : 'Sign Out (લૉગ આઉટ)'}</span>
@@ -333,18 +366,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* ── Main Layout Body ── */}
-      <div className="flex flex-1 flex-col min-w-0 w-full lg:pl-64 overflow-x-hidden">
+      <div className={`flex flex-1 flex-col min-w-0 w-full transition-all duration-300 overflow-x-hidden ${sidebarOpen ? 'lg:pl-72' : 'lg:pl-0'}`}>
 
         {/* Navbar Header */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white/80 px-6 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white/80 px-4 sm:px-6 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
 
-          {/* Left: Hamburger menu toggle for mobile */}
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="rounded-lg p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 lg:hidden cursor-pointer"
-          >
-            <Menu className="h-6 w-6" />
-          </button>
+          {/* Left: Sidebar Toggle Button (Desktop & Mobile) */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => toggleSidebar()}
+              className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/70 dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer transition-all shadow-2xs"
+              title={sidebarOpen ? "Close sidebar (સાઇડબાર બંધ કરો)" : "Open sidebar (સાઇડબાર ખોલો)"}
+            >
+              <Menu className="h-4 w-4" />
+              <span className="text-xs font-bold">
+                {sidebarOpen ? 'Close' : 'Menu'}
+              </span>
+            </button>
+          </div>
 
           <div className="hidden lg:flex items-center gap-3 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
             {userRole && currentRoleMeta ? (

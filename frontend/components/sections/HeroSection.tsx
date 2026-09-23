@@ -1024,73 +1024,148 @@ export default function HeroSection({
 
             </div>
 
-            {/* ═══ MIDDLE COLUMN — 2-Column Newspaper Grid ════════════════ */}
-            <div className="flex flex-col gap-2 border-l border-r border-border/40 px-4 min-w-0">
-              {/* Top Row: Image Cards */}
-              <div className="grid grid-cols-2 gap-x-4 items-start">
-                {uniqueTopStories[1] && (
-                  <Link href={`/news/${uniqueTopStories[1].slug}`} className="group flex flex-col gap-2 min-w-0">
-                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                      <ArticleMedia
-                        src={uniqueTopStories[1].image || (uniqueTopStories[1] as any).featuredImage}
-                        alt={uniqueTopStories[1].title}
-                        className="transition-transform duration-300 group-hover:scale-[1.02]"
-                      />
-                    </div>
-                    <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                      <AutoArticleTitle article={uniqueTopStories[1]} language={language} />
-                    </h3>
-                  </Link>
-                )}
+            {/* ═══ MIDDLE COLUMN — 2-Column Newspaper Grid (Desktop) / Modern Clean 1-Line List (Mobile) ════════════════ */}
+            <div className="flex flex-col gap-2.5 md:border-l md:border-r md:border-border/40 md:px-4 px-0 min-w-0">
+              
+              {/* ─── DESKTOP VIEW (md: and up) — 100% UNCHANGED ─── */}
+              <div className="hidden md:flex md:flex-col md:gap-2">
+                {/* Top Row: Image Cards */}
+                <div className="grid grid-cols-2 gap-x-4 items-start">
+                  {uniqueTopStories[1] && (
+                    <Link href={`/news/${uniqueTopStories[1].slug}`} className="group flex flex-col gap-2 min-w-0">
+                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                        <ArticleMedia
+                          src={uniqueTopStories[1].image || (uniqueTopStories[1] as any).featuredImage}
+                          alt={uniqueTopStories[1].title}
+                          className="transition-transform duration-300 group-hover:scale-[1.02]"
+                        />
+                      </div>
+                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                        <AutoArticleTitle article={uniqueTopStories[1]} language={language} />
+                      </h3>
+                    </Link>
+                  )}
 
-                {uniqueTopStories[2] && (
-                  <Link href={`/news/${uniqueTopStories[2].slug}`} className="group flex flex-col gap-2 min-w-0">
-                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                      <ArticleMedia
-                        src={uniqueTopStories[2].image || (uniqueTopStories[2] as any).featuredImage}
-                        alt={uniqueTopStories[2].title}
-                        className="transition-transform duration-300 group-hover:scale-[1.02]"
-                      />
-                    </div>
-                    <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                      <AutoArticleTitle article={uniqueTopStories[2]} language={language} />
-                    </h3>
-                  </Link>
-                )}
+                  {uniqueTopStories[2] && (
+                    <Link href={`/news/${uniqueTopStories[2].slug}`} className="group flex flex-col gap-2 min-w-0">
+                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                        <ArticleMedia
+                          src={uniqueTopStories[2].image || (uniqueTopStories[2] as any).featuredImage}
+                          alt={uniqueTopStories[2].title}
+                          className="transition-transform duration-300 group-hover:scale-[1.02]"
+                        />
+                      </div>
+                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                        <AutoArticleTitle article={uniqueTopStories[2]} language={language} />
+                      </h3>
+                    </Link>
+                  )}
+                </div>
+
+                {/* Text Article Rows: 5 paired rows with aligned top borders and line-clamp-2 */}
+                {[
+                  [middleColumnPool[3], middleColumnPool[4]],
+                  [middleColumnPool[5], middleColumnPool[6]],
+                  [middleColumnPool[7], middleColumnPool[8]],
+                  [middleColumnPool[9], middleColumnPool[10]],
+                  [middleColumnPool[11], middleColumnPool[12]],
+                ].map(([leftArt, rightArt], idx) => (
+                  <div key={idx} className="grid grid-cols-2 gap-x-4 border-t border-border/40 pt-2 pb-1 items-start">
+                    {leftArt ? (
+                      <Link
+                        href={`/news/${leftArt.slug}`}
+                        className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
+                      >
+                        <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                          <AutoArticleTitle article={leftArt} language={language} />
+                        </h3>
+                      </Link>
+                    ) : <div />}
+
+                    {rightArt ? (
+                      <Link
+                        href={`/news/${rightArt.slug}`}
+                        className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
+                      >
+                        <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                          <AutoArticleTitle article={rightArt} language={language} />
+                        </h3>
+                      </Link>
+                    ) : <div />}
+                  </div>
+                ))}
               </div>
 
-              {/* Text Article Rows: 5 paired rows with aligned top borders and line-clamp-2 */}
-              {[
-                [middleColumnPool[3], middleColumnPool[4]],
-                [middleColumnPool[5], middleColumnPool[6]],
-                [middleColumnPool[7], middleColumnPool[8]],
-                [middleColumnPool[9], middleColumnPool[10]],
-                [middleColumnPool[11], middleColumnPool[12]],
-              ].map(([leftArt, rightArt], idx) => (
-                <div key={idx} className="grid grid-cols-2 gap-x-4 border-t border-border/40 pt-2 pb-1 items-start">
-                  {leftArt ? (
-                    <Link
-                      href={`/news/${leftArt.slug}`}
-                      className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
-                    >
-                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        <AutoArticleTitle article={leftArt} language={language} />
+              {/* ─── MOBILE VIEW (< md) — Single Column, 1 Line Per Item, Better Readability ─── */}
+              <div className="flex flex-col gap-2.5 md:hidden">
+                {/* Mobile: Top 2 Featured Image Stories — 1 Per Row */}
+                {[uniqueTopStories[1], uniqueTopStories[2]].filter(Boolean).map((story, idx) => (
+                  <Link
+                    key={story.id || story.slug || idx}
+                    href={`/news/${story.slug}`}
+                    className="group flex flex-row items-center justify-between gap-3 p-2 rounded-lg bg-card/60 hover:bg-muted/30 border border-border/40 transition-all min-w-0"
+                  >
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase tracking-wide mb-1">
+                        {getCategoryLabel(story, language)}
+                      </span>
+                      <h3 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                        <AutoArticleTitle article={story} language={language} />
                       </h3>
-                    </Link>
-                  ) : <div />}
+                    </div>
+                    <div className="relative aspect-[16/10] w-[95px] h-[64px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                      <ArticleMedia
+                        src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                        alt={story.title || ''}
+                        className="transition-transform duration-300 group-hover:scale-[1.03]"
+                      />
+                    </div>
+                  </Link>
+                ))}
 
-                  {rightArt ? (
-                    <Link
-                      href={`/news/${rightArt.slug}`}
-                      className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
-                    >
-                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        <AutoArticleTitle article={rightArt} language={language} />
-                      </h3>
-                    </Link>
-                  ) : <div />}
+                {/* Mobile: News Items with Photo Thumbnail & Full Headline */}
+                <div className="flex flex-col divide-y divide-border/40 border-t border-border/40 mt-1">
+                  {[
+                    middleColumnPool[3],
+                    middleColumnPool[4],
+                    middleColumnPool[5],
+                    middleColumnPool[6],
+                    middleColumnPool[7],
+                    middleColumnPool[8],
+                    middleColumnPool[9],
+                    middleColumnPool[10],
+                    middleColumnPool[11],
+                    middleColumnPool[12],
+                  ]
+                    .filter(Boolean)
+                    .map((art, idx) => {
+                      const imageSrc = art.image || (art as any).featuredImage || getArticleImage(art);
+                      return (
+                        <Link
+                          key={art.id || art.slug || idx}
+                          href={`/news/${art.slug}`}
+                          className="group flex flex-row items-center justify-between gap-3 py-3 px-1 hover:bg-muted/10 transition-colors min-w-0"
+                        >
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <h3 className="text-[14px] sm:text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                              <AutoArticleTitle article={art} language={language} />
+                            </h3>
+                          </div>
+                          {imageSrc && (
+                            <div className="relative aspect-[16/10] w-[95px] h-[64px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                              <ArticleMedia
+                                src={imageSrc}
+                                alt={art.title || ''}
+                                className="transition-transform duration-300 group-hover:scale-[1.03]"
+                              />
+                            </div>
+                          )}
+                        </Link>
+                      );
+                    })}
                 </div>
-              ))}
+              </div>
+
             </div>
           </div> {/* Close Top Row grid */}
 

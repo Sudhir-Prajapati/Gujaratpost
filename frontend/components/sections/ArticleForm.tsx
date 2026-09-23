@@ -1848,7 +1848,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* 🏷️ MULTIPLE CATEGORY CHECKBOX GRID (Like Old Website) */}
-        <div className="rounded-2xl border border-zinc-200/80 bg-zinc-50/60 p-4 dark:border-zinc-800 dark:bg-zinc-950/40 space-y-3">
+        <div className="rounded-2xl border border-zinc-300 bg-[#ebf5ea] p-4 dark:border-zinc-800 dark:bg-emerald-950/20 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 flex items-center gap-2">
               <span>Category (*) [Select Multiple News Sections]</span>
@@ -1869,10 +1869,11 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               return (
                 <label
                   key={cat.id}
-                  className={`flex items-center gap-2 rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer select-none ${
+                  title={cat.name}
+                  className={`group/cat relative flex items-center gap-2 rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer select-none ${
                     isChecked
                       ? 'border-red-500 bg-red-50/80 text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300 shadow-2xs'
-                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
                   }`}
                 >
                   <input
@@ -1889,14 +1890,22 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                         setAdditionalCategoryIds((prev) => prev.filter((id) => id !== cat.id));
                       }
                     }}
-                    className="h-4 w-4 rounded border-zinc-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                    className="h-4 w-4 shrink-0 rounded border-zinc-300 text-red-600 focus:ring-red-500 cursor-pointer"
                   />
-                  <span className="truncate">{cat.name}</span>
+                  <span className="truncate min-w-0 flex-1">{cat.name}</span>
                   {isPrimary && (
-                    <span className="ml-auto text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-1.5 py-0.5 rounded">
+                    <span className="ml-auto shrink-0 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-1.5 py-0.5 rounded">
                       Main
                     </span>
                   )}
+
+                  {/* Floating tooltip showing full name on hover without increasing box size */}
+                  <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/cat:flex flex-col items-center z-50">
+                    <div className="whitespace-nowrap rounded-lg bg-zinc-900 px-2.5 py-1 text-[11px] font-bold text-white shadow-xl dark:bg-zinc-100 dark:text-zinc-900">
+                      {cat.name}
+                    </div>
+                    <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900 dark:border-t-zinc-100" />
+                  </div>
                 </label>
               );
             })}
@@ -2680,6 +2689,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 </div>
                 <input
                   type="datetime-local"
+                  suppressHydrationWarning
                   min={getCurrentLocalMinDateTime()}
                   value={scheduledAt}
                   onChange={(e) => {
