@@ -8,7 +8,7 @@ import {
   Plus,
   Edit2,
   Trash2,
-  ChevronLeft, 
+  ChevronLeft,
   ChevronRight,
   Eye,
   Filter,
@@ -78,17 +78,17 @@ export default function ArticleList() {
           year: 'numeric',
         });
       }
-    } catch (e) {}
+    } catch (e) { }
     return selectedDate;
   }, [selectedDate]);
-  
+
   // Table state
   const [articles, setArticles] = useState<ArticleData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [totalArticles, setTotalArticles] = useState(0);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  
+
   // UI indicators
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -96,7 +96,7 @@ export default function ArticleList() {
   const [langTab, setLangTab] = useState<'en' | 'gu' | 'hi'>('gu');
   const [userRole, setUserRole] = useState<string | null>(null);
   const [userAuthorId, setUserAuthorId] = useState<string | null>(null);
-  
+
   // Custom confirm dialog state
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -107,7 +107,7 @@ export default function ArticleList() {
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
+    onConfirm: () => { },
   });
 
   // Review Modal state
@@ -229,7 +229,7 @@ export default function ArticleList() {
           setUserAuthorId(json.data.user.authorId);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   // Fetch Categories for dropdown filter
@@ -309,7 +309,7 @@ export default function ArticleList() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path: '/' }),
-          }).catch(() => {});
+          }).catch(() => { });
 
           // Refresh list
           setArticles((prev) => prev.filter((art) => art.id !== id));
@@ -356,7 +356,7 @@ export default function ArticleList() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path: '/', slug: art.slug }),
-          }).catch(() => {});
+          }).catch(() => { });
 
           setArticles(prev => prev.map(a => a.id === art.id ? { ...a, status: 'PUBLISHED', publishedAt: new Date().toISOString() } : a));
         } catch (err: any) {
@@ -398,7 +398,7 @@ export default function ArticleList() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ path: '/', slug: art.slug }),
-          }).catch(() => {});
+          }).catch(() => { });
 
           setArticles(prev => prev.map(a => a.id === art.id ? { ...a, status: 'DRAFT' } : a));
         } catch (err: any) {
@@ -443,7 +443,7 @@ export default function ArticleList() {
             Manage your news streams, breaking alerts, and drafts.
           </p>
         </div>
-        
+
         {/* Create Link */}
         <a
           href="/admin/articles/create"
@@ -555,7 +555,7 @@ export default function ArticleList() {
         key={loading ? 'loading' : error ? 'error' : articles.length === 0 ? `empty-${selectedDate || 'none'}` : `table-${page}`}
         className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-sm dark:border-zinc-800 dark:bg-zinc-900 w-full max-w-full"
       >
-        
+
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
             <Loader2 className="h-10 w-10 animate-spin text-zinc-400" />
@@ -659,7 +659,7 @@ export default function ArticleList() {
                   <tr key={art.id} className="group hover:bg-[#dfeee0] dark:hover:bg-emerald-950/35 transition-colors">
                     {/* Thumbnail & Title */}
                     <td className="px-4 py-3 font-medium min-w-[360px] border border-zinc-300 dark:border-zinc-700">
-                      <div 
+                      <div
                         onClick={() => handleOpenReview(art)}
                         className="flex items-center gap-4 cursor-pointer group/title"
                       >
@@ -800,7 +800,7 @@ export default function ArticleList() {
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              
+
               <span className="text-xs font-bold text-zinc-650 dark:text-zinc-400 px-2">
                 Page {page} of {totalPages}
               </span>
@@ -860,7 +860,7 @@ export default function ArticleList() {
       {reviewModal.isOpen && reviewModal.article && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/65 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
           <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b border-zinc-200/80 px-6 py-4 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40">
               <div className="flex items-center gap-3">
@@ -990,11 +990,10 @@ export default function ArticleList() {
                                 key={idx}
                                 type="button"
                                 onClick={() => setReviewModal(prev => ({ ...prev, activeMediaIndex: idx }))}
-                                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${
-                                  currentIndex === idx
+                                className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${currentIndex === idx
                                     ? 'border-blue-600 ring-2 ring-blue-500/30 scale-95'
                                     : 'border-transparent opacity-75 hover:opacity-100 hover:scale-105'
-                                }`}
+                                  }`}
                               >
                                 <ArticleMedia
                                   src={mediaUrl}
@@ -1030,11 +1029,11 @@ export default function ArticleList() {
                     <div className="p-5 rounded-2xl border border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-950/20 text-zinc-800 dark:text-zinc-200 text-sm leading-relaxed prose max-w-none dark:prose-invert">
                       {(() => {
                         const rawContent = reviewModal.fullData?.contentGu || reviewModal.fullData?.content || reviewModal.fullData?.contentHi;
-                        
+
                         if (!rawContent) {
                           return <p className="text-zinc-400 italic">No text content available.</p>;
                         }
-                        
+
                         return <div dangerouslySetInnerHTML={{ __html: rawContent }} />;
                       })()}
                     </div>

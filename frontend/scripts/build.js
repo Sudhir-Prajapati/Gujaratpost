@@ -12,14 +12,27 @@ if (process.cwd() !== realCwd) {
 
 const nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
 
-const result = spawnSync(process.execPath, ['--max-old-space-size=4096', nextBin, 'build', ...process.argv.slice(2)], {
-  cwd: realCwd,
-  stdio: 'inherit',
-  env: {
-    ...process.env,
-    PWD: realCwd,
-    INIT_CWD: realCwd,
-  }
-});
+const nodeOptions = [process.env.NODE_OPTIONS, '--max-old-space-size=8192'].filter(Boolean).join(' ');
+
+const runBuild = (extraArgs = []) => {
+  return spawnSync(process.execPath, [nextBin, 'build', ...extraArgs, ...process.argv.slice(2)], {
+    cwd: realCwd,
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      NODE_OPTIONS: nodeOptions,
+      PWD: realCwd,
+      INIT_CWD: realCwd,
+    }
+  });
+};
+
+console.log('🚀 [Build] Starting Next.js frontend build...');
+let result = runBuild();
+
+if (result.status !== 0 && !process.argv.includes('--webpack')) {
+  console.log('\n⚠️  Turbopack encountered a build issue on this environment. Retrying with --webpack...\n');
+  result = runBuild(['--webpack']);
+}
 
 process.exit(result.status ?? 0);

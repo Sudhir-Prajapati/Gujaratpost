@@ -169,7 +169,7 @@ export default function Header() {
     updateHeight();
     window.addEventListener('resize', updateHeight);
     return () => window.removeEventListener('resize', updateHeight);
-  }, [mounted]);
+  }, [mounted, menuOpen]);
 
   // Lock body scroll when mobile menu is open
   useEffect(() => {
@@ -413,17 +413,40 @@ export default function Header() {
             <div className="flex md:hidden items-center gap-1.5 shrink-0">
               <Link
                 href="/news-brief"
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-600/90 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-wider transition active:scale-95 shadow-xs"
+                className="group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-red-950/60 to-zinc-900/90 hover:from-red-900/70 hover:to-zinc-800 text-white text-[10.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-red-500/40 hover:border-red-500/70 shadow-2xs"
+                title="News Brief"
               >
-                <span>⚡</span>
-                <span>Brief</span>
+                <Image
+                  src="/rightSide.png"
+                  alt="News Brief"
+                  width={13}
+                  height={13}
+                  className="shrink-0 object-contain group-hover:translate-x-0.5 transition-transform"
+                />
+                <span className="text-zinc-100 group-hover:text-red-300 transition-colors">BRIEF</span>
               </Link>
               <Link
                 href="/aqi"
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-[10px] font-black uppercase tracking-wider transition active:scale-95 border border-amber-500/30"
+                className="group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-950/60 to-zinc-900/90 hover:from-amber-900/70 hover:to-zinc-800 text-white text-[10.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-amber-500/40 hover:border-amber-500/70 shadow-2xs"
+                title="Weather & AQI"
               >
-                <span>🌤️</span>
-                <span>AQI</span>
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="M20 12h2" />
+                  <path d="m19.07 4.93-1.41 1.41" />
+                  <path d="M15.9 16A5 5 0 1 0 9 10.45" />
+                  <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
+                </svg>
+                <span className="text-zinc-100 group-hover:text-amber-300 transition-colors">AQI</span>
               </Link>
             </div>
           </div>
@@ -704,9 +727,24 @@ export default function Header() {
                 <Link
                   href="/aqi"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-amber-500/10 border border-amber-500/30 p-2 text-xs font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition"
+                  className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 p-2 text-xs font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition"
                 >
-                  <span className="text-amber-500">🌤️</span>
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-3.5 h-3.5 text-amber-500 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M12 2v2" />
+                    <path d="m4.93 4.93 1.41 1.41" />
+                    <path d="M20 12h2" />
+                    <path d="m19.07 4.93-1.41 1.41" />
+                    <path d="M15.9 16A5 5 0 1 0 9 10.45" />
+                    <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
+                  </svg>
                   <span>AQI</span>
                 </Link>
                 <a
@@ -791,7 +829,7 @@ export default function Header() {
       </header>
 
       {/* -- Sticky Nav Section (Category Bar + District Bar) ------------------ */}
-      <div className={`${hideStickyNav ? 'relative z-50' : 'sticky top-0 z-50'} bg-card/98 shadow-md transition-all duration-300`}>
+      <div className={`${hideStickyNav ? 'relative z-50' : 'sticky top-0 z-50'} bg-card/98 shadow-md transition-all duration-300 ${menuOpen ? 'max-md:hidden' : ''}`}>
         {/* Desktop Nav Bar */}
         <nav
           className="hidden border-t border-border bg-card/98 md:block"
@@ -923,8 +961,10 @@ export default function Header() {
           </div>
         </nav>
 
-        {/* District Bar */}
-        <DistrictBar />
+        {/* District Bar (Hidden on mobile when mobile menu drawer is open) */}
+        <div className={menuOpen ? 'max-md:hidden' : ''}>
+          <DistrictBar />
+        </div>
       </div>
 
       {/* City selection modal */}

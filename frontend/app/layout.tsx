@@ -56,6 +56,19 @@ export const metadata: Metadata = {
     title: "Gujarat Post",
     description: "Latest Gujarati breaking news.",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/assets/favicon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/assets/favicon-16.png", type: "image/png", sizes: "16x16" },
+      { url: "/icon.png", type: "image/png", sizes: "512x512" },
+    ],
+    apple: [
+      { url: "/apple-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/assets/favicon-180.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: "/favicon.ico",
+  },
   robots: { index: true, follow: true },
 };
 
@@ -63,6 +76,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="gu" data-scroll-behavior="smooth" className={`${notoSansGujarati.variable} ${hindVadodara.variable}`} suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
         <link rel="preconnect" href="https://www.youtube.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://i.ytimg.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://www.youtube.com" />
