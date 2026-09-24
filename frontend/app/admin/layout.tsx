@@ -15,6 +15,8 @@ import {
   Sun,
   Moon,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   User,
   Image as ImageIcon,
   Video,
@@ -129,7 +131,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const { theme, toggleTheme } = useApp();
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Desktop sidebar expanded mode: false = icon-only rail (72px), true = expanded menu (288px)
+  const [sidebarExpanded, setSidebarExpanded] = useState(false);
+  // Mobile drawer open state
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
 
@@ -140,21 +145,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const isMobile = window.innerWidth < 1024;
-      const saved = localStorage.getItem('admin_sidebar_open');
+      const saved = localStorage.getItem('admin_sidebar_expanded');
       if (saved !== null) {
-        setSidebarOpen(saved === 'true');
-      } else {
-        setSidebarOpen(!isMobile);
+        setSidebarExpanded(saved === 'true');
       }
     }
   }, []);
 
-  const toggleSidebar = () => {
-    setSidebarOpen((prev) => {
+  const toggleSidebarExpanded = () => {
+    setSidebarExpanded((prev) => {
       const next = !prev;
       if (typeof window !== 'undefined') {
-        localStorage.setItem('admin_sidebar_open', String(next));
+        localStorage.setItem('admin_sidebar_expanded', String(next));
       }
       return next;
     });
@@ -249,23 +251,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">
 
       {/* ── Mobile Sidebar Overlay ── */}
-      {sidebarOpen && (
+      {mobileDrawerOpen && (
         <div
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setMobileDrawerOpen(false)}
           className="fixed inset-0 z-40 bg-zinc-900/40 backdrop-blur-sm lg:hidden"
         />
       )}
 
-      {/* ── Sidebar Navigation ── */}
+      {/* ── Sidebar Navigation (Left Side: Icon Rail when collapsed, Full Menu when expanded) ── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col border-r border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900 transition-all duration-300 ease-in-out overflow-hidden select-none ${
+          mobileDrawerOpen ? 'translate-x-0 w-72' : '-translate-x-full'
+        } ${
+          sidebarExpanded ? 'lg:translate-x-0 lg:w-72' : 'lg:translate-x-0 lg:w-[72px]'
         }`}
       >
-        {/* Brand Header with Close Button */}
-        <div className="flex h-16 items-center justify-between px-5 border-b border-zinc-200 dark:border-zinc-800">
-          <Link href={currentRoleMeta?.defaultPath || '/admin'} className="flex items-center gap-2">
-            <div className="relative h-10 w-40 overflow-hidden rounded">
+        {/* Brand Header & Toggle */}
+        <div className="flex h-16 items-center border-b border-zinc-200 dark:border-zinc-800 px-3.5 shrink-0 overflow-hidden justify-between">
+          <Link
+            href={currentRoleMeta?.defaultPath || '/admin'}
+            className={`flex items-center min-w-0 transition-all duration-300 ease-in-out overflow-hidden ${
+              sidebarExpanded ? 'opacity-100 max-w-[160px]' : 'opacity-0 max-w-0 pointer-events-none'
+            }`}
+          >
+            <div className="relative h-10 w-36 overflow-hidden rounded shrink-0">
               <Image
                 src="/assets/gujarat-post-logo-chip.png"
                 alt="Gujarat Post"
@@ -275,35 +284,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               />
             </div>
           </Link>
+
           <button
-            onClick={() => toggleSidebar()}
-            className="flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors cursor-pointer"
-            title="Close sidebar (સાઇડબાર બંધ કરો)"
-            aria-label="Close sidebar"
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                setMobileDrawerOpen(false);
+              } else {
+                toggleSidebarExpanded();
+              }
+            }}
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-700 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 transition-all duration-300 cursor-pointer shadow-2xs ${
+              !sidebarExpanded ? 'mx-auto' : ''
+            }`}
+            title={sidebarExpanded ? 'Collapse menu (મેનૂ નાનું કરો)' : 'Expand menu (મેનૂ મોટું કરો)'}
+            aria-label={sidebarExpanded ? 'Collapse menu' : 'Expand menu'}
           >
-            <X className="h-5 w-5" />
+            <ChevronLeft
+              className={`h-5 w-5 text-[#B3121B] dark:text-red-400 transition-transform duration-300 ease-in-out ${
+                !sidebarExpanded ? 'rotate-180' : 'rotate-0'
+              }`}
+            />
           </button>
         </div>
 
         {/* User Role Card in Sidebar */}
         {userRole && currentRoleMeta && (
-          <div className="mx-3.5 mt-3 px-3.5 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-800/60 border-zinc-200/80 dark:border-zinc-700/60 flex items-center justify-between">
-            <div className="min-w-0">
-              <div className="text-[11px] font-extrabold text-zinc-400 uppercase tracking-wider">
-                Logged in as
-              </div>
-              <div className="text-[13.5px] font-black text-zinc-800 dark:text-zinc-200 truncate">
-                {userName || 'Admin'}
-              </div>
+          <div
+            onClick={!sidebarExpanded ? toggleSidebarExpanded : undefined}
+            title={`Logged in as ${userName || 'Admin'} (${currentRoleMeta.titleGu})`}
+            className={`mt-3 rounded-xl border border-zinc-200/80 dark:border-zinc-700/60 bg-zinc-50 dark:bg-zinc-800/60 transition-all duration-300 ease-in-out overflow-hidden shrink-0 flex items-center ${
+              sidebarExpanded
+                ? 'mx-2.5 h-12 px-2.5 justify-start'
+                : 'mx-auto w-11 h-11 justify-center cursor-pointer hover:border-zinc-400'
+            }`}
+          >
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#B3121B]/10 text-[#B3121B] dark:bg-red-950/40 dark:text-red-400 font-black text-xs select-none">
+              {(userName || 'A').charAt(0).toUpperCase()}
             </div>
-            <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${currentRoleMeta.badgeBg} ${currentRoleMeta.badgeText}`}>
-              {currentRoleMeta.titleGu}
-            </span>
+            <div
+              className={`flex items-center justify-between min-w-0 transition-all duration-300 ease-in-out overflow-hidden ${
+                sidebarExpanded
+                  ? 'opacity-100 max-w-[200px] ml-2 flex-1'
+                  : 'opacity-0 max-w-0 ml-0 pointer-events-none'
+              }`}
+            >
+              <div className="min-w-0 pr-1.5">
+                <div className="text-[10px] font-extrabold text-zinc-400 uppercase tracking-wider leading-none">
+                  Logged in as
+                </div>
+                <div className="text-[13px] font-black text-zinc-800 dark:text-zinc-200 truncate mt-0.5">
+                  {userName || 'Admin'}
+                </div>
+              </div>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0 ${currentRoleMeta.badgeBg} ${currentRoleMeta.badgeText}`}>
+                {currentRoleMeta.titleGu}
+              </span>
+            </div>
           </div>
         )}
 
         {/* Navigation Menu (Scrollable) */}
-        <nav className="flex-1 overflow-y-auto min-h-0 space-y-1.5 p-3.5 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800">
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden min-h-0 space-y-1.5 p-2.5 scrollbar-thin scrollbar-thumb-zinc-200 dark:scrollbar-thumb-zinc-800 mt-2">
           {filteredMenuItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href + '/'));
             const Icon = item.icon;
@@ -312,76 +354,129 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Link
                 key={item.label}
                 href={item.href}
+                title={!sidebarExpanded ? item.label : undefined}
                 onClick={() => {
                   if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                    setSidebarOpen(false);
+                    setMobileDrawerOpen(false);
                   }
                 }}
-                className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-bold transition-all duration-200 ${isActive
+                className={`group/nav relative flex items-center h-11 w-full rounded-xl transition-colors duration-200 overflow-hidden ${
+                  isActive
                     ? 'bg-[#B3121B] text-white shadow-md shadow-red-900/20'
-                    : 'text-zinc-650 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white'
-                  }`}
+                    : 'text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-white'
+                }`}
               >
-                <Icon className="h-5 w-5 shrink-0" />
-                <span className="truncate">{item.label}</span>
+                <div className="flex h-11 w-[52px] shrink-0 items-center justify-center">
+                  <Icon className="h-5 w-5 shrink-0" />
+                </div>
+                <span
+                  className={`whitespace-nowrap text-[14.5px] font-bold transition-all duration-300 ease-in-out overflow-hidden ${
+                    sidebarExpanded
+                      ? 'opacity-100 max-w-[210px] pr-3'
+                      : 'opacity-0 max-w-0 pr-0 pointer-events-none'
+                  }`}
+                >
+                  {item.label}
+                </span>
+
+                {/* Floating tooltip when sidebar is in collapsed icon-only mode on desktop */}
+                {!sidebarExpanded && (
+                  <span className="pointer-events-none absolute left-full ml-3 hidden lg:group-hover/nav:flex items-center whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white shadow-xl dark:bg-zinc-100 dark:text-zinc-900 z-50">
+                    {item.label}
+                    <span className="absolute -left-1 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+                  </span>
+                )}
               </Link>
             );
           })}
 
-          {/* Super Admin Only: Data Cleanup — separated by a divider */}
+          {/* Super Admin Only: Data Cleanup */}
           {userRole === 'SUPER_ADMIN' && (
             <>
-              <div className="my-2 border-t border-zinc-200 dark:border-zinc-800" />
+              <div className="my-2 border-t border-zinc-200 dark:border-zinc-800 mx-1" />
               <Link
                 href="/admin/cleanup"
+                title={!sidebarExpanded ? "Data Cleanup (ડેટા સાફ)" : undefined}
                 onClick={() => {
                   if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                    setSidebarOpen(false);
+                    setMobileDrawerOpen(false);
                   }
                 }}
-                className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-bold transition-all duration-200 ${
+                className={`group/nav relative flex items-center h-11 w-full rounded-xl transition-colors duration-200 overflow-hidden ${
                   pathname === '/admin/cleanup'
                     ? 'bg-red-600 text-white shadow-md shadow-red-900/30'
                     : 'text-red-500 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/30'
                 }`}
               >
-                <Trash2 className="h-5 w-5 shrink-0" />
-                <span className="truncate">Data Cleanup (ડેટા સાફ)</span>
+                <div className="flex h-11 w-[52px] shrink-0 items-center justify-center">
+                  <Trash2 className="h-5 w-5 shrink-0" />
+                </div>
+                <span
+                  className={`whitespace-nowrap text-[14.5px] font-bold transition-all duration-300 ease-in-out overflow-hidden ${
+                    sidebarExpanded
+                      ? 'opacity-100 max-w-[210px] pr-3'
+                      : 'opacity-0 max-w-0 pr-0 pointer-events-none'
+                  }`}
+                >
+                  Data Cleanup (ડેટા સાફ)
+                </span>
+                {!sidebarExpanded && (
+                  <span className="pointer-events-none absolute left-full ml-3 hidden lg:group-hover/nav:flex items-center whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white shadow-xl dark:bg-zinc-100 dark:text-zinc-900 z-50">
+                    Data Cleanup (ડેટા સાફ)
+                    <span className="absolute -left-1 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+                  </span>
+                )}
               </Link>
             </>
           )}
         </nav>
 
         {/* Footer Logout Button */}
-        <div className="border-t border-zinc-200 p-3.5 dark:border-zinc-800">
+        <div className="border-t border-zinc-200 dark:border-zinc-800 p-2.5 shrink-0 overflow-hidden">
           <button
             onClick={handleLogout}
             disabled={loggingOut}
-            className="flex w-full items-center gap-3 rounded-xl px-3.5 py-3 text-[15px] font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50 cursor-pointer transition-colors"
+            title={!sidebarExpanded ? "Sign Out (લૉગ આઉટ)" : undefined}
+            className="group/logout relative flex items-center h-11 w-full rounded-xl text-[14.5px] font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50 cursor-pointer transition-colors duration-200 overflow-hidden"
           >
-            <LogOut className="h-5 w-5 shrink-0" />
-            <span>{loggingOut ? 'Signing out...' : 'Sign Out (લૉગ આઉટ)'}</span>
+            <div className="flex h-11 w-[52px] shrink-0 items-center justify-center">
+              <LogOut className="h-5 w-5 shrink-0" />
+            </div>
+            <span
+              className={`whitespace-nowrap transition-all duration-300 ease-in-out overflow-hidden ${
+                sidebarExpanded
+                  ? 'opacity-100 max-w-[210px] pr-3'
+                  : 'opacity-0 max-w-0 pr-0 pointer-events-none'
+              }`}
+            >
+              {loggingOut ? 'Signing out...' : 'Sign Out (લૉગ આઉટ)'}
+            </span>
+            {!sidebarExpanded && (
+              <span className="pointer-events-none absolute left-full ml-3 hidden lg:group-hover/logout:flex items-center whitespace-nowrap rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-bold text-white shadow-xl dark:bg-zinc-100 dark:text-zinc-900 z-50">
+                Sign Out (લૉગ આઉટ)
+                <span className="absolute -left-1 border-4 border-transparent border-r-zinc-900 dark:border-r-zinc-100" />
+              </span>
+            )}
           </button>
         </div>
       </aside>
 
       {/* ── Main Layout Body ── */}
-      <div className={`flex flex-1 flex-col min-w-0 w-full transition-all duration-300 overflow-x-hidden ${sidebarOpen ? 'lg:pl-72' : 'lg:pl-0'}`}>
+      <div className={`flex flex-1 flex-col min-w-0 w-full transition-all duration-300 ease-in-out overflow-x-hidden ${
+        sidebarExpanded ? 'lg:pl-72' : 'lg:pl-[72px]'
+      }`}>
 
-        {/* Navbar Header */}
+        {/* Navbar Header (Top Menu button removed on desktop) */}
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white/80 px-4 sm:px-6 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
 
-          {/* Left: Sidebar Toggle Button (Desktop & Mobile) */}
           <div className="flex items-center gap-3">
+            {/* Mobile hamburger menu toggle only (<lg) */}
             <button
-              onClick={() => toggleSidebar()}
-              className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:bg-zinc-800/70 dark:text-zinc-200 dark:hover:bg-zinc-800 cursor-pointer transition-all shadow-2xs"
-              title={sidebarOpen ? "Close sidebar (સાઇડબાર બંધ કરો)" : "Open sidebar (સાઇડબાર ખોલો)"}
+              onClick={() => setMobileDrawerOpen(true)}
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 lg:hidden cursor-pointer"
+              aria-label="Open mobile menu"
             >
-              <Menu className="h-4 w-4" />
-              <span className="text-xs font-bold">
-                {sidebarOpen ? 'Close' : 'Menu'}
-              </span>
+              <Menu className="h-5 w-5" />
             </button>
           </div>
 
