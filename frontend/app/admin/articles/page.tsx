@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
+
   Search,
   Plus,
   Edit2,
@@ -991,8 +992,8 @@ export default function ArticleList() {
                                 type="button"
                                 onClick={() => setReviewModal(prev => ({ ...prev, activeMediaIndex: idx }))}
                                 className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all ${currentIndex === idx
-                                    ? 'border-blue-600 ring-2 ring-blue-500/30 scale-95'
-                                    : 'border-transparent opacity-75 hover:opacity-100 hover:scale-105'
+                                  ? 'border-blue-600 ring-2 ring-blue-500/30 scale-95'
+                                  : 'border-transparent opacity-75 hover:opacity-100 hover:scale-105'
                                   }`}
                               >
                                 <ArticleMedia
