@@ -10,6 +10,6 @@ export const metadata: Metadata = {
 };
 
 export default async function PhotosPage() {
-  const photos = await getPublicGallery();
+  const photos = await getPublicGallery({ limit: 60 });
   return <PhotosClient initialPhotos={photos} />;
 }
