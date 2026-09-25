@@ -17,9 +17,16 @@ import ArticleMedia from '@/components/ui/ArticleMedia';
 interface NewsCardProps {
   article: Article;
   variant?: 'default' | 'hero' | 'small' | 'horizontal' | 'compact' | 'flat';
+  showFooter?: boolean;
+  showDate?: boolean;
 }
 
-export default function NewsCard({ article, variant = 'default' }: NewsCardProps) {
+export default function NewsCard({
+  article,
+  variant = 'default',
+  showFooter = false,
+  showDate = false,
+}: NewsCardProps) {
   const { language } = useApp();
   const rawTitle = getArticleTitle(article, language);
   const rawExcerpt = getArticleExcerpt(article, language);
@@ -202,7 +209,7 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
       {/* 2. Card Content Body: Flex column filling remaining height */}
       <div className="flex flex-col flex-1 p-3 sm:p-3.5 justify-between">
         <div>
-          {/* Top row: Category Badge + Timestamp */}
+          {/* Top row: Category Badge (and optional Timestamp) */}
           <div className="flex items-center justify-between gap-2 mb-2">
             <span
               className="cat-badge truncate font-bold text-[10.5px] leading-tight"
@@ -210,10 +217,12 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
             >
               {displayCategory}
             </span>
-            <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap shrink-0 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-muted-foreground/60" />
-              {displayDate}
-            </span>
+            {showDate && (
+              <span className="text-[11px] font-semibold text-muted-foreground whitespace-nowrap shrink-0 flex items-center gap-1">
+                <Clock className="w-3 h-3 text-muted-foreground/60" />
+                {displayDate}
+              </span>
+            )}
           </div>
 
           {/* Title: exactly 2 lines clamped with fixed min-height for uniform alignment across rows */}
@@ -225,12 +234,14 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
           </h3>
         </div>
 
-        {/* 3. Card Footer: Pinned to bottom border */}
-        <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span className="truncate max-w-[200px] font-medium text-foreground/80">
-            {authorName || 'Gujarat Post'}
-          </span>
-        </div>
+        {/* 3. Card Footer (Optional) */}
+        {showFooter && (
+          <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
+            <span className="truncate max-w-[200px] font-medium text-foreground/80">
+              {authorName || 'Gujarat Post'}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   );

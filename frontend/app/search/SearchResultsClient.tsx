@@ -73,10 +73,9 @@ function SearchCardSkeleton() {
       {/* Content */}
       <div className="flex flex-col flex-1 p-3 sm:p-3.5 justify-between">
         <div>
-          {/* Badge & Date row */}
+          {/* Badge row */}
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <div className="h-4 w-16 rounded-full bg-muted/80" />
-            <div className="h-3 w-20 rounded bg-muted/70" />
           </div>
 
           {/* Title lines */}
@@ -84,11 +83,6 @@ function SearchCardSkeleton() {
             <div className="h-3.5 w-full rounded bg-muted/80" />
             <div className="h-3.5 w-3/4 rounded bg-muted/80" />
           </div>
-        </div>
-
-        {/* Footer */}
-        <div className="mt-3.5 pt-2.5 border-t border-border/60 flex items-center">
-          <div className="h-3 w-20 rounded bg-muted/70" />
         </div>
       </div>
     </div>
