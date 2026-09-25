@@ -87,9 +87,8 @@ function SearchCardSkeleton() {
         </div>
 
         {/* Footer */}
-        <div className="mt-3.5 pt-2.5 border-t border-border/60 flex items-center justify-between">
+        <div className="mt-3.5 pt-2.5 border-t border-border/60 flex items-center">
           <div className="h-3 w-20 rounded bg-muted/70" />
-          <div className="h-3 w-12 rounded bg-muted/70" />
         </div>
       </div>
     </div>

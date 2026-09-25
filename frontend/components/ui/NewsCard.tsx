@@ -1,11 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, Clock } from 'lucide-react';
+import { Clock } from 'lucide-react';
 import { Article } from '@/types';
 import {
   formatDate,
-  formatViews,
   getArticleExcerpt,
   getArticleTitle,
   getCategoryLabel,
@@ -228,19 +227,9 @@ export default function NewsCard({ article, variant = 'default' }: NewsCardProps
 
         {/* 3. Card Footer: Pinned to bottom border */}
         <div className="mt-3 pt-2.5 border-t border-border/60 flex items-center justify-between text-[11px] text-muted-foreground">
-          <span className="truncate max-w-[130px] font-medium text-foreground/80">
+          <span className="truncate max-w-[200px] font-medium text-foreground/80">
             {authorName || 'Gujarat Post'}
           </span>
-          {article.views !== undefined && article.views > 0 ? (
-            <span className="flex items-center gap-1 font-semibold shrink-0">
-              <Eye className="h-3 w-3 text-muted-foreground/70" />
-              <span>{formatViews(article.views)}</span>
-            </span>
-          ) : (
-            <span className="text-[10px] font-semibold text-accent/90 uppercase tracking-wider">
-              {language === 'gu' ? 'વિશેષ' : language === 'hi' ? 'विशेष' : 'Featured'}
-            </span>
-          )}
         </div>
       </div>
     </Link>
