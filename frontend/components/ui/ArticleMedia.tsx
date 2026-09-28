@@ -139,7 +139,9 @@ export default function ArticleMedia({
       alt={alt}
       className={`w-full h-full object-cover ${className}`}
       onError={() => setHasError(true)}
-      loading="lazy"
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : 'auto'}
+      decoding={priority ? 'sync' : 'async'}
     />
   );
 }

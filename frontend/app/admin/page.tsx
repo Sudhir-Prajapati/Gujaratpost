@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -29,6 +29,7 @@ import {
   Edit3,
   Layers,
   Zap,
+  Megaphone,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
 
@@ -351,7 +352,7 @@ export default function AdminDashboard() {
     { label: 'Write Article', href: '/admin/articles/create', icon: Plus, bg: 'bg-red-600 text-white hover:bg-red-700' },
     { label: 'Hero Layout', href: '/admin/hero', icon: Layers, bg: 'bg-zinc-900 text-white dark:bg-zinc-800 hover:bg-black' },
     { label: 'Categories', href: '/admin/categories', icon: FolderOpen, bg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 hover:bg-blue-100' },
-    { label: 'Advertisements', href: '/admin/advertisements', icon: Zap, bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-100' },
+    { label: 'Advertisements', href: '/admin/ads', icon: Megaphone, bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-100' },
     { label: 'Gallery Media', href: '/admin/gallery', icon: ImageIcon, bg: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 hover:bg-purple-100' },
     { label: 'Videos Stream', href: '/admin/videos', icon: Video, bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 hover:bg-rose-100' },
     { label: 'YouTube Shorts', href: '/admin/shorts', icon: Film, bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 hover:bg-emerald-100' },

@@ -770,9 +770,9 @@ export default function Header() {
               </div>
 
               {/* App downloads CTA */}
-              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/50 border border-border">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">App:</span>
-                <div className="flex gap-2">
+              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted/50 border border-border">
+                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 shrink-0">App:</span>
+                <div className="flex items-center gap-2">
                   <a
                     href="https://apps.apple.com"
                     target="_blank"
@@ -819,8 +819,8 @@ export default function Header() {
               </div>
 
               {/* Social links at bottom of drawer */}
-              <div className="pt-3 border-t border-border flex items-center justify-between">
-                <span className="text-xs font-bold text-muted-foreground">Follow Us:</span>
+              <div className="pt-3 border-t border-border flex items-center gap-2.5">
+                <span className="text-xs font-bold text-muted-foreground shrink-0">Follow Us:</span>
                 <SocialLinks size="sm" />
               </div>
             </div>
