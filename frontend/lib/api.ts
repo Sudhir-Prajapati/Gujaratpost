@@ -125,14 +125,14 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
       clearTimeout(timeoutId);
       const isAbort = error?.name === 'AbortError' || error?.message?.includes('aborted');
       if (isAbort) {
-        if (typeof window === 'undefined') {
+        if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
           console.warn(`SSR fetch timed out for ${url}`);
-        } else {
+        } else if (typeof window !== 'undefined') {
           console.debug(`Fetch aborted for ${url}`);
         }
       } else {
         const isClientAbort = typeof window !== 'undefined' && (error?.message === 'Failed to fetch' || error?.name === 'TypeError');
-        if (!isClientAbort) {
+        if (!isClientAbort && process.env.NODE_ENV === 'development') {
           console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
         }
       }
@@ -186,7 +186,9 @@ export async function getPublicArticles(options: {
       };
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for articles:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for articles:', error?.message || error);
+    }
   }
 
   return {
@@ -208,7 +210,9 @@ export const getPublicArticleBySlug = cache(async (slug: string): Promise<Articl
       return json.data.article;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for article detail:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for article detail:', error?.message || error);
+    }
   }
 
   // Fallback article detail lookup for weather/rain/AQI news items
@@ -298,7 +302,9 @@ export async function getPublicCategories(options?: { showInHeader?: boolean; sh
       return json.data.categories;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for categories:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for categories:', error?.message || error);
+    }
   }
   return [];
 }
@@ -314,7 +320,9 @@ export async function getPublicAuthors(): Promise<any[]> {
       return json.data.authors;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for authors:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for authors:', error?.message || error);
+    }
   }
   return [];
 }
@@ -471,7 +479,9 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
       }
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for videos:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for videos:', error?.message || error);
+    }
   }
 
   return combined;
@@ -588,7 +598,9 @@ export async function getPublicTickers(): Promise<any[]> {
       return json.data.tickers;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for tickers:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for tickers:', error?.message || error);
+    }
   }
   return [];
 }
@@ -604,7 +616,9 @@ export async function getPublicAstrology(): Promise<any[]> {
       return json.data.signs;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for astrology:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for astrology:', error?.message || error);
+    }
   }
   return [];
 }
@@ -637,7 +651,9 @@ export async function getHeroSettings(): Promise<{ slots: (Article | null)[]; se
       return json.data;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for hero-settings:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for hero-settings:', error?.message || error);
+    }
   }
   return { slots: [null, null, null], setting: null };
 }
@@ -677,7 +693,9 @@ export async function fetchLiveInstagramReels(): Promise<any[]> {
       return res.data;
     }
   } catch (err) {
-    console.warn('Failed to fetch live Instagram reels feed:', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch live Instagram reels feed:', err);
+    }
   }
 
   return [];
@@ -699,7 +717,9 @@ export async function getPublicReels(): Promise<any[]> {
       return dbReels;
     }
   } catch (error: any) {
-    console.warn('Backend API fetch error for reels:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Backend API fetch error for reels:', error?.message || error);
+    }
   }
 
   // Fallback: fetch directly from live Instagram scrape (12 reels max)
@@ -717,7 +737,9 @@ export async function getMarketRates(): Promise<any> {
       return json.data;
     }
   } catch (error: any) {
-    console.warn('Failed to fetch market rates from API:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch market rates from API:', error?.message || error);
+    }
   }
   return {
     gold: { price: '₹74,850', priceNumber: 74850, change: '▲ ₹450', purity: '24 Karat', unit: '10 Grams' },
@@ -760,7 +782,9 @@ export async function getPublicAds(): Promise<any[]> {
       return json.data.ads;
     }
   } catch (error: any) {
-    console.warn('Failed to fetch public ads from API:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public ads from API:', error?.message || error);
+    }
   }
   return [];
 }
@@ -785,7 +809,9 @@ export async function getPublicAdBySection(section: string): Promise<any | null>
       return json.data.ad;
     }
   } catch (error: any) {
-    console.warn(`Failed to fetch public ad for section ${section}:`, error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn(`Failed to fetch public ad for section ${section}:`, error?.message || error);
+    }
   }
   return null;
 }
@@ -801,7 +827,9 @@ export async function getPublicSupportDetails(): Promise<any | null> {
       return json.data;
     }
   } catch (error: any) {
-    console.warn('Failed to fetch public support details:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public support details:', error?.message || error);
+    }
   }
   return null;
 }
@@ -839,7 +867,9 @@ export async function getPublicTributes(): Promise<PublicTributesResponse> {
       return json.data;
     }
   } catch (error: any) {
-    console.warn('Failed to fetch public tributes:', error?.message || error);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public tributes:', error?.message || error);
+    }
   }
   return { birthdays: [], shradhanjalis: [], all: [] };
 }

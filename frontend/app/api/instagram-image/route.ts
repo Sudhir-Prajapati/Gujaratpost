@@ -62,7 +62,9 @@ export async function GET(request: NextRequest) {
 
     return new NextResponse('Failed to fetch image', { status: res.status });
   } catch (err: any) {
-    console.error('Instagram image proxy error:', err);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Instagram image proxy error:', err?.message || err);
+    }
     return new NextResponse('Image proxy error', { status: 500 });
   }
 }
