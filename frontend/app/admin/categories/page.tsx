@@ -616,73 +616,73 @@ export default function CategoriesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div
           onClick={() => openOrderManager('all')}
-          className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-zinc-400 hover:ring-2 hover:ring-zinc-400/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to view & reorder all categories"
         >
           <div>
-            <p className="text-xs font-bold text-zinc-500 group-hover:underline">Total Categories</p>
-            <h3 className="text-xl font-black text-zinc-900 dark:text-zinc-100 mt-0.5">{categories.length}</h3>
-            <span className="text-[10px] font-bold text-zinc-400 mt-1 inline-block">Manage All ➔</span>
+            <p className="text-sm font-bold text-black dark:text-white group-hover:underline">Total Categories</p>
+            <h3 className="text-4xl font-extrabold text-black dark:text-white mt-0.5">{categories.length}</h3>
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white hover:underline mt-1 inline-block">Manage All ➔</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 group-hover:scale-110 transition-transform">
+          <div className="p-2.5 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400 group-hover:scale-110 transition-transform">
             <FolderOpen className="h-5 w-5" />
           </div>
         </div>
 
         <div
           onClick={() => openOrderManager('home')}
-          className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-950/60 shadow-xs flex items-center justify-between cursor-pointer hover:border-emerald-500 hover:ring-2 hover:ring-emerald-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to reorder Home Page section sequence"
         >
           <div>
-            <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 group-hover:underline">Home Page Sections</p>
-            <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+            <p className="text-sm font-bold text-black dark:text-white group-hover:underline">Home Page Sections</p>
+            <h3 className="text-4xl font-extrabold text-black dark:text-white mt-0.5">
               {categories.filter(c => (c.showInHome !== undefined ? c.showInHome : true) && c.isActive).length}
             </h3>
-            <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 inline-block">⚡ Reorder Home Sections ➔</span>
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white hover:underline mt-1 inline-block">⚡ Reorder Home Sections ➔</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 group-hover:scale-110 transition-transform">
+          <div className="p-2.5 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400 group-hover:scale-110 transition-transform">
             <Home className="h-5 w-5" />
           </div>
         </div>
 
         <div
           onClick={() => openOrderManager('header')}
-          className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-blue-200 dark:border-blue-950/60 shadow-xs flex items-center justify-between cursor-pointer hover:border-blue-500 hover:ring-2 hover:ring-blue-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to reorder Header Navigation Bars (2 Rows)"
         >
           <div>
-            <p className="text-xs font-bold text-blue-700 dark:text-blue-400 group-hover:underline">Header Nav Links</p>
-            <h3 className="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5">
+            <p className="text-sm font-bold text-black dark:text-white group-hover:underline">Header Nav Links</p>
+            <h3 className="text-4xl font-extrabold text-black dark:text-white mt-0.5">
               {categories.filter(c => (c.showInHeader !== undefined ? c.showInHeader : true) && c.isActive).length}
             </h3>
-            <span className="text-[10px] font-extrabold text-blue-600 dark:text-blue-400 mt-1 inline-block">⚡ Reorder 2 Nav Rows ➔</span>
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white hover:underline mt-1 inline-block">⚡ Reorder 2 Nav Rows ➔</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 group-hover:scale-110 transition-transform">
+          <div className="p-2.5 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400 group-hover:scale-110 transition-transform">
             <Layers className="h-5 w-5" />
           </div>
         </div>
 
         <div
           onClick={() => openOrderManager('all')}
-          className="bg-white dark:bg-zinc-900 p-4 rounded-2xl border border-amber-200 dark:border-amber-950/60 shadow-xs flex items-center justify-between cursor-pointer hover:border-amber-500 hover:ring-2 hover:ring-amber-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to view offline or hidden categories"
         >
           <div>
-            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 group-hover:underline">Hidden / Offline</p>
-            <h3 className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
+            <p className="text-sm font-bold text-black dark:text-white group-hover:underline">Hidden / Offline</p>
+            <h3 className="text-4xl font-extrabold text-black dark:text-white mt-0.5">
               {categories.filter(c => !c.isActive || ((c.showInHome === false) && (c.showInHeader === false))).length}
             </h3>
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 mt-1 inline-block">View Hidden ➔</span>
+            <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 hover:text-black dark:hover:text-white hover:underline mt-1 inline-block">View Hidden ➔</span>
           </div>
-          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 group-hover:scale-110 transition-transform">
+          <div className="p-2.5 rounded-xl bg-sky-100 text-sky-600 dark:bg-sky-900/50 dark:text-sky-400 group-hover:scale-110 transition-transform">
             <EyeOff className="h-5 w-5" />
           </div>
         </div>
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 shadow-xs">
+      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-zinc-900 shadow-xs">
         <div className="relative flex-1 max-w-md">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
             <Search className="h-4 w-4" />
@@ -692,7 +692,7 @@ export default function CategoriesPage() {
             placeholder="Search categories by name or slug..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+            className="w-full rounded-xl border border-slate-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-zinc-950/40 dark:text-white dark:focus:border-sky-500"
           />
         </div>
       </div>
@@ -712,83 +712,93 @@ export default function CategoriesPage() {
           <p className="text-xs text-zinc-550">Create a category to begin sorting articles.</p>
         </div>
       ) : (
-        <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="rounded-xl border border-black overflow-hidden bg-white shadow-sm dark:border-zinc-600 dark:bg-zinc-900">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm min-w-[850px]">
+            <table className="w-full min-w-[850px] border-collapse text-left text-sm [&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr:first-child>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0 [&_th]:border [&_th]:border-black [&_td]:border [&_td]:border-black dark:[&_th]:border-zinc-600 dark:[&_td]:border-zinc-600">
               <thead>
-                <tr className="border-b border-zinc-200 bg-zinc-50 text-xs font-bold text-zinc-450 uppercase tracking-wider dark:border-zinc-800 dark:bg-zinc-950/40">
-                  <th className="px-5 py-4 text-center">Order Position</th>
-                  <th className="px-5 py-4">Category Name</th>
-                  <th className="px-5 py-4">Slug</th>
-                  <th className="px-5 py-4">Translations</th>
-                  <th className="px-5 py-4 text-center">Header Nav</th>
-                  <th className="px-5 py-4 text-center">Home Page</th>
-                  <th className="px-5 py-4 text-center">Status</th>
-                  <th className="px-5 py-4 text-right">Actions</th>
+                <tr className="bg-slate-50/75 text-base font-bold text-black uppercase tracking-wider dark:border-slate-700 dark:bg-slate-800/50 dark:text-white">
+                  <th className="px-4 py-4 text-center">Order Position</th>
+                  <th className="px-4 py-4">Category Name</th>
+                  <th className="px-4 py-4">Slug</th>
+                  <th className="px-4 py-4">Translations</th>
+                  <th className="px-4 py-4 text-center">Header Nav</th>
+                  <th className="px-4 py-4 text-center">Home Page</th>
+                  <th className="px-4 py-4 text-center">Status</th>
+                  <th className="px-4 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-850">
+              <tbody className="bg-sky-50/50 dark:bg-sky-950/20">
                 {filteredCategories.map((cat, idx) => {
                   const inHeader = cat.showInHeader !== undefined ? cat.showInHeader : true;
                   const inHome = cat.showInHome !== undefined ? cat.showInHome : true;
 
                   return (
-                    <tr key={cat.id} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-950/20 transition-colors">
+                    <tr key={cat.id} className="hover:bg-sky-100/60 dark:hover:bg-sky-950/35 transition-colors">
                       {/* Order Position & Move Controls */}
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <span className="font-mono font-black text-xs bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400 px-2.5 py-1 rounded-md border border-red-200 dark:border-red-900/40">
+                          <span className="font-mono font-bold text-sm bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-800">
                             #{cat.displayOrder ?? idx + 1}
                           </span>
                           <div className="flex flex-col gap-0.5">
                             <button
                               onClick={() => handleMoveOrder(cat, 'up')}
                               disabled={idx === 0}
-                              className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded disabled:opacity-30 transition-colors cursor-pointer"
+                              className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors cursor-pointer"
                               title="Move Up in order"
                             >
-                              <ArrowUp className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
+                              <ArrowUp className="h-4 w-4" />
                             </button>
                             <button
                               onClick={() => handleMoveOrder(cat, 'down')}
                               disabled={idx === filteredCategories.length - 1}
-                              className="p-1 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded disabled:opacity-30 transition-colors cursor-pointer"
+                              className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors cursor-pointer"
                               title="Move Down in order"
                             >
-                              <ArrowDown className="h-3.5 w-3.5 text-zinc-700 dark:text-zinc-300" />
+                              <ArrowDown className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
                       </td>
 
                       {/* Name & Badge */}
-                      <td className="px-5 py-4">
+                      <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <span 
                             className="h-3.5 w-3.5 rounded-full ring-2 ring-white shadow-xs shrink-0" 
                             style={{ backgroundColor: cat.color || '#10b981' }}
                           />
-                          <span className="font-extrabold text-zinc-900 dark:text-white">{cat.name}</span>
+                          <span className="text-lg font-bold text-slate-800 dark:text-slate-100">{cat.name}</span>
                         </div>
                       </td>
 
                       {/* Slug */}
-                      <td className="px-5 py-4 font-mono text-xs text-zinc-500 select-all">
-                        {cat.slug}
+                      <td className="px-4 py-4">
+                        <span className="inline-block rounded bg-slate-100/80 px-2 py-0.5 font-mono text-sm font-medium text-slate-500 select-all dark:bg-slate-800 dark:text-slate-400">
+                          {cat.slug}
+                        </span>
                       </td>
 
                       {/* Regional Translations */}
-                      <td className="px-5 py-4 text-xs space-y-0.5 text-zinc-550 dark:text-zinc-400 font-semibold">
-                        <div>GU: {cat.nameGu || cat.name}</div>
-                        <div>HI: {cat.nameHi || cat.name}</div>
+                      <td className="px-4 py-4">
+                        <div className="flex flex-col items-start gap-1.5">
+                          <span className="inline-flex items-center gap-1.5 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">GU</span>
+                            {cat.nameGu || cat.name}
+                          </span>
+                          <span className="inline-flex items-center gap-1.5 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300">
+                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">HI</span>
+                            {cat.nameHi || cat.name}
+                          </span>
+                        </div>
                       </td>
 
                       {/* Header Visibility & Placement Row Toggle */}
-                      <td className="px-5 py-4 text-center">
-                        <div className="flex flex-col items-center gap-1">
+                      <td className="px-4 py-4 text-center">
+                        <div className="flex flex-col items-center justify-center gap-1.5">
                           <button
                             onClick={() => handleToggleShowInHeader(cat)}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold transition-all cursor-pointer ${
                               inHeader 
                                 ? (cat.headerType === 'GUJARAT'
                                     ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-500/20'
@@ -814,7 +824,7 @@ export default function CategoriesPage() {
                             <button
                               type="button"
                               onClick={() => handleSwitchHeaderType(cat)}
-                              className="text-[10px] font-bold text-zinc-400 hover:text-purple-600 dark:hover:text-purple-400 underline transition cursor-pointer"
+                              className="text-xs font-bold text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 underline transition cursor-pointer"
                               title="Cycle: Row 1 (Primary) → Other Dropdown → Row 2 (Cities)"
                             >
                               {cat.headerType === 'GLOBAL' || !cat.headerType
@@ -828,10 +838,10 @@ export default function CategoriesPage() {
                       </td>
 
                       {/* Home Visibility Toggle */}
-                      <td className="px-5 py-4 text-center">
+                      <td className="px-4 py-4 text-center">
                         <button
                           onClick={() => handleToggleShowInHome(cat)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold transition-all cursor-pointer ${
                             inHome 
                               ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 ring-1 ring-purple-500/20' 
                               : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500'
@@ -844,10 +854,10 @@ export default function CategoriesPage() {
                       </td>
 
                       {/* Active Status Toggle */}
-                      <td className="px-5 py-4 text-center">
+                      <td className="px-4 py-4 text-center">
                         <button
                           onClick={() => handleToggleActive(cat)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold transition-all cursor-pointer ${
                             cat.isActive 
                               ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300 ring-1 ring-green-500/20' 
                               : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
@@ -860,18 +870,18 @@ export default function CategoriesPage() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-5 py-4 text-right">
+                      <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => openEdit(cat)}
-                            className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+                            className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Edit Category & Visibility Options"
                           >
                             <Edit2 className="h-4 w-4" />
                           </button>
                           <button
                             onClick={() => setDeleteTarget(cat)}
-                            className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
+                            className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
                             title="Delete Category"
                           >
                             <Trash2 className="h-4 w-4" />

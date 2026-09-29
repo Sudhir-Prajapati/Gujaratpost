@@ -345,7 +345,7 @@ export default function AdminTributesPage() {
             </div>
             <div>
               <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">
-                Birthday & Shradhanjali (જન્મદિવસ અને શ્રદ્ધાંજલિ)
+                Birthday & Shradhanjali
               </h1>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
                 Manage ready-made celebratory birthday greetings & heartfelt tributes shown in the homepage carousel
@@ -391,37 +391,37 @@ export default function AdminTributesPage() {
 
       {/* ── Stat Badges ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider">Active in Slider</p>
-            <p className="text-2xl font-black text-zinc-900 dark:text-white mt-1">{activeCount}</p>
+            <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Active in Slider</p>
+            <p className="text-4xl font-black text-zinc-900 dark:text-white mt-1">{activeCount}</p>
           </div>
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-sm">
+          <div className="h-14 w-14 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black text-2xl">
             ✓
           </div>
         </div>
 
-        <div className="rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 p-4 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 p-5 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+            <p className="text-sm font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
               🎂 Birthdays (જન્મદિવસ)
             </p>
-            <p className="text-2xl font-black text-amber-900 dark:text-amber-200 mt-1">{totalBirthdays}</p>
+            <p className="text-4xl font-black text-amber-900 dark:text-amber-200 mt-1">{totalBirthdays}</p>
           </div>
-          <div className="h-10 w-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center">
-            <Cake className="h-5 w-5" />
+          <div className="h-14 w-14 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-300 flex items-center justify-center">
+            <Cake className="h-7 w-7" />
           </div>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/40 p-4 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/40 p-5 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-stone-600 dark:text-stone-400 uppercase tracking-wider">
+            <p className="text-sm font-bold text-stone-600 dark:text-stone-400 uppercase tracking-wider">
               🕊️ Shradhanjali (શ્રદ્ધાંજલિ)
             </p>
-            <p className="text-2xl font-black text-stone-900 dark:text-stone-200 mt-1">{totalShradhanjalis}</p>
+            <p className="text-4xl font-black text-stone-900 dark:text-stone-200 mt-1">{totalShradhanjalis}</p>
           </div>
-          <div className="h-10 w-10 rounded-xl bg-stone-500/20 text-stone-700 dark:text-stone-300 flex items-center justify-center">
-            <Flame className="h-5 w-5" />
+          <div className="h-14 w-14 rounded-xl bg-stone-500/20 text-stone-700 dark:text-stone-300 flex items-center justify-center">
+            <Flame className="h-7 w-7" />
           </div>
         </div>
       </div>

@@ -307,7 +307,7 @@ export default function UserList() {
       </div>
 
       {/* Main Table Card */}
-      <div className="rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="rounded-xl border border-black overflow-hidden bg-white shadow-sm dark:border-zinc-600 dark:bg-zinc-900">
         
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-zinc-500">
@@ -327,19 +327,19 @@ export default function UserList() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50/50 font-semibold text-zinc-500 dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-zinc-400">
+            <table className="w-full border-collapse text-left text-sm [&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr:first-child>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0 [&_th]:border [&_th]:border-black [&_td]:border [&_td]:border-black dark:[&_th]:border-zinc-600 dark:[&_td]:border-zinc-600">
+              <thead className="bg-zinc-50/50 font-bold text-base text-black dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white">
                 <tr>
-                  <th className="px-6 py-4">User</th>
-                  <th className="px-6 py-4">Security Role</th>
-                  <th className="px-6 py-4">Account Status</th>
-                  <th className="px-6 py-4">Linked Bio</th>
-                  <th className="px-6 py-4">Sessions</th>
-                  <th className="px-6 py-4">Joined At</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4 text-center">User</th>
+                  <th className="px-6 py-4 text-center">Security Role</th>
+                  <th className="px-6 py-4 text-center">Account Status</th>
+                  <th className="px-6 py-4 text-center">Linked Bio</th>
+                  <th className="px-6 py-4 text-center">Sessions</th>
+                  <th className="px-6 py-4 text-center">Joined At</th>
+                  <th className="px-6 py-4 text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-zinc-850">
+              <tbody>
                 {(Array.isArray(users) ? users : []).map((user) => (
                   <tr key={user.id} className="group hover:bg-zinc-50/40 dark:hover:bg-zinc-950/10 transition-colors">
                     {/* User Info */}
@@ -355,19 +355,19 @@ export default function UserList() {
                     </td>
 
                     {/* Role Badge */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       {getRoleBadge(user.role)}
                     </td>
 
                     {/* Status Badge */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       {getStatusBadge(user.status)}
                     </td>
 
                     {/* Linked Writer Profile */}
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
                       {user.author ? (
-                        <div className="flex items-center gap-1.5 text-zinc-650 dark:text-zinc-350">
+                        <div className="flex items-center justify-center gap-1.5 text-zinc-650 dark:text-zinc-350">
                           <span className="font-semibold text-xs bg-zinc-100 dark:bg-zinc-800 py-1 px-2 rounded-lg border border-zinc-200 dark:border-zinc-700">
                             {user.author.name}
                           </span>
@@ -381,21 +381,21 @@ export default function UserList() {
                     </td>
 
                     {/* Active Sessions Count */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 text-zinc-650 dark:text-zinc-350">
+                    <td className="px-6 py-4 whitespace-nowrap text-center">
+                      <div className="flex items-center justify-center gap-1.5 text-zinc-650 dark:text-zinc-350">
                         <Activity className={`h-4 w-4 ${user.sessionCount > 0 ? 'text-green-500 animate-pulse' : 'text-zinc-350'}`} />
                         <span className="font-bold text-xs">{user.sessionCount} Active</span>
                       </div>
                     </td>
 
                     {/* Created Date */}
-                    <td className="px-6 py-4 whitespace-nowrap text-zinc-500 dark:text-zinc-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-zinc-500 dark:text-zinc-400">
                       {formatDate(user.createdAt)}
                     </td>
 
                     {/* Actions */}
-                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-2.5">
+                    <td className="px-6 py-4 text-center whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2.5">
                         {/* Edit Button */}
                         <a
                           href={`/admin/users/${user.id}/edit`}

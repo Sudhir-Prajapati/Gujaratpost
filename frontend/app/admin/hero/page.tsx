@@ -918,20 +918,20 @@ export default function HeroManagerPage() {
 
       {/* Stats Bar */}
       <div className="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3.5 sm:p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Total Articles</p>
-          <p className="mt-1 text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">{allArticles.length}</p>
-          <p className="text-xs text-zinc-400 mt-0.5">Published news</p>
+        <div className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/80 dark:bg-sky-950/30 p-4 sm:p-5">
+          <p className="text-xs font-bold uppercase tracking-widest text-black dark:text-white">Total Articles</p>
+          <p className="mt-1 text-4xl sm:text-5xl font-black text-black dark:text-white">{allArticles.length}</p>
+          <p className="text-sm font-medium text-black dark:text-white mt-1">Published news</p>
         </div>
-        <div className="rounded-xl border border-[#B3121B]/25 bg-red-50 dark:bg-red-950/20 p-3.5 sm:p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-[#B3121B]">Slots Filled</p>
-          <p className="mt-1 text-2xl sm:text-3xl font-black text-[#B3121B]">{usedIds.length} / 3</p>
-          <p className="text-xs text-[#B3121B]/60 mt-0.5">Bottom row image cards</p>
+        <div className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/80 dark:bg-sky-950/30 p-4 sm:p-5">
+          <p className="text-xs font-bold uppercase tracking-widest text-black dark:text-white">Slots Filled</p>
+          <p className="mt-1 text-4xl sm:text-5xl font-black text-black dark:text-white">{usedIds.length} / 3</p>
+          <p className="text-sm font-medium text-black dark:text-white mt-1">Bottom row image cards</p>
         </div>
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3.5 sm:p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Available</p>
-          <p className="mt-1 text-2xl sm:text-3xl font-black text-zinc-900 dark:text-zinc-100">{allArticles.length - usedIds.length}</p>
-          <p className="text-xs text-zinc-400 mt-0.5">Remaining articles</p>
+        <div className="rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/80 dark:bg-sky-950/30 p-4 sm:p-5">
+          <p className="text-xs font-bold uppercase tracking-widest text-black dark:text-white">Available</p>
+          <p className="mt-1 text-4xl sm:text-5xl font-black text-black dark:text-white">{allArticles.length - usedIds.length}</p>
+          <p className="text-sm font-medium text-black dark:text-white mt-1">Remaining articles</p>
         </div>
       </div>
 
