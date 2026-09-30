@@ -217,6 +217,13 @@ export default function YouTubeShorts() {
 
     updateArrows();
 
+    // Initialize at max scroll so left-to-right direction starts smoothly
+    const initMax = el.scrollWidth - el.clientWidth;
+    if (initMax > 0 && scrollPosRef.current === 0) {
+      scrollPosRef.current = initMax;
+      el.scrollLeft = initMax;
+    }
+
     let animId: number;
     let lastTime = performance.now();
     const SPEED = 50; 
@@ -226,11 +233,12 @@ export default function YouTubeShorts() {
       lastTime = now;
 
       if (!isPausedRef.current && !selectedVideoId) {
-        scrollPosRef.current += SPEED * dt;
         const maxScroll = el.scrollWidth - el.clientWidth;
+        // Decrement scrollPosRef so content moves from left to right
+        scrollPosRef.current -= SPEED * dt;
         if (maxScroll > 0) {
-          if (scrollPosRef.current >= maxScroll) {
-            scrollPosRef.current = 0;
+          if (scrollPosRef.current <= 0) {
+            scrollPosRef.current = maxScroll;
           }
           el.scrollLeft = scrollPosRef.current;
           updateArrows();
@@ -302,6 +310,8 @@ export default function YouTubeShorts() {
             ref={scrollContainerRef}
             onMouseEnter={() => { isPausedRef.current = true; }}
             onMouseLeave={() => { isPausedRef.current = false; }}
+            onTouchStart={() => { isPausedRef.current = true; }}
+            onTouchEnd={() => { isPausedRef.current = false; }}
             className="scrollbar-hide flex gap-4 overflow-x-auto py-1"
           >
             {loading ? (

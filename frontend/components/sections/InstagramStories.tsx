@@ -38,29 +38,29 @@ export function getReelThumbnail(reel: ReelItem): string | null {
   const instaMatch = url.match(/instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
   const shortcode = instaMatch?.[1] || '';
 
-  // Direct thumbnail URL (proxy Instagram CDN links)
+  // 1. If Instagram shortcode exists, fetch live thumbnail via backend public proxy
+  if (shortcode) {
+    return `/api/public/instagram-image?shortcode=${encodeURIComponent(shortcode)}`;
+  }
+
+  // 2. Direct thumbnail URL (proxy Instagram CDN links)
   if (reel.thumbnail?.trim()) {
     const rawThumb = reel.thumbnail.trim();
-    if (rawThumb.includes('instagram') || rawThumb.includes('fbcdn.net') || shortcode) {
-      return `/api/instagram-image?url=${encodeURIComponent(rawThumb)}&shortcode=${shortcode}`;
+    if (rawThumb.includes('instagram') || rawThumb.includes('fbcdn.net')) {
+      return `/api/public/instagram-image?url=${encodeURIComponent(rawThumb)}`;
     }
     return rawThumb;
   }
 
   if (!url) return null;
 
-  // 1. YouTube video or shorts URL
+  // 3. YouTube video or shorts URL
   const ytId = safeYouTubeId(url);
   if (ytId && ytId !== url && /^[a-zA-Z0-9_-]{11}$/.test(ytId)) {
     return `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
   }
 
-  // 2. Instagram shortcode proxy
-  if (shortcode) {
-    return `/api/instagram-image?shortcode=${shortcode}`;
-  }
-
-  // 3. Direct image link
+  // 4. Direct image link
   if (/\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url)) {
     return url;
   }
@@ -209,6 +209,13 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
 
     updateArrows();
 
+    // Initialize at max scroll so left-to-right direction starts from right end
+    const initMax = el.scrollWidth - el.clientWidth;
+    if (initMax > 0) {
+      scrollPosRef.current = initMax;
+      el.scrollLeft = initMax;
+    }
+
     let animId: number;
     let lastTime = performance.now();
     const SPEED = 40; // pixels per second for smooth drifting
@@ -218,10 +225,11 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
       lastTime = now;
 
       if (!isPausedRef.current && el) {
-        scrollPosRef.current += (SPEED * dt) / 1000;
         const maxScroll = el.scrollWidth - el.clientWidth;
-        if (scrollPosRef.current >= maxScroll && maxScroll > 0) {
-          scrollPosRef.current = 0;
+        // Scroll left-to-right: decrement scrollLeft so content moves rightward
+        scrollPosRef.current -= (SPEED * dt) / 1000;
+        if (scrollPosRef.current <= 0 && maxScroll > 0) {
+          scrollPosRef.current = maxScroll;
         }
         el.scrollLeft = scrollPosRef.current;
       }
@@ -280,10 +288,10 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
   const displayList = reels.length > 0 ? [...reels, ...reels] : [];
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 mb-2 relative overflow-hidden select-none">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2 mb-3 md:mb-4 relative select-none">
       <div className="relative">
         {/* Section Header */}
-        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-4">
+        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-3">
           <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
             {language === 'gu' ? 'ઇન્સ્ટાગ્રામ રિલ્સ' : language === 'hi' ? 'इन्स्टाग्राम रीલ્સ' : 'Instagram Reels'}
           </span>
@@ -329,7 +337,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
 
           <div
             ref={scrollContainerRef}
-            className="scrollbar-hide flex gap-4 overflow-x-auto pb-2 py-1"
+            className="scrollbar-hide flex gap-4 overflow-x-auto pb-3 pt-1"
           >
             {reels.map((reel) => {
               const displayTitle = language === 'gu' ? (reel.headingGu || reel.heading) : language === 'hi' ? (reel.headingHi || reel.heading) : reel.heading;
@@ -372,7 +380,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                   onClick={() => handleReelClick(reel)}
                   className="flex-none w-[140px] sm:w-[165px] cursor-pointer snap-start group"
                 >
-                  <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-slate-900/90 dark:border-slate-800 bg-slate-950 shadow-md transition-all duration-300 group-hover:scale-[1.02] group-hover:shadow-xl">
+                  <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-slate-900/90 dark:border-slate-800 bg-gradient-to-tr from-[#833ab4]/80 via-[#fd1d1d]/80 to-[#fcb045]/80 shadow-md transition-all duration-300 group-hover:scale-[1.02] group-hover:shadow-xl">
                     <div className="absolute top-2.5 left-2.5 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-[#B3121B] text-white shadow-md">
                       <ReelsBadgeIcon className="h-3.5 w-3.5 text-white" />
                     </div>
@@ -386,6 +394,10 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                         referrerPolicy="no-referrer"
                         className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
                         loading="lazy"
+                        onError={(e) => {
+                          // Hide broken image so gradient shows cleanly
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     ) : isDirectVideo ? (
                       <video
@@ -398,7 +410,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                       />
                     ) : (
                       /* Dark sleek fallback cover */
-                      <div className="absolute inset-0 h-full w-full bg-slate-900" />
+                      <div className="absolute inset-0 h-full w-full bg-gradient-to-tr from-[#833ab4] via-[#fd1d1d] to-[#fcb045]" />
                     )}
 
                     {/* Dark gradient overlay for readability */}
@@ -457,3 +469,4 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
     </section>
   );
 }
+

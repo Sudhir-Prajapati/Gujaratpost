@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import Link from 'next/link';
@@ -186,9 +186,9 @@ export default function WebStoriesSection() {
           </span>
           <Link
             href="/category/webstory"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
           >
-            {language === 'gu' ? 'વધુ વેબસ્ટોરી →' : 'More →'}
+            {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
           </Link>
         </div>
 
@@ -356,3 +356,5 @@ export default function WebStoriesSection() {
     </section>
   );
 }
+
+

@@ -44,24 +44,18 @@ import ApkHomeFeed from '@/components/apk/ApkHomeFeed';
 import ApkHomeSkeleton from '@/components/apk/ApkHomeSkeleton';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
-import dynamic from 'next/dynamic';
-
-const Skeleton = ({ h = 'h-[200px]' }: { h?: string }) => (
-  <div className={`w-full ${h} animate-pulse rounded-2xl bg-muted/40`} />
-);
-
-const VideoDesk = dynamic(() => import('./home/VideoDesk'), { loading: () => <Skeleton h="h-[160px]" /> });
-const CityHyperlocalSection = dynamic(() => import('./home/CityHyperlocalSection'), { loading: () => <Skeleton h="h-[280px]" /> });
-const CrimeSection = dynamic(() => import('./home/CrimeSection'), { loading: () => <Skeleton h="h-[280px]" /> });
-const PoliticsSection = dynamic(() => import('./home/PoliticsSection'), { loading: () => <Skeleton h="h-[280px]" /> });
-const FactCheckSection = dynamic(() => import('./home/FactCheckSection'), { loading: () => <Skeleton h="h-[200px]" /> });
-const NationalSection = dynamic(() => import('./home/NationalSection'), { loading: () => <Skeleton h="h-[280px]" /> });
-const WorldSection = dynamic(() => import('./home/WorldSection'), { loading: () => <Skeleton h="h-[280px]" /> });
-const LiveCenterSection = dynamic(() => import('./home/LiveCenterSection'), { loading: () => <Skeleton h="h-[200px]" /> });
-const WeatherDashboardSection = dynamic(() => import('./home/WeatherDashboardSection'), { loading: () => <Skeleton h="h-[200px]" /> });
-const DynamicCategorySection = dynamic(() => import('./home/DynamicCategorySection'));
-const EntertainTechLifeSection = dynamic(() => import('./home/EntertainTechLifeSection'), { loading: () => <Skeleton h="h-[280px]" /> });
-const PhotoGallerySection = dynamic(() => import('./home/PhotoGallerySection'), { loading: () => <Skeleton h="h-[420px]" /> });
+import VideoDesk from './home/VideoDesk';
+import CityHyperlocalSection from './home/CityHyperlocalSection';
+import CrimeSection from './home/CrimeSection';
+import PoliticsSection from './home/PoliticsSection';
+import FactCheckSection from './home/FactCheckSection';
+import NationalSection from './home/NationalSection';
+import WorldSection from './home/WorldSection';
+import LiveCenterSection from './home/LiveCenterSection';
+import WeatherDashboardSection from './home/WeatherDashboardSection';
+import DynamicCategorySection from './home/DynamicCategorySection';
+import EntertainTechLifeSection from './home/EntertainTechLifeSection';
+import PhotoGallerySection from './home/PhotoGallerySection';
 
 
 const stripHtmlTags = (str?: string) => (str || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '');
@@ -913,66 +907,66 @@ export default function HeroSection({
       </Fragment>
     ),
     crime: (
-      <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2.5">
+      <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
           <div className="flex flex-col gap-10 min-w-0">
             <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
           </div>
           <div className="flex flex-col gap-6 sticky top-20 select-none">
             <div>
-              <div className="flex items-end gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2.5 mb-6">
-                <span className="text-[#B3121B] text-[15px] font-extrabold leading-none pb-0.5">♦</span>
-                <h3 className="text-[15px] font-black text-foreground leading-none pb-0.5">
+              <div className="flex items-end gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+                <span className="text-[#B3121B] text-[17px] md:text-[18px] font-black leading-none pb-0.5">♦</span>
+                <h3 className="text-[17px] md:text-[18px] font-black text-foreground leading-none pb-0.5">
                   {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : 'Gold & Silver Rates'}
                 </h3>
               </div>
 
-              <div className="border border-border/80 rounded-sm bg-card p-3.5 space-y-3.5 shadow-sm">
+              <div className="border border-border/80 rounded-sm bg-card py-2 px-3 space-y-2 shadow-sm">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-extrabold select-none shadow-sm">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-lg font-black select-none shadow-xs">
                       🏅
                     </div>
                     <div>
-                      <h4 className="text-[14px] text-foreground leading-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
+                      <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
                         {language === 'gu' ? 'Gold (10 Grams)' : 'Gold (10 Grams)'}
                       </h4>
-                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                      <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
                         {language === 'gu' ? '24 Karat' : '24 Karat'}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[16px] text-foreground leading-none" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 800 }}>
+                    <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
                       {marketRates?.gold?.price || '₹74,850'}
                     </p>
-                    <p className="text-[11px] font-bold text-emerald-600 flex items-center justify-end gap-0.5 mt-1 select-none">
+                    <p className="text-[13px] md:text-[13.5px] font-black text-emerald-600 flex items-center justify-end gap-0.5 mt-0.5 select-none">
                       {marketRates?.gold?.change || '▲ ₹450'}
                     </p>
                   </div>
                 </div>
 
-                <div className="border-t border-border/40" />
+                <div className="border-t border-border/50" />
 
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 font-extrabold select-none shadow-sm">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 text-lg font-black select-none shadow-xs">
                       🥈
                     </div>
                     <div>
-                      <h4 className="text-[14px] text-foreground leading-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
+                      <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
                         {language === 'gu' ? 'Silver (1 Kg)' : 'Silver (1 Kg)'}
                       </h4>
-                      <p className="text-[11px] font-medium text-muted-foreground mt-0.5">
+                      <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
                         {language === 'gu' ? 'Per Kg' : 'Per Kg'}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-[16px] text-foreground leading-none" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 800 }}>
+                    <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
                       {marketRates?.silver?.price || '₹84,200'}
                     </p>
-                    <p className="text-[11px] font-bold text-muted-foreground flex items-center justify-end gap-0.5 mt-1 select-none">
+                    <p className="text-[13px] md:text-[13.5px] font-black text-muted-foreground flex items-center justify-end gap-0.5 mt-0.5 select-none">
                       {marketRates?.silver?.change || '— Stable'}
                     </p>
                   </div>
@@ -1114,7 +1108,7 @@ export default function HeroSection({
     return <HeroSectionSkeleton language={language} />;
   }
   return (
-    <div className="w-full space-y-2.5 md:space-y-3.5">
+    <div className="w-full space-y-3 md:space-y-4">
 
       {/* ── ROW 1: Content + Sidebar Grid ──────────────────────────────── */}
       <div className="mx-auto max-w-screen-xl px-4">
@@ -1306,6 +1300,8 @@ export default function HeroSection({
                     src={currentSidebarVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(currentSidebarVideo.youtubeId)}/hqdefault.jpg`}
                     alt={currentSidebarVideo.title || 'Video'}
                     fill
+                    priority
+                    loading="eager"
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 768px) 100vw, 350px"
                   />
@@ -1459,7 +1455,7 @@ function HeroSectionSkeleton({ language }: { language: Language }) {
   const labelEPaper = language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper';
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 pb-4 space-y-2.5 md:space-y-3.5 animate-pulse">
+    <div className="mx-auto max-w-screen-xl px-4 pb-4 space-y-3 md:space-y-4 animate-pulse">
       {/* ROW 1: 3-column main section */}
       <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
         <div className="min-w-0">
@@ -1622,4 +1618,8 @@ export {
   EntertainTechLifeSection,
   PhotoGallerySection,
 };
+
+
+
+
 

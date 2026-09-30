@@ -203,6 +203,63 @@ router.get('/hero-settings', cacheResponse(60), HeroController.getHeroSettings);
  */
 router.get('/reels', cacheResponse(60), InstagramReelController.getAllReels);
 
+/**
+ * GET /api/public/instagram-image
+ * Proxies live Instagram reel media thumbnail directly by shortcode or URL
+ */
+router.get('/instagram-image', async (req, res) => {
+  const shortcode = ((req.query.shortcode as string) || '').trim();
+  const rawUrl = ((req.query.url as string) || '').trim();
+
+  let code = shortcode;
+  if (!code && rawUrl) {
+    const match = rawUrl.match(/instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
+    if (match) code = match[1];
+  }
+
+  if (!code && !rawUrl) {
+    return res.status(400).send('Missing shortcode or url parameter');
+  }
+
+  try {
+    const targetUrl = code
+      ? `https://www.instagram.com/p/${code}/media/?size=l`
+      : rawUrl;
+
+    const response = await fetch(targetUrl, {
+      signal: AbortSignal.timeout(6000),
+    });
+
+    if (!response.ok) {
+      if (!code && rawUrl) {
+        const match = rawUrl.match(/instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
+        if (match) {
+          const fallbackRes = await fetch(`https://www.instagram.com/p/${match[1]}/media/?size=l`, {
+            signal: AbortSignal.timeout(6000),
+          });
+          if (fallbackRes.ok) {
+            const buf = Buffer.from(await fallbackRes.arrayBuffer());
+            const ct = fallbackRes.headers.get('content-type') || 'image/jpeg';
+            res.setHeader('Content-Type', ct);
+            res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+            return res.send(buf);
+          }
+        }
+      }
+      return res.status(response.status).send('Failed to fetch image');
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=86400');
+    return res.send(buffer);
+  } catch (error: any) {
+    return res.status(500).send('Proxy error');
+  }
+});
+
 
 const CATEGORY_ALIASES: Record<string, string> = {
   india: 'national',
@@ -990,16 +1047,15 @@ router.get('/live-center', cacheResponse(120), async (req, res) => {
  */
 router.get('/tickers', cacheResponse(15), async (req, res, next) => {
   try {
-    const [customTickers, heroSetting] = await Promise.all([
+    const [customTickers, heroSettingRows] = await Promise.all([
       prisma.breakingTickerItem.findMany({
         orderBy: { createdAt: 'desc' },
         take: 10,
       }),
-      (prisma.heroSetting as any).findUnique({
-        where: { id: 'default' },
-        select: { tickerLabel: true },
-      }).catch(() => null),
+      prisma.$queryRawUnsafe<any[]>('SELECT tickerLabel FROM hero_settings WHERE id = "default" LIMIT 1').catch(() => []),
     ]);
+
+    const tickerLabel = heroSettingRows?.[0]?.tickerLabel || null;
 
     const breakingArticles = await prisma.post.findMany({
       where: { isBreaking: true, status: 'PUBLISHED' },
@@ -1053,7 +1109,7 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
       }));
     }
 
-    return sendSuccess(res, { tickers: combinedTickers, tickerLabel: heroSetting?.tickerLabel || null }, 'Breaking tickers retrieved');
+    return sendSuccess(res, { tickers: combinedTickers, tickerLabel }, 'Breaking tickers retrieved');
   } catch (error) {
     next(error);
   }

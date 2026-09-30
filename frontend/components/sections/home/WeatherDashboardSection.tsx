@@ -59,14 +59,14 @@ export default function WeatherDashboardSection({ language }: { language: Langua
   const otherCities = ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot'].filter(c => c !== selectedCity);
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 py-1 mt-2.5 select-none">
+    <section className="mx-auto max-w-screen-xl px-4 py-1 mt-2 select-none">
       {/* Tab headers - Black, Red & White */}
       <div className="flex items-end">
-        <div className="bg-slate-950 p-1 rounded-t-xl inline-flex gap-1 border-t border-x border-slate-800">
+        <div className="bg-slate-950 p-1 rounded-t-xl inline-flex gap-1 border-t-2 border-x-2 border-[#B3121B]/60 dark:border-[#B3121B]/50 relative z-10 -mb-[2px]">
           <button
             onClick={() => setActiveTab('weather')}
             className={`flex items-center gap-2 px-5 py-2 text-xs md:text-sm font-black transition-all rounded-lg tracking-wider select-none ${activeTab === 'weather'
-              ? 'bg-white text-slate-950 shadow-sm border border-slate-200'
+              ? 'bg-white text-slate-950 shadow-sm border border-slate-300'
               : 'text-white/80 hover:text-white bg-transparent'
               }`}
           >
@@ -76,7 +76,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
           <button
             onClick={() => setActiveTab('aqi')}
             className={`flex items-center gap-2 px-5 py-2 text-xs md:text-sm font-black transition-all rounded-lg tracking-wider select-none ${activeTab === 'aqi'
-              ? 'bg-white text-slate-950 shadow-sm border border-slate-200'
+              ? 'bg-white text-slate-950 shadow-sm border border-slate-300'
               : 'text-white/80 hover:text-white bg-transparent'
               }`}
           >
@@ -86,12 +86,12 @@ export default function WeatherDashboardSection({ language }: { language: Langua
         </div>
       </div>
 
-      {/* Main Box - Clean Light Grey Container */}
-      <div className="bg-[#f3f4f6] dark:bg-slate-900/90 p-6 rounded-b-2xl rounded-r-2xl border border-slate-200 dark:border-slate-800 shadow-md relative">
+      {/* Main Box - Clean Container with Prominent Visible Border */}
+      <div className="bg-[#f8f9fa] dark:bg-slate-900/90 p-6 md:p-7 rounded-2xl rounded-tl-none border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 shadow-md relative">
         {activeTab === 'weather' ? (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-center">
             {/* Left Area - Selected City weather info */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b lg:border-b-0 lg:border-r border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
               <div className="flex flex-col">
                 <h3 className="text-lg md:text-xl font-black text-slate-950 dark:text-white flex items-center gap-2">
                   {selectedCity} {isGu ? 'હવામાનની સ્થિતિ' : 'Weather Status'}
@@ -143,13 +143,13 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                   return (
                     <div
                       key={city}
-                      className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] relative hover:shadow-md hover:border-[#B3121B]/40 transition-all duration-300"
+                      className="bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] relative hover:shadow-md hover:border-[#B3121B]/40 transition-all duration-300"
                     >
                       <div className="flex items-center justify-between">
                         <span className="text-[13px] font-black text-slate-950 dark:text-white">{city}</span>
                         <button
                           onClick={() => setSelectedCity(city)}
-                          className="h-5.5 w-5.5 bg-[#B3121B] text-white rounded-full flex items-center justify-center hover:bg-slate-950 transition-colors"
+                          className="h-6 w-6 bg-[#B3121B] text-white rounded-full flex items-center justify-center hover:bg-slate-950 transition-colors shadow-xs"
                         >
                           <ArrowUpRight className="h-3 w-3" />
                         </button>
@@ -184,7 +184,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-center">
             {/* Left Area - Selected City AQI info */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b lg:border-b-0 lg:border-r border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
               <div className="flex flex-col">
                 <h3 className="text-lg md:text-xl font-black text-slate-950 dark:text-white">
                   {selectedCity} {isGu ? 'હવાની ગુણવત્તા સૂચકાંક (AQI)' : 'Air Quality Index'}
@@ -233,7 +233,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                   return (
                     <div
                       key={city}
-                      className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] hover:shadow-md hover:border-[#B3121B]/40 transition-all duration-300"
+                      className="bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] hover:shadow-md hover:border-[#B3121B]/40 transition-all duration-300"
                     >
                       <span className="text-[13px] font-black text-slate-950 dark:text-white">{city}</span>
                       <div className="flex items-center justify-between mt-1">
@@ -259,4 +259,6 @@ export default function WeatherDashboardSection({ language }: { language: Langua
   );
 }
 export { WeatherDashboardSection };
+
+
 

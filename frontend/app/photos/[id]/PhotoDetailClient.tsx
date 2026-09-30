@@ -13,6 +13,7 @@ import {
   getArticleTitle, getCategoryLabel 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 
 const ReadingProgressBar = memo(function ReadingProgressBar() {
   const [progress, setProgress] = useState(0);
@@ -63,49 +64,6 @@ function getCardThumbnail(art: any, index: number = 0): string {
   return DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
 }
 
-const FilmstripThumb = memo(function FilmstripThumb({
-  item,
-  idx,
-  isActive,
-  onClick,
-}: {
-  item: any;
-  idx: number;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  const fallback = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
-  const [src, setSrc] = useState(item.src || fallback);
-
-  useEffect(() => {
-    setSrc(item.src || fallback);
-  }, [item.src, fallback]);
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative aspect-[4/3] h-16 shrink-0 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-        isActive
-          ? 'border-[#B3121B] ring-2 ring-[#B3121B]/30 scale-105 shadow-md'
-          : 'border-transparent opacity-65 hover:opacity-100 hover:border-neutral-300 dark:hover:border-neutral-700'
-      }`}
-    >
-      <Image
-        src={src}
-        alt={item.alt || item.captionGu || `Thumbnail ${idx + 1}`}
-        fill
-        sizes="100px"
-        className="object-cover"
-        onError={() => setSrc(fallback)}
-      />
-      <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 py-0.2 text-[9px] font-black text-white">
-        #{idx + 1}
-      </span>
-    </button>
-  );
-});
-
 const SidebarThumb = memo(function SidebarThumb({
   item,
   index,
@@ -153,7 +111,7 @@ const MOCK_DESCRIPTIONS: Record<string, { en: string; gu: string; hi: string; ca
   ph3: {
     category: { en: "Politics", gu: "રાજકારણ", hi: "राजनीति" },
     en: "A massive crowd gathered at the district election rally showing high enthusiasm and support. Political leaders addressed key developmental schemes, civic infrastructure plans, and employment initiatives.",
-    gu: "જિલ્લા ચૂંટણી રેલીમાં ભારે ઉત્સાહ અને સમર્થન દર્શાવતી વિશાળ જનમેદની એકઠી થઈ હતી. રાજકીય નેતાઓએ આગામી 2027ની વિધાનસભા ચૂંટણી માટે નિર્ધારિત કલ્યાણકારી યોજનાઓ અંગે સંબોધન કર્યું હતું.",
+    gu: "જિલ્લા ચૂંટણી રેલીમાં ભારે ઉત્સાહ અને સમર્થન દર્શાવતી વિશાળ જનમેદની એકઠી થઈ હતી. રાજકીય નેતાઓએ આગામી વિધાનસભા ચૂંટણી માટે નિર્ધારિત કલ્યાણકારી યોજનાઓ અંગે સંબોધન કર્યું હતું.",
     hi: "जिला चुनाव रैली में भारी उत्साह और समर्थन दिखाते हुए विशाल जनसमुदाय एकत्रित हुआ।"
   },
   ph4: {
@@ -190,45 +148,166 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [activeLightboxIndex, setActiveLightboxIndex] = useState(0);
 
   const photosList = dbAllPhotos && dbAllPhotos.length > 0 ? dbAllPhotos : PHOTOS;
-  const photo = dbPhoto || photosList.find(p => p.id === activeId || p.id === `photo-${activeId}` || p.id === activeId.replace('photo-', '')) || photosList[0];
-  const activeIndex = photosList.findIndex((item) => item.id === photo?.id);
+  const photo = dbPhoto || photosList.find((p: any) => p.id === activeId || p.id === `photo-${activeId}` || p.id === activeId.replace('photo-', '')) || photosList[0];
+  const activeIndex = photosList.findIndex((item: any) => item.id === photo?.id);
   const currentPhotoIndex = activeIndex >= 0 ? activeIndex : 0;
   
   const photoUrl = propPhotoUrl || `https://gujaratpost.com/photos/${photo?.id || activeId}`;
-
   const mainFallback = FALLBACK_NEWS_IMAGES[currentPhotoIndex % FALLBACK_NEWS_IMAGES.length];
-  const [mainImgSrc, setMainImgSrc] = useState(photo?.src || mainFallback);
-  useEffect(() => {
-    setMainImgSrc(photo?.src || mainFallback);
-  }, [photo?.src, mainFallback]);
 
-  const nextIndex = photosList.length > 0 ? (currentPhotoIndex + 1) % photosList.length : 0;
-  const prevIndex = photosList.length > 0 ? (currentPhotoIndex - 1 + photosList.length) % photosList.length : 0;
+  const rawCaption = photo?.captionGu || photo?.caption || photo?.alt || 'Photo Gallery';
+  const caption = getLocalized(language, { 
+    en: photo?.caption || photo?.alt || '', 
+    gu: photo?.captionGu || photo?.caption || photo?.alt || '', 
+    hi: photo?.captionHi || photo?.caption || photo?.alt || '' 
+  }) || rawCaption;
 
-  const handleNext = useCallback(() => {
-    if (photosList[nextIndex]) {
-      router.push(`/photos/${photosList[nextIndex].id}`);
+  const title = caption;
+  
+  const descriptionData = (photo && MOCK_DESCRIPTIONS[photo.id]) || {
+    category: { en: photo?.category || "Photo Gallery", gu: photo?.category || 'સમાચાર', hi: photo?.category || 'સમાચાર' },
+    en: photo?.caption || '',
+    gu: photo?.caption || photo?.captionGu || '',
+    hi: photo?.captionHi || photo?.caption || ''
+  };
+
+  const category = getLocalized(language, descriptionData.category);
+  const bodyText = getLocalized(language, descriptionData) || photo?.caption || '';
+  const paragraphs = bodyText.split(/\n\n+/).filter(Boolean);
+
+  const authorName = photo?.photographer || (language === 'gu' ? 'ગુજરાત પોસ્ટ' : language === 'hi' ? 'गुजरात पोस्ट' : 'Gujarat Post');
+
+  // Build the vertical continuous gallery story items matching the user's reference
+  const galleryItems = useMemo(() => {
+    let items: any[] = [];
+
+    // 1. Direct photo.images or photo.galleryImages or photo.slides (e.g. if passed as array)
+    let rawImages = (photo as any)?.images || (photo as any)?.galleryImages || (photo as any)?.slides;
+    if (typeof rawImages === 'string') {
+      try {
+        const parsed = JSON.parse(rawImages);
+        if (Array.isArray(parsed) && parsed.length > 0) rawImages = parsed;
+      } catch {}
     }
-  }, [nextIndex, photosList, router]);
 
-  const handlePrev = useCallback(() => {
-    if (photosList[prevIndex]) {
-      router.push(`/photos/${photosList[prevIndex].id}`);
+    // 2. Check JSON string in photo.src
+    if (!rawImages && typeof photo?.src === 'string' && photo.src.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(photo.src);
+        if (Array.isArray(parsed) && parsed.length > 0) rawImages = parsed;
+      } catch {}
     }
-  }, [prevIndex, photosList, router]);
 
-  // Keyboard navigation
+    // 3. Check newline or comma in photo.src
+    if (!rawImages && typeof photo?.src === 'string' && (photo.src.includes('\n') || (photo.src.includes(',') && !photo.src.startsWith('data:')))) {
+      const splitUrls = photo.src.includes('\n')
+        ? photo.src.split('\n').map((s: string) => s.trim()).filter((s: string) => s.startsWith('http') || s.startsWith('/'))
+        : photo.src.split(',').map((s: string) => s.trim()).filter((s: string) => s.startsWith('http') || s.startsWith('/'));
+      if (splitUrls.length > 1) {
+        rawImages = splitUrls;
+      }
+    }
+
+    // 4. Check explicit multiple image props (image2, image3, secondaryImage, etc.)
+    if (!rawImages) {
+      const collected = [photo?.src].filter(Boolean);
+      ['image2', 'image3', 'image4', 'image5', 'secondaryImage', 'galleryImage2'].forEach((k) => {
+        const val = (photo as any)?.[k];
+        if (val && typeof val === 'string' && val.trim()) collected.push(val.trim());
+      });
+      if (collected.length > 1) rawImages = collected;
+    }
+
+    if (Array.isArray(rawImages) && rawImages.length > 0) {
+      items = rawImages.map((entry: any, idx: number) => {
+        if (typeof entry === 'string') {
+          const desc = paragraphs[idx] || (idx === 0 ? (photo?.caption || photo?.captionGu || bodyText) : '');
+          return {
+            id: `${photo?.id || 'item'}-${idx + 1}`,
+            src: entry,
+            title: idx === 0 ? title : `${title} (${idx + 1})`,
+            description: desc || caption,
+            photographer: photo?.photographer || authorName,
+            source: photo?.copyright || 'ગુજરાત પોસ્ટ',
+          };
+        }
+        const itemTitle = entry.title || entry.captionGu || entry.caption || (idx === 0 ? title : `${title} (${idx + 1})`);
+        const itemDesc = entry.description || entry.text || entry.caption || paragraphs[idx] || caption;
+        return {
+          id: entry.id || `${photo?.id || 'item'}-${idx + 1}`,
+          src: entry.src || entry.url || photo?.src,
+          title: itemTitle,
+          description: itemDesc,
+          photographer: entry.photographer || photo?.photographer || authorName,
+          source: entry.source || entry.copyright || photo?.copyright || 'ગુજરાત પોસ્ટ',
+        };
+      });
+    }
+
+    // 5. If only 1 image on photo and no rawImages array:
+    if (items.length <= 1) {
+      const firstItem = {
+        id: photo?.id || 'photo-1',
+        src: photo?.src || mainFallback,
+        title: title,
+        description: photo?.caption && photo?.caption !== title ? photo.caption : (paragraphs[0] || caption),
+        photographer: photo?.photographer || authorName,
+        source: photo?.copyright || 'ગુજરાત પોસ્ટ',
+      };
+
+      // Check for related gallery photos by celebrity/topic/subject
+      // Example: For "અવનીત કૌર" (Avneet Kaur), find the other Avneet Kaur photos in database
+      const keywords = (photo?.captionGu || photo?.caption || '')
+        .split(/[\s,:-]+/)
+        .filter((w: string) => w.length >= 4 && !['સાથે', 'કર્યા', 'વાયરલ', 'વાઇરલ', 'ફોટો', 'તસવીર', 'તસવીરો', 'હોટ', 'લુક', 'અંદાજ', 'નવા', 'જોવા', 'મળી'].includes(w));
+
+      let relatedMatches: any[] = [];
+      if (keywords.length > 0) {
+        relatedMatches = photosList.filter((p: any) => {
+          if (!p || p.id === photo?.id) return false;
+          const text = `${p.captionGu || ''} ${p.caption || ''} ${p.alt || ''}`;
+          return keywords.some((kw: string) => text.includes(kw));
+        });
+      }
+
+      if (relatedMatches.length > 0) {
+        items = [
+          firstItem,
+          ...relatedMatches.slice(0, 5).map((p: any, idx: number) => {
+            const pTitle = getLocalized(language, { en: p.caption, gu: p.captionGu, hi: p.captionHi }) || p.alt || title;
+            return {
+              id: p.id || `related-${idx}`,
+              src: p.src,
+              title: pTitle,
+              description: p.caption || p.captionGu || pTitle,
+              photographer: p.photographer || authorName,
+              source: p.copyright || 'ગુજરાત પોસ્ટ',
+            };
+          }),
+        ];
+      } else {
+        items = [firstItem];
+      }
+    }
+
+    return items;
+  }, [photo, photosList, language, title, caption, bodyText, paragraphs, authorName, mainFallback]);
+
+  // Keyboard navigation for Lightbox
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') handleNext();
-      if (e.key === 'ArrowLeft') handlePrev();
-      if (e.key === 'Escape' && isLightboxOpen) setIsLightboxOpen(false);
+      if (isLightboxOpen) {
+        if (e.key === 'ArrowRight') setActiveLightboxIndex((prev) => (prev + 1) % galleryItems.length);
+        if (e.key === 'ArrowLeft') setActiveLightboxIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
+        if (e.key === 'Escape') setIsLightboxOpen(false);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleNext, handlePrev, isLightboxOpen]);
+  }, [galleryItems.length, isLightboxOpen]);
 
   const copyUrl = async () => {
     try {
@@ -241,36 +320,6 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
     }
   };
 
-  const rawCaption = photo?.captionGu || photo?.caption || photo?.alt || 'Photo Gallery';
-  const caption = getLocalized(language, { 
-    en: photo?.caption || photo?.alt || '', 
-    gu: photo?.captionGu || photo?.caption || photo?.alt || '', 
-    hi: photo?.captionHi || photo?.caption || photo?.alt || '' 
-  }) || rawCaption;
-
-  const title = caption;
-  
-  const descriptionData = (photo && MOCK_DESCRIPTIONS[photo.id]) || {
-    category: { en: photo?.category || "Photo Gallery", gu: photo?.category || 'ફોટો ગેલેરી', hi: photo?.category || 'फोटो गैलरी' },
-    en: photo?.caption || '',
-    gu: photo?.captionGu || photo?.caption || '',
-    hi: photo?.captionHi || photo?.caption || ''
-  };
-
-  const category = getLocalized(language, descriptionData.category);
-  const bodyText = getLocalized(language, descriptionData);
-  const paragraphs = bodyText.split(/\n\n+/);
-
-  const authorName = photo?.photographer || (language === 'gu' ? 'ગુજરાત પોસ્ટ ફોટોગ્રાફર' : language === 'hi' ? 'गुजरात पोस्ट फोटोग्राफर' : 'Gujarat Post Photographer');
-
-  const gistPoints = useMemo(() => {
-    return [
-      caption,
-      `${language === 'gu' ? 'સ્થળ / કેટેગરી:' : language === 'hi' ? 'स्थान / श्रेणी:' : 'Category:'} ${category}`,
-      `${language === 'gu' ? 'કવરેજ સ્તરો:' : language === 'hi' ? 'कवरेज स्तर:' : 'Coverage:'} ${language === 'gu' ? 'સ્થાનિક તસવીરો અને તાજા સમાચાર' : language === 'hi' ? 'स्थानीय तस्वीरें और ताजा खबरें' : 'Local HD Imagery'}`,
-    ];
-  }, [caption, category, language]);
-
   const tags = useMemo(() => {
     if (language === 'gu') {
       return ['ફોટો ગેલેરી', 'ગુજરાત', 'અમદાવાદ', 'તાજા સમાચાર', 'લાઈવ', 'વિશેષ કવરેજ', 'તસવીરો', 'ગુજરાત પોસ્ટ'];
@@ -280,8 +329,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
     return ['Photo Gallery', 'Gujarat', 'Ahmedabad', 'Breaking News', 'Live', 'Special Coverage', 'Pictures', 'Gujarat Post'];
   }, [language]);
 
-  const trendingList = dbTrending || [];
-  const sidebarRecommendedPool = photosList.filter(p => p.id !== photo.id);
+  const sidebarRecommendedPool = photosList.filter((p: any) => p.id !== photo?.id);
 
   return (
     <>
@@ -293,47 +341,53 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
           <button
             type="button"
             onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20"
+            className="absolute top-5 right-5 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition-all border border-white/20 cursor-pointer"
             aria-label="Close Lightbox"
           >
             <X className="h-6 w-6" />
           </button>
 
-          <div className="relative h-[85vh] w-[92vw] max-w-6xl">
-            <Image
-              src={mainImgSrc}
-              alt={photo.alt || caption}
-              fill
-              sizes="100vw"
-              className="object-contain"
-              priority
-              onError={() => setMainImgSrc(mainFallback)}
+          <div className="relative h-[85vh] w-[92vw] max-w-6xl flex items-center justify-center">
+            <img
+              src={galleryItems[activeLightboxIndex]?.src || mainFallback}
+              alt={galleryItems[activeLightboxIndex]?.title || caption}
+              className="max-h-[85vh] max-w-full object-contain mx-auto rounded-lg shadow-2xl"
+              onError={(e) => {
+                const target = e.currentTarget;
+                if (target.src !== mainFallback) target.src = mainFallback;
+              }}
             />
 
             {/* Prev / Next controls in lightbox */}
-            <button
-              type="button"
-              onClick={handlePrev}
-              className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white hover:bg-red-600 transition-all border border-white/20"
-              aria-label="Previous photo"
-            >
-              <ChevronLeft className="h-7 w-7" />
-            </button>
+            {galleryItems.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setActiveLightboxIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white hover:bg-[#B3121B] transition-all border border-white/20 cursor-pointer shadow-lg"
+                  aria-label="Previous photo"
+                >
+                  <ChevronLeft className="h-7 w-7" />
+                </button>
 
-            <button
-              type="button"
-              onClick={handleNext}
-              className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white hover:bg-red-600 transition-all border border-white/20"
-              aria-label="Next photo"
-            >
-              <ChevronRight className="h-7 w-7" />
-            </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveLightboxIndex((prev) => (prev + 1) % galleryItems.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-black/60 p-3 text-white hover:bg-[#B3121B] transition-all border border-white/20 cursor-pointer shadow-lg"
+                  aria-label="Next photo"
+                >
+                  <ChevronRight className="h-7 w-7" />
+                </button>
+              </>
+            )}
 
             {/* Lightbox Caption Bar */}
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/80 backdrop-blur-md px-6 py-2.5 text-center text-white border border-white/15 max-w-2xl w-full shadow-2xl">
-              <p className="text-sm font-bold truncate">{caption}</p>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/85 backdrop-blur-md px-6 py-2.5 text-center text-white border border-white/15 max-w-2xl w-full shadow-2xl">
+              <p className="text-sm font-bold truncate">
+                {galleryItems[activeLightboxIndex]?.title || caption}
+              </p>
               <p className="text-[11px] text-neutral-400 mt-0.5">
-                {currentPhotoIndex + 1} of {photosList.length} • {photo.photographer || 'Gujarat Post'}
+                {activeLightboxIndex + 1} of {galleryItems.length} • {galleryItems[activeLightboxIndex]?.photographer || authorName}
               </p>
             </div>
           </div>
@@ -365,8 +419,8 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 <span className="bar"></span>
                 <span>{category} · {language === 'gu' ? 'અંતરદૃશ્ય કવરેજ' : language === 'hi' ? 'विशेष कवरेज' : 'Special Coverage'}</span>
               </div>
-              <span className="live-badge rounded bg-accent px-2 py-0.5 text-xs font-black text-white ml-2">
-                📷 {currentPhotoIndex + 1} / {photosList.length} {language === 'gu' ? 'ફોટા' : language === 'hi' ? 'तस्वीरें' : 'Photos'}
+              <span className="live-badge rounded bg-accent px-2.5 py-0.5 text-xs font-black text-white ml-2 shadow-sm">
+                📷 {galleryItems.length} {language === 'gu' ? 'તસવીરો' : language === 'hi' ? 'तस्वीरें' : 'Photos'}
               </span>
             </div>
 
@@ -376,7 +430,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             {/* Byline / Author card matching NewsDetailClient */}
             <div className="byline select-none" suppressHydrationWarning>
               <div className="flex items-center gap-[11px]">
-                <div className="shrink-0 w-[38px] h-[38px] rounded-full bg-[var(--red)] text-white flex items-center justify-center font-bold text-sm">
+                <div className="shrink-0 w-[38px] h-[38px] rounded-full bg-[var(--red)] text-white flex items-center justify-center font-bold text-sm shadow">
                   GP
                 </div>
                 <div>
@@ -420,7 +474,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
               </div>
             </div>
 
-            {/* Share Row matching NewsDetailClient */}
+            {/* Top Share Row */}
             <div className="share-row-custom select-none flex flex-wrap gap-3 items-center mb-6 p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm" suppressHydrationWarning>
               <span className="lbl font-black text-neutral-900 dark:text-neutral-100 mr-1 text-[14px] tracking-wide uppercase flex items-center gap-1.5 select-none" suppressHydrationWarning>
                 <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-ping" />
@@ -451,17 +505,17 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 suppressHydrationWarning
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(24,119,242,0.35)] hover:border-[#1877F2]"
               >
-                <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-                  <path fill="#1877F2" d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.35c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12z" />
+                <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 fill-[#1877F2] transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
+                  <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.35c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12z" />
                 </svg>
               </a>
 
               {/* X */}
               <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(photoUrl)}`}
+                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title} ${photoUrl}`)}`}
                 target="_blank"
                 rel="noreferrer"
-                title="Post on X"
+                title="X"
                 suppressHydrationWarning
                 className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_8px_20px_rgba(255,255,255,0.2)] hover:border-black dark:hover:border-white"
               >
@@ -501,96 +555,131 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
               </div>
             </div>
 
-            {/* Main Featured Photo Figure & Viewer */}
-            <figure className="article-fig">
-              <div className="imgwrap relative aspect-[16/10] overflow-hidden bg-black/90 rounded-xl shadow-md group">
-                <Image 
-                  src={mainImgSrc} 
-                  alt={photo.alt || caption} 
-                  fill 
-                  sizes="(max-width: 1024px) 100vw, 66vw"
-                  className="object-contain" 
-                  priority
-                  onError={() => setMainImgSrc(mainFallback)}
-                />
+            {/* Vertical Continuous Gallery Stream: Image -> Text -> Ad -> Image -> Text */}
+            <div className="gallery-stream mt-6 space-y-9">
+              {galleryItems.map((item, idx) => {
+                const itemSrc = item.src || mainFallback;
 
-                {/* Top Right Fullscreen Button */}
-                <button
-                  type="button"
-                  onClick={() => setIsLightboxOpen(true)}
-                  className="absolute top-3.5 right-3.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-red-600 transition border border-white/20 shadow-md"
-                  title="Full Screen"
-                >
-                  <Maximize2 className="h-4 w-4" />
-                </button>
+                return (
+                  <div key={item.id || idx} className="gallery-story-block">
+                    {/* Modern Photo Card: White in Light Mode, Dark/Black in Dark Mode */}
+                    <article className="overflow-hidden rounded-2xl bg-white dark:bg-[#0f0f10] border border-neutral-200 dark:border-neutral-800 shadow-sm dark:shadow-2xl transition-all duration-300">
+                      
+                      {/* Image Area with Badges: White in Light Mode, Black in Dark Mode */}
+                      <div className="relative w-full bg-white dark:bg-black flex items-center justify-center overflow-hidden min-h-[320px] max-h-[700px] select-none border-b border-neutral-100 dark:border-neutral-800/80">
+                        
+                        {/* Top-Left Counter Badge matching Reference (1/4, 2/4...) */}
+                        <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 rounded-full bg-black/75 dark:bg-black/80 backdrop-blur-md px-3.5 py-1 text-xs font-black text-white border border-white/20 shadow-md">
+                          <Camera className="h-3.5 w-3.5 text-red-500" />
+                          <span>{idx + 1} / {galleryItems.length}</span>
+                        </div>
 
-                {/* Top Left Counter Pill */}
-                <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 rounded-full bg-black/75 backdrop-blur-md px-3 py-1 text-xs font-bold text-white border border-white/20 shadow">
-                  <Camera className="h-3.5 w-3.5 text-red-500" />
-                  {currentPhotoIndex + 1} / {photosList.length}
-                </div>
+                        {/* Top-Right Fullscreen Expand Button matching Reference */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveLightboxIndex(idx);
+                            setIsLightboxOpen(true);
+                          }}
+                          className="absolute top-3.5 right-3.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 dark:bg-black/80 backdrop-blur-md text-white hover:bg-[#B3121B] hover:scale-110 active:scale-95 transition-all border border-white/20 shadow-md cursor-pointer"
+                          title="Full Screen"
+                        >
+                          <Maximize2 className="h-4 w-4" />
+                        </button>
 
-                {/* Prev / Next Navigation Arrows */}
-                <button 
-                  type="button" 
-                  onClick={handlePrev} 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-red-600 transition border border-white/20 shadow-lg opacity-90 group-hover:opacity-100"
-                  aria-label="Previous photo"
-                >
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button 
-                  type="button" 
-                  onClick={handleNext} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/60 text-white backdrop-blur-md hover:bg-red-600 transition border border-white/20 shadow-lg opacity-90 group-hover:opacity-100"
-                  aria-label="Next photo"
-                >
-                  <ChevronRight className="h-5 w-5" />
-                </button>
-              </div>
+                        {/* Responsive Poster / Photo preserving natural aspect ratio */}
+                        <div className="w-full flex items-center justify-center p-2 sm:p-3">
+                          <img
+                            src={itemSrc}
+                            alt={item.title || caption}
+                            className="w-auto h-auto max-h-[660px] max-w-full object-contain mx-auto rounded-lg shadow-sm"
+                            loading={idx === 0 ? 'eager' : 'lazy'}
+                            onError={(e) => {
+                              const target = e.currentTarget;
+                              const fallback = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
+                              if (target.src !== fallback) target.src = fallback;
+                            }}
+                          />
+                        </div>
+                      </div>
 
-              <figcaption>
-                <span>{caption}</span>
-                <span style={{ whiteSpace: 'nowrap' }}>
-                  {language === 'gu' ? 'તસવીર: ગુજરાત પોસ્ટ' : language === 'hi' ? 'તસવીર: ગુજરાત પોસ્ટ' : 'Photo: Gujarat Post'}
-                </span>
-              </figcaption>
-            </figure>
+                      {/* Text Section Directly Under Image: White in Light Mode, Dark in Dark Mode */}
+                      <div className="p-5 md:p-6 bg-white dark:bg-[#131315] text-neutral-900 dark:text-white space-y-3.5">
+                        <div className="text-[14.5px] md:text-[16px] leading-relaxed text-neutral-700 dark:text-neutral-200">
+                          <strong className="text-neutral-900 dark:text-white font-black text-[16px] md:text-[17.5px] mr-2 block sm:inline mb-1 sm:mb-0">
+                            {item.title}:
+                          </strong>
+                          <span>{item.description}</span>
+                          <span className="font-bold text-neutral-500 dark:text-neutral-400 ml-2 inline-block text-[13.5px]">
+                            ({language === 'gu' ? 'તસવીર:' : language === 'hi' ? 'તસવીર:' : 'Image:'} {item.photographer || authorName})
+                          </span>
+                        </div>
 
-            {/* Interactive Filmstrip Thumbnails Below Main Photo */}
-            <div className="my-5 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900/60 p-3 shadow-sm">
-              <div className="flex items-center justify-between text-[11px] font-black uppercase text-neutral-500 dark:text-neutral-400 tracking-wider mb-2">
-                <span>{language === 'gu' ? 'ફોટો ગેલેરી ફિલ્મસ્ટ્રીપ' : language === 'hi' ? 'फोटो गैलरी फिल्मस्ट्रिप' : 'Photo Gallery Filmstrip'}</span>
-                <span>{currentPhotoIndex + 1} / {photosList.length}</span>
-              </div>
+                        {/* Social Share Row Below Text */}
+                        <div className="flex items-center gap-2 pt-3 border-t border-neutral-200 dark:border-white/10 flex-wrap">
+                          <span className="text-[11.5px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mr-1 select-none">
+                            {language === 'gu' ? 'શેર:' : language === 'hi' ? 'શેર:' : 'Share:'}
+                          </span>
 
-              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
-                {photosList.map((item, idx) => {
-                  const isActive = item.id === photo.id;
-                  return (
-                    <FilmstripThumb
-                      key={item.id}
-                      item={item}
-                      idx={idx}
-                      isActive={isActive}
-                      onClick={() => router.push(`/photos/${item.id}`)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
+                          {/* WhatsApp */}
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`${item.title}\n${item.description}\n${photoUrl}`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Share on WhatsApp"
+                            className="group flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-[#25D366] dark:bg-white/10 dark:hover:bg-[#25D366] transition-all hover:scale-110 active:scale-95 border border-neutral-200 dark:border-white/10 shadow-sm"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#25D366] group-hover:fill-white">
+                              <path d="M12.01 0a12 12 0 0 0-10.4 18l-1.6 5.8 6-1.6a12 12 0 1 0 6-22.2z" />
+                              <path fill="#25D366" d="M12.01 1.8a10.2 10.2 0 0 1 8.8 15.3l.5 1.8-1.9-.5A10.2 10.2 0 1 1 12.01 1.8z" />
+                              <path fill="#FFF" d="M16.9 14.1c-.3-.1-1.6-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.5 0-.2-.1-.4-.2-.6-.2-.4-.7-1.7-1-2.3-.3-.6-.6-.5-.8-.5H8c-.2 0-.6.1-.9.4C6.8 7.3 6 8.1 6 9.8c0 1.7 1.2 3.4 1.4 3.6.2.2 2.4 3.7 5.9 5.2.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.5-.3z" />
+                            </svg>
+                          </a>
 
-            {/* Article Content Body matching NewsDetailClient */}
-            <div className="article-body space-y-4 text-base leading-relaxed text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-6">
-              {paragraphs.map((paragraph, index) => (
-                <p key={index}>{paragraph}</p>
-              ))}
+                          {/* Facebook */}
+                          <a
+                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(photoUrl)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Share on Facebook"
+                            className="group flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-[#1877F2] dark:bg-white/10 dark:hover:bg-[#1877F2] transition-all hover:scale-110 active:scale-95 border border-neutral-200 dark:border-white/10 shadow-sm"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#1877F2] group-hover:fill-white">
+                              <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.35c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12z" />
+                            </svg>
+                          </a>
+
+                          {/* X */}
+                          <a
+                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${item.title} ${photoUrl}`)}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Post on X"
+                            className="group flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-black dark:bg-white/10 dark:hover:bg-white transition-all hover:scale-110 active:scale-95 border border-neutral-200 dark:border-white/10 shadow-sm"
+                          >
+                            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current text-neutral-800 dark:text-white group-hover:text-white dark:group-hover:text-black">
+                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                            </svg>
+                          </a>
+                        </div>
+                      </div>
+                    </article>
+
+                    {/* In-feed Ad Banner between photos matching Reference */}
+                    {idx < galleryItems.length - 1 && (
+                      <div className="my-7">
+                        <AdSectionBanner section="IN_ARTICLE" className="w-full" showFallback={false} />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Topics Tags Bar matching NewsDetailClient */}
-            <div className="flex flex-wrap items-center gap-2 mt-8 select-none border-t border-neutral-200 dark:border-neutral-800 pt-5">
+            <div className="flex flex-wrap items-center gap-2 mt-10 select-none border-t border-neutral-200 dark:border-neutral-800 pt-6">
               <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-                {language === 'gu' ? 'ટોપિક્સ:' : language === 'hi' ? 'विषય:' : 'Topics:'}
+                {language === 'gu' ? 'ટોપિક્સ:' : language === 'hi' ? 'વિષય:' : 'Topics:'}
               </span>
               {tags.map((tag, tIdx) => (
                 <Link
@@ -606,14 +695,13 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
           {/* Sidebar matching NewsDetailClient */}
           <aside className="select-none h-fit sticky top-[100px]" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
-            {/* Heading and recommended stories stick together below header */}
             <div className="wtitle mb-3">
               <span className="d"></span>
               <span>{language === 'gu' ? 'તમારા માટે ભલામણ' : language === 'hi' ? 'आपके लिए अनुशंसित' : 'Recommended Stories'}</span>
             </div>
 
             <div className="space-y-0">
-              {sidebarRecommendedPool.slice(0, 5).map((item, index) => {
+              {sidebarRecommendedPool.slice(0, 6).map((item: any, index: number) => {
                 const itemTitle = getLocalized(language, { en: item.caption, gu: item.captionGu, hi: item.captionHi });
                 const itemCategory = item.category || (language === 'gu' ? 'ગેલેરી' : 'Gallery');
                 return (

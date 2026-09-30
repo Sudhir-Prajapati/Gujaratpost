@@ -33,6 +33,7 @@ interface PhotoData {
   photographer: string;
   copyright: string;
   createdAt: string;
+  images?: any[];
 }
 
 function CustomCategorySelect({
@@ -155,6 +156,7 @@ export default function GalleryPage() {
   const [photographer, setPhotographer] = useState('Gujarat Post Team');
   const [copyright, setCopyright] = useState('© Gujarat Post');
   const [category, setCategory] = useState('');
+  const [extraImages, setExtraImages] = useState<Array<{ src: string; captionGu: string; description: string; photographer: string }>>([]);
   const DEFAULT_CATEGORIES = ['ધર્મ', 'ઉત્સવ', 'પ્રવાસ', 'ખેલ', 'સંસ્કૃતિ', 'મનોરંજન', 'ગુજરાત'];
   const [availableCategories, setAvailableCategories] = useState<string[]>(() => {
     try {
@@ -288,18 +290,42 @@ export default function GalleryPage() {
         setAvailableCategories(prev => Array.from(new Set([...prev, finalCat])));
       }
 
+      const validExtra = extraImages.filter(item => item.src && item.src.trim());
+      let imagesPayload: any = null;
+      if (validExtra.length > 0) {
+        imagesPayload = [
+          {
+            src: src.trim(),
+            title: captionGu || caption || 'ઈમેજ ૧',
+            caption: caption || captionGu,
+            captionGu: captionGu || caption,
+            description: caption || captionGu,
+            photographer: photographer || 'Gujarat Post Team',
+          },
+          ...validExtra.map((item, idx) => ({
+            src: item.src.trim(),
+            title: item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
+            caption: item.captionGu || caption,
+            captionGu: item.captionGu || captionGu,
+            description: item.description || item.captionGu || '',
+            photographer: item.photographer || photographer || 'Gujarat Post Team',
+          })),
+        ];
+      }
+
       const res = await authFetch(getBackendApiUrl('/api/admin/gallery'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          src,
+          src: imagesPayload ? JSON.stringify(imagesPayload) : src,
           alt: alt || captionGu || 'Gujarat Post Gallery',
           caption: caption || captionGu,
           captionGu: captionGu || caption,
           captionHi,
           category: finalCat,
           photographer: photographer || 'Gujarat Post Team',
-          copyright: copyright || '© Gujarat Post'
+          copyright: copyright || '© Gujarat Post',
+          images: imagesPayload,
         }),
       });
       const json = await res.json();
@@ -314,7 +340,8 @@ export default function GalleryPage() {
         category,
         photographer: photographer || 'Gujarat Post Team',
         copyright: copyright || '© Gujarat Post',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        images: imagesPayload,
       };
 
       // Reset & update list while preserving minimum 5 photos
@@ -340,6 +367,7 @@ export default function GalleryPage() {
       setCategory('ધર્મ');
       setPhotographer('Gujarat Post Team');
       setCopyright('© Gujarat Post');
+      setExtraImages([]);
       showNotification('ઈમેજ સફળતાપૂર્વક સેવ થઈ ગઈ છે!', 'success');
     } catch (err: any) {
       showNotification(err.message || 'ઈમેજ સેવ કરવામાં ભૂલ આવી', 'error');
@@ -380,6 +408,35 @@ export default function GalleryPage() {
     setPhotographer(photo.photographer || 'Gujarat Post Team');
     setCopyright(photo.copyright || '© Gujarat Post');
     setFormLang('gu');
+
+    // Populate extraImages if photo has multiple images
+    if (photo.images && Array.isArray(photo.images) && photo.images.length > 1) {
+      setExtraImages(photo.images.slice(1).map((item: any) => ({
+        src: item.src || item.url || (typeof item === 'string' ? item : ''),
+        captionGu: item.captionGu || item.title || item.caption || '',
+        description: item.description || item.text || item.caption || '',
+        photographer: item.photographer || photo.photographer || 'Gujarat Post Team',
+      })));
+    } else if (typeof photo.src === 'string' && photo.src.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(photo.src);
+        if (Array.isArray(parsed) && parsed.length > 1) {
+          setExtraImages(parsed.slice(1).map((item: any) => ({
+            src: item.src || item.url || (typeof item === 'string' ? item : ''),
+            captionGu: item.captionGu || item.title || item.caption || '',
+            description: item.description || item.text || item.caption || '',
+            photographer: item.photographer || photo.photographer || 'Gujarat Post Team',
+          })));
+        } else {
+          setExtraImages([]);
+        }
+      } catch {
+        setExtraImages([]);
+      }
+    } else {
+      setExtraImages([]);
+    }
+
     setEditModalOpen(true);
   };
 
@@ -395,11 +452,50 @@ export default function GalleryPage() {
         setAvailableCategories(prev => Array.from(new Set([...prev, finalCat])));
       }
 
+      const validExtra = extraImages.filter(item => item.src && item.src.trim());
+      let imagesPayload: any = null;
+      let primarySrc = selectedPhoto.src;
+      if (typeof primarySrc === 'string' && primarySrc.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(primarySrc);
+          if (Array.isArray(parsed) && parsed.length > 0) primarySrc = parsed[0]?.src || parsed[0];
+        } catch {}
+      }
+
+      if (validExtra.length > 0) {
+        imagesPayload = [
+          {
+            src: primarySrc,
+            title: captionGu || caption || 'ઈમેજ ૧',
+            caption: caption || captionGu,
+            captionGu: captionGu || caption,
+            description: caption || captionGu,
+            photographer: photographer || 'Gujarat Post Team',
+          },
+          ...validExtra.map((item, idx) => ({
+            src: item.src.trim(),
+            title: item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
+            caption: item.captionGu || caption,
+            captionGu: item.captionGu || captionGu,
+            description: item.description || item.captionGu || '',
+            photographer: item.photographer || photographer || 'Gujarat Post Team',
+          })),
+        ];
+      }
+
       const res = await authFetch(getBackendApiUrl(`/api/admin/gallery/${selectedPhoto.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          src: selectedPhoto.src, alt, caption, captionGu, captionHi, category: finalCat, photographer, copyright
+          src: imagesPayload ? JSON.stringify(imagesPayload) : primarySrc,
+          alt,
+          caption,
+          captionGu,
+          captionHi,
+          category: finalCat,
+          photographer,
+          copyright,
+          images: imagesPayload,
         }),
       });
       const json = await res.json();
@@ -411,12 +507,14 @@ export default function GalleryPage() {
         caption: caption || captionGu,
         alt: alt || captionGu || 'Gujarat Post Gallery',
         photographer,
-        copyright
+        copyright,
+        images: imagesPayload,
       };
 
       setPhotos(prev => prev.map(p => p.id === selectedPhoto.id ? updatedPhoto : p));
       setEditModalOpen(false);
       setSelectedPhoto(null);
+      setExtraImages([]);
       showNotification('ફોટો કેટેગરી અને ડિટેલ્સ સફળતાપૂર્વક અપડેટ થઈ ગઈ છે!', 'success');
     } catch (err: any) {
       showNotification(err.message || 'અપડેટ કરવામાં ભૂલ આવી', 'error');
@@ -736,6 +834,78 @@ export default function GalleryPage() {
                   />
                 </div>
               </div>
+              {/* ─── EXTRA IMAGES SECTION (MULTI-IMAGE GALLERY STORY) ─── */}
+              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                      વધારાની ઈમેજો (Multiple Images for Gallery Story)
+                    </h4>
+                    <p className="text-[11px] text-zinc-400 font-medium">
+                      જો આ સ્ટોરીમાં ૨ કે વધુ ફોટા હોય તો અહીં ઉમેરો (Image + Caption)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setExtraImages(prev => [...prev, { src: '', captionGu: '', description: '', photographer: 'Gujarat Post Team' }])}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#B3121B] dark:bg-red-950/40 dark:hover:bg-red-950/60 dark:text-red-400 text-xs font-bold transition border border-red-200/60 dark:border-red-800/40 cursor-pointer shadow-sm"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    + ફોટો ઉમેરો (Add Image)
+                  </button>
+                </div>
+
+                {extraImages.map((extra, eIdx) => (
+                  <div key={eIdx} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-[#B3121B] dark:text-red-400">
+                        ઈમેજ #{eIdx + 2}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== eIdx))}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 p-1"
+                        title="Remove"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="ઈમેજ URL લિંક (https://...)"
+                      value={extra.src}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: val } : item));
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="ઈમેજ શીર્ષક / કેપ્શન (ગુજરાતી)"
+                      value={extra.captionGu}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, captionGu: val } : item));
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                    />
+
+                    <textarea
+                      rows={2}
+                      placeholder="ઈમેજ વર્ણન / વિગતો (Description text under image)"
+                      value={extra.description}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white resize-none"
+                    />
+                  </div>
+                ))}
+              </div>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-zinc-150 dark:border-zinc-800">
                 <button
@@ -835,6 +1005,78 @@ export default function GalleryPage() {
                     className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
                   />
                 </div>
+              </div>
+              {/* ─── EXTRA IMAGES SECTION (MULTI-IMAGE GALLERY STORY) ─── */}
+              <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
+                      વધારાની ઈમેજો (Multiple Images for Gallery Story)
+                    </h4>
+                    <p className="text-[11px] text-zinc-400 font-medium">
+                      જો આ સ્ટોરીમાં ૨ કે વધુ ફોટા હોય તો અહીં ઉમેરો (Image + Caption)
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setExtraImages(prev => [...prev, { src: '', captionGu: '', description: '', photographer: 'Gujarat Post Team' }])}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#B3121B] dark:bg-red-950/40 dark:hover:bg-red-950/60 dark:text-red-400 text-xs font-bold transition border border-red-200/60 dark:border-red-800/40 cursor-pointer shadow-sm"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    + ફોટો ઉમેરો (Add Image)
+                  </button>
+                </div>
+
+                {extraImages.map((extra, eIdx) => (
+                  <div key={eIdx} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-black text-[#B3121B] dark:text-red-400">
+                        ઈમેજ #{eIdx + 2}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== eIdx))}
+                        className="text-xs font-bold text-red-500 hover:text-red-700 p-1"
+                        title="Remove"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="ઈમેજ URL લિંક (https://...)"
+                      value={extra.src}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: val } : item));
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="ઈમેજ શીર્ષક / કેપ્શન (ગુજરાતી)"
+                      value={extra.captionGu}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, captionGu: val } : item));
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
+                    />
+
+                    <textarea
+                      rows={2}
+                      placeholder="ઈમેજ વર્ણન / વિગતો (Description text under image)"
+                      value={extra.description}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
+                      }}
+                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white resize-none"
+                    />
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-zinc-150 dark:border-zinc-850">

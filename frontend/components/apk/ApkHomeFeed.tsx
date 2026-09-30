@@ -19,10 +19,14 @@ function getReelThumbnail(reel: any): string | null {
   const instaMatch = url.match(/instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
   const shortcode = instaMatch?.[1] || '';
 
+  if (shortcode) {
+    return `/api/public/instagram-image?shortcode=${encodeURIComponent(shortcode)}`;
+  }
+
   if (reel.thumbnail?.trim()) {
     const rawThumb = reel.thumbnail.trim();
-    if (rawThumb.includes('instagram') || rawThumb.includes('fbcdn.net') || shortcode) {
-      return `/api/instagram-image?url=${encodeURIComponent(rawThumb)}&shortcode=${shortcode}`;
+    if (rawThumb.includes('instagram') || rawThumb.includes('fbcdn.net')) {
+      return `/api/public/instagram-image?url=${encodeURIComponent(rawThumb)}`;
     }
     return rawThumb;
   }
@@ -32,10 +36,6 @@ function getReelThumbnail(reel: any): string | null {
   const ytId = safeYouTubeId(url);
   if (ytId && ytId !== url && /^[a-zA-Z0-9_-]{11}$/.test(ytId)) {
     return `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
-  }
-
-  if (shortcode) {
-    return `/api/instagram-image?shortcode=${shortcode}`;
   }
 
   if (/\.(jpg|jpeg|png|webp|gif|svg)($|\?)/i.test(url)) {

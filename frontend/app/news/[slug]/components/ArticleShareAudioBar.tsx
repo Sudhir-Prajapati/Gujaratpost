@@ -31,7 +31,7 @@ export default function ArticleShareAudioBar({
   uiLabel,
 }: ArticleShareAudioBarProps) {
   return (
-    <div className="share-row-custom select-none flex flex-wrap gap-3 items-center mb-6 p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm">
+    <div className="share-row-custom select-none flex flex-wrap gap-2.5 items-center mb-3.5 py-2.5 px-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm">
       <span className="lbl font-black text-neutral-900 dark:text-neutral-100 mr-1 text-[14px] tracking-wide uppercase flex items-center gap-1.5 select-none">
         <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-ping" />
         {uiLabel(language, { en: 'Share:', gu: 'શેર કરો:', hi: 'शेयर करें:' })}

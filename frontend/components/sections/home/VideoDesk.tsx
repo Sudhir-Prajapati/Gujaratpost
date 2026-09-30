@@ -50,9 +50,9 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     const scrollStep = () => {
       const el = scrollContainerRef.current;
       if (el && !isShortsPaused.current && !playId) {
-        el.scrollLeft += 0.8;
-        if (el.scrollLeft >= el.scrollWidth / 2) {
-          el.scrollLeft = 0;
+        el.scrollLeft -= 0.8;
+        if (el.scrollLeft <= 0) {
+          el.scrollLeft = el.scrollWidth / 2;
         }
       }
       animId = requestAnimationFrame(scrollStep);
@@ -243,7 +243,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     ];
 
     return (
-      <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
+      <section className="mx-auto max-w-screen-xl px-4 mt-2">
         {/* Red Panel containing only Shorts */}
         <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 py-6 border border-white/10 relative overflow-hidden shadow-lg">
 
@@ -425,7 +425,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
   }
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* ── Red Panel containing Videos ── */}
       <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 pt-5 pb-5 border border-white/10 relative overflow-hidden shadow-lg">
 
@@ -461,6 +461,8 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 src={featuredVideo.thumbnail}
                 alt={featuredVideo.titleGu}
                 fill
+                priority
+                loading="eager"
                 sizes="(max-width: 1024px) 100vw, 60vw"
                 className="object-cover transition-transform duration-300 group-hover:scale-[1.02] animate-in fade-in duration-500"
               />
@@ -582,4 +584,8 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
   );
 }
 export { VideoDesk };
+
+
+
+
 

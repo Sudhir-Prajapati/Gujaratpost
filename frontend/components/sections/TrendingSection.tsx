@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
@@ -106,9 +106,9 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
 
   if (!trending.length) {
     return (
-      <div className="mx-auto max-w-screen-xl px-4 mt-2.5 animate-pulse">
+      <div className="mx-auto max-w-screen-xl px-4 mt-2 animate-pulse">
         {/* Section Header Skeleton */}
-        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
+        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-1 mb-2">
           <div className="h-9 w-32 rounded-lg bg-muted/60" />
           <div className="h-5 w-24 rounded bg-muted/60" />
         </div>
@@ -125,15 +125,15 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
   }
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2.5 select-none">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2 select-none">
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-1 mb-2">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'ટ્રેન્ડિંગ  ન્યૂઝ' : language === 'hi' ? 'ट्रेंडिंग  न्यूज' : 'Trending News'}
         </span>
         <Link
           href="/category/trending"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More News →'}
         </Link>
@@ -213,3 +213,6 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
     </div>
   );
 }
+
+
+

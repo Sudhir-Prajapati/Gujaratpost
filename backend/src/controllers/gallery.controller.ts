@@ -66,6 +66,21 @@ const DEFAULT_5_PHOTOS = [
   },
 ];
 
+export function formatGalleryPhoto(photo: any) {
+  if (!photo) return photo;
+  const p = { ...photo };
+  if (typeof p.src === 'string' && p.src.trim().startsWith('[')) {
+    try {
+      const parsed = JSON.parse(p.src);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        p.images = parsed;
+        p.src = parsed[0]?.src || parsed[0]?.url || (typeof parsed[0] === 'string' ? parsed[0] : p.src);
+      }
+    } catch {}
+  }
+  return p;
+}
+
 export class GalleryController {
   /**
    * Fetch all gallery photos with pagination and search.
@@ -76,7 +91,7 @@ export class GalleryController {
       const limit = Math.max(1, parseInt(req.query.limit as string) || 12);
       const skip = (page - 1) * limit;
 
-      const query = req.query.query as string || '';
+      const query = (req.query.query as string) || '';
 
       const where: any = {};
 
@@ -128,15 +143,16 @@ export class GalleryController {
         total = Math.max(photos.length, total);
       }
 
+      const formattedPhotos = photos.map(formatGalleryPhoto);
       const totalPages = Math.ceil(Math.max(total, 5) / limit);
 
       return sendSuccess(res, {
-        photos,
+        photos: formattedPhotos,
         totalPages,
       }, 'Gallery photos list retrieved successfully.');
     } catch (error) {
       return sendSuccess(res, {
-        photos: DEFAULT_5_PHOTOS,
+        photos: DEFAULT_5_PHOTOS.map(formatGalleryPhoto),
         totalPages: 1,
       }, 'Gallery photos list retrieved with default fallback.');
     }
@@ -186,7 +202,7 @@ export class GalleryController {
         }
       }
 
-      return sendSuccess(res, { photo }, 'Photo retrieved successfully.');
+      return sendSuccess(res, { photo: formatGalleryPhoto(photo) }, 'Photo retrieved successfully.');
     } catch (error) {
       next(error);
     }
@@ -206,17 +222,23 @@ export class GalleryController {
         category,
         photographer,
         copyright,
+        images,
       } = req.body;
 
-      if (!src) {
-        throw new BadRequestError('Source image URL (src) is required.');
+      let finalSrc = (src || '').trim();
+      if (Array.isArray(images) && images.length > 0) {
+        finalSrc = JSON.stringify(images);
+      }
+
+      if (!finalSrc) {
+        throw new BadRequestError('Source image URL (src) or images array is required.');
       }
 
       let photo: any;
       try {
         photo = await (prisma.galleryPhoto as any).create({
           data: {
-            src: src.trim(),
+            src: finalSrc,
             alt: (alt || 'Gujarat Post Gallery').trim(),
             caption: (caption || '').trim(),
             captionGu: (captionGu || caption || '').trim(),
@@ -235,7 +257,7 @@ export class GalleryController {
         });
       }
 
-      return sendSuccess(res, photo, 'Photo added to gallery successfully.', 201);
+      return sendSuccess(res, formatGalleryPhoto(photo), 'Photo added to gallery successfully.', 201);
     } catch (error) {
       next(error);
     }
@@ -257,10 +279,16 @@ export class GalleryController {
         category,
         photographer,
         copyright,
+        images,
       } = req.body;
 
+      let finalSrc = (src || '').trim();
+      if (Array.isArray(images) && images.length > 0) {
+        finalSrc = JSON.stringify(images);
+      }
+
       const photoData = {
-        src: (src || '').trim(),
+        src: finalSrc,
         alt: (alt || 'Gujarat Post Gallery').trim(),
         caption: (caption || '').trim(),
         captionGu: (captionGu || caption || '').trim(),
@@ -288,7 +316,7 @@ export class GalleryController {
         };
       }
 
-      return sendSuccess(res, updated, 'Photo details updated successfully.');
+      return sendSuccess(res, formatGalleryPhoto(updated), 'Photo details updated successfully.');
     } catch (error) {
       next(error);
     }

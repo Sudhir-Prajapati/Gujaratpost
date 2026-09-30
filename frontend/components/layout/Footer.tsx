@@ -9,7 +9,7 @@ import { SOCIAL_LINKS, SocialIcon } from '@/components/ui/SocialLinks';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import { useApp } from '@/components/AppProvider';
-import gpLogo from '../../public/logo.png';
+import gpLogo from '../../public/gujaratpostLogo.png';
 
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
 const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
@@ -97,7 +97,6 @@ const topics3Links = [
 ];
 
 const companyLinks = [
-    { label: 'Support Us', href: '#support', isSupport: true },
     { label: 'About Us', href: '/about' },
     { label: 'Contact Us', href: '/contact' },
     { label: 'Advertise With Us', href: '/advertise' },
@@ -113,32 +112,33 @@ const companyLinks = [
 function NavColumn({ title, links, titleHref, onSupportClick }: { title: string; links: { label: string; href: string; isSupport?: boolean }[]; titleHref?: string; onSupportClick?: () => void }) {
     return (
         <div>
-            <div className="mb-2">
+            <div className="mb-3">
                 {titleHref ? (
-                    <Link href={titleHref} className="text-white font-extrabold text-[15px] leading-tight tracking-tight hover:text-slate-300 transition-colors uppercase">
+                    <Link href={titleHref} className="text-white font-extrabold text-[17px] leading-tight tracking-tight hover:text-slate-300 transition-colors uppercase">
                         {title}
                     </Link>
                 ) : (
-                    <h3 className="text-white font-extrabold text-[15px] leading-tight tracking-tight uppercase">{title}</h3>
+                    <h3 className="text-white font-extrabold text-[17px] leading-tight tracking-tight uppercase">{title}</h3>
                 )}
             </div>
-            <ul className="space-y-1.5">
+            <ul className="space-y-2">
                 {links.map((item) => (
-                    <li key={item.label}>
+                    <li key={item.label} className="overflow-hidden">
                         {item.isSupport ? (
                             <button
                                 type="button"
                                 onClick={onSupportClick}
-                                className="text-[13px] font-black text-rose-400 hover:text-rose-300 transition-colors duration-150 flex items-center gap-1 leading-snug cursor-pointer"
+                                className="group text-[15px] font-black text-rose-400 hover:text-rose-300 transition-all duration-200 flex items-center gap-1.5 leading-snug cursor-pointer hover:translate-x-1.5 hover:scale-[1.06] origin-left"
                             >
-                                <Heart className="h-3 w-3 fill-current" />
+                                <Heart className="h-3.5 w-3.5 fill-current group-hover:scale-110 transition-transform duration-200" />
                                 <span>{item.label}</span>
                             </button>
                         ) : (
                             <Link
                                 href={item.href}
-                                className="text-[13px] font-semibold text-slate-300 hover:text-white transition-colors duration-150 block leading-snug"
+                                className="group text-[15px] font-semibold text-slate-300 hover:text-white transition-all duration-200 block leading-snug hover:translate-x-1.5 hover:scale-[1.06] origin-left relative pl-0 hover:pl-2"
                             >
+                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 group-hover:w-1 h-3.5 bg-red-500 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100" />
                                 {item.label}
                             </Link>
                         )}
@@ -196,14 +196,14 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
                         {/* Logo */}
                         <Link href="/" className="logo-3d group relative flex shrink-0 items-center">
-                            <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white border-0 shadow-none ring-0 transition-all duration-300">
+                            <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-transparent border-0 shadow-none ring-0 transition-all duration-300">
                                 <Image
                                     src={gpLogo}
                                     alt="Gujarat Post"
                                     fill
                                     priority
                                     sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
-                                    className="object-contain scale-[4.0]"
+                                    className="object-contain scale-[4.0] [mix-blend-mode:screen]"
                                 />
                             </div>
                         </Link>
@@ -211,7 +211,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         <button
                             type="button"
                             onClick={openSupportModal}
-                            className="mt-2.5 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-red-900/30 hover:scale-[1.02] active:scale-95 transition cursor-pointer border border-red-500/30 max-w-[210px]"
+                            className="mt-2.5 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-red-900/30 hover:scale-[1.02] active:scale-95 transition cursor-pointer border border-red-500/30 w-28 sm:w-44 lg:w-56"
                         >
                             <Heart className="h-4 w-4 fill-current animate-pulse text-white" />
                             <span>{language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}</span>
@@ -288,12 +288,12 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             href="https://apps.apple.com"
                             target="_blank"
                             rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-xl bg-white px-4 py-2 text-black border border-white hover:bg-slate-100 transition-all duration-300 hover:scale-105 shadow-md"
+                            className="group flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
                         >
-                            <AppleIcon className="h-6 w-6 text-black transition-transform duration-300 group-hover:scale-110" />
+                            <AppleIcon className="h-6 w-6 text-white transition-transform duration-300 group-hover:scale-110" />
                             <div className="leading-tight text-left" translate="no">
-                                <span className="block text-[9px] text-black font-extrabold uppercase tracking-tight">Download on the</span>
-                                <span className="block text-[14px] font-black text-black tracking-tight">App Store</span>
+                                <span className="block text-[9px] text-zinc-400 font-extrabold uppercase tracking-tight">Download on the</span>
+                                <span className="block text-[14px] font-black text-white tracking-tight">App Store</span>
                             </div>
                         </a>
 
@@ -302,12 +302,12 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             href="https://play.google.com"
                             target="_blank"
                             rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-xl bg-white px-4 py-2 text-black border border-white hover:bg-slate-100 transition-all duration-300 hover:scale-105 shadow-md"
+                            className="group flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
                         >
                             <PlayStoreIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
                             <div className="leading-tight text-left" translate="no">
-                                <span className="block text-[9px] text-black font-extrabold uppercase tracking-tight">GET IT ON</span>
-                                <span className="block text-[14px] font-black text-black tracking-tight">Google Play</span>
+                                <span className="block text-[9px] text-zinc-400 font-extrabold uppercase tracking-tight">Get it on</span>
+                                <span className="block text-[14px] font-black text-white tracking-tight">Google Play</span>
                             </div>
                         </a>
                     </div>

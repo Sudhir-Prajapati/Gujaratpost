@@ -10,6 +10,7 @@ import { useIsApk } from '@/lib/useIsApk';
 import ApkHeader from '@/components/apk/ApkHeader';
 import ApkBottomNav from '@/components/apk/ApkBottomNav';
 
+import { useEffect } from 'react';
 import { useApp } from '@/components/AppProvider';
 
 interface Props {
@@ -20,6 +21,34 @@ export default function MainLayoutWrapper({ children }: Props) {
   const pathname = usePathname();
   const { isApk } = useIsApk();
   const { apkTheme } = useApp();
+
+  // Gracefully handle ChunkLoadError from HMR / dynamic chunk invalidations
+  useEffect(() => {
+    const handleChunkError = (e: ErrorEvent | PromiseRejectionEvent) => {
+      const error = 'reason' in e ? e.reason : e.error;
+      const msg = error?.message || (typeof error === 'string' ? error : '');
+      const name = error?.name || '';
+      if (
+        name === 'ChunkLoadError' ||
+        msg.includes('ChunkLoadError') ||
+        msg.includes('Failed to load chunk')
+      ) {
+        const storageKey = 'gp_last_chunk_reload';
+        const lastReload = parseInt(sessionStorage.getItem(storageKey) || '0', 10);
+        if (Date.now() - lastReload > 8000) {
+          sessionStorage.setItem(storageKey, String(Date.now()));
+          window.location.reload();
+        }
+      }
+    };
+
+    window.addEventListener('error', handleChunkError);
+    window.addEventListener('unhandledrejection', handleChunkError);
+    return () => {
+      window.removeEventListener('error', handleChunkError);
+      window.removeEventListener('unhandledrejection', handleChunkError);
+    };
+  }, []);
 
   // Admin and login pages manage their own layout — skip all frontend chrome
   if (pathname === '/login' || pathname.startsWith('/admin')) {

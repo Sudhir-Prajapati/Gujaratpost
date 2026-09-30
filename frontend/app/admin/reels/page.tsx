@@ -35,16 +35,16 @@ export function getAdminReelThumbnail(reel: ReelData): string | null {
   const instaMatch = url.match(/instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
   const shortcode = instaMatch?.[1] || '';
 
-  if (reel.thumbnail?.trim()) {
-    const rawThumb = reel.thumbnail.trim();
-    if (rawThumb.includes('instagram') || rawThumb.includes('fbcdn.net') || shortcode) {
-      return `/api/instagram-image?url=${encodeURIComponent(rawThumb)}&shortcode=${shortcode}`;
-    }
-    return rawThumb;
+  if (shortcode) {
+    return `/api/public/instagram-image?shortcode=${encodeURIComponent(shortcode)}`;
   }
 
-  if (shortcode) {
-    return `/api/instagram-image?shortcode=${shortcode}`;
+  if (reel.thumbnail?.trim()) {
+    const rawThumb = reel.thumbnail.trim();
+    if (rawThumb.includes('instagram') || rawThumb.includes('fbcdn.net')) {
+      return `/api/public/instagram-image?url=${encodeURIComponent(rawThumb)}`;
+    }
+    return rawThumb;
   }
 
   return null;

@@ -144,7 +144,7 @@ export default function ArticleMedia({
     <img
       src={cleanSrc}
       alt={alt}
-      className={`w-full h-full object-cover ${className}`}
+      className={`absolute inset-0 w-full h-full object-cover ${className}`}
       onError={() => setHasError(true)}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}

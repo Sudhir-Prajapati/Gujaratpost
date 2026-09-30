@@ -43,13 +43,11 @@ export default function CrimeSection({
   });
 
   useEffect(() => {
-    if (!initialArticles || initialArticles.length < 3) {
-      getPublicArticles({ categorySlug: 'crime', limit: 25 }).then((crimeRes) => {
-        if (crimeRes && crimeRes.articles && crimeRes.articles.length > 0) {
-          setDbCrimeArticles(crimeRes.articles);
-        }
-      });
-    }
+    getPublicArticles({ categorySlug: 'crime', limit: 25 }).then((crimeRes) => {
+      if (crimeRes && crimeRes.articles && crimeRes.articles.length > 0) {
+        setDbCrimeArticles(crimeRes.articles);
+      }
+    });
     if (!initialWeather) {
       getPublicWeather('ahmedabad').then((wRes) => {
         if (wRes) {
@@ -64,7 +62,7 @@ export default function CrimeSection({
         }
       });
     }
-  }, [initialArticles, initialWeather, initialAstrology]);
+  }, []);
 
   const mockSlides = [
     {
@@ -121,6 +119,7 @@ export default function CrimeSection({
     {
       id: 'l1',
       slug: 'atm-skimming-gang-caught-after-months-of-investigation-96',
+      image: '/assets/demo/7.jpg',
       titleGu: 'વડોદરામાં ATM સ્કીમિંગ ગેંગ ઝડપાઈ! મહિનાઓની તપાસ બાદ ભાંડો ફૂટ્યો',
       title: 'ATM skimming gang caught in Vadodara! Secret busted after months of investigation',
       titleHi: 'वडोदरा में एटीएम स्किमिंग गैंग पकड़ी गई! महीनों की जांच के बाद हुआ खुलासा',
@@ -136,6 +135,7 @@ export default function CrimeSection({
     {
       id: 'l2',
       slug: 'drug-trafficking-route-from-pakistan-via-gujarat-busted-98',
+      image: '/assets/demo/5.jpg',
       titleGu: 'ભાવનગરમાં દારૂનો મોટો જથ્થો ઝડપાયો, ત્રણ આરોપી કબજે',
       title: 'Huge alcohol haul seized in Bhavnagar, three suspects in custody',
       titleHi: 'भावनगर में शराब का बड़ा जहीरा जब्त, तीन आरोपी गिरफ्तार',
@@ -151,6 +151,7 @@ export default function CrimeSection({
     {
       id: 'l3',
       slug: 'land-fraud-case-senior-official-arrested-in-vadodara-97',
+      image: '/assets/demo/6.jpg',
       titleGu: 'જૂનાગઢમાં ઓનલાઇન લોન એપના નામે બ્લેકમેલિંગ! ફરિયાદ નોંધાઈ',
       title: 'Blackmailing in Junagadh in the name of online loan apps! FIR registered',
       titleHi: 'जूनागढ़ में ऑनलाइन लोन ऐप के नाम पर ब्लैकमेलिंग! शिकायत दर्ज',
@@ -165,18 +166,19 @@ export default function CrimeSection({
     },
     {
       id: 'l4',
-      slug: 'land-fraud-case-senior-official-arrested-in-vadodara-97',
-      titleGu: 'જૂનાગઢમાં ઓનલાઇન લોન એપના નામે બ્લેકમેલિંગ! ફરિયાદ નોંધાઈ',
-      title: 'Blackmailing in Junagadh in the name of online loan apps! FIR registered',
-      titleHi: 'जूनागढ़ में ऑनलाइन लोन ऐप के नाम पर ब्लैकमेलिंग! शिकायत दर्ज',
-      relativeTimeGu: '6 કલાક પહેલાં',
-      relativeTime: '6 hours ago',
-      relativeTimeHi: '6 घंटे पहले',
-      categoryGu: 'જૂનાગઢ',
-      category: 'Junagadh',
-      categoryHi: 'जूनागढ़',
-      viewsGu: '90K',
-      views: '90K'
+      slug: 'cyber-crime-case-fraud-network-exposed-99',
+      image: '/assets/demo/4.jpg',
+      titleGu: 'સાયબર ક્રાઇમનો પર્દાફાશ! રાજ્યવ્યાપી કૌભાંડમાં મુખ્ય સૂત્રધાર સકંજામાં',
+      title: 'Cyber crime busted! Mastermind arrested in statewide racket',
+      titleHi: 'साइबर अपराध का पर्दाफाश! राज्यव्यापी गिरोह का सरगना गिरफ्तार',
+      relativeTimeGu: '7 કલાક પહેલાં',
+      relativeTime: '7 hours ago',
+      relativeTimeHi: '7 घंटे પહેલાં',
+      categoryGu: 'રાજકોટ',
+      category: 'Rajkot',
+      categoryHi: 'રાજકોટ',
+      viewsGu: '95K',
+      views: '95K'
     }
   ];
 
@@ -207,14 +209,6 @@ export default function CrimeSection({
           titleGu: 'ભાજપ પ્રદેશ કારોબારીની બેઠકમાં સંગઠન વિસ્તરણ પર મોટી ચર્ચા',
           relativeTimeGu: '3 કલાક પહેલાં',
           viewsGu: '45K'
-        },
-        {
-          id: 'ps1_3',
-          slug: 'aap-claims-ground-level-network-expansion-gujarat-304',
-          image: '/assets/demo/4.jpg',
-          titleGu: 'AAPનો મોટો દાવો! ગ્રામ્ય ગુજરાતમાં ભૂ-સ્તરીય નેટવર્ક વિસ્તાર્યું',
-          relativeTimeGu: '4 કલાક પહેલાં',
-          viewsGu: '38K'
         }
       ]
     },
@@ -244,14 +238,6 @@ export default function CrimeSection({
           titleGu: 'કોંગ્રેસે ખોલ્યા પત્તા! 2027 ચૂંટણી ઝુંબેશ વ્યૂહ જાહેર કર્યો',
           relativeTimeGu: '5 કલાક પહેલાં',
           viewsGu: '50K'
-        },
-        {
-          id: 'ps2_3',
-          slug: 'assembly-monsoon-session-hung-opposition-adjournment-motion-308',
-          image: '/assets/demo/1.jpg',
-          titleGu: 'વિધાનસભા ચોમાસુ સત્રમાં હોબાળો! વિપક્ષે બેરોજગારી મુદ્દે સ્થગન પ્રસ્તાવ આપ્યો',
-          relativeTimeGu: '6 કલાક પહેલાં',
-          viewsGu: '42K'
         }
       ]
     },
@@ -281,14 +267,6 @@ export default function CrimeSection({
           titleGu: 'મતદાર યાદી સુધારણા ઝુંબેશ શરૂ! નાગરિકોને ઓનલાઈન નોંધણીની અપીલ',
           relativeTimeGu: '2 કલાક પહેલાં',
           viewsGu: '41K'
-        },
-        {
-          id: 'ps3_3',
-          slug: 'police-recruitment-10000-vacancies-filled-soon-315',
-          image: '/assets/demo/7.jpg',
-          titleGu: 'યુવાનો માટે મોટી તક! પોલીસ ભરતીમાં 10,000 જગ્યાઓ ટૂંક સમયમાં ભરાશે',
-          relativeTimeGu: '3 કલાક પહેલાં',
-          viewsGu: '55K'
         }
       ]
     }
@@ -359,13 +337,15 @@ export default function CrimeSection({
 
   const rightList = useMemo(() => {
     if (dbCrimeArticles.length > 3) {
-      return dbCrimeArticles.slice(3, 8).map((art) => {
+      return dbCrimeArticles.slice(3, 7).map((art, idx) => {
         const locEn = getLocationLabel(art, 'en') || art.location || art.category || 'Crime';
         const locGu = getLocationLabel(art, 'gu') || (art as any).locationGu || art.categoryGu || art.category || 'કાઇમ';
         const locHi = getLocationLabel(art, 'hi') || (art as any).locationHi || art.categoryHi || art.category || 'क्राइम';
         return {
           id: art.id,
           slug: art.slug,
+          image: art.image || (art as any).featuredImage || DEMO_IMAGES[(idx + 4) % DEMO_IMAGES.length],
+          article: art as Article,
           category: locEn,
           categoryGu: locGu,
           categoryHi: locHi,
@@ -379,20 +359,20 @@ export default function CrimeSection({
         };
       });
     }
-    return mockList.map((item) => ({ ...item, clockTime: getMockTime(item.id) }));
+    return mockList.slice(0, 4).map((item) => ({ ...item, article: null as Article | null, clockTime: getMockTime(item.id) }));
   }, [dbCrimeArticles, language]);
 
   const popularColumns = useMemo(() => {
-    const remainingCrime = dbCrimeArticles.length > 8 ? dbCrimeArticles.slice(8) : dbCrimeArticles;
+    const remainingCrime = dbCrimeArticles.length > 7 ? dbCrimeArticles.slice(7) : dbCrimeArticles;
     const list = remainingCrime;
     if (list.length > 0) {
       const cols = [];
       for (let c = 0; c < 3; c++) {
         const featArt = list[c] || list[c % list.length];
         const subs = [];
-        for (let s = 0; s < 3; s++) {
-          const subIdx = 3 + c * 3 + s;
-          const subArt = list[subIdx] || list[(c * 3 + s) % list.length];
+        for (let s = 0; s < 2; s++) {
+          const subIdx = 3 + c * 2 + s;
+          const subArt = list[subIdx] || list[(c * 2 + s) % list.length];
           if (subArt) {
             subs.push({
               id: `${subArt.id}-c${c}-s${s}`,
@@ -447,86 +427,96 @@ export default function CrimeSection({
         </span>
         <Link
           href="/category/crime"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline pb-0.5"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline pb-0.5"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More See →'}
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-[1.15fr_1fr] gap-8 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-[1.12fr_1fr] gap-2.5 md:gap-3 items-stretch">
         {/* Slide Carousel */}
         {currentSlide && (
-          <div className="group relative flex flex-col min-w-0 h-full">
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-              <Image
-                src={currentSlide.image}
-                alt={currentSlide.titleGu}
-                fill
-                sizes="(max-width: 768px) 100vw, 40vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
-              />
-              <button
-                type="button"
-                onClick={() => setSlideIdx((prev) => (prev - 1 + slides.length) % slides.length)}
-                className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/60 hover:bg-[#B3121B] hover:border-[#B3121B] text-white transition-all duration-200 shadow-md backdrop-blur-md z-10 cursor-pointer select-none"
-                aria-label="Previous slide"
-              >
-                <ChevronLeft className="h-5 w-5 stroke-[3px] text-white" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setSlideIdx((prev) => (prev + 1) % slides.length)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/60 hover:bg-[#B3121B] hover:border-[#B3121B] text-white transition-all duration-200 shadow-md backdrop-blur-md z-10 cursor-pointer select-none"
-                aria-label="Next slide"
-              >
-                <ChevronRight className="h-5 w-5 stroke-[3px] text-white" />
-              </button>
-              <span className="absolute top-2.5 left-2.5 bg-black/70 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-sm z-10 select-none">
-                {language === 'gu'
-                  ? `${toGuLocal((slideIdx % slides.length) + 1)} / ${toGuLocal(slides.length)}`
-                  : `${(slideIdx % slides.length) + 1} / ${slides.length}`}
-              </span>
+          <div className="group relative flex flex-col justify-between min-w-0 h-full">
+            <div>
+              <div className="relative aspect-[16/9.5] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <Image
+                  src={currentSlide.image}
+                  alt={currentSlide.titleGu}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 40vw"
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSlideIdx((prev) => (prev - 1 + slides.length) % slides.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/60 hover:bg-[#B3121B] hover:border-[#B3121B] text-white transition-all duration-200 shadow-md backdrop-blur-md z-10 cursor-pointer select-none"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="h-5 w-5 stroke-[3px] text-white" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSlideIdx((prev) => (prev + 1) % slides.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/60 hover:bg-[#B3121B] hover:border-[#B3121B] text-white transition-all duration-200 shadow-md backdrop-blur-md z-10 cursor-pointer select-none"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="h-5 w-5 stroke-[3px] text-white" />
+                </button>
+                <span className="absolute top-2.5 left-2.5 bg-black/70 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-sm z-10 select-none">
+                  {language === 'gu'
+                    ? `${toGuLocal((slideIdx % slides.length) + 1)} / ${toGuLocal(slides.length)}`
+                    : `${(slideIdx % slides.length) + 1} / ${slides.length}`}
+                </span>
+              </div>
             </div>
 
-            <div className="mt-3.5 flex flex-col flex-1 justify-between">
-              <div>
-                <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1 select-none uppercase tracking-wide">
-                  {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
-                </span>
-                <Link href={`/news/${currentSlide.slug}`} className="group/link flex flex-col justify-start">
-                  <h3 className="font-extrabold text-[15.5px] md:text-[17px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-3">
-                    {currentSlide.article
-                      ? <AutoArticleTitle article={currentSlide.article} language={language} />
-                      : <AutoTranslateString text={currentSlide.titleGu} language={language} />}
-                  </h3>
-                </Link>
-              </div>
+            <div className="mt-2.5 flex flex-col justify-start">
+              <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1 select-none uppercase tracking-wide leading-none">
+                {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
+              </span>
+              <Link href={`/news/${currentSlide.slug}`} className="group/link flex flex-col justify-start">
+                <h3 className="font-extrabold text-[15px] md:text-[16.5px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-2">
+                  {currentSlide.article
+                    ? <AutoArticleTitle article={currentSlide.article} language={language} />
+                    : <AutoTranslateString text={currentSlide.titleGu} language={language} />}
+                </h3>
+              </Link>
             </div>
           </div>
         )}
 
-        {/* List side updates (Text lists only, no images, matching the screen!) */}
-        <div className="flex flex-col min-w-0 md:border-l md:border-border/60 md:pl-6 gap-0">
-
+        {/* Right side 4 articles with images matching slider height */}
+        <div className="flex flex-col justify-between min-w-0 md:border-l md:border-border/60 md:pl-2.5 divide-y divide-border/40 h-full">
           {rightList.map((item, idx) => (
             <Link
               key={`${item.id}-${idx}`}
               href={`/news/${item.slug}`}
-              className="group flex flex-col py-2 border-b border-border/40 last:border-b-0"
+              className="group flex items-center gap-3 py-1.5 md:py-2 first:pt-0 last:pb-0"
             >
-              <span className="text-red-600 font-extrabold text-[11px] uppercase tracking-wide mb-0.5">
-                {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
-              </span>
-              <h4 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                {getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
-              </h4>
+              <div className="relative aspect-[16/10] w-24 sm:w-[108px] shrink-0 overflow-hidden rounded-sm border border-border/15 bg-muted">
+                <ArticleMedia
+                  src={item.image}
+                  alt={item.titleGu || item.title}
+                  className="transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-red-600 font-extrabold text-[10.5px] md:text-[11px] uppercase tracking-wide mb-0.5 leading-none">
+                  {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
+                </span>
+                <h4 className="text-[13px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                  {item.article
+                    ? <AutoArticleTitle article={item.article} language={language} />
+                    : (getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi }))}
+                </h4>
+              </div>
             </Link>
           ))}
         </div>
       </div>
 
       {/* 3-Column Popular Stories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/40 pt-5 mt-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/40 pt-2 md:pt-2.5 mt-1.5 md:mt-2">
         {popularColumns.map((col) => (
           <div key={col.colId} className="flex flex-col min-w-0">
             <Link
@@ -546,7 +536,7 @@ export default function CrimeSection({
             </Link>
 
             <div className="flex flex-col divide-y divide-border/40 border-t border-border/40 mt-1">
-              {col.subs.slice(0, 3).map((sub, sIdx) => (
+              {col.subs.slice(0, 2).map((sub, sIdx) => (
                 <Link
                   key={`${col.colId}-${sub.id}-${sIdx}`}
                   href={`/news/${sub.slug}`}
@@ -623,32 +613,17 @@ export default function CrimeSection({
         </div>
       </div>
 
-      {/* WhatsApp Channel widget */}
-      <div className="w-full rounded-sm border border-[#16794A] bg-card p-5 shadow-sm">
-        <div className="flex items-center gap-2.5 font-black text-[14.5px] text-foreground">
-          <span className="flex h-7.5 w-7.5 items-center justify-center rounded-sm bg-[#16794A] text-white text-[15px] font-bold select-none">
-            💬
-          </span>
-          <span>{language === 'gu' ? 'WhatsApp ચેનલ' : 'WhatsApp Channel'}</span>
-        </div>
-        <p className="text-[12px] text-muted-foreground leading-relaxed my-3 font-semibold">
-          {language === 'gu' ? 'બ્રેકિંગ ન્યૂઝ સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.' : 'Get breaking news first directly on your phone.'}
-        </p>
-        <button className="w-full bg-[#16794A] hover:bg-[#12613b] text-white font-extrabold text-[12.5px] py-2.5 rounded-sm active:scale-[0.99] transition-all cursor-pointer">
-          {language === 'gu' ? 'ચેનલ ફોલો કરો' : 'Follow Channel'}
-        </button>
-      </div>
 
       {/* Today's Horoscope Widget */}
       <div>
-        <div className="flex items-center justify-between border-b border-border pb-2 mb-3">
-          <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] flex items-center gap-1.5">
+        <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2.5">
+          <span className="text-[#B3121B] font-black text-[15px] md:text-[15.5px] flex items-center gap-1.5">
             <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
             {language === 'gu' ? '• આજનું રાશિફળ' : language === 'hi' ? '• आज का राशिफल' : '• Today\'s Horoscope'}
           </span>
         </div>
-        <div className="border border-purple-500/20 dark:border-purple-500/30 rounded-xl bg-card p-2 sm:p-2.5 shadow-sm">
-          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+        <div className="border border-purple-500/20 dark:border-purple-500/30 rounded-xl bg-card p-1.5 sm:p-2 shadow-sm">
+          <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
             {astrologySigns.map((sign) => {
               const isSelected = selectedZodiac?.id === sign.id;
               const letters = (sign as any).lettersGu ? `(${(sign as any).lettersGu})` : GUJARAT_ZODIAC_LETTERS[sign.id] || `(${sign.name})`;
@@ -659,24 +634,24 @@ export default function CrimeSection({
                 <div
                   key={sign.id}
                   onClick={() => setSelectedZodiac(sign)}
-                  className={`relative flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden ${isSelected
+                  className={`relative flex flex-col items-center justify-center py-1 px-0.5 sm:py-1.5 sm:px-1 rounded-lg border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden ${isSelected
                       ? 'bg-[#FFF8F0] dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 shadow-xs'
                       : 'bg-background hover:bg-amber-50/50 dark:hover:bg-amber-950/20 border-border/60 hover:border-amber-300/60'
                     }`}
                 >
                   {/* SVG Illustration Icon */}
-                  <div className="relative flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center mb-1 select-none">
-                    <ZodiacIcon id={sign.id} className="h-7 w-7 sm:h-8 sm:w-8" />
+                  <div className="relative flex h-7 w-7 sm:h-7.5 sm:w-7.5 items-center justify-center mb-0.5 select-none">
+                    <ZodiacIcon id={sign.id} className="h-6 w-6 sm:h-6.5 sm:w-6.5" />
                   </div>
 
                   {/* Gujarati Name */}
-                  <span className={`text-[12px] sm:text-[12.5px] font-black leading-tight select-none ${isSelected ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
+                  <span className={`text-[13.5px] sm:text-[14.5px] font-black leading-tight select-none ${isSelected ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
                     }`}>
                     {primaryName}
                   </span>
 
                   {/* Gujarati Initial Letters (અ, લ, ઈ) */}
-                  <span className={`text-[9.5px] sm:text-[10px] font-semibold leading-tight select-none mt-0.5 ${isSelected ? 'text-amber-600 dark:text-amber-300 font-bold' : 'text-muted-foreground'
+                  <span className={`text-[10.5px] sm:text-[11px] font-bold leading-tight select-none mt-0.5 ${isSelected ? 'text-amber-600 dark:text-amber-300 font-extrabold' : 'text-muted-foreground'
                     }`}>
                     {subName}
                   </span>
@@ -712,7 +687,7 @@ export default function CrimeSection({
   }
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 border-t border-border pt-3.5">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2 border-t border-border pt-2">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
         {leftContent}
         {sidebarContent}
@@ -722,4 +697,8 @@ export default function CrimeSection({
   );
 }
 export { CrimeSection };
+
+
+
+
 

@@ -51,7 +51,7 @@ export default function ArticleInfiniteStream({
   sidebarRecommendedPool,
 }: ArticleInfiniteStreamProps) {
   return (
-    <div className="article-grid mt-8 border-t border-neutral-200 dark:border-neutral-800 !pt-8" suppressHydrationWarning>
+    <div className="article-grid mt-3.5 border-t border-neutral-200 dark:border-neutral-800 !pt-3.5" suppressHydrationWarning>
       <article className="article-stream-container select-none w-full" suppressHydrationWarning>
         <div className="space-y-5" suppressHydrationWarning>
           {mounted && (() => {
@@ -231,7 +231,7 @@ export default function ArticleInfiniteStream({
                             <Link
                               key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
                               href={`/news/${raArt.slug}`}
-                              className="group flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 hover:border-[#B3121B]/30 hover:shadow-[0_4px_20px_rgba(179,18,27,0.1)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.15)] hover:-translate-y-0.5 transition-all duration-300 text-left"
+                              className="group flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-neutral-900 border border-[#B3121B]/40 dark:border-neutral-700 shadow-sm hover:border-[#B3121B] hover:shadow-[0_4px_20px_rgba(179,18,27,0.16)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.25)] hover:-translate-y-0.5 transition-all duration-300 text-left"
                             >
                               {/* Thumbnail Image */}
                               <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
@@ -293,7 +293,7 @@ export default function ArticleInfiniteStream({
                 <span className="block w-[3px] h-3.5 rounded-full bg-[#B3121B]/40"></span>
               </div>
               <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
-                {uiLabel(language, { en: 'Read Also', gu: 'આ પણ વાંચો', hi: 'યહ ભી પઢ઼ેં' })}
+                {uiLabel(language, { en: 'Read Also', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
               </h4>
               <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
             </div>
@@ -304,7 +304,7 @@ export default function ArticleInfiniteStream({
                   <Link
                     key={`bottom-ra-${raArt.id}-${index}`}
                     href={`/news/${raArt.slug}`}
-                    className="group flex gap-3 p-3 rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 hover:border-[#B3121B]/30 hover:shadow-[0_4px_20px_rgba(179,18,27,0.1)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.15)] hover:-translate-y-0.5 transition-all duration-300 items-start text-left"
+                    className="group flex gap-3 p-3 rounded-xl border border-[#B3121B]/40 dark:border-neutral-700 shadow-sm bg-white dark:bg-neutral-900 hover:border-[#B3121B] hover:shadow-[0_4px_20px_rgba(179,18,27,0.16)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.25)] hover:-translate-y-0.5 transition-all duration-300 items-start text-left"
                   >
                     <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
                       <Image
@@ -323,6 +323,8 @@ export default function ArticleInfiniteStream({
                         <AutoArticleTitle article={raArt} language={language} />
                       </p>
                     </div>
+                    {/* Arrow indicator */}
+                    <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] transition-colors duration-200 text-sm">→</span>
                   </Link>
                 );
               })}
@@ -351,10 +353,10 @@ export default function ArticleInfiniteStream({
         {/* Heading and recommended stories stick together below header */}
         <div className="wtitle mb-3">
           <span className="d"></span>
-          <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'આપકે લિએ અનુશંસિત' })}</span>
+          <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
         </div>
         <div className="space-y-0">
-          {sidebarRecommendedPool.slice(0, 4).map((item, index) => {
+          {sidebarRecommendedPool.slice(0, 6).map((item, index) => {
             const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
             return (
               <Link key={item.id} href={`/news/${item.slug}`} className="s-compact hover:opacity-85 transition-opacity">

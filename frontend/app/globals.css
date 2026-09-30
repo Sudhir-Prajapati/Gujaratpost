@@ -2175,7 +2175,7 @@ html[data-theme="dark"] .share-x {
 }
 
 .article-fig {
-  margin: 0 0 24px;
+  margin: 0 0 12px;
 }
 
 .article-fig .imgwrap {
@@ -2188,7 +2188,7 @@ html[data-theme="dark"] .share-x {
 .article-fig figcaption {
   font-size: 12px;
   color: var(--ink-3);
-  margin-top: 9px;
+  margin-top: 6px;
   display: flex;
   justify-content: space-between;
   gap: 12px;
@@ -2203,7 +2203,7 @@ html[data-theme="dark"] .share-x {
 }
 
 .article-body p {
-  margin: 0 0 22px;
+  margin: 0 0 10px;
   text-align: justify;
   text-justify: inter-word;
 }

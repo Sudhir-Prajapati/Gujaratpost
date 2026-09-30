@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Play, Video as VideoIcon } from 'lucide-react';
+import { Eye, Play, Video as VideoIcon, ChevronDown } from 'lucide-react';
 import { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import {
@@ -136,7 +136,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     return (art as any).views || formatViews(art.views);
   };
 
-  /* Most-read = Top 6 articles published/updated within current running month (last 30 days) sorted by views */
+  /* Most-read = Top 7 articles published/updated within current running month (last 30 days) sorted by views */
   const mostReadToDisplay = useMemo(() => {
     const all = articles || [];
     if (all.length === 0) return [];
@@ -149,8 +149,18 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
       return !isNaN(artTime) && artTime > 0 && (now - artTime) <= THIRTY_DAYS_MS;
     });
 
-    const pool = currentMonthArticles.length > 0 ? currentMonthArticles : all;
-    return [...pool].sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 7);
+    const recentSorted = [...currentMonthArticles].sort((a, b) => (b.views || 0) - (a.views || 0));
+
+    // If fewer than 7 recent articles, fill remaining from full pool
+    if (recentSorted.length < 7) {
+      const usedIds = new Set(recentSorted.map((a) => a.id));
+      const extras = [...all]
+        .filter((a) => !usedIds.has(a.id))
+        .sort((a, b) => (b.views || 0) - (a.views || 0));
+      return [...recentSorted, ...extras].slice(0, 7);
+    }
+
+    return recentSorted.slice(0, 7);
   }, [articles]);
 
   const getArticleTimeMs = (art: Article) => {
@@ -386,10 +396,10 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="mx-auto max-w-screen-xl px-4 py-6">
+      <div className="mx-auto max-w-screen-xl px-4 py-2">
 
         {/* ── TOP ROW: Category name ─────────────────────────────── */}
-        <div className="flex items-center justify-between border-b border-border pb-3 mb-5">
+        <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2">
           <div className="flex items-center gap-3">
             <span className="w-1.5 h-7 bg-accent rounded-sm inline-block" />
             <h1 className="text-2xl font-black text-foreground">{categoryName}</h1>
@@ -397,7 +407,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         </div>
 
         {/* ── FILTER TABS (3 Options: Badhu, Taja Samachar, Video) ────── */}
-        <div className="flex gap-2 flex-wrap mb-6">
+        <div className="flex gap-2 flex-wrap mb-2">
           {tabs.map((tab) => (
             <button
               key={tab.id}
@@ -580,8 +590,8 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         </div>
 
         {/* POPULAR ARTICLES GRID */}
-        <div className="mt-10">
-          <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-border">
+        <div className="mt-1">
+          <div className="flex items-center gap-2.5 mb-1 pb-1 border-b border-border">
             <span className="w-2 h-2 bg-accent rotate-45 shrink-0 inline-block" />
             <span className="text-base font-black text-foreground">
               {getLocalized(language, { en: 'Popular News', gu: 'લોકપ્રિય સમાચાર', hi: 'लोकप्रिय समाचार' })}
@@ -596,12 +606,16 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
 
           {/* Load More */}
           {visibleCount < popularArticles.length && (
-            <div className="mt-10 flex justify-center">
+            <div className="mt-6 flex justify-center">
               <button
+                type="button"
                 onClick={() => setVisibleCount((v) => v + 9)}
-                className="rounded border border-accent px-10 py-3 text-sm font-black text-accent hover:bg-accent hover:text-white transition cursor-pointer"
+                className="group inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-2.5 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
               >
-                {getLocalized(language, { en: 'Load More', gu: 'વધુ લોડ કરો', hi: 'और लोड करें' })}
+                <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                  {getLocalized(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'और देखें' })}
+                </span>
+                <ChevronDown className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[2.5]" />
               </button>
             </div>
           )}

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -58,12 +58,12 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
     bgColor: string;
     textColor: string;
   }>>([
-    { symbol: '$', code: 'USD', pair: 'USD/INR', nameEn: 'US Dollar', nameGu: 'યુએસ ડોલર', nameHi: 'यूएस डॉलर', rate: 86.85, change: 0.12, bgColor: 'bg-green-500/10', textColor: 'text-green-600' },
+    { symbol: '$', code: 'USD', pair: 'USD/INR', nameEn: 'US Dollar', nameGu: 'યુએસ ડૉલર', nameHi: 'यूएस डॉलर', rate: 86.85, change: 0.12, bgColor: 'bg-green-500/10', textColor: 'text-green-600' },
     { symbol: '€', code: 'EUR', pair: 'EUR/INR', nameEn: 'Euro', nameGu: 'યુરો', nameHi: 'यूरो', rate: 90.45, change: -0.20, bgColor: 'bg-blue-500/10', textColor: 'text-blue-600' },
     { symbol: 'د.إ', code: 'AED', pair: 'AED/INR', nameEn: 'UAE Dirham', nameGu: 'યુએઈ દિરહામ', nameHi: 'યુએઈ દિરહામ', rate: 23.64, change: -0.05, bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-600' },
-    { symbol: 'A$', code: 'AUD', pair: 'AUD/INR', nameEn: 'Australian Dollar', nameGu: 'ઓસ્ટ્રેલિયન ડોલર', nameHi: 'ऑस्ट्रेलियन डॉलर', rate: 55.48, change: 0.03, bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-600' },
+    { symbol: 'A$', code: 'AUD', pair: 'AUD/INR', nameEn: 'Australian Dollar', nameGu: 'ઑસ્ટ્રેલિયન ડૉલર', nameHi: 'ऑस्ट्रेलियन डॉलर', rate: 55.48, change: 0.03, bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-600' },
     { symbol: '£', code: 'GBP', pair: 'GBP/INR', nameEn: 'British Pound', nameGu: 'બ્રિટિશ પાઉન્ડ', nameHi: 'ब्रिटिश पाउंड', rate: 108.78, change: 0.00, bgColor: 'bg-amber-500/10', textColor: 'text-amber-600' },
-    { symbol: 'C$', code: 'CAD', pair: 'CAD/INR', nameEn: 'Canadian Dollar', nameGu: 'કેનેડિયન ડોલર', nameHi: 'कनाडाई डॉलर', rate: 61.20, change: 0.08, bgColor: 'bg-red-500/10', textColor: 'text-red-600' },
+    { symbol: 'C$', code: 'CAD', pair: 'CAD/INR', nameEn: 'Canadian Dollar', nameGu: 'કેનેડિયન ડૉલર', nameHi: 'कनाडाई डॉलर', rate: 61.20, change: 0.08, bgColor: 'bg-red-500/10', textColor: 'text-red-600' },
   ]);
 
   const [lastUpdated, setLastUpdated] = useState<string>('Live');
@@ -104,35 +104,35 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between pb-1 mb-2 select-none border-b border-border/80">
-        <span className="text-[#B3121B] font-extrabold text-[14px] md:text-[15px]">
+      <div className="flex items-center justify-between pb-1.5 mb-2 select-none border-b border-border/80">
+        <span className="text-[#B3121B] font-extrabold text-[15px] md:text-[16px]">
           {language === 'gu' ? '• વિદેશી ચલણ' : language === 'hi' ? '• विदेशी मुद्रा' : '• Foreign Exchange'}
         </span>
-        <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+        <span className="text-[11px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>Live {lastUpdated}</span>
         </span>
       </div>
-      <div className="border border-border/80 rounded-sm bg-card divide-y divide-border/60 shadow-sm">
+      <div className="border border-border/80 rounded-sm bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
         {rates.map((item) => {
           const name = language === 'gu' ? item.nameGu : language === 'hi' ? item.nameHi : item.nameEn;
           const isUp = item.change > 0;
           const isDown = item.change < 0;
 
           return (
-            <div key={item.code} className="flex items-center justify-between p-2.5 px-3 hover:bg-muted/30 transition-colors">
-              <div className="flex items-center gap-2.5">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-full ${item.bgColor} ${item.textColor} font-extrabold text-[12px] select-none shrink-0`}>
+            <div key={item.code} className="flex items-center justify-between py-1.5 px-3 hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`flex h-7 w-7 items-center justify-center rounded-full ${item.bgColor} ${item.textColor} font-black text-[13px] select-none shrink-0`}>
                   {item.symbol}
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-[12px] font-black text-foreground">{name}</span>
-                  <span className="text-[9px] text-muted-foreground font-semibold uppercase leading-none mt-0.5">{item.pair}</span>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[14px] md:text-[15px] font-black leading-tight text-foreground truncate">{name}</span>
+                  <span className="text-[10px] md:text-[10.5px] text-muted-foreground font-bold uppercase leading-none mt-0.5">{item.pair}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-[13px] font-black text-foreground">₹{item.rate.toFixed(2)}</span>
-                <span className={`text-[10.5px] font-black tracking-tight select-none ${isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-muted-foreground'}`}>
+              <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
+                <span className="text-[15.5px] md:text-[16.5px] font-black text-foreground tracking-tight">₹{item.rate.toFixed(2)}</span>
+                <span className={`text-[12px] md:text-[13px] font-black tracking-tight select-none min-w-[56px] text-right ${isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-muted-foreground'}`}>
                   {isUp ? `▲ +${item.change.toFixed(2)}` : isDown ? `▼ ${item.change.toFixed(2)}` : '— Stable'}
                 </span>
               </div>
@@ -296,7 +296,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
   }, [dbWorldArticles, language]);
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
@@ -304,7 +304,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         </span>
         <Link
           href="/category/world"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More News →'}
         </Link>
@@ -408,4 +408,8 @@ export default function WorldSection({ language, initialArticles }: { language: 
   );
 }
 export { WorldSection };
+
+
+
+
 

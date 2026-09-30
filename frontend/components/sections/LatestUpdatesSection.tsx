@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -289,7 +289,7 @@ export default function LatestUpdatesSection({
           </span>
           <Link
             href="/category/trending"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
           >
             {language === 'gu' ? 'વધુ જુઓ →' : 'View All →'}
           </Link>
@@ -377,7 +377,7 @@ export default function LatestUpdatesSection({
       {/* ── 2. E-PAPER WIDGET (ઈ-પેપર) ── */}
       <Link
         href="/epaper"
-        className="group flex items-center justify-between p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-xs hover:shadow-md transition cursor-pointer"
+        className="group flex items-center justify-between p-3.5 rounded-xl border border-[#e9c3c7] dark:border-zinc-700 bg-gradient-to-r from-white to-[#fff8f8] dark:from-zinc-900 dark:to-zinc-900/90 shadow-[0_2px_7px_rgba(179,18,27,0.08)] hover:border-[#B3121B]/75 hover:shadow-[0_5px_14px_rgba(179,18,27,0.14)] transition-all duration-200 cursor-pointer"
       >
         <div className="flex items-center gap-3">
           <span className="bg-[#B3121B] text-white text-[11px] font-extrabold px-2.5 py-1 rounded-md shadow-xs">
@@ -422,3 +422,5 @@ export default function LatestUpdatesSection({
     </section>
   );
 }
+
+

@@ -263,10 +263,10 @@ export default function LiveCenterSection({ language }: { language: Language }) 
       <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-80 h-80 bg-red-500/10 rounded-full blur-[90px] pointer-events-none" />
 
       {/* Container Box */}
-      <div className="relative border border-neutral-200/80 dark:border-neutral-800 bg-[#f8f9fa] dark:bg-slate-900/40 rounded-2xl p-6 shadow-sm">
+      <div className="relative border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 bg-[#f8f9fa] dark:bg-slate-900/40 rounded-2xl p-6 shadow-md">
 
         {/* ── Header Row ──────────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b border-neutral-200/40 dark:border-neutral-800/60 select-none">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 select-none">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="bg-[#B3121B] text-white text-[13px] font-black px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow-sm">
               <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
@@ -466,7 +466,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         </div>
 
         {/* ── Bottom Live Highlights Ticker Bar ───────────────────── */}
-        <div className="mt-6 pt-4 border-t border-neutral-200/40 dark:border-neutral-800/60 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 select-none">
+        <div className="mt-6 pt-4 border-t-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 select-none">
           <div className="flex items-center gap-2 shrink-0">
             <span className="bg-[#B3121B] text-white text-[12px] font-black px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
               <Megaphone className="h-4 w-4" />
@@ -488,7 +488,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           <Link
             href="/live-updates"
-            className="shrink-0 border border-red-200 dark:border-red-900/30 text-[#B3121B] dark:text-red-400 font-black text-[14px] md:text-[15px] rounded-lg px-4 py-1.5 flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+            className="shrink-0 border-2 border-red-200 dark:border-red-900/40 text-[#B3121B] dark:text-red-400 font-black text-[14px] md:text-[15px] rounded-lg px-4 py-1.5 flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-xs"
           >
             {language === 'gu' ? 'વધુ અપડેટસ જુઓ →' : 'View More Updates →'}
           </Link>
@@ -525,4 +525,6 @@ function parseAqi(val: number) {
 }
 
 export { LiveCenterSection };
+
+
 

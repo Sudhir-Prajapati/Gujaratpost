@@ -999,14 +999,14 @@ export default function CityHyperlocalSection({
 
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 border-t border-border/60 pt-2.5">
+    <section className="mx-auto max-w-screen-xl px-4 mt-0 border-t border-border/60 pt-0">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
 
         {/* Left Column: Tab list + Carousel & Side list */}
         <div className="flex flex-col min-w-0">
 
           {/* Section Header with Underline */}
-          <div className="relative border-b-2 border-slate-900 pb-2 mb-4 flex items-center justify-between">
+          <div className="relative border-b-2 border-slate-900 pb-0.5 mb-0.5 flex items-center justify-between">
             <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-sm select-none uppercase tracking-wide">
               {language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'गुजरात' : 'Gujarat'}
             </span>
@@ -1019,7 +1019,7 @@ export default function CityHyperlocalSection({
           </div>
 
           {/* Tab Navigation List — dynamically loaded from Admin API */}
-          <div className="flex items-center gap-5 border-b border-border pb-3 mb-2.5 overflow-x-auto scrollbar-none select-none">
+          <div className="flex items-center gap-5 border-b border-border pb-0.5 mb-0.5 overflow-x-auto scrollbar-none select-none">
             {dynamicCityTabs.map((tabObj) => {
               const tab = tabObj.gu;
               const isActive = activeTab === tab;
@@ -1046,8 +1046,8 @@ export default function CityHyperlocalSection({
             {currentSlide && (
               <div className="group relative flex flex-col min-w-0">
                 {/* Image container */}
-                <div className="relative aspect-[16/9] md:aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                  <Link href={`/news/${currentSlide.slug}`} className="block relative w-full h-full cursor-pointer">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                  <Link href={`/news/${currentSlide.slug}`} className="absolute inset-0 cursor-pointer">
                     <ArticleMedia
                       src={currentSlide.image}
                       alt={currentSlide.titleGu}
@@ -1179,7 +1179,7 @@ export default function CityHyperlocalSection({
           />
 
           {/* WhatsApp Channel widget */}
-          <div className="relative w-full overflow-hidden rounded-2xl border-[1.5px] border-emerald-500/25 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] hover:border-emerald-500/40 transition-colors">
+          <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366]">
             {/* Ambient decorative WhatsApp glow */}
             <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
 
@@ -1222,8 +1222,8 @@ export default function CityHyperlocalSection({
           </div>
 
           {/* Trending Topics widget */}
-          <div className="w-full rounded-2xl border-[1.5px] border-slate-300 bg-white p-4 sm:p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:border-slate-700 dark:bg-slate-900">
-            <div className="flex items-center gap-2.5 border-b border-slate-200/90 dark:border-slate-800 pb-3 mb-3.5">
+          <div className="w-full rounded-2xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.10)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_8px_28px_rgba(179,18,27,0.12)] transition-all">
+            <div className="flex items-center gap-2 border-b border-slate-200/90 dark:border-slate-800 pb-2 mb-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
                   <Flame className="h-4.5 w-4.5 fill-[#B3121B] text-[#B3121B]" />
                 </div>
@@ -1234,14 +1234,14 @@ export default function CityHyperlocalSection({
             </div>
 
             <div>
-              <div className="flex flex-wrap gap-2.5">
+              <div className="flex flex-wrap gap-2">
                 {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).map((tag) => {
                   const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                   return (
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-1 border border-slate-200 dark:border-slate-700 text-[12.5px] md:text-[13px] font-black px-3.5 py-1.5 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-md cursor-pointer select-none"
+                      className="group inline-flex items-center gap-1 border-[1.5px] border-slate-300 dark:border-slate-600 text-[12.5px] md:text-[13px] font-black px-3 py-1 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_2px_5px_rgba(15,23,42,0.09)] hover:shadow-md cursor-pointer select-none"
                     >
                       <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />
@@ -1259,4 +1259,8 @@ export default function CityHyperlocalSection({
   );
 }
 export { CityHyperlocalSection };
+
+
+
+
 

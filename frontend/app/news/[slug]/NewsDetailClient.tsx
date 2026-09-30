@@ -5,7 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useIsApk } from '@/lib/useIsApk';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight } from 'lucide-react';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
@@ -43,7 +44,7 @@ const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: st
   return (
     <div
       ref={bodyRef}
-      className="article-body space-y-4 text-base leading-relaxed text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-6"
+      className="article-body text-base leading-relaxed text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4"
     />
   );
 });
@@ -338,7 +339,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
     }
 
     const caption = includeCaption
-? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>તસવીર: ગુજરાત પોસ્ટ</span></figcaption>`
+      ? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>તસવીર: ગુજરાત પોસ્ટ</span></figcaption>`
       : cleanAlt && !isGallery
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
@@ -1107,7 +1108,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       return priorityCatKeywords.some(kw => cat.includes(kw) || kw.includes(cat));
     });
 
-    const poolToUse = stateNationalCandidates.length >= 4 ? stateNationalCandidates : pool;
+    // Combine priority State & National candidates first, filled with other articles from pool
+    const poolToUse = [...stateNationalCandidates, ...pool.filter(cand => !stateNationalCandidates.includes(cand))];
 
     // Group by category to favor category variety in sidebar
     const byCategory = new Map<string, Article>();
@@ -1237,12 +1239,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   return (
     <>
       <ReadingProgressBar />
-      <div className="wrap py-6">
+      <div className="wrap py-2">
         <div key={`${article.id}-${language}`} className="article-grid" suppressHydrationWarning>
           <article suppressHydrationWarning>
             <nav className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium">
               <Link href="/" className="hover:text-[var(--red)] transition-colors">
-                {uiLabel(language, { en: 'Home', gu: 'àª¹à«‹àª®', hi: 'à¤¹à¥‹à¤®' })}
+                {uiLabel(language, { en: 'Home', gu: 'હોમ', hi: 'होम' })}
               </Link>
               <span>/</span>
               <Link href={`/category/${article.category.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-[var(--red)] transition-colors">
@@ -1250,7 +1252,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               </Link>
               <span>/</span>
               <span>
-                {uiLabel(language, { en: 'Ahmedabad', gu: 'àª…àª®àª¦àª¾àªµàª¾àª¦', hi: 'à¤…à¤¹à¤®à¤¦à¤¾à¤¬à¤¾à¤¦' })}
+                {uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' })}
               </span>
               <span className="mx-0.5">:</span>
               <span className="text-red-700 dark:text-red-400 font-bold">
@@ -1261,7 +1263,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <div className="art-kick">
                 <span className="bar"></span>
-                <span>{category} · {uiLabel(language, { en: 'Ahmedabad', gu: 'àª…àª®àª¦àª¾àªµàª¾àª¦', hi: 'à¤…à¤¹à¤®à¤¦à¤¾à¤¬à¤¾à¤¦' })}</span>
+                <span>{category} · {uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' })}</span>
               </div>
               {article.isBreaking && <span className="live-badge rounded bg-accent px-2 py-1 text-xs font-black text-white ml-2">BREAKING</span>}
             </div>
@@ -1284,7 +1286,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </Link>
                 <div>
                   <div className="text-[13.5px]">
-                    <span className="text-[var(--ink-2)]">{uiLabel(language, { en: 'Author:', gu: 'àª²à«‡àª–àª•:', hi: 'à¤²à¥‡à¤–à¤•:' })} </span>
+                    <span className="text-[var(--ink-2)]">{uiLabel(language, { en: 'Author:', gu: 'લેખક:', hi: 'लेखक:' })} </span>
                     <Link href={`/author/${article.author.id}`} className="font-bold text-[var(--red)] hover:underline">
                       {authorName}
                     </Link>
@@ -1322,10 +1324,10 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             {/* Gist: àªàª• àª¨àªœàª°àª®àª¾àª‚ */}
             {gistPoints.length > 0 && (
-              <div className="my-6 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
+              <div className="my-2 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
                 <div className="flex items-center gap-2 font-black text-[#B3121B] text-base mb-3 select-none">
                   <span className="text-[#B3121B] font-bold text-sm">♦</span>
-                  <span>{uiLabel(language, { en: 'At a Glance', gu: 'àªàª• àª¨àªœàª°àª®àª¾àª‚', hi: 'à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚' })}</span>
+                  <span>{uiLabel(language, { en: 'At a Glance', gu: 'એક નજરમાં', hi: 'एक नजर में' })}</span>
                 </div>
                 <ul className="space-y-2.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
                   {gistPoints.map((point, index) => (
@@ -1340,7 +1342,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               </div>
             )}
 
-            <figure className="article-fig">
+            <figure className="article-fig mb-3">
               <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-black/5 dark:bg-black/40 rounded-lg shadow-sm group">
                 {/* Indicator Badge (only if multiple images exist) */}
                 {slideImages.length > 1 && (
@@ -1420,7 +1422,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                         : title}
                 </span>
                 <span style={{ whiteSpace: 'nowrap' }}>
-                  {uiLabel(language, { en: 'Photo: Gujarat Post', gu: 'àª¤àª¸àªµà«€àª°: àª—à«àªœàª°àª¾àª¤ àªªà«‹àª¸à«àªŸ', hi: 'à¤¤à¤¸à¥à¤µà¥€à¤°: à¤—à¥à¤œà¤°à¤¾à¤¤ à¤ªà¥‹à¤¸à¥à¤Ÿ' })}
+                  {uiLabel(language, { en: 'Photo: Gujarat Post', gu: 'તસવીર: ગુજરાત પોસ્ટ', hi: 'तस्वीर: ગુજરાત પોસ્ટ' })}
                 </span>
               </figcaption>
             </figure>
@@ -1486,10 +1488,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                         <button
                           type="button"
                           onClick={() => setIsContentExpanded(true)}
-                          className="group inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white font-black text-sm sm:text-base shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
+                          className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
                         >
-                          <span>{uiLabel(language, { en: 'Read More', gu: 'àªµàª§à« àªµàª¾àª‚àªšà«‹', hi: 'à¤”à¤° à¤ªà¥à¥‡à¤‚' })}</span>
-                          <ChevronDown className="w-5 h-5 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[3]" />
+                          <span className="text-base font-black tracking-wide leading-none">
+                            {uiLabel(language, { en: 'Read More', gu: 'વધુ વાંચો', hi: 'और पढ़ें' })}
+                          </span>
+                          <ChevronDown className="w-4.5 h-4.5 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>
@@ -1508,10 +1512,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                             setIsContentExpanded(false);
                             window.scrollTo({ top: 380, behavior: 'smooth' });
                           }}
-                          className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 font-extrabold text-xs transition-all duration-200 cursor-pointer select-none shadow-sm"
+                          className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
                         >
-                          <span>{uiLabel(language, { en: 'Read Less', gu: 'àª“àª›à«àª‚ àªµàª¾àª‚àªšà«‹', hi: 'à¤•à¤® à¤ªà¥à¥‡à¤‚' })}</span>
-                          <ChevronUp className="w-4 h-4 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
+                          <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                            {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
+                          </span>
+                          <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>
@@ -1528,7 +1534,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               <div className="mostread">
                 <div className="wtitle">
                   <span className="d"></span>
-                  <span>{uiLabel(language, { en: 'Most Read', gu: 'àª¸à«Œàª¥à«€ àªµàª§à« àªµàª‚àªšàª¾àª¯à«‡àª²àª¾', hi: 'à¤¸à¤¬à¤¸à¥‡ à¤œà¥à¤¯à¤¾à¤¦à¤¾ à¤ªà¤¢à¤¼à¥‡ à¤—à¤' })}</span>
+                  <span>{uiLabel(language, { en: 'Most Read', gu: 'સૌથી વધુ વંચાયેલા', hi: 'सबसे ज्यादा पढ़े गए' })}</span>
                 </div>
                 <div className="space-y-0 mt-3">
                   {mostReadArticles.slice(0, trendingLimit).map((item, index) => {
@@ -1551,10 +1557,10 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               <div>
                 <div className="wtitle">
                   <span className="d"></span>
-                  <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'àª¤àª®àª¾àª°àª¾ àª®àª¾àªŸà«‡ àª­àª²àª¾àª®àª£', hi: 'à¤†à¤ªà¤•à¥‡ à¤²à¤¿à¤ à¤…à¤¨à¥à¤¶à¤‚à¤¸à¤¿à¤¤' })}</span>
+                  <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
                 </div>
                 <div className="space-y-0 mt-3">
-                  {sidebarRecommendedPool.slice(0, isContentExpanded ? 8 : 2).map((item, index) => {
+                  {sidebarRecommendedPool.slice(0, isContentExpanded ? 8 : 6).map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
                       <Link key={item.id || index} href={`/news/${item.slug}`} className="s-compact hover:opacity-85 transition-opacity">
@@ -1572,22 +1578,47 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </div>
               </div>
 
-              {/* WhatsApp Promo Card */}
-              <div className="wa-card">
-                <div className="h">
-<span className="wi">💬</span>
-<span>{uiLabel(language, { en: 'WhatsApp Channel', gu: 'WhatsApp àªšà«‡àª¨àª²', hi: 'WhatsApp à¤šà¥ˆà¤¨à¤²' })}</span>
+              {/* WhatsApp Channel widget */}
+              <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/80 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366]">
+                {/* Ambient decorative WhatsApp glow */}
+                <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
+
+                <div className="relative z-10 flex items-center gap-3">
+                  {/* WhatsApp branded icon badge */}
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
+                    <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                        {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
+                      </h3>
+                      <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                    </div>
+                    <span className="text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                      {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
+                    </span>
+                  </div>
                 </div>
-                <p>
+
+                <p className="relative z-10 text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
                   {language === 'gu'
-? 'તમારા શહેરના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
+                    ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
                     : language === 'hi'
-? 'अपने शहर की खबरें सबसे पहले सीधे अपने फोन पर प्राप्त करें।'
-                      : 'Get breaking news first directly on your phone.'}
+                      ? 'अपने शहर के ताजा और महत्वपूर्ण समाचार सबसे पहले सीधे अपने फोन पर पाएं।'
+                      : 'Get breaking news and vital updates of your city first, directly on your phone.'}
                 </p>
-                <button type="button">
-{uiLabel(language, { en: 'Follow Channel', gu: 'àªšà«‡àª¨àª² àª«à«‹àª²à«‹ àª•àª°à«‹', hi: 'à¤šà¥ˆà¤¨à¤² à¤«à¥‰à¤²à¥‹ à¤•à¤°à¥‡à¤‚' })}
-                </button>
+
+                <a
+                  href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+                >
+                  <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
+                  <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+                </a>
               </div>
 
               {/* Trending Topics Tags */}

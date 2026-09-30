@@ -116,25 +116,29 @@ export default function RelatedStoriesSection({
         })}
       </div>
 
-      <div className="flex justify-center mt-8">
+      <div className="flex justify-center mt-4">
         {relatedLimit < displayRelated.length ? (
           <button
             type="button"
             onClick={() => setRelatedLimit((prev) => prev + 4)}
-            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15px] md:text-[16px] hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
+            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95 cursor-pointer"
           >
-            {uiLabel(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'અધિક દેખેં' })}
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-y-0.5" strokeLinecap="round" strokeLinejoin="round">
+            <span className="text-base md:text-lg font-black tracking-wide leading-none">
+              {uiLabel(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'अधिक देखें' })}
+            </span>
+            <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-y-0.5 shrink-0" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="6 9 12 15 18 9" />
             </svg>
           </button>
         ) : (
           <Link
             href={`/category/${(article.category || 'all').toLowerCase().replace(/\s+/g, '-')}`}
-            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15px] md:text-[16px] hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
+            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95 cursor-pointer"
           >
-            {uiLabel(language, { en: 'View All News', gu: 'બધા સમાચાર જુઓ', hi: 'સભી સમાચાર દેખેં' })}
-            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-x-0.5" strokeLinecap="round" strokeLinejoin="round">
+            <span className="text-base md:text-lg font-black tracking-wide leading-none">
+              {uiLabel(language, { en: 'View All News', gu: 'બધા સમાચાર જુઓ', hi: 'सभी समाचार देखें' })}
+            </span>
+            <svg viewBox="0 0 24 24" className="w-4.5 h-4.5 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-x-0.5 shrink-0" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </Link>

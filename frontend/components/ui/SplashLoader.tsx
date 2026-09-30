@@ -179,57 +179,58 @@ export default function SplashLoader() {
       <div className="perspective-container relative mb-8 flex items-center justify-center h-84 w-84">
         {/* Ambient Red Glow Halo */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-72 h-72 rounded-full bg-[#e62117]/35 blur-3xl animate-pulse-glow" />
-          <div className="absolute w-72 h-72 rounded-full border border-[#e62117]/40 animate-ripple-1" />
-          <div className="absolute w-84 h-84 rounded-full border border-[#e62117]/25 animate-ripple-2" />
+          <div className="w-72 h-72 rounded-full bg-[#B3121B]/35 blur-3xl animate-pulse-glow" />
+          <div className="absolute w-72 h-72 rounded-full border border-[#B3121B]/40 animate-ripple-1" />
+          <div className="absolute w-84 h-84 rounded-full border border-[#B3121B]/25 animate-ripple-2" />
         </div>
 
         {/* Orbiting Laser Ring */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-rotate-orbit">
-          <div className="w-76 h-28 rounded-[100%] border-2 border-dashed border-[#e62117] shadow-[0_0_20px_#e62117] opacity-85" />
+          <div className="w-76 h-28 rounded-[100%] border-2 border-dashed border-[#B3121B] shadow-[0_0_20px_#B3121B] opacity-85" />
         </div>
 
         {/* Dynamic Floor Shadow below Mic Handle */}
-        <div className="absolute bottom-2 w-32 h-6 rounded-full bg-black/90 blur-md animate-floor-shadow" />
+        <div className="absolute bottom-3 w-28 h-5 rounded-full bg-black/90 blur-md animate-floor-shadow" />
 
-        {/* 3D ROTATING NEWS MICROPHONE (ULTRA-REALISTIC 3D STYLING) */}
-        <div className="animate-mic-3d relative flex flex-col items-center justify-center w-48 h-76">
+        {/* 3D ROTATING NEWS REPORTER MICROPHONE (REALISTIC BROADCAST STYLING) */}
+        <div className="animate-mic-3d relative flex flex-col items-center justify-center w-36 h-76">
           
-          {/* 1. MIC HEAD (Ultra-Detailed 3D Spherical Metallic Grill) */}
-          <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-slate-100 via-zinc-400 to-zinc-950 shadow-[0_15px_30px_rgba(0,0,0,0.9)] border-[3.5px] border-zinc-200 flex items-center justify-center overflow-hidden z-20">
-            {/* Metallic Grid Mesh Texture */}
-            <div className="absolute inset-0 bg-[radial-gradient(#000_1.8px,transparent_1.8px)] [background-size:5px_5px] opacity-80" />
+          {/* 1. MIC HEAD (Real Broadcast Foam / Mesh Capsule with Domed Top) */}
+          <div className="relative w-[52px] h-[74px] rounded-t-[26px] rounded-b-[6px] overflow-hidden bg-gradient-to-r from-[#141416] via-[#28282c] to-[#0a0a0c] shadow-[0_12px_28px_rgba(0,0,0,0.95)] z-20 flex flex-col items-center justify-between border-t border-x border-zinc-700/50">
+            {/* Realistic Micro-Mesh Texture Pattern */}
+            <div className="absolute inset-0 bg-[radial-gradient(#3e3e46_1px,transparent_1px)] [background-size:3px_3px] opacity-90" />
             
-            {/* Dual Chrome Center Bands with Red Accent Line */}
-            <div className="absolute w-full h-4 bg-gradient-to-r from-zinc-500 via-white to-zinc-600 shadow-md border-y border-zinc-800 z-10 flex items-center justify-center">
-              <div className="w-full h-0.5 bg-[#e62117] shadow-[0_0_4px_#e62117]" />
-            </div>
-
-            {/* 3D Glossy Spherical Glare Highlight */}
-            <div className="absolute top-2.5 left-4 w-11 h-11 rounded-full bg-gradient-to-br from-white/80 via-white/40 to-transparent blur-[1.5px] z-20" />
+            {/* 3D Curved Specular Glare along Left Edge */}
+            <div className="absolute left-1.5 top-2 bottom-3 w-2.5 rounded-l-full bg-gradient-to-r from-white/25 via-white/5 to-transparent blur-[0.6px] z-10" />
             
-            {/* Bottom Ambient Occlusion Shadow */}
-            <div className="absolute bottom-0 inset-x-0 h-10 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-15" />
+            {/* Right Side Ambient Shadow for Cylindrical Depth */}
+            <div className="absolute right-0 inset-y-0 w-3.5 bg-gradient-to-l from-black/80 to-transparent z-10" />
+            
+            {/* Horizontal Capsule Mid-Seam Line */}
+            <div className="absolute bottom-3 inset-x-0 h-0.5 bg-black/80 shadow-[0_1px_0_rgba(255,255,255,0.08)] z-10" />
           </div>
 
-          {/* 2. POLISHED CHROME CONNECTOR NECK */}
-          <div className="w-7 h-5 bg-gradient-to-r from-zinc-500 via-white to-zinc-800 border-x border-zinc-600 shadow-lg z-10" />
+          {/* Capsule Base Ring Collar */}
+          <div className="w-[48px] h-[8px] bg-gradient-to-r from-zinc-800 via-zinc-500 to-black rounded-xs border-y border-zinc-700/80 shadow-md z-20" />
 
-          {/* 3. 3D CUBE MIC FLAG (150px x 150px x 100px) */}
-          <div className="cube-flag relative w-40 h-26 z-10">
+          {/* Conical Neck (Transition into Flag) */}
+          <div className="w-[34px] h-[14px] bg-gradient-to-r from-zinc-900 via-zinc-700 to-zinc-950 z-10 border-x border-zinc-800 shadow-inner" />
+
+          {/* 2. 3D CUBE MIC FLAG (124px x 50px x 124px with Gujarat Post Logo) */}
+          <div className="cube-flag relative w-[124px] h-[50px] z-10">
             {/* FRONT FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
-              style={{ transform: 'rotateY(0deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
+              className="absolute inset-0 bg-[#0c0c0e] border border-zinc-800 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-lg p-1 flex items-center justify-center overflow-hidden"
+              style={{ transform: 'rotateY(0deg) translateZ(62px)', backfaceVisibility: 'hidden' }}
             >
-              <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
+              <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
                 {/* Specular Light Sweep */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-10" />
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/logoblack.png"
+                  src="/assets/gujarat-post-logo-chip.png"
                   alt="Gujarat Post Logo"
                   fill
-                  className="object-contain drop-shadow-md"
+                  className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
                   priority
                 />
               </div>
@@ -237,16 +238,16 @@ export default function SplashLoader() {
 
             {/* BACK FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
-              style={{ transform: 'rotateY(180deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
+              className="absolute inset-0 bg-[#0c0c0e] border border-zinc-800 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-lg p-1 flex items-center justify-center overflow-hidden"
+              style={{ transform: 'rotateY(180deg) translateZ(62px)', backfaceVisibility: 'hidden' }}
             >
-              <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-10" />
+              <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/logoblack.png"
+                  src="/assets/gujarat-post-logo-chip.png"
                   alt="Gujarat Post Logo"
                   fill
-                  className="object-contain drop-shadow-md"
+                  className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
                   priority
                 />
               </div>
@@ -254,16 +255,16 @@ export default function SplashLoader() {
 
             {/* RIGHT FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
-              style={{ transform: 'rotateY(90deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
+              className="absolute inset-0 bg-[#0c0c0e] border border-zinc-800 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-lg p-1 flex items-center justify-center overflow-hidden"
+              style={{ transform: 'rotateY(90deg) translateZ(62px)', backfaceVisibility: 'hidden' }}
             >
-              <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-10" />
+              <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/logoblack.png"
+                  src="/assets/gujarat-post-logo-chip.png"
                   alt="Gujarat Post Logo"
                   fill
-                  className="object-contain drop-shadow-md"
+                  className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
                   priority
                 />
               </div>
@@ -271,52 +272,65 @@ export default function SplashLoader() {
 
             {/* LEFT FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
-              style={{ transform: 'rotateY(-90deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
+              className="absolute inset-0 bg-[#0c0c0e] border border-zinc-800 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-lg p-1 flex items-center justify-center overflow-hidden"
+              style={{ transform: 'rotateY(-90deg) translateZ(62px)', backfaceVisibility: 'hidden' }}
             >
-              <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
-                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-10" />
+              <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
+                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/logoblack.png"
+                  src="/assets/gujarat-post-logo-chip.png"
                   alt="Gujarat Post Logo"
                   fill
-                  className="object-contain drop-shadow-md"
+                  className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
                   priority
                 />
               </div>
             </div>
 
-            {/* TOP CAP (Seals 3D Cube) */}
+            {/* TOP CAP (Seals 3D Cube with Central Mic Neck Hole) */}
             <div
-              className="absolute w-40 h-40 bg-gradient-to-tr from-[#6b0207] via-[#3a0003] to-[#140001] border border-red-700/80 shadow-inner"
-              style={{ transform: 'rotateX(90deg) translateZ(52px)', top: '-28px' }}
-            />
-            {/* BOTTOM CAP (Seals 3D Cube) */}
+              className="absolute w-[124px] h-[124px] bg-[#0e0e11] border border-zinc-800 shadow-inner flex items-center justify-center"
+              style={{ transform: 'rotateX(90deg) translateZ(25px)', top: '-37px' }}
+            >
+              {/* Beveled Central Hole for Mic Shaft */}
+              <div className="w-9 h-9 rounded-full bg-black border-2 border-zinc-700/80 shadow-inner" />
+            </div>
+
+            {/* BOTTOM CAP (Seals 3D Cube with Central Handle Hole) */}
             <div
-              className="absolute w-40 h-40 bg-gradient-to-tr from-[#1c1c1c] via-[#0d0d0d] to-[#050505] border border-zinc-800 shadow-inner"
-              style={{ transform: 'rotateX(-90deg) translateZ(52px)', top: '-28px' }}
-            />
+              className="absolute w-[124px] h-[124px] bg-[#0e0e11] border border-zinc-800 shadow-inner flex items-center justify-center"
+              style={{ transform: 'rotateX(-90deg) translateZ(25px)', top: '-37px' }}
+            >
+              {/* Beveled Central Hole for Mic Handle */}
+              <div className="w-8 h-8 rounded-full bg-black border-2 border-zinc-700/80 shadow-inner" />
+            </div>
           </div>
 
-          {/* 4. CHROME CONNECTOR COLLAR */}
-          <div className="w-8 h-3.5 bg-gradient-to-r from-zinc-500 via-white to-zinc-800 border-x border-zinc-700 shadow-md z-10" />
+          {/* 3. UPPER HANDLE COLLAR */}
+          <div className="w-[26px] h-[8px] bg-gradient-to-r from-zinc-800 via-zinc-600 to-black border-y border-zinc-700 z-10 shadow-sm" />
 
-          {/* 5. HEAVY NEWS REPORTER MIC HANDLE */}
-          <div className="relative w-11 h-36 bg-gradient-to-b from-zinc-800 via-zinc-900 to-black rounded-b-2xl border-x-2 border-zinc-700 shadow-2xl overflow-hidden flex flex-col items-center justify-between p-1 z-10">
-            {/* Glossy Vertical Metallic Reflection Strip */}
-            <div className="absolute inset-y-0 left-2 w-2 bg-gradient-to-r from-white/30 to-transparent blur-[0.5px]" />
+          {/* 4. SLEEK NEWS REPORTER MIC HANDLE (NO HAND - PURE MICROPHONE) */}
+          <div className="relative w-[26px] h-[115px] bg-gradient-to-r from-[#141416] via-[#2a2a2f] to-[#0a0a0c] shadow-2xl overflow-hidden flex flex-col items-center justify-between p-1 z-10 border-x border-zinc-800/80">
+            {/* Realistic Vertical Specular Highlight Strip */}
+            <div className="absolute left-1 inset-y-0 w-1.5 bg-gradient-to-r from-white/20 via-white/5 to-transparent blur-[0.4px]" />
             
-            {/* Grip Ring Lines */}
-            <div className="w-full space-y-2 mt-3 z-10">
-              <div className="w-full h-1 bg-zinc-950 border-y border-zinc-700" />
-              <div className="w-full h-1 bg-zinc-950 border-y border-zinc-700" />
-              <div className="w-full h-1 bg-zinc-950 border-y border-zinc-700" />
+            {/* On/Off Switch Oval Recess */}
+            <div className="w-3 h-6 bg-zinc-950 rounded-full border border-zinc-700/80 flex items-center justify-center shadow-inner mt-3.5 z-10">
+              <div className="w-1.5 h-1.5 rounded-full bg-red-600 shadow-[0_0_4px_#ef4444]" />
             </div>
 
-            {/* Metallic XLR Cable Jack Base with Gold Pins */}
-            <div className="w-9 h-4 bg-gradient-to-r from-zinc-400 via-zinc-100 to-zinc-600 rounded-b-lg border-t border-zinc-800 shadow-md flex items-center justify-center z-10">
-              <div className="w-3.5 h-1 bg-amber-400 rounded-xs shadow-[0_0_2px_#fbbf24]" />
+            {/* Lower Grip Ring Texture Lines */}
+            <div className="w-full space-y-1.5 mb-2 z-10">
+              <div className="w-full h-[1.5px] bg-zinc-950 border-t border-zinc-800" />
+              <div className="w-full h-[1.5px] bg-zinc-950 border-t border-zinc-800" />
             </div>
+          </div>
+
+          {/* 5. STEPPED METALLIC XLR BASE */}
+          <div className="w-[20px] h-[6px] bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-900 border-t border-zinc-950 z-10" />
+          <div className="w-[16px] h-[12px] bg-gradient-to-r from-zinc-600 via-zinc-300 to-zinc-800 rounded-b-md shadow-md flex items-center justify-center z-10">
+            {/* Gold Terminal Contact Pin */}
+            <div className="w-2 h-1 bg-amber-400 rounded-xs shadow-[0_0_3px_#fbbf24]" />
           </div>
 
         </div>
@@ -335,12 +349,12 @@ export default function SplashLoader() {
 
       {/* Brand Slogan */}
       <p className="mt-2 text-xs sm:text-sm font-extrabold text-[#a3a3a3] uppercase tracking-widest leading-none select-none" translate="no">
-        Real Stories. <span className="text-[#e62117]">Real Gujarat.</span>
+        Real Stories. <span className="text-[#B3121B]">Real Gujarat.</span>
       </p>
 
       {/* Modern Sweep Loader Bar */}
       <div className="mt-8 h-1 w-52 overflow-hidden rounded-full bg-white/10 shadow-inner">
-        <div className="h-full w-28 bg-gradient-to-r from-transparent via-[#e62117] to-transparent animate-sweep" />
+        <div className="h-full w-28 bg-gradient-to-r from-transparent via-[#B3121B] to-transparent animate-sweep" />
       </div>
     </div>
   );
