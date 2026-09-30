@@ -412,9 +412,9 @@ export default function ArticleList() {
   const getStatusBadge = (status: ArticleData['status']) => {
     const styles = {
       PUBLISHED: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/30',
-      DRAFT: 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
-      SCHEDULED: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30',
-      ARCHIVED: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30',
+      DRAFT: 'bg-zinc-100 text-zinc-600 border-gray-400 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700',
+      SCHEDULED: 'bg-amber-50 text-amber-700 border-amber-400 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30',
+      ARCHIVED: 'bg-red-50 text-red-700 border-red-400 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30',
     };
     return (
       <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-bold ${styles[status]}`}>
@@ -456,7 +456,7 @@ export default function ArticleList() {
       </div>
 
       {/* Language Filter & Search Toolbar */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-black bg-white p-4 dark:border-zinc-600 dark:bg-zinc-900 md:flex-row md:items-center md:justify-between">
         {/* Search & Category Inputs */}
         <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
           {/* Search box */}
@@ -472,7 +472,7 @@ export default function ArticleList() {
                 setQuery(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/20 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white dark:focus:border-primary"
+              className="w-full rounded-xl border border-black bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
             />
           </div>
 
@@ -484,7 +484,7 @@ export default function ArticleList() {
                 setSelectedCategory(e.target.value);
                 setPage(1);
               }}
-              className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+              className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
             >
               <option value="">All Categories</option>
               {categories.map((cat) => (
@@ -506,7 +506,7 @@ export default function ArticleList() {
                 setSelectedStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+              className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
             >
               <option value="">All Statuses</option>
               <option value="PUBLISHED">Published</option>
@@ -531,7 +531,7 @@ export default function ArticleList() {
                 setSelectedDate(e.target.value);
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-8 text-sm text-zinc-900 focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+              className="w-full rounded-xl border border-black bg-zinc-50 py-2.5 pl-10 pr-8 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
               title="Filter articles by date"
             />
             {selectedDate && (
@@ -664,7 +664,7 @@ export default function ArticleList() {
                         onClick={() => handleOpenReview(art)}
                         className="flex items-center gap-4 cursor-pointer group/title"
                       >
-                        <div className="relative h-20 w-32 sm:h-22 sm:w-36 shrink-0 overflow-hidden rounded-xl bg-zinc-100 border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
+                        <div className="relative h-20 w-32 sm:h-22 sm:w-36 shrink-0 overflow-hidden rounded-xl bg-zinc-100 border border-gray-400 dark:border-zinc-700 shadow-2xs">
                           <ArticleMedia
                             src={art.featuredImage}
                             alt="thumb"
@@ -677,7 +677,7 @@ export default function ArticleList() {
                           </p>
                           <div className="flex items-center gap-2">
                             {art.articleNumber && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-red-50 text-[#B3121B] border border-red-100 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400 text-xs font-medium font-mono">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-md bg-red-50 text-[#B3121B] border border-red-300 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400 text-xs font-medium font-mono">
                                 #{art.articleNumber}
                               </span>
                             )}
@@ -723,7 +723,7 @@ export default function ArticleList() {
                         {/* Dedicated Article Review Button */}
                         <button
                           onClick={() => handleOpenReview(art)}
-                          className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200/80 hover:bg-blue-100 hover:text-blue-900 dark:bg-blue-950/50 dark:border-blue-800/60 dark:text-blue-300 dark:hover:bg-blue-900/60 transition-all shadow-2xs"
+                          className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-400/80 hover:bg-blue-100 hover:text-blue-900 dark:bg-blue-950/50 dark:border-blue-800/60 dark:text-blue-300 dark:hover:bg-blue-900/60 transition-all shadow-2xs"
                           title="Review Article & Preview"
                         >
                           <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -789,7 +789,7 @@ export default function ArticleList() {
 
         {/* Pagination bar */}
         {!loading && !error && totalArticles > 0 && (
-          <div className="flex items-center justify-between border-t border-zinc-300 px-6 py-4 dark:border-zinc-700">
+          <div className="flex items-center justify-between border-t border-zinc-400 px-6 py-4 dark:border-zinc-700">
             <span className="text-base font-medium text-slate-600 dark:text-slate-400">
               Showing {articles.length} of {totalArticles} results
             </span>
@@ -797,7 +797,7 @@ export default function ArticleList() {
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-550 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-800 dark:hover:bg-zinc-950/40"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-550 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-950/40"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
@@ -809,7 +809,7 @@ export default function ArticleList() {
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-zinc-200 text-zinc-550 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-800 dark:hover:bg-zinc-950/40"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-550 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-950/40"
               >
                 <ChevronRight className="h-5 w-5" />
               </button>
@@ -822,7 +822,7 @@ export default function ArticleList() {
       {/* ─── CUSTOM CONFIRMATION DIALOG MODAL ─── */}
       {confirmModal.isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md transform overflow-hidden rounded-2xl border border-zinc-200 bg-white p-6 text-left align-middle shadow-xl transition-all dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+          <div className="w-full max-w-md transform overflow-hidden rounded-2xl border border-gray-400 bg-white p-6 text-left align-middle shadow-xl transition-all dark:border-zinc-700 dark:bg-zinc-900 space-y-4">
             <div className="flex items-start gap-3">
               <span className="rounded-xl bg-amber-500/10 p-2 text-amber-500 shrink-0 mt-0.5">
                 <AlertCircle className="h-6 w-6" />
@@ -841,7 +841,7 @@ export default function ArticleList() {
               <button
                 type="button"
                 onClick={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-                className="rounded-xl border border-zinc-200 px-4 py-2.5 text-xs font-bold text-zinc-500 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-800"
+                className="rounded-xl border border-gray-400 px-4 py-2.5 text-xs font-bold text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-800"
               >
                 Cancel
               </button>
@@ -860,10 +860,10 @@ export default function ArticleList() {
       {/* ─── ARTICLE REVIEW MODAL ─── */}
       {reviewModal.isOpen && reviewModal.article && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/65 backdrop-blur-md p-4 sm:p-6 overflow-y-auto">
-          <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border border-zinc-200 bg-white shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl border border-gray-400 bg-white shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden my-auto animate-in fade-in zoom-in-95 duration-200">
 
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-zinc-200/80 px-6 py-4 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40">
+            <div className="flex items-center justify-between border-b border-gray-400 px-6 py-4 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40">
               <div className="flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 font-bold shrink-0">
                   <Eye className="h-5 w-5" />
@@ -875,7 +875,7 @@ export default function ArticleList() {
                     </h2>
                     {getStatusBadge(reviewModal.article.status)}
                     {reviewModal.article.articleNumber && (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-red-50 text-[#B3121B] border border-red-100 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400 text-xs font-mono font-bold">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-red-50 text-[#B3121B] border border-red-300 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400 text-xs font-mono font-bold">
                         #{reviewModal.article.articleNumber}
                       </span>
                     )}
@@ -905,7 +905,7 @@ export default function ArticleList() {
               ) : (
                 <>
                   {/* Metadata Header Bar */}
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-700 pb-3">
                     <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400 font-medium">
                       <span className="flex items-center gap-1">
                         <User className="h-3.5 w-3.5 text-zinc-400" />
@@ -950,7 +950,7 @@ export default function ArticleList() {
                         </div>
 
                         {/* Main Active Media Display */}
-                        <div className="relative w-full h-72 sm:h-96 rounded-2xl overflow-hidden bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-md group">
+                        <div className="relative w-full h-72 sm:h-96 rounded-2xl overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-700 shadow-md group">
                           <ArticleMedia
                             src={allMedia[currentIndex]}
                             alt={`Media ${currentIndex + 1}`}
@@ -1016,7 +1016,7 @@ export default function ArticleList() {
 
                   {/* Excerpt Section */}
                   {(reviewModal.fullData?.excerptGu || reviewModal.fullData?.excerpt || reviewModal.fullData?.excerptHi) && (
-                    <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 dark:bg-zinc-950/40 dark:border-zinc-800">
+                    <div className="p-4 rounded-2xl bg-zinc-50 border border-gray-400 dark:bg-zinc-950/40 dark:border-zinc-700">
                       <h4 className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-1">Article Excerpt / Summary</h4>
                       <p className="text-sm italic text-zinc-700 dark:text-zinc-300">
                         {reviewModal.fullData?.excerptGu || reviewModal.fullData?.excerpt || reviewModal.fullData?.excerptHi}
@@ -1027,7 +1027,7 @@ export default function ArticleList() {
                   {/* Main Body Content */}
                   <div className="space-y-2">
                     <h4 className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">Full Content Body</h4>
-                    <div className="p-5 rounded-2xl border border-zinc-200 bg-zinc-50/50 dark:border-zinc-800 dark:bg-zinc-950/20 text-zinc-800 dark:text-zinc-200 text-sm leading-relaxed prose max-w-none dark:prose-invert">
+                    <div className="p-5 rounded-2xl border border-gray-400 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-950/20 text-zinc-800 dark:text-zinc-200 text-sm leading-relaxed prose max-w-none dark:prose-invert">
                       {(() => {
                         const rawContent = reviewModal.fullData?.contentGu || reviewModal.fullData?.content || reviewModal.fullData?.contentHi;
 
@@ -1058,14 +1058,14 @@ export default function ArticleList() {
             </div>
 
             {/* Modal Footer Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-200/80 px-6 py-4 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-400 px-6 py-4 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40">
               <div className="flex items-center gap-2">
                 {/* View Live Article Button */}
                 <a
                   href={`/news/${reviewModal.article.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors shadow-xs"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-400 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors shadow-xs"
                 >
                   <Globe2 className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
                   <span>View Live Site</span>
@@ -1075,7 +1075,7 @@ export default function ArticleList() {
                 {(userRole !== 'REPORTER' || reviewModal.article.authorId === userAuthorId) && (
                   <a
                     href={`/admin/articles/${reviewModal.article.id}/edit`}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors shadow-xs"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-400 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-colors shadow-xs"
                   >
                     <Edit2 className="h-3.5 w-3.5 text-zinc-500" />
                     <span>Edit Article</span>
@@ -1116,7 +1116,7 @@ export default function ArticleList() {
                 {/* Close button */}
                 <button
                   onClick={() => setReviewModal(prev => ({ ...prev, isOpen: false }))}
-                  className="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
+                  className="rounded-xl border border-gray-400 px-4 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-colors"
                 >
                   Close
                 </button>

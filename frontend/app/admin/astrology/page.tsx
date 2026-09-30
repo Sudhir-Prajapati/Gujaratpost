@@ -88,7 +88,7 @@ export default function AdminAstrologyPage() {
             <div>
               <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-3 mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 p-2">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-400 dark:border-amber-800/40 p-2">
                     <ZodiacIcon id={sign.id || sign.slug} className="h-8 w-8" />
                   </div>
                   <div>

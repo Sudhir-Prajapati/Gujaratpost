@@ -377,7 +377,7 @@ export default function LatestUpdatesSection({
       {/* ── 2. E-PAPER WIDGET (ઈ-પેપર) ── */}
       <Link
         href="/epaper"
-        className="group flex items-center justify-between p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-xs hover:shadow-md transition cursor-pointer"
+        className="group flex items-center justify-between p-3.5 rounded-xl border border-zinc-400 dark:border-zinc-800 bg-white dark:bg-zinc-900/90 shadow-xs hover:shadow-md transition cursor-pointer"
       >
         <div className="flex items-center gap-3">
           <span className="bg-[#B3121B] text-white text-[11px] font-extrabold px-2.5 py-1 rounded-md shadow-xs">

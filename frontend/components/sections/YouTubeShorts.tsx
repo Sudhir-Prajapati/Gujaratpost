@@ -367,7 +367,7 @@ export default function YouTubeShorts() {
             <button
               type="button"
               onClick={() => handleScroll('left')}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-40 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-2xl border border-slate-200 hover:scale-110 active:scale-95 transition-all duration-200"
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-40 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-2xl border border-slate-400 hover:scale-110 active:scale-95 transition-all duration-200"
               aria-label="Scroll left"
             >
               <ChevronLeft className="h-6 w-6 stroke-[3]" />
@@ -377,7 +377,7 @@ export default function YouTubeShorts() {
             <button
               type="button"
               onClick={() => handleScroll('right')}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-40 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-2xl border border-slate-200 hover:scale-110 active:scale-95 transition-all duration-200"
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-40 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-2xl border border-slate-400 hover:scale-110 active:scale-95 transition-all duration-200"
               aria-label="Scroll right"
             >
               <ChevronRight className="h-6 w-6 stroke-[3]" />

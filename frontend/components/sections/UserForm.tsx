@@ -260,7 +260,7 @@ export default function UserForm({ userId }: UserFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-5xl mx-auto">
       {/* Form Top Actions Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-zinc-200 pb-4 dark:border-zinc-800">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-gray-400 pb-4 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -291,13 +291,13 @@ export default function UserForm({ userId }: UserFormProps) {
 
       {/* Error Alert */}
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-900/30 dark:bg-red-950/20 text-red-700 dark:text-red-400 text-sm font-medium">
+        <div className="rounded-xl border border-red-400 bg-red-50 p-4 dark:border-red-900/30 dark:bg-red-950/20 text-red-700 dark:text-red-400 text-sm font-medium">
           {error}
         </div>
       )}
 
       {/* Tabs Selection Bar */}
-      <div className="flex border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex border-b border-gray-400 dark:border-zinc-700">
         <button
           type="button"
           onClick={() => setActiveFormTab('account')}
@@ -333,7 +333,7 @@ export default function UserForm({ userId }: UserFormProps) {
 
       {/* ── ACCOUNT TAB CONTENT ── */}
       {activeFormTab === 'account' && (
-        <div className="grid gap-6 md:grid-cols-2 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="grid gap-6 md:grid-cols-2 rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
               <Mail className="h-4 w-4 text-zinc-400" />
@@ -349,7 +349,7 @@ export default function UserForm({ userId }: UserFormProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="editor@gujaratpost.com"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-950 dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-white"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-950 dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-white"
               />
             </div>
 
@@ -368,7 +368,7 @@ export default function UserForm({ userId }: UserFormProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={isEditMode ? '•••••••• (leave blank to keep unchanged)' : '••••••••'}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-3 pl-10 pr-10 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-950 dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-3 pl-10 pr-10 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-950 dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-white"
                 />
                 <button
                   type="button"
@@ -396,7 +396,7 @@ export default function UserForm({ userId }: UserFormProps) {
               <select
                 value={role}
                 onChange={(e: any) => setRole(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
               >
                 <option value="REPORTER">Reporter (Writer)</option>
                 <option value="EDITOR">Editor (Publisher & Reviewer)</option>
@@ -414,7 +414,7 @@ export default function UserForm({ userId }: UserFormProps) {
                 value={role === 'SUPER_ADMIN' ? 'ACTIVE' : status}
                 onChange={(e: any) => setStatus(e.target.value)}
                 disabled={role === 'SUPER_ADMIN'}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <option value="ACTIVE">Active</option>
                 {role !== 'SUPER_ADMIN' && (
@@ -440,7 +440,7 @@ export default function UserForm({ userId }: UserFormProps) {
         <div className="space-y-6">
           
           {/* Enable toggle checkbox */}
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center justify-between rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
             <div>
               <h2 className="text-base font-bold text-zinc-800 dark:text-zinc-200">Public Writer Profile</h2>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -454,14 +454,14 @@ export default function UserForm({ userId }: UserFormProps) {
                 onChange={(e) => setEnableProfile(e.target.checked)}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-zinc-250 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-400 dark:peer-focus:ring-zinc-700 dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-650 peer-checked:bg-zinc-900 dark:peer-checked:bg-white"></div>
+              <div className="w-11 h-6 bg-zinc-250 rounded-full peer peer-focus:ring-2 peer-focus:ring-zinc-400 dark:peer-focus:ring-zinc-700 dark:bg-zinc-800 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-zinc-400 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-zinc-650 peer-checked:bg-zinc-900 dark:peer-checked:bg-white"></div>
             </label>
           </div>
 
           {enableProfile && (
             <div className="grid gap-6 md:grid-cols-3">
               {/* Profile Bio Form - Left 2 Columns */}
-              <div className="md:col-span-2 space-y-6 rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+              <div className="md:col-span-2 space-y-6 rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
                 <h3 className="text-sm font-bold text-zinc-850 dark:text-zinc-200 border-b border-zinc-150 pb-3 dark:border-zinc-800">Profile Details</h3>
                 <div className="space-y-4">
                   <div>
@@ -472,7 +472,7 @@ export default function UserForm({ userId }: UserFormProps) {
                       value={profile.name}
                       onChange={(e) => handleProfileFieldChange('name', e.target.value)}
                       placeholder="John Doe"
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
+                      className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
                     />
                   </div>
                   <div>
@@ -483,7 +483,7 @@ export default function UserForm({ userId }: UserFormProps) {
                       value={profile.designation}
                       onChange={(e) => handleProfileFieldChange('designation', e.target.value)}
                       placeholder="Senior Editor, Ahmedabad Bureau"
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
+                      className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
                     />
                   </div>
                   <div>
@@ -493,7 +493,7 @@ export default function UserForm({ userId }: UserFormProps) {
                       value={profile.bio}
                       onChange={(e) => handleProfileFieldChange('bio', e.target.value)}
                       placeholder="Write a short writer profile description..."
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
+                      className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-3 text-sm text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
                     />
                   </div>
                 </div>
@@ -503,7 +503,7 @@ export default function UserForm({ userId }: UserFormProps) {
               <div className="space-y-6">
                 
                 {/* Photo Upload / Image link Card */}
-                <div className="rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+                <div className="rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900 space-y-4">
                   <h3 className="text-sm font-bold text-zinc-850 dark:text-zinc-200">Profile Picture</h3>
                   
                   {/* Image preview with Remove option */}
@@ -565,7 +565,7 @@ export default function UserForm({ userId }: UserFormProps) {
                         <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1">
                           Upload File from Local PC
                         </label>
-                        <div className="relative border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl p-4 text-center hover:border-red-500 transition-colors bg-zinc-50/50 dark:bg-zinc-950/20">
+                        <div className="relative border-2 border-dashed border-gray-400 dark:border-zinc-700 rounded-xl p-4 text-center hover:border-red-500 transition-colors bg-zinc-50/50 dark:bg-zinc-950/20">
                           <input
                             type="file"
                             accept="image/*"
@@ -591,7 +591,7 @@ export default function UserForm({ userId }: UserFormProps) {
                           value={profile.image}
                           onChange={(e) => handleProfileFieldChange('image', e.target.value)}
                           placeholder="https://images.unsplash.com/..."
-                          className="w-full rounded-xl border border-zinc-200 bg-zinc-50 p-2.5 text-xs text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
+                          className="w-full rounded-xl border border-gray-400 bg-zinc-50 p-2.5 text-xs text-zinc-900 focus:outline-none dark:border-zinc-850 dark:bg-zinc-950/40 dark:text-white"
                         />
                       </div>
                     )}

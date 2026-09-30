@@ -419,7 +419,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
               className="text-lg font-black tracking-widest text-slate-950 uppercase font-serif"
             />
             <div className="flex items-center gap-3 font-semibold text-slate-700">
-              <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-300">
+              <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-400">
                 પૃષ્ઠ ૩ (PAGE 3)
               </span>
             </div>
@@ -516,9 +516,9 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 3. ROW 1: MEGA BUSINESS LEAD (8 Cols) + DISTINGUISHED EDITORIAL COLUMN (4 Cols) ─── */}
-        <div className="grid grid-cols-12 gap-0 h-[525px] mb-2 shrink-0 border-b border-slate-300 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 gap-0 h-[525px] mb-2 shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Left: Mega Business Lead Story (col-span-8) */}
-          <div className="col-span-8 pr-4 border-r border-slate-300 flex flex-col justify-between">
+          <div className="col-span-8 pr-4 border-r border-slate-400 flex flex-col justify-between">
             <div className="h-full flex flex-col">
               {/* Category Eyebrow */}
               <div className="flex justify-center items-center mb-0.5">
@@ -543,7 +543,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
               />
 
               {/* Grey Subheadline Banner */}
-              <div className="bg-[#e2e8f0] border border-slate-300/70 py-1 px-3 rounded-xs mb-2 text-center">
+              <div className="bg-[#e2e8f0] border border-slate-400/70 py-1 px-3 rounded-xs mb-2 text-center">
                 <EditableTextSlot
                   value={data.businessStory.subheadline || ''}
                   onChange={(val) => updateField('businessStory.subheadline', val)}
@@ -603,7 +603,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                   )}
 
                   {/* Under-image 2 paragraphs side by side */}
-                  <div className="mt-1.5 pt-1.5 border-t border-slate-300 flex-1 overflow-hidden grid grid-cols-2 gap-3">
+                  <div className="mt-1.5 pt-1.5 border-t border-slate-400 flex-1 overflow-hidden grid grid-cols-2 gap-3">
                     <div className="text-[11px] leading-[1.4] text-slate-800 font-serif text-justify overflow-hidden">
                       <EditableTextSlot
                         value={data.businessStory.paragraph2}
@@ -639,7 +639,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
               </div>
 
               {/* Author Info Bar */}
-              <div className="flex items-center gap-2 mb-1.5 pb-1 border-b border-slate-300 shrink-0">
+              <div className="flex items-center gap-2 mb-1.5 pb-1 border-b border-slate-400 shrink-0">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-800 shrink-0">
                   <EditableImageSlot
                     src={data.editorial.authorImage || ''}
@@ -690,7 +690,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
               />
 
               {/* Editorial Full Text */}
-              <div className="text-[10.5px] leading-[1.38] text-slate-800 font-serif text-justify flex-1 overflow-hidden pr-0.5 border-t border-slate-200 pt-1">
+              <div className="text-[10.5px] leading-[1.38] text-slate-800 font-serif text-justify flex-1 overflow-hidden pr-0.5 border-t border-slate-400 pt-1">
                 <EditableTextSlot
                   value={data.editorial.editorialText}
                   onChange={(val) => updateField('editorial.editorialText', val)}
@@ -717,7 +717,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 4. ROW 2: NATIONAL ECONOMIC POLICY (6 Cols) + SEMICONDUCTOR TECH (6 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-2 h-[310px] shrink-0 border-b border-slate-300 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[310px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Left Feature: National Economic Policy & MSME (col-span-6) */}
           <div className="col-span-6 pr-4 flex flex-col justify-between overflow-hidden h-full">
             <div className="h-full flex flex-col overflow-hidden">
@@ -872,7 +872,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 5. ROW 3: TRIPLE FINANCIAL & INNOVATION COLUMNS (4 Cols + 4 Cols + 4 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-2 h-[340px] shrink-0 border-b border-slate-300 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[340px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Col 1: Banking & Wealth Guide (col-span-4) */}
           <div className="col-span-4 pr-3 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col">
@@ -1048,7 +1048,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 6. ROW 4: CORPORATE BRIEFS (7 Cols, 3 Bulletins) + CORPORATE SOLUS AD (5 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-1.5 h-[280px] shrink-0 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-1.5 h-[280px] shrink-0 overflow-hidden">
           {/* Left: Corporate Diary / Fast Bulletins (col-span-7) */}
           <div className="col-span-7 pr-3 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col justify-between">
@@ -1061,7 +1061,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
               </div>
 
               {/* 3 Columns of Corporate Briefs */}
-              <div className="grid grid-cols-3 divide-x divide-slate-200 gap-0 flex-1 overflow-hidden">
+              <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 flex-1 overflow-hidden">
                 {data.corporateBriefs.slice(0, 3).map((brief: any, bIdx: number) => (
                   <div key={bIdx} className={`flex flex-col justify-between h-full overflow-hidden ${bIdx === 0 ? 'pr-2' : bIdx === 1 ? 'px-2' : 'pl-2'}`}>
                     <div className="h-full flex flex-col">
@@ -1115,7 +1115,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                 <span className="text-[9px] font-sans text-slate-400">ADVERTISEMENT</span>
               </div>
 
-              <div className="flex-1 w-full bg-slate-50 border border-slate-300 relative overflow-hidden flex flex-col justify-between p-1">
+              <div className="flex-1 w-full bg-slate-50 border border-slate-400 relative overflow-hidden flex flex-col justify-between p-1">
                 <EditableImageSlot
                   src={data.advertisement.image || ''}
                   onImageChange={(img) => updateField('advertisement.image', img)}

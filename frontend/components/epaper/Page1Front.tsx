@@ -1023,7 +1023,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
     points: string[];
     accent?: string;
   }> = ({ basePath, title, points }) => (
-    <div className="bg-white border border-slate-300 rounded-none overflow-hidden my-1 shadow-xs">
+    <div className="bg-white border border-slate-400 rounded-none overflow-hidden my-1 shadow-xs">
       <div className="bg-red-700 text-white text-[11.5px] font-sans font-black px-2 py-0.5 text-center tracking-wide">
         <EditableTextSlot
           value={title}
@@ -1051,13 +1051,13 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
 
   return (
     <EpaperReadOnlyProvider value={isReadOnly}>
-      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-white text-slate-950 shadow-2xl border border-slate-300 p-1 flex flex-col font-serif select-none box-border overflow-hidden relative shrink-0">
+      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-white text-slate-950 shadow-2xl border border-slate-400 p-1 flex flex-col font-serif select-none box-border overflow-hidden relative shrink-0">
         {/* ─── TOP ROW: Quote | Masthead | Weather ─── */}
         <div className="grid grid-cols-12 gap-2 h-[132px] mb-1 shrink-0 items-stretch">
           {/* Quote box ("Top Left - Quote / Thought") */}
           <div
             onClick={!isReadOnly ? () => onSelectSlot?.('quote.text', 'આજનું સુકૃતિવચન') : undefined}
-            className={`col-span-3 bg-white border border-slate-300 p-3 flex flex-col justify-between relative ${!isReadOnly ? 'cursor-pointer hover:border-red-400 group/quote' : ''} transition-colors`}
+            className={`col-span-3 bg-white border border-slate-400 p-3 flex flex-col justify-between relative ${!isReadOnly ? 'cursor-pointer hover:border-red-400 group/quote' : ''} transition-colors`}
             title={!isReadOnly ? "સુકૃતિવચન સંપાદિત કરવા ક્લિક કરો" : undefined}
           >
             <div>
@@ -1110,7 +1110,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
         {/* Weather box ("Top Right - Weather / Info") */}
         <div
           onClick={!isReadOnly ? () => onSelectSlot?.('weather.city', 'આજનું હવામાન') : undefined}
-          className={`col-span-3 bg-white border border-slate-300 p-3 flex flex-col justify-between group/weather relative ${!isReadOnly ? 'cursor-pointer hover:border-red-400' : ''} transition-colors`}
+          className={`col-span-3 bg-white border border-slate-400 p-3 flex flex-col justify-between group/weather relative ${!isReadOnly ? 'cursor-pointer hover:border-red-400' : ''} transition-colors`}
           title={!isReadOnly ? "હવામાન સંપાદિત કરવા ક્લિક કરો" : undefined}
         >
           <div className="flex items-center justify-between mb-1">
@@ -1153,7 +1153,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
 
               {/* Quick Icon Picker Popover */}
               {showIconPicker && (
-                <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-300 shadow-xl rounded-lg p-1.5 grid grid-cols-4 gap-1 w-32 animate-in fade-in zoom-in-95">
+                <div className="absolute top-8 left-1/2 -translate-x-1/2 z-40 bg-white border border-slate-400 shadow-xl rounded-lg p-1.5 grid grid-cols-4 gap-1 w-32 animate-in fade-in zoom-in-95">
                   {['☀️', '⛅', '☁️', '🌧️', '⛈️', '🌦️', '❄️', '🌫️'].map((ic) => (
                     <button
                       key={ic}
@@ -1180,7 +1180,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
                 className="text-[10px] font-bold text-slate-800 font-sans"
               />
             </div>
-            <div className="col-span-6 border-l border-slate-300 pl-2 text-[10.5px] font-sans">
+            <div className="col-span-6 border-l border-slate-400 pl-2 text-[10.5px] font-sans">
               <EditableTextSlot
                 value={data.weather.city}
                 onChange={(val) => updateField('weather.city', val)}
@@ -1272,9 +1272,9 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
       </div>
 
       {/* ─── MAIN STORY ROW ("Main Headline Section" + "Side Top News") ─── */}
-      <div className="grid grid-cols-12 gap-0 h-[650px] mb-2.5 shrink-0 border-b border-slate-300 pb-2.5 overflow-hidden">
+      <div className="grid grid-cols-12 gap-0 h-[650px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
         {/* Main headline section ("Main Headline Section") - 73% (col-span-9) */}
-        <div className="col-span-9 pr-4 border-r border-slate-300 flex flex-col justify-between">
+        <div className="col-span-9 pr-4 border-r border-slate-400 flex flex-col justify-between">
           <div className="h-full flex flex-col">
             <div className="flex justify-center items-center mb-0.5">
               <EditableTextSlot
@@ -1297,7 +1297,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
             />
 
             {/* Grey Banner for Subheadline */}
-            <div className="bg-[#e2e8f0] border border-slate-300/70 py-1.5 px-3 rounded-xs mb-3 text-center">
+            <div className="bg-[#e2e8f0] border border-slate-400/70 py-1.5 px-3 rounded-xs mb-3 text-center">
               <EditableTextSlot
                 value={data.mainHeadline.subheadline || ''}
                 onChange={(val) => updateField('mainHeadline.subheadline', val)}
@@ -1364,7 +1364,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
                 )}
 
                 {/* News content under the image: Two separate paragraphs side by side */}
-                <div className="mt-2 pt-2 border-t border-slate-300 flex-1 overflow-hidden grid grid-cols-2 gap-4">
+                <div className="mt-2 pt-2 border-t border-slate-400 flex-1 overflow-hidden grid grid-cols-2 gap-4">
                   {/* Paragraph 2 under image (Left column) */}
                   <div className="text-[11.5px] leading-[1.42] text-slate-800 font-serif text-justify overflow-hidden">
                     <EditableTextSlot
@@ -1496,7 +1496,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
           </div>
 
           {/* Pull Quote Box (Image + Quote + Quote Name) */}
-          <div className="bg-[#f8fafc] border border-slate-300 p-2 flex items-center gap-2.5 rounded-none mt-auto">
+          <div className="bg-[#f8fafc] border border-slate-400 p-2 flex items-center gap-2.5 rounded-none mt-auto">
             {/* 1. Image Quote (Author photo) */}
             <div className="w-[54px] h-[60px] shrink-0">
               <EditableImageSlot
@@ -1565,7 +1565,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
       </div>
 
       {/* ─── THREE NEWS BLOCKS ("News Block 1" | "News Block 2" | "News Block 3") ─── */}
-      <div className="grid grid-cols-3 divide-x divide-slate-300 gap-0 h-[490px] mb-2.5 shrink-0 border-b border-slate-300 pb-2.5 overflow-hidden">
+      <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 h-[490px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
         {/* Block 1 (Rain & Alert) */}
         <div className="pr-4 flex flex-col justify-between overflow-hidden h-full">
           <div className="h-full flex flex-col overflow-hidden">
@@ -1807,7 +1807,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
       </div>
 
       {/* ─── BOTTOM TWO BLOCKS: FEATURE + SPORTS ─── */}
-      <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-2 h-[429px] shrink-0 overflow-hidden">
+      <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[429px] shrink-0 overflow-hidden">
         {/* Bottom left feature ("Bottom Left - Feature") */}
         <div className="col-span-6 pr-4 flex flex-col justify-between">
           <div className="h-full flex flex-col">
@@ -1902,7 +1902,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
             </div>
 
             {/* Main Ad Box */}
-            <div className="flex-1 w-full flex flex-col overflow-hidden bg-slate-50/50 rounded border border-slate-300 p-1 relative">
+            <div className="flex-1 w-full flex flex-col overflow-hidden bg-slate-50/50 rounded border border-slate-400 p-1 relative">
               <EditableImageSlot
                 src={data.advertisement?.image || 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80'}
                 onImageChange={(img) => updateField('advertisement.image', img)}
@@ -2016,7 +2016,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
         </div>
 
         {/* Page Number Only on the Far Right */}
-        <div className="flex items-center gap-1.5 shrink-0 font-sans pl-2 border-l border-slate-300">
+        <div className="flex items-center gap-1.5 shrink-0 font-sans pl-2 border-l border-slate-400">
           <span className="bg-red-700 text-white text-[10px] font-black px-2 py-0.5 rounded-xs tracking-wider">
             પૃષ્ઠ
           </span>

@@ -81,7 +81,7 @@ export default function TributeCard({
               </div>
             </div>
             {/* Sparkle badge on photo */}
-            <div className="absolute -bottom-0.5 -right-0.5 bg-amber-500 text-slate-950 p-0.5 rounded-full shadow border border-amber-200">
+            <div className="absolute -bottom-0.5 -right-0.5 bg-amber-500 text-slate-950 p-0.5 rounded-full shadow border border-amber-400">
               <Star className="h-2.5 w-2.5 fill-current" />
             </div>
           </div>
@@ -256,14 +256,14 @@ export default function TributeCard({
   if (!isBirthday && (template === 'shanti' || template === 'eternal')) {
     return (
       <div
-        className={`relative w-full h-full overflow-hidden rounded-xl border-2 border-amber-300/60 dark:border-amber-500/40 p-3 shadow-md flex flex-col justify-between select-none bg-gradient-to-b from-stone-50 via-amber-50/50 to-stone-100 dark:from-stone-950 dark:via-zinc-900 dark:to-stone-900 text-stone-900 dark:text-stone-100 ${className}`}
+        className={`relative w-full h-full overflow-hidden rounded-xl border-2 border-amber-400/60 dark:border-amber-500/40 p-3 shadow-md flex flex-col justify-between select-none bg-gradient-to-b from-stone-50 via-amber-50/50 to-stone-100 dark:from-stone-950 dark:via-zinc-900 dark:to-stone-900 text-stone-900 dark:text-stone-100 ${className}`}
         style={{ height: '100%', minHeight: minHeight ? `${minHeight}px` : '100%' }}
       >
         {/* Subtle Sacred Border Pattern */}
-        <div className="absolute inset-1 rounded-lg border border-amber-300/30 dark:border-amber-600/20 pointer-events-none" />
+        <div className="absolute inset-1 rounded-lg border border-amber-400/30 dark:border-amber-600/20 pointer-events-none" />
 
         {/* Top Header */}
-        <div className="flex items-center justify-between z-10 gap-2 border-b border-stone-200 dark:border-stone-800 pb-1 mb-1">
+        <div className="flex items-center justify-between z-10 gap-2 border-b border-stone-400 dark:border-stone-800 pb-1 mb-1">
           <div className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
             <Flame className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
             <span className="text-[10.5px] font-black uppercase tracking-wider">
@@ -271,7 +271,7 @@ export default function TributeCard({
             </span>
           </div>
           {showBadge && (
-            <span className="text-[8.5px] font-black px-1.5 py-0.5 rounded-full bg-stone-200/80 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-stone-700 dark:text-stone-300 shrink-0">
+            <span className="text-[8.5px] font-black px-1.5 py-0.5 rounded-full bg-stone-200/80 dark:bg-stone-800 border border-stone-400 dark:border-stone-700 text-stone-700 dark:text-stone-300 shrink-0">
               શ્રદ્ધાંજલિ
             </span>
           )}
@@ -281,7 +281,7 @@ export default function TributeCard({
         <div className="flex items-center gap-2.5 z-10 my-auto">
           {/* Photo Frame with Garland Effect */}
           <div className="relative shrink-0">
-            <div className="h-18 w-18 sm:h-20 sm:w-20 rounded-lg p-1 bg-gradient-to-b from-amber-200 via-stone-200 to-amber-300 dark:from-amber-700 dark:via-stone-700 dark:to-amber-800 shadow-md border border-stone-300 dark:border-stone-700">
+            <div className="h-18 w-18 sm:h-20 sm:w-20 rounded-lg p-1 bg-gradient-to-b from-amber-200 via-stone-200 to-amber-300 dark:from-amber-700 dark:via-stone-700 dark:to-amber-800 shadow-md border border-stone-400 dark:border-stone-700">
               <div className="relative h-full w-full rounded overflow-hidden bg-stone-200 dark:bg-stone-900 flex items-center justify-center grayscale-[20%]">
                 {hasPhoto ? (
                   <Image
@@ -297,7 +297,7 @@ export default function TributeCard({
               </div>
             </div>
             {/* Small lotus icon */}
-            <div className="absolute -bottom-0.5 -right-0.5 bg-white dark:bg-stone-800 text-amber-600 dark:text-amber-400 p-0.5 rounded-full shadow border border-amber-300 dark:border-amber-600">
+            <div className="absolute -bottom-0.5 -right-0.5 bg-white dark:bg-stone-800 text-amber-600 dark:text-amber-400 p-0.5 rounded-full shadow border border-amber-400 dark:border-amber-600">
               <Flower2 className="h-2.5 w-2.5" />
             </div>
           </div>
@@ -323,7 +323,7 @@ export default function TributeCard({
         </div>
 
         {/* Bottom Prayer */}
-        <div className="mt-1 pt-1 border-t border-stone-200 dark:border-stone-800 text-center z-10">
+        <div className="mt-1 pt-1 border-t border-stone-400 dark:border-stone-800 text-center z-10">
           <span className="text-[9.5px] font-bold text-stone-500 dark:text-stone-400 tracking-wide">
             🙏 પ્રભુ આપના દિવ્ય આત્માને ચિર શાંતિ બક્ષે • શોકમગ્ન પરિવાર 🙏
           </span>
@@ -336,15 +336,15 @@ export default function TributeCard({
   if (!isBirthday && template === 'smruti') {
     return (
       <div
-        className={`relative w-full h-full overflow-hidden rounded-xl border-2 border-stone-300 dark:border-stone-700 p-3 shadow-md flex flex-col justify-between select-none bg-gradient-to-br from-stone-100 via-orange-50/40 to-stone-200 dark:from-stone-950 dark:via-zinc-900 dark:to-neutral-900 text-stone-900 dark:text-stone-100 ${className}`}
+        className={`relative w-full h-full overflow-hidden rounded-xl border-2 border-stone-400 dark:border-stone-700 p-3 shadow-md flex flex-col justify-between select-none bg-gradient-to-br from-stone-100 via-orange-50/40 to-stone-200 dark:from-stone-950 dark:via-zinc-900 dark:to-neutral-900 text-stone-900 dark:text-stone-100 ${className}`}
         style={{ height: '100%', minHeight: minHeight ? `${minHeight}px` : '100%' }}
       >
-        <div className="flex items-center justify-between z-10 gap-2 border-b border-stone-300 dark:border-stone-800 pb-1 mb-1">
+        <div className="flex items-center justify-between z-10 gap-2 border-b border-stone-400 dark:border-stone-800 pb-1 mb-1">
           <div className="flex items-center gap-1.5 text-amber-800 dark:text-amber-300 font-black text-[10.5px] uppercase tracking-wider">
             <span>🌸 પવિત્ર સ્મરણાંજલિ 🌸</span>
           </div>
           {showBadge && (
-            <span className="text-[8.5px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-300 shrink-0">
+            <span className="text-[8.5px] font-black px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-950/60 border border-amber-400 dark:border-amber-800 text-amber-800 dark:text-amber-300 shrink-0">
               બેસણું / સ્મૃતિ
             </span>
           )}
@@ -387,7 +387,7 @@ export default function TributeCard({
           </div>
         </div>
 
-        <div className="mt-1 pt-1 border-t border-stone-200 dark:border-stone-800 text-center z-10">
+        <div className="mt-1 pt-1 border-t border-stone-400 dark:border-stone-800 text-center z-10">
           <span className="text-[9.5px] font-bold text-stone-500 dark:text-stone-400 tracking-wide">
             ।। શાંતિઃ શાંતિઃ શાંતિઃ ।।
           </span>
@@ -402,7 +402,7 @@ export default function TributeCard({
       className={`relative w-full h-full overflow-hidden rounded-xl border-2 border-stone-400/40 p-3 shadow-md flex flex-col justify-between select-none bg-gradient-to-br from-neutral-100 via-stone-100 to-neutral-200 dark:from-neutral-950 dark:via-stone-900 dark:to-neutral-900 text-neutral-900 dark:text-neutral-100 ${className}`}
       style={{ height: '100%', minHeight: minHeight ? `${minHeight}px` : '100%' }}
     >
-      <div className="flex items-center justify-between z-10 gap-2 border-b border-stone-300 dark:border-stone-700 pb-1 mb-1">
+      <div className="flex items-center justify-between z-10 gap-2 border-b border-stone-400 dark:border-stone-700 pb-1 mb-1">
         <div className="flex items-center gap-1.5 text-stone-700 dark:text-stone-300 font-black text-[10.5px] uppercase tracking-wider">
           <span>🙏 ભાવપૂર્ણ શ્રદ્ધાંજલિ 🙏</span>
         </div>
@@ -448,7 +448,7 @@ export default function TributeCard({
         </div>
       </div>
 
-      <div className="mt-1 pt-1 border-t border-stone-300 dark:border-stone-800 text-center z-10">
+      <div className="mt-1 pt-1 border-t border-stone-400 dark:border-stone-800 text-center z-10">
         <span className="text-[9.5px] font-bold text-stone-500 dark:text-stone-400 tracking-wide">
           ભાવભરી સ્મરણાંજલિ
         </span>

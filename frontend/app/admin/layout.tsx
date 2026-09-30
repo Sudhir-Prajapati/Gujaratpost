@@ -265,56 +265,58 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         }`}
       >
         {/* Brand Header & Toggle */}
-        <div className={`flex h-16 items-center justify-between border-b border-[#1598c7] bg-[#28B5E8] shrink-0 overflow-hidden ${
-          sidebarExpanded ? 'px-3 py-2.5' : 'px-[14px]'
+        <div className={`flex h-16 items-center border-b border-[#1598c7] bg-[#28B5E8] shrink-0 overflow-hidden ${
+          sidebarExpanded ? 'justify-between px-2.5' : 'justify-center px-0'
         }`}>
-          <Link
-            href={currentRoleMeta?.defaultPath || '/admin'}
-            className={`flex items-center min-w-0 shrink transition-all duration-300 ease-in-out overflow-hidden ${
+          {/* Logo + CMS Brand Container */}
+          <div
+            className={`flex items-center gap-2 min-w-0 transition-all duration-300 ease-in-out overflow-hidden ${
               sidebarExpanded ? 'opacity-100' : 'opacity-0 max-w-0 pointer-events-none'
             }`}
           >
-            {/* Inline size: globals.css `img { height: auto; max-width: 100% }` is unlayered and beats Tailwind utilities */}
-            <Image
-              src="/assets/gujarat-post-logo-cms.jpg"
-              alt="Gujarat Post"
-              width={487}
-              height={120}
-              unoptimized
-              style={{ height: 40, width: 'auto', maxWidth: 'none' }}
-              className="object-contain shrink-0 rounded-md"
-            />
-          </Link>
-
-          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href={currentRoleMeta?.defaultPath || '/admin'}
+              className="flex items-center shrink-0"
+            >
+              {/* Inline size: globals.css `img { height: auto; max-width: 100% }` is unlayered and beats Tailwind utilities */}
+              <Image
+                src="/assets/gujarat-post-logo-cms.png"
+                alt="Gujarat Post"
+                width={940}
+                height={208}
+                unoptimized
+                style={{ height: 40, width: 'auto', maxWidth: 'none' }}
+                className="h-10 w-auto object-contain shrink-0"
+              />
+            </Link>
             <span
-              className={`select-none text-base font-black uppercase tracking-wider text-white transition-all duration-300 ease-in-out overflow-hidden ${
-                sidebarExpanded ? 'opacity-100' : 'opacity-0 max-w-0 pointer-events-none'
-              }`}
+              className="select-none text-lg font-bold uppercase tracking-wider text-white leading-none flex items-center shrink-0"
             >
               CMS
             </span>
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center">
-              <button
-                type="button"
-                onClick={() => {
-                  if (typeof window !== 'undefined' && window.innerWidth < 1024) {
-                    setMobileDrawerOpen(false);
-                  } else {
-                    toggleSidebarExpanded();
-                  }
-                }}
-                className="flex h-9 w-12 items-center justify-center rounded-full border border-white/40 bg-white/15 text-white hover:bg-white/25 transition-all duration-300 cursor-pointer"
-                title={sidebarExpanded ? 'Collapse menu' : 'Expand menu'}
-                aria-label={sidebarExpanded ? 'Collapse menu' : 'Expand menu'}
-              >
-                <ChevronLeft
-                  className={`h-5 w-5 text-white transition-transform duration-300 ease-in-out ${
-                    !sidebarExpanded ? 'rotate-180' : 'rotate-0'
-                  }`}
-                />
-              </button>
-            </div>
+          </div>
+
+          {/* Circular Collapse Toggle Button */}
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+                  setMobileDrawerOpen(false);
+                } else {
+                  toggleSidebarExpanded();
+                }
+              }}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-white/40 bg-white/15 text-white hover:bg-white/25 transition-all duration-300 cursor-pointer"
+              title={sidebarExpanded ? 'Collapse menu' : 'Expand menu'}
+              aria-label={sidebarExpanded ? 'Collapse menu' : 'Expand menu'}
+            >
+              <ChevronLeft
+                className={`h-4 w-4 text-white transition-transform duration-300 ease-in-out ${
+                  !sidebarExpanded ? 'rotate-180' : 'rotate-0'
+                }`}
+              />
+            </button>
           </div>
         </div>
 
@@ -412,7 +414,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* Super Admin Only: Data Cleanup */}
           {userRole === 'SUPER_ADMIN' && (
             <>
-              <div className="my-2 border-t border-zinc-200 dark:border-zinc-800 mx-1" />
+              <div className="my-2 border-t border-gray-400 dark:border-zinc-700 mx-1" />
               <Link
                 href="/admin/cleanup"
                 title={!sidebarExpanded ? "Data Cleanup" : undefined}
@@ -495,13 +497,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       }`}>
 
         {/* Navbar Header (Top Menu button removed on desktop) */}
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-zinc-200 bg-white/80 px-4 sm:px-6 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-black bg-white/80 px-4 sm:px-6 backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/80">
 
           <div className="flex items-center gap-3">
             {/* Mobile hamburger menu toggle only (<lg) */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 lg:hidden cursor-pointer"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-gray-400 bg-zinc-50 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 lg:hidden cursor-pointer"
               aria-label="Open mobile menu"
             >
               <Menu className="h-5 w-5" />
@@ -551,10 +553,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     onClick={() => setProfileMenuOpen(false)}
                     className="fixed inset-0 z-30"
                   />
-                  <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-xl border border-zinc-200 bg-white p-2 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900 z-40">
-                    <div className="px-3 py-2.5 border-b border-zinc-100 dark:border-zinc-800 mb-1">
+                  <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-xl border border-gray-400 bg-white p-2 shadow-xl ring-1 ring-black/5 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 z-40">
+                    <div className="px-3 py-2.5 border-b border-gray-400 dark:border-zinc-700 mb-1">
                       {currentRoleMeta && (
-                        <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border mb-1.5 bg-sky-50 border-sky-300 text-sky-600 dark:bg-sky-950/40 dark:border-sky-700 dark:text-sky-400">
+                        <span className="inline-block text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border mb-1.5 bg-sky-50 border-sky-400 text-sky-600 dark:bg-sky-950/40 dark:border-sky-700 dark:text-sky-400">
                           {currentRoleMeta.title}
                         </span>
                       )}
@@ -585,7 +587,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <main className="flex-1 p-4 md:p-8 min-w-0 w-full">
           {authChecked && !isCurrentRoutePermitted() ? (
             <div className="mx-auto max-w-xl text-center py-16 px-4">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 mb-4 border border-red-200 dark:border-red-900/50 shadow-lg">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 mb-4 border border-red-400 dark:border-red-900/50 shadow-lg">
                 <ShieldAlert className="h-8 w-8" />
               </div>
               <h2 className="text-2xl font-black text-zinc-900 dark:text-white">

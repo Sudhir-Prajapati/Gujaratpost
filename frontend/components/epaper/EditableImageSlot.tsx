@@ -87,7 +87,7 @@ export const EditableImageSlot: React.FC<EditableImageSlotProps> = ({
       className={`group relative overflow-hidden bg-slate-100 transition-all cursor-pointer rounded border ${
         isSelected
           ? 'ring-2 ring-blue-600 border-blue-600'
-          : 'border-slate-300 hover:border-amber-500'
+          : 'border-slate-400 hover:border-amber-500'
       } ${className}`}
       style={{
         aspectRatio: aspectRatio || undefined,
@@ -110,7 +110,7 @@ export const EditableImageSlot: React.FC<EditableImageSlotProps> = ({
           style={{ width: '100%', height: '100%', objectFit }}
         />
       ) : (
-        <div className={`h-full flex flex-col items-center justify-center p-3 text-slate-400 bg-slate-50 border-2 border-dashed border-slate-300 ${actionsClassName || 'w-full'}`}>
+        <div className={`h-full flex flex-col items-center justify-center p-3 text-slate-400 bg-slate-50 border-2 border-dashed border-slate-400 ${actionsClassName || 'w-full'}`}>
           <ImageIcon className="w-8 h-8 mb-1 text-slate-400" />
           <span className="text-xs text-slate-500 font-medium">ઈમેજ અપલોડ કરો</span>
         </div>

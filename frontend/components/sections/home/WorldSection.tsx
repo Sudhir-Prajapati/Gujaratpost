@@ -108,7 +108,7 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
         <span className="text-[#B3121B] font-extrabold text-[14px] md:text-[15px]">
           {language === 'gu' ? '• વિદેશી ચલણ' : language === 'hi' ? '• विदेशी मुद्रा' : '• Foreign Exchange'}
         </span>
-        <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+        <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-400 dark:border-emerald-800">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           <span>Live {lastUpdated}</span>
         </span>

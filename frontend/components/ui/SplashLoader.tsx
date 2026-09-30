@@ -196,7 +196,7 @@ export default function SplashLoader() {
         <div className="animate-mic-3d relative flex flex-col items-center justify-center w-48 h-76">
           
           {/* 1. MIC HEAD (Ultra-Detailed 3D Spherical Metallic Grill) */}
-          <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-slate-100 via-zinc-400 to-zinc-950 shadow-[0_15px_30px_rgba(0,0,0,0.9)] border-[3.5px] border-zinc-200 flex items-center justify-center overflow-hidden z-20">
+          <div className="relative w-32 h-32 rounded-full bg-gradient-to-br from-slate-100 via-zinc-400 to-zinc-950 shadow-[0_15px_30px_rgba(0,0,0,0.9)] border-[3.5px] border-zinc-400 flex items-center justify-center overflow-hidden z-20">
             {/* Metallic Grid Mesh Texture */}
             <div className="absolute inset-0 bg-[radial-gradient(#000_1.8px,transparent_1.8px)] [background-size:5px_5px] opacity-80" />
             
@@ -219,7 +219,7 @@ export default function SplashLoader() {
           <div className="cube-flag relative w-40 h-26 z-10">
             {/* FRONT FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
+              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-400/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
               style={{ transform: 'rotateY(0deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
             >
               <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
@@ -237,7 +237,7 @@ export default function SplashLoader() {
 
             {/* BACK FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
+              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-400/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
               style={{ transform: 'rotateY(180deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
             >
               <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
@@ -254,7 +254,7 @@ export default function SplashLoader() {
 
             {/* RIGHT FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
+              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-400/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
               style={{ transform: 'rotateY(90deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
             >
               <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">
@@ -271,7 +271,7 @@ export default function SplashLoader() {
 
             {/* LEFT FACE */}
             <div
-              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-300/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
+              className="absolute inset-0 bg-gradient-to-br from-[#c8000a] via-[#e62117] to-[#780005] border-2 border-red-400/80 shadow-[0_15px_35px_rgba(0,0,0,0.95)] rounded-xl flex items-center justify-center p-1.5 overflow-hidden"
               style={{ transform: 'rotateY(-90deg) translateZ(80px)', backfaceVisibility: 'hidden' }}
             >
               <div className="relative w-full h-full bg-[#080808] rounded-lg p-2 border border-zinc-800 flex items-center justify-center overflow-hidden shadow-inner">

@@ -307,7 +307,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
       <div className="absolute inset-0" onClick={onClose} />
 
       {/* Modal Box */}
-      <div className="relative w-full max-w-[360px] rounded-3xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 z-10 flex flex-col items-center text-center overflow-hidden">
+      <div className="relative w-full max-w-[360px] rounded-3xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-400 dark:border-zinc-800 z-10 flex flex-col items-center text-center overflow-hidden">
         
         {/* Close Button */}
         <button
@@ -388,7 +388,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
                     if (error) setError(null);
                   }}
                   placeholder={texts.enterEmail}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-xs md:text-sm font-semibold text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs"
+                  className="w-full rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-xs md:text-sm font-semibold text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs"
                 />
               </div>
 
@@ -409,15 +409,15 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
             </form>
 
             <div className="relative flex py-0.5 items-center">
-              <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
+              <div className="flex-grow border-t border-zinc-400 dark:border-zinc-800"></div>
               <span className="flex-shrink mx-2 text-[10px] uppercase font-bold text-zinc-400 tracking-wider">or</span>
-              <div className="flex-grow border-t border-zinc-200 dark:border-zinc-800"></div>
+              <div className="flex-grow border-t border-zinc-400 dark:border-zinc-800"></div>
             </div>
 
             {/* Google Sign In Button */}
             <button
               type="button"
-              className="w-full py-2.5 px-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 font-bold text-xs flex items-center justify-center gap-2.5 shadow-xs transition cursor-default opacity-85"
+              className="w-full py-2.5 px-4 rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 font-bold text-xs flex items-center justify-center gap-2.5 shadow-xs transition cursor-default opacity-85"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -445,7 +445,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
         {step === 'otp' && (
           <div className="w-full space-y-3 mb-4 animate-in fade-in">
             {/* Target Email Badge */}
-            <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 flex items-center justify-between text-xs">
+            <div className="p-2.5 rounded-xl bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-400 dark:border-zinc-700 flex items-center justify-between text-xs">
               <div className="truncate font-semibold text-zinc-700 dark:text-zinc-300 pr-2">
                 <span className="text-[10px] text-zinc-400 block font-normal">Sent OTP to:</span>
                 <span className="font-bold text-zinc-900 dark:text-white truncate">{email}</span>
@@ -460,7 +460,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
             </div>
 
             {/* Prominent Centered OTP Expiration Timer */}
-            <div className="w-full py-2.5 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-200 dark:border-zinc-700/80 flex items-center justify-center gap-2 text-center text-sm font-extrabold text-zinc-800 dark:text-zinc-100 shadow-xs">
+            <div className="w-full py-2.5 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-400 dark:border-zinc-700/80 flex items-center justify-center gap-2 text-center text-sm font-extrabold text-zinc-800 dark:text-zinc-100 shadow-xs">
               <Clock className="w-4 h-4 text-[#B3121B] shrink-0" />
               <span>{language === 'gu' ? 'ઓટીપી સમય:' : 'OTP Expiry:'}</span>
               <span className={`font-mono text-base tracking-wider ${timeLeft < 60 ? 'text-red-600 dark:text-red-400 animate-pulse font-black' : 'text-[#B3121B]'}`}>
@@ -494,7 +494,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
                   }}
                   placeholder="------"
                   disabled={timeLeft === 0}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-center font-mono text-lg font-black tracking-[0.4em] text-zinc-900 dark:text-white placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs disabled:opacity-50"
+                  className="w-full rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-center font-mono text-lg font-black tracking-[0.4em] text-zinc-900 dark:text-white placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs disabled:opacity-50"
                 />
               </div>
 
@@ -533,7 +533,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
         {/* ── STEP 3: RETURN VISIT / ALREADY LOGGED IN VIEW ── */}
         {step === 'already_logged_in' && userEmail && (
           <div className="w-full space-y-3.5 mb-5 animate-in fade-in">
-            <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200 dark:border-zinc-700/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 break-all text-center">
+            <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-400 dark:border-zinc-700/60 text-xs font-medium text-zinc-700 dark:text-zinc-300 break-all text-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-1">
                 ✓ Verified Account
               </span>
@@ -544,7 +544,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full py-3 px-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition cursor-pointer shadow-xs"
+                className="w-full py-3 px-4 rounded-xl border border-red-400 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 font-bold text-xs flex items-center justify-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition cursor-pointer shadow-xs"
               >
                 <LogOut className="w-4 h-4" />
                 <span>{texts.signOut}</span>

@@ -46,11 +46,11 @@ export default function AqiSkeleton() {
         <div className="flex items-center justify-between gap-2 sm:gap-4">
           {/* Tabs */}
           <div className="flex items-end gap-1 select-none">
-            <div className="h-10 sm:h-12 w-24 sm:w-32 rounded-t-xl sm:rounded-t-2xl bg-white dark:bg-zinc-900 border-t border-x border-neutral-200 dark:border-zinc-800 p-2 flex items-center justify-center gap-2">
+            <div className="h-10 sm:h-12 w-24 sm:w-32 rounded-t-xl sm:rounded-t-2xl bg-white dark:bg-zinc-900 border-t border-x border-neutral-400 dark:border-zinc-800 p-2 flex items-center justify-center gap-2">
               <div className="aqi-sk w-4 h-4 rounded-full" />
               <div className="aqi-sk h-4 w-12 rounded-md" />
             </div>
-            <div className="h-9 sm:h-11 w-24 sm:w-32 rounded-t-xl sm:rounded-t-2xl bg-neutral-100 dark:bg-zinc-800/80 border-t border-x border-neutral-200/70 p-2 flex items-center justify-center gap-2">
+            <div className="h-9 sm:h-11 w-24 sm:w-32 rounded-t-xl sm:rounded-t-2xl bg-neutral-100 dark:bg-zinc-800/80 border-t border-x border-neutral-400/70 p-2 flex items-center justify-center gap-2">
               <div className="aqi-sk w-3.5 h-3.5 rounded-full" />
               <div className="aqi-sk h-3.5 w-14 rounded-md" />
             </div>
@@ -61,7 +61,7 @@ export default function AqiSkeleton() {
         </div>
 
         {/* ── Main Hero Card Skeleton ── */}
-        <div className="relative overflow-hidden rounded-b-3xl rounded-tr-3xl border border-neutral-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-10 shadow-xl -mt-px">
+        <div className="relative overflow-hidden rounded-b-3xl rounded-tr-3xl border border-neutral-400 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 sm:p-10 shadow-xl -mt-px">
           {/* Subtle dots pattern */}
           <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] dark:bg-[radial-gradient(#60a5fa_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
 
@@ -108,7 +108,7 @@ export default function AqiSkeleton() {
               </div>
 
               {/* Dual PM 2.5 / PM 10 Box */}
-              <div className="bg-white dark:bg-zinc-800 border border-neutral-200/80 dark:border-zinc-700 rounded-2xl p-3 shadow-md flex items-center gap-3 w-full max-w-xs sm:max-w-sm">
+              <div className="bg-white dark:bg-zinc-800 border border-neutral-400/80 dark:border-zinc-700 rounded-2xl p-3 shadow-md flex items-center gap-3 w-full max-w-xs sm:max-w-sm">
                 <div className="flex-1 rounded-xl p-3 bg-neutral-50 dark:bg-zinc-900/60 text-center space-y-2">
                   <div className="aqi-sk h-3 w-14 rounded-md mx-auto" />
                   <div className="aqi-sk h-7 w-12 rounded-lg mx-auto" />
@@ -132,7 +132,7 @@ export default function AqiSkeleton() {
           {[...Array(5)].map((_, i) => (
             <div
               key={i}
-              className="p-5 rounded-2xl border border-neutral-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col items-center justify-center gap-3 shadow-xs"
+              className="p-5 rounded-2xl border border-neutral-400/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex flex-col items-center justify-center gap-3 shadow-xs"
             >
               <div className="aqi-sk w-10 h-10 rounded-full" />
               <div className="aqi-sk h-4 w-20 rounded-md" />
@@ -142,12 +142,12 @@ export default function AqiSkeleton() {
       </section>
 
       {/* ── Most vs Least Polluted Rankings Skeleton ── */}
-      <section className="rounded-[2.5rem] bg-[#F8FAFC] dark:bg-zinc-900/60 p-6 sm:p-8 border border-zinc-200/80 dark:border-zinc-800 shadow-xs">
+      <section className="rounded-[2.5rem] bg-[#F8FAFC] dark:bg-zinc-900/60 p-6 sm:p-8 border border-zinc-400/80 dark:border-zinc-800 shadow-xs">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {[...Array(2)].map((_, idx) => (
             <div
               key={idx}
-              className="rounded-[2rem] border border-zinc-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm space-y-4"
+              className="rounded-[2rem] border border-zinc-400/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-sm space-y-4"
             >
               <div className="aqi-sk h-7 w-48 rounded-xl mx-auto" />
               <div className="aqi-sk h-10 w-full rounded-xl" />

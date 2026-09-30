@@ -660,8 +660,8 @@ export default function CrimeSection({
                   key={sign.id}
                   onClick={() => setSelectedZodiac(sign)}
                   className={`relative flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-lg border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden ${isSelected
-                      ? 'bg-[#FFF8F0] dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 shadow-xs'
-                      : 'bg-background hover:bg-amber-50/50 dark:hover:bg-amber-950/20 border-border/60 hover:border-amber-300/60'
+                      ? 'bg-[#FFF8F0] dark:bg-amber-950/40 border-amber-400 dark:border-amber-700/60 shadow-xs'
+                      : 'bg-background hover:bg-amber-50/50 dark:hover:bg-amber-950/20 border-border/60 hover:border-amber-400/60'
                     }`}
                 >
                   {/* SVG Illustration Icon */}

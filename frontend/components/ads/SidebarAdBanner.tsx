@@ -193,7 +193,7 @@ export default function SidebarAdBanner({
           href={redirectLink && redirectLink !== '#' ? redirectLink : undefined}
           target={redirectLink && redirectLink !== '#' ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="group relative flex flex-col w-full h-full overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-red-500/30 block select-none"
+          className="group relative flex flex-col w-full h-full overflow-hidden rounded-xl border border-slate-400/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-red-500/30 block select-none"
           style={{ height: bannerHeight }}
         >
           {isVideo ? (
@@ -284,7 +284,7 @@ export default function SidebarAdBanner({
           <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
         </div>
         <div
-          className="relative w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800/60 animate-pulse border border-slate-200 dark:border-slate-800"
+          className="relative w-full rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800/60 animate-pulse border border-slate-400 dark:border-slate-800"
           style={{ height: bannerHeight }}
         />
       </div>

@@ -125,7 +125,7 @@ function ReelCard({ reel, language, onReelClick }: { reel: ReelItem; language: s
         )}
 
         {/* Bottom Title Container Box */}
-        <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-100 dark:border-slate-800 z-20">
+        <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-400 dark:border-slate-800 z-20">
           <div className="flex flex-col min-w-0 flex-1 pr-1">
             <div className="flex items-center gap-1 mb-0.5">
               <ReelsBadgeIcon className="h-3 w-3 text-[#B3121B] shrink-0" />
@@ -309,7 +309,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
             <button
               type="button"
               onClick={() => handleScroll('left')}
-              className="absolute -left-2 sm:-left-3 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white text-[#B3121B] dark:bg-slate-900 dark:text-white flex items-center justify-center shadow-2xl border border-slate-200 dark:border-slate-800 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="absolute -left-2 sm:-left-3 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white text-[#B3121B] dark:bg-slate-900 dark:text-white flex items-center justify-center shadow-2xl border border-slate-400 dark:border-slate-800 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
               aria-label="Scroll left"
             >
               <ChevronLeft className="h-6 w-6 stroke-[3]" />
@@ -320,7 +320,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
             <button
               type="button"
               onClick={() => handleScroll('right')}
-              className="absolute -right-2 sm:-right-3 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white text-[#B3121B] dark:bg-slate-900 dark:text-white flex items-center justify-center shadow-2xl border border-slate-200 dark:border-slate-800 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
+              className="absolute -right-2 sm:-right-3 top-1/2 -translate-y-1/2 z-40 w-11 h-11 rounded-full bg-white text-[#B3121B] dark:bg-slate-900 dark:text-white flex items-center justify-center shadow-2xl border border-slate-400 dark:border-slate-800 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer"
               aria-label="Scroll right"
             >
               <ChevronRight className="h-6 w-6 stroke-[3]" />
@@ -414,7 +414,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
                     </div>
 
                     {/* Bottom Title Container Box */}
-                    <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-100 dark:border-slate-800 z-20">
+                    <div className="absolute bottom-2 inset-x-2 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xs rounded-xl p-2.5 flex items-center justify-between shadow-lg border border-slate-400 dark:border-slate-800 z-20">
                       <div className="flex flex-col min-w-0 flex-1 pr-1">
                         <div className="flex items-center gap-1 mb-0.5">
                           <ReelsBadgeIcon className="h-3 w-3 text-[#B3121B] shrink-0" />
@@ -437,13 +437,13 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
         {/* Follow us on Instagram Row */}
         <div className="relative flex items-center justify-center mt-3">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-red-200 dark:border-red-950/40" />
+            <div className="w-full border-t border-red-400 dark:border-red-950/40" />
           </div>
           <a
             href="https://www.instagram.com/gujaratpost.in/"
             target="_blank"
             rel="noopener noreferrer"
-            className="relative flex items-center gap-2.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-2.5 shadow-sm text-slate-900 dark:text-white font-black text-[13px] md:text-[14px] hover:border-[#B3121B] hover:text-[#B3121B] transition-all select-none"
+            className="relative flex items-center gap-2.5 rounded-full border border-slate-400 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-2.5 shadow-sm text-slate-900 dark:text-white font-black text-[13px] md:text-[14px] hover:border-[#B3121B] hover:text-[#B3121B] transition-all select-none"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-[#B3121B] stroke-[2]" aria-hidden="true">
               <rect x="2" y="2" width="20" height="20" rx="5" />

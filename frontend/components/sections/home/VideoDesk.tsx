@@ -268,7 +268,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 <button
                   type="button"
                   onClick={() => handleScroll('left')}
-                  className="absolute left-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-xl border border-slate-200 hover:scale-105 transition-transform"
+                  className="absolute left-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-xl border border-slate-400 hover:scale-105 transition-transform"
                   aria-label="Scroll left"
                 >
                   <ChevronLeft className="h-6 w-6 stroke-[3]" />
@@ -380,7 +380,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 <button
                   type="button"
                   onClick={() => handleScroll('right')}
-                  className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-xl border border-slate-200 hover:scale-105 transition-transform"
+                  className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white text-[#B3121B] flex items-center justify-center shadow-xl border border-slate-400 hover:scale-105 transition-transform"
                   aria-label="Scroll right"
                 >
                   <ChevronRight className="h-6 w-6 stroke-[3]" />

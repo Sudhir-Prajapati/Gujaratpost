@@ -202,12 +202,12 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
         </div>
 
         {/* User Account & Support Us Quick Action Bar */}
-        <div className="p-3 bg-red-50/70 dark:bg-red-950/20 border-b border-gray-200 dark:border-gray-800 grid grid-cols-2 gap-2">
+        <div className="p-3 bg-red-50/70 dark:bg-red-950/20 border-b border-gray-400 dark:border-gray-800 grid grid-cols-2 gap-2">
           {/* User Sign In / Profile Button */}
           <button
             type="button"
             onClick={() => setAuthModalOpen(true)}
-            className="py-2 px-2.5 rounded-xl bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-100 flex items-center gap-2 hover:border-[#B3121B]/40 active:scale-95 transition shadow-2xs cursor-pointer overflow-hidden"
+            className="py-2 px-2.5 rounded-xl bg-white dark:bg-[#27272a] border border-gray-400 dark:border-gray-700 text-gray-800 dark:text-gray-100 flex items-center gap-2 hover:border-[#B3121B]/40 active:scale-95 transition shadow-2xs cursor-pointer overflow-hidden"
           >
             <div className="w-6 h-6 rounded-full bg-red-100 dark:bg-red-900/40 text-[#B3121B] flex items-center justify-center shrink-0">
               <User className="w-3.5 h-3.5" />
@@ -236,7 +236,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
         </div>
 
         {/* Language Selection */}
-        <div className="p-3 bg-gray-50 dark:bg-[#1e1e24] border-b border-gray-200 dark:border-gray-800">
+        <div className="p-3 bg-gray-50 dark:bg-[#1e1e24] border-b border-gray-400 dark:border-gray-800">
           <div className="text-[11px] font-bold text-gray-500 dark:text-gray-400 uppercase mb-1.5 flex items-center gap-1">
             <Globe className="w-3.5 h-3.5" />
             {language === 'hi' ? 'भाषा चुनें (Language)' : language === 'en' ? 'Select Language' : 'ભાષા પસંદ કરો (Language)'}
@@ -254,7 +254,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
                 className={`py-1.5 text-xs font-bold rounded-lg border transition text-center cursor-pointer ${
                   language === lang.code
                     ? 'bg-[#B3121B] text-white border-[#B3121B] shadow-xs'
-                    : 'bg-white dark:bg-[#27272a] text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    : 'bg-white dark:bg-[#27272a] text-gray-700 dark:text-gray-200 border-gray-400 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
               >
                 {lang.label}
@@ -264,7 +264,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
         </div>
 
         {/* Dark / Light Mode Switcher */}
-        <div className="p-3 bg-gray-50 dark:bg-[#1e1e24] border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+        <div className="p-3 bg-gray-50 dark:bg-[#1e1e24] border-b border-gray-400 dark:border-gray-800 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {apkTheme === 'dark' ? (
               <Sun className="w-4 h-4 text-amber-400" />
@@ -316,7 +316,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={onClose}
-                    className="h-11 flex items-center justify-center text-center rounded-2xl border border-gray-200/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] px-2.5 text-[13px] font-bold text-gray-800 dark:text-gray-200 transition hover:border-[#B3121B]/40 hover:text-[#B3121B] active:scale-95 shadow-2xs"
+                    className="h-11 flex items-center justify-center text-center rounded-2xl border border-gray-400/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] px-2.5 text-[13px] font-bold text-gray-800 dark:text-gray-200 transition hover:border-[#B3121B]/40 hover:text-[#B3121B] active:scale-95 shadow-2xs"
                   >
                     <span className="truncate">{getCatName(cat)}</span>
                   </a>
@@ -332,7 +332,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
                   className={`h-11 flex items-center justify-center text-center rounded-2xl border px-2.5 text-[13px] font-bold transition active:scale-95 shadow-2xs ${
                     active
                       ? 'border-[#B3121B]/40 bg-[#FDF2F2] dark:bg-red-950/40 text-[#B3121B] font-extrabold gap-1.5'
-                      : 'border-gray-200/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] text-gray-800 dark:text-gray-200 hover:border-[#B3121B]/40 hover:text-[#B3121B]'
+                      : 'border-gray-400/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] text-gray-800 dark:text-gray-200 hover:border-[#B3121B]/40 hover:text-[#B3121B]'
                   }`}
                 >
                   {active && (
@@ -345,7 +345,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
           </div>
 
           {/* Social Follow Links Bar (Matching Reference Screenshot - Vibrant Brand Icons) */}
-          <div className="pt-3.5 pb-2 border-t border-gray-200/80 dark:border-gray-800">
+          <div className="pt-3.5 pb-2 border-t border-gray-400/80 dark:border-gray-800">
             <div className="flex items-center justify-between gap-1.5">
               <span className="text-[12px] font-extrabold text-gray-700 dark:text-gray-300 shrink-0">
                 Follow Us:
@@ -370,7 +370,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
         </div>
 
         {/* Drawer Footer */}
-        <div className="p-3 bg-gray-50 dark:bg-[#1e1e24] border-t border-gray-200 dark:border-gray-800 text-center text-[11px] text-gray-500 dark:text-gray-400 font-medium">
+        <div className="p-3 bg-gray-50 dark:bg-[#1e1e24] border-t border-gray-400 dark:border-gray-800 text-center text-[11px] text-gray-500 dark:text-gray-400 font-medium">
           © 2026 Gujarat Post. All rights reserved.
         </div>
       </div>

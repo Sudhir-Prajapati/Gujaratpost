@@ -82,11 +82,11 @@ function CustomCategorySelect({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between rounded-xl border border-zinc-200 bg-white dark:bg-zinc-900/90 px-4 py-3 text-sm font-extrabold text-zinc-900 transition-all hover:bg-zinc-50 hover:border-red-500/40 focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:border-zinc-800 dark:text-white dark:hover:!bg-zinc-800 cursor-pointer shadow-sm"
+        className="w-full flex items-center justify-between rounded-xl border border-gray-400 bg-white dark:bg-zinc-900/90 px-4 py-3 text-sm font-extrabold text-zinc-900 transition-all hover:bg-zinc-50 hover:border-red-500/40 focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:border-zinc-700 dark:text-white dark:hover:!bg-zinc-800 cursor-pointer shadow-sm"
       >
         <span className="flex items-center gap-2">
           {selectedCategory ? (
-            <span className="inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 px-3 py-1 rounded-lg text-xs font-black border border-red-200 dark:border-red-900/50">
+            <span className="inline-flex items-center gap-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 px-3 py-1 rounded-lg text-xs font-black border border-red-400 dark:border-red-900/50">
               <span>{getCategoryIcon(selectedCategory)}</span>
               <span>{selectedCategory}</span>
             </span>
@@ -99,7 +99,7 @@ function CustomCategorySelect({
 
       {/* Floating Absolute Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-[100] max-h-60 overflow-y-auto rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2 shadow-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-[100] max-h-60 overflow-y-auto rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-2 shadow-2xl space-y-1 animate-in fade-in zoom-in-95 duration-150">
           {availableCategories.map((cat) => {
             const isSelected = selectedCategory === cat;
             return (
@@ -438,7 +438,7 @@ export default function GalleryPage() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
           <button
             onClick={() => setNewCategoryModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white hover:bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:hover:!bg-zinc-700 dark:text-white dark:hover:!text-white px-4 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer whitespace-nowrap w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white hover:bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:hover:!bg-zinc-700 dark:text-white dark:hover:!text-white px-4 py-2.5 text-xs sm:text-sm font-bold shadow-xs transition-all cursor-pointer whitespace-nowrap w-full sm:w-auto"
           >
             <Plus className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
             <span>કેટેગરી ઉમેરો (Add Category)</span>
@@ -458,10 +458,10 @@ export default function GalleryPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex items-center gap-3 rounded-2xl border border-gray-400 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="relative flex-1 max-w-md">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
-            <Search className="h-4 w-4" />
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-500">
+            <Search className="h-5 w-5" />
           </span>
           <input
             type="text"
@@ -471,7 +471,7 @@ export default function GalleryPage() {
               setQuery(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none focus:ring-1 focus:ring-primary/20 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+            className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-11 pr-4 text-base text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/20 dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white"
           />
         </div>
       </div>
@@ -495,7 +495,7 @@ export default function GalleryPage() {
           {photos.map((photo) => (
             <div
               key={photo.id}
-              className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+              className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-400 bg-white shadow-sm transition hover:shadow-md dark:border-zinc-600 dark:bg-zinc-900"
             >
               {/* Image Preview with Category Badge */}
               <div className="relative aspect-video w-full overflow-hidden bg-zinc-150 dark:bg-zinc-950">
@@ -514,41 +514,41 @@ export default function GalleryPage() {
               {/* Details */}
               <div className="flex-1 p-4 flex flex-col justify-between space-y-3">
                 <div>
-                  <p className="line-clamp-2 text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                  <p className="line-clamp-2 text-base font-bold text-gray-900 dark:text-white leading-snug">
                     {photo.caption || 'No caption'}
                   </p>
-                  <p className="text-[11px] text-zinc-400 font-mono mt-1 select-all truncate">
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 font-mono mt-1 select-all truncate">
                     URL: {photo.src}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between text-[11px] font-semibold text-zinc-500 border-t pt-2 border-zinc-100 dark:border-zinc-800">
-                  <span className="flex items-center gap-1">
-                    <Camera className="h-3 w-3" />
-                    <span className="truncate max-w-[100px]">{photo.photographer || 'Staff'}</span>
+                <div className="flex items-center justify-between text-sm font-semibold text-gray-800 dark:text-zinc-200 border-t pt-2.5 border-gray-400 dark:border-zinc-700">
+                  <span className="flex items-center gap-1.5 text-gray-800 dark:text-zinc-200">
+                    <Camera className="h-4 w-4 text-gray-700 dark:text-zinc-300 shrink-0" />
+                    <span className="truncate max-w-[110px]">{photo.photographer || 'Staff'}</span>
                   </span>
-                  <span className="flex items-center gap-1">
-                    <Copyright className="h-3 w-3" />
-                    <span className="truncate max-w-[80px]">{photo.copyright || 'GP'}</span>
+                  <span className="flex items-center gap-1.5 text-gray-800 dark:text-zinc-200">
+                    <Copyright className="h-4 w-4 text-gray-700 dark:text-zinc-300 shrink-0" />
+                    <span className="truncate max-w-[90px]">{photo.copyright || 'GP'}</span>
                   </span>
                 </div>
               </div>
 
               {/* Hover overlay actions */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-zinc-900/80 backdrop-blur p-1 rounded-xl shadow-md border border-zinc-200 dark:border-zinc-850">
+              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-zinc-900/80 backdrop-blur p-1 rounded-xl shadow-md border border-gray-400 dark:border-zinc-850">
                 <button
                   onClick={() => openEdit(photo)}
-                  className="p-1.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 rounded-lg"
+                  className="p-1.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
                   title="Edit details"
                 >
-                  <Edit2 className="h-3.5 w-3.5" />
+                  <Edit2 className="h-4 w-4" />
                 </button>
                 <button
                   onClick={() => setDeleteTargetPhoto(photo)}
-                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 rounded-lg"
+                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 rounded-lg cursor-pointer"
                   title="Delete image"
                 >
-                  <Trash2 className="h-3.5 w-3.5" />
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -558,7 +558,7 @@ export default function GalleryPage() {
 
       {/* Pagination */}
       {!loading && !error && photos.length > 0 && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
           <span className="text-xs font-semibold text-zinc-500">
             Showing Page {page} of {totalPages}
           </span>
@@ -566,14 +566,14 @@ export default function GalleryPage() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:text-zinc-400 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:text-zinc-400 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
             >
               Previous
             </button>
             <button
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:text-zinc-400 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:text-zinc-400 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
             >
               Next
             </button>
@@ -588,7 +588,7 @@ export default function GalleryPage() {
           onClick={() => setUploadModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-zinc-200 bg-white p-7 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 space-y-5 cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-400 bg-white p-7 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 space-y-5 cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -639,7 +639,7 @@ export default function GalleryPage() {
                     </div>
                   </div>
                 ) : (
-                  <label className="relative flex flex-col items-center justify-center w-full h-36 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-950/30 hover:bg-red-50/40 dark:hover:bg-red-950/20 hover:border-red-500/50 transition-all cursor-pointer group p-4 text-center">
+                  <label className="relative flex flex-col items-center justify-center w-full h-36 rounded-2xl border-2 border-dashed border-zinc-400 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-950/30 hover:bg-red-50/40 dark:hover:bg-red-950/20 hover:border-red-500/50 transition-all cursor-pointer group p-4 text-center">
                     <div className="flex flex-col items-center justify-center space-y-2">
                       <div className="p-3 bg-red-100 dark:bg-red-950/60 text-[#B3121B] dark:text-red-400 rounded-2xl group-hover:scale-110 transition-transform shadow-sm">
                         {uploading ? <Loader2 className="h-6 w-6 animate-spin" /> : <UploadCloud className="h-6 w-6" />}
@@ -667,7 +667,7 @@ export default function GalleryPage() {
               {/* Divider OR */}
               <div className="relative flex items-center justify-center my-2">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                  <div className="w-full border-t border-gray-400 dark:border-zinc-700" />
                 </div>
                 <span className="relative bg-white dark:bg-zinc-900 px-3 text-[11px] font-black uppercase text-zinc-400 tracking-wider select-none">
                   અથવા ઈમેજ URL લિંક (OR VIA IMAGE URL)
@@ -681,7 +681,7 @@ export default function GalleryPage() {
                   placeholder="https://images.unsplash.com/photo-..."
                   value={src}
                   onChange={(e) => setSrc(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
                 />
               </div>
 
@@ -699,7 +699,7 @@ export default function GalleryPage() {
                     setCaption(e.target.value);
                     setAlt(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
                 />
               </div>
 
@@ -720,7 +720,7 @@ export default function GalleryPage() {
                     type="text"
                     value={photographer}
                     onChange={(e) => setPhotographer(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
                   />
                 </div>
                 <div>
@@ -732,7 +732,7 @@ export default function GalleryPage() {
                     placeholder="© Gujarat Post"
                     value={copyright}
                     onChange={(e) => setCopyright(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-800 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
                   />
                 </div>
               </div>
@@ -741,7 +741,7 @@ export default function GalleryPage() {
                 <button
                   type="button"
                   onClick={() => setUploadModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-5 py-2.5 text-sm font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-800 transition cursor-pointer"
+                  className="rounded-xl border border-gray-400 px-5 py-2.5 text-sm font-bold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -765,7 +765,7 @@ export default function GalleryPage() {
           onClick={() => setEditModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 space-y-4 cursor-default"
+            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-400 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4 cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850">
@@ -800,7 +800,7 @@ export default function GalleryPage() {
                     setCaption(e.target.value);
                     setAlt(e.target.value);
                   }}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-bold text-foreground focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2.5 text-sm font-bold text-foreground focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                 />
               </div>
 
@@ -821,7 +821,7 @@ export default function GalleryPage() {
                     type="text"
                     value={photographer}
                     onChange={(e) => setPhotographer(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   />
                 </div>
                 <div>
@@ -832,7 +832,7 @@ export default function GalleryPage() {
                     type="text"
                     value={copyright}
                     onChange={(e) => setCopyright(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   />
                 </div>
               </div>
@@ -841,7 +841,7 @@ export default function GalleryPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-55 dark:border-zinc-800"
+                  className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-55 dark:border-zinc-700"
                 >
                   Cancel
                 </button>
@@ -865,7 +865,7 @@ export default function GalleryPage() {
           onClick={() => setToastModal(prev => ({ ...prev, isOpen: false }))}
         >
           <div
-            className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 text-center space-y-4 animate-in zoom-in-95 duration-200 cursor-default"
+            className="w-full max-w-sm rounded-2xl border border-gray-400 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 text-center space-y-4 animate-in zoom-in-95 duration-200 cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Icon Badge */}
@@ -907,7 +907,7 @@ export default function GalleryPage() {
           onClick={() => setNewCategoryModalOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 space-y-4 cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4 cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850">
@@ -933,7 +933,7 @@ export default function GalleryPage() {
                   placeholder="દા.ત. શિરોમણિ, રાજકારણ, ખેલ-જગત..."
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   autoFocus
                 />
               </div>
@@ -959,7 +959,7 @@ export default function GalleryPage() {
                 <button
                   type="button"
                   onClick={() => setNewCategoryModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+                  className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -982,7 +982,7 @@ export default function GalleryPage() {
             className="absolute inset-0"
             onClick={() => !deletingPhoto && setDeleteTargetPhoto(null)}
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
             {/* Red Alert Icon */}
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
               <Trash2 className="h-7 w-7" />
@@ -996,7 +996,7 @@ export default function GalleryPage() {
             </p>
 
             {/* Photo Preview Card */}
-            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+            <div className="mt-4 overflow-hidden rounded-xl border border-gray-400 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/60 text-left">
               <div className="relative aspect-video w-full overflow-hidden bg-zinc-200 dark:bg-zinc-800">
                 {deleteTargetPhoto.src && (
                   <img
@@ -1033,7 +1033,7 @@ export default function GalleryPage() {
                 type="button"
                 disabled={deletingPhoto}
                 onClick={() => setDeleteTargetPhoto(null)}
-                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                className="flex-1 rounded-xl border border-gray-400 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>

@@ -257,7 +257,7 @@ export default function SupportModal({ isOpen, onClose }: SupportModalProps) {
             {activeTab === 'upi' && (
               <div className="p-5 rounded-2xl bg-muted/40 border border-border/80 text-center space-y-4">
                 {/* QR Code Container */}
-                <div className="inline-block p-3 rounded-2xl bg-white shadow-md border border-zinc-200">
+                <div className="inline-block p-3 rounded-2xl bg-white shadow-md border border-zinc-400">
                   {data.qrCodeImage ? (
                     <img
                       src={data.qrCodeImage.startsWith('http') || data.qrCodeImage.startsWith('data:') ? data.qrCodeImage : getBackendApiUrl(data.qrCodeImage)}

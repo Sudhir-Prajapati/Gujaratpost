@@ -1222,9 +1222,9 @@ export default function CityHyperlocalSection({
           </div>
 
           {/* Trending Topics widget */}
-          <div className="w-full rounded-2xl border-[1.5px] border-slate-300 bg-white p-4 sm:p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:border-slate-700 dark:bg-slate-900">
-            <div className="flex items-center gap-2.5 border-b border-slate-200/90 dark:border-slate-800 pb-3 mb-3.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
+          <div className="w-full rounded-2xl border-[1.5px] border-slate-400 bg-white p-4 sm:p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-center gap-2.5 border-b border-slate-400/90 dark:border-slate-800 pb-3 mb-3.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-300 dark:border-red-900/30">
                   <Flame className="h-4.5 w-4.5 fill-[#B3121B] text-[#B3121B]" />
                 </div>
                 <h3 className="text-[16px] md:text-[17px] font-black text-slate-900 dark:text-white tracking-tight">
@@ -1241,7 +1241,7 @@ export default function CityHyperlocalSection({
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-1 border border-slate-200 dark:border-slate-700 text-[12.5px] md:text-[13px] font-black px-3.5 py-1.5 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-md cursor-pointer select-none"
+                      className="group inline-flex items-center gap-1 border border-slate-400 dark:border-slate-700 text-[12.5px] md:text-[13px] font-black px-3.5 py-1.5 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-md cursor-pointer select-none"
                     >
                       <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />

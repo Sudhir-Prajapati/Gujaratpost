@@ -162,7 +162,7 @@ export default function PhotoGallery() {
             <button
               type="button"
               onClick={() => handleScroll('left')}
-              className="absolute left-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-center shadow-xl border border-neutral-200 dark:border-neutral-800 hover:scale-105 transition-transform cursor-pointer"
+              className="absolute left-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-center shadow-xl border border-neutral-400 dark:border-neutral-800 hover:scale-105 transition-transform cursor-pointer"
               aria-label="Scroll left"
             >
               <ChevronLeft className="h-6 w-6 stroke-[3]" />
@@ -174,7 +174,7 @@ export default function PhotoGallery() {
             <button
               type="button"
               onClick={() => handleScroll('right')}
-              className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-center shadow-xl border border-neutral-200 dark:border-neutral-800 hover:scale-105 transition-transform cursor-pointer"
+              className="absolute right-[-14px] top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 flex items-center justify-center shadow-xl border border-neutral-400 dark:border-neutral-800 hover:scale-105 transition-transform cursor-pointer"
               aria-label="Scroll right"
             >
               <ChevronRight className="h-6 w-6 stroke-[3]" />

@@ -1268,7 +1268,7 @@ export default function HeroSection({
           />
 
           {/* YouTube Video Section */}
-          <div className="w-full rounded-xl border-2 border-red-300 border-t-4 border-t-[#B3121B] bg-gradient-to-b from-white to-red-50/45 p-4 shadow-[0_8px_24px_rgba(127,29,29,0.16)] ring-2 ring-red-100 flex flex-col gap-2.5 dark:border-red-800 dark:ring-red-950/70 dark:from-card dark:to-red-950/20">
+          <div className="w-full rounded-xl border-2 border-red-400 border-t-4 border-t-[#B3121B] bg-gradient-to-b from-white to-red-50/45 p-4 shadow-[0_8px_24px_rgba(127,29,29,0.16)] ring-2 ring-red-100 flex flex-col gap-2.5 dark:border-red-800 dark:ring-red-950/70 dark:from-card dark:to-red-950/20">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] flex items-center gap-1.5 select-none">
                 <Play className="h-3.5 w-3.5 fill-current" />
@@ -1288,7 +1288,7 @@ export default function HeroSection({
             </div>
 
             <div
-              className="relative w-full overflow-hidden rounded-sm border border-slate-200/60 bg-black shadow-inner cursor-pointer group"
+              className="relative w-full overflow-hidden rounded-sm border border-slate-400/60 bg-black shadow-inner cursor-pointer group"
               style={{ aspectRatio: '16/9' }}
               onClick={() => setIsSidebarVideoPlaying(true)}
             >
@@ -1342,7 +1342,7 @@ export default function HeroSection({
           </div>
 
           {/* Popular Articles */}
-          <div className="w-full overflow-hidden rounded-xl border border-slate-300 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
+          <div className="w-full overflow-hidden rounded-xl border border-slate-400 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] select-none">
                 {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : 'Most Read'}

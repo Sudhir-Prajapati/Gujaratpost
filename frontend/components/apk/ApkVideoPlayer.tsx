@@ -99,7 +99,7 @@ export default function ApkVideoPlayer({
   return (
     <div className="fixed inset-0 z-[200] bg-[#F8F9FA] flex flex-col overflow-hidden select-none">
       {/* ── TOP BAR ─────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-gray-200 shadow-sm shrink-0">
+      <div className="flex items-center justify-between px-3 py-2 bg-white border-b border-gray-400 shadow-sm shrink-0">
         <button
           type="button"
           onClick={onClose}
@@ -115,7 +115,7 @@ export default function ApkVideoPlayer({
           onClick={toggleMute}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border active:scale-95 transition cursor-pointer ${
             muted
-              ? 'bg-red-50 border-red-200 text-red-600'
+              ? 'bg-red-50 border-red-400 text-red-600'
               : 'bg-green-50 border-green-200 text-green-700'
           }`}
           title={muted ? soundOnLabel : mutedLabel}
@@ -150,7 +150,7 @@ export default function ApkVideoPlayer({
 
         {/* ── VIDEO META ─────────────────────────────────────────── */}
         {currentVideo && (
-          <div className="bg-white px-4 pt-3 pb-4 border-b border-gray-100">
+          <div className="bg-white px-4 pt-3 pb-4 border-b border-gray-400">
             <h2 className="text-[15px] font-black text-gray-900 leading-snug line-clamp-3">
               {getLocalized(language, {
                 en: currentVideo.title || '',
