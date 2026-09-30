@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
-export const revalidate = 600; // Cache for 10 minutes
+export const dynamic = 'force-dynamic'; // Never pre-render at build time
+export const revalidate = 0;
 
 const CITY_COORDS: Record<string, { lat: number; lon: number }> = {
   Ahmedabad: { lat: 23.0225, lon: 72.5714 },

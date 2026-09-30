@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const revalidate = 86400; // Cache image for 24 hours
+export const dynamic = 'force-dynamic'; // Never pre-render at build time
+export const revalidate = 0;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

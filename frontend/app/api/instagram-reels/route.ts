@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export const revalidate = 60; // Cache for 60 seconds
+export const dynamic = 'force-dynamic'; // Never pre-render at build time
+export const revalidate = 0; // No static caching — runs on each request
 
 export async function GET(_request: NextRequest) {
   try {

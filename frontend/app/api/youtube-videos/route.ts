@@ -3,7 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 const YOUTUBE_CHANNEL_ID = 'UCqQ8YbFSZ4j8J4iVJOHurTw';
 const CHANNEL_HANDLE = '@Gujaratpostnews';
 
-export const revalidate = 300; // Cache for 5 minutes
+export const dynamic = 'force-dynamic'; // Never pre-render at build time
+export const revalidate = 0;
 
 function cleanTitle(raw: string): string {
   if (!raw) return '';
