@@ -328,7 +328,7 @@ export default function PhotoGallerySection({ language }: { language: Language }
   const allPhotos = photos.length >= 2 ? photos : PHOTOS;
 
   return (
-    <section className="py-6 bg-background select-none">
+    <section className="py-2 bg-background select-none">
       <div className="mx-auto max-w-screen-xl px-4">
 
         {/* ── Header: ફોટો ગેલેરી ── */}
@@ -338,7 +338,7 @@ export default function PhotoGallerySection({ language }: { language: Language }
           </span>
           <Link
             href="/photos"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline flex items-center gap-1 transition-colors"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 transition-colors"
           >
             <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : 'More Photo Gallery'}</span>
             <span>→</span>

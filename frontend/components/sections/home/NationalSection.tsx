@@ -197,7 +197,7 @@ export default function NationalSection({ language, initialArticles }: { languag
         </span>
         <Link
           href="/category/national"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
         </Link>

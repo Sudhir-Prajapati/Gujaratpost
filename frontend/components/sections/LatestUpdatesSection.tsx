@@ -289,7 +289,7 @@ export default function LatestUpdatesSection({
           </span>
           <Link
             href="/category/trending"
-            className="text-[#B3121B] font-extrabold text-[13px] hover:underline flex items-center gap-1 cursor-pointer"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
           >
             {language === 'gu' ? 'વધુ જુઓ →' : 'View All →'}
           </Link>
@@ -414,8 +414,8 @@ export default function LatestUpdatesSection({
   }
 
   return (
-    <section className="mt-4">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start border-t border-border/60 pt-4">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start border-t border-border/60 pt-2.5">
         {timelineContent}
         {sidebarContent}
       </div>

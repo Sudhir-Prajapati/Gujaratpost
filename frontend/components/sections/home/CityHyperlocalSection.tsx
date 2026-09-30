@@ -3,14 +3,15 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, ChevronRight, ChevronLeft, MapPin, Sparkles, TrendingUp, Flame, Radio } from 'lucide-react';
+import { Eye, ChevronRight, ChevronLeft, MapPin, Sparkles, TrendingUp, Flame, Radio, ArrowRight, CheckCircle2 } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime, getLocalized } from '@/data';
 import { getTrendingTopicHref } from '@/lib/utils';
-import { getPublicArticles } from '@/lib/api';
+import { getPublicArticles, getPublicCategories } from '@/lib/api';
 import SidebarAdBanner from '@/components/ads/SidebarAdBanner';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 import { stripHtmlTags, getLocalizedTrendingTags } from './homeHelpers';
 
 const toGuLocal = (num: number | string): string => {
@@ -110,6 +111,16 @@ const getLocalizedTag = (tag: string, language: Language) => {
   return tag;
 };
 
+/* Default city tabs (fallback if API returns nothing) */
+const DEFAULT_CITY_TABS = [
+  { gu: 'અમદાવાદ', hi: 'अहमदाबाद', en: 'Ahmedabad', slug: 'ahmedabad' },
+  { gu: 'સુરત', hi: 'सूरत', en: 'Surat', slug: 'surat' },
+  { gu: 'વડોદરા', hi: 'वडोदरा', en: 'Vadodara', slug: 'vadodara' },
+  { gu: 'રાજકોટ', hi: 'राजकोट', en: 'Rajkot', slug: 'rajkot' },
+  { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar', slug: 'gandhinagar' },
+  { gu: 'અન્ય', hi: 'अन्य', en: 'Other Cities', slug: 'gujarat' },
+];
+
 /* --- City Hyperlocal Section ("ગુજરાત" Zone) ----------------------------- */
 export default function CityHyperlocalSection({
   language,
@@ -121,17 +132,50 @@ export default function CityHyperlocalSection({
   dynamicTrendingTopics?: string[];
 }) {
   const [slideIdx, setSlideIdx] = useState(0);
-  const [activeTab, setActiveTab] = useState('અમદાવાદ');
+  const [dynamicCityTabs, setDynamicCityTabs] = useState(DEFAULT_CITY_TABS);
+  const [activeTab, setActiveTab] = useState(DEFAULT_CITY_TABS[0].gu);
   const [fetchedCityArticles, setFetchedCityArticles] = useState<Record<string, Article[]>>({});
 
-  const citySlugMap: Record<string, string> = useMemo(() => ({
-    'અમદાવાદ': 'ahmedabad',
-    'સુરત': 'surat',
-    'વડોદરા': 'vadodara',
-    'રાજકોટ': 'rajkot',
-    'ગાંધીનગર': 'gandhinagar',
-    'અન્ય': 'gujarat',
-  }), []);
+  // Fetch city tabs dynamically from Admin panel categories API
+  useEffect(() => {
+    getPublicCategories({ showInHeader: true, headerType: 'GUJARAT' })
+      .then((cats) => {
+        if (cats && Array.isArray(cats) && cats.length > 0) {
+          const sorted = [...cats].sort((a, b) =>
+            (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0)
+          );
+          const tabs = sorted.map((cat) => {
+            const slug = (cat.slug || '').toLowerCase();
+            // Match to DEFAULT_CITY_TABS for localized names
+            const match = DEFAULT_CITY_TABS.find((d) => d.slug === slug);
+            return {
+              gu: match ? match.gu : (cat.nameGu || cat.name),
+              hi: match ? match.hi : (cat.nameHi || cat.name),
+              en: match ? match.en : (cat.name),
+              slug,
+            };
+          });
+          // Always put Ahmedabad first
+          const sorted2 = [...tabs].sort((a, b) => {
+            if (a.slug === 'ahmedabad') return -1;
+            if (b.slug === 'ahmedabad') return 1;
+            return 0;
+          });
+          setDynamicCityTabs(sorted2);
+          setActiveTab(sorted2[0]?.gu || DEFAULT_CITY_TABS[0].gu);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Build slug map dynamically from fetched tabs
+  const citySlugMap: Record<string, string> = useMemo(() => {
+    const map: Record<string, string> = {};
+    dynamicCityTabs.forEach((tab) => {
+      map[tab.gu] = tab.slug;
+    });
+    return map;
+  }, [dynamicCityTabs]);
 
   // Fetch dedicated articles for activeTab if not yet populated
   useEffect(() => {
@@ -156,9 +200,9 @@ export default function CityHyperlocalSection({
 
   // Pre-load all city tabs in parallel on mount so tab switching is instantaneous
   useEffect(() => {
-    const tabs = ['અમદાવાદ', 'વડોદરા', 'સુરત', 'રાજકોટ', 'ગાંધીનગર', 'અન્ય'];
-    tabs.forEach((tab) => {
-      const slug = citySlugMap[tab];
+    if (dynamicCityTabs.length === 0) return;
+    dynamicCityTabs.forEach((tabObj) => {
+      const { gu: tab, slug } = tabObj;
       if (slug) {
         getPublicArticles({ categorySlug: slug, limit: 12 }).then((res) => {
           if (res?.articles && res.articles.length > 0) {
@@ -170,7 +214,7 @@ export default function CityHyperlocalSection({
         }).catch(() => {});
       }
     });
-  }, [citySlugMap]);
+  }, [dynamicCityTabs]);
 
   // Handle tab change — reset slide index
   const handleTabChange = (tab: string) => {
@@ -955,7 +999,7 @@ export default function CityHyperlocalSection({
 
 
   return (
-    <section className="mt-6 border-t border-border pt-5">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 border-t border-border/60 pt-2.5">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
 
         {/* Left Column: Tab list + Carousel & Side list */}
@@ -968,17 +1012,18 @@ export default function CityHyperlocalSection({
             </span>
             <Link
               href="/category/gujarat"
-              className="text-[13px] md:text-[14px] font-black pb-1.5 text-[#B3121B] hover:text-[#B3121B]/80 transition-colors whitespace-nowrap cursor-pointer ml-auto flex items-center gap-1 select-none"
+              className="text-[15px] md:text-[16px] font-black pb-1.5 text-[#B3121B] hover:text-[#B3121B]/80 hover:underline transition-colors whitespace-nowrap cursor-pointer ml-auto flex items-center gap-1 select-none"
             >
               {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'View All →'}
             </Link>
           </div>
 
-          {/* Tab Navigation List */}
-          <div className="flex items-center gap-5 border-b border-border pb-3 mb-6 overflow-x-auto scrollbar-none select-none">
-            {['અમદાવાદ', 'સુરત', 'વડોદરા', 'રાજકોટ', 'ગાંધીનગર', 'અન્ય'].map((tab) => {
+          {/* Tab Navigation List — dynamically loaded from Admin API */}
+          <div className="flex items-center gap-5 border-b border-border pb-3 mb-2.5 overflow-x-auto scrollbar-none select-none">
+            {dynamicCityTabs.map((tabObj) => {
+              const tab = tabObj.gu;
               const isActive = activeTab === tab;
-              const tabLabel = CITY_NAME_MAP[tab] ? getLocalized(language, CITY_NAME_MAP[tab]) : tab;
+              const tabLabel = language === 'hi' ? tabObj.hi : language === 'en' ? tabObj.en : tabObj.gu;
               return (
                 <button
                   key={tab}
@@ -992,7 +1037,6 @@ export default function CityHyperlocalSection({
                 </button>
               );
             })}
-
           </div>
 
           {/* Main 2-Column Content Section */}
@@ -1135,40 +1179,71 @@ export default function CityHyperlocalSection({
           />
 
           {/* WhatsApp Channel widget */}
-          <div className="w-full rounded-sm border border-slate-200 bg-card p-5 shadow-sm">
-            <div className="flex items-center gap-2.5 font-black text-[14.5px] text-foreground">
-              {/* WhatsApp green icon */}
-              <span className="flex h-7.5 w-7.5 items-center justify-center rounded-sm bg-[#16794A] text-white text-[15px] font-bold select-none">
-                💬
-              </span>
-              <span>{language === 'gu' ? 'WhatsApp ચેનલ' : 'WhatsApp Channel'}</span>
+          <div className="relative w-full overflow-hidden rounded-2xl border-[1.5px] border-emerald-500/25 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] hover:border-emerald-500/40 transition-colors">
+            {/* Ambient decorative WhatsApp glow */}
+            <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
+
+            <div className="relative z-10 flex items-center gap-3">
+              {/* WhatsApp branded icon badge */}
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
+                <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                    {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
+                  </h3>
+                  <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                </div>
+                <span className="text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                  {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'आधिकारिक समाचार अपडेट' : 'Official News Updates'}
+                </span>
+              </div>
             </div>
-            <p className="text-[12px] text-muted-foreground leading-relaxed my-3 font-semibold">
-              {language === 'gu' ? 'તમારા શહેરના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો' : 'Get your city news first directly on your phone.'}
+
+            <p className="relative z-10 text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
+              {language === 'gu'
+                ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
+                : language === 'hi'
+                ? 'अपने शहर के ताजा और महत्वपूर्ण समाचार सबसे पहले सीधे अपने फोन पर पाएं।'
+                : 'Get breaking news and vital updates of your city first, directly on your phone.'}
             </p>
-            <button className="w-full bg-[#16794A] hover:bg-[#12613b] text-white font-extrabold text-[12.5px] py-2.5 rounded-sm active:scale-[0.99] transition-all cursor-pointer">
-              {language === 'gu' ? 'ચેનલ ફોલો કરો' : 'Follow Channel'}
-            </button>
+
+            <a
+              href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+            >
+              <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
+              <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+            </a>
           </div>
 
           {/* Trending Topics widget */}
-          <div>
-            <div className="flex items-center gap-1.5 border-b border-border pb-1.5 mb-2">
-              <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px]">
-                {language === 'gu' ? '• Trending વિષયો' : '• Trending Topics'}
-              </span>
+          <div className="w-full rounded-2xl border-[1.5px] border-slate-300 bg-white p-4 sm:p-5 shadow-[0_6px_20px_rgba(15,23,42,0.06)] dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-center gap-2.5 border-b border-slate-200/90 dark:border-slate-800 pb-3 mb-3.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
+                  <Flame className="h-4.5 w-4.5 fill-[#B3121B] text-[#B3121B]" />
+                </div>
+                <h3 className="text-[16px] md:text-[17px] font-black text-slate-900 dark:text-white tracking-tight">
+                  {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
+                </h3>
+
             </div>
-            <div className="border border-border rounded-sm bg-card p-2.5 shadow-sm">
-              <div className="flex flex-wrap gap-1.5">
+
+            <div>
+              <div className="flex flex-wrap gap-2.5">
                 {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).map((tag) => {
                   const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                   return (
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="border border-neutral-300 dark:border-neutral-700 text-[11px] font-black px-2.5 py-2 rounded-full text-foreground hover:border-[#B3121B] hover:bg-[#B3121B]/5 hover:text-[#B3121B] transition-all bg-card shadow-sm cursor-pointer select-none"
+                      className="group inline-flex items-center gap-1 border border-slate-200 dark:border-slate-700 text-[12.5px] md:text-[13px] font-black px-3.5 py-1.5 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-md cursor-pointer select-none"
                     >
-                      <span className="text-[#B3121B] font-extrabold mr-0.5">#</span>
+                      <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />
                     </Link>
                   );

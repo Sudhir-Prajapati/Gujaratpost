@@ -121,7 +121,7 @@ export default function RelatedStoriesSection({
           <button
             type="button"
             onClick={() => setRelatedLimit((prev) => prev + 4)}
-            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-sm hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
+            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15px] md:text-[16px] hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
           >
             {uiLabel(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'અધિક દેખેં' })}
             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-y-0.5" strokeLinecap="round" strokeLinejoin="round">
@@ -131,7 +131,7 @@ export default function RelatedStoriesSection({
         ) : (
           <Link
             href={`/category/${(article.category || 'all').toLowerCase().replace(/\s+/g, '-')}`}
-            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-sm hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
+            className="group flex items-center gap-2 px-7 py-3 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15px] md:text-[16px] hover:bg-[#B3121B] hover:text-white transition-all duration-300 shadow-sm hover:shadow-[0_4px_20px_rgba(179,18,27,0.3)] active:scale-95"
           >
             {uiLabel(language, { en: 'View All News', gu: 'બધા સમાચાર જુઓ', hi: 'સભી સમાચાર દેખેં' })}
             <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none stroke-current stroke-[2.5] transition-transform duration-300 group-hover:translate-x-0.5" strokeLinecap="round" strokeLinejoin="round">

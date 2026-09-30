@@ -361,6 +361,7 @@ export class HeroController {
         return {
           setting: {
             ...(heroSetting || { id: 'default', slot1Id, slot2Id, slot3Id }),
+            tickerLabel: (heroSetting as any)?.tickerLabel || null,
             trendingTopics: parsedTopics,
             trendingNewsIds: parsedTrendingNewsIds,
             popularNewsIds: parsedPopularNewsIds,
@@ -368,6 +369,7 @@ export class HeroController {
             heroGridIds: parsedHeroGridIds,
           },
           slots,
+          tickerLabel: (heroSetting as any)?.tickerLabel || null,
           trendingTopics: parsedTopics,
           trendingNewsIds: parsedTrendingNewsIds,
           trendingNewsArticles,
@@ -403,7 +405,11 @@ export class HeroController {
    */
   static async updateHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
-      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, heroGridIds } = req.body;
+      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, heroGridIds, tickerLabel } = req.body;
+
+      const tickerLabelStr = tickerLabel !== undefined
+        ? (typeof tickerLabel === 'object' ? JSON.stringify(tickerLabel) : String(tickerLabel))
+        : undefined;
 
       const topicsStr = Array.isArray(trendingTopics)
         ? JSON.stringify(trendingTopics)
@@ -435,18 +441,20 @@ export class HeroController {
         ? heroGridIds
         : null;
 
+      const updateData: any = {};
+      if (slot1Id !== undefined) updateData.slot1Id = slot1Id || null;
+      if (slot2Id !== undefined) updateData.slot2Id = slot2Id || null;
+      if (slot3Id !== undefined) updateData.slot3Id = slot3Id || null;
+      if (trendingTopics !== undefined) updateData.trendingTopics = topicsStr;
+      if (trendingNewsIds !== undefined) updateData.trendingNewsIds = newsIdsStr;
+      if (popularNewsIds !== undefined) updateData.popularNewsIds = popularIdsStr;
+      if (mostReadIds !== undefined) updateData.mostReadIds = mostReadIdsStr;
+      if (heroGridIds !== undefined) updateData.heroGridIds = heroGridIdsStr;
+      if (tickerLabelStr !== undefined) updateData.tickerLabel = tickerLabelStr;
+
       const updatedSetting = await prisma.heroSetting.upsert({
         where: { id: 'default' },
-        update: {
-          slot1Id: slot1Id || null,
-          slot2Id: slot2Id || null,
-          slot3Id: slot3Id || null,
-          trendingTopics: topicsStr,
-          trendingNewsIds: newsIdsStr,
-          popularNewsIds: popularIdsStr,
-          mostReadIds: mostReadIdsStr,
-          heroGridIds: heroGridIdsStr,
-        } as any,
+        update: updateData,
         create: {
           id: 'default',
           slot1Id: slot1Id || null,
@@ -457,6 +465,7 @@ export class HeroController {
           popularNewsIds: popularIdsStr,
           mostReadIds: mostReadIdsStr,
           heroGridIds: heroGridIdsStr,
+          tickerLabel: tickerLabelStr || null,
         } as any,
       });
 
@@ -595,6 +604,7 @@ export class HeroController {
       return sendSuccess(res, {
         setting: {
           ...updatedSetting,
+          tickerLabel: (updatedSetting as any)?.tickerLabel || null,
           trendingTopics: parsedTopics,
           trendingNewsIds: parsedTrendingNewsIds,
           popularNewsIds: parsedPopularNewsIds,
@@ -602,6 +612,7 @@ export class HeroController {
           heroGridIds: parsedHeroGridIds,
         },
         slots,
+        tickerLabel: (updatedSetting as any)?.tickerLabel || null,
         trendingTopics: parsedTopics,
         trendingNewsIds: parsedTrendingNewsIds,
         trendingNewsArticles,

@@ -125,7 +125,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   const featImage = featArt?.image || '/assets/demo/5.jpg';
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-10">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">

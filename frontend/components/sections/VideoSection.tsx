@@ -129,7 +129,7 @@ export default function VideoSection({ initialVideos }: Props) {
   const viewMoreText = getLocalized(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'और देखें' });
 
   return (
-    <section className="my-6 mx-auto max-w-screen-xl px-2">
+    <section className="my-6 mx-auto max-w-screen-xl px-4">
       <div className="overflow-hidden rounded-2xl bg-[#a50f15] p-4 md:p-6 shadow-xl border border-red-800/40 text-white">
         
         <div className="mb-4 flex items-center justify-between border-b border-white/20 pb-3">
@@ -144,7 +144,7 @@ export default function VideoSection({ initialVideos }: Props) {
 
           <Link
             href="/videos"
-            className="group flex items-center gap-1 text-xs md:text-sm font-extrabold text-white/90 hover:text-white transition-colors"
+            className="group flex items-center gap-1 text-[15px] md:text-[16px] font-extrabold text-white hover:text-white/90 transition-colors hover:underline"
           >
             <span>{viewMoreText}</span>
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />

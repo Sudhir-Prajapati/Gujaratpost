@@ -243,7 +243,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     ];
 
     return (
-      <section className="mt-6">
+      <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
         {/* Red Panel containing only Shorts */}
         <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 py-6 border border-white/10 relative overflow-hidden shadow-lg">
 
@@ -254,7 +254,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
             </span>
             <Link
               href="/shorts"
-              className="text-white/95 font-extrabold text-[13px] md:text-[14px] hover:text-white hover:underline flex items-center gap-1"
+              className="text-white/95 font-extrabold text-[15px] md:text-[16px] hover:text-white hover:underline flex items-center gap-1"
             >
               {language === 'gu' ? 'વધુ શોર્ટ્સ →' : 'More Shorts →'}
             </Link>
@@ -425,7 +425,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
   }
 
   return (
-    <section className="mt-6">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* ── Red Panel containing Videos ── */}
       <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 pt-5 pb-5 border border-white/10 relative overflow-hidden shadow-lg">
 
@@ -438,7 +438,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
           </div>
           <Link
             href="/videos"
-            className="text-white/95 font-extrabold text-[13px] md:text-[14px] hover:text-white hover:underline flex items-center gap-1"
+            className="text-white/95 font-extrabold text-[15px] md:text-[16px] hover:text-white hover:underline flex items-center gap-1"
           >
             {language === 'gu' ? 'વધુ જુઓ →' : 'See All →'}
           </Link>

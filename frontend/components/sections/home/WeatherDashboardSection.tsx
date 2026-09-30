@@ -59,7 +59,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
   const otherCities = ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot'].filter(c => c !== selectedCity);
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 py-4 mt-8 select-none">
+    <section className="mx-auto max-w-screen-xl px-4 py-1 mt-2.5 select-none">
       {/* Tab headers - Black, Red & White */}
       <div className="flex items-end">
         <div className="bg-slate-950 p-1 rounded-t-xl inline-flex gap-1 border-t border-x border-slate-800">

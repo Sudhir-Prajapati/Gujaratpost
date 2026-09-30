@@ -64,9 +64,9 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
     return (
       <aside
         aria-label={`Advertisement section ${section}`}
-        className={`my-6 w-full ${className}`}
+        className={`my-2.5 w-full ${className}`}
       >
-        <div className="container mx-auto px-2 sm:px-4">
+        <div className="mx-auto max-w-screen-xl px-4">
           <div className="group relative flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border border-dashed border-red-300/60 dark:border-red-800/50 bg-gradient-to-r from-red-50 via-rose-50 to-pink-50 dark:from-red-950/30 dark:via-rose-950/20 dark:to-pink-950/20 shadow-sm hover:border-red-400/70 hover:shadow-md transition-all duration-300 overflow-hidden min-h-[80px]">
             {/* Left: Icon + Text */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -124,9 +124,9 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
   return (
     <aside
       aria-label={`Advertisement section ${section}`}
-      className={`my-6 w-full ${className}`}
+      className={`my-2.5 w-full ${className}`}
     >
-      <div className="container mx-auto px-2 sm:px-4">
+      <div className="mx-auto max-w-screen-xl px-4">
         <div className={`grid ${gridColsClass} gap-4 items-stretch`}>
           {items.map((item, idx) => (
             <a

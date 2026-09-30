@@ -296,7 +296,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
   }, [dbWorldArticles, language]);
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-4">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
@@ -304,7 +304,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         </span>
         <Link
           href="/category/world"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More News →'}
         </Link>

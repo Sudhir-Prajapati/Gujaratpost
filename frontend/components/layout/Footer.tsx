@@ -9,6 +9,7 @@ import { SOCIAL_LINKS, SocialIcon } from '@/components/ui/SocialLinks';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import { useApp } from '@/components/AppProvider';
+import gpLogo from '../../public/logo.png';
 
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
 const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
@@ -181,23 +182,30 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                 <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 pb-4 border-b border-slate-800/80">
 
                     {/* Logo & Brand */}
-                    <div className="flex flex-col gap-2 lg:w-72 flex-shrink-0">
-                        <div>
-                            <p className="text-[15px] font-bold text-white tracking-tight leading-snug ml-1" translate="no">
-                                Real Stories. <span className="text-[#B3121B]">Real Gujarat.</span>
+                    <div className="flex flex-col items-start gap-1 lg:w-72 flex-shrink-0 select-none">
+                        {/* Slogan */}
+                        <div className="flex flex-col justify-center leading-tight pl-1 sm:pl-1.5 md:pl-2">
+                            <p
+                                className="text-[12px] sm:text-[14px] md:text-[15px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
+                                style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
+                                translate="no"
+                            >
+                                Real Stories. <span className="text-red-600">Real Gujarat.</span>
                             </p>
                         </div>
-                        <Link
-                            href="/"
-                            className="relative block h-12 w-48 overflow-hidden rounded-lg transition-transform duration-200 hover:scale-[1.02]"
-                        >
-                            <Image
-                                src="/assets/logoblack.png"
-                                alt="Gujarat Post Logo"
-                                fill
-                                priority
-                                className="object-contain object-left"
-                            />
+
+                        {/* Logo */}
+                        <Link href="/" className="logo-3d group relative flex shrink-0 items-center">
+                            <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white border-0 shadow-none ring-0 transition-all duration-300">
+                                <Image
+                                    src={gpLogo}
+                                    alt="Gujarat Post"
+                                    fill
+                                    priority
+                                    sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
+                                    className="object-contain scale-[4.0]"
+                                />
+                            </div>
                         </Link>
                         {/* Support Us Button in Footer */}
                         <button
@@ -209,8 +217,8 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             <span>{language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}</span>
                         </button>
 
-                        {/* Social Icons Grid */}
-                        <div className="grid grid-cols-4 gap-2.5 w-fit mt-3.5 ml-2">
+                        {/* Social Icons */}
+                        <div className="flex flex-wrap items-center gap-2.5 w-fit mt-3.5 ml-2">
                             {SOCIAL_LINKS.map((item) => (
                                 <SocialIconButton key={item.label} item={item} />
                             ))}

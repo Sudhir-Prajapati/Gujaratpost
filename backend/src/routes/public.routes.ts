@@ -988,12 +988,18 @@ router.get('/live-center', cacheResponse(120), async (req, res) => {
  * GET /api/public/tickers
  * Fetch breaking ticker items
  */
-router.get('/tickers', cacheResponse(120), async (req, res, next) => {
+router.get('/tickers', cacheResponse(15), async (req, res, next) => {
   try {
-    const customTickers = await prisma.breakingTickerItem.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    });
+    const [customTickers, heroSetting] = await Promise.all([
+      prisma.breakingTickerItem.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }),
+      (prisma.heroSetting as any).findUnique({
+        where: { id: 'default' },
+        select: { tickerLabel: true },
+      }).catch(() => null),
+    ]);
 
     const breakingArticles = await prisma.post.findMany({
       where: { isBreaking: true, status: 'PUBLISHED' },
@@ -1047,7 +1053,7 @@ router.get('/tickers', cacheResponse(120), async (req, res, next) => {
       }));
     }
 
-    return sendSuccess(res, { tickers: combinedTickers }, 'Breaking tickers retrieved');
+    return sendSuccess(res, { tickers: combinedTickers, tickerLabel: heroSetting?.tickerLabel || null }, 'Breaking tickers retrieved');
   } catch (error) {
     next(error);
   }

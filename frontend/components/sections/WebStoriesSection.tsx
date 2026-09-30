@@ -177,7 +177,7 @@ export default function WebStoriesSection() {
   if (stories.length === 0) return null;
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-8 relative overflow-hidden select-none">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 relative overflow-hidden select-none">
       <div className="relative">
         {/* Section Header */}
         <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
@@ -186,7 +186,7 @@ export default function WebStoriesSection() {
           </span>
           <Link
             href="/category/webstory"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
           >
             {language === 'gu' ? 'વધુ વેબસ્ટોરી →' : 'More →'}
           </Link>

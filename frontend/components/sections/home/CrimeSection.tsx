@@ -447,7 +447,7 @@ export default function CrimeSection({
         </span>
         <Link
           href="/category/crime"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline pb-0.5"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline pb-0.5"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More See →'}
         </Link>
@@ -712,7 +712,7 @@ export default function CrimeSection({
   }
 
   return (
-    <section className="mt-2.5 border-t border-border pt-3.5">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 border-t border-border pt-3.5">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
         {leftContent}
         {sidebarContent}

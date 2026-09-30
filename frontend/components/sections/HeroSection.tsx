@@ -355,6 +355,156 @@ function makeHomeImagesUnique<T extends Article>(sections: T[][]): T[][] {
 }
 
 /* ===========================================================================
+   HeroStorySlider -- Slides through the Top 3 News articles with auto-play,
+   manual controls, pill indicators, and pause-on-hover
+=========================================================================== */
+function HeroStorySlider({
+  articles,
+  language,
+}: {
+  articles: Article[];
+  language: Language;
+}) {
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const total = articles.length;
+
+  useEffect(() => {
+    if (total <= 1 || isHovered) return;
+    const interval = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % total);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [total, isHovered]);
+
+  if (!articles || total === 0) return null;
+
+  const current = articles[slideIndex] || articles[0];
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSlideIndex((prev) => (prev - 1 + total) % total);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSlideIndex((prev) => (prev + 1) % total);
+  };
+
+  const handleDotClick = (idx: number, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setSlideIndex(idx);
+  };
+
+  return (
+    <div
+      className="flex flex-col gap-3 group/hero-slider relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <Link href={`/news/${current.slug}`} className="group flex flex-col w-full">
+        {/* Hero image with slider controls */}
+        <div className="relative w-full overflow-hidden rounded-sm shadow-sm aspect-[16/9] md:aspect-[3/2] bg-muted">
+          <ArticleMedia
+            key={current.id || slideIndex}
+            src={current.image || (current as any).featuredImage}
+            alt={current.title}
+            className="transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+
+          {/* Navigation Arrows & Controls (only if more than 1 slide) */}
+          {total > 1 && (
+            <>
+              {/* Prev Arrow */}
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous story"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-black/60 text-white hover:bg-black/90 flex items-center justify-center backdrop-blur-sm transition-all opacity-0 group-hover/hero-slider:opacity-100 hover:scale-110 active:scale-95 cursor-pointer shadow-lg border border-white/20"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Next Arrow */}
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next story"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-black/60 text-white hover:bg-black/90 flex items-center justify-center backdrop-blur-sm transition-all opacity-0 group-hover/hero-slider:opacity-100 hover:scale-110 active:scale-95 cursor-pointer shadow-lg border border-white/20"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+
+              {/* Dots Progress Indicator */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/55 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10">
+                {articles.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => handleDotClick(idx, e)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    className={`transition-all duration-300 rounded-full cursor-pointer ${
+                      idx === slideIndex
+                        ? 'w-5 h-1.5 bg-[#B3121B]'
+                        : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Slide Counter Badge */}
+              <div className="absolute top-2.5 right-2.5 z-20 bg-black/70 backdrop-blur-md text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-md border border-white/15 tracking-wider">
+                {slideIndex + 1} / {total}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Category & Live Badge tags */}
+        <div className="flex items-center gap-2 mt-2.5">
+          <span className="bg-[#B3121B] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1.5 shadow-sm">
+            <span className="inline-block h-2 w-2 rounded-full bg-white animate-pulse" />
+            {language === 'gu' ? 'લાઇવ' : language === 'hi' ? 'लाइव' : 'LIVE'}
+          </span>
+          <span className="text-muted-foreground text-[12px] font-bold">
+            {getCategoryLabel(current, language)}
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[24px] leading-[1.22] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
+          <AutoArticleTitle article={current} language={language} />
+        </h1>
+
+        {/* Excerpt - Exactly 3 lines, reserving 3-line vertical space even if article has fewer lines */}
+        <p className="text-muted-foreground text-[12.5px] sm:text-[13px] leading-[20px] sm:leading-[22px] min-h-[60px] sm:min-h-[66px] mt-1.5 line-clamp-3 font-medium">
+          <AutoArticleExcerpt article={current} language={language} />
+        </p>
+
+        {/* Meta / Author Name */}
+        {((current as any).author || (current as any).authorName) && (
+          <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground font-semibold border-t border-border/50 pt-2">
+            <span className="font-black text-foreground">
+              {typeof current.author === 'string'
+                ? current.author
+                : getLocalized(language, {
+                    en: current.author?.name || (current as any).authorName,
+                    gu: current.author?.nameGu || current.author?.name || (current as any).authorName,
+                    hi: current.author?.nameHi || current.author?.name || (current as any).authorName,
+                  })}
+            </span>
+          </div>
+        )}
+      </Link>
+    </div>
+  );
+}
+
+/* ===========================================================================
    Main HeroSection -- tv9gujarati.com style 3-column layout
 =========================================================================== */
 // Helper to safely extract category slug from article (handles object or string)
@@ -725,9 +875,7 @@ export default function HeroSection({
 
   const sectionMap: Record<string, React.ReactNode> = {
     videos: (
-      <div key="videos" className="mx-auto max-w-screen-xl px-2 my-6">
-        <VideoDesk videos={videosList.length > 0 ? videosList : (initialVideos && initialVideos.length > 0 ? initialVideos : VIDEOS)} language={language} />
-      </div>
+      <VideoDesk key="videos" videos={videosList.length > 0 ? videosList : (initialVideos && initialVideos.length > 0 ? initialVideos : VIDEOS)} language={language} />
     ),
     gujarat: <CityHyperlocalSection key="gujarat" language={language} articles={articlesList} dynamicTrendingTopics={dynamicTrendingTopics} />,
     national: <NationalSection key="national" language={language} initialArticles={(initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0) ? initialCategoryArticles['national'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; })} />,
@@ -765,7 +913,7 @@ export default function HeroSection({
       </Fragment>
     ),
     crime: (
-      <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-10">
+      <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2.5">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
           <div className="flex flex-col gap-10 min-w-0">
             <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
@@ -966,207 +1114,96 @@ export default function HeroSection({
     return <HeroSectionSkeleton language={language} />;
   }
   return (
-    <div className="mx-auto max-w-screen-xl px-2 py-0.5 space-y-1">
+    <div className="w-full space-y-2.5 md:space-y-3.5">
 
       {/* ── ROW 1: Content + Sidebar Grid ──────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
+      <div className="mx-auto max-w-screen-xl px-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
         {/* Left Content Side */}
         <div className="flex flex-col gap-6">
 
           {/* Top Row: Hero Story & Middle Column */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 items-start">
 
-            {/* Hero Story Column */}
-            <div className="flex flex-col gap-3">
-              {uniqueTopStories[0] && (
-                <Link href={`/news/${uniqueTopStories[0].slug}`} className="group flex flex-col w-full">
-                  {/* Hero image */}
-                  <div className="relative w-full overflow-hidden rounded-sm shadow-sm aspect-[16/9] md:aspect-[3/2]">
-                    <ArticleMedia
-                      src={uniqueTopStories[0].image || (uniqueTopStories[0] as any).featuredImage}
-                      alt={uniqueTopStories[0].title}
-                      className="transition-transform duration-300 group-hover:scale-[1.02]"
-                    />
-                  </div>
-                  {/* Category & Live Badge tags */}
-                  <div className="flex items-center gap-2 mt-2.5">
-                    <span className="bg-[#B3121B] text-white text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide flex items-center gap-1.5 shadow-sm">
-                      <span className="inline-block h-2 w-2 rounded-full bg-white animate-pulse" />
-                      {language === 'gu' ? 'લાઇવ' : language === 'hi' ? 'लाइव' : 'LIVE'}
-                    </span>
-                    <span className="text-muted-foreground text-[12px] font-bold">
-                      {getCategoryLabel(uniqueTopStories[0], language)}
-                    </span>
-                  </div>
-                  {/* Headline */}
-                  <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[24px] leading-[1.22] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
-                    <AutoArticleTitle article={uniqueTopStories[0]} language={language} />
-                  </h1>
-                  {/* Excerpt */}
-                  <p className="text-muted-foreground text-[12.5px] sm:text-[13px] leading-relaxed mt-1.5 line-clamp-2 font-medium">
-                    <AutoArticleExcerpt article={uniqueTopStories[0]} language={language} />
-                  </p>
-                  {/* Meta */}
-                  {uniqueTopStories[0].author && (
-                    <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground font-semibold border-t border-border/50 pt-2">
-                      <span className="font-black text-foreground">
-                        {getLocalized(language, {
-                          en: uniqueTopStories[0].author.name,
-                          gu: uniqueTopStories[0].author.nameGu,
-                          hi: uniqueTopStories[0].author.nameHi,
-                        })}
-                      </span>
-                    </div>
-                  )}
-                </Link>
-              )}
+            {/* Hero Story Column -- Top 3 News Slider */}
+            <HeroStorySlider
+              articles={uniqueTopStories.slice(0, 3)}
+              language={language}
+            />
 
-            </div>
+            {/* ═══ MIDDLE COLUMN — 6 Image Article Boxes (News directly after Top 3) ════════════════ */}
+            {(() => {
+              // Gather articles after the Top 3 news (indices 3 onwards), ensuring no duplication with the Top 3 slider
+              const top3Ids = new Set(uniqueTopStories.slice(0, 3).map((a) => a.id).filter(Boolean));
+              const candidatePool = [
+                ...uniqueTopStories.slice(3),
+                ...middleColumnPool.filter((a) => !top3Ids.has(a.id)),
+                ...articlesList.filter((a) => !top3Ids.has(a.id)),
+              ];
+              const seen = new Set<string>();
+              const afterTop3News: Article[] = [];
+              for (const art of candidatePool) {
+                if (art && art.id && !seen.has(art.id)) {
+                  seen.add(art.id);
+                  afterTop3News.push(art);
+                }
+                if (afterTop3News.length >= 6) break;
+              }
 
-            {/* ═══ MIDDLE COLUMN — 2-Column Newspaper Grid (Desktop) / Modern Clean 1-Line List (Mobile) ════════════════ */}
-            <div className="flex flex-col gap-2.5 md:border-l md:border-r md:border-border/40 md:px-4 px-0 min-w-0">
-              
-              {/* ─── DESKTOP VIEW (md: and up) — 100% UNCHANGED ─── */}
-              <div className="hidden md:flex md:flex-col md:gap-2">
-                {/* Top Row: Image Cards */}
-                <div className="grid grid-cols-2 gap-x-4 items-start">
-                  {uniqueTopStories[1] && (
-                    <Link href={`/news/${uniqueTopStories[1].slug}`} className="group flex flex-col gap-2 min-w-0">
-                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                        <ArticleMedia
-                          src={uniqueTopStories[1].image || (uniqueTopStories[1] as any).featuredImage}
-                          alt={uniqueTopStories[1].title}
-                          className="transition-transform duration-300 group-hover:scale-[1.02]"
-                        />
-                      </div>
-                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        <AutoArticleTitle article={uniqueTopStories[1]} language={language} />
-                      </h3>
-                    </Link>
-                  )}
-
-                  {uniqueTopStories[2] && (
-                    <Link href={`/news/${uniqueTopStories[2].slug}`} className="group flex flex-col gap-2 min-w-0">
-                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                        <ArticleMedia
-                          src={uniqueTopStories[2].image || (uniqueTopStories[2] as any).featuredImage}
-                          alt={uniqueTopStories[2].title}
-                          className="transition-transform duration-300 group-hover:scale-[1.02]"
-                        />
-                      </div>
-                      <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        <AutoArticleTitle article={uniqueTopStories[2]} language={language} />
-                      </h3>
-                    </Link>
-                  )}
-                </div>
-
-                {/* Text Article Rows: 5 paired rows with aligned top borders and line-clamp-2 */}
-                {[
-                  [middleColumnPool[3], middleColumnPool[4]],
-                  [middleColumnPool[5], middleColumnPool[6]],
-                  [middleColumnPool[7], middleColumnPool[8]],
-                  [middleColumnPool[9], middleColumnPool[10]],
-                  [middleColumnPool[11], middleColumnPool[12]],
-                ].map(([leftArt, rightArt], idx) => (
-                  <div key={idx} className="grid grid-cols-2 gap-x-4 border-t border-border/40 pt-2 pb-1 items-start">
-                    {leftArt ? (
+              return (
+                <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0">
+                  {/* ─── DESKTOP VIEW (md: and up): 6 Image Article Boxes (3 Rows x 2 Columns, Perfectly Aligned with Left Hero) ─── */}
+                  <div className="hidden md:grid md:grid-cols-2 md:gap-x-2.5 md:gap-y-2.5 items-start">
+                    {afterTop3News.map((art, idx) => (
                       <Link
-                        href={`/news/${leftArt.slug}`}
-                        className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
+                        key={art.id || art.slug || idx}
+                        href={`/news/${art.slug}`}
+                        className="group flex flex-col gap-1 min-w-0"
                       >
-                        <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                          <AutoArticleTitle article={leftArt} language={language} />
+                        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                          <ArticleMedia
+                            src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                            alt={art.title || ''}
+                            className="transition-transform duration-300 group-hover:scale-[1.03]"
+                          />
+                        </div>
+                        <h3 className="text-[12.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                          <AutoArticleTitle article={art} language={language} />
                         </h3>
                       </Link>
-                    ) : <div />}
-
-                    {rightArt ? (
-                      <Link
-                        href={`/news/${rightArt.slug}`}
-                        className="group flex flex-col hover:bg-muted/10 transition-colors rounded-md min-w-0"
-                      >
-                        <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                          <AutoArticleTitle article={rightArt} language={language} />
-                        </h3>
-                      </Link>
-                    ) : <div />}
+                    ))}
                   </div>
-                ))}
-              </div>
 
-              {/* ─── MOBILE VIEW (< md) — Single Column, 1 Line Per Item, Better Readability ─── */}
-              <div className="flex flex-col gap-2.5 md:hidden">
-                {/* Mobile: Top 2 Featured Image Stories — 1 Per Row */}
-                {[uniqueTopStories[1], uniqueTopStories[2]].filter(Boolean).map((story, idx) => (
-                  <Link
-                    key={story.id || story.slug || idx}
-                    href={`/news/${story.slug}`}
-                    className="group flex flex-row items-center justify-between gap-3 p-2 rounded-lg bg-card/60 hover:bg-muted/30 border border-border/40 transition-all min-w-0"
-                  >
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase tracking-wide mb-1">
-                        {getCategoryLabel(story, language)}
-                      </span>
-                      <h3 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                        <AutoArticleTitle article={story} language={language} />
-                      </h3>
-                    </div>
-                    <div className="relative aspect-[16/10] w-[95px] h-[64px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
-                      <ArticleMedia
-                        src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                        alt={story.title || ''}
-                        className="transition-transform duration-300 group-hover:scale-[1.03]"
-                      />
-                    </div>
-                  </Link>
-                ))}
-
-                {/* Mobile: News Items with Photo Thumbnail & Full Headline */}
-                <div className="flex flex-col divide-y divide-border/40 border-t border-border/40 mt-1">
-                  {[
-                    middleColumnPool[3],
-                    middleColumnPool[4],
-                    middleColumnPool[5],
-                    middleColumnPool[6],
-                    middleColumnPool[7],
-                    middleColumnPool[8],
-                    middleColumnPool[9],
-                    middleColumnPool[10],
-                    middleColumnPool[11],
-                    middleColumnPool[12],
-                  ]
-                    .filter(Boolean)
-                    .map((art, idx) => {
-                      const imageSrc = art.image || (art as any).featuredImage || getArticleImage(art);
-                      return (
-                        <Link
-                          key={art.id || art.slug || idx}
-                          href={`/news/${art.slug}`}
-                          className="group flex flex-row items-center justify-between gap-3 py-3 px-1 hover:bg-muted/10 transition-colors min-w-0"
-                        >
-                          <div className="flex flex-col flex-1 min-w-0">
-                            <h3 className="text-[14px] sm:text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                              <AutoArticleTitle article={art} language={language} />
-                            </h3>
-                          </div>
-                          {imageSrc && (
-                            <div className="relative aspect-[16/10] w-[95px] h-[64px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
-                              <ArticleMedia
-                                src={imageSrc}
-                                alt={art.title || ''}
-                                className="transition-transform duration-300 group-hover:scale-[1.03]"
-                              />
-                            </div>
-                          )}
-                        </Link>
-                      );
-                    })}
+                  {/* ─── MOBILE VIEW (< md): Clean List with Image Thumbnails ─── */}
+                  <div className="flex flex-col gap-2.5 md:hidden">
+                    {afterTop3News.map((story, idx) => (
+                      <Link
+                        key={story.id || story.slug || idx}
+                        href={`/news/${story.slug}`}
+                        className="group flex flex-row items-center justify-between gap-3 p-2 rounded-lg bg-card/60 hover:bg-muted/30 border border-border/40 transition-all min-w-0"
+                      >
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase tracking-wide mb-1">
+                            {getCategoryLabel(story, language)}
+                          </span>
+                          <h3 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                            <AutoArticleTitle article={story} language={language} />
+                          </h3>
+                        </div>
+                        <div className="relative aspect-[16/10] w-[95px] h-[64px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                          <ArticleMedia
+                            src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                            alt={story.title || ''}
+                            className="transition-transform duration-300 group-hover:scale-[1.03]"
+                          />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-              </div>
-
-            </div>
+              );
+            })()}
           </div> {/* Close Top Row grid */}
 
           {/* Bottom Row: Three image cards (#14, #15, #16 articles in sequence right after the top 13, or Admin custom picks) */}
@@ -1231,7 +1268,7 @@ export default function HeroSection({
           />
 
           {/* YouTube Video Section */}
-          <div className="w-full rounded-md border border-slate-200 bg-card p-4 shadow-sm flex flex-col gap-2.5">
+          <div className="w-full rounded-xl border-2 border-red-300 border-t-4 border-t-[#B3121B] bg-gradient-to-b from-white to-red-50/45 p-4 shadow-[0_8px_24px_rgba(127,29,29,0.16)] ring-2 ring-red-100 flex flex-col gap-2.5 dark:border-red-800 dark:ring-red-950/70 dark:from-card dark:to-red-950/20">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] flex items-center gap-1.5 select-none">
                 <Play className="h-3.5 w-3.5 fill-current" />
@@ -1305,14 +1342,14 @@ export default function HeroSection({
           </div>
 
           {/* Popular Articles */}
-          <div className="w-full rounded-sm border border-border bg-card p-4 shadow-sm flex flex-col gap-3">
+          <div className="w-full overflow-hidden rounded-xl border border-slate-300 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
             <div className="flex items-center justify-between border-b border-border pb-2">
               <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] select-none">
                 {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : 'Most Read'}
               </span>
               <Link
                 href="/category/trending"
-                className="text-[11px] font-black text-[#B3121B]/95 hover:text-[#B3121B] hover:underline"
+                className="text-[13px] md:text-[13.5px] font-bold text-[#B3121B] hover:text-red-700 hover:underline"
               >
                 {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
               </Link>
@@ -1336,6 +1373,7 @@ export default function HeroSection({
             </div>
           </div>
         </div>
+      </div>
       </div>
 
 
@@ -1371,7 +1409,7 @@ export default function HeroSection({
       })}
 
       {/* 17. NEWSLETTER SECTION (Screenshot 5) */}
-      <div className="mx-auto max-w-screen-xl px-2 py-2 mb-6 select-none">
+      <div className="mx-auto max-w-screen-xl px-4 py-1 mb-2.5 select-none">
         <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-6 md:p-8 bg-[#140e0c] text-white rounded-xl shadow-md border border-white/5">
           <div className="flex flex-col gap-2 max-w-xl text-center lg:text-left">
             <h3 className="text-lg sm:text-xl md:text-2xl font-black leading-tight">
@@ -1421,7 +1459,7 @@ function HeroSectionSkeleton({ language }: { language: Language }) {
   const labelEPaper = language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper';
 
   return (
-    <div className="mx-auto max-w-screen-xl px-2 py-0.5 space-y-2 animate-pulse">
+    <div className="mx-auto max-w-screen-xl px-4 pb-4 space-y-2.5 md:space-y-3.5 animate-pulse">
       {/* ROW 1: 3-column main section */}
       <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
         <div className="min-w-0">

@@ -150,7 +150,7 @@ export default function PhotoGallery() {
           </div>
           <Link
             href="/photos"
-            className="text-[#B3121B] font-bold text-[14px] hover:underline flex items-center gap-1"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 transition-colors"
           >
             {language === 'gu' ? 'વધુ ફોટો ગેલેરી →' : language === 'hi' ? 'और फोटो गैलरी →' : 'More Photo Gallery →'}
           </Link>

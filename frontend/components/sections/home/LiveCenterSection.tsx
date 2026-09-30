@@ -256,7 +256,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
   const activeFuel = fuelPrices[fuelCity] || fuelPrices.Ahmedabad || FUEL_PRICE_CITY_MAP.Ahmedabad;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-8 relative">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5 relative">
       {/* Blurred Red Ambient Glow Orbs in Background */}
       <div className="absolute -top-6 left-10 w-96 h-96 bg-[#B3121B]/15 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute -bottom-6 right-10 w-[420px] h-[420px] bg-red-600/12 rounded-full blur-[120px] pointer-events-none" />
@@ -488,9 +488,9 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           <Link
             href="/live-updates"
-            className="shrink-0 border border-red-200 dark:border-red-900/30 text-[#B3121B] dark:text-red-400 font-black text-[12px] rounded-lg px-3.5 py-1.5 flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+            className="shrink-0 border border-red-200 dark:border-red-900/30 text-[#B3121B] dark:text-red-400 font-black text-[14px] md:text-[15px] rounded-lg px-4 py-1.5 flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
           >
-            {language === 'gu' ? 'વધુ અપડેટસ જુઓ' : 'View More Updates'}
+            {language === 'gu' ? 'વધુ અપડેટસ જુઓ →' : 'View More Updates →'}
           </Link>
         </div>
 

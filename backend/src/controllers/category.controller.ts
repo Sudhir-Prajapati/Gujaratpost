@@ -190,31 +190,39 @@ export class CategoryController {
         throw new BadRequestError('Items array is required for reordering.');
       }
 
-      // Check all display orders are non-negative
+      // Validate all items
       for (const item of items) {
+        if (!item.id || typeof item.id !== 'string') {
+          throw new BadRequestError('Each item must have a valid id string.');
+        }
         const orderVal = typeof item.displayOrder === 'number' ? item.displayOrder : parseInt(item.displayOrder);
         if (isNaN(orderVal) || orderVal < 0) {
           throw new BadRequestError('Category order must be a positive number or zero (0 કે તેથી વધુ ધન સંખ્યા હોવી જોઈએ).');
         }
       }
 
-      await prisma.$transaction(
-        items.map((item: { id: string; displayOrder: number; headerOrder?: number; homeOrder?: number }) => {
-          const val = typeof item.displayOrder === 'number' ? item.displayOrder : (parseInt(item.displayOrder as any) || 0);
-          const updateData: any = {};
-          if (target === 'header') {
-            updateData.headerOrder = typeof item.headerOrder === 'number' ? item.headerOrder : val;
-          } else if (target === 'home') {
-            updateData.homeOrder = typeof item.homeOrder === 'number' ? item.homeOrder : val;
-          } else {
-            updateData.displayOrder = val;
-          }
-          return prisma.category.update({
-            where: { id: item.id },
-            data: updateData,
-          });
-        })
-      );
+      // Batch updates in chunks of 10 to avoid transaction timeout on large lists (e.g. 51 items)
+      const CHUNK_SIZE = 10;
+      for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+        const chunk = items.slice(i, i + CHUNK_SIZE);
+        await prisma.$transaction(
+          chunk.map((item: { id: string; displayOrder: number; headerOrder?: number; homeOrder?: number }) => {
+            const val = typeof item.displayOrder === 'number' ? item.displayOrder : (parseInt(item.displayOrder as any) || 0);
+            const updateData: any = {};
+            if (target === 'header') {
+              updateData.headerOrder = typeof item.headerOrder === 'number' ? item.headerOrder : val;
+            } else if (target === 'home') {
+              updateData.homeOrder = typeof item.homeOrder === 'number' ? item.homeOrder : val;
+            } else {
+              updateData.displayOrder = val;
+            }
+            return prisma.category.update({
+              where: { id: item.id },
+              data: updateData,
+            });
+          })
+        );
+      }
 
       let orderBy: any = [{ displayOrder: 'desc' }];
       if (target === 'home') {
@@ -229,10 +237,12 @@ export class CategoryController {
 
       clearPublicRoutesCache();
       return sendSuccess(res, categories, 'Categories reordered successfully.');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[reorderCategories] Error:', error?.message || error);
       next(error);
     }
   }
+
 
   /**
    * Delete a category.

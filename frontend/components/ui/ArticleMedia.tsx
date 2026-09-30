@@ -57,16 +57,23 @@ export default function ArticleMedia({
   const isAbsolute = className.includes('absolute');
   const posClass = isAbsolute ? 'absolute inset-0' : 'relative';
 
-  // Fallback: If image/video missing or fails to load, render clean GP text badge card
+  // Fallback: If image/video missing or fails to load, render Gujarat Post logo card
   if (!cleanSrc || hasError) {
     return (
-      <div className={`${posClass} flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-900 via-slate-900 to-black p-2 overflow-hidden shadow-inner select-none ${className}`}>
+      <div className={`${posClass} flex h-full w-full items-center justify-center bg-gradient-to-br from-zinc-900 via-slate-900 to-black p-3 overflow-hidden shadow-inner select-none ${className}`}>
         {/* Ambient subtle backdrop pattern */}
-        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:12px_12px] opacity-10" />
-        {/* GP Text Badge */}
-        <span className="relative z-10 text-[20px] font-black tracking-widest text-[#B3121B] drop-shadow-md font-sans">
-          GP
-        </span>
+        <div className="absolute inset-0 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:12px_12px] opacity-10 pointer-events-none" />
+        {/* Gujarat Post Logo */}
+        <div className="relative z-10 w-[70%] h-[48%] max-w-[210px] max-h-[64px] flex items-center justify-center">
+          <Image
+            src="/assets/gujarat-post-logo.png"
+            alt={alt || "Gujarat Post"}
+            fill
+            sizes="(max-width: 768px) 150px, 210px"
+            className="object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+            priority={priority}
+          />
+        </div>
       </div>
     );
   }

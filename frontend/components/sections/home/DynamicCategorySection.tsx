@@ -122,7 +122,7 @@ export default function DynamicCategorySection({ category, language, initialArti
   const isSingleArticle = articles.length === 1;
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-10">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header - ALWAYS RED BRAND TAG */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4 select-none">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg leading-none tracking-tight">
@@ -130,7 +130,7 @@ export default function DynamicCategorySection({ category, language, initialArti
         </span>
         <Link
           href={`/category/${catSlug}`}
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
         >
           {language === 'gu' ? 'બધા જુઓ →' : 'View All →'}
         </Link>

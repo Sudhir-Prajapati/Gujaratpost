@@ -21,7 +21,7 @@ import { useApp } from '@/components/AppProvider';
 import { SocialLinks } from '@/components/ui/SocialLinks';
 import Advertisement from '@/components/ads/Advertisement';
 import DistrictBar from './DistrictBar';
-import gpLogo from '../../public/Gujarat Post Logo.gif';
+import gpLogo from '../../public/logo.png';
 import { getPublicCategories } from '@/lib/api';
 import UserAuthModal from '@/components/ui/UserAuthModal';
 import { prefetchSupportDetails } from '@/components/ui/SupportModal';
@@ -360,7 +360,7 @@ export default function Header() {
 
   return (
     <>
-      <header ref={headerRef} className="relative z-[60] border-b border-border bg-card/95">
+      <header ref={headerRef} className="relative z-[60] bg-card/95">
         {/* Top bar: date + social */}
         <div className="bg-black dark:bg-black text-white/95 select-none">
           <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-1.5">
@@ -454,53 +454,58 @@ export default function Header() {
 
 
         {/* Logo + Controls */}
-        <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-1.5 sm:gap-4 px-2 sm:px-4 py-2 sm:py-2.5 relative">
+        <div className="w-full flex items-center justify-between gap-1.5 sm:gap-4 px-2 sm:px-4 py-2 sm:py-2.5 relative">
           {/* Slogan on top, Logo below */}
           <div className="flex flex-col items-start gap-0.5 select-none shrink-0">
             {/* Slogan */}
-            <div className="flex flex-col justify-center leading-tight">
-              <p className="text-[10px] sm:text-[12px] md:text-[13px] font-black text-foreground tracking-wide whitespace-nowrap" translate="no">
+            <div className="flex flex-col justify-center leading-tight pl-1 sm:pl-1.5 md:pl-2">
+              <p
+                className="text-[12px] sm:text-[14px] md:text-[15px] font-black font-sans tracking-wide text-foreground whitespace-nowrap select-none"
+                style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
+                translate="no"
+              >
                 Real Stories. <span className="text-red-600">Real Gujarat.</span>
               </p>
             </div>
 
             {/* Logo */}
             <a href="/" className="logo-3d group relative flex shrink-0 items-center">
-              <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white shadow-md ring-1 ring-black/10 transition-all duration-300">
+              <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-white border-0 shadow-none ring-0 transition-all duration-300">
                 <Image
                   src={gpLogo}
                   alt="Gujarat Post"
                   fill
                   priority
-                  unoptimized
                   sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
-                  className="object-cover"
+                  className="object-contain scale-[4.0]"
                 />
               </div>
             </a>
           </div>
 
           {/* Header Ad Slot (visible on desktop) */}
-          <div className="hidden lg:flex flex-1 min-w-0 mx-4 2xl:mx-6" style={{ maxWidth: 728, height: 90 }}>
+          <div className="hidden lg:flex flex-1 min-w-[400px] mx-1 2xl:mx-2" style={{ height: 105 }}>
             <Advertisement position="header" className="w-full h-full" />
           </div>
 
-          {/* Right-side compact News Brief + Weather/AQI + Search Container (desktop only) */}
-          <div className="ml-auto mr-3 hidden md:flex items-center gap-4 lg:gap-5 select-none shrink-0">
+          {/* Right-side Group: News Brief + Weather/AQI + Search + Controls */}
+          <div className="ml-auto flex items-center gap-1 select-none shrink-0">
+            {/* News Brief + Weather/AQI + Search Container (desktop only) */}
+            <div className="hidden md:flex items-center gap-3 lg:gap-4 select-none shrink-0">
             {/* NEWS BRIEF Button */}
             <Link
               href="/news-brief"
-              className="group flex items-center gap-1 hover:opacity-90 transition-all select-none active:scale-[0.98]"
+              className="group flex items-center gap-1.5 hover:opacity-90 transition-all select-none active:scale-[0.98]"
             >
               <Image
                 src="/rightSide.png"
                 alt="NEWS BRIEF"
-                width={16}
-                height={16}
+                width={20}
+                height={20}
                 className="shrink-0 object-contain transition-transform duration-200 group-hover:translate-x-0.5"
-                style={{ width: 16, height: 16 }}
+                style={{ width: 20, height: 20 }}
               />
-              <span translate="no" className="font-black font-sans text-[15px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
+              <span translate="no" className="font-black font-sans text-[18px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
                 NEWS BRIEF
               </span>
             </Link>
@@ -509,11 +514,11 @@ export default function Header() {
             <Link
               href="/aqi"
               title={language === 'gu' ? 'હવામાન અને AQI' : language === 'hi' ? 'मौसम और AQI' : 'Weather & AQI'}
-              className="group flex items-center gap-1 hover:opacity-90 transition-all select-none active:scale-[0.98] cursor-pointer"
+              className="group flex items-center gap-1.5 hover:opacity-90 transition-all select-none active:scale-[0.98] cursor-pointer"
             >
               <svg
                 viewBox="0 0 24 24"
-                className="w-4 h-4 text-amber-500 shrink-0 transition-transform duration-200 group-hover:scale-110"
+                className="w-5 h-5 text-amber-500 shrink-0 transition-transform duration-200 group-hover:scale-110"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2.2"
@@ -527,27 +532,27 @@ export default function Header() {
                 <path d="M15.9 16A5 5 0 1 0 9 10.45" />
                 <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
               </svg>
-              <span translate="no" className="font-black font-sans text-[15px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
+              <span translate="no" className="font-black font-sans text-[18px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
                 AQI
               </span>
             </Link>
 
             {/* Compact Search Trigger */}
             <div
-              className="relative w-[140px] lg:w-[180px] flex items-center cursor-pointer group shrink-0"
+              className="relative w-[140px] lg:w-[180px] flex items-center cursor-pointer group shrink-0 active:scale-[0.98] transition-transform duration-150"
               onClick={() => router.push('/search')}
             >
-              <div className="h-[34px] w-full rounded-full border border-border bg-muted py-1.5 pl-10 pr-3.5 text-[13px] text-muted-foreground transition-all duration-200 group-hover:border-accent group-hover:bg-card select-none flex items-center">
+              <div className="h-[34px] w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/80 dark:bg-zinc-900/60 py-1.5 pl-10 pr-3.5 text-[13px] text-muted-foreground transition-all duration-200 group-hover:border-red-600 dark:group-hover:border-red-500 group-hover:bg-card dark:group-hover:bg-zinc-800/90 group-hover:text-foreground group-hover:shadow-sm group-hover:ring-1 group-hover:ring-red-600/30 dark:group-hover:ring-red-500/30 select-none flex items-center shadow-2xs">
                 {language === 'gu' ? 'સમાચાર શોધો...' : language === 'hi' ? 'समाचार खोजें...' : 'Search news...'}
               </div>
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground group-hover:text-accent transition-colors">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:scale-110 transition-all duration-200">
                 <Search className="h-[14px] w-[14px]" />
               </span>
             </div>
           </div>
 
           {/* Controls (Mobile + Desktop compact icons) */}
-          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+          <div className="flex shrink-0 items-center gap-1">
             {/* Mobile Search Icon Button */}
             <button
               type="button"
@@ -563,26 +568,27 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setLanguageOpen((value) => !value)}
-                className={`inline-flex h-8 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2 sm:px-4 text-[11px] sm:text-sm font-bold sm:font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
+                className={`inline-flex h-8 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2.5 sm:px-4 text-[12px] sm:text-[14px] font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
                   }`}
+                style={{ fontWeight: 800 }}
                 aria-label="Switch language"
                 aria-expanded={languageOpen}
               >
                 {/* Globe icon */}
-                <svg viewBox="0 0 24 24" className="h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M2 12h20" />
                   <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
                 </svg>
                 {/* Desktop label */}
-                <span className="hidden sm:inline">
+                <span className="hidden sm:inline font-black" style={{ fontWeight: 800 }}>
                   {languageChosen ? languageLabels[language] : 'Language'}
                 </span>
                 {/* Mobile label - compact to fit header controls without pushing the hamburger button off */}
-                <span className="sm:hidden">
+                <span className="sm:hidden font-black" style={{ fontWeight: 800 }}>
                   {languageChosen ? (language === 'gu' ? 'ગુજ' : language === 'hi' ? 'हि' : 'EN') : 'Lang'}
                 </span>
-                <ChevronDown className={`h-3 w-3 sm:h-3.5 sm:w-3.5 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
+                <ChevronDown strokeWidth={2.5} className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
               </button>
 
               {languageOpen && (
@@ -628,10 +634,14 @@ export default function Header() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
+              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
               aria-label="Toggle dark mode"
             >
-              {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4" />}
+              {theme === 'dark' ? (
+                <Sun className="h-4 w-4 text-amber-400 transition-transform duration-200 group-hover:rotate-45 group-hover:scale-110" />
+              ) : (
+                <Moon className="h-4 w-4 transition-transform duration-200 group-hover:-rotate-12 group-hover:scale-110" />
+              )}
             </button>
 
             {/* User / Login */}
@@ -645,11 +655,11 @@ export default function Header() {
                   setAuthModalOpen(true);
                 }
               }}
-              className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary shrink-0 active:scale-95"
+              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
               aria-label="Sign In"
               title="Sign In"
             >
-              <User className="h-4 w-4" />
+              <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
             </button>
 
             {/* Mobile hamburger */}
@@ -662,6 +672,7 @@ export default function Header() {
               {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
           </div>
+        </div>
 
           {/* Mobile Full-Width Search Overlay Bar */}
           {searchOpen && (
@@ -832,7 +843,7 @@ export default function Header() {
       <div className={`${hideStickyNav ? 'relative z-50' : 'sticky top-0 z-50'} bg-card/98 shadow-md transition-all duration-300 ${menuOpen ? 'max-md:hidden' : ''}`}>
         {/* Desktop Nav Bar */}
         <nav
-          className="hidden border-t border-border bg-card/98 md:block"
+          className="hidden border-y-2 border-zinc-300 bg-card/98 md:block dark:border-zinc-600"
           aria-label="Main navigation"
         >
           <div className="mx-auto max-w-[1700px] px-1.5 sm:px-2 xl:px-3 flex items-center gap-1 xl:gap-1.5 relative">
@@ -845,17 +856,17 @@ export default function Header() {
                     <li key={`${link.href}-${language}`} className="shrink-0">
                       <a
                         href={link.href}
-                        className={`relative flex h-11 items-center whitespace-nowrap px-1 sm:px-1.5 xl:px-2 2xl:px-2.5 text-[12.5px] xl:text-[13px] 2xl:text-[14px] font-bold tracking-tight transition-colors duration-150 ${active
-                          ? 'text-accent'
-                          : 'text-foreground hover:text-accent'
+                        className={`relative flex h-11 items-center justify-center whitespace-nowrap ${link.href === '/' ? 'px-2.5 sm:px-3' : 'px-2 sm:px-2.5 xl:px-3 2xl:px-3.5'
+                          } text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold tracking-tight transition-colors duration-150 ${active
+                            ? 'text-accent'
+                            : 'text-foreground hover:text-accent'
                           }`}
                         aria-current={active ? 'page' : undefined}
+                        aria-label={link.href === '/' ? 'Home' : undefined}
+                        title={link.href === '/' ? getNavLabel(link) : undefined}
                       >
                         {link.href === '/' ? (
-                          <span className="flex items-center gap-1.5">
-                            <Home className="h-4 w-4 shrink-0 text-accent" />
-                            <span>{getNavLabel(link)}</span>
-                          </span>
+                          <Home className="h-5 w-5 sm:h-[22px] sm:w-[22px] shrink-0 text-accent transition-transform duration-200 hover:scale-110" strokeWidth={2.3} />
                         ) : (
                           getNavLabel(link)
                         )}
@@ -891,11 +902,12 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setOtherMenuOpen(!otherMenuOpen)}
-                className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-1 sm:px-1.5 xl:px-2 2xl:px-2.5 text-[12.5px] xl:text-[13px] 2xl:text-[14px] font-bold tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
+                className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
                   }`}
+                style={{ fontWeight: 800 }}
               >
-                <span key={language}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
+                <span key={language} className="font-bold sm:font-black" style={{ fontWeight: 800 }}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
+                <ChevronDown strokeWidth={2.5} className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
               </button>
             </div>
 
@@ -906,22 +918,22 @@ export default function Header() {
                 type="button"
                 onClick={openSupportModal}
                 onMouseEnter={prefetchSupportDetails}
-                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-2.5 xl:px-3 text-xs font-black text-white shadow-md shadow-red-900/20 ring-1 ring-red-600/40 transition-all duration-200 hover:shadow-lg hover:scale-[1.03] active:scale-95 cursor-pointer"
+                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3 text-[13px] font-black text-white shadow-md shadow-red-900/20 ring-1 ring-red-600/40 transition-all duration-200 hover:bg-red-700 hover:shadow-lg hover:scale-[1.03] active:scale-95 cursor-pointer"
               >
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
-                <Heart className="h-3.5 w-3.5 shrink-0 fill-current text-white animate-pulse" />
-                <span className="tracking-wide">{language === 'gu' ? 'સપોર્ટ કરો' : language === 'hi' ? 'सपोर्ट करें' : 'Support Us'}</span>
+                <Heart className="h-4 w-4 shrink-0 fill-current text-white animate-pulse" />
+                <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'સપોર્ટ કરો' : language === 'hi' ? 'सपोर्ट करें' : 'Support Us'}</span>
               </button>
 
               {/* E-Paper CTA */}
               <a
                 href="/epaper"
-                className="group relative inline-flex h-9 items-center gap-2 overflow-hidden rounded-lg bg-gradient-to-r from-accent to-red-700 px-3 xl:px-4 text-xs font-black text-white shadow-md shadow-red-900/30 ring-1 ring-red-700/40 transition-all duration-200 hover:shadow-lg hover:shadow-red-900/40 hover:scale-[1.03] active:scale-95"
+                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3 text-[13px] font-black text-white shadow-md shadow-red-900/30 ring-1 ring-red-600/40 transition-all duration-200 hover:bg-red-700 hover:shadow-lg hover:shadow-red-900/40 hover:scale-[1.03] active:scale-95"
               >
                 {/* shimmer sweep on hover */}
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
-                <BookOpen className="h-3.5 w-3.5 shrink-0" />
-                <span className="tracking-wide">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
+                <BookOpen className="h-4 w-4 shrink-0" />
+                <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
                 {/* live pulse dot */}
                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" />

@@ -30,8 +30,18 @@ export const rateLimiter = (options: RateLimitOptions) => {
       }
 
       if (count > options.maxRequests) {
-        const ttl = await redisClient.ttl(key);
-        res.setHeader('Retry-After', ttl > 0 ? ttl : options.windowSeconds);
+        let ttl = await redisClient.ttl(key);
+
+        // TTL=-1 means key exists but has NO expiry (stale/corrupted key) — fix it immediately
+        if (ttl === -1) {
+          await redisClient.expire(key, options.windowSeconds);
+          ttl = options.windowSeconds;
+        }
+
+        // TTL=-2 means key doesn't exist — shouldn't happen but handle gracefully
+        if (ttl < 0) ttl = options.windowSeconds;
+
+        res.setHeader('Retry-After', ttl);
         return next(new TooManyRequestsError(`Too many requests. Please try again in ${ttl} seconds.`));
       }
 

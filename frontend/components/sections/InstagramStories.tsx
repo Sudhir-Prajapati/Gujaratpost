@@ -280,7 +280,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
   const displayList = reels.length > 0 ? [...reels, ...reels] : [];
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-8 mb-6 relative overflow-hidden select-none">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 mb-2 relative overflow-hidden select-none">
       <div className="relative">
         {/* Section Header */}
         <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-4">
@@ -291,7 +291,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
             href="https://www.instagram.com/gujaratpost.in/"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
+            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
           >
             {language === 'gu' ? 'વધુ રિલ્સ →' : 'More →'}
           </a>

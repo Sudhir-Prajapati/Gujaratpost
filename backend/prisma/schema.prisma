@@ -281,6 +281,7 @@ model HeroSetting {
   slot1Id         String?
   slot2Id         String?
   slot3Id         String?
+  tickerLabel     String?  @db.Text
   trendingTopics  String?  @db.Text
   trendingNewsIds String?  @db.Text
   popularNewsIds  String?  @db.Text

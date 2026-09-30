@@ -103,7 +103,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
 
   if (loading && allCards.length === 0) {
     return (
-      <div className="mx-auto max-w-screen-xl px-4 mt-8 animate-pulse">
+      <div className="mx-auto max-w-screen-xl px-4 mt-2.5 animate-pulse">
         <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
           <div className="h-10 w-36 rounded-lg bg-muted/60" />
           <div className="h-5 w-20 rounded bg-muted/40" />
@@ -123,7 +123,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
   if (allCards.length === 0) return null;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-8">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
@@ -131,7 +131,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
         </span>
         <Link
           href="/category/politics"
-          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[13px] md:text-[14px] hover:underline"
+          className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
         >
           {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
         </Link>

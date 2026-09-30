@@ -33,6 +33,7 @@ export default function BreakingTicker() {
   const [paused, setPaused] = useState(false);
   const { language } = useApp();
   const [breaking, setBreaking] = useState<any[]>([]);
+  const [tickerLabel, setTickerLabel] = useState<any>(null);
   const firstSetRef = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(70);
 
@@ -40,6 +41,7 @@ export default function BreakingTicker() {
     getPublicTickers()
       .then((res) => {
         setBreaking(res || []);
+        if ((res as any)?.tickerLabel) setTickerLabel((res as any).tickerLabel);
       })
       .catch(() => {
         setBreaking([]);
@@ -55,6 +57,25 @@ export default function BreakingTicker() {
     }));
   }, [breaking]);
 
+  const badgeText = useMemo(() => {
+    if (tickerLabel) {
+      if (typeof tickerLabel === 'string' && tickerLabel.trim()) {
+        try {
+          if (tickerLabel.trim().startsWith('{')) {
+            const parsed = JSON.parse(tickerLabel);
+            if (parsed && typeof parsed === 'object') {
+              return getLocalized(language, parsed) || parsed.gu || parsed.en || parsed.hi || tickerLabel;
+            }
+          }
+        } catch {}
+        return tickerLabel.trim();
+      }
+      if (typeof tickerLabel === 'object') {
+        return getLocalized(language, tickerLabel) || tickerLabel.gu || tickerLabel.en || tickerLabel.hi;
+      }
+    }
+    return getLocalized(language, { en: 'BREAKING NEWS', gu: 'બ્રેકિંગ ન્યૂઝ', hi: 'ब्रेકિંગ न्यूज़' });
+  }, [tickerLabel, language]);
   const activeItems = itemsToRender.length > 0 ? itemsToRender : FALLBACK_TICKERS;
 
   // Ensure there are enough items in a single set to span wide screens seamlessly
@@ -122,17 +143,17 @@ export default function BreakingTicker() {
 
   return (
     <div
-      className="flex h-10 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none"
+      className="flex h-10 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-2 sm:mb-2.5"
       role="region"
       aria-label="Breaking News Ticker"
     >
       {/* Left Badge */}
-      <div className="z-20 flex h-full shrink-0 items-center bg-black px-3.5 md:px-4 text-xs font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-2">
-        <span className="relative flex h-2 w-2">
+      <div className="z-20 flex h-full shrink-0 items-center bg-black px-3.5 md:px-4 text-xs font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-2 whitespace-nowrap">
+        <span className="relative flex h-2.5 w-2.5 shrink-0">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
         </span>
-        <span>{getLocalized(language, { en: 'BREAKING', gu: 'બ્રેકિંગ', hi: 'ब्रेकिंग' })}</span>
+        <span>{badgeText}</span>
       </div>
 
       {/* Marquee Viewport */}

@@ -595,7 +595,9 @@ export async function getPublicTickers(): Promise<any[]> {
     const url = `${API_BASE_URL}/tickers`;
     const json = await fetchCachedJson<any>(url);
     if (json?.success && json.data?.tickers) {
-      return json.data.tickers;
+      const arr = json.data.tickers;
+      (arr as any).tickerLabel = json.data.tickerLabel;
+      return arr;
     }
   } catch (error: any) {
     if (process.env.NODE_ENV === 'development') {
@@ -665,9 +667,12 @@ export async function updateHeroSettings(payload: {
   slot1Id?: string | null;
   slot2Id?: string | null;
   slot3Id?: string | null;
-  trendingTopics?: string[];
-  trendingNewsIds?: string[];
-  popularNewsIds?: string[];
+  trendingTopics?: string[] | string;
+  trendingNewsIds?: string[] | string;
+  popularNewsIds?: string[] | string;
+  mostReadIds?: string[] | string;
+  heroGridIds?: string[] | string;
+  tickerLabel?: string | Record<string, string> | null;
 }): Promise<any> {
   const res = await authFetch('/api/admin/hero-settings', {
     method: 'PUT',

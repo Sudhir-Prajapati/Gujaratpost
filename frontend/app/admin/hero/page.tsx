@@ -332,6 +332,10 @@ export default function HeroManagerPage() {
   const [heroGridArticles, setHeroGridArticles] = useState<Article[]>([]);
   const [savingHeroGrid, setSavingHeroGrid] = useState(false);
 
+    // Breaking News ticker badge label
+  const [tickerBadgeText, setTickerBadgeText] = useState('બ્રેકિંગ ન્યૂઝ');
+  const [savingTickerBadge, setSavingTickerBadge] = useState(false);
+
   const showToast = (msg: string, ok: boolean) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 3500);
@@ -357,6 +361,23 @@ export default function HeroManagerPage() {
 
       const arts = (pubRes.articles || []) as unknown as Article[];
       setAllArticles(arts);
+
+            // Parse and populate ticker badge label
+      if (heroRes) {
+        const rawLabel = (heroRes as any)?.tickerLabel || heroRes?.setting?.tickerLabel;
+        if (rawLabel) {
+          try {
+            const parsed = typeof rawLabel === 'string' && rawLabel.trim().startsWith('{') ? JSON.parse(rawLabel) : rawLabel;
+            if (typeof parsed === 'object' && parsed !== null) {
+              setTickerBadgeText(parsed.gu || parsed.en || parsed.hi || '');
+            } else if (typeof parsed === 'string') {
+              setTickerBadgeText(parsed);
+            }
+          } catch {
+            setTickerBadgeText(rawLabel);
+          }
+        }
+      }
 
       const featured = arts.filter((a) => a.isFeatured);
       const serverGrid = Array.isArray((heroRes as any)?.heroGridArticles) ? (heroRes as any).heroGridArticles : [];
@@ -409,6 +430,26 @@ export default function HeroManagerPage() {
   }, []);
 
   useEffect(() => { fetchArticles(); }, [fetchArticles]);
+
+    const handleSaveTickerBadge = async () => {
+    setSavingTickerBadge(true);
+    try {
+      const payload = {
+        tickerLabel: tickerBadgeText.trim() || 'બ્રેકિંગ ન્યૂઝ',
+      };
+      const res = await updateHeroSettings(payload);
+      if (res && res.success) {
+        triggerOnDemandRevalidate();
+        showToast('✅ Saved! Breaking News ticker badge updated live on user side.', true);
+      } else {
+        showToast('Failed to save ticker badge. Please try again.', false);
+      }
+    } catch {
+      showToast('Save failed. Please try again.', false);
+    } finally {
+      setSavingTickerBadge(false);
+    }
+  };
 
   const usedIds = slots.filter(Boolean).map((a) => a!.id);
 
@@ -942,6 +983,105 @@ export default function HeroManagerPage() {
         </div>
       ) : (
         <>
+          {/* ════════════════════════════════════════════════════════════════
+             BREAKING NEWS TICKER BADGE SETTINGS
+             ════════════════════════════════════════════════════════════════ */}
+          <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-3.5 sm:p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-100 pb-4 dark:border-zinc-800 mb-5 gap-4">
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="flex h-3 w-3 relative">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-600"></span>
+                  </span>
+                  <h3 className="text-base font-black text-zinc-900 dark:text-white">
+                    Breaking News Ticker Badge Settings
+                  </h3>
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full border bg-zinc-100 text-zinc-700 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
+                    Live Header Badge
+                  </span>
+                </div>
+                <p className="text-xs text-zinc-500 font-medium mt-1">
+                  Change the badge text displayed next to the live pulsing dot in the top Breaking News ticker bar.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSaveTickerBadge}
+                disabled={savingTickerBadge}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl bg-[#B3121B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer"
+              >
+                {savingTickerBadge ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {savingTickerBadge ? 'Saving Badge...' : 'Save Ticker Badge Text'}
+              </button>
+            </div>
+
+            {/* Single Input & Live Preview Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+              {/* Single Input */}
+              <div className="lg:col-span-2 space-y-2">
+                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+                  <span>Badge Text / Label</span>
+                  <span className="text-[10px] text-zinc-400 font-medium">Type any text in any language</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={tickerBadgeText}
+                    onChange={(e) => setTickerBadgeText(e.target.value)}
+                    placeholder="Enter badge text (e.g. બ્રેકિંગ ન્યૂઝ, BREAKING NEWS, લાઈવ સમાચાર...)"
+                    className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-zinc-900 focus:border-[#B3121B] focus:ring-2 focus:ring-[#B3121B]/20 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 placeholder:font-normal placeholder:text-zinc-400 shadow-xs"
+                  />
+                  {tickerBadgeText && (
+                    <button
+                      type="button"
+                      onClick={() => setTickerBadgeText('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200"
+                      title="Clear text"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="text-[11px] text-zinc-400 font-medium">Quick suggestions:</span>
+                  {['બ્રેકિંગ ન્યૂઝ', 'BREAKING NEWS', 'લાઈવ સમાચાર', 'LIVE UPDATES', 'ખાસ અહેવાલ'].map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      onClick={() => setTickerBadgeText(preset)}
+                      className={`text-[11px] px-2.5 py-0.5 rounded-full border transition cursor-pointer ${
+                        tickerBadgeText === preset
+                          ? 'bg-[#B3121B] text-white border-[#B3121B]'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-zinc-400'
+                      }`}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Live Preview Card */}
+              <div className="rounded-xl border border-zinc-200 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/40 p-3.5 flex flex-col justify-center">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-2">Live Bar Preview</span>
+                <div className="flex items-center gap-2 overflow-hidden rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1">
+                  <div className="flex shrink-0 items-center gap-1.5 bg-black px-2.5 py-1 text-xs font-black tracking-wide text-white border-r-2 border-[#B3121B] rounded-xs select-none">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                    </span>
+                    <span>{tickerBadgeText || 'બ્રેકિંગ ન્યૂઝ'}</span>
+                  </div>
+                  <div className="text-xs text-zinc-400 italic truncate pl-1">
+                    ન્યૂઝ હેડલાઇન્સ અહીં સ્લાઇડ થશે...
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* ════════════════════════════════════════════════════════════════
              MAIN HERO GRID (13 POSITIONS MANAGEMENT)
              ════════════════════════════════════════════════════════════════ */}

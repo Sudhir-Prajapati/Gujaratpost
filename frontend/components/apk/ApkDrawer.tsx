@@ -89,16 +89,6 @@ const APK_SOCIAL_LINKS = [
     ),
   },
   {
-    label: 'Telegram',
-    href: 'https://t.me/gujaratpostnews',
-    bg: 'bg-[#229ED9] text-white hover:bg-[#1e8dbf]',
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white translate-x-[-0.5px] translate-y-[0.5px]" aria-hidden="true">
-        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-      </svg>
-    ),
-  },
-  {
     label: 'WhatsApp',
     href: 'https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a',
     bg: 'bg-[#25D366] text-white hover:bg-[#20bd5a]',

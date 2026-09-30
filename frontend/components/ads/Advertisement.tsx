@@ -86,7 +86,7 @@ export default function Advertisement({ position, section, className = '', showF
     return (
       <aside
         aria-label="Advertisement"
-        className={`group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
+        className={`flex-1 group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
         style={{ minHeight: h }}
       >
         <a

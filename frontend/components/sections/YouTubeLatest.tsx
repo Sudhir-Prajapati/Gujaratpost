@@ -263,7 +263,7 @@ export default function YouTubeLatest() {
               href="https://www.youtube.com/@Gujaratpostnews"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border bg-card px-4 text-xs font-black text-foreground shadow-sm hover:border-[#ff0000]/35 hover:text-[#ff0000] transition"
+              className="inline-flex h-9 items-center justify-center gap-1.5 rounded-full border border-border bg-card px-4 text-[13.5px] md:text-[14px] font-black text-foreground shadow-sm hover:border-[#ff0000]/35 hover:text-[#ff0000] transition"
             >
               {getLocalized(language, { en: 'View all on YouTube', gu: 'યૂટ્યૂબ પર બધા જુઓ', hi: 'यूट्यूब पर सभी देखें' })}
               <ExternalLink className="h-3.5 w-3.5" />

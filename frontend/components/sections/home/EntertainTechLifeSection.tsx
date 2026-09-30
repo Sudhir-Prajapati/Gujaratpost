@@ -209,7 +209,7 @@ export default function EntertainTechLifeSection({
 
       <Link
         href={href}
-        className="mt-4 w-full border border-red-200 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/20 text-[#B3121B] font-extrabold text-[12.5px] md:text-[13px] py-2.5 rounded-lg text-center hover:bg-[#B3121B] hover:text-white transition-all block select-none"
+        className="mt-4 w-full border border-red-200 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/20 text-[#B3121B] font-extrabold text-[14px] md:text-[15px] py-2.5 rounded-lg text-center hover:bg-[#B3121B] hover:text-white transition-all block select-none"
       >
         {language === 'gu' ? btnTextGu : btnTextEn}
       </Link>
@@ -218,7 +218,7 @@ export default function EntertainTechLifeSection({
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-screen-xl px-4 mt-8 py-10 flex justify-center items-center text-muted-foreground">
+      <div className="mx-auto max-w-screen-xl px-4 mt-2.5 py-6 flex justify-center items-center text-muted-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-[#B3121B] mr-2" />
         <span>લોડ થઈ રહ્યું છે...</span>
       </div>
@@ -228,7 +228,7 @@ export default function EntertainTechLifeSection({
   if (categories.length === 0) return null;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-8">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">

@@ -277,7 +277,7 @@ export default function YouTubeShorts() {
   const displayList = shorts.length > 0 ? [...shorts, ...shorts] : [];
 
   return (
-    <section className="relative mx-auto max-w-screen-xl px-4 py-6 select-none">
+    <section className="relative mx-auto max-w-screen-xl px-4 py-2 select-none">
       <div className="w-full bg-[#B3121B] text-white rounded-2xl p-5 sm:p-6 md:p-7 border border-white/10 relative shadow-xl">
         
         {/* Header Row */}
@@ -291,7 +291,7 @@ export default function YouTubeShorts() {
 
           <Link
             href="/shorts"
-            className="text-white/95 hover:text-white font-extrabold text-xs sm:text-sm hover:underline flex items-center gap-1 transition"
+            className="text-white/95 hover:text-white font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 transition"
           >
             {getLocalized(language, { en: 'More Shorts →', gu: 'બધા શોર્ટ્સ જુઓ →', hi: 'सभी शॉर्ट्स देखें →' })}
           </Link>
