@@ -123,7 +123,7 @@ export default function ApkCategoryFeed({
   return (
     <div className="pb-10 max-w-md mx-auto w-full select-none">
       {/* ── 1. CATEGORY HEADER BANNER ─────────────────────────────────── */}
-      <div className="bg-white dark:bg-[#18181b] border-b border-gray-200/80 dark:border-gray-800 px-3.5 py-3 shadow-2xs">
+      <div className="bg-white dark:bg-[#18181b] border-b border-gray-400/80 dark:border-gray-800 px-3.5 py-3 shadow-2xs">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-1.5 h-6 bg-[#B3121B] rounded-full inline-block" />
@@ -131,7 +131,7 @@ export default function ApkCategoryFeed({
               {categoryTitle}
             </h1>
           </div>
-          <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full border border-gray-200/60 dark:border-gray-700">
+          <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2.5 py-1 rounded-full border border-gray-400/60 dark:border-gray-700">
             {language === 'gu' ? toGu(filteredArticles.length) : filteredArticles.length} {getLocalized(language, { gu: 'સમાચાર', hi: 'समाचार', en: 'News' })}
           </span>
         </div>
@@ -150,7 +150,7 @@ export default function ApkCategoryFeed({
               className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer active:scale-95 ${
                 activeTab === tab.id
                   ? 'bg-[#B3121B] text-white shadow-xs font-extrabold'
-                  : 'bg-gray-100 dark:bg-[#222228] text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-[#222228] text-gray-700 dark:text-gray-300 border border-gray-400 dark:border-gray-700 hover:bg-gray-200'
               }`}
             >
               {getLocalized(language, { gu: tab.gu, hi: tab.hi, en: tab.en })}
@@ -165,7 +165,7 @@ export default function ApkCategoryFeed({
           <Link
             href={`/news/${heroArticle.slug || heroArticle.id}`}
             prefetch={true}
-            className="group block bg-white dark:bg-[#18181b] rounded-2xl overflow-hidden border border-gray-200/90 dark:border-gray-800 shadow-xs hover:shadow-md transition active:scale-[0.99]"
+            className="group block bg-white dark:bg-[#18181b] rounded-2xl overflow-hidden border border-gray-400/90 dark:border-gray-800 shadow-xs hover:shadow-md transition active:scale-[0.99]"
           >
             {/* Hero Image */}
             <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -188,7 +188,7 @@ export default function ApkCategoryFeed({
                 <AutoArticleTitle article={heroArticle} language={language} />
               </h2>
 
-              <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-gray-100 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 font-semibold">
+              <div className="mt-3 flex items-center justify-between pt-2.5 border-t border-gray-400 dark:border-gray-800 text-[11px] text-gray-500 dark:text-gray-400 font-semibold">
                 <div className="flex items-center gap-2">
                   {heroArticle.views ? (
                     <span className="flex items-center gap-1 text-gray-400">
@@ -227,7 +227,7 @@ export default function ApkCategoryFeed({
               key={`apk-cat-${art.id || art.slug}`}
               href={`/news/${art.slug || art.id}`}
               prefetch={true}
-              className="group flex gap-3 p-3 bg-white dark:bg-[#18181b] rounded-2xl border border-gray-200/80 dark:border-gray-800 shadow-2xs hover:shadow-xs transition active:scale-[0.99] items-start"
+              className="group flex gap-3 p-3 bg-white dark:bg-[#18181b] rounded-2xl border border-gray-400/80 dark:border-gray-800 shadow-2xs hover:shadow-xs transition active:scale-[0.99] items-start"
             >
               {/* Left: Text Information */}
               <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
@@ -278,7 +278,7 @@ export default function ApkCategoryFeed({
           <button
             type="button"
             onClick={() => setVisibleCount((prev) => prev + 15)}
-            className="w-full max-w-xs py-2.5 px-4 bg-white dark:bg-[#18181b] hover:bg-gray-50 dark:hover:bg-[#202128] border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-black rounded-xl shadow-xs transition active:scale-95 cursor-pointer text-center"
+            className="w-full max-w-xs py-2.5 px-4 bg-white dark:bg-[#18181b] hover:bg-gray-50 dark:hover:bg-[#202128] border border-gray-400 dark:border-gray-700 text-gray-800 dark:text-gray-200 text-xs font-black rounded-xl shadow-xs transition active:scale-95 cursor-pointer text-center"
           >
             {getLocalized(language, {
               gu: 'વધુ સમાચાર લોડ કરો',

@@ -52,7 +52,7 @@ const BIRTHDAY_TEMPLATES = [
     id: 'royal',
     label: 'Imperial Indigo (રોયલ એલિગન્ટ)',
     desc: 'Deep midnight navy & rose-gold VIP greeting card',
-    previewColor: 'bg-indigo-950 border-amber-300',
+    previewColor: 'bg-indigo-950 border-amber-400',
   },
 ];
 
@@ -79,7 +79,7 @@ const SHRADHANJALI_TEMPLATES = [
     id: 'eternal',
     label: 'Moksh Dham (મોક્ષ ધામ / શાંતિ)',
     desc: 'Dawn light rays and heavenly serene tribute aura',
-    previewColor: 'bg-stone-100 border-stone-300 text-stone-900',
+    previewColor: 'bg-stone-100 border-stone-400 text-stone-900',
   },
 ];
 
@@ -337,7 +337,7 @@ export default function AdminTributesPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-16">
       {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-400 dark:border-zinc-700 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
@@ -357,7 +357,7 @@ export default function AdminTributesPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchTributes}
-            className="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition cursor-pointer"
+            className="p-2.5 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition cursor-pointer"
             title="Refresh"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -391,7 +391,7 @@ export default function AdminTributesPage() {
 
       {/* ── Stat Badges ── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Active in Slider</p>
             <p className="text-4xl font-black text-zinc-900 dark:text-white mt-1">{activeCount}</p>
@@ -401,7 +401,7 @@ export default function AdminTributesPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-amber-200 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 p-5 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-amber-400 dark:border-amber-900/40 bg-amber-50/50 dark:bg-amber-950/20 p-5 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
               🎂 Birthdays (જન્મદિવસ)
@@ -413,7 +413,7 @@ export default function AdminTributesPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/40 p-5 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-stone-400 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/40 p-5 shadow-sm flex items-center justify-between">
           <div>
             <p className="text-sm font-bold text-stone-600 dark:text-stone-400 uppercase tracking-wider">
               🕊️ Shradhanjali (શ્રદ્ધાંજલિ)
@@ -427,7 +427,7 @@ export default function AdminTributesPage() {
       </div>
 
       {/* ── Filter Bar ── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-white dark:bg-zinc-900 p-3 rounded-2xl border border-gray-400 dark:border-zinc-700 shadow-sm">
         {/* Type Tabs */}
         <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0">
           <button
@@ -472,7 +472,7 @@ export default function AdminTributesPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search by name..."
-            className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
+            className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
           />
         </div>
       </div>
@@ -484,7 +484,7 @@ export default function AdminTributesPage() {
           <p className="text-xs font-bold">Loading Birthday & Shradhanjali cards...</p>
         </div>
       ) : filteredTributes.length === 0 ? (
-        <div className="py-16 text-center border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-2xl bg-white/40 dark:bg-zinc-900/40 p-8">
+        <div className="py-16 text-center border-2 border-dashed border-gray-400 dark:border-zinc-700 rounded-2xl bg-white/40 dark:bg-zinc-900/40 p-8">
           <div className="h-14 w-14 mx-auto rounded-2xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 mb-3">
             <Gift className="h-7 w-7" />
           </div>
@@ -512,12 +512,12 @@ export default function AdminTributesPage() {
                 key={item.id}
                 className={`rounded-2xl border bg-white dark:bg-zinc-900 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between ${
                   item.isActive
-                    ? 'border-zinc-200 dark:border-zinc-800'
-                    : 'border-zinc-200/50 dark:border-zinc-800/50 opacity-70 bg-zinc-50/50 dark:bg-zinc-950/50'
+                    ? 'border-gray-400 dark:border-zinc-700'
+                    : 'border-gray-400 dark:border-zinc-700/50 opacity-70 bg-zinc-50/50 dark:bg-zinc-950/50'
                 }`}
               >
                 {/* Live Card Preview Banner */}
-                <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-950/40">
+                <div className="p-3 border-b border-gray-400 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-950/40">
                   <div className="scale-95 origin-top transition-transform hover:scale-100">
                     <TributeCard tribute={item} minHeight={170} />
                   </div>
@@ -561,7 +561,7 @@ export default function AdminTributesPage() {
                   </div>
 
                   {/* Action Bar */}
-                  <div className="pt-3 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+                  <div className="pt-3 border-t border-gray-400 dark:border-zinc-700 flex items-center justify-between">
                     {/* Active Switch */}
                     <label className="flex items-center gap-2 cursor-pointer select-none">
                       <input
@@ -570,7 +570,7 @@ export default function AdminTributesPage() {
                         onChange={() => handleToggleActive(item.id)}
                         className="sr-only peer"
                       />
-                      <div className="w-8 h-4.5 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 relative" />
+                      <div className="w-8 h-4.5 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-400 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 relative" />
                       <span className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400">
                         {item.isActive ? 'Active (સક્રિય)' : 'Hidden (બંધ)'}
                       </span>
@@ -606,9 +606,9 @@ export default function AdminTributesPage() {
       {/* ══════════════════════════════════════════════════════════════ */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-4xl rounded-3xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
+          <div className="relative w-full max-w-4xl rounded-3xl bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 shadow-2xl overflow-hidden my-8 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/80">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-400 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-950/80">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-red-500/10 text-red-600 dark:text-red-400">
                   <Gift className="h-5 w-5" />
@@ -643,7 +643,7 @@ export default function AdminTributesPage() {
                       className={`flex items-center justify-center gap-2.5 p-3.5 rounded-2xl border-2 transition cursor-pointer ${
                         formData.type === 'BIRTHDAY'
                           ? 'border-amber-500 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 shadow-sm ring-2 ring-amber-500/20'
-                          : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+                          : 'border-gray-400 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400'
                       }`}
                     >
                       <Cake className="h-5 w-5 text-amber-500" />
@@ -661,7 +661,7 @@ export default function AdminTributesPage() {
                       className={`flex items-center justify-center gap-2.5 p-3.5 rounded-2xl border-2 transition cursor-pointer ${
                         formData.type === 'SHRADHANJALI'
                           ? 'border-stone-500 bg-stone-100 dark:bg-stone-900/60 text-stone-900 dark:text-stone-100 shadow-sm ring-2 ring-stone-500/20'
-                          : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400'
+                          : 'border-gray-400 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-700 text-zinc-600 dark:text-zinc-400'
                       }`}
                     >
                       <Flame className="h-5 w-5 text-stone-600 dark:text-stone-400" />
@@ -691,7 +691,7 @@ export default function AdminTributesPage() {
                           ? 'e.g. શ્રી રાજેશભાઈ પટેલ / ચિ. દર્શિત'
                           : 'e.g. સ્વ. કાંતિલાલ મગનલાલ શાહ'
                       }
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-sm font-semibold focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-sm font-semibold focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-500/20"
                       required
                     />
                   </div>
@@ -708,7 +708,7 @@ export default function AdminTributesPage() {
                       value={formData.photo}
                       onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
                       placeholder="https://... or click Upload"
-                      className="flex-1 px-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                      className="flex-1 px-3 py-2 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
                     />
                     <input
                       type="file"
@@ -721,7 +721,7 @@ export default function AdminTributesPage() {
                       type="button"
                       disabled={uploading}
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
+                      className="px-4 py-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-200 flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
                     >
                       {uploading ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-red-600" />
@@ -745,7 +745,7 @@ export default function AdminTributesPage() {
                       value={formData.date}
                       onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                       placeholder="e.g. 15 ઓગસ્ટ 2026 / 15-08-2026"
-                      className="w-full pl-10 pr-3 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                      className="w-full pl-10 pr-3 py-2 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
                     />
                   </div>
                 </div>
@@ -763,7 +763,7 @@ export default function AdminTributesPage() {
                     value={formData.info}
                     onChange={(e) => setFormData({ ...formData, info: e.target.value })}
                     placeholder="Enter tribute message, wishes, family names, details..."
-                    className="w-full p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                    className="w-full p-3 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-red-500/20"
                   />
                   {/* Quick-fill Message Pills */}
                   <div className="flex flex-wrap gap-1.5 mt-1.5">
@@ -800,7 +800,7 @@ export default function AdminTributesPage() {
                             className={`p-3 rounded-xl border-2 text-left transition cursor-pointer ${
                               isSelected
                                 ? 'border-[#B3121B] bg-red-50/60 dark:bg-red-950/20 shadow ring-2 ring-red-500/20'
-                                : 'border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700'
+                                : 'border-gray-400 dark:border-zinc-700 hover:border-zinc-400 dark:hover:border-zinc-700'
                             }`}
                           >
                             <div className="flex items-center gap-2">
@@ -822,7 +822,7 @@ export default function AdminTributesPage() {
                 </div>
 
                 {/* 7. Active Status Toggle */}
-                <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-zinc-50 dark:bg-zinc-950 border border-gray-400 dark:border-zinc-700">
                   <div>
                     <p className="text-xs font-black text-zinc-800 dark:text-zinc-200">
                       Publish to Homepage Carousel
@@ -838,13 +838,13 @@ export default function AdminTributesPage() {
                       onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                       className="sr-only peer"
                     />
-                    <div className="w-9 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500" />
+                    <div className="w-9 h-5 bg-zinc-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-400 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-500" />
                   </label>
                 </div>
               </form>
 
               {/* Right Column: Real-Time Live Preview (5 cols) */}
-              <div className="lg:col-span-5 flex flex-col items-center justify-start border-t lg:border-t-0 lg:border-l border-zinc-200 dark:border-zinc-800 pt-6 lg:pt-0 lg:pl-6">
+              <div className="lg:col-span-5 flex flex-col items-center justify-start border-t lg:border-t-0 lg:border-l border-gray-400 dark:border-zinc-700 pt-6 lg:pt-0 lg:pl-6">
                 <div className="w-full">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5">
@@ -861,7 +861,7 @@ export default function AdminTributesPage() {
                   </p>
 
                   {/* Card Container Preview */}
-                  <div className="w-full rounded-2xl p-3 bg-zinc-100/80 dark:bg-zinc-950/80 border border-zinc-200 dark:border-zinc-800 shadow-inner">
+                  <div className="w-full rounded-2xl p-3 bg-zinc-100/80 dark:bg-zinc-950/80 border border-gray-400 dark:border-zinc-700 shadow-inner">
                     <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest text-center mb-1.5">
                       {formData.type === 'BIRTHDAY'
                         ? '🎂 જન્મદિવસની હાર્દિક શુભકામના'
@@ -888,11 +888,11 @@ export default function AdminTributesPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50/80 dark:bg-zinc-950/80">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-400 dark:border-zinc-700 bg-zinc-50/80 dark:bg-zinc-950/80">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="px-5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-zinc-400 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Cancel
               </button>
@@ -946,7 +946,7 @@ export default function AdminTributesPage() {
             </h3>
 
             {/* Target Item Chip */}
-            <div className="mt-3.5 mx-auto p-3 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 flex items-center gap-3 text-left">
+            <div className="mt-3.5 mx-auto p-3 rounded-2xl bg-red-50/70 dark:bg-red-950/30 border border-red-400 dark:border-red-900/50 flex items-center gap-3 text-left">
               <div className="h-10 w-10 rounded-xl bg-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 font-bold text-base">
                 {deleteTarget.type === 'BIRTHDAY' ? '🎂' : '🕊️'}
               </div>
@@ -974,7 +974,7 @@ export default function AdminTributesPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => setDeleteTarget(null)}
-                className="flex-1 py-2.5 px-4 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer disabled:opacity-50"
+                className="flex-1 py-2.5 px-4 rounded-xl border border-zinc-400 dark:border-zinc-700 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer disabled:opacity-50"
               >
                 Cancel (રદ રાખો)
               </button>

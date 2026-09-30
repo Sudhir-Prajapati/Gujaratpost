@@ -383,7 +383,7 @@ export default function ApkHomeFeed({
               <Link
                 key={`apk-top-${art.id || art.slug || idx}-${idx}`}
                 href={`/news/${art.slug || art.id}`}
-                className="shrink-0 w-[170px] bg-white dark:bg-[#18181b] rounded-xl border border-gray-200/90 dark:border-gray-800 shadow-xs overflow-hidden flex flex-col hover:shadow-md transition active:scale-98"
+                className="shrink-0 w-[170px] bg-white dark:bg-[#18181b] rounded-xl border border-gray-400/90 dark:border-gray-800 shadow-xs overflow-hidden flex flex-col hover:shadow-md transition active:scale-98"
               >
                 {/* Thumbnail */}
                 <div className="relative aspect-[16/10] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
@@ -461,7 +461,7 @@ export default function ApkHomeFeed({
                   }}
                   className="shrink-0 w-[130px] sm:w-[145px] cursor-pointer group select-none active:scale-95 transition-transform"
                 >
-                  <div className="relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-gradient-to-b from-slate-900 to-black shadow-sm border border-gray-200/90 dark:border-gray-800">
+                  <div className="relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-gradient-to-b from-slate-900 to-black shadow-sm border border-gray-400/90 dark:border-gray-800">
                     {/* Thumbnail Image */}
                     {thumbUrl ? (
                       <img
@@ -533,7 +533,7 @@ export default function ApkHomeFeed({
             </Link>
           </div>
 
-          <div className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-200/90 dark:border-gray-800 shadow-xs divide-y divide-gray-100 dark:divide-gray-800/80 overflow-hidden">
+          <div className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-400/90 dark:border-gray-800 shadow-xs divide-y divide-gray-400 dark:divide-gray-800/80 overflow-hidden">
             {mostReadArticles.map((art, idx) => (
               <Link
                 key={`apk-most-read-${art.id || idx}`}
@@ -596,7 +596,7 @@ export default function ApkHomeFeed({
                   className="shrink-0 w-[165px] flex flex-col cursor-pointer active:scale-98 transition group"
                 >
                   {/* Thumbnail + Play Button + Duration */}
-                  <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-900 shadow-xs border border-gray-200/60 dark:border-gray-800">
+                  <div className="relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-slate-900 shadow-xs border border-gray-400/60 dark:border-gray-800">
                     <img
                       src={thumb}
                       alt={vid.titleGu || vid.title || ''}
@@ -648,7 +648,7 @@ export default function ApkHomeFeed({
           <Link
             key={`apk-feed-${art.id || art.slug || idx}-${idx}`}
             href={`/news/${art.slug || art.id}`}
-            className="flex gap-3 bg-white dark:bg-[#18181b] p-3 rounded-xl border border-gray-200/80 dark:border-gray-800 shadow-xs active:bg-gray-50 dark:active:bg-gray-800/80 transition"
+            className="flex gap-3 bg-white dark:bg-[#18181b] p-3 rounded-xl border border-gray-400/80 dark:border-gray-800 shadow-xs active:bg-gray-50 dark:active:bg-gray-800/80 transition"
           >
             {/* Content Left */}
             <div className="flex-1 flex flex-col justify-center min-w-0">
@@ -667,7 +667,7 @@ export default function ApkHomeFeed({
             </div>
 
             {/* Thumbnail Right */}
-            <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-900 border border-gray-100 dark:border-gray-800">
+            <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-900 border border-gray-400 dark:border-gray-800">
               <Image
                 src={art.image || '/logo.png'}
                 alt={art.titleGu || art.title || ''}

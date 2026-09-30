@@ -67,7 +67,7 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
         className={`my-2.5 w-full ${className}`}
       >
         <div className="mx-auto max-w-screen-xl px-4">
-          <div className="group relative flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border border-dashed border-red-300/60 dark:border-red-800/50 bg-gradient-to-r from-red-50 via-rose-50 to-pink-50 dark:from-red-950/30 dark:via-rose-950/20 dark:to-pink-950/20 shadow-sm hover:border-red-400/70 hover:shadow-md transition-all duration-300 overflow-hidden min-h-[80px]">
+          <div className="group relative flex items-center justify-between gap-4 px-6 py-4 rounded-2xl border border-dashed border-red-400/60 dark:border-red-800/50 bg-gradient-to-r from-red-50 via-rose-50 to-pink-50 dark:from-red-950/30 dark:via-rose-950/20 dark:to-pink-950/20 shadow-sm hover:border-red-400/70 hover:shadow-md transition-all duration-300 overflow-hidden min-h-[80px]">
             {/* Left: Icon + Text */}
             <div className="flex items-center gap-4 flex-1 min-w-0">
               <div className="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30">
@@ -134,7 +134,7 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
               href={item.link && item.link !== '#' ? item.link : undefined}
               target={item.link && item.link !== '#' ? '_blank' : '_self'}
               rel="noopener noreferrer"
-              className="group relative flex w-full overflow-hidden rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-red-500/30"
+              className="group relative flex w-full overflow-hidden rounded-2xl border border-slate-400/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-red-500/30"
             >
               <div className={`relative w-full ${aspectRatioClass} min-h-[100px] overflow-hidden`}>
                 <Image

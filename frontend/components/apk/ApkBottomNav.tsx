@@ -24,7 +24,7 @@ export default function ApkBottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/98 dark:bg-[#18181b]/98 backdrop-blur-md border-t border-gray-200/90 dark:border-gray-800 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_12px_rgba(0,0,0,0.4)] select-none transition-colors duration-200">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white/98 dark:bg-[#18181b]/98 backdrop-blur-md border-t border-gray-400/90 dark:border-gray-800 shadow-[0_-2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_-2px_12px_rgba(0,0,0,0.4)] select-none transition-colors duration-200">
         <div className="grid grid-cols-5 h-[58px] items-center px-1">
           {/* 1. HOME */}
           <Link

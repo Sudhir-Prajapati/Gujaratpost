@@ -396,17 +396,17 @@ export default function AdminAdsPage() {
   return (
     <div className="space-y-8 pb-12 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-400 dark:border-zinc-600 pb-5">
         <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-red-600/10 text-red-600 dark:bg-red-500/20 dark:text-red-400">
-              <Megaphone className="h-6 w-6" />
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-2xl bg-red-600/10 text-red-600 dark:bg-red-500/20 dark:text-red-400">
+              <Megaphone className="h-7 w-7" />
             </div>
-            <h1 className="text-2xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-zinc-50 tracking-tight">
               Advertisement Manager
             </h1>
           </div>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-1.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium">
             Manage Header Banners (728×90), In-Between Section Ads, and Fixed Right Sidebar Ads easily.
           </p>
         </div>
@@ -415,19 +415,19 @@ export default function AdminAdsPage() {
           <button
             type="button"
             onClick={() => setShowPreviewModal(true)}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-4 py-2.5 text-sm font-bold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white px-5 py-2.5 text-sm sm:text-base font-bold shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
             title="Open modal preview showing all configured ad slots, filled locations, and status"
           >
-            <Eye className="h-4 w-4" />
+            <Eye className="h-4.5 w-4.5" />
             <span>Full Page Live Ad Preview</span>
-            <Sparkles className="h-3.5 w-3.5 opacity-90 animate-pulse" />
+            <Sparkles className="h-4 w-4 opacity-90 animate-pulse" />
           </button>
 
           {editingId && (
             <button
               type="button"
               onClick={resetForm}
-              className="inline-flex items-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2.5 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-4 py-2.5 text-sm sm:text-base font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-all cursor-pointer"
             >
               <X className="h-4 w-4" /> Cancel Edit
             </button>
@@ -436,56 +436,56 @@ export default function AdminAdsPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-zinc-100 dark:bg-zinc-800/60 rounded-2xl max-w-2xl border border-zinc-200 dark:border-zinc-700/50">
+      <div className="flex flex-wrap items-center gap-2 p-1.5 bg-zinc-100 dark:bg-zinc-800/60 rounded-2xl max-w-2xl border border-gray-400 dark:border-zinc-600">
         <button
           type="button"
           onClick={() => handleTabChange('header')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
             activeTab === 'header'
-              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm border border-zinc-200 dark:border-zinc-800'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm border border-gray-400 dark:border-zinc-600'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
           }`}
         >
-          <PanelTop className="h-4 w-4 text-emerald-500" />
+          <PanelTop className="h-5 w-5 text-emerald-500" />
           <span>Header Ad (728×90)</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('section')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
             activeTab === 'section'
-              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm border border-zinc-200 dark:border-zinc-800'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm border border-gray-400 dark:border-zinc-600'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
           }`}
         >
-          <LayoutGrid className="h-4 w-4 text-red-500" />
+          <LayoutGrid className="h-5 w-5 text-red-500" />
           <span>In-Between Section Ads</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('sidebar')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
             activeTab === 'sidebar'
-              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm border border-zinc-200 dark:border-zinc-800'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 shadow-sm border border-gray-400 dark:border-zinc-600'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
           }`}
         >
-          <Sidebar className="h-4 w-4 text-blue-500" />
+          <Sidebar className="h-5 w-5 text-blue-500" />
           <span>Fixed Sidebar Ads</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabChange('random')}
-          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+          className={`flex-1 min-w-[140px] flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
             activeTab === 'random'
-              ? 'bg-white dark:bg-zinc-900 text-[#B3121B] dark:text-red-400 shadow-sm border border-red-200 dark:border-red-900/50'
-              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
+              ? 'bg-white dark:bg-zinc-900 text-[#B3121B] dark:text-red-400 shadow-sm border border-red-400 dark:border-red-800'
+              : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100'
           }`}
         >
-          <Layers className="h-4 w-4 text-[#B3121B]" />
+          <Layers className="h-5 w-5 text-[#B3121B]" />
           <span>Random Bottom Ads</span>
         </button>
       </div>
@@ -501,14 +501,14 @@ export default function AdminAdsPage() {
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="text-xs sm:text-sm font-black uppercase tracking-wider text-white">
+                  <h2 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
                     Random Bottom Advertisements Pool
                   </h2>
-                  <span className="text-[10px] font-bold text-amber-300 bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">
+                  <span className="text-xs font-bold text-amber-300 bg-amber-400/10 px-2.5 py-0.5 rounded border border-amber-400/20">
                     7-Card Grid
                   </span>
                 </div>
-                <p className="text-[11px] text-red-100/90 font-medium mt-0.5">
+                <p className="text-xs sm:text-sm text-red-100/90 font-medium mt-0.5">
                   <strong>Option 1:</strong> Select existing website ads below &nbsp;•&nbsp; <strong>Option 2:</strong> Create a new custom ad for bottom section.
                 </p>
               </div>
@@ -516,17 +516,17 @@ export default function AdminAdsPage() {
           </div>
 
           {/* Option 1 Card: Select Existing Ads */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-red-200 dark:border-red-950/60 p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-red-400 dark:border-red-900/60 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4 text-[#B3121B]" /> Option 1: Select Existing Website Advertisements
+                <h3 className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                  <LayoutGrid className="h-5 w-5 text-[#B3121B]" /> Option 1: Select Existing Website Advertisements
                 </h3>
-                <p className="text-xs text-zinc-500 mt-0.5">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium mt-1">
                   Toggle on any existing ad (Header, Sidebar, In-between section) to automatically display it in the bottom Random Ads grid!
                 </p>
               </div>
-              <span className="text-xs font-black text-[#B3121B] dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-3.5 py-1 rounded-full border border-red-200 dark:border-red-900/60">
+              <span className="text-xs font-black text-[#B3121B] dark:text-red-400 bg-red-50 dark:bg-red-950/40 px-3.5 py-1 rounded-full border border-red-400 dark:border-red-900/60">
                 {ads.filter((a) => a.includeInRandom || a.section?.includes('RANDOM')).length} Active in Pool
               </span>
             </div>
@@ -550,13 +550,13 @@ export default function AdminAdsPage() {
                       key={ad.id}
                       className={`p-4 rounded-2xl border transition-all flex flex-col justify-between gap-4 ${
                         isIncluded
-                          ? 'border-red-300 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20 shadow-sm'
-                          : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30'
+                          ? 'border-red-400 dark:border-red-800 bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                          : 'border-gray-400 dark:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-800/30'
                       }`}
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         {/* Thumbnail */}
-                        <div className="relative h-14 w-20 shrink-0 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-800">
+                        <div className="relative h-14 w-20 shrink-0 rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-800">
                           {ad.image1 ? (
                             <Image src={ad.image1} alt={ad.title || 'Ad'} fill unoptimized={true} className="object-cover" />
                           ) : (
@@ -592,7 +592,7 @@ export default function AdminAdsPage() {
                         className={`w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-black transition-all shadow-sm ${
                           isIncluded
                             ? 'bg-[#B3121B] hover:bg-zinc-900 text-white'
-                            : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-[#B3121B] hover:text-white border border-zinc-300 dark:border-zinc-700'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 hover:bg-[#B3121B] hover:text-white border border-gray-400 dark:border-zinc-600'
                         }`}
                       >
                         {isIncluded ? (
@@ -619,10 +619,10 @@ export default function AdminAdsPage() {
       {/* Main Form & Preview Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Form Card (7 Cols) */}
-        <div className="lg:col-span-7 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-6">
-          <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-4">
-            <h2 className="text-lg font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-red-500" />
+        <div className="lg:col-span-7 bg-white dark:bg-zinc-900 rounded-2xl border border-gray-400 dark:border-zinc-600 p-6 shadow-sm space-y-6">
+          <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-4">
+            <h2 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2.5">
+              <Sparkles className="h-6 w-6 text-red-500" />
               {editingId
                 ? `Edit ${
                     activeTab === 'header'
@@ -644,7 +644,7 @@ export default function AdminAdsPage() {
                   }`}
             </h2>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-zinc-500">Status:</span>
+              <span className="text-sm font-bold text-zinc-600 dark:text-zinc-400">Status:</span>
               <button
                 type="button"
                 onClick={() => setIsActive(!isActive)}
@@ -658,21 +658,21 @@ export default function AdminAdsPage() {
                   }`}
                 />
               </button>
-              <span className={`text-xs font-bold ${isActive ? 'text-emerald-600' : 'text-zinc-400'}`}>
+              <span className={`text-sm font-bold ${isActive ? 'text-emerald-600' : 'text-zinc-400'}`}>
                 {isActive ? 'Active' : 'Draft'}
               </span>
             </div>
           </div>
 
           {errorMessage && (
-            <div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-sm font-medium border border-red-200 dark:border-red-800">
+            <div className="flex items-center gap-2 p-4 rounded-xl bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-sm font-medium border border-red-400 dark:border-red-800">
               <AlertCircle className="h-5 w-5 shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="flex items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium border border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-center gap-2 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 text-sm font-medium border border-emerald-400 dark:border-emerald-800">
               <Check className="h-5 w-5 shrink-0" />
               <span>{successMessage}</span>
             </div>
@@ -681,14 +681,14 @@ export default function AdminAdsPage() {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Slot / Section Selector */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-zinc-800 dark:text-zinc-200">
+              <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
                 1. Target Position / Slot <span className="text-red-500">*</span>
               </label>
               {activeTab === 'header' ? (
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                  className="w-full rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/80 px-4 py-3 text-base font-semibold text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                 >
                   {HEADER_SLOTS.map((sec) => (
                     <option key={sec.id} value={sec.id}>
@@ -700,7 +700,7 @@ export default function AdminAdsPage() {
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                  className="w-full rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/80 px-4 py-3 text-base font-semibold text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                 >
                   {FIXED_SIDEBAR_SLOTS.map((sec) => (
                     <option key={sec.id} value={sec.id}>
@@ -712,7 +712,7 @@ export default function AdminAdsPage() {
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
+                  className="w-full rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/80 px-4 py-3 text-base font-semibold text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-500/20"
                 >
                   {HOME_SECTIONS.map((sec) => (
                     <option key={sec.id} value={sec.id}>
@@ -721,7 +721,7 @@ export default function AdminAdsPage() {
                   ))}
                 </select>
               )}
-              <p className="text-xs text-zinc-500">
+              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
                 {activeTab === 'header'
                   ? HEADER_SLOTS.find((s) => s.id === selectedSection)?.description
                   : activeTab === 'sidebar'
@@ -732,7 +732,7 @@ export default function AdminAdsPage() {
 
             {/* Optional Title */}
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-zinc-800 dark:text-zinc-200">
+              <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
                 Ad Title / Reference Label <span className="text-xs font-normal text-zinc-400">(Optional)</span>
               </label>
               <input
@@ -740,40 +740,40 @@ export default function AdminAdsPage() {
                 value={adTitle}
                 onChange={(e) => setAdTitle(e.target.value)}
                 placeholder="e.g. Top Header Brand Promotion 2026"
-                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 px-4 py-2.5 text-sm font-medium text-zinc-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none"
+                className="w-full rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/80 px-4 py-3 text-base font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:border-red-500 focus:outline-none"
               />
             </div>
 
             {/* Media Type Selector (For Header & Fixed Sidebar Ads) */}
             {(activeTab === 'header' || activeTab === 'sidebar') && (
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
                   2. Media Type (Image or Video) <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setMediaType('IMAGE')}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                    className={`flex items-center justify-center gap-2 p-3.5 rounded-xl border-2 text-base font-bold transition-all ${
                       mediaType === 'IMAGE'
-                        ? 'border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 font-bold'
-                        : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300'
+                        ? 'border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400'
+                        : 'border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300 hover:border-gray-500'
                     }`}
                   >
-                    <ImageIcon className="h-4 w-4" />
+                    <ImageIcon className="h-5 w-5" />
                     <span>Image Banner</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setMediaType('VIDEO')}
-                    className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${
+                    className={`flex items-center justify-center gap-2 p-3.5 rounded-xl border-2 text-base font-bold transition-all ${
                       mediaType === 'VIDEO'
-                        ? 'border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 font-bold'
-                        : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300'
+                        ? 'border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400'
+                        : 'border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300 hover:border-gray-500'
                     }`}
                   >
-                    <Video className="h-4 w-4" />
+                    <Video className="h-5 w-5" />
                     <span>Video Banner</span>
                   </button>
                 </div>
@@ -783,7 +783,7 @@ export default function AdminAdsPage() {
             {/* Image Count Selector (For In-Between Section Ads) */}
             {activeTab === 'section' && (
               <div className="space-y-2">
-                <label className="block text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
                   2. Number of Ad Images <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-3 gap-3">
@@ -795,11 +795,11 @@ export default function AdminAdsPage() {
                       className={`flex flex-col items-center justify-center p-3 rounded-xl border-2 transition-all ${
                         imageCount === num
                           ? 'border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 font-bold'
-                          : 'border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 text-zinc-600 dark:text-zinc-400 hover:border-zinc-300'
+                          : 'border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300 hover:border-gray-500'
                       }`}
                     >
                       <span className="text-base font-black">{num} {num === 1 ? 'Image' : 'Images'}</span>
-                      <span className="text-[11px] opacity-80 mt-0.5">
+                      <span className="text-xs opacity-80 mt-0.5">
                         {num === 1 ? '100% Width' : num === 2 ? '50% / 50%' : '33.3% Each'}
                       </span>
                     </button>
@@ -820,16 +820,16 @@ export default function AdminAdsPage() {
                 return (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-800/30 space-y-4"
+                    className="p-4 sm:p-5 rounded-xl border border-gray-400 dark:border-zinc-600 bg-zinc-50/50 dark:bg-zinc-800/30 space-y-4"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                      <span className="text-sm font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-1.5">
                         {activeTab === 'header' ? (
-                          mediaType === 'VIDEO' ? <Video className="h-3.5 w-3.5" /> : <PanelTop className="h-3.5 w-3.5" />
+                          mediaType === 'VIDEO' ? <Video className="h-4 w-4" /> : <PanelTop className="h-4 w-4" />
                         ) : activeTab === 'sidebar' ? (
-                          mediaType === 'VIDEO' ? <Video className="h-3.5 w-3.5" /> : <ImageIcon className="h-3.5 w-3.5" />
+                          mediaType === 'VIDEO' ? <Video className="h-4 w-4" /> : <ImageIcon className="h-4 w-4" />
                         ) : (
-                          <LayoutGrid className="h-3.5 w-3.5" />
+                          <LayoutGrid className="h-4 w-4" />
                         )}
                         {activeTab === 'header'
                           ? 'Header Media & Link'
@@ -838,10 +838,10 @@ export default function AdminAdsPage() {
                           : `Ad Image Slot ${idx + 1}`}
                       </span>
                       {activeTab === 'header' && (
-                        <span className="text-[11px] text-zinc-400 font-semibold">Recommended: 728×90 banner</span>
+                        <span className="text-xs text-zinc-500 font-semibold">Recommended: 728×90 banner</span>
                       )}
                       {activeTab === 'section' && (
-                        <span className="text-[11px] text-zinc-400 font-semibold">
+                        <span className="text-xs text-zinc-500 font-semibold">
                           {imageCount === 1 ? 'Full Banner' : imageCount === 2 ? 'Half Banner' : '1/3 Banner'}
                         </span>
                       )}
@@ -849,7 +849,7 @@ export default function AdminAdsPage() {
 
                     {/* Field 1: Media (Image or Video) */}
                     <div className="space-y-2">
-                      <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      <label className="block text-sm sm:text-base font-bold text-zinc-800 dark:text-zinc-200">
                         {(activeTab === 'header' || activeTab === 'sidebar') && mediaType === 'VIDEO'
                           ? 'Video File (MP4/WebM Upload) or Video URL'
                           : 'Image File (Upload) or Image URL'}{' '}
@@ -865,7 +865,7 @@ export default function AdminAdsPage() {
                               ? 'https://example.com/banner-video.mp4'
                               : 'https://example.com/banner-image.jpg'
                           }
-                          className="flex-1 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-500"
+                          className="flex-1 rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-900 px-3.5 py-2.5 text-sm sm:text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-red-500"
                         />
                         <input
                           type="file"
@@ -880,12 +880,12 @@ export default function AdminAdsPage() {
                           type="button"
                           disabled={uploadingIndex === idx}
                           onClick={() => fileInputRefs[idx].current?.click()}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-2 text-xs font-bold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition shrink-0 disabled:opacity-50"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zinc-900 dark:bg-zinc-100 px-4 py-2.5 text-xs sm:text-sm font-bold text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-200 transition shrink-0 disabled:opacity-50"
                         >
                           {uploadingIndex === idx ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-4 w-4 animate-spin" />
                           ) : (
-                            <Upload className="h-3.5 w-3.5" />
+                            <Upload className="h-4 w-4" />
                           )}
                           <span>Upload File</span>
                         </button>
@@ -893,7 +893,7 @@ export default function AdminAdsPage() {
 
                       {/* Media Preview */}
                       {imgVal && (
-                        <div className="relative h-32 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-zinc-900 mt-2 flex items-center justify-center">
+                        <div className="relative h-36 w-full rounded-xl border border-gray-400 dark:border-zinc-600 overflow-hidden bg-zinc-900 mt-2 flex items-center justify-center">
                           {isMediaValid ? (
                             mediaType === 'VIDEO' || /\.(mp4|webm|mov)(\?.*)?$/i.test(imgVal) ? (
                               <video src={imgVal} autoPlay loop muted playsInline className="h-full w-full object-cover" />
@@ -924,17 +924,17 @@ export default function AdminAdsPage() {
 
                     {/* Field 2: Redirect Link */}
                     <div className="space-y-1.5">
-                      <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      <label className="block text-sm sm:text-base font-bold text-zinc-800 dark:text-zinc-200">
                         Redirect Target Link URL (Opens when clicked)
                       </label>
                       <div className="relative">
-                        <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                        <LinkIcon className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400" />
                         <input
                           type="url"
                           value={linkVal}
                           onChange={(e) => setLinkVal(e.target.value)}
                           placeholder="https://yourbrand.com/promo-landing"
-                          className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 pl-9 pr-3.5 py-2 text-xs text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-500"
+                          className="w-full rounded-xl border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-900 pl-10 pr-3.5 py-2.5 text-sm sm:text-base text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-red-500"
                         />
                       </div>
                     </div>
@@ -944,18 +944,18 @@ export default function AdminAdsPage() {
             </div>
 
             {/* Submit Buttons */}
-            <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800 flex items-center justify-end gap-3">
+            <div className="pt-4 border-t border-gray-400 dark:border-zinc-600 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={resetForm}
-                className="px-5 py-2.5 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="px-5 py-2.5 rounded-xl border border-gray-400 dark:border-zinc-600 text-sm font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800"
               >
                 Reset
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="inline-flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 text-sm font-bold shadow-md shadow-red-950/20 transition disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 text-base font-bold shadow-md shadow-red-950/20 transition disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 <span>
@@ -979,12 +979,12 @@ export default function AdminAdsPage() {
         {/* Live Preview & Configured Ads (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* Live Preview Card */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
-              <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                <Eye className="h-4 w-4 text-emerald-500" /> Live Layout Preview
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-400 dark:border-zinc-600 p-6 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-3">
+              <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                <Eye className="h-5 w-5 text-emerald-500" /> Live Layout Preview
               </h3>
-              <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md">
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 px-2.5 py-1 rounded-md">
                 {activeTab === 'header'
                   ? '728×90 Banner'
                   : activeTab === 'sidebar'
@@ -993,14 +993,14 @@ export default function AdminAdsPage() {
               </span>
             </div>
 
-            <p className="text-xs text-zinc-500">
-              Target Slot: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{selectedSection}</span>
+            <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              Target Slot: <span className="font-bold text-zinc-900 dark:text-zinc-100">{selectedSection}</span>
             </p>
 
             {/* Simulated Banner Container */}
-            <div className="p-3 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950">
+            <div className="p-3 rounded-xl border border-dashed border-gray-400 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-950">
               {activeTab === 'header' ? (
-                <div className="relative aspect-[21/6] rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-[#0c1729] flex items-center justify-between p-3 text-white">
+                <div className="relative aspect-[21/6] rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-[#0c1729] flex items-center justify-between p-3 text-white">
                   {isValidMediaUrl(image1) ? (
                     mediaType === 'VIDEO' || /\.(mp4|webm|mov)(\?.*)?$/i.test(image1) ? (
                       <video src={image1} autoPlay loop muted playsInline className="absolute inset-0 h-full w-full object-cover" />
@@ -1028,7 +1028,7 @@ export default function AdminAdsPage() {
                   </div>
                 </div>
               ) : activeTab === 'sidebar' ? (
-                <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-900 flex flex-col items-center justify-center text-center p-2">
+                <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-900 flex flex-col items-center justify-center text-center p-2">
                   {isValidMediaUrl(image1) ? (
                     mediaType === 'VIDEO' || /\.(mp4|webm|mov)(\?.*)?$/i.test(image1) ? (
                       <video src={image1} autoPlay loop muted playsInline className="h-full w-full object-cover" />
@@ -1062,7 +1062,7 @@ export default function AdminAdsPage() {
                     return (
                       <div
                         key={idx}
-                        className="relative aspect-[16/8] rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-800 flex flex-col items-center justify-center text-center p-2 group"
+                        className="relative aspect-[16/8] rounded-lg overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-800 flex flex-col items-center justify-center text-center p-2 group"
                       >
                         {isValidMediaUrl(img) ? (
                           <Image
@@ -1090,9 +1090,9 @@ export default function AdminAdsPage() {
           </div>
 
           {/* Configured Ads List for Active Tab */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-6 shadow-sm space-y-4">
-            <h3 className="text-sm font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-              <Layers className="h-4 w-4 text-blue-500" />
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-400 dark:border-zinc-600 p-6 shadow-sm space-y-4">
+            <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b border-gray-400 dark:border-zinc-600 pb-3">
+              <Layers className="h-5 w-5 text-blue-500" />
               {activeTab === 'header'
                 ? 'Configured Header Ad'
                 : activeTab === 'sidebar'
@@ -1121,11 +1121,11 @@ export default function AdminAdsPage() {
                   return (
                     <div
                       key={ad.id}
-                      className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/40 flex items-center justify-between gap-3"
+                      className="p-3.5 rounded-xl border border-gray-400 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-800/40 flex items-center justify-between gap-3"
                     >
                       <div className="min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-xs text-zinc-900 dark:text-zinc-100 truncate">
+                          <span className="font-bold text-sm text-zinc-900 dark:text-zinc-100 truncate">
                             {ad.title || secLabel}
                           </span>
                           <span
@@ -1138,7 +1138,7 @@ export default function AdminAdsPage() {
                             {ad.isActive ? 'Active' : 'Disabled'}
                           </span>
                         </div>
-                        <p className="text-[11px] text-zinc-500 truncate">
+                        <p className="text-xs text-zinc-500 truncate">
                           {secLabel} • <span className="font-semibold">{ad.mediaType || 'IMAGE'}</span>
                         </p>
                       </div>
@@ -1150,8 +1150,8 @@ export default function AdminAdsPage() {
                           title="Toggle Active Status"
                           className={`p-1.5 rounded-lg border transition ${
                             ad.isActive
-                              ? 'border-emerald-300 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-                              : 'border-zinc-300 text-zinc-400 hover:bg-zinc-200'
+                              ? 'border-emerald-400 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                              : 'border-zinc-400 text-zinc-400 hover:bg-zinc-200'
                           }`}
                         >
                           <Check className="h-3.5 w-3.5" />
@@ -1160,7 +1160,7 @@ export default function AdminAdsPage() {
                           type="button"
                           onClick={() => handleEdit(ad)}
                           title="Edit Ad"
-                          className="p-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                          className="p-1.5 rounded-lg border border-gray-400 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700"
                         >
                           <Edit2 className="h-3.5 w-3.5" />
                         </button>
@@ -1168,7 +1168,7 @@ export default function AdminAdsPage() {
                           type="button"
                           onClick={() => setDeleteTargetAd({ id: ad.id, title: ad.title || '', section: secLabel })}
                           title="Delete Ad"
-                          className="p-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                          className="p-1.5 rounded-lg border border-red-400 dark:border-red-900/60 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -1185,9 +1185,9 @@ export default function AdminAdsPage() {
       {/* Full Page Live Ad Preview Modal */}
       {showPreviewModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800 w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-gray-400 dark:border-zinc-600 w-full max-w-6xl max-h-[95vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950">
+            <div className="p-5 sm:p-6 border-b border-gray-400 dark:border-zinc-600 flex items-center justify-between bg-zinc-50 dark:bg-zinc-950">
               <div>
                 <div className="flex items-center gap-3">
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-600/30">
@@ -1207,16 +1207,16 @@ export default function AdminAdsPage() {
               <button
                 type="button"
                 onClick={() => setShowPreviewModal(false)}
-                className="p-2.5 rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition shadow-sm"
+                className="p-2.5 rounded-full border border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition shadow-sm"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Modal Filter & Stats Bar */}
-            <div className="bg-zinc-100/90 dark:bg-zinc-850 p-4 border-b border-zinc-200 dark:border-zinc-800 flex flex-wrap items-center justify-between gap-4 text-xs">
+            <div className="bg-zinc-100/90 dark:bg-zinc-850 p-4 border-b border-gray-400 dark:border-zinc-600 flex flex-wrap items-center justify-between gap-4 text-xs">
               {/* Interactive Filter Pills */}
-              <div className="flex flex-wrap items-center gap-2 p-1 bg-zinc-200/80 dark:bg-zinc-800 rounded-2xl border border-zinc-300/50 dark:border-zinc-700">
+              <div className="flex flex-wrap items-center gap-2 p-1 bg-zinc-200/80 dark:bg-zinc-800 rounded-2xl border border-gray-400 dark:border-zinc-600">
                 <button
                   type="button"
                   onClick={() => setModalFilter('all')}
@@ -1277,8 +1277,8 @@ export default function AdminAdsPage() {
 
               {/* SECTION 1: ARTICLE DETAIL PAGE ADS */}
               {(modalFilter === 'all' || modalFilter === 'active' || modalFilter === 'remaining') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-gray-400 dark:border-zinc-600 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-3">
                     <h3 className="text-sm font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-2">
                       <LayoutGrid className="h-4 w-4" /> 1. Article Page News Reader Ads (2 Slots)
                     </h3>
@@ -1313,7 +1313,7 @@ export default function AdminAdsPage() {
                             {isFilled && imageList.length > 0 ? (
                               <div className={`grid gap-2 ${imageList.length === 3 ? 'grid-cols-3' : imageList.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                 {imageList.map((imgUrl, idx) => (
-                                  <div key={idx} className="relative h-24 sm:h-28 rounded-xl overflow-hidden bg-zinc-950 border border-zinc-200 dark:border-zinc-700">
+                                  <div key={idx} className="relative h-24 sm:h-28 rounded-xl overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-600">
                                     <Image src={imgUrl!} alt={`Ad Image ${idx + 1}`} fill className="object-cover" />
                                     <span className="absolute bottom-1 right-1 bg-black/70 text-white px-1.5 py-0.5 rounded text-[9px] font-black">
                                       Card {idx + 1}
@@ -1363,8 +1363,8 @@ export default function AdminAdsPage() {
 
               {/* SECTION 2: TOP HEADER NAV AD */}
               {(modalFilter === 'all' || modalFilter === 'active' || modalFilter === 'remaining') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-gray-400 dark:border-zinc-600 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-3">
                     <h3 className="text-sm font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-2">
                       <PanelTop className="h-4 w-4" /> 2. Top Navigation Header Ad Banner (728×90)
                     </h3>
@@ -1392,7 +1392,7 @@ export default function AdminAdsPage() {
                           </span>
                         </div>
 
-                        <div className="mt-4 relative h-24 w-full rounded-xl overflow-hidden bg-zinc-950 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center">
+                        <div className="mt-4 relative h-24 w-full rounded-xl overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-600 flex items-center justify-center">
                           {isFilled && foundAd?.image1 ? (
                             foundAd.mediaType === 'VIDEO' ? (
                               <video src={foundAd.image1} autoPlay loop muted playsInline className="h-full w-full object-cover" />
@@ -1437,8 +1437,8 @@ export default function AdminAdsPage() {
 
               {/* SECTION 3: FIXED RIGHT SIDEBAR ADS */}
               {(modalFilter === 'all' || modalFilter === 'active' || modalFilter === 'remaining') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-gray-400 dark:border-zinc-600 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-3">
                     <h3 className="text-sm font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-2">
                       <Sidebar className="h-4 w-4" /> 3. Fixed Right Sidebar Banners (4 Column Slots)
                     </h3>
@@ -1464,7 +1464,7 @@ export default function AdminAdsPage() {
                             </span>
                           </div>
 
-                          <div className="mt-3 relative h-24 w-full rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-700 bg-zinc-950 flex items-center justify-center">
+                          <div className="mt-3 relative h-24 w-full rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-950 flex items-center justify-center">
                             {isFilled && foundAd?.image1 ? (
                               <Image src={foundAd.image1} alt={slot.label} fill className="object-cover" />
                             ) : (
@@ -1505,8 +1505,8 @@ export default function AdminAdsPage() {
 
               {/* SECTION 4: HOMEPAGE IN-BETWEEN SECTION BANNERS */}
               {(modalFilter === 'all' || modalFilter === 'active' || modalFilter === 'remaining') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-gray-400 dark:border-zinc-600 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-600 pb-3">
                     <h3 className="text-sm font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-2">
                       <Layers className="h-4 w-4" /> 4. Homepage Section In-Between Banners (5 Slots)
                     </h3>
@@ -1544,7 +1544,7 @@ export default function AdminAdsPage() {
                             {isFilled && imageList.length > 0 ? (
                               <div className={`grid gap-1.5 ${imageList.length === 3 ? 'grid-cols-3' : imageList.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                 {imageList.map((imgUrl, idx) => (
-                                  <div key={idx} className="relative h-20 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-200 dark:border-zinc-700">
+                                  <div key={idx} className="relative h-20 rounded-lg overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-600">
                                     <Image src={imgUrl!} alt={`Ad Image ${idx + 1}`} fill className="object-cover" />
                                   </div>
                                 ))}
@@ -1587,8 +1587,8 @@ export default function AdminAdsPage() {
 
               {/* SECTION 5: RANDOM BOTTOM 7-CARD GRID ADS */}
               {(modalFilter === 'all' || modalFilter === 'active' || modalFilter === 'remaining') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 sm:p-6 rounded-3xl border border-gray-400 dark:border-zinc-600 shadow-sm space-y-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-gray-400 dark:border-zinc-600 pb-3">
                     <div>
                       <h3 className="text-sm font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-2">
                         <Sparkles className="h-4 w-4" /> 5. Random Bottom 7-Card Grid Pool Banners (3 Sections)
@@ -1597,7 +1597,7 @@ export default function AdminAdsPage() {
                         Interactive promo grid pool at website bottom. Combines custom random ads & selected pool ads.
                       </p>
                     </div>
-                    <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-300 dark:border-emerald-800/60 shrink-0">
+                    <span className="text-[11px] font-extrabold text-emerald-700 dark:text-emerald-300 bg-emerald-100/80 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-400 dark:border-emerald-800/60 shrink-0">
                       {ads.filter((a) => a.isActive !== false && (Boolean(a.includeInRandom) || a.section?.includes('RANDOM'))).length} Active Ads in Random Pool
                     </span>
                   </div>
@@ -1643,7 +1643,7 @@ export default function AdminAdsPage() {
                                 {isFilled && imageList.length > 0 ? (
                                   <div className={`grid gap-1.5 ${imageList.length >= 3 ? 'grid-cols-3' : imageList.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                     {imageList.slice(0, 3).map((imgUrl, idx) => (
-                                      <div key={idx} className="relative h-20 rounded-lg overflow-hidden bg-zinc-950 border border-zinc-200 dark:border-zinc-700">
+                                      <div key={idx} className="relative h-20 rounded-lg overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-600">
                                         <Image src={imgUrl!} alt={`Random Card ${idx + 1}`} fill className="object-cover" />
                                       </div>
                                     ))}
@@ -1664,7 +1664,7 @@ export default function AdminAdsPage() {
                                       HOME_SECTIONS.find((s) => s.id === adItem.section)?.label ||
                                       adItem.section;
                                     return (
-                                      <div key={adItem.id} className="flex items-center justify-between text-[10px] font-bold bg-white/70 dark:bg-zinc-800/60 p-1.5 rounded-lg border border-zinc-200/50 dark:border-zinc-700/50">
+                                      <div key={adItem.id} className="flex items-center justify-between text-[10px] font-bold bg-white/70 dark:bg-zinc-800/60 p-1.5 rounded-lg border border-gray-400 dark:border-zinc-600">
                                         <span className="truncate text-zinc-800 dark:text-zinc-200">{adItem.title || itemSecLabel}</span>
                                         <span className="text-emerald-600 dark:text-emerald-400 shrink-0 ml-1">Active</span>
                                       </div>
@@ -1707,7 +1707,7 @@ export default function AdminAdsPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:border-zinc-950 flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-t border-gray-400 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-950 flex items-center justify-between">
               <span className="text-xs font-bold text-zinc-500">
                 Setup ad slots to increase monetization efficiency across the portal.
               </span>
@@ -1729,7 +1729,7 @@ export default function AdminAdsPage() {
             className="absolute inset-0"
             onClick={() => !deletingAd && setDeleteTargetAd(null)}
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-600 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
             {/* Red Alert Icon */}
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
               <Trash2 className="h-7 w-7" />
@@ -1743,7 +1743,7 @@ export default function AdminAdsPage() {
             </p>
 
             {/* Target Details Card */}
-            <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3.5 text-left dark:border-zinc-800 dark:bg-zinc-950/60">
+            <div className="mt-4 rounded-xl border border-gray-400 bg-zinc-50 p-3.5 text-left dark:border-zinc-600 dark:bg-zinc-950/60">
               <div className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
                 Slot / Position
               </div>
@@ -1751,7 +1751,7 @@ export default function AdminAdsPage() {
                 {deleteTargetAd.section}
               </div>
               {deleteTargetAd.title && (
-                <div className="mt-2 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 text-xs text-zinc-600 dark:text-zinc-300 truncate">
+                <div className="mt-2 pt-2 border-t border-gray-400 dark:border-zinc-600/60 text-xs text-zinc-600 dark:text-zinc-300 truncate">
                   <span className="font-semibold text-zinc-400">Label: </span>
                   {deleteTargetAd.title}
                 </div>
@@ -1768,7 +1768,7 @@ export default function AdminAdsPage() {
                 type="button"
                 disabled={deletingAd}
                 onClick={() => setDeleteTargetAd(null)}
-                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                className="flex-1 rounded-xl border border-gray-400 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>

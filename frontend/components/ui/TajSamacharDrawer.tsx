@@ -286,7 +286,7 @@ export default function TajSamacharDrawer() {
           {/* Drawer Body - Scrollable Article List with Infinite Scroll */}
           <div
             onScroll={handleScroll}
-            className="overflow-y-auto flex-1 divide-y divide-gray-100 dark:divide-gray-800 p-2 max-h-[440px] custom-scrollbar bg-white dark:bg-gray-900"
+            className="overflow-y-auto flex-1 divide-y divide-gray-400 dark:divide-gray-800 p-2 max-h-[440px] custom-scrollbar bg-white dark:bg-gray-900"
           >
             {loading ? (
               // Loading Skeleton
@@ -322,7 +322,7 @@ export default function TajSamacharDrawer() {
                       className="flex items-start gap-3 p-3 hover:bg-red-50/60 dark:hover:bg-red-950/20 rounded-xl transition-all duration-200 group cursor-pointer"
                     >
                       {/* Thumbnail Image */}
-                      <div className="w-24 h-20 sm:w-28 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-gray-100 dark:bg-gray-800 border border-gray-200/80 dark:border-gray-700 shadow-sm">
+                      <div className="w-24 h-20 sm:w-28 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-gray-100 dark:bg-gray-800 border border-gray-400/80 dark:border-gray-700 shadow-sm">
                         <ArticleMedia
                           src={imageSrc}
                           alt={item.titleGu || item.title || 'Taj Samachar'}

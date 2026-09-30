@@ -165,7 +165,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
             <Link
               key={article.id}
               href={`/news/${article.slug}`}
-              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-200 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-start w-[calc((100%-16px)/2)] sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
+              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-400 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-start w-[calc((100%-16px)/2)] sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
             >
               {/* Image Container */}
               <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">

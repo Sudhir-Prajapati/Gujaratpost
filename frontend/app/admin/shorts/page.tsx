@@ -332,7 +332,7 @@ export default function ShortsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-5 border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-5 border-gray-400 dark:border-zinc-700">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white flex items-start sm:items-center gap-2.5">
             <span className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-xl bg-red-600 text-white shadow-md shadow-red-600/20 shrink-0 mt-0.5 sm:mt-0">
@@ -374,7 +374,7 @@ export default function ShortsPage() {
       )}
 
       {/* Primary Tab Bar */}
-      <div className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-800">
+      <div className="flex items-center gap-3 border-b border-gray-400 dark:border-zinc-700">
         <button
           onClick={() => setActiveTab('saved')}
           className={`pb-3 px-1 text-sm font-bold transition-colors cursor-pointer border-b-2 ${
@@ -421,17 +421,17 @@ export default function ShortsPage() {
                   setQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white"
               />
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 shadow-sm">
+              <div className="flex items-center gap-2 rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 shadow-sm">
                 <Film className="h-4 w-4 text-red-600 dark:text-red-400" />
                 <span>Total Shorts: <strong className="text-zinc-950 dark:text-white">{totalShortsCount || shorts.length}</strong></span>
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300 shadow-sm">
+              <div className="flex items-center gap-2 rounded-xl border border-amber-400 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300 shadow-sm">
                 <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
                 <span>Top 40 Featured: <strong className="text-amber-950 dark:text-amber-200">{totalFeaturedCount || shorts.filter(s => s.isFeatured).length}</strong></span>
               </div>
@@ -457,7 +457,7 @@ export default function ShortsPage() {
               {shorts.map((short) => (
                 <div
                   key={short.id}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-md dark:border-zinc-800 transition-all hover:scale-[1.02] hover:shadow-xl"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-400 bg-black shadow-md dark:border-zinc-700 transition-all hover:scale-[1.02] hover:shadow-xl"
                 >
                   {/* Featured Badge on Top-Left */}
                   {short.isFeatured && (
@@ -584,7 +584,7 @@ export default function ShortsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
               <span className="text-xs font-semibold text-zinc-500">
                 Page {page} of {totalPages}
               </span>
@@ -592,14 +592,14 @@ export default function ShortsPage() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+                  className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+                  className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-700 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
                 >
                   Next
                 </button>
@@ -626,7 +626,7 @@ export default function ShortsPage() {
             <button
               onClick={loadChannelShorts}
               disabled={channelLoading}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:!bg-zinc-700 text-xs font-bold text-zinc-800 dark:text-white px-3.5 py-2 cursor-pointer shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white hover:bg-zinc-100 dark:bg-zinc-800 dark:hover:!bg-zinc-700 text-xs font-bold text-zinc-800 dark:text-white px-3.5 py-2 cursor-pointer shadow-xs"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${channelLoading ? 'animate-spin' : ''}`} />
               <span>Reload Channel Feed</span>
@@ -655,7 +655,7 @@ export default function ShortsPage() {
                 return (
                   <div
                     key={cId}
-                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-md dark:border-zinc-800 transition-all hover:scale-[1.02] hover:shadow-xl"
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-400 bg-black shadow-md dark:border-zinc-700 transition-all hover:scale-[1.02] hover:shadow-xl"
                   >
                     {/* Status Badge */}
                     <div className="absolute top-2.5 left-2.5 z-20">
@@ -740,7 +740,7 @@ export default function ShortsPage() {
       {/* ── EDIT SHORT MODAL ── */}
       {editModalOpen && selectedShort && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="relative w-full max-w-lg rounded-2xl border border-gray-400 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex items-center justify-between border-b border-zinc-150 pb-4 dark:border-zinc-800">
               <h3 className="text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
                 <Edit2 className="h-5 w-5 text-red-600" />
@@ -763,7 +763,7 @@ export default function ShortsPage() {
                   type="text"
                   value={formTitleGu}
                   onChange={(e) => setFormTitleGu(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white"
                   required
                 />
               </div>
@@ -777,7 +777,7 @@ export default function ShortsPage() {
                     type="text"
                     value={formYoutubeId}
                     onChange={(e) => handleYoutubeInputChange(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white font-mono"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white font-mono"
                     required
                   />
                 </div>
@@ -790,7 +790,7 @@ export default function ShortsPage() {
                     type="text"
                     value={formDuration}
                     onChange={(e) => setFormDuration(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white"
                   />
                 </div>
               </div>
@@ -813,7 +813,7 @@ export default function ShortsPage() {
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+                  className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-600 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -840,7 +840,7 @@ export default function ShortsPage() {
               className="absolute inset-0"
               onClick={() => !deleting && setDeleteTargetId(null)}
             />
-            <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 z-10 animate-in zoom-in-95 duration-200 text-center">
+            <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 z-10 animate-in zoom-in-95 duration-200 text-center">
               {/* Red Alert Icon */}
               <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
                 <Trash2 className="h-7 w-7" />
@@ -855,9 +855,9 @@ export default function ShortsPage() {
 
               {/* Short Preview Card */}
               {targetShort && (
-                <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+                <div className="mt-4 overflow-hidden rounded-xl border border-gray-400 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/60 text-left">
                   <div className="flex gap-3 p-3 items-center">
-                    <div className="w-14 h-20 relative rounded-lg overflow-hidden bg-black shrink-0 border border-zinc-200 dark:border-zinc-700">
+                    <div className="w-14 h-20 relative rounded-lg overflow-hidden bg-black shrink-0 border border-gray-400 dark:border-zinc-700">
                       <img
                         src={
                           targetShort.thumbnail && targetShort.thumbnail.startsWith('http')
@@ -894,7 +894,7 @@ export default function ShortsPage() {
                   type="button"
                   disabled={deleting}
                   onClick={() => setDeleteTargetId(null)}
-                  className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                  className="flex-1 rounded-xl border border-gray-400 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
                 >
                   Cancel (રદ કરો)
                 </button>

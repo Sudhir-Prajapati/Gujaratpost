@@ -174,8 +174,8 @@ export default function ApkHeader() {
             </button>
 
             {langMenuOpen && (
-              <div className="absolute right-0 top-full mt-2 w-36 bg-white dark:bg-[#1f2026] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-1.5 z-50 text-gray-800 dark:text-gray-100 text-xs animate-in fade-in zoom-in-95 duration-150">
-                <div className="px-3 py-1 text-[10px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-wider border-b border-gray-100 dark:border-gray-800">
+              <div className="absolute right-0 top-full mt-2 w-36 bg-white dark:bg-[#1f2026] rounded-xl shadow-2xl border border-gray-400 dark:border-gray-700 py-1.5 z-50 text-gray-800 dark:text-gray-100 text-xs animate-in fade-in zoom-in-95 duration-150">
+                <div className="px-3 py-1 text-[10px] font-black text-gray-400 dark:text-gray-400 uppercase tracking-wider border-b border-gray-400 dark:border-gray-800">
                   {getDropdownTitle()}
                 </div>
                 {[
@@ -210,14 +210,14 @@ export default function ApkHeader() {
 
       {/* ── HORIZONTAL CATEGORIES PILLS BAR (Hidden on /shorts for full-screen immersive view) ── */}
       {pathname !== '/shorts' && (
-        <div className="bg-white dark:bg-[#18181b] border-b border-gray-200 dark:border-gray-800 shadow-xs px-2.5 py-2 overflow-x-auto scrollbar-hide flex items-center gap-1.5">
+        <div className="bg-white dark:bg-[#18181b] border-b border-gray-400 dark:border-gray-800 shadow-xs px-2.5 py-2 overflow-x-auto scrollbar-hide flex items-center gap-1.5">
           {/* 1. Home Category */}
           <Link
             href="/"
             prefetch={true}
             className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${pathname === '/'
               ? 'bg-[#B3121B] text-white shadow-xs'
-              : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+              : 'bg-white dark:bg-[#27272a] border border-gray-400 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
           >
             <Home className={`w-3.5 h-3.5 ${pathname === '/' ? 'text-white' : 'text-[#B3121B]'}`} />
@@ -230,7 +230,7 @@ export default function ApkHeader() {
             prefetch={true}
             className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${pathname === '/news-brief'
               ? 'bg-[#B3121B] text-white shadow-xs'
-              : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
+              : 'bg-white dark:bg-[#27272a] border border-gray-400 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
               }`}
           >
             <Image
@@ -251,7 +251,7 @@ export default function ApkHeader() {
             prefetch={true}
             className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-black flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${pathname === '/aqi'
               ? 'bg-[#B3121B] text-white shadow-xs'
-              : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
+              : 'bg-white dark:bg-[#27272a] border border-gray-400 dark:border-gray-700 text-gray-900 dark:text-gray-100 hover:bg-gray-50 shadow-2xs'
               }`}
           >
             <svg
@@ -287,7 +287,7 @@ export default function ApkHeader() {
                 prefetch={true}
                 className={`shrink-0 px-3 py-1.5 rounded-full text-[12px] font-extrabold flex items-center gap-1.5 transition active:scale-95 whitespace-nowrap ${isActive
                   ? 'bg-[#B3121B] text-white shadow-xs'
-                  : 'bg-white dark:bg-[#27272a] border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  : 'bg-white dark:bg-[#27272a] border border-gray-400 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
               >
                 <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-[#B3121B]'}`} />

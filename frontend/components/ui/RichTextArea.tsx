@@ -94,7 +94,7 @@ export default function RichTextArea({
   const formatValueToHtml = (val: string) => {
     if (!val) return '';
     return val.replace(/!\[(.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, (match, alt, url) => {
-      return `<figure class="my-4 text-center"><img src="${url}" alt="${alt || 'Article Image'}" class="max-w-full h-auto rounded-xl mx-auto border border-zinc-200 dark:border-zinc-800 shadow-sm" /></figure>`;
+      return `<figure class="my-4 text-center"><img src="${url}" alt="${alt || 'Article Image'}" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure>`;
     });
   };
 
@@ -175,7 +175,7 @@ export default function RichTextArea({
 
     if (activeModal === 'anchor') {
       if (val) {
-        const anchorHTML = `<a id="${val}" name="${val}" class="inline-inline-block align-middle px-1.5 py-0.5 mx-0.5 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800 rounded-md text-xs font-bold cursor-default select-none" title="Anchor: ${val}">🚩 ${val}</a>&nbsp;`;
+        const anchorHTML = `<a id="${val}" name="${val}" class="inline-inline-block align-middle px-1.5 py-0.5 mx-0.5 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-400 dark:border-red-800 rounded-md text-xs font-bold cursor-default select-none" title="Anchor: ${val}">🚩 ${val}</a>&nbsp;`;
         execCmd('insertHTML', anchorHTML);
       }
     } else if (activeModal === 'link') {
@@ -191,7 +191,7 @@ export default function RichTextArea({
       }
     } else if (activeModal === 'image') {
       if (val) {
-        const imgHTML = `<figure class="my-4 text-center"><img src="${val}" alt="Article Image" class="max-w-full h-auto rounded-xl mx-auto border border-zinc-200 dark:border-zinc-800 shadow-sm" /></figure><p></p>`;
+        const imgHTML = `<figure class="my-4 text-center"><img src="${val}" alt="Article Image" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure><p></p>`;
         execCmd('insertHTML', imgHTML);
       }
     }
@@ -201,17 +201,17 @@ export default function RichTextArea({
   // Insert Table
   const insertTable = () => {
     saveSelection();
-    const tableHTML = `<table class="w-full border-collapse border border-zinc-300 dark:border-zinc-700 my-3 text-sm">
+    const tableHTML = `<table class="w-full border-collapse border border-zinc-400 dark:border-zinc-700 my-3 text-sm">
       <thead>
         <tr class="bg-zinc-100 dark:bg-zinc-800">
-          <th class="border border-zinc-300 dark:border-zinc-700 p-2 font-bold text-left">Header 1</th>
-          <th class="border border-zinc-300 dark:border-zinc-700 p-2 font-bold text-left">Header 2</th>
+          <th class="border border-zinc-400 dark:border-zinc-700 p-2 font-bold text-left">Header 1</th>
+          <th class="border border-zinc-400 dark:border-zinc-700 p-2 font-bold text-left">Header 2</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td class="border border-zinc-300 dark:border-zinc-700 p-2">Data 1</td>
-          <td class="border border-zinc-300 dark:border-zinc-700 p-2">Data 2</td>
+          <td class="border border-zinc-400 dark:border-zinc-700 p-2">Data 1</td>
+          <td class="border border-zinc-400 dark:border-zinc-700 p-2">Data 2</td>
         </tr>
       </tbody>
     </table><p></p>`;
@@ -275,7 +275,7 @@ export default function RichTextArea({
     <div className={`space-y-1.5 w-full ${isFullscreen ? 'fixed inset-0 z-[99999] bg-white dark:bg-zinc-900 p-4 flex flex-col space-y-3' : ''}`}>
       {label && (
         <div className="flex items-center justify-between">
-          <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300">
+          <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100">
             {label} {required && <span className="text-red-500">*</span>}
           </label>
           {isFullscreen && (
@@ -291,16 +291,16 @@ export default function RichTextArea({
         </div>
       )}
 
-      <div className={`rounded-2xl border border-zinc-200 bg-white overflow-hidden shadow-xs dark:border-zinc-800 dark:bg-zinc-900 transition-all focus-within:border-primary ${isFullscreen ? 'flex-1 flex flex-col' : ''}`}>
+      <div className={`rounded-2xl border border-gray-400 bg-white overflow-hidden shadow-xs dark:border-zinc-600 dark:bg-zinc-900 transition-all focus-within:border-primary ${isFullscreen ? 'flex-1 flex flex-col' : ''}`}>
 
         {/* FULL CKEDITOR STYLE TOOLBAR (2 ROWS) */}
-        <div className="border-b border-zinc-200/80 bg-zinc-50/80 p-2.5 dark:border-zinc-800 dark:bg-zinc-950/60 select-none space-y-2">
+        <div className="border-b border-gray-400 bg-zinc-50/80 p-2.5 dark:border-zinc-700 dark:bg-zinc-950/60 select-none space-y-2">
 
           {/* ROW 1: Edit, History, Links, Inserts & View Modes */}
           <div className="flex flex-wrap items-center gap-2">
 
             {/* Clipboard / Edit Group */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={handleCut}
@@ -330,7 +330,7 @@ export default function RichTextArea({
             <div className="h-5 w-[1px] bg-zinc-300/80 dark:bg-zinc-800 mx-0.5 hidden sm:block" />
 
             {/* Undo / Redo History Group */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={() => execCmd('undo')}
@@ -352,7 +352,7 @@ export default function RichTextArea({
             <div className="h-5 w-[1px] bg-zinc-300/80 dark:bg-zinc-800 mx-0.5 hidden sm:block" />
 
             {/* Links & Anchors Group */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={openLinkModal}
@@ -382,7 +382,7 @@ export default function RichTextArea({
             <div className="h-5 w-[1px] bg-zinc-300/80 dark:bg-zinc-800 mx-0.5 hidden sm:block" />
 
             {/* Inserts Group (Image, Table, Line, Special Symbol) */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={openImageModal}
@@ -423,7 +423,7 @@ export default function RichTextArea({
                 type="button"
                 onClick={() => setIsFullscreen(!isFullscreen)}
                 title={isFullscreen ? 'Exit Fullscreen' : 'Maximize Fullscreen Editor'}
-                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all border border-zinc-300 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 shadow-2xs cursor-pointer"
+                className="flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all border border-gray-400 bg-white text-zinc-800 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 shadow-2xs cursor-pointer"
               >
                 {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                 <span className="hidden md:inline">{isFullscreen ? 'Minimize' : 'Maximize'}</span>
@@ -453,7 +453,7 @@ export default function RichTextArea({
                 type="button"
                 onClick={() => setActiveModal('help')}
                 title="Editor Guide & Keyboard Shortcuts (?)"
-                className="rounded-xl border border-zinc-200 bg-white p-2 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
+                className="rounded-xl border border-gray-400 bg-white p-2 text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 cursor-pointer shadow-2xs"
               >
                 <HelpCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </button>
@@ -462,10 +462,10 @@ export default function RichTextArea({
           </div>
 
           {/* ROW 2: Text Formatting, Paragraphs, Alignment & Colors */}
-          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-zinc-200/60 dark:border-zinc-800/60">
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-gray-400 dark:border-zinc-700/60">
 
             {/* Font Styling Group */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={() => execCmd('bold')}
@@ -511,7 +511,7 @@ export default function RichTextArea({
             <div className="h-5 w-[1px] bg-zinc-300/80 dark:bg-zinc-800 mx-0.5 hidden sm:block" />
 
             {/* Lists & Indents Group */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={() => execCmd('insertOrderedList')}
@@ -557,7 +557,7 @@ export default function RichTextArea({
             <div className="h-5 w-[1px] bg-zinc-300/80 dark:bg-zinc-800 mx-0.5 hidden sm:block" />
 
             {/* Alignments Group */}
-            <div className="flex items-center rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
                 onClick={() => execCmd('justifyLeft')}
@@ -599,7 +599,7 @@ export default function RichTextArea({
               onChange={(e) => execCmd('formatBlock', e.target.value)}
               defaultValue="<p>"
               title="Heading Style / Paragraph Format"
-              className="rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-bold text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 focus:outline-none cursor-pointer shadow-2xs"
+              className="rounded-xl border border-gray-400 bg-white px-3 py-1.5 text-xs font-bold text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 focus:outline-none cursor-pointer shadow-2xs"
             >
               <option value="<p>">Normal Paragraph</option>
               <option value="<h1>">Heading 1 (H1 - Main)</option>
@@ -615,7 +615,7 @@ export default function RichTextArea({
               onChange={(e) => execCmd('fontSize', e.target.value)}
               defaultValue="3"
               title="Font Size"
-              className="rounded-xl border border-zinc-200 bg-white px-3 py-1.5 text-xs font-bold text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 focus:outline-none cursor-pointer shadow-2xs"
+              className="rounded-xl border border-gray-400 bg-white px-3 py-1.5 text-xs font-bold text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 focus:outline-none cursor-pointer shadow-2xs"
             >
               <option value="1">Small (10px)</option>
               <option value="2">Normal (13px)</option>
@@ -625,7 +625,7 @@ export default function RichTextArea({
             </select>
 
             {/* Intuitive Text Color & Background Color Controls */}
-            <div className="flex items-center gap-1 rounded-xl bg-white p-1 border border-zinc-200/80 dark:bg-zinc-900 dark:border-zinc-800 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               
               {/* Text Color */}
               <label className="flex items-center gap-1.5 px-2 py-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-300" title="Text Color">
@@ -672,7 +672,7 @@ export default function RichTextArea({
             placeholder={placeholder}
             rows={rows}
             required={required}
-            className={`w-full bg-white px-4 py-3 text-sm font-mono text-zinc-900 placeholder:text-zinc-400 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 leading-relaxed ${isFullscreen ? 'flex-1 min-h-[400px]' : ''}`}
+            className={`w-full bg-white px-4 py-3 text-base font-mono text-gray-900 placeholder:text-gray-500 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 leading-relaxed ${isFullscreen ? 'flex-1 min-h-[400px]' : ''}`}
           />
         ) : (
           <div
@@ -688,7 +688,7 @@ export default function RichTextArea({
             onSelect={saveSelection}
             onClick={saveSelection}
             style={{ minHeight: isFullscreen ? 'calc(100vh - 200px)' : `${rows * 28}px` }}
-            className={`w-full bg-white px-4 py-3 text-sm text-zinc-900 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 font-sans leading-relaxed prose dark:prose-invert max-w-none break-words overflow-x-auto [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:my-3 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:text-zinc-900 dark:[&_blockquote]:text-white [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_li]:list-item [&_li]:my-1 empty:before:content-[attr(data-placeholder)] empty:before:text-zinc-400 empty:before:italic ${isFullscreen ? 'flex-1 overflow-y-auto' : ''}`}
+            className={`w-full bg-white px-4 py-3 text-base text-gray-900 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 font-sans leading-relaxed prose dark:prose-invert max-w-none break-words overflow-x-auto [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:my-3 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:text-gray-900 dark:[&_blockquote]:text-white [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_li]:list-item [&_li]:my-1 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500 empty:before:italic ${isFullscreen ? 'flex-1 overflow-y-auto' : ''}`}
             data-placeholder={placeholder}
           />
         )}
@@ -701,11 +701,11 @@ export default function RichTextArea({
           onClick={() => setActiveModal(null)}
         >
           <div
-            className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain"
+            className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 space-y-4 max-h-[85vh] overflow-y-auto overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
               <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
                 {activeModal === 'anchor' && <Flag className="h-4 w-4 text-emerald-600" />}
                 {activeModal === 'link' && <LinkIcon className="h-4 w-4 text-blue-600" />}
@@ -734,7 +734,7 @@ export default function RichTextArea({
               <div className="space-y-4 text-xs text-zinc-700 dark:text-zinc-300">
                 
                 {/* Branding Badge Header */}
-                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-zinc-50 border border-zinc-200/80 dark:bg-zinc-950/60 dark:border-zinc-800 text-center space-y-2">
+                <div className="flex flex-col items-center justify-center p-4 rounded-2xl bg-zinc-50 border border-gray-400 dark:bg-zinc-950/60 dark:border-zinc-700 text-center space-y-2">
                   <div className="inline-flex items-center gap-1 bg-red-600 text-white font-black px-3 py-1 rounded-xl text-base tracking-tight shadow-xs">
                     <span>GUJARAT POST</span>
                     <span className="text-xs text-yellow-300 font-bold">.in</span>
@@ -746,15 +746,15 @@ export default function RichTextArea({
                 </div>
 
                 {/* Shortcuts Grid */}
-                <div className="rounded-xl bg-blue-50/60 p-3 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40">
+                <div className="rounded-xl bg-blue-50/60 p-3 dark:bg-blue-950/30 border border-blue-300 dark:border-blue-900/40">
                   <h5 className="font-extrabold text-blue-700 dark:text-blue-400 mb-1 text-[11px] uppercase tracking-wider">⌨️ Quick Keyboard Shortcuts</h5>
                   <div className="grid grid-cols-2 gap-2 text-[11px] font-medium">
-                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">Ctrl + B</span> Bold Text</div>
-                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">Ctrl + I</span> Italic Text</div>
-                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">Ctrl + U</span> Underline Text</div>
-                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">Ctrl + Z</span> Undo Action</div>
-                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">Ctrl + Y</span> Redo Action</div>
-                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-zinc-200 dark:border-zinc-700">Ctrl + K</span> Add Link URL</div>
+                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-400 dark:border-zinc-700">Ctrl + B</span> Bold Text</div>
+                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-400 dark:border-zinc-700">Ctrl + I</span> Italic Text</div>
+                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-400 dark:border-zinc-700">Ctrl + U</span> Underline Text</div>
+                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-400 dark:border-zinc-700">Ctrl + Z</span> Undo Action</div>
+                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-400 dark:border-zinc-700">Ctrl + Y</span> Redo Action</div>
+                    <div><span className="font-mono font-bold bg-white dark:bg-zinc-800 px-1.5 py-0.5 rounded border border-gray-400 dark:border-zinc-700">Ctrl + K</span> Add Link URL</div>
                   </div>
                 </div>
 
@@ -765,12 +765,12 @@ export default function RichTextArea({
                   <p>• <strong>🌐 Multi-Language Sync</strong>: Auto-translates titles and drafts for Gujarati, Hindi, and English.</p>
                 </div>
 
-                <div className="pt-2 border-t border-zinc-200/80 dark:border-zinc-800 flex items-center justify-between">
+                <div className="pt-2 border-t border-gray-400 dark:border-zinc-700 flex items-center justify-between">
                   <span className="text-[10px] text-zinc-400 font-medium">Copyright © 2026 Gujarat Post News Portal</span>
                   <button
                     type="button"
                     onClick={() => setActiveModal(null)}
-                    className="rounded-xl border border-zinc-300 bg-zinc-100 px-5 py-2 text-xs font-extrabold text-zinc-800 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer shadow-2xs"
+                    className="rounded-xl border border-gray-400 bg-zinc-100 px-5 py-2 text-xs font-extrabold text-zinc-800 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer shadow-2xs"
                   >
                     Cancel
                   </button>
@@ -787,7 +787,7 @@ export default function RichTextArea({
                       execCmd('insertHTML', char);
                       setActiveModal(null);
                     }}
-                    className="flex h-10 items-center justify-center rounded-xl border border-zinc-200 bg-zinc-50 text-base font-extrabold text-zinc-800 hover:border-amber-500 hover:bg-amber-50 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                    className="flex h-10 items-center justify-center rounded-xl border border-gray-400 bg-zinc-50 text-base font-extrabold text-zinc-800 hover:border-amber-500 hover:bg-amber-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all cursor-pointer"
                   >
                     {char}
                   </button>
@@ -817,17 +817,17 @@ export default function RichTextArea({
                         ? 'e.g. section-1'
                         : 'https://...'
                     }
-                    className="w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-sm font-medium text-zinc-900 focus:border-emerald-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-white px-3.5 py-2.5 text-base font-medium text-zinc-900 placeholder:text-gray-500 focus:border-emerald-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                     autoFocus
                   />
                 </div>
 
                 {/* Modal Footer Actions (OK / Cancel) */}
-                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+                <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-400 dark:border-zinc-700">
                   <button
                     type="button"
                     onClick={() => setActiveModal(null)}
-                    className="rounded-xl border border-zinc-300 bg-zinc-100 px-4 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                    className="rounded-xl border border-gray-400 bg-zinc-100 px-4 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer"
                   >
                     Cancel
                   </button>

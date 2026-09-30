@@ -519,7 +519,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
               className="text-lg font-black tracking-widest text-slate-950 uppercase font-serif"
             />
             <div className="flex items-center gap-3 font-semibold text-slate-700">
-              <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-300">
+              <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 border border-slate-400">
                 પૃષ્ઠ ૪ (PAGE 4)
               </span>
             </div>
@@ -548,9 +548,9 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 3. ROW 1: SPORTS ARENA (8 Cols Lead Cricket + 4 Cols Athletics & Wire) ─── */}
-        <div className="grid grid-cols-12 gap-0 h-[495px] mb-2 shrink-0 border-b border-slate-300 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 gap-0 h-[495px] mb-2 shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Left: Lead Sports Story (col-span-8) */}
-          <div className="col-span-8 pr-4 border-r border-slate-300 flex flex-col justify-between h-full overflow-hidden">
+          <div className="col-span-8 pr-4 border-r border-slate-400 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col">
               {/* Category Eyebrow */}
               <div className="flex justify-between items-center mb-0.5">
@@ -604,7 +604,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                       onSelect={() => onSelectSlot?.('mainSportsStory.paragraph1', 'સ્પોર્ટ્સ પેરાગ્રાફ ૧')}
                       multiline
                     />
-                    <div className="mt-1.5 text-[10.5px] leading-[1.4] text-slate-700 border-t border-slate-200 pt-1">
+                    <div className="mt-1.5 text-[10.5px] leading-[1.4] text-slate-700 border-t border-slate-400 pt-1">
                       <EditableTextSlot
                         value={data.mainSportsStory.paragraph2}
                         onChange={(val) => updateField('mainSportsStory.paragraph2', val)}
@@ -723,7 +723,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
           <div className="col-span-4 pl-4 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col justify-between">
               {/* Secondary Sports Story */}
-              <div className="pb-1.5 border-b border-slate-300">
+              <div className="pb-1.5 border-b border-slate-400">
                 <div className="flex justify-between items-start mb-0.5">
                   <EditableTextSlot
                     value={data.secondarySportsStory.category}
@@ -782,7 +782,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
 
                 <div className="space-y-1 overflow-hidden flex-1 flex flex-col justify-around">
                   {data.sportsBriefs.slice(0, 3).map((sb: any, idx: number) => (
-                    <div key={idx} className="border-b border-slate-200 pb-0.5 last:border-0 last:pb-0">
+                    <div key={idx} className="border-b border-slate-400 pb-0.5 last:border-0 last:pb-0">
                       <div className="flex items-center gap-1">
                         <span className="text-[8.5px] font-black bg-emerald-100 text-emerald-900 px-1 py-0.2 rounded-2xs shrink-0">
                           <EditableTextSlot
@@ -818,7 +818,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 4. ROW 2: CINEMA, BOLLYWOOD & OTT WORLD (7 Cols + 5 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-2 h-[380px] shrink-0 border-b border-slate-300 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[380px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Cinema Lead (col-span-7) */}
           <div className="col-span-7 pr-4 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col justify-between">
@@ -833,7 +833,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                       onSelect={() => onSelectSlot?.('entertainmentStory.category', 'મનોરંજન કેટેગરી')}
                     />
                   </span>
-                  <span className="text-[10px] text-purple-800 font-bold bg-purple-50 px-2 py-0.5 border border-purple-200">
+                  <span className="text-[10px] text-purple-800 font-bold bg-purple-50 px-2 py-0.5 border border-purple-400">
                     બોક્સ ઓફિસ રિપોર્ટ
                   </span>
                 </div>
@@ -871,7 +871,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                       onSelect={() => onSelectSlot?.('entertainmentStory.paragraph1', 'મનોરંજન પેરાગ્રાફ ૧')}
                       multiline
                     />
-                    <div className="mt-1 pt-1 border-t border-slate-200 text-[10px] text-slate-700">
+                    <div className="mt-1 pt-1 border-t border-slate-400 text-[10px] text-slate-700">
                       <EditableTextSlot
                         value={data.entertainmentStory.paragraph2}
                         onChange={(val) => updateField('entertainmentStory.paragraph2', val)}
@@ -973,7 +973,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                     />
                   </div>
                   {data.entertainmentStory.keyPoints && (
-                    <div className="bg-purple-50 border border-purple-200 p-1.5 rounded-xs">
+                    <div className="bg-purple-50 border border-purple-400 p-1.5 rounded-xs">
                       <span className="text-[10px] font-bold text-purple-900 block mb-0.5 font-sans">
                         {data.entertainmentStory.keyPoints.title}
                       </span>
@@ -1052,8 +1052,8 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
 
                 {/* Top 3 OTT Streaming Releases Box - 100% Editable */}
                 {data.ottLifestyleStory.ottPicks && (
-                  <div className="bg-rose-50 border border-rose-200 p-1.5 rounded-xs mt-1 font-sans text-[9px]">
-                    <div className="font-black text-rose-950 border-b border-rose-200 pb-0.5 mb-1 flex items-center justify-between">
+                  <div className="bg-rose-50 border border-rose-400 p-1.5 rounded-xs mt-1 font-sans text-[9px]">
+                    <div className="font-black text-rose-950 border-b border-rose-400 pb-0.5 mb-1 flex items-center justify-between">
                       <span>
                         <EditableTextSlot
                           value={data.ottLifestyleStory.ottPicks.title}
@@ -1072,7 +1072,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                       </span>
                     </div>
                     <div className="grid grid-cols-3 gap-1 text-slate-800">
-                      <div className="bg-white p-1 rounded-2xs border border-rose-100">
+                      <div className="bg-white p-1 rounded-2xs border border-rose-300">
                         <span className="font-black text-red-600 block">
                           <EditableTextSlot
                             value={data.ottLifestyleStory.ottPicks.pick1Platform}
@@ -1090,7 +1090,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                           />
                         </span>
                       </div>
-                      <div className="bg-white p-1 rounded-2xs border border-rose-100">
+                      <div className="bg-white p-1 rounded-2xs border border-rose-300">
                         <span className="font-black text-blue-600 block">
                           <EditableTextSlot
                             value={data.ottLifestyleStory.ottPicks.pick2Platform}
@@ -1108,7 +1108,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                           />
                         </span>
                       </div>
-                      <div className="bg-white p-1 rounded-2xs border border-rose-100">
+                      <div className="bg-white p-1 rounded-2xs border border-rose-300">
                         <span className="font-black text-indigo-600 block">
                           <EditableTextSlot
                             value={data.ottLifestyleStory.ottPicks.pick3Platform}
@@ -1135,8 +1135,8 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 5. ROW 3: 12 ZODIAC SIGNS HOROSCOPE (6x2 Astrological Grid) ─── */}
-        <div className="bg-purple-50/40 border border-purple-300/80 rounded-xs p-2 mb-2 shrink-0 shadow-2xs">
-          <div className="flex items-center justify-between border-b border-purple-200 pb-1 mb-1.5 font-sans">
+        <div className="bg-purple-50/40 border border-purple-400/80 rounded-xs p-2 mb-2 shrink-0 shadow-2xs">
+          <div className="flex items-center justify-between border-b border-purple-400 pb-1 mb-1.5 font-sans">
             <div className="flex items-center gap-1.5 font-black text-purple-950 text-xs">
               <Sparkles className="w-3.5 h-3.5 text-purple-700" />
               <span>આજનું દૈનિક રાશિભવિષ્ય (TODAY'S 12 ZODIAC HOROSCOPE)</span>
@@ -1144,7 +1144,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
             {onOpenHoroscopeEditor && (
               <button
                 onClick={onOpenHoroscopeEditor}
-                className="text-[10px] text-purple-800 hover:underline font-bold bg-white px-2 py-0.5 rounded-xs border border-purple-300 cursor-pointer flex items-center gap-1"
+                className="text-[10px] text-purple-800 hover:underline font-bold bg-white px-2 py-0.5 rounded-xs border border-purple-400 cursor-pointer flex items-center gap-1"
               >
                 <span>બધી ૧૨ રાશિઓ સંપાદિત કરો</span>
                 <span>➔</span>
@@ -1156,9 +1156,9 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
             {data.horoscope.map((item: any, idx: number) => (
               <div
                 key={item.signEn || idx}
-                className="bg-white p-1.5 rounded-xs border border-purple-100 shadow-2xs space-y-0.5"
+                className="bg-white p-1.5 rounded-xs border border-purple-300 shadow-2xs space-y-0.5"
               >
-                <div className="flex justify-between items-center font-black text-purple-950 border-b border-purple-100 pb-0.5 text-[11px]">
+                <div className="flex justify-between items-center font-black text-purple-950 border-b border-purple-300 pb-0.5 text-[11px]">
                   <span>{item.signGu}</span>
                   <span className="text-[9px] text-purple-500 font-normal">({item.signEn})</span>
                 </div>
@@ -1179,7 +1179,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 6. ROW 4: 3 BOTTOM EDITORIAL & SPORTS/CULTURE NEWS STORIES (100% NEWS - ZERO ADS!) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-1 h-[345px] shrink-0 overflow-hidden border border-slate-300 bg-white shadow-2xs">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-1 h-[345px] shrink-0 overflow-hidden border border-slate-400 bg-white shadow-2xs">
           {(data.bottomStories || []).slice(0, 3).map((story: any, idx: number) => {
             const basePath = `bottomStories.${idx}`;
             const categoryColors = [
@@ -1196,7 +1196,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
               >
                 <div className="space-y-1.5 overflow-hidden flex-1 flex flex-col">
                   {/* Top Bar: Category badge & Location tag */}
-                  <div className="flex items-center justify-between border-b border-slate-200 pb-1 shrink-0">
+                  <div className="flex items-center justify-between border-b border-slate-400 pb-1 shrink-0">
                     <span className={`text-[9.5px] font-black uppercase px-2 py-0.5 rounded-2xs tracking-wider ${badgeColor}`}>
                       <EditableTextSlot
                         value={story.category}
@@ -1236,7 +1236,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                         onChange={(val) => updateField(`${basePath}.subheadline`, val)}
                         isSelected={selectedPath === `${basePath}.subheadline`}
                         onSelect={() => onSelectSlot?.(`${basePath}.subheadline`, `બોટમ ન્યૂઝ ${idx + 1} સબહેડિંગ`)}
-                        className="text-[9.5px] font-serif font-semibold text-slate-600 leading-tight line-clamp-1 border-b border-slate-100 pb-0.5"
+                        className="text-[9.5px] font-serif font-semibold text-slate-600 leading-tight line-clamp-1 border-b border-slate-400 pb-0.5"
                       />
                     </div>
                   )}
@@ -1251,7 +1251,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                         isSelected={selectedPath === `${basePath}.image`}
                         onSelect={() => onSelectSlot?.(`${basePath}.image`, `બોટમ ન્યૂઝ ${idx + 1} ફોટો`)}
                         containerHeight="105px"
-                        className="w-full h-[105px] object-cover rounded-xs border border-slate-200 shadow-2xs"
+                        className="w-full h-[105px] object-cover rounded-xs border border-slate-400 shadow-2xs"
                       />
                       {story.caption && (
                         <EditableTextSlot
@@ -1279,7 +1279,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                 </div>
 
                 {/* Footer readmore / dateline bar */}
-                <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-[8.5px] text-slate-400 font-sans shrink-0">
+                <div className="pt-1 border-t border-slate-400 flex items-center justify-between text-[8.5px] text-slate-400 font-sans shrink-0">
                   <span className="font-semibold text-slate-600">ગુજરાત પોસ્ટ સ્પેશિયલ ડેસ્ક</span>
                   <span className="text-red-600 font-bold hover:underline cursor-pointer">વિશેષ અહેવાલ ➔</span>
                 </div>

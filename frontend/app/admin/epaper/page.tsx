@@ -811,20 +811,20 @@ export default function AdminEPaperPage() {
           { label: 'Drafts', value: editions.filter((e) => e.status === 'DRAFT').length, icon: FileCode, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-900/20' },
           { label: 'Cities', value: citiesList.length, icon: MapPin, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-900/20' },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3 shadow-sm">
-            <div className={`h-9 sm:h-10 w-9 sm:w-10 rounded-xl flex items-center justify-center shrink-0 ${stat.bg}`}>
-              <stat.icon className={`h-4 sm:h-5 w-4 sm:w-5 ${stat.color}`} />
+          <div key={stat.label} className="rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 sm:p-5 flex items-center gap-3.5 sm:gap-4 shadow-sm">
+            <div className={`h-12 sm:h-14 w-12 sm:w-14 rounded-2xl flex items-center justify-center shrink-0 ${stat.bg}`}>
+              <stat.icon className={`h-6 sm:h-7 w-6 sm:w-7 ${stat.color}`} />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white leading-none">{stat.value}</p>
-              <p className="text-xs font-bold text-zinc-500 mt-1 truncate">{stat.label}</p>
+              <p className="text-3xl sm:text-4xl font-black text-zinc-900 dark:text-white leading-none tracking-tight">{stat.value}</p>
+              <p className="text-sm sm:text-base font-bold text-zinc-600 dark:text-zinc-400 mt-1 truncate">{stat.label}</p>
             </div>
           </div>
         ))}
       </div>
 
       {/* Date, Status & City Filter Controls */}
-      <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-200 dark:border-zinc-800 p-3.5 sm:p-5 space-y-4">
+      <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-2xl border border-gray-400 dark:border-zinc-700 p-3.5 sm:p-5 space-y-4">
         <div className="flex flex-col gap-3.5 sm:gap-4">
           
           {/* Top Filter Row: Date Selector & Search Box */}
@@ -841,17 +841,17 @@ export default function AdminEPaperPage() {
                   type="date"
                   value={selectedDateFilter === 'ALL' ? '' : selectedDateFilter}
                   onChange={(e) => setSelectedDateFilter(e.target.value || 'ALL')}
-                  className="px-3 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
+                  className="px-3 py-2 rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
                 />
                 <button
                   onClick={() => setSelectedDateFilter(todayStr)}
-                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedDateFilter === todayStr ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedDateFilter === todayStr ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-gray-400 dark:border-zinc-700 hover:border-[#B3121B]'}`}
                 >
                   Today ({todayStr})
                 </button>
                 <button
                   onClick={() => setSelectedDateFilter('ALL')}
-                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedDateFilter === 'ALL' ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedDateFilter === 'ALL' ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-gray-400 dark:border-zinc-700 hover:border-[#B3121B]'}`}
                 >
                   All Dates
                 </button>
@@ -865,30 +865,30 @@ export default function AdminEPaperPage() {
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search edition title or date..."
-                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
+                  className="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-semibold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B]"
                 />
               </div>
             </div>
 
             {/* Status Filter Row */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800/80">
+            <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-gray-400 dark:border-zinc-700/80">
               <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0 mr-1">Status:</span>
               <div className="flex flex-wrap items-center gap-1.5">
                 <button
                   onClick={() => setSelectedStatusFilter('ALL')}
-                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-700 border border-zinc-200 dark:border-zinc-800'}`}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-700 border border-gray-400 dark:border-zinc-700'}`}
                 >
                   All Status
                 </button>
                 <button
                   onClick={() => setSelectedStatusFilter('PUBLISHED')}
-                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'PUBLISHED' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-zinc-900 text-emerald-600 border border-emerald-200'}`}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'PUBLISHED' ? 'bg-emerald-600 text-white' : 'bg-white dark:bg-zinc-900 text-emerald-600 border border-emerald-400'}`}
                 >
                   Published
                 </button>
                 <button
                   onClick={() => setSelectedStatusFilter('DRAFT')}
-                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'DRAFT' ? 'bg-amber-600 text-white' : 'bg-white dark:bg-zinc-900 text-amber-600 border border-amber-200'}`}
+                  className={`inline-flex items-center justify-center whitespace-nowrap px-3 py-2 rounded-xl text-xs font-black transition ${selectedStatusFilter === 'DRAFT' ? 'bg-amber-600 text-white' : 'bg-white dark:bg-zinc-900 text-amber-600 border border-amber-400'}`}
                 >
                   Drafts
                 </button>
@@ -898,14 +898,14 @@ export default function AdminEPaperPage() {
         </div>
 
         {/* City Filter Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-2 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 pt-2 border-t border-gray-400 dark:border-zinc-700">
           <span className="text-xs font-black uppercase text-zinc-500 dark:text-zinc-400 shrink-0 flex items-center gap-1.5 mr-1">
             <MapPin className="h-4 w-4 text-[#B3121B]" />
             City Filter:
           </span>
           <button
             onClick={() => setSelectedCityFilter('ALL')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition ${selectedCityFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-400'}`}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition ${selectedCityFilter === 'ALL' ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900' : 'bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border border-gray-400 dark:border-zinc-700 hover:border-zinc-400'}`}
           >
             All Cities
           </button>
@@ -916,7 +916,7 @@ export default function AdminEPaperPage() {
               <button
                 key={c.id}
                 onClick={() => setSelectedCityFilter(c.city)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-black shrink-0 transition flex items-center gap-1.5 ${isSelected ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]'}`}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-black shrink-0 transition flex items-center gap-1.5 ${isSelected ? 'bg-[#B3121B] text-white' : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border border-gray-400 dark:border-zinc-700 hover:border-[#B3121B]'}`}
               >
                 <span>{c.cityGu || c.city}</span>
               </button>
@@ -931,7 +931,7 @@ export default function AdminEPaperPage() {
           <Loader2 className="h-8 w-8 text-[#B3121B] animate-spin" />
         </div>
       ) : editions.length === 0 ? (
-        <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-zinc-300 dark:border-zinc-800 p-8 shadow-sm">
+        <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-2xl border border-dashed border-zinc-400 dark:border-zinc-800 p-8 shadow-sm">
           <Newspaper className="h-16 w-16 mx-auto mb-4 opacity-20 text-[#B3121B]" />
           <h3 className="text-xl font-black text-zinc-800 dark:text-zinc-200">
             કોઈ ઈ-પેપર મળ્યું નથી (No Newspaper Edition Found)
@@ -966,7 +966,7 @@ export default function AdminEPaperPage() {
           {editions.map((edition) => (
             <div
               key={edition.id}
-              className={`group flex flex-col justify-between overflow-hidden rounded-xl border bg-slate-100 dark:bg-zinc-900 shadow-sm transition-all hover:shadow-xl ${edition.isActive ? 'border-slate-300 dark:border-zinc-800' : 'border-slate-200 opacity-60'}`}
+              className={`group flex flex-col justify-between overflow-hidden rounded-xl border bg-slate-100 dark:bg-zinc-900 shadow-sm transition-all hover:shadow-xl ${edition.isActive ? 'border-slate-400 dark:border-zinc-800' : 'border-gray-400 opacity-60'}`}
             >
               {/* Vertical Front Page Image Container */}
               <div
@@ -1022,7 +1022,7 @@ export default function AdminEPaperPage() {
 
                   return (
                     <div className="flex h-full w-full flex-col items-center justify-between p-6 text-center bg-gradient-to-b from-slate-50 to-slate-200 dark:from-zinc-900 dark:to-zinc-950">
-                      <div className="w-full flex justify-between items-center text-[10px] font-black text-slate-400 border-b border-slate-300 dark:border-zinc-800 pb-2">
+                      <div className="w-full flex justify-between items-center text-[10px] font-black text-slate-400 border-b border-slate-400 dark:border-zinc-800 pb-2">
                         <span>GUJARAT POST</span>
                         <span>{edition.date}</span>
                       </div>
@@ -1035,7 +1035,7 @@ export default function AdminEPaperPage() {
                           {edition.pages || 24} PAGES E-PAPER
                         </span>
                       </div>
-                      <div className="w-full pt-2 border-t border-slate-300 dark:border-zinc-800 text-[10px] font-bold text-slate-500 flex items-center justify-between">
+                      <div className="w-full pt-2 border-t border-slate-400 dark:border-zinc-800 text-[10px] font-bold text-slate-500 flex items-center justify-between">
                         <span>{edition.cityGu || edition.city}</span>
                         <span>{edition.publishTime || '06:00 AM'}</span>
                       </div>
@@ -1121,10 +1121,10 @@ export default function AdminEPaperPage() {
           onClick={() => !addingCity && setAddCityModalOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl p-6 cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-md rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl p-6 cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-400 dark:border-zinc-700">
               <h2 className="text-base font-black text-zinc-900 dark:text-white flex items-center gap-2">
                 <Building className="h-5 w-5 text-amber-500" />
                 + નવું શહેર ઉમેરો (Add New City)
@@ -1157,7 +1157,7 @@ export default function AdminEPaperPage() {
                         (c.cityHi || '').trim().toLowerCase() === newCityName.trim().toLowerCase()
                     ) && newCityName.trim().length > 0
                       ? 'border-red-500 focus:ring-red-500/30'
-                      : 'border-zinc-200 dark:border-zinc-800 focus:ring-[#B3121B]/30'
+                      : 'border-gray-400 dark:border-zinc-700 focus:ring-[#B3121B]/30'
                   }`}
                 />
 
@@ -1174,15 +1174,15 @@ export default function AdminEPaperPage() {
                 )}
               </div>
 
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="pt-2 border-t border-gray-400 dark:border-zinc-700">
                 <label className="block text-[11px] font-black text-zinc-400 uppercase tracking-wider mb-2">
                   Existing Active Cities:
                 </label>
-                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                <div className="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-2 bg-zinc-50 dark:bg-zinc-950/40 rounded-xl border border-gray-400 dark:border-zinc-700">
                   {citiesList.map((c) => (
                     <span
                       key={c.id}
-                      className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 px-2.5 py-1 rounded-lg border border-zinc-200 text-xs font-bold shadow-sm"
+                      className="inline-flex items-center gap-1.5 bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 px-2.5 py-1 rounded-lg border border-gray-400 text-xs font-bold shadow-sm"
                     >
                       <Check className="h-3 w-3 text-emerald-500 shrink-0" />
                       <span>{c.cityGu || c.city}</span>
@@ -1202,11 +1202,11 @@ export default function AdminEPaperPage() {
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-400 dark:border-zinc-700">
                 <button
                   type="button"
                   onClick={() => setAddCityModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-zinc-200 text-xs font-black text-zinc-500 hover:bg-zinc-50 cursor-pointer"
+                  className="px-4 py-2 rounded-xl border border-gray-400 text-xs font-black text-zinc-500 hover:bg-zinc-50 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1231,11 +1231,11 @@ export default function AdminEPaperPage() {
           onClick={() => { setModalOpen(false); resetForm(); }}
         >
           <div
-            className="w-full max-w-lg rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-y-auto max-h-[92vh] cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-lg rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xl overflow-y-auto max-h-[92vh] cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+            <div className="flex items-center justify-between px-6 pt-6 pb-4 border-b border-gray-400 dark:border-zinc-700">
               <h2 className="text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
                 <Newspaper className="h-5 w-5 text-[#B3121B]" />
                 {editingEdition ? 'Edit E-Paper Edition' : '+ નવી આવૃત્તિ ઉમેરો (Add Edition)'}
@@ -1252,12 +1252,12 @@ export default function AdminEPaperPage() {
             <form onSubmit={handleSave} className="px-6 py-5 space-y-5">
 
               {/* Dual Creation Mode Options */}
-              <div className="p-4 bg-zinc-50 dark:bg-zinc-900/60 rounded-2xl border border-zinc-200 dark:border-zinc-800 space-y-3">
+              <div className="p-4 bg-zinc-50 dark:bg-zinc-900/60 rounded-2xl border border-gray-400 dark:border-zinc-700 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">
                     આવૃત્તિ બનાવવાની પદ્ધતિ (Select Creation Method) *
                   </label>
-                  <span className="text-[10px] font-bold text-zinc-500 bg-white dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-zinc-200 dark:border-zinc-700">
+                  <span className="text-[10px] font-bold text-zinc-500 bg-white dark:bg-zinc-800 px-2.5 py-0.5 rounded-full border border-gray-400 dark:border-zinc-700">
                     Step 1
                   </span>
                 </div>
@@ -1270,7 +1270,7 @@ export default function AdminEPaperPage() {
                     className={`relative p-3.5 rounded-2xl text-left border-2 transition-all cursor-pointer ${
                       editionCreationOption === 'TEMPLATE'
                         ? 'bg-red-50/50 dark:bg-red-950/20 border-[#B3121B] shadow-md ring-2 ring-[#B3121B]/15'
-                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-[#B3121B]/40'
+                        : 'bg-white dark:bg-zinc-900 border-gray-400 dark:border-zinc-700 hover:border-[#B3121B]/40'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1298,7 +1298,7 @@ export default function AdminEPaperPage() {
                     className={`relative p-3.5 rounded-2xl text-left border-2 transition-all cursor-pointer ${
                       editionCreationOption === 'PDF'
                         ? 'bg-blue-50/50 dark:bg-blue-950/20 border-blue-600 shadow-md ring-2 ring-blue-500/15'
-                        : 'bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 hover:border-blue-400'
+                        : 'bg-white dark:bg-zinc-900 border-gray-400 dark:border-zinc-700 hover:border-blue-400'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
@@ -1310,7 +1310,7 @@ export default function AdminEPaperPage() {
                           તૈયાર PDF અપલોડ
                         </span>
                       </div>
-                      <span className="text-[9px] font-black uppercase tracking-wider bg-blue-600/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
+                      <span className="text-[9px] font-black uppercase tracking-wider bg-blue-600/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-400 dark:border-blue-800">
                         PDF Mode
                       </span>
                     </div>
@@ -1322,7 +1322,7 @@ export default function AdminEPaperPage() {
               </div>
 
               {/* Status Selector: Draft vs Published */}
-              <div className="p-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-zinc-200 dark:border-zinc-800">
+              <div className="p-3 bg-zinc-50 dark:bg-zinc-950/40 rounded-2xl border border-gray-400 dark:border-zinc-700">
                 <label className="block text-xs font-black text-zinc-600 dark:text-zinc-300 uppercase tracking-wider mb-2">
                   Publication Status *
                 </label>
@@ -1330,7 +1330,7 @@ export default function AdminEPaperPage() {
                   <button
                     type="button"
                     onClick={() => setStatus('PUBLISHED')}
-                    className={`py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${status === 'PUBLISHED' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-zinc-600 border border-zinc-200'}`}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${status === 'PUBLISHED' ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-zinc-600 border border-gray-400'}`}
                   >
                     <CheckCircle2 className="h-4 w-4" />
                     PUBLISHED (પબ્લિશ)
@@ -1338,7 +1338,7 @@ export default function AdminEPaperPage() {
                   <button
                     type="button"
                     onClick={() => setStatus('DRAFT')}
-                    className={`py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${status === 'DRAFT' ? 'bg-amber-600 text-white shadow-md' : 'bg-white text-zinc-600 border border-zinc-200'}`}
+                    className={`py-2 px-3 rounded-xl text-xs font-black transition flex items-center justify-center gap-1.5 cursor-pointer ${status === 'DRAFT' ? 'bg-amber-600 text-white shadow-md' : 'bg-white text-zinc-600 border border-gray-400'}`}
                   >
                     <FileCode className="h-4 w-4" />
                     DRAFT (ડ્રાફ્ટ)
@@ -1360,7 +1360,7 @@ export default function AdminEPaperPage() {
                       key={c.id}
                       type="button"
                       onClick={() => handleCitySelect(c.city)}
-                      className={`px-2.5 py-2 rounded-xl text-xs font-black transition border text-center ${city === c.city ? 'bg-[#B3121B] text-white border-[#B3121B]' : 'bg-zinc-50 text-zinc-700 border-zinc-200 hover:border-[#B3121B]'}`}
+                      className={`px-2.5 py-2 rounded-xl text-xs font-black transition border text-center ${city === c.city ? 'bg-[#B3121B] text-white border-[#B3121B]' : 'bg-zinc-50 text-zinc-700 border-gray-400 hover:border-[#B3121B]'}`}
                     >
                       <div>{c.cityGu || c.city}</div>
                     </button>
@@ -1383,7 +1383,7 @@ export default function AdminEPaperPage() {
                   className={`w-full px-4 py-2.5 rounded-xl border bg-zinc-50 dark:bg-zinc-950/30 text-xs font-bold text-zinc-900 dark:text-white focus:outline-none focus:ring-2 ${
                     isDuplicateEdition
                       ? 'border-red-500 focus:ring-red-500/30'
-                      : 'border-zinc-200 dark:border-zinc-800 focus:ring-[#B3121B]/30'
+                      : 'border-gray-400 dark:border-zinc-700 focus:ring-[#B3121B]/30'
                   }`}
                 />
 
@@ -1397,7 +1397,7 @@ export default function AdminEPaperPage() {
 
               {/* Date & Publish Time - Only show Scheduled Time settings when Status is DRAFT */}
               {status === 'DRAFT' ? (
-                <div className="p-4 bg-amber-50/70 dark:bg-amber-900/10 rounded-2xl border border-amber-200/80 dark:border-amber-900/30 space-y-3">
+                <div className="p-4 bg-amber-50/70 dark:bg-amber-900/10 rounded-2xl border border-amber-400/80 dark:border-amber-900/30 space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-xs font-black text-amber-800 dark:text-amber-400">
                       <Clock className="h-4 w-4 text-amber-600" />
@@ -1435,7 +1435,7 @@ export default function AdminEPaperPage() {
                           onChange={(e) => setDate(e.target.value)}
                           min={getTodayDateStr()}
                           required
-                          className="w-full pl-9 pr-2 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white"
+                          className="w-full pl-9 pr-2 py-2 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs font-bold text-zinc-900 dark:text-white"
                         />
                       </div>
                     </div>
@@ -1457,7 +1457,7 @@ export default function AdminEPaperPage() {
                               const now = new Date();
                               const [h, m] = formatTo24Hour(publishTime).split(':');
                               return parseInt(h, 10) < now.getHours() || (parseInt(h, 10) === now.getHours() && parseInt(m, 10) < now.getMinutes());
-                            })() ? 'border-red-500' : 'border-zinc-200 dark:border-zinc-800'
+                            })() ? 'border-red-500' : 'border-gray-400 dark:border-zinc-700'
                           }`}
                         />
                       </div>
@@ -1519,10 +1519,10 @@ export default function AdminEPaperPage() {
                           }}
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-md border transition ${
                             isPast
-                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-700 cursor-not-allowed opacity-50'
+                              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-600 border-gray-400 dark:border-zinc-700 cursor-not-allowed opacity-50'
                               : publishTime === presetTime
                               ? 'bg-amber-600 text-white border-amber-600 cursor-pointer'
-                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-amber-500 cursor-pointer'
+                              : 'bg-white dark:bg-zinc-900 text-zinc-700 dark:text-zinc-300 border-gray-400 dark:border-zinc-700 hover:border-amber-500 cursor-pointer'
                           }`}
                         >
                           {presetTime}
@@ -1567,7 +1567,7 @@ export default function AdminEPaperPage() {
                       min={getTodayDateStr()}
                       max={getDateOffsetStr(6)}
                       required
-                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950/30 text-xs font-bold text-zinc-900 dark:text-white"
+                      className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950/30 text-xs font-bold text-zinc-900 dark:text-white"
                     />
                   </div>
                 </div>
@@ -1580,8 +1580,8 @@ export default function AdminEPaperPage() {
                 <div
                   className={`p-4 rounded-2xl space-y-3 transition border ${
                     formValidationError
-                      ? 'bg-zinc-50/80 dark:bg-zinc-900/40 border-zinc-200 dark:border-zinc-800'
-                      : 'bg-gradient-to-br from-red-50 via-rose-50 to-amber-50 dark:from-red-950/30 dark:via-zinc-900 dark:to-zinc-900 border-red-200 dark:border-red-900/40'
+                      ? 'bg-zinc-50/80 dark:bg-zinc-900/40 border-gray-400 dark:border-zinc-700'
+                      : 'bg-gradient-to-br from-red-50 via-rose-50 to-amber-50 dark:from-red-950/30 dark:via-zinc-900 dark:to-zinc-900 border-red-400 dark:border-red-900/40'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -1589,7 +1589,7 @@ export default function AdminEPaperPage() {
                       <Sparkles className="h-4 w-4 text-[#B3121B]" />
                       <span>૪-પૃષ્ઠ ડિજિટલ અખબાર બિલ્ડર તૈયાર છે</span>
                     </div>
-                    <span className="text-[10px] font-bold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 rounded-full border border-red-200 dark:border-red-800">
+                    <span className="text-[10px] font-bold text-red-700 dark:text-red-400 bg-red-100 dark:bg-red-900/40 px-2.5 py-0.5 rounded-full border border-red-400 dark:border-red-800">
                       {cityGu || city || 'શહેર'} • {formatDateLabel(date)}
                     </span>
                   </div>
@@ -1598,7 +1598,7 @@ export default function AdminEPaperPage() {
                   </p>
 
                   {formValidationError && (
-                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 text-xs font-bold text-red-600 dark:text-red-400 flex items-start gap-2 shadow-xs">
+                    <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/50 border border-red-400 dark:border-red-900/60 text-xs font-bold text-red-600 dark:text-red-400 flex items-start gap-2 shadow-xs">
                       <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-red-600" />
                       <div>
                         <p className="font-black text-red-700 dark:text-red-400">
@@ -1625,7 +1625,7 @@ export default function AdminEPaperPage() {
                     }}
                     className={`w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-black flex items-center justify-center gap-2 transition ${
                       formValidationError
-                        ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed border border-zinc-300 dark:border-zinc-700 shadow-none'
+                        ? 'bg-zinc-200 dark:bg-zinc-800 text-zinc-400 dark:text-zinc-500 cursor-not-allowed border border-zinc-400 dark:border-zinc-700 shadow-none'
                         : 'bg-gradient-to-r from-[#B3121B] via-red-600 to-[#8e0e15] hover:opacity-95 text-white shadow-lg shadow-red-900/20 cursor-pointer transform active:scale-98'
                     }`}
                   >
@@ -1636,7 +1636,7 @@ export default function AdminEPaperPage() {
                 </div>
               ) : (
                 /* PDF ATTACHMENT */
-                <div className="border border-zinc-200 dark:border-zinc-800 p-4 rounded-2xl bg-zinc-50/50 dark:bg-zinc-950/20 space-y-3">
+                <div className="border border-gray-400 dark:border-zinc-700 p-4 rounded-2xl bg-zinc-50/50 dark:bg-zinc-950/20 space-y-3">
                   <label className="block text-xs font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider">
                     Newspaper PDF Source (પસંદ કરો: લિંક અથવા ફાઇલ અપલોડ) *
                   </label>
@@ -1666,7 +1666,7 @@ export default function AdminEPaperPage() {
                       value={fileUrl}
                       onChange={(e) => setFileUrl(e.target.value)}
                       placeholder="https://example.com/newspaper.pdf"
-                      className="w-full px-4 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white text-xs font-semibold"
+                      className="w-full px-4 py-2.5 rounded-xl border border-gray-400 dark:border-zinc-700 bg-white text-xs font-semibold"
                     />
                   ) : (
                     <div>
@@ -1677,14 +1677,14 @@ export default function AdminEPaperPage() {
                         className="hidden"
                         onChange={handleUploadFile}
                       />
-                      <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${fileUrl ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-zinc-300 bg-white'}`}>
+                      <div className={`border-2 border-dashed rounded-xl p-4 text-center transition-all ${fileUrl ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-zinc-400 bg-white'}`}>
                         {fileUrl ? (
                           <div className="space-y-2">
                             <div className="flex items-center justify-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-400">
                               <CheckCircle2 className="h-5 w-5 text-emerald-600" />
                               <span>PDF File Selected & Ready!</span>
                             </div>
-                            <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 truncate max-w-full px-2 bg-white dark:bg-zinc-900 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-900">
+                            <p className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 truncate max-w-full px-2 bg-white dark:bg-zinc-900 py-1.5 rounded-lg border border-emerald-400 dark:border-emerald-900">
                               {fileUrl}
                             </p>
                             <div className="flex justify-center gap-2 pt-1">
@@ -1722,11 +1722,11 @@ export default function AdminEPaperPage() {
               )}
 
               {/* Submit Buttons */}
-              <div className="flex justify-end gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-end gap-3 pt-2 border-t border-gray-400 dark:border-zinc-700">
                 <button
                   type="button"
                   onClick={() => { setModalOpen(false); resetForm(); }}
-                  className="px-5 py-2.5 rounded-xl border border-zinc-200 text-xs font-black text-zinc-500 hover:bg-zinc-50 cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl border border-gray-400 text-xs font-black text-zinc-500 hover:bg-zinc-50 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1761,7 +1761,7 @@ export default function AdminEPaperPage() {
           onClick={() => setDeleteId(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-sm rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
@@ -1776,7 +1776,7 @@ export default function AdminEPaperPage() {
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeleteId(null)}
-                className="px-4 py-2 rounded-xl border border-zinc-200 text-xs font-black text-zinc-500 hover:bg-zinc-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-gray-400 text-xs font-black text-zinc-500 hover:bg-zinc-50 cursor-pointer"
               >
                 Cancel
               </button>
@@ -1800,7 +1800,7 @@ export default function AdminEPaperPage() {
           onClick={() => setDeleteCityTarget(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-sm rounded-2xl border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 shadow-2xl cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center gap-3 mb-4">
@@ -1816,11 +1816,11 @@ export default function AdminEPaperPage() {
                 </p>
               </div>
             </div>
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-gray-400 dark:border-zinc-700">
               <button
                 type="button"
                 onClick={() => setDeleteCityTarget(null)}
-                className="px-4 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 cursor-pointer"
+                className="px-4 py-2 rounded-xl border border-gray-400 dark:border-zinc-700 text-xs font-black text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>
@@ -2010,7 +2010,7 @@ export default function AdminEPaperPage() {
                     />
                   </div>
                 ) : (
-                  <div className="relative mx-auto w-[680px] max-w-full min-h-[900px] rounded-lg bg-white p-8 text-slate-900 shadow-2xl border border-slate-300 flex flex-col justify-between">
+                  <div className="relative mx-auto w-[680px] max-w-full min-h-[900px] rounded-lg bg-white p-8 text-slate-900 shadow-2xl border border-slate-400 flex flex-col justify-between">
                     <div>
                       <div className="flex items-center justify-between border-b-4 border-slate-950 pb-2">
                         <h2 className="text-3xl font-black tracking-tighter text-red-600">GUJARAT POST</h2>
@@ -2021,7 +2021,7 @@ export default function AdminEPaperPage() {
                       </div>
 
                       <div className="mt-6 space-y-6">
-                        <div className="border-b border-slate-300 pb-4">
+                        <div className="border-b border-slate-400 pb-4">
                           <span className="inline-block bg-red-600 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded mb-2">
                             PAGE {currentPage} • MAIN HEADLINE
                           </span>
@@ -2031,14 +2031,14 @@ export default function AdminEPaperPage() {
                         </div>
 
                         {currentPage === 1 && activeReaderEdition.thumbnailUrl && !activeReaderEdition.thumbnailUrl.startsWith('blob:') && (
-                          <div className="my-4 rounded-lg overflow-hidden border border-slate-200 max-h-96">
+                          <div className="my-4 rounded-lg overflow-hidden border border-gray-400 max-h-96">
                             <img src={activeReaderEdition.thumbnailUrl} alt="Edition Cover" className="w-full h-full object-cover" />
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="border-t border-slate-300 pt-3 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                    <div className="border-t border-slate-400 pt-3 flex items-center justify-between text-[11px] font-bold text-slate-500">
                       <span>Gujarat Post E-Paper • {activeReaderEdition.city}</span>
                       <span>- Page {currentPage} of {activeReaderEdition.pages || 24} -</span>
                     </div>

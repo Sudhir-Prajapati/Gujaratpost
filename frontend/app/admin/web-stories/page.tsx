@@ -215,7 +215,7 @@ export default function WebStoriesPage() {
     setValue: (val: string) => void 
   }) => {
     return (
-      <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center relative overflow-hidden bg-gray-50 dark:bg-gray-800">
+      <div className="border border-dashed border-gray-400 dark:border-gray-600 rounded-lg p-4 flex flex-col items-center justify-center relative overflow-hidden bg-gray-50 dark:bg-gray-800">
         {value ? (
           <>
             <Image src={value} alt={`Slide ${index}`} fill className="object-cover" />
@@ -278,7 +278,7 @@ export default function WebStoriesPage() {
 
       {/* Error state */}
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-100 dark:bg-red-900/20 dark:border-red-900/50">
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg border border-red-300 dark:bg-red-900/20 dark:border-red-900/50">
           {error}
         </div>
       )}
@@ -314,12 +314,12 @@ export default function WebStoriesPage() {
               <table className="w-full border-collapse text-left text-sm [&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr:first-child>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0 [&_th]:border [&_th]:border-black [&_td]:border [&_td]:border-black dark:[&_th]:border-zinc-600 dark:[&_td]:border-zinc-600">
                 <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-200 uppercase text-sm">
                   <tr>
-                    <th className="px-6 py-4 font-bold">Preview</th>
-                    <th className="px-6 py-4 font-bold">Heading (EN / GU)</th>
-                    <th className="px-6 py-4 font-bold">Images</th>
-                    <th className="px-6 py-4 font-bold">Status</th>
-                    <th className="px-6 py-4 font-bold">Date</th>
-                    <th className="px-6 py-4 font-bold text-right">Actions</th>
+                    <th className="px-6 py-4 font-bold text-center align-middle w-28">Preview</th>
+                    <th className="px-6 py-4 font-bold text-left align-middle">Heading (EN / GU)</th>
+                    <th className="px-6 py-4 font-bold text-center align-middle w-32">Images</th>
+                    <th className="px-6 py-4 font-bold text-center align-middle w-32">Status</th>
+                    <th className="px-6 py-4 font-bold text-center align-middle w-36">Date</th>
+                    <th className="px-6 py-4 font-bold text-center align-middle w-32">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -333,44 +333,50 @@ export default function WebStoriesPage() {
 
                     return (
                       <tr key={story.id} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
-                        <td className="px-6 py-4">
-                          <div className="w-16 h-24 relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700">
-                            <Image src={story.image1} alt="Cover" fill className="object-cover" />
+                        <td className="px-6 py-4 text-center align-middle">
+                          <div className="flex justify-center items-center">
+                            <div className="w-16 h-24 relative rounded-md overflow-hidden bg-gray-200 dark:bg-gray-700 shadow-xs">
+                              <Image src={story.image1} alt="Cover" fill className="object-cover" />
+                            </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-left align-middle">
                           <div className="text-base font-semibold text-gray-900 dark:text-white mb-1">{story.heading}</div>
                           {story.headingGu && <div className="text-gray-500 dark:text-gray-400 text-sm">{story.headingGu}</div>}
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-                            {imageCount} / 5
-                          </span>
+                        <td className="px-6 py-4 text-center align-middle">
+                          <div className="flex justify-center items-center">
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                              {imageCount} / 5
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            story.isActive 
-                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                              : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
-                          }`}>
-                            {story.isActive ? 'Active' : 'Inactive'}
-                          </span>
+                        <td className="px-6 py-4 text-center align-middle">
+                          <div className="flex justify-center items-center">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                              story.isActive 
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
+                            }`}>
+                              {story.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 text-base text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-center align-middle text-base text-gray-500 dark:text-gray-400 whitespace-nowrap">
                           {new Date(story.createdAt).toLocaleDateString()}
                         </td>
-                        <td className="px-6 py-4 text-right">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-6 py-4 text-center align-middle">
+                          <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => openEditModal(story)}
-                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
+                              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
                               title="Edit"
                             >
                               <Edit2 size={20} />
                             </button>
                             <button
                               onClick={() => setDeleteTargetStory(story)}
-                              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
                               title="Delete"
                             >
                               <Trash2 size={20} />
@@ -378,14 +384,14 @@ export default function WebStoriesPage() {
                           </div>
                         </td>
                       </tr>
-                    )
+                    );
                   })}
                 </tbody>
               </table>
             </div>
 
             {/* Mobile Card List View */}
-            <div className="md:hidden divide-y divide-gray-200 dark:divide-gray-800">
+            <div className="md:hidden divide-y divide-gray-400 dark:divide-gray-800">
               {stories.map((story) => {
                 let imageCount = 0;
                 if (story.image1) imageCount++;
@@ -396,7 +402,7 @@ export default function WebStoriesPage() {
 
                 return (
                   <div key={story.id} className="p-3.5 flex gap-3 items-start">
-                    <div className="w-16 h-24 relative rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 shadow-xs border border-gray-200 dark:border-gray-700">
+                    <div className="w-16 h-24 relative rounded-xl overflow-hidden bg-gray-200 dark:bg-gray-700 shrink-0 shadow-xs border border-gray-400 dark:border-gray-700">
                       <Image src={story.image1} alt="Cover" fill className="object-cover" />
                     </div>
 
@@ -425,7 +431,7 @@ export default function WebStoriesPage() {
                         )}
                       </div>
 
-                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-gray-800/80 text-[10px] text-gray-400">
+                      <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-400 dark:border-gray-800/80 text-[10px] text-gray-400">
                         <span>{new Date(story.createdAt).toLocaleDateString()}</span>
 
                         <div className="flex items-center gap-1.5">
@@ -456,7 +462,7 @@ export default function WebStoriesPage() {
       {(addModalOpen || editModalOpen) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm overflow-y-auto">
           <div className="bg-white dark:bg-[#1E1E1E] rounded-xl shadow-xl w-full max-w-3xl my-8">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-between p-6 border-b border-gray-400 dark:border-gray-800">
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 {editModalOpen ? 'Edit Web Story' : 'Add New Web Story'}
               </h2>
@@ -484,7 +490,7 @@ export default function WebStoriesPage() {
                       value={heading}
                       onChange={(e) => setHeading(e.target.value)}
                       placeholder="Enter heading..."
-                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-400 dark:bg-gray-800/50 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
                     />
                   </div>
 
@@ -497,7 +503,7 @@ export default function WebStoriesPage() {
                       value={headingGu}
                       onChange={(e) => setHeadingGu(e.target.value)}
                       placeholder="Enter Gujarati heading..."
-                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-400 dark:bg-gray-800/50 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
                     />
                   </div>
 
@@ -510,7 +516,7 @@ export default function WebStoriesPage() {
                       value={headingHi}
                       onChange={(e) => setHeadingHi(e.target.value)}
                       placeholder="Enter Hindi heading..."
-                      className="w-full px-4 py-2 bg-gray-50 border border-gray-200 dark:bg-gray-800/50 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
+                      className="w-full px-4 py-2 bg-gray-50 border border-gray-400 dark:bg-gray-800/50 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all dark:text-white"
                     />
                   </div>
                 </div>
@@ -537,7 +543,7 @@ export default function WebStoriesPage() {
                   id="isActive"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
+                  className="w-4 h-4 text-primary bg-gray-100 border-gray-400 rounded focus:ring-primary dark:focus:ring-primary dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600"
                 />
                 <label htmlFor="isActive" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Active (visible on website)
@@ -546,7 +552,7 @@ export default function WebStoriesPage() {
 
             </div>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 dark:border-gray-800">
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-400 dark:border-gray-800">
               <button
                 onClick={() => {
                   setAddModalOpen(false);
@@ -582,7 +588,7 @@ export default function WebStoriesPage() {
             className="absolute inset-0"
             onClick={() => !deletingStory && setDeleteTargetStory(null)}
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
             {/* Red Alert Icon */}
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
               <Trash2 className="h-7 w-7" />
@@ -596,9 +602,9 @@ export default function WebStoriesPage() {
             </p>
 
             {/* Story Preview Card */}
-            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+            <div className="mt-4 overflow-hidden rounded-xl border border-gray-400 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/60 text-left">
               <div className="flex gap-3 p-3 items-center">
-                <div className="w-14 h-20 relative rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-800 shrink-0 border border-zinc-200 dark:border-zinc-700">
+                <div className="w-14 h-20 relative rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-800 shrink-0 border border-gray-400 dark:border-zinc-700">
                   {deleteTargetStory.image1 && (
                     <Image
                       src={deleteTargetStory.image1}
@@ -638,7 +644,7 @@ export default function WebStoriesPage() {
                 type="button"
                 disabled={deletingStory}
                 onClick={() => setDeleteTargetStory(null)}
-                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                className="flex-1 rounded-xl border border-gray-400 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>

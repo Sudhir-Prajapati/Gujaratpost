@@ -470,13 +470,13 @@ export default function VideosPage() {
       </div>
 
       {syncMessage && (
-        <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-2 animate-fade-in">
+        <div className="p-3.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-400 text-xs font-bold dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-2 animate-fade-in">
           <span>{syncMessage}</span>
         </div>
       )}
 
       {/* Tab switcher */}
-      <div className="flex gap-1 rounded-xl border border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-800 dark:bg-zinc-900 w-fit">
+      <div className="flex gap-1 rounded-xl border border-gray-400 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-900 w-fit">
         <button
           onClick={() => setActiveTab('saved')}
           className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-bold transition-all ${activeTab === 'saved'
@@ -503,7 +503,7 @@ export default function VideosPage() {
       {activeTab === 'saved' && (
         <>
           {/* Toolbar */}
-          <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 rounded-2xl border border-gray-400 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 md:flex-row md:items-center md:justify-between">
             <div className="relative w-full max-w-lg">
               <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
                 <Search className="h-4 w-4" />
@@ -516,17 +516,17 @@ export default function VideosPage() {
                   setQuery(e.target.value);
                   setPage(1);
                 }}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white"
               />
             </div>
 
             <div className="flex items-center gap-2.5 flex-wrap">
-              <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-200 shadow-sm">
+              <div className="flex items-center gap-2 rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:border-zinc-700 dark:bg-zinc-950/50 dark:text-zinc-200 shadow-sm">
                 <VideoIcon className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
                 <span>Total Videos: <strong className="text-zinc-950 dark:text-white">{totalVideosCount || videos.length}</strong></span>
               </div>
 
-              <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300 shadow-sm">
+              <div className="flex items-center gap-2 rounded-xl border border-amber-400 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300 shadow-sm">
                 <Bookmark className="h-4 w-4 text-amber-500 fill-amber-500" />
                 <span>Featured: <strong className="text-amber-950 dark:text-amber-200">{totalFeaturedCount || videos.filter(v => v.isFeatured).length}</strong></span>
               </div>
@@ -552,7 +552,7 @@ export default function VideosPage() {
               {videos.map((video) => (
                 <div
                   key={video.id}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-400 bg-white shadow-sm transition hover:shadow-md dark:border-zinc-700 dark:bg-zinc-900"
                 >
                   {/* Thumbnail Container */}
                   <div
@@ -612,7 +612,7 @@ export default function VideosPage() {
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between gap-1.5 mt-4 border-t pt-3 border-zinc-100 dark:border-zinc-800">
+                    <div className="flex items-center justify-between gap-1.5 mt-4 border-t pt-3 border-gray-400 dark:border-zinc-800">
                       <button
                         onClick={() => handleToggleFeaturedSaved(video)}
                         className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${video.isFeatured
@@ -651,7 +651,7 @@ export default function VideosPage() {
 
           {/* Pagination */}
           {!loading && !error && videos.length > 0 && totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-zinc-200 pt-4 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
               <span className="text-xs font-semibold text-zinc-500">
                 Showing Page {page} of {totalPages}
               </span>
@@ -659,14 +659,14 @@ export default function VideosPage() {
                 <button
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-55 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-850"
+                  className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-55 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-850"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                   disabled={page === totalPages}
-                  className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-55 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-850"
+                  className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-55 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-850"
                 >
                   Next
                 </button>
@@ -680,7 +680,7 @@ export default function VideosPage() {
       {activeTab === 'channel' && (
         <div className="space-y-4">
           {/* Channel header */}
-          <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="flex items-center justify-between rounded-2xl border border-gray-400 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30">
                 <YoutubeIcon className="h-5 w-5 text-red-600" />
@@ -702,7 +702,7 @@ export default function VideosPage() {
               <button
                 onClick={loadChannelVideos}
                 disabled={channelLoading}
-                className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
+                className="inline-flex items-center gap-2 rounded-xl border border-gray-400 bg-zinc-50 px-3 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${channelLoading ? 'animate-spin' : ''}`} />
                 Refresh
@@ -734,7 +734,7 @@ export default function VideosPage() {
                       : cv.publishedAt
                   : '';
                 return (
-                  <div key={cv.youtubeId} className={`group relative flex flex-col rounded-2xl border bg-white overflow-hidden shadow-sm transition-all hover:shadow-md dark:bg-zinc-900 ${isFeat ? 'border-yellow-400 dark:border-yellow-500' : 'border-zinc-200 dark:border-zinc-800'}`}>
+                  <div key={cv.youtubeId} className={`group relative flex flex-col rounded-2xl border bg-white overflow-hidden shadow-sm transition-all hover:shadow-md dark:bg-zinc-900 ${isFeat ? 'border-yellow-400 dark:border-yellow-500' : 'border-gray-400 dark:border-zinc-700'}`}>
                     {/* Featured badge */}
                     {isFeat && (
                       <div className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-[10px] font-black text-yellow-900">
@@ -822,7 +822,7 @@ export default function VideosPage() {
       {/* ─── IMPORT VIDEO MODAL WITH CATEGORY SELECTOR ─── */}
       {importModalOpen && importingCv && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+          <div className="w-full max-w-lg rounded-2xl border border-gray-400 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850">
               <h3 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <Download className="h-5 w-5 text-red-500" />
@@ -836,7 +836,7 @@ export default function VideosPage() {
               </button>
             </div>
 
-            <div className="flex gap-3 items-center rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 border border-zinc-200 dark:border-zinc-700">
+            <div className="flex gap-3 items-center rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3 border border-gray-400 dark:border-zinc-700">
               <img
                 src={importingCv.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(importingCv.youtubeId)}/hqdefault.jpg`}
                 alt={importingCv.title}
@@ -855,7 +855,7 @@ export default function VideosPage() {
               <select
                 value={importCategoryId}
                 onChange={(e) => setImportCategoryId(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-semibold focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm font-semibold focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white"
               >
                 <option value="">Select Category (Optional / Default)</option>
                 {categories.map((cat) => (
@@ -902,7 +902,7 @@ export default function VideosPage() {
       {/* ─── EDIT VIDEO MODAL ─── */}
       {editModalOpen && selectedVideo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/45 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
+          <div className="w-full max-w-xl rounded-2xl border border-gray-400 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <Edit2 className="h-5 w-5 text-zinc-500" />
@@ -930,7 +930,7 @@ export default function VideosPage() {
                     e.preventDefault();
                     handleYoutubeInputChange(e.clipboardData.getData('text'));
                   }}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   required
                 />
                 {youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(youtubeId) && (
@@ -958,7 +958,7 @@ export default function VideosPage() {
                   value={titleGu}
                   onChange={(e) => setTitleGu(e.target.value)}
                   placeholder="ગુજરાતીમાં શીર્ષક લખો..."
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-3 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   required
                 />
               </div>
@@ -972,7 +972,7 @@ export default function VideosPage() {
                   <select
                     value={type}
                     onChange={(e) => setType(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   >
                     <option value="video">Standard Video</option>
                     <option value="short">YouTube Short</option>
@@ -988,7 +988,7 @@ export default function VideosPage() {
                     type="text"
                     value={duration}
                     onChange={(e) => setDuration(e.target.value)}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                   />
                 </div>
               </div>
@@ -1001,7 +1001,7 @@ export default function VideosPage() {
                 <select
                   value={categoryId}
                   onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm font-semibold focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm font-semibold focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                 >
                   <option value="">Select Category (Optional)</option>
                   {categories.map((cat) => (
@@ -1020,7 +1020,7 @@ export default function VideosPage() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={2}
-                  className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                 />
               </div>
 
@@ -1030,18 +1030,18 @@ export default function VideosPage() {
                   id="editIsFeatured"
                   checked={isFeatured}
                   onChange={(e) => setIsFeatured(e.target.checked)}
-                  className="rounded border-zinc-300 accent-primary"
+                  className="rounded border-zinc-400 accent-primary"
                 />
                 <label htmlFor="editIsFeatured" className="text-sm font-bold text-zinc-600 dark:text-zinc-300 cursor-pointer">
                   Feature this video on homepage slider
                 </label>
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+              <div className="flex justify-end gap-3 pt-3 border-t border-gray-400 dark:border-zinc-700">
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-50 dark:border-zinc-800"
+                  className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-50 dark:border-zinc-700"
                 >
                   Cancel
                 </button>
@@ -1085,7 +1085,7 @@ export default function VideosPage() {
             className="absolute inset-0"
             onClick={() => !deletingVideo && setDeleteTargetVideo(null)}
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
             {/* Red Alert Icon */}
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
               <Trash2 className="h-7 w-7" />
@@ -1099,7 +1099,7 @@ export default function VideosPage() {
             </p>
 
             {/* Video Preview Card */}
-            <div className="mt-4 overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60 text-left">
+            <div className="mt-4 overflow-hidden rounded-xl border border-gray-400 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/60 text-left">
               <div className="relative aspect-video w-full overflow-hidden bg-zinc-900">
                 <img
                   src={deleteTargetVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(deleteTargetVideo.youtubeId)}/hqdefault.jpg`}
@@ -1130,7 +1130,7 @@ export default function VideosPage() {
                 type="button"
                 disabled={deletingVideo}
                 onClick={() => setDeleteTargetVideo(null)}
-                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                className="flex-1 rounded-xl border border-gray-400 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>

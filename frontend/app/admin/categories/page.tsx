@@ -596,7 +596,7 @@ export default function CategoriesPage() {
           </button>
           <button
             onClick={() => openOrderManager('all')}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white hover:bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:hover:!bg-zinc-700 dark:text-white dark:hover:!text-white px-4 py-2.5 text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer whitespace-nowrap w-full sm:w-auto"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white hover:bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:hover:!bg-zinc-700 dark:text-white dark:hover:!text-white px-4 py-2.5 text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer whitespace-nowrap w-full sm:w-auto"
             title="Reorder Home Page and Header Sections"
           >
             <ArrowUpDown className="h-4 w-4 text-red-600 shrink-0" />
@@ -616,7 +616,7 @@ export default function CategoriesPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div
           onClick={() => openOrderManager('all')}
-          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-400 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to view & reorder all categories"
         >
           <div>
@@ -631,7 +631,7 @@ export default function CategoriesPage() {
 
         <div
           onClick={() => openOrderManager('home')}
-          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-400 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to reorder Home Page section sequence"
         >
           <div>
@@ -648,7 +648,7 @@ export default function CategoriesPage() {
 
         <div
           onClick={() => openOrderManager('header')}
-          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-400 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to reorder Header Navigation Bars (2 Rows)"
         >
           <div>
@@ -665,7 +665,7 @@ export default function CategoriesPage() {
 
         <div
           onClick={() => openOrderManager('all')}
-          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-200 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
+          className="bg-sky-50/80 dark:bg-sky-950/30 p-4 rounded-2xl border border-sky-400 dark:border-sky-800 shadow-xs flex items-center justify-between cursor-pointer hover:border-sky-500 hover:ring-2 hover:ring-sky-500/20 hover:scale-[1.02] transition-all group"
           title="Click to view offline or hidden categories"
         >
           <div>
@@ -682,7 +682,7 @@ export default function CategoriesPage() {
       </div>
 
       {/* Toolbar */}
-      <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-zinc-900 shadow-xs">
+      <div className="flex items-center gap-3 rounded-2xl border border-gray-400 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 shadow-xs">
         <div className="relative flex-1 max-w-md">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
             <Search className="h-4 w-4" />
@@ -692,7 +692,7 @@ export default function CategoriesPage() {
             placeholder="Search categories by name or slug..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-zinc-950/40 dark:text-white dark:focus:border-sky-500"
+            className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none focus:border-sky-500 dark:border-slate-700 dark:bg-zinc-950/40 dark:text-white dark:focus:border-sky-500"
           />
         </div>
       </div>
@@ -737,25 +737,25 @@ export default function CategoriesPage() {
                       {/* Order Position & Move Controls */}
                       <td className="px-4 py-4">
                         <div className="flex items-center justify-center gap-2">
-                          <span className="font-mono font-bold text-sm bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 px-2 py-0.5 rounded-md border border-red-200 dark:border-red-800">
+                          <span className="font-mono font-bold text-base bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 px-2.5 py-1 rounded-md border border-red-400 dark:border-red-800">
                             #{cat.displayOrder ?? idx + 1}
                           </span>
                           <div className="flex flex-col gap-0.5">
                             <button
                               onClick={() => handleMoveOrder(cat, 'up')}
                               disabled={idx === 0}
-                              className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors cursor-pointer"
+                              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors cursor-pointer"
                               title="Move Up in order"
                             >
-                              <ArrowUp className="h-4 w-4" />
+                              <ArrowUp className="h-4.5 w-4.5" />
                             </button>
                             <button
                               onClick={() => handleMoveOrder(cat, 'down')}
                               disabled={idx === filteredCategories.length - 1}
-                              className="p-0.5 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors cursor-pointer"
+                              className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 disabled:opacity-30 disabled:hover:text-slate-400 transition-colors cursor-pointer"
                               title="Move Down in order"
                             >
-                              <ArrowDown className="h-4 w-4" />
+                              <ArrowDown className="h-4.5 w-4.5" />
                             </button>
                           </div>
                         </div>
@@ -765,29 +765,29 @@ export default function CategoriesPage() {
                       <td className="px-4 py-4">
                         <div className="flex items-center gap-3">
                           <span 
-                            className="h-3.5 w-3.5 rounded-full ring-2 ring-white shadow-xs shrink-0" 
+                            className="h-4.5 w-4.5 rounded-full ring-2 ring-white shadow-xs shrink-0" 
                             style={{ backgroundColor: cat.color || '#10b981' }}
                           />
-                          <span className="text-lg font-bold text-slate-800 dark:text-slate-100">{cat.name}</span>
+                          <span className="text-lg font-bold text-slate-900 dark:text-slate-100">{cat.name}</span>
                         </div>
                       </td>
 
                       {/* Slug */}
                       <td className="px-4 py-4">
-                        <span className="inline-block rounded bg-slate-100/80 px-2 py-0.5 font-mono text-sm font-medium text-slate-500 select-all dark:bg-slate-800 dark:text-slate-400">
+                        <span className="inline-block rounded-md bg-slate-100/80 px-2.5 py-1 font-mono text-base font-semibold text-slate-600 select-all dark:bg-slate-800 dark:text-slate-300">
                           {cat.slug}
                         </span>
                       </td>
 
                       {/* Regional Translations */}
                       <td className="px-4 py-4">
-                        <div className="flex flex-col items-start gap-1.5">
-                          <span className="inline-flex items-center gap-1.5 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300">
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">GU</span>
+                        <div className="flex flex-col items-start gap-2">
+                          <span className="inline-flex items-center gap-2 text-base font-semibold leading-normal text-slate-700 dark:text-slate-200">
+                            <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-sm font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">GU</span>
                             {cat.nameGu || cat.name}
                           </span>
-                          <span className="inline-flex items-center gap-1.5 text-sm font-medium leading-relaxed text-slate-600 dark:text-slate-300">
-                            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">HI</span>
+                          <span className="inline-flex items-center gap-2 text-base font-semibold leading-normal text-slate-700 dark:text-slate-200">
+                            <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-sm font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">HI</span>
                             {cat.nameHi || cat.name}
                           </span>
                         </div>
@@ -798,7 +798,7 @@ export default function CategoriesPage() {
                         <div className="flex flex-col items-center justify-center gap-1.5">
                           <button
                             onClick={() => handleToggleShowInHeader(cat)}
-                            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold transition-all cursor-pointer ${
+                            className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-base font-semibold transition-all cursor-pointer ${
                               inHeader 
                                 ? (cat.headerType === 'GUJARAT'
                                     ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-500/20'
@@ -809,7 +809,7 @@ export default function CategoriesPage() {
                             }`}
                             title={inHeader ? 'Visible in Header Nav (Click to hide)' : 'Hidden from Header Nav (Click to show)'}
                           >
-                            <Layers className="h-3 w-3" />
+                            <Layers className="h-4.5 w-4.5 shrink-0" />
                             <span>
                               {inHeader
                                 ? (cat.headerType === 'GUJARAT'
@@ -824,7 +824,7 @@ export default function CategoriesPage() {
                             <button
                               type="button"
                               onClick={() => handleSwitchHeaderType(cat)}
-                              className="text-xs font-bold text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 underline transition cursor-pointer"
+                              className="text-sm font-bold text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 underline transition cursor-pointer mt-0.5"
                               title="Cycle: Row 1 (Primary) → Other Dropdown → Row 2 (Cities)"
                             >
                               {cat.headerType === 'GLOBAL' || !cat.headerType
@@ -841,14 +841,14 @@ export default function CategoriesPage() {
                       <td className="px-4 py-4 text-center">
                         <button
                           onClick={() => handleToggleShowInHome(cat)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-base font-semibold transition-all cursor-pointer ${
                             inHome 
                               ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 ring-1 ring-purple-500/20' 
                               : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500'
                           }`}
                           title={inHome ? 'Visible on Home Page (Click to hide)' : 'Hidden from Home Page (Click to show)'}
                         >
-                          <Home className="h-3 w-3" />
+                          <Home className="h-4.5 w-4.5 shrink-0" />
                           <span>{inHome ? 'Visible' : 'Hidden'}</span>
                         </button>
                       </td>
@@ -857,34 +857,34 @@ export default function CategoriesPage() {
                       <td className="px-4 py-4 text-center">
                         <button
                           onClick={() => handleToggleActive(cat)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold transition-all cursor-pointer ${
+                          className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-base font-semibold transition-all cursor-pointer ${
                             cat.isActive 
                               ? 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-300 ring-1 ring-green-500/20' 
                               : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
                           }`}
                           title={cat.isActive ? 'Active Category' : 'Inactive Category'}
                         >
-                          {cat.isActive ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                          {cat.isActive ? <Eye className="h-4.5 w-4.5 shrink-0" /> : <EyeOff className="h-4.5 w-4.5 shrink-0" />}
                           <span>{cat.isActive ? 'Active' : 'Inactive'}</span>
                         </button>
                       </td>
 
                       {/* Actions */}
                       <td className="px-4 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                        <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => openEdit(cat)}
-                            className="rounded-lg p-1.5 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            className="rounded-xl p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                             title="Edit Category & Visibility Options"
                           >
-                            <Edit2 className="h-4 w-4" />
+                            <Edit2 className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => setDeleteTarget(cat)}
-                            className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer"
+                            className="rounded-xl p-2 text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
                             title="Delete Category"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       </td>
@@ -900,7 +900,7 @@ export default function CategoriesPage() {
       {/* ─── DEDICATED REORDER SECTIONS MODAL ─── */}
       {orderModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/50 backdrop-blur-sm p-4 animate-in fade-in-0 duration-200">
-          <div className="w-full max-w-3xl rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 space-y-4 max-h-[90vh] flex flex-col">
+          <div className="w-full max-w-3xl rounded-3xl border border-gray-400 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850 shrink-0">
               <div>
@@ -967,7 +967,7 @@ export default function CategoriesPage() {
               {/* TAB 1: HOME PAGE SECTIONS ONLY */}
               {orderTab === 'home' && (
                 <div className="space-y-2">
-                  <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
+                  <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-400 dark:border-emerald-900/40 text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-2">
                     <Home className="h-4 w-4 shrink-0 text-emerald-600" />
                     <span>Home Page Section Sequence: Order top-to-bottom as sections appear on the Home Page.</span>
                   </div>
@@ -989,7 +989,7 @@ export default function CategoriesPage() {
                             ? 'opacity-40 border-dashed border-emerald-500 bg-emerald-50/20'
                             : dragOverItemId === item.id
                               ? 'border-emerald-400 bg-emerald-50/40 dark:bg-emerald-950/30 scale-[1.01]'
-                              : 'border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950 hover:border-emerald-500/40'
+                              : 'border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-950 hover:border-emerald-500/40'
                         }`}
                       >
                         <div className="flex items-center gap-3 min-w-0">
@@ -1014,14 +1014,14 @@ export default function CategoriesPage() {
                             type="number"
                             value={item.homeOrder ?? item.displayOrder ?? idx + 1}
                             onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
-                            className="w-14 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-center text-xs font-mono font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                            className="w-14 rounded-lg border border-gray-400 bg-white px-2 py-1 text-center text-xs font-mono font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                           />
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => moveSubsetItem(item, 'up', c => (c.showInHome !== false) && c.isActive)}
                               disabled={idx === 0}
-                              className="p-1.5 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
                               title="Move UP on Home Page"
                             >
                               <ArrowUp className="h-4 w-4" />
@@ -1030,7 +1030,7 @@ export default function CategoriesPage() {
                               type="button"
                               onClick={() => moveSubsetItem(item, 'down', c => (c.showInHome !== false) && c.isActive)}
                               disabled={idx === orderList.filter(c => (c.showInHome !== false) && c.isActive).length - 1}
-                              className="p-1.5 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
                               title="Move DOWN on Home Page"
                             >
                               <ArrowDown className="h-4 w-4" />
@@ -1227,7 +1227,7 @@ export default function CategoriesPage() {
                                 ? 'opacity-40 border-dashed border-amber-500 bg-white/90 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100'
                                 : dragOverItemId === item.id
                                   ? 'border-amber-400 bg-amber-50 dark:bg-amber-950/20 text-zinc-900 dark:text-zinc-100 scale-[1.01]'
-                                  : 'bg-white/90 dark:bg-zinc-800 border-amber-300 dark:border-amber-900/40 text-zinc-900 dark:text-zinc-100 hover:border-amber-500'
+                                  : 'bg-white/90 dark:bg-zinc-800 border-amber-400 dark:border-amber-900/40 text-zinc-900 dark:text-zinc-100 hover:border-amber-500'
                             }`}
                           >
                             <div className="flex items-center gap-3 min-w-0">
@@ -1252,7 +1252,7 @@ export default function CategoriesPage() {
                                 type="number"
                                 value={item.headerOrder ?? item.displayOrder ?? idx + 1}
                                 onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
-                                className="w-12 rounded border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1.5 py-0.5 text-center text-xs font-mono font-bold"
+                                className="w-12 rounded border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-1.5 py-0.5 text-center text-xs font-mono font-bold"
                               />
                               <div className="flex items-center gap-1">
                                 <button
@@ -1292,7 +1292,7 @@ export default function CategoriesPage() {
                     return (
                       <div
                         key={item.id}
-                        className="flex items-center justify-between gap-3 p-3 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/40 hover:border-red-500/40 transition-all"
+                        className="flex items-center justify-between gap-3 p-3 rounded-xl border border-gray-400 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/40 hover:border-red-500/40 transition-all"
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <GripVertical className="h-4 w-4 text-zinc-400 shrink-0 cursor-grab" />
@@ -1333,14 +1333,14 @@ export default function CategoriesPage() {
                             type="number"
                             value={item.displayOrder ?? idx + 1}
                             onChange={(e) => handleOrderInputChange(item.id, Number(e.target.value))}
-                            className="w-14 rounded-lg border border-zinc-200 bg-white px-2 py-1 text-center text-xs font-mono font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                            className="w-14 rounded-lg border border-gray-400 bg-white px-2 py-1 text-center text-xs font-mono font-bold text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                           />
                           <div className="flex items-center gap-1">
                             <button
                               type="button"
                               onClick={() => moveOrderItem(idx, 'up')}
                               disabled={idx === 0}
-                              className="p-1.5 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
                               title="Move section UP"
                             >
                               <ArrowUp className="h-4 w-4" />
@@ -1349,7 +1349,7 @@ export default function CategoriesPage() {
                               type="button"
                               onClick={() => moveOrderItem(idx, 'down')}
                               disabled={idx === orderList.length - 1}
-                              className="p-1.5 rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
+                              className="p-1.5 rounded-lg border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-30 cursor-pointer"
                               title="Move section DOWN"
                             >
                               <ArrowDown className="h-4 w-4" />
@@ -1368,7 +1368,7 @@ export default function CategoriesPage() {
               <button
                 type="button"
                 onClick={() => setOrderModalOpen(false)}
-                className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+                className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
               >
                 Cancel
               </button>
@@ -1393,7 +1393,7 @@ export default function CategoriesPage() {
       {/* ─── ADD/EDIT CATEGORY MODAL ─── */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/50 backdrop-blur-sm p-4 animate-in fade-in-0 duration-200">
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 flex flex-col max-h-[90vh] overflow-hidden">
+          <div className="w-full max-w-lg rounded-2xl border border-gray-400 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 flex flex-col max-h-[90vh] overflow-hidden">
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850 shrink-0">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                 <FolderOpen className="h-5 w-5 text-red-600" />
@@ -1427,7 +1427,7 @@ export default function CategoriesPage() {
                         setSlug(slugifyText(val));
                       }
                     }}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
                     required
                   />
                 </div>
@@ -1454,7 +1454,7 @@ export default function CategoriesPage() {
                     placeholder="varsad"
                     value={slug}
                     onChange={(e) => setSlug(slugifyText(e.target.value))}
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white font-mono"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-4 py-2.5 text-sm focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white font-mono"
                     required
                   />
                 </div>
@@ -1465,7 +1465,7 @@ export default function CategoriesPage() {
                     <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
                       Display Order Index
                     </label>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 border border-zinc-200 dark:border-zinc-700">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 border border-gray-400 dark:border-zinc-700">
                       <Lock className="h-3 w-3 text-zinc-500" /> Auto-Generated
                     </span>
                   </div>
@@ -1478,7 +1478,7 @@ export default function CategoriesPage() {
                         ? `Position #${categories.findIndex(c => c.id === selectedCategory.id) + 1} of ${categories.length} (Order Index: ${displayOrder})`
                         : `Position #${categories.length + 1} (End of list, Order Index: ${displayOrder})`
                     }
-                    className="w-full rounded-xl border border-zinc-200 bg-zinc-100/90 dark:border-zinc-800 dark:bg-zinc-950/60 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 cursor-not-allowed select-none font-mono"
+                    className="w-full rounded-xl border border-gray-400 bg-zinc-100/90 dark:border-zinc-700 dark:bg-zinc-950/60 px-4 py-2.5 text-sm font-semibold text-zinc-700 dark:text-zinc-300 cursor-not-allowed select-none font-mono"
                   />
                   <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
                     Order is automatically managed. To change sequence, use the visual <strong className="text-red-600 dark:text-red-400">⚡ Reorder Categories</strong> tool on this page.
@@ -1499,7 +1499,7 @@ export default function CategoriesPage() {
                         className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
                           headerType === 'GLOBAL'
                             ? 'bg-red-50/80 dark:bg-red-950/40 border-red-500 ring-2 ring-red-500/20'
-                            : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                            : 'bg-white dark:bg-zinc-800 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
                         }`}
                       >
                         <input 
@@ -1525,7 +1525,7 @@ export default function CategoriesPage() {
                         className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
                           headerType === 'GUJARAT'
                             ? 'bg-red-50/80 dark:bg-red-950/40 border-red-500 ring-2 ring-red-500/20'
-                            : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:border-zinc-300'
+                            : 'bg-white dark:bg-zinc-800 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
                         }`}
                       >
                         <input 
@@ -1549,14 +1549,14 @@ export default function CategoriesPage() {
                   </div>
 
                   {/* Checkbox 1: Show in Navigation Header */}
-                  <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
+                  <div className="p-3 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         id="showInHeaderCheck"
                         checked={showInHeader}
                         onChange={(e) => setShowInHeader(e.target.checked)}
-                        className="h-4 w-4 rounded border-zinc-300 accent-blue-600 cursor-pointer"
+                        className="h-4 w-4 rounded border-zinc-400 accent-blue-600 cursor-pointer"
                       />
                       <label htmlFor="showInHeaderCheck" className="text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer flex items-center gap-1.5">
                         <Layers className="h-4 w-4 text-blue-600" />
@@ -1576,14 +1576,14 @@ export default function CategoriesPage() {
                   </div>
 
                   {/* Checkbox 2: Show as Section on Home Page */}
-                  <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
+                  <div className="p-3 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         id="showInHomeCheck"
                         checked={showInHome}
                         onChange={(e) => setShowInHome(e.target.checked)}
-                        className="h-4 w-4 rounded border-zinc-300 accent-purple-600 cursor-pointer"
+                        className="h-4 w-4 rounded border-zinc-400 accent-purple-600 cursor-pointer"
                       />
                       <label htmlFor="showInHomeCheck" className="text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer flex items-center gap-1.5">
                         <Home className="h-4 w-4 text-purple-600" />
@@ -1603,14 +1603,14 @@ export default function CategoriesPage() {
                   </div>
 
                   {/* Checkbox 3: Active Category */}
-                  <div className="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
+                  <div className="p-3 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
                     <div className="flex items-center gap-3">
                       <input
                         type="checkbox"
                         id="isActiveCheck"
                         checked={isActive}
                         onChange={(e) => setIsActive(e.target.checked)}
-                        className="h-4 w-4 rounded border-zinc-300 accent-emerald-600 cursor-pointer"
+                        className="h-4 w-4 rounded border-zinc-400 accent-emerald-600 cursor-pointer"
                       />
                       <label htmlFor="isActiveCheck" className="text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer flex items-center gap-1.5">
                         <Eye className="h-4 w-4 text-emerald-600" />
@@ -1630,7 +1630,7 @@ export default function CategoriesPage() {
                   </div>
 
                   {/* Realtime Display Summary Box */}
-                  <div className="p-3.5 rounded-xl border border-dashed border-red-300 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-xs space-y-1.5">
+                  <div className="p-3.5 rounded-xl border border-dashed border-red-400 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 text-xs space-y-1.5">
                     <div className="font-black text-red-700 dark:text-red-400 flex items-center gap-1.5">
                       <span>📍 Category Display Destination Summary:</span>
                     </div>
@@ -1665,7 +1665,7 @@ export default function CategoriesPage() {
                 <button
                   type="button"
                   onClick={() => setModalOpen(false)}
-                  className="rounded-xl border border-zinc-200 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-800 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+                  className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1686,9 +1686,9 @@ export default function CategoriesPage() {
       {/* Full Page Live Category Sections Map Preview Modal */}
       {showPreviewModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-zinc-900 w-full max-w-6xl max-h-[90vh] rounded-3xl border border-zinc-200 dark:border-zinc-800 shadow-2xl flex flex-col overflow-hidden">
+          <div className="bg-white dark:bg-zinc-900 w-full max-w-6xl max-h-[90vh] rounded-3xl border border-gray-400 dark:border-zinc-700 shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-zinc-200 dark:border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-50/80 dark:bg-zinc-950/80">
+            <div className="p-5 sm:p-6 border-b border-gray-400 dark:border-zinc-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-50/80 dark:bg-zinc-950/80">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 rounded-2xl bg-red-600 text-white shadow-md shadow-red-600/20">
                   <Eye className="h-6 w-6" />
@@ -1712,7 +1712,7 @@ export default function CategoriesPage() {
             </div>
 
             {/* Filter Pills Bar */}
-            <div className="px-6 py-3 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex items-center justify-between gap-2 overflow-x-auto text-xs">
+            <div className="px-6 py-3 border-b border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-between gap-2 overflow-x-auto text-xs">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -1775,8 +1775,8 @@ export default function CategoriesPage() {
             <div className="p-6 overflow-y-auto space-y-6 flex-1 bg-zinc-50/60 dark:bg-zinc-950/60">
               {/* SECTION A: HEADER NAVIGATION BARS MAP */}
               {(previewFilter === 'all' || previewFilter === 'header') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-5">
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-gray-400 dark:border-zinc-700 shadow-xs space-y-5">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-700 pb-3">
                     <h3 className="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-2">
                       <Layers className="h-4 w-4" /> 1. Header Navigation Bar Menu Items Flow (2 Rows)
                     </h3>
@@ -1849,8 +1849,8 @@ export default function CategoriesPage() {
 
               {/* SECTION B: HOME PAGE SECTIONS SEQUENCE MAP */}
               {(previewFilter === 'all' || previewFilter === 'home' || previewFilter === 'hidden') && (
-                <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-xs space-y-4">
-                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-800 pb-3">
+                <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-gray-400 dark:border-zinc-700 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-gray-400 dark:border-zinc-700 pb-3">
                     <h3 className="text-xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
                       <Home className="h-4 w-4" /> 2. Home Page Section Layout Sequence (Order Positions)
                     </h3>
@@ -1887,7 +1887,7 @@ export default function CategoriesPage() {
                                     className="w-3 h-3 rounded-full shrink-0"
                                     style={{ backgroundColor: cat.color || '#10b981' }}
                                   />
-                                  <span className="font-mono font-black text-xs text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-200 dark:border-red-900/40">
+                                  <span className="font-mono font-black text-xs text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-400 dark:border-red-900/40">
                                     #{cat.homeOrder ?? cat.displayOrder ?? idx + 1}
                                   </span>
                                 </div>
@@ -1915,7 +1915,7 @@ export default function CategoriesPage() {
                               </div>
                             </div>
 
-                            <div className="mt-2 pt-2 border-t border-zinc-200/60 dark:border-zinc-800/60 flex items-center justify-between">
+                            <div className="mt-2 pt-2 border-t border-gray-400 dark:border-zinc-700/60 flex items-center justify-between">
                               <span className="text-[10px] text-zinc-400 font-bold">
                                 {idx === 0 ? '🏆 Top Hero Section' : `Position #${idx + 1} Section`}
                               </span>
@@ -1939,7 +1939,7 @@ export default function CategoriesPage() {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 sm:p-5 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-950 flex items-center justify-between">
+            <div className="p-4 sm:p-5 border-t border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 flex items-center justify-between">
               <span className="text-xs font-bold text-zinc-500">
                 Click <strong>"Order Home Sections"</strong> to re-arrange position sequence.
               </span>
@@ -1958,7 +1958,7 @@ export default function CategoriesPage() {
       {/* ─── CUSTOM DELETE CONFIRMATION MODAL ─── */}
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/60 backdrop-blur-md p-4 animate-in fade-in-0 duration-200">
-          <div className="w-full max-w-md rounded-3xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 space-y-5 text-center">
+          <div className="w-full max-w-md rounded-3xl border border-gray-400 bg-white p-6 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 space-y-5 text-center">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-100 dark:bg-red-950/50 text-red-600 dark:text-red-400 shadow-inner">
               <Trash2 className="h-7 w-7" />
             </div>
@@ -1976,7 +1976,7 @@ export default function CategoriesPage() {
               <button
                 type="button"
                 onClick={() => setDeleteTarget(null)}
-                className="w-1/2 rounded-xl border border-zinc-200 dark:border-zinc-800 py-2.5 text-sm font-extrabold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+                className="w-1/2 rounded-xl border border-gray-400 dark:border-zinc-700 py-2.5 text-sm font-extrabold text-zinc-600 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
               >
                 Cancel
               </button>

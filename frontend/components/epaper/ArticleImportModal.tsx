@@ -74,9 +74,9 @@ export const ArticleImportModal: React.FC<ArticleImportModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden border border-slate-200">
+      <div className="bg-white rounded-xl shadow-2xl max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden border border-gray-400">
         {/* Modal Header */}
-        <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+        <div className="px-5 py-4 border-b border-gray-400 flex items-center justify-between bg-slate-50">
           <div>
             <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <FileText className="w-5 h-5 text-blue-600" />
@@ -95,7 +95,7 @@ export const ArticleImportModal: React.FC<ArticleImportModalProps> = ({
         </div>
 
         {/* Search Bar */}
-        <div className="p-4 border-b border-slate-100 bg-white">
+        <div className="p-4 border-b border-gray-400 bg-white">
           <form onSubmit={handleSearchSubmit} className="flex gap-2">
             <div className="relative flex-1">
               <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
@@ -104,7 +104,7 @@ export const ArticleImportModal: React.FC<ArticleImportModalProps> = ({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="સમાચારનું શિર્ષક શોધો..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                className="w-full pl-9 pr-3 py-2 border border-slate-400 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:outline-none"
               />
             </div>
             <button
@@ -148,13 +148,13 @@ export const ArticleImportModal: React.FC<ArticleImportModalProps> = ({
                     });
                     onClose();
                   }}
-                  className="group flex gap-3 p-3 rounded-lg border border-slate-200 hover:border-blue-500 hover:bg-blue-50/40 cursor-pointer transition-all items-center"
+                  className="group flex gap-3 p-3 rounded-lg border border-gray-400 hover:border-blue-500 hover:bg-blue-50/40 cursor-pointer transition-all items-center"
                 >
                   {img && (
                     <img
                       src={img}
                       alt={headline}
-                      className="w-20 h-16 object-cover rounded border border-slate-200 shrink-0"
+                      className="w-20 h-16 object-cover rounded border border-gray-400 shrink-0"
                     />
                   )}
                   <div className="flex-1 min-w-0">

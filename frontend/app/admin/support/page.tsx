@@ -151,7 +151,7 @@ export default function AdminSupportPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8 p-4 sm:p-6 lg:p-8">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-zinc-200 dark:border-zinc-800 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-400 dark:border-zinc-700 pb-5">
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-wider mb-2">
             <ShieldAlert className="h-3.5 w-3.5" />
@@ -169,7 +169,7 @@ export default function AdminSupportPage() {
         <button
           type="button"
           onClick={fetchSupportSettings}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition cursor-pointer self-start sm:self-auto"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-bold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 transition cursor-pointer self-start sm:self-auto"
         >
           <RefreshCw className="h-3.5 w-3.5" />
           <span>Reload</span>
@@ -195,15 +195,15 @@ export default function AdminSupportPage() {
         {/* Left Column: QR Code & UPI (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* QR Code Upload Box */}
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 shadow-sm space-y-4">
             <h2 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <QrCode className="h-5 w-5 text-red-600" />
               <span>Official QR Code Image</span>
             </h2>
 
-            <div className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-center space-y-3">
+            <div className="flex flex-col items-center justify-center p-4 rounded-2xl border-2 border-dashed border-zinc-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 text-center space-y-3">
               {form.qrCodeImage ? (
-                <div className="relative w-48 h-48 rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-white p-2 shadow-md">
+                <div className="relative w-48 h-48 rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-700 bg-white p-2 shadow-md">
                   <Image
                     src={form.qrCodeImage}
                     alt="Support QR Code"
@@ -260,13 +260,13 @@ export default function AdminSupportPage() {
                 value={form.qrCodeImage}
                 onChange={(e) => setForm({ ...form, qrCodeImage: e.target.value })}
                 placeholder="https://example.com/qr-code.png"
-                className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
+                className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
               />
             </div>
           </div>
 
           {/* UPI Details Box */}
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 shadow-sm space-y-4">
             <h2 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Sparkles className="h-5 w-5 text-amber-500" />
               <span>UPI Details</span>
@@ -281,7 +281,7 @@ export default function AdminSupportPage() {
                 value={form.upiId}
                 onChange={(e) => setForm({ ...form, upiId: e.target.value })}
                 placeholder="gujaratpost@upi"
-                className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
+                className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
               />
             </div>
           </div>
@@ -290,7 +290,7 @@ export default function AdminSupportPage() {
         {/* Right Column: Bank Info & Notes (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
           {/* Bank Account Details */}
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-5">
+          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 shadow-sm space-y-5">
             <h2 className="text-base font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
               <Building2 className="h-5 w-5 text-red-600" />
               <span>Bank Account Information</span>
@@ -306,7 +306,7 @@ export default function AdminSupportPage() {
                   value={form.accountName}
                   onChange={(e) => setForm({ ...form, accountName: e.target.value })}
                   placeholder="Gujarat Post Media Pvt Ltd"
-                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
+                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
                 />
               </div>
 
@@ -319,7 +319,7 @@ export default function AdminSupportPage() {
                   value={form.accountNumber}
                   onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
                   placeholder="9924038640"
-                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
+                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
                 />
               </div>
 
@@ -332,7 +332,7 @@ export default function AdminSupportPage() {
                   value={form.ifscCode}
                   onChange={(e) => setForm({ ...form, ifscCode: e.target.value })}
                   placeholder="HDFC0001234"
-                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600 uppercase"
+                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600 uppercase"
                 />
               </div>
 
@@ -345,7 +345,7 @@ export default function AdminSupportPage() {
                   value={form.bankName}
                   onChange={(e) => setForm({ ...form, bankName: e.target.value })}
                   placeholder="HDFC Bank"
-                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
+                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
                 />
               </div>
 
@@ -358,14 +358,14 @@ export default function AdminSupportPage() {
                   value={form.branchName}
                   onChange={(e) => setForm({ ...form, branchName: e.target.value })}
                   placeholder="Main Branch, SG Highway, Ahmedabad"
-                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
+                  className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600"
                 />
               </div>
             </div>
           </div>
 
           {/* Reader Instructions / Note */}
-          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm space-y-4">
+          <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 shadow-sm space-y-4">
             <h2 className="text-base font-black text-zinc-900 dark:text-zinc-100">
               Reader Instructions & Note (સપોર્ટ સૂચના / નોંધ)
             </h2>
@@ -386,7 +386,7 @@ export default function AdminSupportPage() {
                   })
                 }
                 placeholder="GPay, PhonePe, Paytm અથવા કોઈપણ UPI એપ વડે સ્કેન કરી સપોર્ટ આપી શકો છો."
-                className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600 resize-none"
+                className="w-full px-3.5 py-2.5 text-xs font-bold rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 focus:outline-none focus:border-red-600 resize-none"
               />
             </div>
           </div>

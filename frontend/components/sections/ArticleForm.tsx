@@ -548,7 +548,7 @@ interface ExtraDescriptionSlot {
     if (youtubeUrl && youtubeUrl.trim()) {
       const embed = getYouTubeEmbedUrl(youtubeUrl);
       if (embed) {
-        parts.push(`<div class="my-6 aspect-video w-full overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-md"><iframe src="${embed}" class="h-full w-full" allowfullscreen frameborder="0"></iframe></div>`);
+        parts.push(`<div class="my-6 aspect-video w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 shadow-md"><iframe src="${embed}" class="h-full w-full" allowfullscreen frameborder="0"></iframe></div>`);
       }
     }
 
@@ -1642,12 +1642,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
     <div className="max-w-4xl mx-auto space-y-6">
 
       {/* Header Bar */}
-      <div className="flex items-center justify-between border-b border-zinc-200 pb-4 dark:border-zinc-800">
+      <div className="flex items-center justify-between border-b border-gray-400 pb-4 dark:border-zinc-700">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={() => router.push('/admin/articles')}
-            className="rounded-lg border border-zinc-200 p-2 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-950/40"
+            className="rounded-lg border border-gray-400 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-950/40"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -1662,7 +1662,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           <button
             type="button"
             onClick={() => setShowLivePreview(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm font-bold text-zinc-800 transition-all hover:bg-zinc-100 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 shadow-xs cursor-pointer"
+            className="inline-flex items-center gap-2 rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm font-bold text-gray-900 transition-all hover:bg-zinc-100 hover:border-gray-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800 shadow-xs cursor-pointer"
           >
             <Eye className="h-4 w-4 text-blue-600 dark:text-blue-400" />
             <span>Preview Article</span>
@@ -1696,12 +1696,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
       )}
 
       {/* Form Content Panel - Line-by-Line Flow */}
-      <form onSubmit={handleSubmit} className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 space-y-6">
+      <form onSubmit={handleSubmit} className="rounded-2xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 space-y-6">
 
 
         {/* LINE 1: News Name (In English / Slug) */}
         <div id="field-slug">
-          <label className={`block text-xs uppercase tracking-wider ${fieldErrors.slug ? 'font-black text-red-600 dark:text-red-400' : 'font-extrabold text-zinc-700 dark:text-zinc-300'}`}>
+          <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.slug ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
             News Name (In English) <span className="text-red-500">*</span>
           </label>
           <input
@@ -1712,23 +1712,23 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               if (fieldErrors.slug) setFieldErrors((prev) => ({ ...prev, slug: false }));
             }}
             placeholder="e.g. flood-havoc-gujarat-30-deaths"
-            className={`w-full rounded-xl border mt-1.5 px-4 py-3 text-sm font-mono focus:outline-none transition-all ${
+            className={`w-full rounded-xl border px-4 py-3 text-base font-mono placeholder:text-gray-500 focus:outline-none transition-all ${
               fieldErrors.slug
                 ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
-                : 'border-zinc-200 bg-zinc-50/50 text-zinc-800 focus:border-primary dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-zinc-200'
+                : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100'
             }`}
             required
           />
           {fieldErrors.slug ? (
             <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> News Name (Slug) is required.</p>
           ) : (
-            <p className="text-[11px] text-zinc-400 mt-1">Enter a short URL-friendly slug in English (e.g. flood-havoc-gujarat)</p>
+            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Enter a short URL-friendly slug in English (e.g. flood-havoc-gujarat)</p>
           )}
         </div>
 
         {/* LINE 2: Title (*) / Headline */}
         <div id="field-title">
-          <label className={`block text-xs uppercase tracking-wider ${fieldErrors.title ? 'font-black text-red-600 dark:text-red-400' : 'font-extrabold text-zinc-700 dark:text-zinc-300'}`}>
+          <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.title ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
             Title (*) <span className="text-red-500">*</span>
           </label>
           <input
@@ -1753,10 +1753,10 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   ? 'गुजरात में बाढ़ का कहर: दो दिनों में 30 लोगों की मौत, अहमदाबाद में 20 वर्षों में सबसे अधिक बारिश'
                   : 'Enter main news article title...'
             }
-            className={`w-full rounded-xl border mt-1.5 px-4 py-3 text-sm font-bold focus:outline-none transition-all ${
+            className={`w-full rounded-xl border px-4 py-3 text-base font-bold placeholder:text-gray-500 focus:outline-none transition-all ${
               fieldErrors.title
                 ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
-                : 'border-zinc-200 bg-zinc-50/50 text-zinc-900 focus:border-primary dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white'
+                : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-white'
             }`}
             required
           />
@@ -1768,7 +1768,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         {/* LINE 3: Category (Topic) (*), City / Location, & Publish By (Author) (*) */}
         <div className="grid gap-4 md:grid-cols-3">
           <div id="field-category">
-            <label className={`block text-xs uppercase tracking-wider mb-1.5 ${fieldErrors.category ? 'font-black text-red-600 dark:text-red-400' : 'font-extrabold text-zinc-700 dark:text-zinc-300'}`}>
+            <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.category ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
               Category (Topic) (*) <span className="text-red-500">*</span>
             </label>
             <CustomSelect
@@ -1789,7 +1789,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           </div>
 
           <div>
-            <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5 flex items-center justify-between">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center justify-between">
               <span>City / Location</span>
               {(() => {
                 const selectedCat = categories.find((c) => c.id === categoryId);
@@ -1801,7 +1801,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 } else if (GUJARAT_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
                   return <span className="text-[10px] text-green-600 font-semibold bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">🏙️ Gujarat</span>;
                 }
-                return <span className="text-[10px] text-zinc-400 font-normal">Optional</span>;
+                return <span className="text-xs text-gray-500 font-normal">Optional</span>;
               })()}
             </label>
             <CustomSelect
@@ -1818,11 +1818,11 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           </div>
 
           <div id="field-author">
-            <label className={`block text-xs uppercase tracking-wider mb-1.5 ${fieldErrors.author ? 'font-black text-red-600 dark:text-red-400' : 'font-extrabold text-zinc-700 dark:text-zinc-300'}`}>
+            <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.author ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
               Publish By (Author) (*) <span className="text-red-500">*</span>
             </label>
             {userRole === 'REPORTER' ? (
-              <div className="w-full rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/40 px-4 py-3 text-sm font-semibold text-zinc-600 dark:text-zinc-400">
+              <div className="w-full rounded-xl border border-gray-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-950/40 px-4 py-3 text-base font-semibold text-gray-900 dark:text-zinc-200">
                 {userAuthorName || 'Your Author Profile'}
               </div>
             ) : (
@@ -1848,15 +1848,15 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* 🏷️ MULTIPLE CATEGORY CHECKBOX GRID (Like Old Website) */}
-        <div className="rounded-2xl border border-zinc-300 bg-[#ebf5ea] p-4 dark:border-zinc-800 dark:bg-emerald-950/20 space-y-3">
+        <div className="rounded-2xl border border-gray-400 bg-[#ebf5ea] p-4 dark:border-zinc-700 dark:bg-emerald-950/20 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 flex items-center gap-2">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
               <span>Category (*) [Select Multiple News Sections]</span>
-              <span className="text-[10px] font-extrabold bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 px-2.5 py-0.5 rounded-full">
+              <span className="text-xs font-bold bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 px-2.5 py-0.5 rounded-full">
                 {1 + additionalCategoryIds.filter(id => id !== categoryId).length} Selected
               </span>
             </label>
-            <span className="text-[11px] text-zinc-500 font-medium">
+            <span className="text-xs text-gray-600 dark:text-zinc-400 font-medium">
               Check all news sections where this article should appear.
             </span>
           </div>
@@ -1870,10 +1870,10 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 <label
                   key={cat.id}
                   title={cat.name}
-                  className={`group/cat relative flex items-center gap-2 rounded-xl border p-2.5 text-xs font-bold transition-all cursor-pointer select-none ${
+                  className={`group/cat relative flex items-center gap-2 rounded-xl border p-2.5 text-sm font-medium transition-all cursor-pointer select-none ${
                     isChecked
                       ? 'border-red-500 bg-red-50/80 text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300 shadow-2xs'
-                      : 'border-zinc-200 bg-white text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800'
+                      : 'border-gray-400 bg-white text-gray-900 hover:border-gray-500 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800'
                   }`}
                 >
                   <input
@@ -1890,7 +1890,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                         setAdditionalCategoryIds((prev) => prev.filter((id) => id !== cat.id));
                       }
                     }}
-                    className="h-4 w-4 shrink-0 rounded border-zinc-300 text-red-600 focus:ring-red-500 cursor-pointer"
+                    className="h-4 w-4 shrink-0 rounded border-gray-400 text-red-600 focus:ring-red-500 cursor-pointer"
                   />
                   <span className="truncate min-w-0 flex-1">{cat.name}</span>
                   {isPrimary && (
@@ -1913,13 +1913,13 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* Placement Badges & Website Location Info */}
-        <div className="space-y-3 rounded-2xl border border-zinc-200 bg-zinc-50/70 p-4 dark:border-zinc-800 dark:bg-zinc-950/40">
-          <div className="flex items-center justify-between border-b border-zinc-200/80 pb-2 dark:border-zinc-800">
-            <span className="text-xs font-black uppercase tracking-wider text-zinc-700 dark:text-zinc-300 flex items-center gap-1.5">
+        <div className="space-y-3 rounded-2xl border border-gray-400 bg-zinc-50/70 p-4 dark:border-zinc-700 dark:bg-zinc-950/40">
+          <div className="flex items-center justify-between border-b border-gray-400 pb-2 dark:border-zinc-700">
+            <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-amber-500" />
               <span>Article Display Placement & Badges (તમારું આર્ટીકલ ક્યાં દેખાશે)</span>
             </span>
-            <span className="text-[11px] font-medium text-zinc-400">Select where this article should appear on Gujarat Post homepage</span>
+            <span className="text-xs font-medium text-gray-600 dark:text-zinc-400">Select where this article should appear on Gujarat Post homepage</span>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -1927,7 +1927,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <label className={`flex flex-col justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${
               isBreaking 
                 ? 'border-amber-400 bg-amber-50/80 dark:border-amber-800/80 dark:bg-amber-950/30 shadow-sm' 
-                : 'border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900'
+                : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
             }`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -1938,12 +1938,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     type="checkbox"
                     checked={isBreaking}
                     onChange={(e) => setIsBreaking(e.target.checked)}
-                    className="h-4 w-4 rounded border-zinc-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    className="h-4 w-4 rounded border-gray-400 text-amber-600 focus:ring-amber-500 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100">Top Breaking Ticker Bar</p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Top Breaking Ticker Bar</p>
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 leading-snug">
                     Shows in red ticker bar at the top of homepage and adds urgent "તાજા સમાચાર" tag.
                   </p>
                 </div>
@@ -1957,7 +1957,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <label className={`flex flex-col justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${
               isTrending 
                 ? 'border-blue-400 bg-blue-50/80 dark:border-blue-800/80 dark:bg-blue-950/30 shadow-sm' 
-                : 'border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900'
+                : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
             }`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -1968,12 +1968,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     type="checkbox"
                     checked={isTrending}
                     onChange={(e) => setIsTrending(e.target.checked)}
-                    className="h-4 w-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    className="h-4 w-4 rounded border-gray-400 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100">Trending Sidebar & List</p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Trending Sidebar & List</p>
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 leading-snug">
                     Appears in "ટ્રેન્ડિંગ સમાચાર" sidebar widget and top read news lists across pages.
                   </p>
                 </div>
@@ -1987,7 +1987,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <label className={`flex flex-col justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${
               isFeatured 
                 ? 'border-emerald-400 bg-emerald-50/80 dark:border-emerald-800/80 dark:bg-emerald-950/30 shadow-sm' 
-                : 'border-zinc-200 bg-white hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900'
+                : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
             }`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -1998,12 +1998,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     type="checkbox"
                     checked={isFeatured}
                     onChange={(e) => setIsFeatured(e.target.checked)}
-                    className="h-4 w-4 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                    className="h-4 w-4 rounded border-gray-400 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
                   />
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-zinc-800 dark:text-zinc-100">Main Hero Grid Banner</p>
-                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-snug">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">Main Hero Grid Banner</p>
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 leading-snug">
                     Promotes article to main homepage Hero Big Banner cards and category top feature spots.
                   </p>
                 </div>
@@ -2029,9 +2029,9 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* 📌 DISTINCT SECTION 1: Highlights ("એક નજરમાં") / Key Points Box */}
-        <div className="space-y-2 rounded-2xl border border-red-200 bg-red-50/30 p-4 dark:border-red-950/40 dark:bg-red-950/10">
+        <div className="space-y-2 rounded-2xl border border-gray-400 bg-red-50/30 p-4 dark:border-zinc-700 dark:bg-red-950/10">
           <div className="flex items-center justify-between">
-            <label className="block text-xs font-black text-red-700 uppercase tracking-wider dark:text-red-400 flex items-center gap-1.5">
+            <label className="block text-sm font-semibold text-red-800 dark:text-red-400 flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-red-500" />
               <span>Highlights ("એક નજરમાં") / Key Points Box</span>
             </label>
@@ -2047,7 +2047,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 else if (contentLang === 'gu') setHighlightsGu(sample);
                 else if (contentLang === 'hi') setHighlightsHi(sample);
               }}
-              className="text-[11px] font-bold text-red-600 hover:text-red-800 underline"
+              className="text-xs font-bold text-red-600 hover:text-red-800 underline"
             >
               + Insert Sample Highlights
             </button>
@@ -2061,21 +2061,21 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             }}
             placeholder="• Enter bullet point 1 line by line&#10;• Enter bullet point 2&#10;• Enter bullet point 3"
             rows={4}
-            className="w-full rounded-xl border border-red-200 bg-white px-4 py-3 text-sm focus:border-red-500 focus:outline-none dark:border-red-950 dark:bg-zinc-900 font-medium text-zinc-900 dark:text-zinc-100"
+            className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-base placeholder:text-gray-500 focus:border-red-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 font-medium text-gray-900 dark:text-zinc-100 leading-relaxed"
           />
         </div>
 
         {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video) [Size: 1100px X 541px] */}
-        <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-5 dark:border-zinc-800 dark:bg-zinc-950/20">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-zinc-200/80 pb-3 dark:border-zinc-800 gap-3">
+        <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700 gap-3">
             <div>
-              <label className="block text-xs font-extrabold text-zinc-800 uppercase tracking-wider dark:text-zinc-200 flex items-center gap-1.5 flex-wrap">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
                 <Video className="h-4 w-4 text-red-600 shrink-0" />
                 <span>Upload Primary Media (Featured Photo or Video)</span>
-                <span className="text-[10px] text-zinc-400 font-medium normal-case">[Size: 1100px X 541px]</span>
+                <span className="text-xs text-gray-600 dark:text-zinc-400 font-medium normal-case">[Size: 1100px X 541px]</span>
                 <span className="text-red-500 font-bold">*</span>
               </label>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
                 Upload an Image or Video directly from your device (.jpg, .png, .webp, .mp4, .webm, .mov), or paste a direct media URL.
               </p>
             </div>
@@ -2107,7 +2107,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
           {imageMode === 'upload' ? (
             <div className="space-y-3">
-              <div className="relative rounded-2xl border-2 border-dashed border-zinc-300 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900/60 text-center transition-all hover:border-red-500 hover:bg-red-50/20 dark:hover:border-red-500">
+              <div className="relative rounded-2xl border-2 border-dashed border-gray-400 bg-white p-6 dark:border-zinc-600 dark:bg-zinc-900/60 text-center transition-all hover:border-red-500 hover:bg-red-50/20 dark:hover:border-red-500">
                 <input
                   type="file"
                   id="primary-media-file-input"
@@ -2128,10 +2128,10 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                         <UploadCloud className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
                           Click to browse or drag & drop Image or Video from your computer
                         </p>
-                        <p className="text-[11px] text-zinc-400 mt-0.5 font-medium">
+                        <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5 font-medium">
                           Supports Photos (JPG, PNG, WebP) & Videos (MP4, WebM, MOV) up to 200MB
                         </p>
                       </div>
@@ -2151,18 +2151,18 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 value={featuredImage || ''}
                 onChange={(e) => setFeaturedImage(e.target.value)}
                 placeholder="Paste direct Image URL (https://images.unsplash.com/...) or Video URL (https://domain.com/video.mp4)"
-                className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs focus:border-red-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-900"
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-red-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
               />
-              <p className="text-[11px] text-zinc-400">
+              <p className="text-xs text-gray-600 dark:text-zinc-400">
                 You can paste direct web links to photos or MP4/WebM videos.
               </p>
             </div>
           )}
 
           {featuredImage && (
-            <div className="space-y-2 pt-2 border-t border-zinc-200/80 dark:border-zinc-800">
+            <div className="space-y-2 pt-2 border-t border-gray-400 dark:border-zinc-700">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-zinc-300 flex items-center gap-1.5">
                   {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || featuredImage.includes('/video/upload/') ? (
                     <>
                       <Video className="h-3.5 w-3.5 text-red-600" />
@@ -2185,14 +2185,14 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 </button>
               </div>
 
-              <div className="relative aspect-[16/9] max-w-lg overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-black shadow-sm">
+              <div className="relative aspect-[16/9] max-w-lg overflow-hidden rounded-xl border border-gray-400 dark:border-zinc-700 bg-black shadow-sm">
                 {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || featuredImage.includes('/video/upload/') ? (
                   <video src={featuredImage} controls autoPlay muted loop className="h-full w-full object-contain" />
                 ) : (
                   <img src={sanitizeImageUrl(featuredImage)} alt="Featured preview" className="h-full w-full object-cover" />
                 )}
               </div>
-              <p className="text-[11px] font-mono text-zinc-400 truncate max-w-lg">
+              <p className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-lg">
                 {featuredImage}
               </p>
             </div>
@@ -2216,8 +2216,8 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* 💬 DISTINCT SECTION 4: Quote Callout Box (Optional) */}
-        <div className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50/30 p-4 dark:border-amber-950/40 dark:bg-amber-950/10">
-          <label className="block text-xs font-black text-amber-800 uppercase tracking-wider dark:text-amber-400 flex items-center gap-1.5">
+        <div className="space-y-3 rounded-2xl border border-gray-400 bg-amber-50/30 p-4 dark:border-zinc-700 dark:bg-amber-950/10">
+          <label className="block text-sm font-semibold text-amber-900 dark:text-amber-400 flex items-center gap-1.5">
             <Quote className="h-4 w-4 text-amber-600" />
             <span>Quote Callout Box (Optional)</span>
           </label>
@@ -2232,7 +2232,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   else if (contentLang === 'hi') setQuoteTextHi(e.target.value);
                 }}
                 placeholder={contentLang === 'gu' ? 'ગુજરાતના વિકાસ અને સુરક્ષા માટે મહત્વપૂર્ણ નિર્ણય...' : 'Quote statement text...'}
-                className="w-full rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none dark:border-amber-950 dark:bg-zinc-900 font-semibold"
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-amber-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 font-semibold"
               />
             </div>
             <div>
@@ -2245,26 +2245,26 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   else if (contentLang === 'hi') setQuoteCiteHi(e.target.value);
                 }}
                 placeholder="— Police Commissioner, Ahmedabad"
-                className="w-full rounded-xl border border-amber-200 bg-white px-4 py-2.5 text-sm focus:border-amber-500 focus:outline-none dark:border-amber-950 dark:bg-zinc-900 font-medium"
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-amber-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 font-medium"
               />
             </div>
           </div>
         </div>
 
         {/* 🖼️ DISTINCT SECTION 5: Upload Additional Gallery Photos (Dynamic - Up to 9 optional photos | Max 10 Photos Total) */}
-        <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-5 dark:border-zinc-800 dark:bg-zinc-950/20">
-          <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
+        <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
+          <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
             <div>
-              <label className="block text-xs font-extrabold text-zinc-800 uppercase tracking-wider dark:text-zinc-200 flex items-center gap-1.5">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
                 <ImageIcon className="h-4 w-4 text-red-600" />
                 <span>Upload Additional Gallery Photos (Dynamic - Up to 9 photos | Max 10 Photos Total)</span>
               </label>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
                 Upload or paste URLs for up to 9 additional images for this article [Recommended size: 1100px x 541px].
               </p>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-red-600 bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-lg border border-red-100 dark:border-red-900/50">
+              <span className="text-xs font-extrabold text-red-600 bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-lg border border-red-300 dark:border-red-900/50">
                 {(featuredImage ? 1 : 0) + extraImages.filter((s) => s.url.trim()).length} / 10 Photos Selected
               </span>
             </div>
@@ -2275,9 +2275,9 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               const photoNum = idx + 2; // Image 2 to Image 10
               const labelSuffix = photoNum === 2 ? '2nd' : photoNum === 3 ? '3rd' : `${photoNum}th`;
               return (
-                <div key={slot.id || idx} className="p-4 rounded-xl border border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900 space-y-3 shadow-xs transition-all hover:border-zinc-300 dark:hover:border-zinc-700">
+                <div key={slot.id || idx} className="p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-600 dark:bg-zinc-900 space-y-3 shadow-xs transition-all hover:border-gray-500">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-black text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                         {photoNum}
                       </span>
@@ -2353,21 +2353,21 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                       value={slot.url || ''}
                       onChange={(e) => updateExtraImage(idx, { url: e.target.value })}
                       placeholder="Paste Image URL (https://...) or Video URL (https://.../video.mp4)"
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
                     />
                   )}
 
                   {slot.url && (
-                    <div className="flex items-center justify-between pt-2 border-t border-zinc-100 dark:border-zinc-800/60">
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-400 dark:border-zinc-700/60">
                       <div className="flex items-center gap-3">
-                        <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-zinc-200 bg-black shrink-0">
+                        <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
                           {slot.url.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || slot.url.includes('/video/upload/') ? (
                             <video src={slot.url} controls className="h-full w-full object-cover" />
                           ) : (
                             <img src={sanitizeImageUrl(slot.url)} alt={`Media ${photoNum} preview`} className="h-full w-full object-cover" />
                           )}
                         </div>
-                        <span className="text-[11px] font-mono text-zinc-400 truncate max-w-xs">{slot.url}</span>
+                        <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-xs">{slot.url}</span>
                       </div>
                       <button
                         type="button"
@@ -2387,7 +2387,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <button
               type="button"
               onClick={handleAddImageSlot}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-xs font-extrabold text-zinc-700 transition-all hover:border-red-500 hover:bg-red-50/50 hover:text-red-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-red-500 dark:hover:bg-red-950/20 dark:hover:text-red-400"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-400 py-3 text-sm font-semibold text-gray-800 transition-all hover:border-red-500 hover:bg-red-50/50 hover:text-red-600 dark:border-zinc-600 dark:text-zinc-200"
             >
               <Plus className="h-4 w-4" />
               <span>Add Image Slot ({extraImages.length + 1} of 9 Additional Photos | Max 10 Total)</span>
@@ -2397,18 +2397,18 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
 
         {/* 📑 DISTINCT SECTION 6: Dynamic Additional Description / Story Sections (Max 5 Descriptions Total) */}
-        <div className="space-y-4 rounded-2xl border border-zinc-200 bg-zinc-50/50 p-5 dark:border-zinc-800 dark:bg-zinc-950/20">
-          <div className="flex items-center justify-between border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
+        <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
+          <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
             <div>
-              <label className="block text-xs font-extrabold text-zinc-800 uppercase tracking-wider dark:text-zinc-200 flex items-center gap-1.5">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
                 <Type className="h-4 w-4 text-blue-600" />
                 <span>Additional Description Sections (Dynamic - Max 5 Descriptions Total)</span>
               </label>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
                 Add optional additional story description blocks (Description 2 to 5 | Max 5 total).
               </p>
             </div>
-            <span className="text-xs font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-3 py-1 rounded-lg border border-blue-100 dark:border-blue-900/50">
+            <span className="text-xs font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-3 py-1 rounded-lg border border-blue-300 dark:border-blue-900/50">
               {1 + extraDescriptions.length} / 5 Descriptions Total
             </span>
           </div>
@@ -2418,9 +2418,9 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               const descNum = idx + 2; // Description 2 to Description 5
               const currentVal = contentLang === 'gu' ? descSlot.gu : contentLang === 'hi' ? descSlot.hi : descSlot.en;
               return (
-                <div key={descSlot.id || idx} className="p-4 rounded-xl border border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900 space-y-3 shadow-xs">
+                <div key={descSlot.id || idx} className="p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-600 dark:bg-zinc-900 space-y-3 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <label className="block text-xs font-bold text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
+                    <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-[10px] font-black text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
                         {descNum}
                       </span>
@@ -2452,7 +2452,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <button
               type="button"
               onClick={handleAddDescriptionSlot}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 py-3 text-xs font-extrabold text-zinc-700 transition-all hover:border-blue-500 hover:bg-blue-50/50 hover:text-blue-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 dark:hover:text-blue-400"
+              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-400 py-3 text-sm font-semibold text-gray-800 transition-all hover:border-blue-500 hover:bg-blue-50/50 hover:text-blue-600 dark:border-zinc-600 dark:text-zinc-200"
             >
               <Plus className="h-4 w-4" />
               <span>Add Description Section (Description {extraDescriptions.length + 2} of 5 Max)</span>
@@ -2461,16 +2461,16 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* 🎥 SOCIAL MEDIA, VIDEO & DOCUMENT EMBEDS (YouTube, Twitter / X, PDF) */}
-        <div className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-xs dark:border-zinc-800 dark:bg-zinc-900 space-y-4">
-          <div className="flex items-center gap-2 border-b border-zinc-200/80 pb-3 dark:border-zinc-800">
+        <div className="rounded-2xl border border-gray-400 bg-white p-5 shadow-xs dark:border-zinc-700 dark:bg-zinc-900 space-y-4">
+          <div className="flex items-center gap-2 border-b border-gray-400 pb-3 dark:border-zinc-700">
             <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 font-extrabold text-sm">
               🎥
             </span>
             <div>
-              <h3 className="text-xs font-black text-zinc-900 dark:text-white uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider">
                 Video, Twitter (X) & PDF Document Embeds
               </h3>
-              <p className="text-[11px] text-zinc-400 mt-0.5">
+              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
                 Add YouTube videos, X (Twitter) tweet links, or official PDF document attachments to your news article.
               </p>
             </div>
@@ -2479,7 +2479,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           <div className="grid gap-4 md:grid-cols-3">
             {/* YouTube Video URL / Embed ID */}
             <div>
-              <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
                 <span className="text-red-600">▶</span> YouTube Video URL / ID
               </label>
               <input
@@ -2487,14 +2487,14 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 value={youtubeUrl}
                 onChange={(e) => setYoutubeUrl(e.target.value)}
                 placeholder="Ex: https://www.youtube.com/watch?v=4YWEl2ZZVyY"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs font-medium focus:border-red-600 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
               />
-              <p className="text-[10px] text-zinc-400 mt-1">Paste YouTube URL or embedded code ID.</p>
+              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste YouTube URL or embedded code ID.</p>
             </div>
 
             {/* Twitter / X Post URL */}
             <div>
-              <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
                 <span className="text-sky-500">🐦</span> Twitter / X Post URL
               </label>
               <input
@@ -2502,30 +2502,30 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 value={twitterUrl}
                 onChange={(e) => setTwitterUrl(e.target.value)}
                 placeholder="Ex: https://x.com/GujaratPost/status/1820000000000"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-4 py-2.5 text-xs font-medium focus:border-sky-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-sky-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
               />
-              <p className="text-[10px] text-zinc-400 mt-1">Paste tweet link to embed post card.</p>
+              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste tweet link to embed post card.</p>
             </div>
 
             {/* PDF File / Attachment */}
             <div className="md:col-span-3 lg:col-span-1">
-              <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5 flex items-center gap-1.5">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
                 <span className="text-red-500">📄</span> PDF Document File / URL
               </label>
 
               {pdfUrl && pdfUrl.trim() ? (
-                <div className="rounded-xl border border-emerald-500/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 space-y-2">
+                <div className="rounded-xl border border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 space-y-2">
                   <div className="flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
                     <span>PDF Document Attached & Ready!</span>
                   </div>
 
-                  <div className="text-[11px] font-mono text-zinc-600 dark:text-zinc-400 truncate bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-2.5 py-1.5 rounded-lg">
+                  <div className="text-xs font-mono text-gray-700 dark:text-zinc-300 truncate bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 px-2.5 py-1.5 rounded-lg">
                     {pdfUrl}
                   </div>
 
                   <div className="flex items-center gap-2 pt-1">
-                    <label className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-3 py-1.5 text-[11px] font-black hover:bg-zinc-800 transition cursor-pointer shadow-xs">
+                    <label className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-3 py-1.5 text-xs font-black hover:bg-zinc-800 transition cursor-pointer shadow-xs">
                       {uploadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                       <span>{uploadingPdf ? 'Uploading...' : 'Re-upload PDF'}</span>
                       <input
@@ -2539,7 +2539,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     <button
                       type="button"
                       onClick={() => setPdfUrl('')}
-                      className="px-3 py-1.5 rounded-lg border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 text-[11px] font-black transition cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg border border-red-400 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-black transition cursor-pointer"
                     >
                       Remove
                     </button>
@@ -2548,7 +2548,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               ) : (
                 <div>
                   <div className="flex items-center gap-2">
-                    <label className="inline-flex items-center gap-1.5 rounded-xl border border-zinc-300 bg-zinc-100 px-3 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer shadow-2xs shrink-0">
+                    <label className="inline-flex items-center gap-1.5 rounded-xl border border-gray-400 bg-zinc-100 px-3 py-2 text-sm font-semibold text-gray-800 hover:bg-zinc-200 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 cursor-pointer shadow-2xs shrink-0">
                       {uploadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
                       <span>{uploadingPdf ? 'Uploading...' : 'Choose PDF'}</span>
                       <input
@@ -2564,10 +2564,10 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                       value={pdfUrl}
                       onChange={(e) => setPdfUrl(e.target.value)}
                       placeholder="https://.../document.pdf or /uploads/..."
-                      className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 px-3 py-2 text-xs font-medium focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+                      className="w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
                     />
                   </div>
-                  <p className="text-[10px] text-zinc-400 mt-1">Upload PDF file from computer or enter URL.</p>
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Upload PDF file from computer or enter URL.</p>
                 </div>
               )}
             </div>
@@ -2575,14 +2575,14 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         </div>
 
         {/* LINE 7: SEO Details & Publication Status */}
-        <div className="space-y-4 border-t border-zinc-100 pt-5 dark:border-zinc-800">
+        <div className="space-y-4 border-t border-gray-400 pt-5 dark:border-zinc-700">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <h3 className="text-xs font-black text-zinc-400 uppercase tracking-wider">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-zinc-100 uppercase tracking-wider">
                 SEO & Publication Settings
               </h3>
               {seoSource === 'gemini' && (
-                <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
+                <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-400 dark:border-emerald-800 px-2.5 py-0.5 rounded-full inline-flex items-center gap-1">
                   🤖 Generated by Google Gemini AI (FREE Engine)
                 </span>
               )}
@@ -2591,7 +2591,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               type="button"
               onClick={() => generateSeoWithGeminiAI(undefined, undefined, undefined, false)}
               disabled={loadingAiSeo}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-300 bg-emerald-50 px-3.5 py-1.5 text-xs font-black text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shadow-xs disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400 bg-emerald-50 px-3.5 py-1.5 text-xs font-black text-emerald-800 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/60 transition-all cursor-pointer shadow-xs disabled:opacity-50"
               title="Use Google Gemini AI to generate high-ranking bilingual SEO metadata"
             >
               {loadingAiSeo ? <Loader2 className="h-3.5 w-3.5 animate-spin text-emerald-600" /> : <Sparkles className="h-3.5 w-3.5 text-emerald-600" />}
@@ -2601,12 +2601,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5">
                 Article No. (#)
               </label>
-              <div className="w-full rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-900/50 mt-1.5 px-4 py-3 text-sm font-bold text-zinc-600 dark:text-zinc-300 flex items-center justify-between">
+              <div className="w-full rounded-xl border border-gray-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-900/50 px-4 py-3 text-base font-bold text-gray-900 dark:text-zinc-200 flex items-center justify-between">
                 <span>{articleNumber ? `#${articleNumber}` : 'Auto-generated on save'}</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 bg-zinc-200/80 dark:bg-zinc-800 px-2 py-0.5 rounded">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 bg-zinc-200/80 dark:bg-zinc-800 px-2 py-0.5 rounded">
                   Auto Sequence
                 </span>
               </div>
@@ -2614,7 +2614,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+                <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100">
                   Status (*)
                 </label>
                 <button
@@ -2627,7 +2627,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 </button>
               </div>
               {userRole === 'REPORTER' ? (
-                <div className="w-full rounded-xl border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/40 mt-1.5 px-4 py-3 text-sm text-zinc-500 font-semibold">
+                <div className="w-full rounded-xl border border-gray-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-950/40 px-4 py-3 text-base text-gray-700 font-semibold">
                   Draft (Pending Review)
                 </div>
               ) : (
@@ -2665,10 +2665,10 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             {status !== 'PUBLISHED' && (
               <div id="field-scheduledAt">
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className={`block text-xs uppercase tracking-wider ${
+                  <label className={`block text-sm font-semibold ${
                     scheduledAtError || fieldErrors.scheduledAt
-                      ? 'font-black text-red-600 dark:text-red-400'
-                      : 'font-bold text-zinc-500 dark:text-zinc-400'
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-gray-900 dark:text-zinc-100'
                   }`}>
                     Scheduled Publish Date & Time ⏰
                   </label>
@@ -2681,7 +2681,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                         setFieldErrors((prev) => ({ ...prev, scheduledAt: false }));
                         if (status === 'SCHEDULED') setStatus('DRAFT');
                       }}
-                      className="text-[11px] font-semibold text-zinc-400 hover:text-red-500 transition-colors cursor-pointer"
+                      className="text-xs font-semibold text-gray-500 hover:text-red-500 transition-colors cursor-pointer"
                     >
                       Clear
                     </button>
@@ -2707,14 +2707,14 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     setScheduledAtError(err);
                     setFieldErrors((prev) => ({ ...prev, scheduledAt: Boolean(err) }));
                   }}
-                  className={`w-full rounded-xl border mt-1.5 px-4 py-3 text-sm font-mono focus:outline-none transition-all ${
+                  className={`w-full rounded-xl border px-4 py-3 text-base font-mono focus:outline-none transition-all ${
                     scheduledAtError || fieldErrors.scheduledAt
                       ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
-                      : 'border-zinc-200 bg-zinc-50/50 text-zinc-900 focus:border-primary dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white'
+                      : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-white'
                   }`}
                 />
                 {scheduledAtError || fieldErrors.scheduledAt ? (
-                  <div className="mt-2 rounded-lg border border-red-200 bg-red-50 p-2.5 dark:border-red-900/60 dark:bg-red-950/30 text-xs font-bold text-red-600 dark:text-red-400 flex items-start gap-2">
+                  <div className="mt-2 rounded-lg border border-red-400 bg-red-50 p-2.5 dark:border-red-900/60 dark:bg-red-950/30 text-xs font-bold text-red-600 dark:text-red-400 flex items-start gap-2">
                     <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                     <div>
                       <p>{scheduledAtError || 'Scheduled publish date & time must be in the future.'}</p>
@@ -2733,7 +2733,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[10px] text-zinc-400 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">
                     Article will automatically become visible on the public website when this time arrives.
                   </p>
                 )}
@@ -2741,7 +2741,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             )}
 
             <div>
-              <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5">
                 Reading Time (Minutes)
               </label>
               <input
@@ -2749,13 +2749,13 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 value={readingTime || 3}
                 onChange={(e) => setReadingTime(Number(e.target.value))}
                 min={1}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 mt-1.5 px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20 font-mono"
+                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 font-mono"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5">
               SEO Title
             </label>
             <input
@@ -2763,12 +2763,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               value={seoTitle || ''}
               onChange={(e) => setSeoTitle(e.target.value)}
               placeholder="Flood havoc in Gujarat 30 deaths in two days Ahmedabad records highest rainfall in 20 years gujaratpost news"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 mt-1.5 px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+              className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5">
               SEO Description
             </label>
             <textarea
@@ -2776,12 +2776,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               onChange={(e) => setSeoDescription(e.target.value)}
               placeholder="Flood havoc in Gujarat 30 deaths in two days Ahmedabad records highest rainfall in 20 years gujaratpost news"
               rows={2}
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 mt-1.5 px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+              className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5">
               SEO Keywords (comma separated)
             </label>
             <input
@@ -2789,12 +2789,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               value={seoKeywords || ''}
               onChange={(e) => setSeoKeywords(e.target.value)}
               placeholder="Flood havoc in Gujarat, Ahmedabad rainfall, Gujarat post news"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 mt-1.5 px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+              className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20"
             />
           </div>
           {/* Article Tags */}
           <div>
-            <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5">
               Article Tags (comma separated)
             </label>
             <input
@@ -2802,20 +2802,20 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               value={tagsString || ''}
               onChange={(e) => setTagsString(e.target.value)}
               placeholder="Gujarat, Ahmedabad, rain, weather"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50/50 mt-1.5 px-4 py-3 text-sm focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/20"
+              className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20"
             />
-            <p className="text-[10px] text-zinc-400 mt-1">
+            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">
               Enter words separated by commas.
             </p>
           </div>
         </div>
 
         {/* 🚀 BOTTOM STICKY ACTION BAR (Save Article, Preview Article, Cancel) */}
-        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-zinc-200/90 bg-white/95 p-5 shadow-lg backdrop-blur-md dark:border-zinc-800/90 dark:bg-zinc-900/95 sticky bottom-4 z-20">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-400 bg-white/95 p-5 shadow-lg backdrop-blur-md dark:border-zinc-700/90 dark:bg-zinc-900/95 sticky bottom-4 z-20">
           <button
             type="button"
             onClick={() => router.push('/admin/articles')}
-            className="rounded-xl border border-zinc-200 bg-zinc-50 px-5 py-3 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all cursor-pointer"
+            className="rounded-xl border border-gray-400 bg-zinc-50 px-5 py-3 text-sm font-bold text-gray-900 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-zinc-300 dark:hover:bg-zinc-800 transition-all cursor-pointer"
           >
             Cancel & Exit
           </button>
@@ -2824,7 +2824,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <button
               type="button"
               onClick={() => setShowLivePreview(true)}
-              className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-3 text-xs font-extrabold text-blue-600 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-900/60 transition-all cursor-pointer shadow-2xs"
+              className="inline-flex items-center gap-2 rounded-xl border border-gray-400 bg-blue-50 px-5 py-3 text-sm font-extrabold text-blue-600 hover:bg-blue-100 dark:border-zinc-700 dark:bg-blue-950/40 dark:text-blue-400 dark:hover:bg-blue-900/60 transition-all cursor-pointer shadow-2xs"
             >
               <Eye className="h-4 w-4" />
               <span>Preview Article</span>
@@ -2833,7 +2833,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             <button
               type="submit"
               disabled={loading}
-              className={`inline-flex items-center gap-2 rounded-xl px-7 py-3 text-xs font-black text-white active:scale-[0.98] transition-all cursor-pointer shadow-md disabled:opacity-50 ${
+              className={`inline-flex items-center gap-2 rounded-xl px-7 py-3 text-sm font-black text-white active:scale-[0.98] transition-all cursor-pointer shadow-md disabled:opacity-50 ${
                 status === 'DRAFT'
                   ? 'bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100'
                   : status === 'SCHEDULED'
@@ -2862,12 +2862,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           }}
         >
           <div
-            className="relative w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 md:p-8 shadow-2xl dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-6 overscroll-contain"
+            className="relative w-full max-w-4xl max-h-[85vh] sm:max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 md:p-8 shadow-2xl dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 space-y-6 overscroll-contain"
             onClick={(e) => e.stopPropagation()}
           >
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between border-b border-zinc-200/80 pb-4 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-b border-gray-400 pb-4 dark:border-zinc-700">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
                   <Eye className="h-5 w-5" />
@@ -2875,7 +2875,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 <div>
                   <h3 className="text-base font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
                     <span>Live Article Reader Preview</span>
-                    <span className="text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 px-2 py-0.5 rounded-md border border-blue-100 dark:border-blue-900/40">
+                    <span className="text-[10px] font-black uppercase tracking-wider bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400 px-2 py-0.5 rounded-md border border-blue-300 dark:border-blue-900/40">
                       Live Preview Mode
                     </span>
                   </h3>
@@ -2923,7 +2923,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
               {/* Featured Media */}
               {featuredImage && (
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-black shadow-md">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
                   {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ? (
                     <video src={featuredImage} controls className="h-full w-full object-cover" />
                   ) : (
@@ -2934,7 +2934,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
               {/* Highlights Box */}
               {((contentLang === 'gu' ? highlightsGu : contentLang === 'hi' ? highlightsHi : highlights) || '').trim() && (
-                <div className="rounded-2xl border border-red-200 bg-red-50/50 p-4 dark:border-red-950/40 dark:bg-red-950/20 space-y-2">
+                <div className="rounded-2xl border border-red-400 bg-red-50/50 p-4 dark:border-red-950/40 dark:bg-red-950/20 space-y-2">
                   <h4 className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5">
                     <Sparkles className="h-4 w-4 text-red-500" />
                     <span>📌 એક નજરમાં (KEY HIGHLIGHTS)</span>
@@ -2972,7 +2972,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {extraImages.filter((s) => s.url.trim()).map((slot, idx) => (
-                      <div key={idx} className="relative aspect-[4/3] overflow-hidden rounded-xl border border-zinc-200 bg-black dark:border-zinc-800 shadow-xs">
+                      <div key={idx} className="relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-xs">
                         <img src={sanitizeImageUrl(slot.url)} alt={`Gallery photo ${idx + 2}`} className="h-full w-full object-cover" />
                       </div>
                     ))}
@@ -2985,7 +2985,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 const val = (contentLang === 'gu' ? descSlot.gu : contentLang === 'hi' ? descSlot.hi : descSlot.en) || '';
                 if (!val.trim()) return null;
                 return (
-                  <div key={idx} className="border-t border-zinc-100 pt-4 dark:border-zinc-800">
+                  <div key={idx} className="border-t border-gray-400 pt-4 dark:border-zinc-700">
                     {renderFormattedPreviewContent(val)}
                   </div>
                 );
@@ -2997,7 +2997,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   <h4 className="text-xs font-black uppercase tracking-wider text-red-600 dark:text-red-400 flex items-center gap-1.5">
                     ▶ YouTube Video Coverage
                   </h4>
-                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-black shadow-md">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
                     <iframe
                       src={getYouTubeEmbedUrl(youtubeUrl)}
                       className="h-full w-full"
@@ -3010,7 +3010,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
               {/* Twitter / X Post Card Preview */}
               {twitterUrl && twitterUrl.trim() && (
-                <div className="my-4 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-gradient-to-r from-zinc-50 via-white to-zinc-100/80 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans">
+                <div className="my-4 rounded-2xl border border-gray-400 dark:border-zinc-700 bg-gradient-to-r from-zinc-50 via-white to-zinc-100/80 dark:from-zinc-900 dark:via-zinc-900 dark:to-zinc-800 p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 font-sans">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black text-white text-base font-black shadow-sm">𝕏</span>
                     <div className="min-w-0">
@@ -3047,7 +3047,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between border-t border-zinc-200/80 pt-4 dark:border-zinc-800">
+            <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
               <span className="text-xs font-mono text-zinc-400">Slug: /{slug || 'preview-news'}</span>
               <button
                 type="button"

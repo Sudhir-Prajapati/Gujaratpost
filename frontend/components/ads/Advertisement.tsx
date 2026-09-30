@@ -86,7 +86,7 @@ export default function Advertisement({ position, section, className = '', showF
     return (
       <aside
         aria-label="Advertisement"
-        className={`flex-1 group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
+        className={`flex-1 group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-400/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
         style={{ minHeight: h }}
       >
         <a
@@ -137,7 +137,7 @@ export default function Advertisement({ position, section, className = '', showF
   return (
     <aside
       aria-label="Advertisement"
-      className={`group relative overflow-hidden rounded-xl border border-dashed border-red-300/60 dark:border-red-800/50 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm transition-all duration-300 hover:border-red-400/70 hover:shadow-md ${className}`}
+      className={`group relative overflow-hidden rounded-xl border border-dashed border-red-400/60 dark:border-red-800/50 bg-gradient-to-br from-red-50 to-rose-100 dark:from-red-950/30 dark:to-rose-950/20 shadow-sm transition-all duration-300 hover:border-red-400/70 hover:shadow-md ${className}`}
       style={{ minHeight: h }}
     >
       <div

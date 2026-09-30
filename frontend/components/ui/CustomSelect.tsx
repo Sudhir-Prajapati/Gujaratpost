@@ -92,19 +92,19 @@ export default function CustomSelect({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full rounded-xl border px-4 py-3 text-left text-sm font-semibold flex items-center justify-between transition-all duration-200 outline-none shadow-sm ${
+        className={`w-full rounded-xl border px-4 py-3 text-left text-base font-semibold flex items-center justify-between transition-all duration-200 outline-none shadow-sm ${
           error
             ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
             : isOpen
               ? 'border-primary ring-2 ring-primary/20 bg-white dark:bg-zinc-900 dark:border-primary'
-              : 'border-zinc-200 bg-zinc-50/70 hover:bg-zinc-100/80 hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-950/40 dark:hover:bg-zinc-900/60'
+              : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-950/40 dark:hover:bg-zinc-900/60'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
-        <span className={`truncate ${selectedOption ? 'text-zinc-900 dark:text-zinc-100 font-bold' : 'text-zinc-400 dark:text-zinc-500'}`}>
+        <span className={`truncate ${selectedOption ? 'text-gray-900 dark:text-zinc-100 font-bold' : 'text-gray-500 dark:text-zinc-400'}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
-          className={`h-4 w-4 text-zinc-500 transition-transform duration-200 shrink-0 ml-2 ${
+          className={`h-4 w-4 text-gray-600 transition-transform duration-200 shrink-0 ml-2 dark:text-zinc-400 ${
             isOpen ? 'rotate-180 text-primary' : ''
           }`}
         />
@@ -112,7 +112,7 @@ export default function CustomSelect({
 
       {/* Dropdown Menu Popup */}
       {isOpen && (
-        <div className="absolute z-50 mt-1.5 w-full rounded-2xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-zinc-800 dark:bg-zinc-900 animate-in fade-in-50 zoom-in-95 duration-150">
+        <div className="absolute z-50 mt-1.5 w-full rounded-2xl border border-gray-400 bg-white p-2 shadow-xl dark:border-zinc-600 dark:bg-zinc-900 animate-in fade-in-50 zoom-in-95 duration-150">
           {/* Search Box (if searchable & options > 4) */}
           {searchable && options.length > 4 && (
             <div className="relative mb-2 px-1">
@@ -123,7 +123,7 @@ export default function CustomSelect({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Type to search..."
-                className="w-full rounded-lg border border-zinc-200 bg-zinc-50 py-1.5 pl-8 pr-7 text-xs focus:border-primary focus:outline-none dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-100"
+                className="w-full rounded-lg border border-gray-400 bg-zinc-50 py-1.5 pl-8 pr-7 text-sm placeholder:text-gray-500 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100"
               />
               {search && (
                 <button
@@ -154,7 +154,7 @@ export default function CustomSelect({
                       onChange(opt.value);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold flex items-center justify-between transition-colors ${
+                    className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold flex items-center justify-between transition-colors ${
                       isSelected
                         ? 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 font-bold'
                         : 'text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800/60'

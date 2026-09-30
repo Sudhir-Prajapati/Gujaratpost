@@ -182,17 +182,17 @@ export default function UserList() {
 
   const getRoleBadge = (role: UserData['role']) => {
     const styles = {
-      SUPER_ADMIN: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30',
-      EDITOR: 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30',
-      REPORTER: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30',
+      SUPER_ADMIN: 'bg-red-50 text-red-700 border-red-400 dark:bg-red-950/20 dark:text-red-400 dark:border-red-900/30',
+      EDITOR: 'bg-purple-50 text-purple-700 border-purple-400 dark:bg-purple-950/20 dark:text-purple-400 dark:border-purple-900/30',
+      REPORTER: 'bg-blue-50 text-blue-700 border-blue-400 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-900/30',
       SEO: 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/20 dark:text-teal-400 dark:border-teal-900/30',
       PHOTOGRAPHER: 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-400 dark:border-indigo-900/30',
       ADVERTISEMENT: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/20 dark:text-orange-400 dark:border-orange-900/30',
     };
     return (
-      <span className={`inline-flex items-center gap-1 rounded-lg border px-2.5 py-0.5 text-xs font-semibold ${styles[role]}`}>
-        <Shield className="h-3 w-3 shrink-0" />
-        {role.replace('_', ' ')}
+      <span className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1 text-sm font-semibold ${styles[role]}`}>
+        <Shield className="h-5 w-5 shrink-0" />
+        <span>{role.replace('_', ' ')}</span>
       </span>
     );
   };
@@ -200,12 +200,12 @@ export default function UserList() {
   const getStatusBadge = (status: UserData['status']) => {
     const styles = {
       ACTIVE: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/20 dark:text-green-400 dark:border-green-900/30',
-      SUSPENDED: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30',
-      DELETED: 'bg-zinc-150 text-zinc-650 border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-750',
-      PENDING_VERIFICATION: 'bg-zinc-50 text-zinc-500 border-zinc-200 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-800',
+      SUSPENDED: 'bg-amber-50 text-amber-700 border-amber-400 dark:bg-amber-950/20 dark:text-amber-400 dark:border-amber-900/30',
+      DELETED: 'bg-zinc-150 text-zinc-650 border-zinc-400 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-750',
+      PENDING_VERIFICATION: 'bg-zinc-50 text-zinc-500 border-gray-400 dark:bg-zinc-900 dark:text-zinc-400 dark:border-zinc-700',
     };
     return (
-      <span className={`inline-flex items-center rounded-lg border px-2.5 py-0.5 text-xs font-semibold ${styles[status]}`}>
+      <span className={`inline-flex items-center rounded-lg border px-3 py-1 text-sm font-semibold ${styles[status]}`}>
         {status.replace('_', ' ')}
       </span>
     );
@@ -241,7 +241,7 @@ export default function UserList() {
       </div>
 
       {/* Toolbar Filter & Search */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 md:flex-row md:items-center">
+      <div className="flex flex-col gap-4 rounded-2xl border border-gray-400 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900 md:flex-row md:items-center">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
@@ -255,7 +255,7 @@ export default function UserList() {
               setQuery(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-zinc-500 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+            className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-zinc-500 focus:ring-1 focus:ring-gray-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-zinc-700"
           />
         </div>
 
@@ -268,7 +268,7 @@ export default function UserList() {
                 setSelectedRole(e.target.value);
                 setPage(1);
               }}
-              className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+              className="w-full appearance-none rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-zinc-500 focus:ring-1 focus:ring-gray-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-zinc-700"
             >
               <option value="">All Roles</option>
               <option value="SUPER_ADMIN">Super Admin</option>
@@ -291,7 +291,7 @@ export default function UserList() {
                 setSelectedStatus(e.target.value);
                 setPage(1);
               }}
-              className="w-full appearance-none rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+              className="w-full appearance-none rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-zinc-500 focus:ring-1 focus:ring-gray-400 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white dark:focus:ring-zinc-700"
             >
               <option value="">All Statuses</option>
               <option value="ACTIVE">Active</option>
@@ -327,28 +327,28 @@ export default function UserList() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm [&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr:first-child>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0 [&_th]:border [&_th]:border-black [&_td]:border [&_td]:border-black dark:[&_th]:border-zinc-600 dark:[&_td]:border-zinc-600">
+            <table className="w-full border-collapse text-left text-base [&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr:first-child>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0 [&_th]:border [&_th]:border-black [&_td]:border [&_td]:border-black dark:[&_th]:border-zinc-600 dark:[&_td]:border-zinc-600">
               <thead className="bg-zinc-50/50 font-bold text-base text-black dark:border-zinc-800 dark:bg-zinc-950/20 dark:text-white">
                 <tr>
-                  <th className="px-6 py-4 text-center">User</th>
-                  <th className="px-6 py-4 text-center">Security Role</th>
-                  <th className="px-6 py-4 text-center">Account Status</th>
-                  <th className="px-6 py-4 text-center">Linked Bio</th>
-                  <th className="px-6 py-4 text-center">Sessions</th>
-                  <th className="px-6 py-4 text-center">Joined At</th>
-                  <th className="px-6 py-4 text-center">Actions</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">User</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">Security Role</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">Account Status</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">Linked Bio</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">Sessions</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">Joined At</th>
+                  <th className="px-6 py-4 text-center text-base font-bold">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {(Array.isArray(users) ? users : []).map((user) => (
                   <tr key={user.id} className="group hover:bg-zinc-50/40 dark:hover:bg-zinc-950/10 transition-colors">
                     {/* User Info */}
-                    <td className="px-6 py-4 font-medium">
+                    <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="text-zinc-900 dark:text-white font-bold leading-tight">
+                        <span className="text-base font-bold text-zinc-900 dark:text-white leading-snug">
                           {user.email}
                         </span>
-                        <span className="text-[10px] text-zinc-400 font-mono mt-0.5">
+                        <span className="text-sm text-zinc-500 dark:text-zinc-400 font-mono mt-0.5">
                           ID: {user.id}
                         </span>
                       </div>
@@ -367,29 +367,29 @@ export default function UserList() {
                     {/* Linked Writer Profile */}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
                       {user.author ? (
-                        <div className="flex items-center justify-center gap-1.5 text-zinc-650 dark:text-zinc-350">
-                          <span className="font-semibold text-xs bg-zinc-100 dark:bg-zinc-800 py-1 px-2 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                        <div className="flex items-center justify-center gap-2 text-zinc-700 dark:text-zinc-200">
+                          <span className="font-semibold text-base bg-zinc-100 dark:bg-zinc-800 py-1 px-2.5 rounded-lg border border-gray-400 dark:border-zinc-700">
                             {user.author.name}
                           </span>
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-sm text-zinc-500 dark:text-zinc-400">
                             ({user.author.designation})
                           </span>
                         </div>
                       ) : (
-                        <span className="text-xs text-zinc-400 italic">None</span>
+                        <span className="text-sm text-zinc-400 italic">None</span>
                       )}
                     </td>
 
                     {/* Active Sessions Count */}
                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                      <div className="flex items-center justify-center gap-1.5 text-zinc-650 dark:text-zinc-350">
-                        <Activity className={`h-4 w-4 ${user.sessionCount > 0 ? 'text-green-500 animate-pulse' : 'text-zinc-350'}`} />
-                        <span className="font-bold text-xs">{user.sessionCount} Active</span>
+                      <div className="flex items-center justify-center gap-2 text-zinc-700 dark:text-zinc-200">
+                        <Activity className={`h-5 w-5 ${user.sessionCount > 0 ? 'text-green-500 animate-pulse' : 'text-zinc-350'}`} />
+                        <span className="font-bold text-base">{user.sessionCount} Active</span>
                       </div>
                     </td>
 
                     {/* Created Date */}
-                    <td className="px-6 py-4 whitespace-nowrap text-center text-zinc-500 dark:text-zinc-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-center text-base text-zinc-600 dark:text-zinc-300">
                       {formatDate(user.createdAt)}
                     </td>
 
@@ -399,19 +399,19 @@ export default function UserList() {
                         {/* Edit Button */}
                         <a
                           href={`/admin/users/${user.id}/edit`}
-                          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white"
+                          className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
                           title="Edit User & Profile"
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-5 w-5" />
                         </a>
 
                         {/* Super Admin Protected Badge or Standard Action Buttons */}
                         {user.role === 'SUPER_ADMIN' ? (
                           <span
-                            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-bold text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 select-none cursor-default"
+                            className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold text-amber-700 bg-amber-50 dark:text-amber-400 dark:bg-amber-950/30 border border-amber-400 dark:border-amber-800/40 select-none cursor-default"
                             title="Super Admin account is permanently protected against suspension and deletion."
                           >
-                            <Shield className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+                            <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                             <span>Protected</span>
                           </span>
                         ) : (
@@ -421,7 +421,7 @@ export default function UserList() {
                               <button
                                 onClick={() => handleOpenStatusModal(user)}
                                 disabled={updatingId === user.id}
-                                className={`rounded-lg p-1.5 transition-colors ${
+                                className={`rounded-lg p-2 transition-colors ${
                                   user.status === 'ACTIVE'
                                     ? 'text-amber-650 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:hover:bg-amber-950/20'
                                     : 'text-green-650 hover:bg-green-50 hover:text-green-700 dark:text-green-400 dark:hover:bg-green-950/20'
@@ -429,11 +429,11 @@ export default function UserList() {
                                 title={user.status === 'ACTIVE' ? 'Suspend Account' : 'Activate Account'}
                               >
                                 {updatingId === user.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-5 w-5 animate-spin" />
                                 ) : user.status === 'ACTIVE' ? (
-                                  <UserX className="h-4 w-4" />
+                                  <UserX className="h-5 w-5" />
                                 ) : (
-                                  <UserCheck className="h-4 w-4" />
+                                  <UserCheck className="h-5 w-5" />
                                 )}
                               </button>
                             )}
@@ -443,13 +443,13 @@ export default function UserList() {
                               <button
                                 onClick={() => handleOpenDeleteModal(user)}
                                 disabled={deletingId === user.id}
-                                className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50"
+                                className="rounded-lg p-2 text-red-500 hover:bg-red-50 hover:text-red-600 dark:text-red-400 dark:hover:bg-red-950/20 disabled:opacity-50 transition-colors"
                                 title="De-provision User"
                               >
                                 {deletingId === user.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-5 w-5 animate-spin" />
                                 ) : (
-                                  <Trash2 className="h-4 w-4" />
+                                  <Trash2 className="h-5 w-5" />
                                 )}
                               </button>
                             )}
@@ -476,7 +476,7 @@ export default function UserList() {
               <button
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 transition-all hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-850 dark:hover:bg-zinc-900"
+                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-850 dark:hover:bg-zinc-900"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -486,7 +486,7 @@ export default function UserList() {
               <button
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-zinc-200 p-1.5 text-zinc-500 transition-all hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-850 dark:hover:bg-zinc-900"
+                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-850 dark:hover:bg-zinc-900"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -500,8 +500,8 @@ export default function UserList() {
         <div
           className={`fixed top-6 right-6 z-50 flex items-center gap-3 rounded-2xl border px-4 py-3 shadow-2xl backdrop-blur-md animate-in fade-in slide-in-from-top-4 duration-300 max-w-md ${
             toast.type === 'success'
-              ? 'bg-emerald-50/95 border-emerald-300 text-emerald-900 dark:bg-emerald-950/90 dark:border-emerald-800 dark:text-emerald-200'
-              : 'bg-red-50/95 border-red-300 text-red-900 dark:bg-red-950/90 dark:border-red-800 dark:text-red-200'
+              ? 'bg-emerald-50/95 border-emerald-400 text-emerald-900 dark:bg-emerald-950/90 dark:border-emerald-800 dark:text-emerald-200'
+              : 'bg-red-50/95 border-red-400 text-red-900 dark:bg-red-950/90 dark:border-red-800 dark:text-red-200'
           }`}
         >
           {toast.type === 'success' ? (
@@ -526,7 +526,7 @@ export default function UserList() {
             className="absolute inset-0"
             onClick={() => !updatingId && setStatusModalTarget(null)}
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 sm:p-7 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
             {/* Close X Button */}
             <button
               type="button"
@@ -572,7 +572,7 @@ export default function UserList() {
                   </strong>{' '}
                   the account for:
                 </p>
-                <div className="mt-2.5 rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/50 p-2.5 flex items-center gap-2">
+                <div className="mt-2.5 rounded-xl border border-gray-400 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950/50 p-2.5 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-zinc-400 shrink-0" />
                   <span className="text-xs font-mono font-bold text-zinc-900 dark:text-white truncate">
                     {statusModalTarget.email}
@@ -582,7 +582,7 @@ export default function UserList() {
             </div>
 
             {/* Explanatory Note */}
-            <div className="mt-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 p-3 border border-zinc-200/70 dark:border-zinc-800/70 text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            <div className="mt-4 rounded-xl bg-zinc-50 dark:bg-zinc-950/40 p-3 border border-gray-400 dark:border-zinc-700/70 text-[11px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
               {statusModalTarget.status === 'ACTIVE' ? (
                 <span>
                   ⚠️ <strong>Effect:</strong> This user will be immediately logged out of all active sessions and will not be able to log in to the admin portal until reactivated.
@@ -600,7 +600,7 @@ export default function UserList() {
                 type="button"
                 disabled={!!updatingId}
                 onClick={() => setStatusModalTarget(null)}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                className="rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>
@@ -641,7 +641,7 @@ export default function UserList() {
             className="absolute inset-0"
             onClick={() => !deletingId && setDeleteModalTarget(null)}
           />
-          <div className="relative w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 sm:p-7 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-400 bg-white p-6 sm:p-7 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200">
             {/* Close X Button */}
             <button
               type="button"
@@ -665,7 +665,7 @@ export default function UserList() {
                 <p className="mt-1.5 text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed">
                   Are you sure you want to de-provision this user account:
                 </p>
-                <div className="mt-2.5 rounded-xl border border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20 p-2.5 flex items-center gap-2">
+                <div className="mt-2.5 rounded-xl border border-red-400 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20 p-2.5 flex items-center gap-2">
                   <div className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
                   <span className="text-xs font-mono font-bold text-red-900 dark:text-red-200 truncate">
                     {deleteModalTarget.email}
@@ -688,7 +688,7 @@ export default function UserList() {
                 type="button"
                 disabled={!!deletingId}
                 onClick={() => setDeleteModalTarget(null)}
-                className="rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
+                className="rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50 cursor-pointer"
               >
                 Cancel (રદ કરો)
               </button>

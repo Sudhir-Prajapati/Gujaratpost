@@ -31,7 +31,7 @@ export default function ApkHomeSkeleton() {
 
       {/* ── 1. HERO FEATURED CAROUSEL SKELETON ────────────────────────── */}
       <div className="px-3.5 pt-3 pb-2">
-        <div className="apk-sk relative aspect-[16/10] sm:aspect-video w-full rounded-2xl p-3.5 flex flex-col justify-between shadow-xs border border-gray-200/70 dark:border-gray-800">
+        <div className="apk-sk relative aspect-[16/10] sm:aspect-video w-full rounded-2xl p-3.5 flex flex-col justify-between shadow-xs border border-gray-400/70 dark:border-gray-800">
           {/* Top row: VIDEOS badge + 1/5 counter */}
           <div className="flex items-center justify-between z-10">
             <div className="h-5 w-20 rounded-full bg-gray-300/80 dark:bg-gray-700/80" />
@@ -62,7 +62,7 @@ export default function ApkHomeSkeleton() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-200/90 dark:border-gray-800 shadow-xs overflow-hidden flex flex-col"
+              className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-400/90 dark:border-gray-800 shadow-xs overflow-hidden flex flex-col"
             >
               {/* Thumbnail */}
               <div className="apk-sk relative aspect-[16/10] w-full" />
@@ -93,7 +93,7 @@ export default function ApkHomeSkeleton() {
           {[1, 2, 3].map((i) => (
             <div
               key={i}
-              className="apk-sk shrink-0 w-[115px] aspect-[9/16] rounded-xl border border-gray-200/80 dark:border-gray-800"
+              className="apk-sk shrink-0 w-[115px] aspect-[9/16] rounded-xl border border-gray-400/80 dark:border-gray-800"
             />
           ))}
         </div>
@@ -109,7 +109,7 @@ export default function ApkHomeSkeleton() {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-200/90 dark:border-gray-800 p-3 flex gap-3 items-center shadow-xs"
+              className="bg-white dark:bg-[#18181b] rounded-xl border border-gray-400/90 dark:border-gray-800 p-3 flex gap-3 items-center shadow-xs"
             >
               <div className="apk-sk w-24 h-18 rounded-lg shrink-0" />
               <div className="flex-1 flex flex-col gap-2">

@@ -359,9 +359,9 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         </div>
 
         {/* ─── 2. MAIN STORY ROW (73% Lead State Story + 27% Side Lead Spotlight) ─── */}
-        <div className="grid grid-cols-12 gap-0 h-[650px] mb-2.5 shrink-0 border-b border-slate-300 pb-2.5 overflow-hidden">
+        <div className="grid grid-cols-12 gap-0 h-[650px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
           {/* Main State Lead Story - 73% (col-span-9) */}
-          <div className="col-span-9 pr-4 border-r border-slate-300 flex flex-col justify-between">
+          <div className="col-span-9 pr-4 border-r border-slate-400 flex flex-col justify-between">
             <div className="h-full flex flex-col">
               {/* Category Eyebrow */}
               <div className="flex justify-center items-center mb-0.5">
@@ -386,7 +386,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
               />
 
               {/* Grey Subheadline Banner */}
-              <div className="bg-[#e2e8f0] border border-slate-300/70 py-1.5 px-3 rounded-xs mb-3 text-center">
+              <div className="bg-[#e2e8f0] border border-slate-400/70 py-1.5 px-3 rounded-xs mb-3 text-center">
                 <EditableTextSlot
                   value={data.mainDistrictStory.subheadline || ''}
                   onChange={(val) => updateField('mainDistrictStory.subheadline', val)}
@@ -446,7 +446,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
                   )}
 
                   {/* Under-image 2 Paragraphs side by side */}
-                  <div className="mt-2 pt-2 border-t border-slate-300 flex-1 overflow-hidden grid grid-cols-2 gap-4">
+                  <div className="mt-2 pt-2 border-t border-slate-400 flex-1 overflow-hidden grid grid-cols-2 gap-4">
                     <div className="text-[11.5px] leading-[1.42] text-slate-800 font-serif text-justify overflow-hidden">
                       <EditableTextSlot
                         value={data.mainDistrictStory.paragraph2}
@@ -553,7 +553,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
 
             {/* Official Pull Quote Box at the bottom */}
             {data.sideLeadStory.pullQuote && (
-              <div className="bg-[#f8fafc] border border-slate-300 p-2 flex items-center gap-2.5 rounded-none mt-auto">
+              <div className="bg-[#f8fafc] border border-slate-400 p-2 flex items-center gap-2.5 rounded-none mt-auto">
                 <div className="w-[54px] h-[60px] shrink-0">
                   <EditableImageSlot
                     src={data.sideLeadStory.pullQuote.photo || data.sideLeadStory.pullQuote.image || ''}
@@ -590,7 +590,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         </div>
 
         {/* ─── 3. THREE-ACROSS DISTRICT NEWS BLOCKS (Surat | Rajkot | Vadodara) ─── */}
-        <div className="grid grid-cols-3 divide-x divide-slate-300 gap-0 h-[490px] mb-2.5 shrink-0 border-b border-slate-300 pb-2.5 overflow-hidden">
+        <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 h-[490px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
           {data.districtStories.slice(0, 3).map((dist, idx) => (
             <div
               key={idx}
@@ -680,7 +680,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         </div>
 
         {/* ─── 4. BOTTOM ROW: TWO FULL NEWS FEATURES (NO ADVERTISEMENT!) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-300 gap-0 mb-2 h-[429px] shrink-0 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[429px] shrink-0 overflow-hidden">
           {/* Bottom Left Feature: Agriculture & Rural Economy */}
           <div className="col-span-6 pr-4 flex flex-col justify-between">
             <div className="h-full flex flex-col">

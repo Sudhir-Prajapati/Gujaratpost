@@ -134,7 +134,8 @@ export default function AdminDashboard() {
 
         if (meRes.ok && meJson.data?.user) {
           setUserRole(meJson.data.user.role);
-          setUserName(meJson.data.user.name || meJson.data.user.email?.split('@')[0] || 'Admin');
+          const rawName = meJson.data.user.name || meJson.data.user.email?.split('@')[0] || 'Admin';
+          setUserName(rawName.charAt(0).toUpperCase() + rawName.slice(1));
         }
 
         if (statsRes.ok && statsJson.data) {
@@ -274,7 +275,7 @@ export default function AdminDashboard() {
 
   if (error) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 border border-red-200 rounded-2xl bg-red-50 text-red-600 dark:border-red-950/20 dark:bg-red-950/10 dark:text-red-400">
+      <div className="flex flex-col items-center justify-center p-8 border border-red-400 rounded-2xl bg-red-50 text-red-600 dark:border-red-950/20 dark:bg-red-950/10 dark:text-red-400">
         <AlertCircle className="h-10 w-10 mb-2" />
         <h3 className="font-bold">Error Loading Dashboard</h3>
         <p className="text-sm mt-1">{error}</p>
@@ -286,10 +287,10 @@ export default function AdminDashboard() {
     {
       label: 'Total Articles',
       value: data ? formatNumber(data.articles.total) : '0',
-      description: `${data?.articles.published || 0} published â€¢ ${data?.articles.draft || 0} drafts`,
+      description: `${data?.articles.published || 0} published • ${data?.articles.draft || 0} drafts`,
       icon: FileText,
       gradient: 'from-blue-600 to-indigo-600',
-      bgLight: 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-100 dark:border-blue-900/30',
+      bgLight: 'bg-blue-50/70 dark:bg-blue-950/20 border-blue-400 dark:border-blue-800',
       badgeColor: 'bg-blue-600 text-white',
       href: '/admin/articles',
     },
@@ -299,7 +300,7 @@ export default function AdminDashboard() {
       description: 'Submitted reporter drafts needing review',
       icon: FileCheck2,
       gradient: 'from-rose-600 to-red-600',
-      bgLight: 'bg-rose-50/70 dark:bg-rose-950/20 border-rose-100 dark:border-rose-900/30',
+      bgLight: 'bg-rose-50/70 dark:bg-rose-950/20 border-red-400 dark:border-red-800',
       badgeColor: 'bg-rose-600 text-white',
       highlight: (data?.articles.pendingReview || 0) > 0,
       href: '/admin/articles?status=DRAFT',
@@ -310,7 +311,7 @@ export default function AdminDashboard() {
       description: 'Cumulative news articles view counts',
       icon: Eye,
       gradient: 'from-emerald-600 to-teal-600',
-      bgLight: 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30',
+      bgLight: 'bg-emerald-50/70 dark:bg-emerald-950/20 border-emerald-400 dark:border-emerald-800',
       badgeColor: 'bg-emerald-600 text-white',
       href: '/admin/articles',
     },
@@ -320,7 +321,7 @@ export default function AdminDashboard() {
       description: 'Active news categories & sections',
       icon: FolderOpen,
       gradient: 'from-purple-600 to-violet-600',
-      bgLight: 'bg-purple-50/70 dark:bg-purple-950/20 border-purple-100 dark:border-purple-900/30',
+      bgLight: 'bg-purple-50/70 dark:bg-purple-950/20 border-purple-400 dark:border-purple-800',
       badgeColor: 'bg-purple-600 text-white',
       href: '/admin/categories',
     },
@@ -330,7 +331,7 @@ export default function AdminDashboard() {
       description: 'Uploaded high-res media files',
       icon: ImageIcon,
       gradient: 'from-amber-600 to-orange-600',
-      bgLight: 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-100 dark:border-amber-900/30',
+      bgLight: 'bg-amber-50/70 dark:bg-amber-950/20 border-amber-400 dark:border-amber-800',
       badgeColor: 'bg-amber-600 text-white',
       href: '/admin/gallery',
     },
@@ -340,7 +341,7 @@ export default function AdminDashboard() {
       description: 'YouTube videos and shorts clips',
       icon: Video,
       gradient: 'from-red-600 to-pink-600',
-      bgLight: 'bg-red-50/70 dark:bg-red-950/20 border-red-100 dark:border-red-900/30',
+      bgLight: 'bg-red-50/70 dark:bg-red-950/20 border-red-400 dark:border-red-800',
       badgeColor: 'bg-red-600 text-white',
       href: '/admin/videos',
     },
@@ -374,28 +375,30 @@ export default function AdminDashboard() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span>LIVE EDITORIAL SYSTEM</span>
-              <span className="text-zinc-400">â€¢</span>
+              <span className="text-zinc-400">•</span>
               <span className="text-red-400 font-semibold">{userRole || 'ADMIN'}</span>
+              <span className="text-zinc-400">•</span>
+              <span className="text-amber-300 font-semibold capitalize">{userName}</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight">
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-amber-300">{userName}</span>
+              Editorial Overview &amp; <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-amber-300">Management</span>
             </h1>
             <p className="max-w-2xl text-xs sm:text-sm text-zinc-300 leading-relaxed">
               Gujarat Post News Management Portal. Monitor live audience reach, publish breaking stories, inspect reporter submissions, and manage custom homepage hero slots.
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               onClick={() => router.push('/admin/articles/create')}
-              className="inline-flex items-center gap-2 rounded-2xl bg-red-600 px-5 py-3 text-xs font-black text-white shadow-lg shadow-red-600/30 hover:bg-red-700 hover:scale-[1.02] active:scale-[0.98] transition-all"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-red-600 px-5 text-xs font-bold text-white shadow-md shadow-red-600/30 hover:bg-red-700 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
             >
               <Plus className="h-4 w-4 stroke-[3]" />
               Write New Article
             </button>
             <button
               onClick={() => router.push('/admin/hero')}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-xs font-bold text-white backdrop-blur-md border border-white/15 hover:bg-white/20 transition-all"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/10 px-5 text-xs font-bold text-white backdrop-blur-md border border-white/20 hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
             >
               <Layers className="h-4 w-4" />
               Manage Hero
@@ -404,7 +407,7 @@ export default function AdminDashboard() {
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-2xl bg-zinc-800/80 px-4 py-3 text-xs font-bold text-zinc-200 hover:bg-zinc-700 transition-all"
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-white/10 px-5 text-xs font-bold text-white backdrop-blur-md border border-white/20 hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer whitespace-nowrap"
             >
               <ExternalLink className="h-4 w-4" />
               Live Portal
@@ -453,9 +456,9 @@ export default function AdminDashboard() {
         })}
       </div>
 
-      {/* â”€â”€â”€ PENDING REVIEW QUEUE â”€â”€â”€ */}
+      {/* ─── PENDING REVIEW QUEUE ─── */}
       {data && data.pendingReporterArticles.length > 0 && (
-        <div className="rounded-3xl border border-rose-300/80 bg-gradient-to-r from-rose-50/80 via-rose-50/30 to-amber-50/50 p-6 shadow-md dark:border-rose-900/40 dark:from-rose-950/20 dark:to-zinc-900">
+        <div className="rounded-3xl border border-rose-400 bg-gradient-to-r from-rose-50/80 via-rose-50/30 to-amber-50/50 p-6 shadow-md dark:border-rose-900/60 dark:from-rose-950/20 dark:to-zinc-900">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-black text-rose-700 dark:text-rose-400 flex items-center gap-2">
               <FileCheck2 className="h-5 w-5" />
@@ -504,7 +507,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
-                          className="rounded-xl border border-zinc-300 px-3 py-1.5 text-xs font-extrabold text-zinc-700 hover:bg-white dark:border-zinc-700 dark:text-zinc-200"
+                          className="rounded-xl border border-zinc-400 px-3 py-1.5 text-xs font-extrabold text-zinc-700 hover:bg-white dark:border-zinc-700 dark:text-zinc-200"
                         >
                           Edit Details
                         </button>
@@ -532,19 +535,19 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Main Grid Split: Left Lists vs Right Column */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column: Article Feeds & Tables */}
+      {/* Main Grid: Left Lists, Right Column, and Full-Width Recently Published */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column: Quick Operations & Recent Drafts */}
         <div className="lg:col-span-2 space-y-6">
           
           {/* Quick Action Shortcuts Grid */}
-          <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex items-center justify-between mb-5">
-              <h3 className="text-lg font-black tracking-tight flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-500" />
-                Quick Operations & Shortcuts
+              <h3 className="text-lg font-black tracking-tight flex items-center gap-2 text-zinc-900 dark:text-white">
+                <Zap className="h-5 w-5 text-amber-500 shrink-0" />
+                <span>Quick Operations & Shortcuts</span>
               </h3>
-              <span className="text-xs font-bold text-zinc-400">Direct Navigation</span>
+              <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 whitespace-nowrap">Direct Navigation</span>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -554,10 +557,10 @@ export default function AdminDashboard() {
                   <button
                     key={s.label}
                     onClick={() => router.push(s.href)}
-                    className={`group flex flex-col items-center justify-center p-4 rounded-2xl text-center transition-all duration-200 shadow-sm ${
+                    className={`group flex flex-col items-center justify-center p-4 rounded-2xl text-center transition-all duration-200 shadow-sm min-h-[88px] cursor-pointer ${
                       s.primary
                         ? 'bg-red-600 text-white hover:bg-red-700 hover:shadow-md'
-                        : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-sky-300 hover:bg-sky-50/40 dark:hover:bg-sky-950/20'
+                        : 'bg-white dark:bg-slate-900 border border-gray-400 dark:border-zinc-700 hover:border-sky-400 hover:bg-sky-50/40 dark:hover:bg-sky-950/20'
                     }`}
                   >
                     <Icon
@@ -579,25 +582,26 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Drafts */}
-          <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <Edit3 className="h-5 w-5 text-zinc-500" />
-                <h3 className="text-lg font-black tracking-tight">Recent Drafts</h3>
+                <Edit3 className="h-5 w-5 text-zinc-500 shrink-0" />
+                <h3 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Recent Drafts</h3>
               </div>
               <button
                 onClick={() => router.push('/admin/articles?status=DRAFT')}
-                className="text-xs font-extrabold text-red-600 hover:underline flex items-center gap-1"
+                className="text-xs font-extrabold text-red-600 hover:underline flex items-center gap-1 cursor-pointer whitespace-nowrap leading-none"
               >
-                View all drafts <ChevronRight className="h-3.5 w-3.5" />
+                <span>View all drafts</span>
+                <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
 
             {data?.recentDrafts && data.recentDrafts.length > 0 ? (
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="divide-y divide-gray-400 dark:divide-zinc-800">
                 {data.recentDrafts.slice(0, 5).map((art) => (
-                  <div key={art.id} className="py-3.5 flex items-center justify-between gap-4 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
-                    <div className="min-w-0 flex-1">
+                  <div key={art.id} className="flex items-center justify-between gap-4 py-3.5 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
                       <p
                         onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
                         className="font-extrabold text-zinc-900 hover:text-red-600 cursor-pointer dark:text-zinc-100 line-clamp-1"
@@ -606,13 +610,13 @@ export default function AdminDashboard() {
                       </p>
                       <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400 mt-1 uppercase tracking-wide">
                         <span>By {art.author?.name || 'Staff'}</span>
-                        <span>â€¢</span>
+                        <span>•</span>
                         <span className="text-zinc-600 dark:text-zinc-300">{art.category?.name || 'General'}</span>
                       </div>
                     </div>
                     <button
                       onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
-                      className="rounded-xl border border-zinc-200 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 flex items-center gap-1 shrink-0"
+                      className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 flex items-center justify-center gap-1 shrink-0 self-center cursor-pointer"
                     >
                       <span>Edit</span>
                       <ChevronRight className="h-3.5 w-3.5" />
@@ -621,9 +625,9 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center border-2 border-dashed border-zinc-100 rounded-2xl dark:border-zinc-800">
-                <FileText className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-                <p className="text-xs font-bold text-zinc-400">No active drafts found.</p>
+              <div className="py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-400 rounded-2xl dark:border-zinc-700">
+                <FileText className="h-8 w-8 text-zinc-300 dark:text-zinc-600 mb-2" />
+                <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500">No active drafts found.</p>
               </div>
             )}
           </div>
@@ -631,41 +635,42 @@ export default function AdminDashboard() {
         </div>
 
         {/* Right Column: Most Read Articles */}
-        <div className="space-y-6">
+        <div className="lg:col-span-1 space-y-6">
           
           {/* Most Read Articles Panel */}
-          <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 select-none">
-            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5 mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 select-none">
+            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-400 dark:border-zinc-800">
               <div className="flex items-center gap-2.5 min-w-0">
                 <TrendingUp className="h-6 w-6 text-red-600 shrink-0" />
-                <h3 className="text-base font-extrabold whitespace-nowrap text-zinc-900 dark:text-white flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 rounded-full shadow-2xs">
-                  <Eye className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
-                  <span>Most Read Articles</span>
+                <h3 className="text-base font-extrabold text-zinc-900 dark:text-white whitespace-nowrap">
+                  Most Read Articles
                 </h3>
               </div>
 
-              <span className="text-xs font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-md whitespace-nowrap shrink-0">
-                Sorted by Views
+              <span className="text-xs font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-md whitespace-nowrap shrink-0 border border-red-400 dark:border-red-900/40">
+                SORTED BY VIEWS
               </span>
             </div>
 
             {mostReadArticles && mostReadArticles.length > 0 ? (
-              <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
+              <div className="divide-y divide-gray-400 dark:divide-zinc-800">
                 {mostReadArticles.slice(0, 7).map((art) => (
-                  <div key={art.id} className="py-3 flex items-center justify-between gap-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-1 rounded-xl transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-extrabold text-sm leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2">{art.title}</p>
+                  <div key={art.id} className="flex items-center justify-between gap-4 py-3 border-b border-gray-400 last:border-0 dark:border-zinc-800 hover:bg-zinc-50/60 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <p className="font-extrabold text-sm leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                        {art.title}
+                      </p>
                       <div className="flex items-center gap-2 text-xs font-bold text-zinc-400 mt-1">
-                        <span className="text-zinc-500 font-semibold">{formatNumber(art.views)} views</span>
+                        <span className="text-zinc-500 dark:text-zinc-400 font-semibold">{formatNumber(art.views)} views</span>
                       </div>
                     </div>
                     <a
                       href={`/news/${art.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0 flex items-center gap-1 select-none"
+                      className="rounded-lg border border-gray-400 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0 flex items-center justify-center gap-1.5 self-center select-none"
                     >
-                      <Eye className="h-4 w-4 text-zinc-500" />
+                      <Eye className="h-4 w-4 text-zinc-500 shrink-0" />
                       <span>Show</span>
                     </a>
                   </div>
@@ -677,57 +682,58 @@ export default function AdminDashboard() {
           </div>
 
         </div>
-      </div>
 
-      {/* Full-Width Section: Recently Published (Spans across left and right) */}
-      <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 w-full">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <Newspaper className="h-5 w-5 text-emerald-600" />
-            <h3 className="text-lg font-black tracking-tight">Recently Published</h3>
+        {/* Full-Width Section: Recently Published (Spans across left and right) */}
+        <div className="col-span-full rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Newspaper className="h-5 w-5 text-emerald-600 shrink-0" />
+              <h3 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Recently Published</h3>
+            </div>
+            <button
+              onClick={() => router.push('/admin/articles?status=PUBLISHED')}
+              className="text-xs font-extrabold text-emerald-600 hover:underline flex items-center gap-1 cursor-pointer whitespace-nowrap leading-none"
+            >
+              <span>View all published</span>
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => router.push('/admin/articles?status=PUBLISHED')}
-            className="text-xs font-extrabold text-emerald-600 hover:underline flex items-center gap-1"
-          >
-            View all published <ChevronRight className="h-3.5 w-3.5" />
-          </button>
-        </div>
 
-        {sortedRecentlyPublished && sortedRecentlyPublished.length > 0 ? (
-          <div className="divide-y divide-zinc-100 dark:divide-zinc-800">
-            {sortedRecentlyPublished.slice(0, 5).map((art) => (
-              <div key={art.id} className="py-3.5 flex items-center justify-between gap-4 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
-                <div className="flex-1 min-w-0">
-                  <p className="font-extrabold text-zinc-900 dark:text-zinc-100 line-clamp-1">
-                    {art.title}
-                  </p>
-                  <div className="flex items-center gap-3 text-[11px] font-bold text-zinc-400 mt-1 uppercase tracking-wide">
-                    <span className="flex items-center gap-1 text-emerald-600 font-extrabold">
-                      <Eye className="h-3.5 w-3.5" /> {formatNumber(art.views)} views
-                    </span>
-                    <span>â€¢</span>
-                    <span>Published: {new Date(art.publishedAt || art.createdAt).toLocaleDateString('en-IN')}</span>
+          {sortedRecentlyPublished && sortedRecentlyPublished.length > 0 ? (
+            <div className="divide-y divide-gray-400 dark:divide-zinc-800">
+              {sortedRecentlyPublished.slice(0, 5).map((art) => (
+                <div key={art.id} className="flex items-center justify-between gap-4 py-3.5 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
+                  <div className="flex-1 min-w-0 flex flex-col justify-center">
+                    <p className="font-extrabold text-sm leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-1">
+                      {art.title}
+                    </p>
+                    <div className="flex items-center gap-3 text-[11px] font-bold text-zinc-400 mt-1 uppercase tracking-wide">
+                      <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-extrabold">
+                        <Eye className="h-3.5 w-3.5 shrink-0" /> {formatNumber(art.views)} views
+                      </span>
+                      <span>•</span>
+                      <span>Published: {new Date(art.publishedAt || art.createdAt).toLocaleDateString('en-IN')}</span>
+                    </div>
                   </div>
+                  <a
+                    href={`/news/${art.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-xl border border-gray-400 p-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-400 shrink-0 flex items-center justify-center transition-colors self-center"
+                    title="View live article"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                  </a>
                 </div>
-                <a
-                  href={`/news/${art.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-xl border border-zinc-200 p-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800 dark:text-zinc-400 shrink-0"
-                  title="View live article"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                </a>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="py-8 text-center border-2 border-dashed border-zinc-100 rounded-2xl dark:border-zinc-800">
-            <Newspaper className="h-8 w-8 text-zinc-300 mx-auto mb-2" />
-            <p className="text-xs font-bold text-zinc-400">No published articles found.</p>
-          </div>
-        )}
+              ))}
+            </div>
+          ) : (
+            <div className="py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-400 rounded-2xl dark:border-zinc-700">
+              <Newspaper className="h-8 w-8 text-zinc-300 dark:text-zinc-600 mx-auto mb-2" />
+              <p className="text-xs font-bold text-zinc-400 dark:text-zinc-500">No published articles found.</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

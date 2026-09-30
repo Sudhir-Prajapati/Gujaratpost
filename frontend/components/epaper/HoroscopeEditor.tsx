@@ -20,15 +20,15 @@ export const HoroscopeEditor: React.FC<HoroscopeEditorProps> = ({ horoscope, onC
   };
 
   return (
-    <div className="bg-purple-50/70 border border-purple-200 rounded-lg p-3 space-y-3">
-      <div className="flex items-center gap-2 text-purple-900 font-semibold text-sm border-b border-purple-200 pb-2">
+    <div className="bg-purple-50/70 border border-purple-400 rounded-lg p-3 space-y-3">
+      <div className="flex items-center gap-2 text-purple-900 font-semibold text-sm border-b border-purple-400 pb-2">
         <Sparkles className="w-4 h-4 text-purple-600" />
         <span>રાશિભવિષ્ય ૧૨ રાશિઓ (Horoscope 12 Signs)</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[380px] overflow-y-auto pr-1">
         {horoscope.map((item, idx) => (
-          <div key={item.signEn || idx} className="bg-white p-2 rounded border border-purple-100 shadow-sm space-y-1">
+          <div key={item.signEn || idx} className="bg-white p-2 rounded border border-purple-300 shadow-sm space-y-1">
             <div className="flex justify-between items-center text-xs font-bold text-purple-950">
               <span>{item.signGu}</span>
               <span className="text-[10px] text-purple-500 font-normal">({item.signEn})</span>
@@ -37,7 +37,7 @@ export const HoroscopeEditor: React.FC<HoroscopeEditorProps> = ({ horoscope, onC
               rows={2}
               value={item.prediction}
               onChange={(e) => handlePredictionChange(idx, e.target.value)}
-              className="w-full p-2 bg-white border border-slate-300 rounded text-xs text-slate-900 font-medium leading-relaxed focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none placeholder:text-slate-400 shadow-xs"
+              className="w-full p-2 bg-white border border-slate-400 rounded text-xs text-slate-900 font-medium leading-relaxed focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none resize-none placeholder:text-slate-400 shadow-xs"
               placeholder={`${item.signGu} રાશિફળ...`}
             />
           </div>

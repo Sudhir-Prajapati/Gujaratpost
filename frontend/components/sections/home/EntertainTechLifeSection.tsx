@@ -168,7 +168,7 @@ export default function EntertainTechLifeSection({
       <div>
         <div className="flex flex-col mb-4 select-none">
           <div className="flex items-center gap-2.5">
-            <div className="h-8 w-8 rounded-full border border-red-200 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 flex items-center justify-center shrink-0">
+            <div className="h-8 w-8 rounded-full border border-red-400 dark:border-red-900/40 bg-red-50 dark:bg-red-950/20 flex items-center justify-center shrink-0">
               {icon}
             </div>
             <Link href={href} className="flex items-center gap-1 group/title">
@@ -209,7 +209,7 @@ export default function EntertainTechLifeSection({
 
       <Link
         href={href}
-        className="mt-4 w-full border border-red-200 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/20 text-[#B3121B] font-extrabold text-[14px] md:text-[15px] py-2.5 rounded-lg text-center hover:bg-[#B3121B] hover:text-white transition-all block select-none"
+        className="mt-4 w-full border border-red-400 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/20 text-[#B3121B] font-extrabold text-[14px] md:text-[15px] py-2.5 rounded-lg text-center hover:bg-[#B3121B] hover:text-white transition-all block select-none"
       >
         {language === 'gu' ? btnTextGu : btnTextEn}
       </Link>

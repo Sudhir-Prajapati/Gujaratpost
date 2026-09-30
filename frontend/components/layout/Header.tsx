@@ -542,7 +542,7 @@ export default function Header() {
               className="relative w-[140px] lg:w-[180px] flex items-center cursor-pointer group shrink-0 active:scale-[0.98] transition-transform duration-150"
               onClick={() => router.push('/search')}
             >
-              <div className="h-[34px] w-full rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/80 dark:bg-zinc-900/60 py-1.5 pl-10 pr-3.5 text-[13px] text-muted-foreground transition-all duration-200 group-hover:border-red-600 dark:group-hover:border-red-500 group-hover:bg-card dark:group-hover:bg-zinc-800/90 group-hover:text-foreground group-hover:shadow-sm group-hover:ring-1 group-hover:ring-red-600/30 dark:group-hover:ring-red-500/30 select-none flex items-center shadow-2xs">
+              <div className="h-[34px] w-full rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted/80 dark:bg-zinc-900/60 py-1.5 pl-10 pr-3.5 text-[13px] text-muted-foreground transition-all duration-200 group-hover:border-red-600 dark:group-hover:border-red-500 group-hover:bg-card dark:group-hover:bg-zinc-800/90 group-hover:text-foreground group-hover:shadow-sm group-hover:ring-1 group-hover:ring-red-600/30 dark:group-hover:ring-red-500/30 select-none flex items-center shadow-2xs">
                 {language === 'gu' ? 'સમાચાર શોધો...' : language === 'hi' ? 'समाचार खोजें...' : 'Search news...'}
               </div>
               <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:scale-110 transition-all duration-200">
@@ -634,7 +634,7 @@ export default function Header() {
             <button
               type="button"
               onClick={toggleTheme}
-              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
+              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
               aria-label="Toggle dark mode"
             >
               {theme === 'dark' ? (
@@ -655,7 +655,7 @@ export default function Header() {
                   setAuthModalOpen(true);
                 }
               }}
-              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
               aria-label="Sign In"
               title="Sign In"
             >
@@ -843,7 +843,7 @@ export default function Header() {
       <div className={`${hideStickyNav ? 'relative z-50' : 'sticky top-0 z-50'} bg-card/98 shadow-md transition-all duration-300 ${menuOpen ? 'max-md:hidden' : ''}`}>
         {/* Desktop Nav Bar */}
         <nav
-          className="hidden border-y-2 border-zinc-300 bg-card/98 md:block dark:border-zinc-600"
+          className="hidden border-y-2 border-zinc-400 bg-card/98 md:block dark:border-zinc-600"
           aria-label="Main navigation"
         >
           <div className="mx-auto max-w-[1700px] px-1.5 sm:px-2 xl:px-3 flex items-center gap-1 xl:gap-1.5 relative">

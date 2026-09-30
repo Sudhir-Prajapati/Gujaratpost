@@ -215,7 +215,7 @@ export default function ReelsPage() {
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto p-4 md:p-8 pt-6">
       {/* Header matching YouTube Shorts Admin style */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-5 border-zinc-200 dark:border-zinc-800">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b pb-5 border-gray-400 dark:border-zinc-700">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white flex items-start sm:items-center gap-2.5">
             <span className="flex h-8 sm:h-9 w-8 sm:w-9 items-center justify-center rounded-xl bg-[#B3121B] text-white shadow-md shrink-0 mt-0.5 sm:mt-0">
@@ -233,7 +233,7 @@ export default function ReelsPage() {
         <div className="flex items-center gap-3 w-full sm:w-auto shrink-0 flex-wrap">
           <button
             onClick={() => setShowUrlBox((prev) => !prev)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all shadow-sm cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all shadow-sm cursor-pointer"
             title="Add a single reel by URL"
           >
             <Plus className="h-4 w-4 text-[#B3121B]" />
@@ -256,7 +256,7 @@ export default function ReelsPage() {
       {showUrlBox && (
         <form
           onSubmit={handleSyncByUrl}
-          className="flex flex-col gap-3 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200"
+          className="flex flex-col gap-3 p-5 rounded-2xl border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/80 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -288,7 +288,7 @@ export default function ReelsPage() {
                 placeholder="Paste Instagram Reel URL(s), e.g.&#10;https://www.instagram.com/reel/DSvBjEOEZCv/&#10;https://www.instagram.com/reel/Db2NMohRDw_/"
                 value={reelUrlInput}
                 onChange={(e) => setReelUrlInput(e.target.value)}
-                className="w-full rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-950 p-3 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B] font-mono resize-y"
+                className="w-full rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-950 p-3 text-xs sm:text-sm text-zinc-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B] font-mono resize-y"
               />
             </div>
             <div className="flex sm:flex-col justify-end gap-2 shrink-0">
@@ -326,12 +326,12 @@ export default function ReelsPage() {
               placeholder="Search reel headline..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-800 dark:bg-zinc-950/40 dark:text-white"
+              className="w-full rounded-xl border border-gray-400 bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/40 dark:text-white"
             />
           </div>
 
           <div className="flex items-center gap-2.5 flex-wrap">
-            <div className="flex items-center gap-2 rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 shadow-sm">
+            <div className="flex items-center gap-2 rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2 text-xs font-bold text-zinc-800 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 shadow-sm">
               <Smartphone className="h-4 w-4 text-[#B3121B]" />
               <span>Total Reels: <strong className="text-zinc-950 dark:text-white">{filteredReels.length}</strong></span>
             </div>
@@ -360,7 +360,7 @@ export default function ReelsPage() {
               return (
                 <div
                   key={reel.id}
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-black shadow-md dark:border-zinc-800 transition-all hover:scale-[1.02] hover:shadow-xl"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-gray-400 bg-black shadow-md dark:border-zinc-700 transition-all hover:scale-[1.02] hover:shadow-xl"
                 >
                   {/* Vertical 9:16 Aspect Container */}
                   <div
@@ -464,7 +464,7 @@ export default function ReelsPage() {
             className="absolute inset-0"
             onClick={() => !deleting && setDeleteTargetId(null)}
           />
-          <div className="relative w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
+          <div className="relative w-full max-w-sm rounded-2xl border border-gray-400 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xl z-10 animate-in zoom-in-95 duration-200 text-center">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-red-100 dark:bg-red-950/60 text-[#B3121B] shadow-inner">
               <Trash2 className="h-7 w-7" />
             </div>
@@ -481,7 +481,7 @@ export default function ReelsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => setDeleteTargetId(null)}
-                className="flex-1 rounded-xl border border-zinc-200 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-800 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50"
+                className="flex-1 rounded-xl border border-gray-400 bg-zinc-100 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition disabled:opacity-50"
               >
                 Cancel (રદ કરો)
               </button>

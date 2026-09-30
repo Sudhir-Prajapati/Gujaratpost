@@ -280,7 +280,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
           </div>
 
           {/* Top Right Live Tag */}
-          <span className="bg-red-50 text-[#B3121B] text-[11.5px] font-black px-3.5 py-1 rounded-full border border-red-100 flex items-center gap-1.5 shadow-xs">
+          <span className="bg-red-50 text-[#B3121B] text-[11.5px] font-black px-3.5 py-1 rounded-full border border-red-300 flex items-center gap-1.5 shadow-xs">
             <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-pulse" />
             {language === 'gu' ? 'લાઈવ' : 'LIVE'}
           </span>
@@ -319,12 +319,12 @@ export default function LiveCenterSection({ language }: { language: Language }) 
               { name: 'ડીઝલ', nameEng: 'Diesel', price: activeFuel.diesel, unit: 'લીટર', symbol: 'D' as const },
               { name: 'CNG', nameEng: 'CNG', price: activeFuel.cng, unit: 'કિલો', symbol: 'C' as const }
             ].map((item) => (
-              <div key={item.symbol} className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-100 hover:shadow transition-shadow">
+              <div key={item.symbol} className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-400 hover:shadow transition-shadow">
                 <div className="flex items-center gap-3">
                   <div className={`h-9 w-9 rounded-full flex items-center justify-center font-extrabold text-[16px] shrink-0
-                    ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-100' : ''}
-                    ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-100' : ''}
-                    ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
+                    ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-300' : ''}
+                    ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-300' : ''}
+                    ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-300' : ''}
                   `}>
                     {item.symbol}
                   </div>
@@ -395,11 +395,11 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             icon={<Trophy className="h-5 w-5 text-white" />}
           >
             {cricketMatches.map((match, i) => (
-              <div key={i} className="rounded-xl bg-white p-3 shadow-sm border border-neutral-100">
-                <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-100">
+              <div key={i} className="rounded-xl bg-white p-3 shadow-sm border border-neutral-400">
+                <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-400">
                   <p className="font-extrabold text-[12.5px] text-neutral-900 leading-none">{match.title}</p>
                   {match.statusType === 'live' ? (
-                    <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 text-[8.5px] font-black rounded leading-none select-none border border-emerald-100">
+                    <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 text-[8.5px] font-black rounded leading-none select-none border border-emerald-300">
                       {match.statusText}
                     </span>
                   ) : (

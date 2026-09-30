@@ -82,9 +82,9 @@ export default function ApkAdBanner({
 
   return (
     <div className={`px-3.5 my-3 select-none ${className}`}>
-      <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#18181b] border border-gray-200/90 dark:border-gray-800 shadow-xs hover:shadow-md transition-all duration-300">
+      <div className="relative overflow-hidden rounded-2xl bg-white dark:bg-[#18181b] border border-gray-400/90 dark:border-gray-800 shadow-xs hover:shadow-md transition-all duration-300">
         {/* Top Header Strip: Ad Badge & Title */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50/90 dark:bg-[#1f2026] border-b border-gray-100 dark:border-gray-800/80">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-gray-50/90 dark:bg-[#1f2026] border-b border-gray-400 dark:border-gray-800/80">
           <div className="flex items-center gap-1.5">
             <span className="bg-[#B3121B] text-white text-[9px] font-black px-1.5 py-0.5 rounded tracking-wider uppercase">
               {adLabel}

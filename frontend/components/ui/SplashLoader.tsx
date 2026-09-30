@@ -82,9 +82,8 @@ export default function SplashLoader() {
 
   return (
     <div
-      className={`fixed inset-0 z-[9999999] flex flex-col items-center justify-center bg-[#040810] transition-opacity duration-500 ease-in-out select-none overflow-hidden h-screen w-screen ${
-        visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
+      className={`fixed inset-0 z-[9999999] flex flex-col items-center justify-center bg-[#040810] transition-opacity duration-500 ease-in-out select-none overflow-hidden h-screen w-screen ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
     >
       <style>{`
         .perspective-container {

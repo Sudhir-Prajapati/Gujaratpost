@@ -278,10 +278,10 @@ export default function LiveDashboard() {
     <section id="live-dashboard" className="py-6 bg-background">
       <div className="mx-auto max-w-screen-xl px-4">
         {/* Main Card Container */}
-        <div className="bg-[#f8f9fa] dark:bg-slate-900/40 border border-neutral-200/85 dark:border-neutral-800/65 rounded-2xl p-6 shadow-sm shadow-neutral-100/20">
+        <div className="bg-[#f8f9fa] dark:bg-slate-900/40 border border-neutral-400/85 dark:border-neutral-800/65 rounded-2xl p-6 shadow-sm shadow-neutral-100/20">
 
           {/* Header Row */}
-          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-neutral-200/40 dark:border-neutral-800/60 select-none">
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-neutral-400/40 dark:border-neutral-800/60 select-none">
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2">
                 {/* Red speed arrow logo */}
@@ -324,7 +324,7 @@ export default function LiveDashboard() {
                 type="button"
                 onClick={() => void loadDashboard(true)}
                 disabled={refreshing}
-                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-neutral-300 dark:border-neutral-800 bg-white hover:bg-[#B3121B] text-neutral-700 hover:text-white dark:bg-slate-900/50 px-4 text-xs font-black transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-sm"
+                className="inline-flex h-8 items-center justify-center gap-1.5 rounded-full border border-neutral-400 dark:border-neutral-800 bg-white hover:bg-[#B3121B] text-neutral-700 hover:text-white dark:bg-slate-900/50 px-4 text-xs font-black transition-all hover:scale-105 active:scale-95 disabled:opacity-50 shadow-sm"
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
                 <span>{getLocalized(language, { en: 'Refresh Data', gu: 'તાજું કરો', hi: 'रिफ्रेश करें' })}</span>
@@ -356,12 +356,12 @@ export default function LiveDashboard() {
               icon={<Fuel className="h-5 w-5 text-white" />}
             >
               {fuel.map((item) => (
-                <div key={item.symbol} className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-100 hover:shadow transition-shadow">
+                <div key={item.symbol} className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-400 hover:shadow transition-shadow">
                   <div className="flex items-center gap-3">
                     <div className={`h-9 w-9 rounded-full flex items-center justify-center font-extrabold text-[16px] shrink-0
-                      ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-100' : ''}
-                      ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-100' : ''}
-                      ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
+                      ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-300' : ''}
+                      ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-300' : ''}
+                      ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-300' : ''}
                     `}>
                       {item.symbol}
                     </div>
@@ -432,11 +432,11 @@ export default function LiveDashboard() {
               icon={<Trophy className="h-5 w-5 text-white" />}
             >
               {cricket.map((match, i) => (
-                <div key={i} className="rounded-xl bg-white p-3 shadow-sm border border-neutral-100">
-                  <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-100">
+                <div key={i} className="rounded-xl bg-white p-3 shadow-sm border border-neutral-400">
+                  <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-400">
                     <p className="font-extrabold text-[12.5px] text-neutral-900 leading-none">{match.title}</p>
                     {match.statusType === 'live' ? (
-                      <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 text-[8.5px] font-black rounded leading-none select-none border border-emerald-100">
+                      <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 text-[8.5px] font-black rounded leading-none select-none border border-emerald-300">
                         {match.statusText}
                       </span>
                     ) : (
