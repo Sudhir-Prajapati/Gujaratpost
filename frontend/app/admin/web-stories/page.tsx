@@ -284,7 +284,7 @@ export default function WebStoriesPage() {
       )}
 
       {/* Main content */}
-      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden shadow-sm">
+      <div className="bg-white dark:bg-[#1E1E1E] rounded-xl border border-black dark:border-zinc-600 overflow-hidden shadow-sm">
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 text-gray-500">
             <Loader2 size={32} className="animate-spin mb-4 text-red-600" />
@@ -311,18 +311,18 @@ export default function WebStoriesPage() {
           <>
             {/* Desktop Table View */}
             <div className="hidden md:block overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-600 dark:text-gray-400 uppercase text-xs">
+              <table className="w-full border-collapse text-left text-sm [&_tr>*:first-child]:border-l-0 [&_tr>*:last-child]:border-r-0 [&_thead_tr:first-child>*]:border-t-0 [&_tbody_tr:last-child>*]:border-b-0 [&_th]:border [&_th]:border-black [&_td]:border [&_td]:border-black dark:[&_th]:border-zinc-600 dark:[&_td]:border-zinc-600">
+                <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-900 dark:text-gray-200 uppercase text-sm">
                   <tr>
-                    <th className="px-6 py-4 font-medium">Preview</th>
-                    <th className="px-6 py-4 font-medium">Heading (EN / GU)</th>
-                    <th className="px-6 py-4 font-medium">Images</th>
-                    <th className="px-6 py-4 font-medium">Status</th>
-                    <th className="px-6 py-4 font-medium">Date</th>
-                    <th className="px-6 py-4 font-medium text-right">Actions</th>
+                    <th className="px-6 py-4 font-bold">Preview</th>
+                    <th className="px-6 py-4 font-bold">Heading (EN / GU)</th>
+                    <th className="px-6 py-4 font-bold">Images</th>
+                    <th className="px-6 py-4 font-bold">Status</th>
+                    <th className="px-6 py-4 font-bold">Date</th>
+                    <th className="px-6 py-4 font-bold text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+                <tbody>
                   {stories.map((story) => {
                     let imageCount = 0;
                     if (story.image1) imageCount++;
@@ -339,16 +339,16 @@ export default function WebStoriesPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="font-medium text-gray-900 dark:text-white mb-1">{story.heading}</div>
-                          {story.headingGu && <div className="text-gray-500 dark:text-gray-400 text-xs">{story.headingGu}</div>}
+                          <div className="text-base font-semibold text-gray-900 dark:text-white mb-1">{story.heading}</div>
+                          {story.headingGu && <div className="text-gray-500 dark:text-gray-400 text-sm">{story.headingGu}</div>}
                         </td>
                         <td className="px-6 py-4">
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                             {imageCount} / 5
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
                             story.isActive 
                               ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                               : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-400'
@@ -356,7 +356,7 @@ export default function WebStoriesPage() {
                             {story.isActive ? 'Active' : 'Inactive'}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-gray-500 dark:text-gray-400">
+                        <td className="px-6 py-4 text-base text-gray-500 dark:text-gray-400">
                           {new Date(story.createdAt).toLocaleDateString()}
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -366,14 +366,14 @@ export default function WebStoriesPage() {
                               className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors"
                               title="Edit"
                             >
-                              <Edit2 size={16} />
+                              <Edit2 size={20} />
                             </button>
                             <button
                               onClick={() => setDeleteTargetStory(story)}
                               className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                               title="Delete"
                             >
-                              <Trash2 size={16} />
+                              <Trash2 size={20} />
                             </button>
                           </div>
                         </td>

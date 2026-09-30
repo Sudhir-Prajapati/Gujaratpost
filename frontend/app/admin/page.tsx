@@ -348,15 +348,15 @@ export default function AdminDashboard() {
 
 
 
-  const quickShortcuts = [
-    { label: 'Write Article', href: '/admin/articles/create', icon: Plus, bg: 'bg-red-600 text-white hover:bg-red-700' },
-    { label: 'Hero Layout', href: '/admin/hero', icon: Layers, bg: 'bg-zinc-900 text-white dark:bg-zinc-800 hover:bg-black' },
-    { label: 'Categories', href: '/admin/categories', icon: FolderOpen, bg: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 hover:bg-blue-100' },
-    { label: 'Advertisements', href: '/admin/ads', icon: Megaphone, bg: 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-100' },
-    { label: 'Gallery Media', href: '/admin/gallery', icon: ImageIcon, bg: 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400 hover:bg-purple-100' },
-    { label: 'Videos Stream', href: '/admin/videos', icon: Video, bg: 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 hover:bg-rose-100' },
-    { label: 'YouTube Shorts', href: '/admin/shorts', icon: Film, bg: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 hover:bg-emerald-100' },
-    { label: 'E-Paper Releases', href: '/admin/epaper', icon: Newspaper, bg: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 hover:bg-indigo-100' },
+  const quickShortcuts: { label: string; href: string; icon: React.ElementType; primary?: boolean }[] = [
+    { label: 'Write Article', href: '/admin/articles/create', icon: Plus, primary: true },
+    { label: 'Hero Layout', href: '/admin/hero', icon: Layers },
+    { label: 'Categories', href: '/admin/categories', icon: FolderOpen },
+    { label: 'Advertisements', href: '/admin/ads', icon: Megaphone },
+    { label: 'Gallery Media', href: '/admin/gallery', icon: ImageIcon },
+    { label: 'Videos Stream', href: '/admin/videos', icon: Video },
+    { label: 'YouTube Shorts', href: '/admin/shorts', icon: Film },
+    { label: 'E-Paper Releases', href: '/admin/epaper', icon: Newspaper },
   ];
 
   return (
@@ -430,7 +430,7 @@ export default function AdminDashboard() {
                 </span>
               )}
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+                <span className="text-sm font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
                   {card.label}
                 </span>
                 <div className={`rounded-2xl p-3 shadow-md ${card.badgeColor} group-hover:scale-110 transition-transform duration-300`}>
@@ -554,10 +554,24 @@ export default function AdminDashboard() {
                   <button
                     key={s.label}
                     onClick={() => router.push(s.href)}
-                    className={`group flex flex-col items-center justify-center p-4 rounded-2xl ${s.bg} transition-all duration-200 shadow-sm hover:shadow-md text-center space-y-2`}
+                    className={`group flex flex-col items-center justify-center p-4 rounded-2xl text-center transition-all duration-200 shadow-sm ${
+                      s.primary
+                        ? 'bg-red-600 text-white hover:bg-red-700 hover:shadow-md'
+                        : 'bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-sky-300 hover:bg-sky-50/40 dark:hover:bg-sky-950/20'
+                    }`}
                   >
-                    <Icon className="h-6 w-6 group-hover:scale-110 transition-transform" />
-                    <span className="text-xs font-black tracking-tight">{s.label}</span>
+                    <Icon
+                      className={`h-6 w-6 shrink-0 mb-1.5 group-hover:scale-110 transition-transform ${
+                        s.primary ? 'text-white' : 'text-sky-500 dark:text-sky-400'
+                      }`}
+                    />
+                    <span
+                      className={`text-sm font-semibold ${
+                        s.primary ? 'text-white font-bold' : 'text-slate-900 dark:text-slate-100'
+                      }`}
+                    >
+                      {s.label}
+                    </span>
                   </button>
                 );
               })}
@@ -621,16 +635,16 @@ export default function AdminDashboard() {
           
           {/* Most Read Articles Panel */}
           <div className="rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 select-none">
-            <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-zinc-100 dark:border-zinc-800">
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-red-600 shrink-0" />
-                <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 rounded-full shadow-2xs">
-                  <Eye className="h-4 w-4 text-zinc-700 dark:text-zinc-300" />
+            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2.5 mb-4 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <TrendingUp className="h-6 w-6 text-red-600 shrink-0" />
+                <h3 className="text-base font-extrabold whitespace-nowrap text-zinc-900 dark:text-white flex items-center gap-1.5 border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-1.5 rounded-full shadow-2xs">
+                  <Eye className="h-5 w-5 text-zinc-700 dark:text-zinc-300" />
                   <span>Most Read Articles</span>
                 </h3>
               </div>
 
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded-md">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-md whitespace-nowrap shrink-0">
                 Sorted by Views
               </span>
             </div>
@@ -640,8 +654,8 @@ export default function AdminDashboard() {
                 {mostReadArticles.slice(0, 7).map((art) => (
                   <div key={art.id} className="py-3 flex items-center justify-between gap-3 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-1 rounded-xl transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 line-clamp-1">{art.title}</p>
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-400 mt-0.5">
+                      <p className="font-extrabold text-sm leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2">{art.title}</p>
+                      <div className="flex items-center gap-2 text-xs font-bold text-zinc-400 mt-1">
                         <span className="text-zinc-500 font-semibold">{formatNumber(art.views)} views</span>
                       </div>
                     </div>
@@ -649,9 +663,9 @@ export default function AdminDashboard() {
                       href={`/news/${art.slug}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="rounded-lg border border-zinc-200 px-2.5 py-1 text-[11px] font-bold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0 flex items-center gap-1 select-none"
+                      className="rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0 flex items-center gap-1 select-none"
                     >
-                      <Eye className="h-3.5 w-3.5 text-zinc-500" />
+                      <Eye className="h-4 w-4 text-zinc-500" />
                       <span>Show</span>
                     </a>
                   </div>
