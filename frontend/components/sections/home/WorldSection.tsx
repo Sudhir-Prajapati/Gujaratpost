@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
@@ -115,7 +115,7 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
       </div>
       <div className="border border-border/80 rounded-sm bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
         {rates.map((item) => {
-          const name = language === 'gu' ? item.nameGu : language === 'hi' ? item.nameHi : item.nameEn;
+          const name = item.nameEn;
           const isUp = item.change > 0;
           const isDown = item.change < 0;
 
@@ -296,10 +296,10 @@ export default function WorldSection({ language, initialArticles }: { language: 
   }, [dbWorldArticles, language]);
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2">
+    <div className="mx-auto max-w-screen-xl px-4 -mt-4 md:-mt-5 pt-0">
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
-        <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+        <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'વિશ્વ' : language === 'hi' ? 'विश्व' : 'World'}
         </span>
         <Link

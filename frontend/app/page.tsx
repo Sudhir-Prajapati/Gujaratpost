@@ -45,7 +45,7 @@ export default async function HomePage() {
     getPublicArticles({ categorySlug: 'manoranjan', limit: 4 }).catch(() => ({ articles: [] })),
     getPublicArticles({ categorySlug: 'health', limit: 4 }).catch(() => ({ articles: [] })),
     getPublicArticles({ categorySlug: 'technology', limit: 4 }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'factcheck', limit: 9 }).catch(() => ({ articles: [] })),
+    getPublicArticles({ categorySlug: 'fact-check', limit: 20 }).catch(() => ({ articles: [] })),
     getPublicArticles({ categorySlug: 'sports', limit: 7 }).catch(() => ({ articles: [] })),
     getPublicArticles({ categorySlug: 'politics', limit: 8 }).catch(() => ({ articles: [] })),
   ]);

@@ -492,187 +492,187 @@ export default function Header() {
           <div className="ml-auto flex items-center gap-1 select-none shrink-0">
             {/* News Brief + Weather/AQI + Search Container (desktop only) */}
             <div className="hidden md:flex items-center gap-3 lg:gap-4 select-none shrink-0">
-            {/* NEWS BRIEF Button */}
-            <Link
-              href="/news-brief"
-              className="group flex items-center gap-1.5 hover:opacity-90 transition-all select-none active:scale-[0.98]"
-            >
-              <Image
-                src="/rightSide.png"
-                alt="NEWS BRIEF"
-                width={20}
-                height={20}
-                className="shrink-0 object-contain transition-transform duration-200 group-hover:translate-x-0.5"
-                style={{ width: 20, height: 20 }}
-              />
-              <span translate="no" className="font-black font-sans text-[18px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
-                NEWS BRIEF
-              </span>
-            </Link>
-
-            {/* AQI Button */}
-            <Link
-              href="/aqi"
-              title={language === 'gu' ? 'હવામાન અને AQI' : language === 'hi' ? 'मौसम और AQI' : 'Weather & AQI'}
-              className="group flex items-center gap-1.5 hover:opacity-90 transition-all select-none active:scale-[0.98] cursor-pointer"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                className="w-5 h-5 text-amber-500 shrink-0 transition-transform duration-200 group-hover:scale-110"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
+              {/* NEWS BRIEF Button */}
+              <Link
+                href="/news-brief"
+                className="group flex items-center gap-1.5 hover:opacity-90 transition-all select-none active:scale-[0.98]"
               >
-                <path d="M12 2v2" />
-                <path d="m4.93 4.93 1.41 1.41" />
-                <path d="M20 12h2" />
-                <path d="m19.07 4.93-1.41 1.41" />
-                <path d="M15.9 16A5 5 0 1 0 9 10.45" />
-                <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
-              </svg>
-              <span translate="no" className="font-black font-sans text-[18px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
-                AQI
-              </span>
-            </Link>
+                <Image
+                  src="/rightSide.png"
+                  alt="NEWS BRIEF"
+                  width={20}
+                  height={20}
+                  className="shrink-0 object-contain transition-transform duration-200 group-hover:translate-x-0.5"
+                  style={{ width: 20, height: 20 }}
+                />
+                <span translate="no" className="font-black font-sans text-[18px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
+                  NEWS BRIEF
+                </span>
+              </Link>
 
-            {/* Compact Search Trigger */}
-            <div
-              className="relative w-[140px] lg:w-[180px] flex items-center cursor-pointer group shrink-0 active:scale-[0.98] transition-transform duration-150"
-              onClick={() => router.push('/search')}
-            >
-              <div className="h-[34px] w-full rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted/80 dark:bg-zinc-900/60 py-1.5 pl-10 pr-3.5 text-[13px] text-muted-foreground transition-all duration-200 group-hover:border-red-600 dark:group-hover:border-red-500 group-hover:bg-card dark:group-hover:bg-zinc-800/90 group-hover:text-foreground group-hover:shadow-sm group-hover:ring-1 group-hover:ring-red-600/30 dark:group-hover:ring-red-500/30 select-none flex items-center shadow-2xs">
-                {language === 'gu' ? 'સમાચાર શોધો...' : language === 'hi' ? 'समाचार खोजें...' : 'Search news...'}
+              {/* AQI Button */}
+              <Link
+                href="/aqi"
+                title={language === 'gu' ? 'હવામાન અને AQI' : language === 'hi' ? 'मौसम और AQI' : 'Weather & AQI'}
+                className="group flex items-center gap-1.5 hover:opacity-90 transition-all select-none active:scale-[0.98] cursor-pointer"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-5 h-5 text-amber-500 shrink-0 transition-transform duration-200 group-hover:scale-110"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="M20 12h2" />
+                  <path d="m19.07 4.93-1.41 1.41" />
+                  <path d="M15.9 16A5 5 0 1 0 9 10.45" />
+                  <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
+                </svg>
+                <span translate="no" className="font-black font-sans text-[18px] tracking-wider text-black dark:text-white uppercase leading-none select-none group-hover:text-[#B3121B] transition-colors duration-200">
+                  AQI
+                </span>
+              </Link>
+
+              {/* Compact Search Trigger */}
+              <div
+                className="relative w-[140px] lg:w-[180px] flex items-center cursor-pointer group shrink-0 active:scale-[0.98] transition-transform duration-150"
+                onClick={() => router.push('/search')}
+              >
+                <div className="h-[34px] w-full rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted/80 dark:bg-zinc-900/60 py-1.5 pl-10 pr-3.5 text-[13px] text-muted-foreground transition-all duration-200 group-hover:border-red-600 dark:group-hover:border-red-500 group-hover:bg-card dark:group-hover:bg-zinc-800/90 group-hover:text-foreground group-hover:shadow-sm group-hover:ring-1 group-hover:ring-red-600/30 dark:group-hover:ring-red-500/30 select-none flex items-center shadow-2xs">
+                  {language === 'gu' ? 'સમાચાર શોધો...' : language === 'hi' ? 'समाचार खोजें...' : 'Search news...'}
+                </div>
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:scale-110 transition-all duration-200">
+                  <Search className="h-[14px] w-[14px]" />
+                </span>
               </div>
-              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 flex items-center justify-center text-muted-foreground group-hover:text-red-600 dark:group-hover:text-red-400 group-hover:scale-110 transition-all duration-200">
-                <Search className="h-[14px] w-[14px]" />
-              </span>
             </div>
-          </div>
 
-          {/* Controls (Mobile + Desktop compact icons) */}
-          <div className="flex shrink-0 items-center gap-1">
-            {/* Mobile Search Icon Button */}
-            <button
-              type="button"
-              onClick={() => setSearchOpen(true)}
-              className="md:hidden flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
-              aria-label="Search"
-            >
-              <Search className="h-4 w-4" />
-            </button>
-
-            {/* Language switcher */}
-            <div className="relative z-50 transition-all duration-300 notranslate shrink-0">
+            {/* Controls (Mobile + Desktop compact icons) */}
+            <div className="flex shrink-0 items-center gap-1">
+              {/* Mobile Search Icon Button */}
               <button
                 type="button"
-                onClick={() => setLanguageOpen((value) => !value)}
-                className={`inline-flex h-8 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2.5 sm:px-4 text-[12px] sm:text-[14px] font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
-                  }`}
-                style={{ fontWeight: 800 }}
-                aria-label="Switch language"
-                aria-expanded={languageOpen}
+                onClick={() => setSearchOpen(true)}
+                className="md:hidden flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
+                aria-label="Search"
               >
-                {/* Globe icon */}
-                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10" />
-                  <path d="M2 12h20" />
-                  <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                </svg>
-                {/* Desktop label */}
-                <span className="hidden sm:inline font-black" style={{ fontWeight: 800 }}>
-                  {languageChosen ? languageLabels[language] : 'Language'}
-                </span>
-                {/* Mobile label - compact to fit header controls without pushing the hamburger button off */}
-                <span className="sm:hidden font-black" style={{ fontWeight: 800 }}>
-                  {languageChosen ? (language === 'gu' ? 'ગુજ' : language === 'hi' ? 'हि' : 'EN') : 'Lang'}
-                </span>
-                <ChevronDown strokeWidth={2.5} className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
+                <Search className="h-4 w-4" />
               </button>
 
-              {languageOpen && (
-                <>
-                  {/* Backdrop overlay to close dropdown when clicking outside */}
-                  <div
-                    className="fixed inset-0 z-[9998] cursor-default"
-                    onClick={() => setLanguageOpen(false)}
-                  />
+              {/* Language switcher */}
+              <div className="relative z-50 transition-all duration-300 notranslate shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setLanguageOpen((value) => !value)}
+                  className={`inline-flex h-8 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2.5 sm:px-4 text-[12px] sm:text-[14px] font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
+                    }`}
+                  style={{ fontWeight: 800 }}
+                  aria-label="Switch language"
+                  aria-expanded={languageOpen}
+                >
+                  {/* Globe icon */}
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M2 12h20" />
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                  </svg>
+                  {/* Desktop label */}
+                  <span className="hidden sm:inline font-black" style={{ fontWeight: 800 }}>
+                    {languageChosen ? languageLabels[language] : 'Language'}
+                  </span>
+                  {/* Mobile label - compact to fit header controls without pushing the hamburger button off */}
+                  <span className="sm:hidden font-black" style={{ fontWeight: 800 }}>
+                    {languageChosen ? (language === 'gu' ? 'ગુજ' : language === 'hi' ? 'हि' : 'EN') : 'Lang'}
+                  </span>
+                  <ChevronDown strokeWidth={2.5} className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
+                </button>
 
-                  {/* Dropdown Menu Popup with Smooth Scale & Slide Entrance Animation */}
-                  <div className="absolute right-0 top-full z-[9999] mt-2 w-36 rounded-xl border border-border/90 bg-card p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.25)] backdrop-blur-md origin-top-right transition-all duration-200 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 notranslate">
-                    {(['gu', 'en', 'hi'] as const).map((item) => {
-                      const isSelected = languageChosen && language === item;
-                      return (
-                        <button
-                          key={item}
-                          type="button"
-                          onClick={() => {
-                            setLanguage(item);
-                            setLanguageOpen(false);
-                            setLanguageChosen(true);
-                            try { sessionStorage.setItem('gp-lang-chosen', 'true'); } catch (e) { }
-                          }}
-                          className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs font-bold transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 ${isSelected
-                            ? 'bg-red-600 text-white font-extrabold shadow-sm'
-                            : 'text-foreground hover:bg-muted'
-                            }`}
-                        >
-                          <span>{languageLabels[item]}</span>
-                          {isSelected && (
-                            <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
+                {languageOpen && (
+                  <>
+                    {/* Backdrop overlay to close dropdown when clicking outside */}
+                    <div
+                      className="fixed inset-0 z-[9998] cursor-default"
+                      onClick={() => setLanguageOpen(false)}
+                    />
+
+                    {/* Dropdown Menu Popup with Smooth Scale & Slide Entrance Animation */}
+                    <div className="absolute right-0 top-full z-[9999] mt-2 w-36 rounded-xl border border-border/90 bg-card p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.25)] backdrop-blur-md origin-top-right transition-all duration-200 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 notranslate">
+                      {(['gu', 'en', 'hi'] as const).map((item) => {
+                        const isSelected = languageChosen && language === item;
+                        return (
+                          <button
+                            key={item}
+                            type="button"
+                            onClick={() => {
+                              setLanguage(item);
+                              setLanguageOpen(false);
+                              setLanguageChosen(true);
+                              try { sessionStorage.setItem('gp-lang-chosen', 'true'); } catch (e) { }
+                            }}
+                            className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs font-bold transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 ${isSelected
+                              ? 'bg-red-600 text-white font-extrabold shadow-sm'
+                              : 'text-foreground hover:bg-muted'
+                              }`}
+                          >
+                            <span>{languageLabels[item]}</span>
+                            {isSelected && (
+                              <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Theme toggle */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
+                aria-label="Toggle dark mode"
+              >
+                {theme === 'dark' ? (
+                  <Sun className="h-4 w-4 text-amber-400 transition-transform duration-200 group-hover:rotate-45 group-hover:scale-110" />
+                ) : (
+                  <Moon className="h-4 w-4 transition-transform duration-200 group-hover:-rotate-12 group-hover:scale-110" />
+                )}
+              </button>
+
+              {/* User / Login */}
+              <button
+                type="button"
+                onClick={() => {
+                  const hasToken = typeof document !== 'undefined' && document.cookie.includes('access_token');
+                  if (hasToken) {
+                    router.push('/admin');
+                  } else {
+                    setAuthModalOpen(true);
+                  }
+                }}
+                className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+                aria-label="Sign In"
+                title="Sign In"
+              >
+                <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+              </button>
+
+              {/* Mobile hamburger */}
+              <button
+                type="button"
+                onClick={() => setMenuOpen((value) => !value)}
+                className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95"
+                aria-label="Open menu"
+              >
+                {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </button>
             </div>
-
-            {/* Theme toggle */}
-            <button
-              type="button"
-              onClick={toggleTheme}
-              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
-              aria-label="Toggle dark mode"
-            >
-              {theme === 'dark' ? (
-                <Sun className="h-4 w-4 text-amber-400 transition-transform duration-200 group-hover:rotate-45 group-hover:scale-110" />
-              ) : (
-                <Moon className="h-4 w-4 transition-transform duration-200 group-hover:-rotate-12 group-hover:scale-110" />
-              )}
-            </button>
-
-            {/* User / Login */}
-            <button
-              type="button"
-              onClick={() => {
-                const hasToken = typeof document !== 'undefined' && document.cookie.includes('access_token');
-                if (hasToken) {
-                  router.push('/admin');
-                } else {
-                  setAuthModalOpen(true);
-                }
-              }}
-              className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
-              aria-label="Sign In"
-              title="Sign In"
-            >
-              <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-            </button>
-
-            {/* Mobile hamburger */}
-            <button
-              type="button"
-              onClick={() => setMenuOpen((value) => !value)}
-              className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95"
-              aria-label="Open menu"
-            >
-              {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-            </button>
           </div>
-        </div>
 
           {/* Mobile Full-Width Search Overlay Bar */}
           {searchOpen && (
@@ -997,7 +997,7 @@ export default function Header() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
-              {['અમદાવાદ', 'સુરત', 'વડોદરા', 'રાજકોટ', 'ગાંધીનગર', 'અન્ય'].map((city) => (
+              {['અમદાવાદ', 'વડોદરા', 'સુરત', 'ગાંધીનગર', 'રાજકોટ', 'અન્ય શહેરો'].map((city) => (
                 <button
                   key={city}
                   type="button"

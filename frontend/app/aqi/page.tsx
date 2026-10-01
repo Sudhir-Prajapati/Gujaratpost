@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/components/AppProvider';
 import AqiSkeleton from '@/components/aqi/AqiSkeleton';
 import { getPublicArticles } from '@/lib/api';
@@ -242,12 +243,47 @@ function getAqiMeta(aqi: number, lang: string) {
   return { range: '301-500+', status: 'Hazardous', color: '#B91C1C', bg: 'bg-rose-900 text-white' };
 }
 
-export default function AqiPage() {
+function AqiPageContent() {
   const { language } = useApp();
+  const searchParams = useSearchParams();
+  const cityParam = searchParams.get('city');
+
+  const initialCity = useMemo(() => {
+    if (cityParam) {
+      const q = cityParam.trim().toLowerCase();
+      const matched = POPULAR_CITIES.find(
+        (c) =>
+          c.nameEn.toLowerCase() === q ||
+          c.nameGu.toLowerCase() === q ||
+          c.nameHi.toLowerCase() === q
+      );
+      if (matched) return matched;
+    }
+    return POPULAR_CITIES[0];
+  }, [cityParam]);
+
   const [activeTab, setActiveTab] = useState<'aqi' | 'weather'>('aqi');
-  const [selectedCity, setSelectedCity] = useState<CityData>(POPULAR_CITIES[0]);
+  const [selectedCity, setSelectedCity] = useState<CityData>(initialCity);
   const [searchQuery, setSearchQuery] = useState('');
   const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    if (cityParam) {
+      const q = cityParam.trim().toLowerCase();
+      const matched = POPULAR_CITIES.find(
+        (c) =>
+          c.nameEn.toLowerCase() === q ||
+          c.nameGu.toLowerCase() === q ||
+          c.nameHi.toLowerCase() === q
+      );
+      if (matched) {
+        setSelectedCity(matched);
+        if (typeof window !== 'undefined') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+    }
+  }, [cityParam]);
 
   const [liveAqi, setLiveAqi] = useState<{ aqi: number; pm25: number; pm10: number } | null>(null);
   const [liveWeather, setLiveWeather] = useState<{ temp: number; wind: number; humidity: number; condition: string } | null>(null);
@@ -539,15 +575,14 @@ export default function AqiPage() {
             {/* Spectrum Bar & Vertical Timestamp (Top Right) */}
             <div className="absolute top-6 right-8 flex items-start gap-4 z-10">
               <div className="hidden sm:flex flex-col items-end">
-                <div className="flex items-center justify-between w-64 text-[10px] font-bold text-neutral-600 dark:text-neutral-400 mb-1 select-none">
-                  <span>Good</span>
-                  <span>Moderate</span>
-                  <span>Poor</span>
-                  <span>Unhealthy</span>
-                  <span>Severe</span>
-                  <span>Hazardous</span>
+                {/* Category labels */}
+                <div className="grid grid-cols-6 w-72 mb-0.5">
+                  {['Good', 'Mod', 'Poor', 'Unhltly', 'Severe', 'Hzrd'].map((label) => (
+                    <span key={label} className="text-[8px] font-bold text-neutral-500 dark:text-neutral-400 text-center leading-tight">{label}</span>
+                  ))}
                 </div>
-                <div className="h-2 w-64 flex rounded-full overflow-hidden bg-neutral-200 dark:bg-zinc-800">
+                {/* Color bar */}
+                <div className="h-2 w-72 flex rounded-full overflow-hidden bg-neutral-200 dark:bg-zinc-800">
                   <div className="h-full w-[16.6%] bg-[#10B981]" />
                   <div className="h-full w-[16.6%] bg-[#F59E0B]" />
                   <div className="h-full w-[16.6%] bg-[#F97316]" />
@@ -555,21 +590,14 @@ export default function AqiPage() {
                   <div className="h-full w-[16.6%] bg-[#8B5CF6]" />
                   <div className="h-full w-[16.6%] bg-[#B91C1C]" />
                 </div>
-                <div className="flex items-center justify-between w-64 text-[9px] font-extrabold text-neutral-400 mt-1 select-none">
-                  <span>0</span>
-                  <span>50</span>
-                  <span>100</span>
-                  <span>150</span>
-                  <span>200</span>
-                  <span>300</span>
-                  <span>500+</span>
+                {/* Numeric scale */}
+                <div className="flex items-center justify-between w-72 mt-0.5 px-0">
+                  {['0', '50', '100', '150', '200', '300', '500+'].map((n) => (
+                    <span key={n} className="text-[8px] font-extrabold text-neutral-400">{n}</span>
+                  ))}
                 </div>
               </div>
 
-              {/* Rotated Vertical Timestamp */}
-              <div className="hidden lg:block text-[9px] font-bold text-neutral-400 rotate-90 origin-top-right translate-y-24 translate-x-3 select-none whitespace-nowrap">
-                Last Updated: 14 August 2026 | 10:30 AM
-              </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10 pt-2 pb-6">
@@ -577,7 +605,7 @@ export default function AqiPage() {
               {/* Left Column: Serif City Name + Rainbow Arc Gauge */}
               <div className="lg:col-span-6 flex flex-col items-center justify-center">
                 <h2 className="font-serif text-3xl sm:text-4xl font-normal text-neutral-800 dark:text-neutral-100 mb-4 tracking-wide text-center">
-                  {getCityName(selectedCity)}
+                  {selectedCity.nameEn}
                 </h2>
 
                 <div className="relative w-72 h-40 sm:w-84 sm:h-48 flex items-end justify-center">
@@ -678,7 +706,7 @@ export default function AqiPage() {
               <div className="flex items-center gap-3">
                 <Sun className="w-9 h-9 text-amber-500 animate-spin-slow" />
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-neutral-100">{getCityName(selectedCity)}</h2>
+                  <h2 className="text-2xl sm:text-3xl font-black text-neutral-900 dark:text-neutral-100">{selectedCity.nameEn}</h2>
                   <p className="text-xs text-neutral-400 font-bold mt-0.5">{liveWeather?.condition}</p>
                 </div>
               </div>
@@ -740,7 +768,7 @@ export default function AqiPage() {
               >
                 <CityReferenceIcon cityKey={city.nameEn} />
                 <span className="font-extrabold text-sm sm:text-base text-neutral-900 dark:text-neutral-100 tracking-tight">
-                  {getCityName(city)}
+                  {city.nameEn}
                 </span>
               </button>
             );
@@ -760,8 +788,8 @@ export default function AqiPage() {
 
             {/* TV9 Light Blue Pill Header Bar */}
             <div className="bg-[#E0F2FE] dark:bg-sky-950/70 text-zinc-900 dark:text-zinc-100 py-3.5 px-6 rounded-2xl font-black text-sm sm:text-base flex justify-between items-center mb-3 shadow-xs">
-              <span className="w-16">રેન્ક</span>
-              <span className="flex-1 text-center">શહેર</span>
+              <span className="w-16">{language === 'gu' ? 'રેન્ક' : language === 'hi' ? 'रैंक' : 'Rank'}</span>
+              <span className="flex-1 text-center">{language === 'gu' ? 'શહેર' : language === 'hi' ? 'शहर' : 'City'}</span>
               <span className="w-16 text-right">AQI</span>
             </div>
 
@@ -792,8 +820,8 @@ export default function AqiPage() {
 
             {/* TV9 Light Blue Pill Header Bar */}
             <div className="bg-[#E0F2FE] dark:bg-sky-950/70 text-zinc-900 dark:text-zinc-100 py-3.5 px-6 rounded-2xl font-black text-sm sm:text-base flex justify-between items-center mb-3 shadow-xs">
-              <span className="w-16">રેન્ક</span>
-              <span className="flex-1 text-center">શહેર</span>
+              <span className="w-16">{language === 'gu' ? 'રેન્ક' : language === 'hi' ? 'रैंक' : 'Rank'}</span>
+              <span className="flex-1 text-center">{language === 'gu' ? 'શહેર' : language === 'hi' ? 'शहर' : 'City'}</span>
               <span className="w-16 text-right">AQI</span>
             </div>
 
@@ -906,5 +934,13 @@ export default function AqiPage() {
       </section>
 
     </div>
+  );
+}
+
+export default function AqiPage() {
+  return (
+    <Suspense fallback={<AqiSkeleton />}>
+      <AqiPageContent />
+    </Suspense>
   );
 }

@@ -396,7 +396,7 @@ function HeroStorySlider({
 
   return (
     <div
-      className="flex flex-col gap-3 group/hero-slider relative"
+      className="flex flex-col gap-3 group/hero-slider relative h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -877,7 +877,15 @@ export default function HeroSection({
       <Fragment key="trending-frag">
         <TrendingSection
           key="trending"
-          initialArticles={initialHeroSettings?.trendingNewsArticles || (initialHeroSettings as any)?.setting?.trendingNewsArticles}
+          initialArticles={
+            (initialHeroSettings?.trendingNewsArticles && initialHeroSettings.trendingNewsArticles.length > 0)
+              ? initialHeroSettings.trendingNewsArticles
+              : ((initialHeroSettings as any)?.setting?.trendingNewsArticles && (initialHeroSettings as any)?.setting?.trendingNewsArticles.length > 0)
+                ? (initialHeroSettings as any)?.setting?.trendingNewsArticles
+                : (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+                  ? initialCategoryArticles['fact-check']
+                  : initialCategoryArticles['factcheck']
+          }
         />
         <AdSectionBanner section="AFTER_TRENDING" />
       </Fragment>
@@ -982,7 +990,19 @@ export default function HeroSection({
     entertainment: <EntertainTechLifeSection key="entertainment" language={language} initialArticles={publishedInitialArticles} initialCategoryArticles={initialCategoryArticles} />,
     technology: null,
     health: null,
-    'fact-check': <FactCheckSection key="fact-check" language={language} initialArticles={(initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0) ? initialCategoryArticles['factcheck'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })} />,
+    'fact-check': (
+      <FactCheckSection
+        key="fact-check"
+        language={language}
+        initialArticles={
+          (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+            ? initialCategoryArticles['fact-check']
+            : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+              ? initialCategoryArticles['factcheck']
+              : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
+        }
+      />
+    ),
     photos: (
       <Fragment key="photos-frag">
         <PhotoGallerySection language={language} />
@@ -1118,7 +1138,7 @@ export default function HeroSection({
         <div className="flex flex-col gap-6">
 
           {/* Top Row: Hero Story & Middle Column */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 items-stretch">
 
             {/* Hero Story Column -- Top 3 News Slider */}
             <HeroStorySlider
@@ -1146,7 +1166,7 @@ export default function HeroSection({
               }
 
               return (
-                <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0">
+                <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0 h-full">
                   {/* ─── DESKTOP VIEW (md: and up): 6 Image Article Boxes (3 Rows x 2 Columns, Perfectly Aligned with Left Hero) ─── */}
                   <div className="hidden md:grid md:grid-cols-2 md:gap-x-2.5 md:gap-y-2.5 items-start">
                     {afterTop3News.map((art, idx) => (

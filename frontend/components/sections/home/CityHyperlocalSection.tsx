@@ -1007,8 +1007,8 @@ export default function CityHyperlocalSection({
 
           {/* Section Header with Underline */}
           <div className="relative border-b-2 border-slate-900 pb-0.5 mb-0.5 flex items-center justify-between">
-            <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-sm select-none uppercase tracking-wide">
-              {language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'गुजरात' : 'Gujarat'}
+            <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none uppercase tracking-wide">
+              {language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}
             </span>
             <Link
               href="/category/gujarat"

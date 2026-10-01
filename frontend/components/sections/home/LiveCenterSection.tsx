@@ -25,21 +25,28 @@ function LivePanel({
   children: React.ReactNode;
 }) {
   const panelBg = variant === 'red'
-    ? 'bg-gradient-to-b from-[#C21E26] to-[#990D14] text-white border-red-700/20'
-    : 'bg-gradient-to-b from-[#0F1115] to-[#050608] text-white border-neutral-900';
+    ? 'bg-gradient-to-b from-[#C21E26] via-[#A8141B] to-[#8C0B12] text-white border-red-600/40 hover:border-red-400/80 shadow-lg hover:shadow-[0_20px_35px_-10px_rgba(179,18,27,0.45)]'
+    : 'bg-gradient-to-b from-[#161A20] via-[#101318] to-[#0A0C0F] text-white border-neutral-800 hover:border-neutral-600/90 shadow-lg hover:shadow-[0_20px_35px_-10px_rgba(0,0,0,0.85)]';
 
   const borderLine = variant === 'red' ? 'border-white/20' : 'border-white/10';
 
   return (
-    <div className={`relative flex flex-col rounded-2xl border p-4 shadow-md overflow-hidden min-h-[420px] ${panelBg}`}>
-      {/* Watermark in background */}
-      {watermark}
+    <div className={`group relative flex flex-col rounded-2xl border p-4.5 overflow-hidden min-h-[420px] transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] ${panelBg}`}>
+      {/* Top glowing luxury highlight line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+
+      {/* Watermark in background with smooth hover scale */}
+      <div className="transition-all duration-700 ease-out group-hover:scale-110 group-hover:rotate-1 pointer-events-none">
+        {watermark}
+      </div>
 
       {/* Header */}
       <div className={`mb-4 flex items-center justify-between pb-2.5 border-b select-none ${borderLine} relative z-10`}>
         <div className="flex items-center gap-2">
-          {icon}
-          <h3 className="text-[16px] font-extrabold tracking-tight leading-none text-white">{title}</h3>
+          <div className="transition-transform duration-300 group-hover:scale-125 group-hover:rotate-6">
+            {icon}
+          </div>
+          <h3 className="text-[16.5px] font-black tracking-tight leading-none text-white drop-shadow-xs">{title}</h3>
         </div>
         <div className="flex items-center">
           {rightElement}
@@ -53,7 +60,7 @@ function LivePanel({
         </div>
 
         {/* Source Footer */}
-        <p className={`pt-3 text-[10px] font-bold select-none mt-4 leading-none ${variant === 'red' ? 'text-white/60' : 'text-neutral-400'}`}>
+        <p className={`pt-3 text-[10.5px] font-extrabold select-none mt-4 leading-none transition-colors ${variant === 'red' ? 'text-white/70 group-hover:text-white' : 'text-neutral-400 group-hover:text-neutral-200'}`}>
           {sourceText}
         </p>
       </div>
@@ -268,21 +275,22 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         {/* ── Header Row ──────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 select-none">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="bg-[#B3121B] text-white text-[13px] font-black px-4 py-1.5 rounded-full inline-flex items-center gap-2 shadow-sm">
+            <span className="section-heading-badge bg-[#B3121B] text-white text-[13.5px] md:text-[14.5px] font-black px-4.5 py-1.5 rounded-full inline-flex items-center gap-2 shadow-sm transition-transform duration-200 hover:scale-105 cursor-default">
               <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
-              {language === 'gu' ? '((•)) લાઈવ સેન્ટર' : '((•)) Live Center'}
+              ((•)) Live Center
             </span>
-            <span className="text-[12.5px] text-muted-foreground font-extrabold">
-              {language === 'gu'
-                ? 'ઈંધણ ભાવ • શેરબજાર • રમતગમત — 2.5 મિનિટ અપડેટ'
-                : 'Fuel Price · Stock Market · Sports — 2.5 min updates'}
+            <span className="text-[12.5px] md:text-[13px] text-muted-foreground font-extrabold">
+              Fuel Price · Stock Market · Sports — 2.5 min updates
             </span>
           </div>
 
           {/* Top Right Live Tag */}
-          <span className="bg-red-50 text-[#B3121B] text-[11.5px] font-black px-3.5 py-1 rounded-full border border-red-300 flex items-center gap-1.5 shadow-xs">
-            <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-pulse" />
-            {language === 'gu' ? 'લાઈવ' : 'LIVE'}
+          <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] dark:text-red-400 text-[13px] md:text-[13.5px] font-black px-4 py-1.5 rounded-full border border-red-300/90 dark:border-red-800/60 flex items-center gap-2 shadow-2xs tracking-wide select-none transition-transform duration-200 hover:scale-105">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B3121B] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#B3121B]" />
+            </span>
+            <span>LIVE</span>
           </span>
         </div>
 
@@ -291,17 +299,17 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           {/* Panel 1: Fuel Price */}
           <LivePanel
-            title={language === 'gu' ? 'ઈંધણ ભાવ' : 'Fuel Price'}
+            title="Fuel Price"
             variant="red"
             watermark={FuelWatermark}
-            sourceText={language === 'gu' ? 'સ્ત્રોત: IOC / HPCL' : 'Source: IOC / HPCL'}
+            sourceText="Source: IOC / HPCL"
             rightElement={
               <div className="flex items-center gap-1 text-[12px] font-extrabold text-white select-none">
                 <div className="relative">
                   <select
                     value={fuelCity}
                     onChange={(e) => setFuelCity(e.target.value)}
-                    className="appearance-none bg-red-800/80 text-white text-[11px] font-black px-2.5 py-1 pr-6 rounded-md border border-red-400/40 focus:outline-none cursor-pointer"
+                    className="appearance-none bg-red-800/80 text-white text-[11px] font-black px-3 py-1 pr-6 rounded-md border border-red-400/40 focus:outline-none cursor-pointer hover:bg-red-900 transition-all duration-200 hover:scale-105 shadow-2xs"
                   >
                     <option value="Ahmedabad" className="bg-slate-900 text-white">Ahmedabad</option>
                     <option value="Vadodara" className="bg-slate-900 text-white">Vadodara</option>
@@ -315,32 +323,35 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             icon={<Fuel className="h-5 w-5 text-white" />}
           >
             {[
-              { name: 'પેટ્રોલ', nameEng: 'Petrol', price: activeFuel.petrol, unit: 'લીટર', symbol: 'P' as const },
-              { name: 'ડીઝલ', nameEng: 'Diesel', price: activeFuel.diesel, unit: 'લીટર', symbol: 'D' as const },
-              { name: 'CNG', nameEng: 'CNG', price: activeFuel.cng, unit: 'કિલો', symbol: 'C' as const }
+              { name: 'Petrol', sub: 'Per Litre', price: activeFuel.petrol, unit: '/ Litre', symbol: 'P' as const },
+              { name: 'Diesel', sub: 'Per Litre', price: activeFuel.diesel, unit: '/ Litre', symbol: 'D' as const },
+              { name: 'CNG', sub: 'Per Kg', price: activeFuel.cng, unit: '/ Kg', symbol: 'C' as const }
             ].map((item) => (
-              <div key={item.symbol} className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-400 hover:shadow transition-shadow">
+              <div
+                key={item.symbol}
+                className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-300/80 hover:border-red-400 hover:border-l-4 hover:border-l-red-600 transition-all duration-200 hover:scale-[1.025] hover:shadow-lg hover:bg-neutral-50/90 cursor-pointer select-none group/item active:scale-[0.99]"
+              >
                 <div className="flex items-center gap-3">
-                  <div className={`h-9 w-9 rounded-full flex items-center justify-center font-extrabold text-[16px] shrink-0
-                    ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-300' : ''}
-                    ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-300' : ''}
-                    ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-300' : ''}
+                  <div className={`h-9 w-9 rounded-full flex items-center justify-center font-black text-[15px] shrink-0 transition-transform duration-300 group-hover/item:scale-115 group-hover/item:rotate-6 shadow-2xs
+                    ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-200' : ''}
+                    ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-200' : ''}
+                    ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : ''}
                   `}>
                     {item.symbol}
                   </div>
                   <div className="min-w-0">
-                    <p className="font-extrabold text-[13.5px] text-neutral-900 leading-none">
-                      {language === 'gu' ? `${item.name} (${item.nameEng})` : `${item.nameEng} (${item.nameEng})`}
+                    <p className="font-black text-[14px] text-neutral-900 leading-none group-hover/item:text-red-700 transition-colors">
+                      {item.name}
                     </p>
-                    <p className="text-[10px] font-bold text-neutral-400 mt-2 leading-none">
-                      {language === 'gu' ? `પ્રતિ ${item.unit}` : `per ${item.unit === 'લીટર' ? 'liter' : 'kg'}`}
+                    <p className="text-[10.5px] font-bold text-neutral-500 mt-1.5 leading-none">
+                      {item.sub}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-[16px] font-black text-neutral-900 leading-none">₹{item.price}</p>
-                  <p className="text-[9px] font-bold text-neutral-400 mt-1.5 leading-none">
-                    / {item.unit}
+                  <p className="text-[16.5px] font-black text-neutral-900 leading-none group-hover/item:text-red-700 transition-colors">₹{item.price}</p>
+                  <p className="text-[9.5px] font-bold text-neutral-400 mt-1 leading-none">
+                    {item.unit}
                   </p>
                 </div>
               </div>
@@ -349,32 +360,35 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           {/* Panel 2: Stock Market */}
           <LivePanel
-            title={language === 'gu' ? 'શેરબજાર' : 'Stock Market'}
+            title="Stock Market"
             variant="black"
             watermark={MarketWatermark}
-            sourceText={language === 'gu' ? 'સ્ત્રોત: Yahoo Finance' : 'Source: Yahoo Finance'}
+            sourceText="Source: Yahoo Finance"
             rightElement={
-              <span className="text-[10px] font-bold text-neutral-400 leading-none whitespace-nowrap">
-                {language === 'gu' ? 'ભારત ₹ INR' : 'India ₹ INR'}
+              <span className="text-[11px] font-black text-neutral-300 leading-none whitespace-nowrap px-2.5 py-1 rounded-full bg-white/10 border border-white/10">
+                India ₹ INR
               </span>
             }
             icon={<TrendingUp className="h-5 w-5 text-white" />}
           >
             {stocks.map((item) => (
-              <div key={item.name} className="rounded-xl bg-[#121518] p-3 border border-[#1F252C] shadow-sm">
+              <div
+                key={item.name}
+                className="rounded-xl bg-[#14181D] hover:bg-[#1A2027] p-3.5 border border-[#222933] hover:border-[#384353] hover:border-l-4 hover:border-l-emerald-500 shadow-sm transition-all duration-200 hover:scale-[1.025] hover:shadow-lg cursor-pointer select-none group/stock active:scale-[0.99]"
+              >
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-extrabold text-[13.5px] text-white leading-none">{item.name}</p>
-                    <p className="text-[10px] font-bold text-neutral-400 mt-2 leading-none">{item.exchange}</p>
+                    <p className="font-black text-[14px] text-white leading-none group-hover/stock:text-sky-400 transition-colors">{item.name}</p>
+                    <p className="text-[10px] font-bold text-neutral-400 mt-1.5 leading-none">{item.exchange}</p>
                   </div>
-                  <p className="text-[15px] font-black text-white leading-none">
+                  <p className="text-[15.5px] font-black text-white leading-none group-hover/stock:text-white transition-colors">
                     ₹{item.value.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
                   </p>
                 </div>
-                <div className={`mt-2.5 flex items-center gap-1 text-[11px] font-black select-none leading-none
-                  ${item.change >= 0 ? 'text-emerald-500' : 'text-red-500'}
+                <div className={`mt-2.5 flex items-center gap-1.5 text-[11px] font-black select-none leading-none
+                  ${item.change >= 0 ? 'text-emerald-400' : 'text-red-400'}
                 `}>
-                  {item.change >= 0 ? '↗' : '↘'}
+                  <span className="text-[12px]">{item.change >= 0 ? '↗' : '↘'}</span>
                   <span>{item.change >= 0 ? '+' : ''}{item.change.toFixed(1)} ({item.changePercent >= 0 ? '+' : ''}{item.changePercent.toFixed(2)}%)</span>
                 </div>
               </div>
@@ -383,38 +397,44 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           {/* Panel 3: Cricket */}
           <LivePanel
-            title={language === 'gu' ? 'ક્રિકેટ' : 'Cricket'}
+            title="Cricket"
             variant="red"
             watermark={CricketWatermark}
-            sourceText={language === 'gu' ? 'સ્ત્રોત: ESPN' : 'Source: ESPN'}
-            rightElement={
-              <Link href="/sports" className="text-[12px] font-extrabold text-white leading-none hover:text-white/80 transition-colors select-none whitespace-nowrap">
-                {language === 'gu' ? '+ વધુ' : '+ More'}
-              </Link>
-            }
+            sourceText="Source: ESPN"
             icon={<Trophy className="h-5 w-5 text-white" />}
           >
             {cricketMatches.map((match, i) => (
-              <div key={i} className="rounded-xl bg-white p-3 shadow-sm border border-neutral-400">
-                <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-neutral-400">
-                  <p className="font-extrabold text-[12.5px] text-neutral-900 leading-none">{match.title}</p>
+              <div
+                key={i}
+                className="rounded-xl bg-white p-3.5 shadow-sm border border-neutral-300/80 hover:border-red-400 hover:border-l-4 hover:border-l-red-600 transition-all duration-200 hover:scale-[1.025] hover:shadow-lg hover:bg-neutral-50/90 cursor-pointer select-none group/cricket active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-200">
+                  <p className="font-black text-[13px] text-neutral-900 leading-none group-hover/cricket:text-red-700 transition-colors">{match.title}</p>
                   {match.statusType === 'live' ? (
-                    <span className="bg-emerald-50 text-emerald-600 px-2 py-0.5 text-[8.5px] font-black rounded leading-none select-none border border-emerald-300">
-                      {match.statusText}
+                    <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[9px] font-black rounded flex items-center gap-1.5 border border-emerald-300 shadow-2xs">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-600" />
+                      </span>
+                      {match.statusText || 'LIVE'}
+                    </span>
+                  ) : match.statusType === 'result' || match.statusText === 'Result' ? (
+                    <span className="bg-neutral-800 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-2xs">
+                      Result
                     </span>
                   ) : (
-                    <span className="text-neutral-400 text-[9.5px] font-bold select-none">
+                    <span className="text-neutral-500 text-[10px] font-extrabold select-none bg-neutral-100 px-2 py-0.5 rounded">
                       {match.statusText}
                     </span>
                   )}
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-[12.5px] font-bold text-neutral-700">
-                    <span>{match.team1}</span>
+                    <span className="group-hover/cricket:text-neutral-900 transition-colors">{match.team1}</span>
                     <span className="font-black text-neutral-900">{match.team1Score}</span>
                   </div>
                   <div className="flex justify-between items-center text-[12.5px] font-bold text-neutral-700">
-                    <span>{match.team2}</span>
+                    <span className="group-hover/cricket:text-neutral-900 transition-colors">{match.team2}</span>
                     <span className="font-black text-neutral-900">{match.team2Score}</span>
                   </div>
                 </div>
@@ -424,38 +444,44 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           {/* Panel 4: Football */}
           <LivePanel
-            title={language === 'gu' ? 'ફૂટબોલ' : 'Football'}
+            title="Football"
             variant="black"
             watermark={FootballWatermark}
-            sourceText={language === 'gu' ? 'સ્ત્રોત: ESPN' : 'Source: ESPN'}
-            rightElement={
-              <Link href="/sports" className="text-[12px] font-extrabold text-white leading-none hover:text-white/80 transition-colors select-none whitespace-nowrap">
-                {language === 'gu' ? '+ વધુ' : '+ More'}
-              </Link>
-            }
+            sourceText="Source: ESPN"
             icon={<Shield className="h-5 w-5 text-white" />}
           >
             {footballMatches.map((match, i) => (
-              <div key={i} className="rounded-xl bg-[#121518] p-3 border border-[#1F252C] shadow-sm">
-                <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#1F252C]">
-                  <p className="font-extrabold text-[12.5px] text-white leading-none">{match.league}</p>
+              <div
+                key={i}
+                className="rounded-xl bg-[#14181D] hover:bg-[#1A2027] p-3.5 border border-[#222933] hover:border-[#384353] hover:border-l-4 hover:border-l-sky-500 shadow-sm transition-all duration-200 hover:scale-[1.025] hover:shadow-lg cursor-pointer select-none group/football active:scale-[0.99]"
+              >
+                <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-[#222933]">
+                  <p className="font-black text-[13px] text-white leading-none group-hover/football:text-sky-400 transition-colors">{match.league}</p>
                   {match.statusType === 'live' ? (
-                    <span className="bg-[#B3121B] text-white px-2 py-0.5 text-[8.5px] font-black rounded leading-none select-none">
-                      {match.statusText}
+                    <span className="bg-[#B3121B] text-white px-2 py-0.5 text-[9px] font-black rounded flex items-center gap-1.5 shadow-2xs">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+                      </span>
+                      {match.statusText || 'LIVE'}
+                    </span>
+                  ) : match.statusType === 'result' || match.statusText === 'FT' ? (
+                    <span className="bg-emerald-950 text-emerald-300 border border-emerald-800/60 text-[9px] font-black px-2 py-0.5 rounded shadow-2xs">
+                      FT
                     </span>
                   ) : (
-                    <span className="text-neutral-400 text-[9.5px] font-bold select-none">
+                    <span className="text-neutral-400 text-[10px] font-extrabold select-none bg-white/5 px-2 py-0.5 rounded">
                       {match.statusText}
                     </span>
                   )}
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-[12.5px] font-bold text-neutral-300">
-                    <span>{match.homeTeam}</span>
+                    <span className="group-hover/football:text-white transition-colors">{match.homeTeam}</span>
                     <span className="font-black text-white">{match.homeScore}</span>
                   </div>
                   <div className="flex justify-between items-center text-[12.5px] font-bold text-neutral-300">
-                    <span>{match.awayTeam}</span>
+                    <span className="group-hover/football:text-white transition-colors">{match.awayTeam}</span>
                     <span className="font-black text-white">{match.awayScore}</span>
                   </div>
                 </div>
@@ -468,9 +494,9 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         {/* ── Bottom Live Highlights Ticker Bar ───────────────────── */}
         <div className="mt-6 pt-4 border-t-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 select-none">
           <div className="flex items-center gap-2 shrink-0">
-            <span className="bg-[#B3121B] text-white text-[12px] font-black px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs">
-              <Megaphone className="h-4 w-4" />
-              {language === 'gu' ? 'લાઈવ હાઈલાઈટ્સ' : 'Live Highlights'}
+            <span className="bg-[#B3121B] text-white text-[12px] font-black px-3.5 py-1.5 rounded-lg flex items-center gap-1.5 shadow-xs hover:scale-105 transition-transform duration-200 cursor-default">
+              <Megaphone className="h-4 w-4 animate-bounce" />
+              Live Highlights
             </span>
           </div>
 
@@ -488,9 +514,17 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
           <Link
             href="/live-updates"
-            className="shrink-0 border-2 border-red-200 dark:border-red-900/40 text-[#B3121B] dark:text-red-400 font-black text-[14px] md:text-[15px] rounded-lg px-4 py-1.5 flex items-center gap-1 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors shadow-xs"
+            className="group/link relative overflow-hidden shrink-0 border-2 border-red-300 dark:border-red-800/80 bg-white dark:bg-slate-900 text-[#B3121B] dark:text-red-400 hover:text-white dark:hover:text-white font-black text-[14px] md:text-[15px] rounded-xl px-4.5 py-1.5 flex items-center gap-1.5 transition-all duration-300 hover:border-[#B3121B] hover:shadow-[0_8px_20px_-3px_rgba(179,18,27,0.45)] hover:-translate-y-0.5 active:scale-95 select-none"
           >
-            {language === 'gu' ? 'વધુ અપડેટસ જુઓ →' : 'View More Updates →'}
+            {/* Sliding vibrant crimson background fill on hover */}
+            <span className="absolute inset-0 bg-gradient-to-r from-[#C21E26] via-[#B3121B] to-[#8C0B12] transition-transform duration-300 ease-out -translate-x-full group-hover/link:translate-x-0" />
+
+            {/* Sweep light shimmer flare */}
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover/link:translate-x-full" />
+
+            {/* Content with smooth text color and arrow slide */}
+            <span className="relative z-10 transition-colors duration-200">View More Updates</span>
+            <span className="relative z-10 font-bold text-base transition-transform duration-300 ease-out group-hover/link:translate-x-1.5">→</span>
           </Link>
         </div>
 

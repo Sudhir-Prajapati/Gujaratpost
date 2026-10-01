@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -178,10 +178,10 @@ export default function LatestUpdatesSection({
     <div className="flex flex-col min-w-0">
       {/* ── 1. LATEST NEWS SECTION (Latest સમાચાર) ── */}
       <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2.5 mb-6">
-        <span className="bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[17px] md:text-[19px] rounded-sm tracking-tight leading-none">
+        <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[17px] md:text-[19px] rounded-lg tracking-tight leading-none">
           {labelLatest}
         </span>
-        <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] animate-pulse">
+        <span className="text-[#B3121B] font-black text-[16px] sm:text-[18px] md:text-[20px] animate-pulse select-none tracking-tight">
           {labelContinuous}
         </span>
       </div>
@@ -284,7 +284,7 @@ export default function LatestUpdatesSection({
       {/* ── 2. POPULAR NEWS SECTION (લોકપ્રિય સમાચાર - Admin Managed) ── */}
       <div className="mt-4 pt-3 border-t border-border/60">
         <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
-          <span className="bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[17px] md:text-[19px] rounded-sm tracking-tight leading-none">
+          <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[17px] md:text-[19px] rounded-lg tracking-tight leading-none">
             {language === 'gu' ? 'લોકપ્રિય સમાચાર' : language === 'hi' ? 'लोकप्रिय समाचार' : 'Popular News'}
           </span>
           <Link

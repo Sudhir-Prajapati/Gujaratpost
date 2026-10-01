@@ -666,6 +666,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [adSlide, setAdSlide] = useState(0);
   const [relatedLimit, setRelatedLimit] = useState(8);
   const [isContentExpanded, setIsContentExpanded] = useState(false);
+  const [sidebarMoreRecommended, setSidebarMoreRecommended] = useState(false);
+  const isRecommendedExpanded = isContentExpanded || sidebarMoreRecommended;
 
   const [mostReadArticles, setMostReadArticles] = useState<typeof trending>(trending.slice(0, 5));
 
@@ -1077,11 +1079,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   }, [article]);
 
   const trendingLimit = useMemo(() => {
+    if (!isContentExpanded) return 3;
     const textLength = (article.content || '').length + ((article as any).contentGu || '').length + (article.excerpt || '').length;
     if (textLength < 350) return 3;
     if (textLength < 800) return 4;
     return 5;
-  }, [article]);
+  }, [article, isContentExpanded]);
 
   const streamList = useMemo(() => {
     const mainId = String(article.id);
@@ -1487,7 +1490,10 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                       <div className="flex flex-col items-center justify-center relative z-20 pt-2 pb-4">
                         <button
                           type="button"
-                          onClick={() => setIsContentExpanded(true)}
+                          onClick={() => {
+                            setIsContentExpanded(true);
+                            setSidebarMoreRecommended(true);
+                          }}
                           className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
                         >
                           <span className="text-base font-black tracking-wide leading-none">
@@ -1510,6 +1516,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                           type="button"
                           onClick={() => {
                             setIsContentExpanded(false);
+                            setSidebarMoreRecommended(false);
                             window.scrollTo({ top: 380, behavior: 'smooth' });
                           }}
                           className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
@@ -1559,15 +1566,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <span className="d"></span>
                   <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
                 </div>
-                <div className="space-y-0 mt-3">
-                  {sidebarRecommendedPool.slice(0, isContentExpanded ? 8 : 6).map((item, index) => {
+                <div className="space-y-0 mt-3 transition-all duration-300">
+                  {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 2).map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
                       <Link key={item.id || index} href={`/news/${item.slug}`} className="s-compact hover:opacity-85 transition-opacity">
                         <div>
                           <span className="kick">{itemCategory}</span>
                           <h3><AutoArticleTitle article={item} language={language} /></h3>
-
                         </div>
                         <div className="imgwrap">
                           <Image src={getCardThumbnail(item, index)} alt={item.title} fill sizes="92px" className="object-cover" />
@@ -1575,6 +1581,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                       </Link>
                     );
                   })}
+
+                  {!isRecommendedExpanded && sidebarRecommendedPool.length > 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setSidebarMoreRecommended(true)}
+                      className="mt-3 w-full py-2 px-3 text-center text-[12.5px] font-bold text-[#B3121B] hover:text-white hover:bg-[#B3121B] rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none shadow-xs active:scale-95"
+                    >
+                      <span>{uiLabel(language, { en: 'View More Stories', gu: 'વધુ સમાચાર જુઓ', hi: 'और खबरें देखें' })}</span>
+                      <ChevronDown className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  )}
                 </div>
               </div>
 

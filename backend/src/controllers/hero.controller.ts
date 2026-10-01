@@ -239,10 +239,18 @@ export class HeroController {
             })
           ).catch(() => []),
 
-          // Query D: Active trending posts
+          // Query D: Fact Check posts (for Fact Check slider)
           withDbRetry(() =>
             prisma.post.findMany({
-              where: { isTrending: true, status: 'PUBLISHED' },
+              where: {
+                status: 'PUBLISHED',
+                OR: [
+                  { category: { slug: 'fact-check' } },
+                  { category: { slug: 'factcheck' } },
+                  { category: { name: { contains: 'Fact Check' } } },
+                  { isTrending: true },
+                ],
+              },
               orderBy: [{ createdAt: 'desc' }],
               take: 10,
               select: heroPostSelect,

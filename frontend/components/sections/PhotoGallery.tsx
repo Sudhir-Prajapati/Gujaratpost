@@ -145,7 +145,7 @@ export default function PhotoGallery() {
       <div className="mx-auto max-w-screen-xl px-4">
         {/* Top Header Matching User Mockup */}
         <div className="flex items-center justify-between pb-3 border-b-2 border-neutral-900 dark:border-neutral-700 mb-6">
-          <div className="bg-[#B3121B] text-white font-extrabold text-[15px] px-4 py-2 rounded-xl shadow-sm tracking-wide">
+          <div className="section-heading-badge bg-[#B3121B] text-white font-extrabold text-[15px] px-4 py-2 rounded-xl shadow-sm tracking-wide">
             {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
           </div>
           <Link

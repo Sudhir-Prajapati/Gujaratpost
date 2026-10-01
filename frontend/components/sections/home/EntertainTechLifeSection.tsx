@@ -473,7 +473,7 @@ export default function EntertainTechLifeSection({
     <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
-        <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
+        <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu'
             ? 'હેલ્થ   •   મનોરંજન   •   ટેકનોલોજી'
             : language === 'hi'

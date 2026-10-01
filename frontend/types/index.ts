@@ -36,6 +36,7 @@ export interface Article {
   tagsHi?: string[];
   author: Author;
   publishedAt: string;
+  createdAt?: string;
   updatedAt: string;
   readingTime?: number;
   isTrending?: boolean;

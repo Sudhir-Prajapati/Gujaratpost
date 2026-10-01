@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Cloud, Sun, CloudRain, Wind, Droplet, Thermometer, ChevronDown, ArrowUpRight } from 'lucide-react';
 import type { Language } from '@/types';
 import { CITY_COORDS, parseWmoCode, parseAqi } from './homeHelpers';
@@ -90,14 +91,19 @@ export default function WeatherDashboardSection({ language }: { language: Langua
       <div className="bg-[#f8f9fa] dark:bg-slate-900/90 p-6 md:p-7 rounded-2xl rounded-tl-none border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 shadow-md relative">
         {activeTab === 'weather' ? (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-center">
-            {/* Left Area - Selected City weather info */}
+            {/* Left Area - Selected City weather info linking to AQI page */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
-              <div className="flex flex-col">
-                <h3 className="text-lg md:text-xl font-black text-slate-950 dark:text-white flex items-center gap-2">
+              <Link
+                href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
+                className="group flex flex-col cursor-pointer"
+                title={isGu ? `${selectedCity} માટે હવામાન અને AQI વિગતવાર જુઓ` : `View ${selectedCity} Weather & AQI details`}
+              >
+                <h3 className="text-lg md:text-xl font-black text-slate-950 dark:text-white flex items-center gap-2 group-hover:text-[#B3121B] transition-colors">
                   {selectedCity} {isGu ? 'હવામાનની સ્થિતિ' : 'Weather Status'}
+                  <ArrowUpRight className="h-4 w-4 text-[#B3121B] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </h3>
                 <p className="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 mt-1 select-none">
-                  {isGu ? 'વર્તમાન તાપમાનનું સ્તર' : 'Current temperature level'}
+                  {isGu ? 'વર્તમાન તાપમાનનું સ્તર (સંપૂર્ણ AQI જુઓ →)' : 'Current temperature level (View full AQI →)'}
                 </p>
                 <div className="flex items-center gap-5 mt-4">
                   <div className="relative">
@@ -109,15 +115,15 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                     <span className="text-4xl md:text-5xl font-black text-slate-950 dark:text-white select-none">
                       {mainWeather.temp}°C
                     </span>
-                    <span className="mt-1.5 self-start bg-[#B3121B] text-white text-[11px] font-black px-3.5 py-1 rounded-full uppercase leading-none select-none shadow-sm">
+                    <span className="mt-1.5 self-start bg-[#B3121B] text-white text-[11px] font-black px-3.5 py-1 rounded-full uppercase leading-none select-none shadow-sm group-hover:shadow-md transition-shadow">
                       {isGu ? mainWeather.descGu : mainWeather.desc}
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             </div>
 
-            {/* Right Area - Other Cities */}
+            {/* Right Area - Other Cities (Vadodara, Surat, Rajkot) linking to AQI page */}
             <div className="flex flex-col gap-4">
               {/* City selector dropdown on top right */}
               <div className="self-end flex items-center gap-2">
@@ -136,23 +142,24 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                 </div>
               </div>
 
-              {/* City cards with Clean Black, Red, White styling */}
+              {/* City cards with Clean Black, Red, White styling linking to AQI page */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {otherCities.map((city) => {
                   const item = weatherData[city];
                   return (
-                    <div
+                    <Link
                       key={city}
-                      className="bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] relative hover:shadow-md hover:border-[#B3121B]/40 transition-all duration-300"
+                      href={`/aqi?city=${encodeURIComponent(city)}`}
+                      className="group bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] relative hover:shadow-md hover:border-[#B3121B] hover:scale-[1.02] transition-all duration-300 cursor-pointer select-none"
+                      title={isGu ? `${city} માટે સંપૂર્ણ હવામાન અને AQI પેજ જુઓ` : `View full Weather & AQI page for ${city}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] font-black text-slate-950 dark:text-white">{city}</span>
-                        <button
-                          onClick={() => setSelectedCity(city)}
-                          className="h-6 w-6 bg-[#B3121B] text-white rounded-full flex items-center justify-center hover:bg-slate-950 transition-colors shadow-xs"
+                        <span className="text-[13px] font-black text-slate-950 dark:text-white group-hover:text-[#B3121B] transition-colors">{city}</span>
+                        <span
+                          className="h-6 w-6 bg-[#B3121B] text-white rounded-full flex items-center justify-center group-hover:bg-slate-950 group-hover:scale-110 transition-all shadow-xs"
                         >
                           <ArrowUpRight className="h-3 w-3" />
-                        </button>
+                        </span>
                       </div>
                       <div className="flex items-center justify-between gap-3 mt-1">
                         {item.icon === 'cloud' && <Cloud className="h-8 w-8 text-slate-950 dark:text-white shrink-0" />}
@@ -170,34 +177,48 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                           </span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
 
-              {/* Bottom update timestamp */}
-              <div className="text-[10px] text-slate-500 font-semibold text-right select-none mt-2">
-                Last Update: {lastUpdateStr || '2026-07-16 18:31'} (local time)
+              {/* Bottom update timestamp + Link to AQI page */}
+              <div className="flex items-center justify-between mt-2 select-none">
+                <Link
+                  href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
+                  className="text-xs font-black text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{isGu ? 'સંપૂર્ણ હવામાન & AQI વિગતો જુઓ' : 'View Full Weather & AQI Details'}</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+                <div className="text-[10px] text-slate-500 font-semibold text-right">
+                  Last Update: {lastUpdateStr || '2026-07-16 18:31'} (local time)
+                </div>
               </div>
             </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-center">
-            {/* Left Area - Selected City AQI info */}
+            {/* Left Area - Selected City AQI info linking to AQI page */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
-              <div className="flex flex-col">
-                <h3 className="text-lg md:text-xl font-black text-slate-950 dark:text-white">
+              <Link
+                href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
+                className="group flex flex-col cursor-pointer"
+                title={isGu ? `${selectedCity} માટે સંપૂર્ણ AQI વિગતવાર જુઓ` : `View detailed AQI for ${selectedCity}`}
+              >
+                <h3 className="text-lg md:text-xl font-black text-slate-950 dark:text-white flex items-center gap-2 group-hover:text-[#B3121B] transition-colors">
                   {selectedCity} {isGu ? 'હવાની ગુણવત્તા સૂચકાંક (AQI)' : 'Air Quality Index'}
+                  <ArrowUpRight className="h-4 w-4 text-[#B3121B] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                 </h3>
-                <p className="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 mt-1">
-                  {isGu ? 'વર્તમાન વાયુ પ્રદૂષણ સ્તર' : 'Current air pollution levels'}
+                <p className="text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 mt-1 select-none">
+                  {isGu ? 'વર્તમાન વાયુ પ્રદૂષણ સ્તર (સંપૂર્ણ AQI જુઓ →)' : 'Current air pollution levels (View full AQI →)'}
                 </p>
                 <div className="flex items-center gap-5 mt-4">
-                  <div className="h-14 w-14 rounded-xl bg-[#B3121B] text-white flex items-center justify-center text-xl font-black shadow-md select-none">
+                  <div className="h-14 w-14 rounded-xl bg-[#B3121B] text-white flex items-center justify-center text-xl font-black shadow-md select-none group-hover:scale-105 transition-transform">
                     {aqiData[selectedCity]?.value}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[16px] font-black text-slate-950 dark:text-white">
+                    <span className="text-[16px] font-black text-slate-950 dark:text-white group-hover:text-[#B3121B] transition-colors">
                       {isGu ? aqiData[selectedCity]?.labelGu : aqiData[selectedCity]?.label}
                     </span>
                     <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 mt-0.5">
@@ -205,10 +226,10 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             </div>
 
-            {/* Right Area - Other Cities AQI */}
+            {/* Right Area - Other Cities AQI linking to AQI page */}
             <div className="flex flex-col gap-4">
               {/* City selector dropdown on top right */}
               <div className="self-end flex items-center gap-2">
@@ -231,11 +252,20 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                 {otherCities.map((city) => {
                   const item = aqiData[city];
                   return (
-                    <div
+                    <Link
                       key={city}
-                      className="bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] hover:shadow-md hover:border-[#B3121B]/40 transition-all duration-300"
+                      href={`/aqi?city=${encodeURIComponent(city)}`}
+                      className="group bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] hover:shadow-md hover:border-[#B3121B] hover:scale-[1.02] transition-all duration-300 cursor-pointer select-none"
+                      title={isGu ? `${city} માટે સંપૂર્ણ AQI પેજ જુઓ` : `View full AQI page for ${city}`}
                     >
-                      <span className="text-[13px] font-black text-slate-950 dark:text-white">{city}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[13px] font-black text-slate-950 dark:text-white group-hover:text-[#B3121B] transition-colors">{city}</span>
+                        <span
+                          className="h-6 w-6 bg-[#B3121B] text-white rounded-full flex items-center justify-center group-hover:bg-slate-950 group-hover:scale-110 transition-all shadow-xs"
+                        >
+                          <ArrowUpRight className="h-3 w-3" />
+                        </span>
+                      </div>
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-[12px] font-black text-white px-2.5 py-1 rounded bg-[#B3121B] shadow-sm select-none">
                           {item.value} AQI
@@ -244,12 +274,23 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                           {isGu ? item.labelGu : item.label}
                         </span>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
-              <div className="text-[10px] text-slate-500 font-semibold text-right select-none mt-2">
-                Last Update: {lastUpdateStr || '2026-07-16 18:31'} (local time)
+
+              {/* Bottom update timestamp + Link to AQI page */}
+              <div className="flex items-center justify-between mt-2 select-none">
+                <Link
+                  href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
+                  className="text-xs font-black text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <span>{isGu ? 'સંપૂર્ણ હવામાન & AQI વિગતો જુઓ' : 'View Full Weather & AQI Details'}</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+                <div className="text-[10px] text-slate-500 font-semibold text-right">
+                  Last Update: {lastUpdateStr || '2026-07-16 18:31'} (local time)
+                </div>
               </div>
             </div>
           </div>

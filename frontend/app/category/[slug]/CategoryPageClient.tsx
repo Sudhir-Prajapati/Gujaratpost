@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Play, Video as VideoIcon, ChevronDown } from 'lucide-react';
+import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import {
@@ -14,13 +14,33 @@ import {
   formatDate,
 } from '@/data';
 import { getCategoryColor, toGu } from '@/lib/utils';
-import { getPublicVideos } from '@/lib/api';
+import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
 import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkCategoryFeed from '@/components/apk/ApkCategoryFeed';
+
+const FALLBACK_GALLERY_IMAGES = [
+  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
+  'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=800&q=80',
+  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80',
+  'https://images.unsplash.com/photo-1541872703-74c5e44368f9?w=800&q=80',
+  'https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?w=800&q=80',
+  'https://images.unsplash.com/photo-1599930113854-d6d7fd521f10?w=800&q=80',
+  'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=90',
+];
+
+const FALLBACK_NEWS_IMAGES = [
+  'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1526470608268-f674ce90ebd4?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1508921340878-ba53e1f016ec?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=800&auto=format&fit=crop&q=80',
+  'https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&auto=format&fit=crop&q=80',
+];
 
 /* ── Types ────────────────────────────────────────────────── */
 interface Props {
@@ -67,11 +87,18 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
   const { language } = useApp();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
-  const [visibleCount, setVisibleCount] = useState(9);
+  const [visibleCount, setVisibleCount] = useState(12);
 
   // Videos state for Video filter
   const [videos, setVideos] = useState<any[]>([]);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+
+  // Also Read: Crime & Fact Check articles
+  const [crimeArticles, setCrimeArticles] = useState<any[]>([]);
+  const [factCheckArticles, setFactCheckArticles] = useState<any[]>([]);
+
+  // Photo Gallery
+  const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
 
   // Scroll page to top instantly whenever category page mounts or slug changes
   useEffect(() => {
@@ -88,6 +115,34 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
       })
       .catch(() => { });
   }, []);
+
+  // Fetch Crime & Fact Check articles for "Also Read" section (12 Crime + 12 Fact Check = 24 articles)
+  useEffect(() => {
+    getPublicArticles({ categorySlug: 'crime', limit: 20 })
+      .then((res) => { if (res?.articles) setCrimeArticles(res.articles); })
+      .catch(() => {});
+    getPublicArticles({ categorySlug: 'fact-check', limit: 20 })
+      .then((res) => { if (res?.articles) setFactCheckArticles(res.articles); })
+      .catch(() => {});
+  }, []);
+
+  // Fetch Photo Gallery
+  useEffect(() => {
+    getPublicGallery({ limit: 8 })
+      .then((res) => { if (Array.isArray(res)) setGalleryPhotos(res.slice(0, 8)); })
+      .catch(() => {});
+  }, []);
+
+  // Interleave Crime & Fact-Check articles for "Also Read" (24 articles total: 12 Crime + 12 Fact-Check)
+  const alsoReadArticles = useMemo(() => {
+    const combined: any[] = [];
+    const maxLen = Math.max(crimeArticles.length, factCheckArticles.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (crimeArticles[i]) combined.push(crimeArticles[i]);
+      if (factCheckArticles[i]) combined.push(factCheckArticles[i]);
+    }
+    return combined.slice(0, 24);
+  }, [crimeArticles, factCheckArticles]);
 
   // Get localized category name aligned exactly with header menu links
   const getCategoryTitleLocalized = () => {
@@ -299,11 +354,18 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
           isYouTube: true,
         }));
 
+    // Sort all articles by date descending (latest first)
+    const sortedArticles = [...(articles || [])].sort((a, b) => {
+      const aTime = new Date((a as any).updatedAt || a.publishedAt || (a as any).createdAt || 0).getTime();
+      const bTime = new Date((b as any).updatedAt || b.publishedAt || (b as any).createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+
     const result: any[] = [];
     const usedIds = new Set();
 
-    // 1. Top category news article
-    const firstArticle = (articles || [])[0];
+    // 1. Latest article as hero
+    const firstArticle = sortedArticles[0];
     if (firstArticle) {
       result.push(firstArticle);
       usedIds.add(firstArticle.id);
@@ -318,7 +380,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     });
 
     // 3. Articles in this category with video
-    (articles || []).forEach((a: any) => {
+    sortedArticles.forEach((a: any) => {
       if ((a.videoUrl || a.youtubeUrl || a.mediaType === 'video' || a.isVideo) && !usedIds.has(a.id)) {
         result.push({
           ...a,
@@ -329,8 +391,8 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
       }
     });
 
-    // 4. Fill remaining slots with standard category articles
-    (articles || []).forEach((a: any) => {
+    // 4. Fill remaining slots with standard category articles (latest first)
+    sortedArticles.forEach((a: any) => {
       if (!usedIds.has(a.id)) {
         result.push(a);
         usedIds.add(a.id);
@@ -399,10 +461,11 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
       <div className="mx-auto max-w-screen-xl px-4 py-2">
 
         {/* ── TOP ROW: Category name ─────────────────────────────── */}
-        <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2">
+        <div className="flex items-center justify-between border-b border-border pb-2 mb-3">
           <div className="flex items-center gap-3">
-            <span className="w-1.5 h-7 bg-accent rounded-sm inline-block" />
-            <h1 className="text-2xl font-black text-foreground">{categoryName}</h1>
+            <h1 className="section-heading-badge bg-[#B3121B] text-white px-5 py-2 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
+              {categoryName}
+            </h1>
           </div>
         </div>
 
@@ -487,7 +550,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                     <span className="text-xs font-black uppercase tracking-wide text-accent">
                       {getArticleLocation(heroArticle)}
                     </span>
-                    <h2 className="mt-1 text-xl md:text-[22px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                    <h2 className="mt-1 text-xl md:text-[22px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                       <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
                     <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
@@ -546,11 +609,14 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                         <span>{formatDate(art.publishedAt)}</span>
                       </div>
                     </div>
-                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-sm bg-muted shadow-sm">
-                      <ArticleMedia
-                        src={art.image || art.featuredImage || art.thumbnail}
+                    <div style={{ position: 'relative', height: '64px', width: '80px', flexShrink: 0, alignSelf: 'flex-start', overflow: 'hidden', borderRadius: '4px' }} className="bg-muted shadow-sm">
+                      <img
+                        src={art.image || art.featuredImage || art.thumbnail || '/assets/gujarat-post-logo.png'}
                         alt={getArticleTitle(art, language)}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                         className="transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
+                        loading="lazy"
                       />
                     </div>
                   </Link>
@@ -594,7 +660,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
           <div className="flex items-center gap-2.5 mb-1 pb-1 border-b border-border">
             <span className="w-2 h-2 bg-accent rotate-45 shrink-0 inline-block" />
             <span className="text-base font-black text-foreground">
-              {getLocalized(language, { en: 'Popular News', gu: 'લોકપ્રિય સમાચાર', hi: 'लोकप्रिय समाचार' })}
+              {getLocalized(language, { en: 'Related News', gu: 'સંબંધિત સમાચાર', hi: 'संबंधित समाचार' })}
             </span>
           </div>
 
@@ -620,6 +686,126 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
             </div>
           )}
         </div>
+
+        {/* ── AE PAN VACHO: Also Read (24 Articles: 12 Crime + 12 Fact-Check) ─────── */}
+        {alsoReadArticles.length > 0 && (
+          <div className="mt-8 border-t border-border pt-6">
+            <div className="flex items-center gap-2.5 mb-5">
+              <span className="section-heading-badge bg-[#B3121B] text-white px-4 py-1.5 text-sm md:text-base font-black rounded-lg select-none leading-none tracking-tight">
+                {getLocalized(language, { en: 'Also Read', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-x-5 gap-y-6">
+              {alsoReadArticles.map((article: any, idx: number) => {
+                const artTitle = language === 'gu'
+                  ? (article.titleGu || article.title)
+                  : language === 'hi'
+                  ? (article.titleHi || article.title)
+                  : article.title;
+                const artCategory = language === 'gu'
+                  ? (article.categoryGu || article.category)
+                  : language === 'hi'
+                  ? (article.categoryHi || article.category)
+                  : article.category;
+                const fallbackImg = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
+                const artImg = article.image || article.featuredImage || article.thumbnail || fallbackImg;
+
+                return (
+                  <Link key={article.id || idx} href={`/news/${article.slug}`} className="group flex flex-col">
+                    <div style={{ position: 'relative', width: '100%', aspectRatio: '16/9', overflow: 'hidden', borderRadius: '6px', background: '#e5e7eb' }}>
+                      <img
+                        src={artImg}
+                        alt={artTitle}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
+                        loading="lazy"
+                      />
+                    </div>
+                    <span className="text-[10px] font-black text-accent uppercase tracking-wider mt-2">
+                      {artCategory}
+                    </span>
+                    <h4 className="text-[13px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
+                      {artTitle}
+                    </h4>
+                    <span className="text-[10px] text-muted-foreground font-semibold mt-1">
+                      {formatDate(article.publishedAt)}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── PHOTO GALLERY (8 Photos with Text Inside, Red Border matching user design) ── */}
+        {galleryPhotos.length > 0 && (
+          <div className="mt-8 border-t border-border pt-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2.5">
+                <span className="section-heading-badge bg-[#B3121B] text-white px-4 py-1.5 text-sm md:text-base font-black rounded-lg select-none leading-none tracking-tight">
+                  {getLocalized(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
+                </span>
+              </div>
+              <Link href="/gallery" className="text-xs font-bold text-accent hover:underline">
+                {getLocalized(language, { en: 'View All', gu: 'બધાં જુઓ', hi: 'सभी देखें' })} →
+              </Link>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+              {galleryPhotos.map((photo: any, idx: number) => {
+                const photoTitle = language === 'gu'
+                  ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
+                  : language === 'hi'
+                  ? (photo.captionHi || photo.caption || photo.titleHi || photo.title || photo.alt || '')
+                  : (photo.caption || photo.alt || photo.title || '');
+                const photoCategory = photo.category || getLocalized(language, { en: 'News', gu: 'સમાચાર', hi: 'समाचार' });
+                const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
+                const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
+
+                return (
+                  <Link
+                    key={photo.id || idx}
+                    href={`/photos/${photo.id || ''}`}
+                    className="group relative block overflow-hidden rounded-2xl border-2 border-[#b31217] bg-black shadow-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
+                    style={{ aspectRatio: '1/1' }}
+                  >
+                    <img
+                      src={photoSrc}
+                      alt={photoTitle || 'Gallery'}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      className="transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
+                      loading="lazy"
+                    />
+                    {/* Dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
+
+                    {/* Category pill badge top-left */}
+                    <span className="absolute top-2.5 left-2.5 z-10 bg-[#b31217] text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-sm pointer-events-none">
+                      {photoCategory}
+                    </span>
+
+                    {/* Title + "― ફોટો જુઓ >" inside the card at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-3 z-10 flex flex-col pointer-events-none">
+                      <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md mb-2">
+                        {photoTitle}
+                      </p>
+                      <div className="flex items-center gap-1.5 text-white">
+                        <span className="w-5 h-[2px] bg-[#b31217] inline-block" />
+                        <span className="text-[11px] font-bold text-white tracking-wide">
+                          {getLocalized(language, { en: 'View Photo', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}
+                        </span>
+                        <ChevronRight className="w-3.5 h-3.5 text-[#b31217] stroke-[3]" />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -974,22 +974,146 @@ async function fetchFreshLiveCenterData() {
     try {
       const events = (espnSoccerRes as any)?.events;
       if (Array.isArray(events) && events.length > 0) {
-        const parsed = events.slice(0, 3).map((evt: any) => {
+        const parsed = events.map((evt: any) => {
           const comp = evt.competitions?.[0];
-          const home = comp?.competitors?.find((c: any) => c.homeAway === 'home');
-          const away = comp?.competitors?.find((c: any) => c.homeAway === 'away');
+          const home = comp?.competitors?.find((c: any) => c.homeAway === 'home') || comp?.competitors?.[0];
+          const away = comp?.competitors?.find((c: any) => c.homeAway === 'away') || comp?.competitors?.[1];
           const status = evt.status?.type;
+          const state = status?.state; // 'in' = live, 'post' = completed/last match, 'pre' = scheduled
+
+          let statusType = 'time';
+          let statusText = status?.shortDetail || 'Scheduled';
+          if (state === 'in') {
+            statusType = 'live';
+            statusText = status?.detail || 'LIVE';
+          } else if (state === 'post') {
+            statusType = 'result';
+            statusText = 'FT';
+          }
+
           return {
-            league: evt.season?.type === 1 ? 'EPL' : 'Football',
-            statusType: status?.state === 'in' ? 'live' : 'time',
-            statusText: status?.state === 'in' ? `${status.detail || "LIVE"}` : (status?.shortDetail || '22:00'),
+            league: evt.season?.type === 1 ? 'EPL' : (evt.name ? 'Football' : 'Soccer'),
+            statusType,
+            statusText,
             homeTeam: home?.team?.shortDisplayName || home?.team?.name || 'Home',
-            homeScore: home?.score || '—',
+            homeScore: home?.score !== undefined ? String(home.score) : '—',
             awayTeam: away?.team?.shortDisplayName || away?.team?.name || 'Away',
-            awayScore: away?.score || '—'
+            awayScore: away?.score !== undefined ? String(away.score) : '—',
+            order: state === 'in' ? 0 : state === 'post' ? 1 : 2
           };
         });
-        if (parsed.length > 0) footballMatches = parsed;
+        if (parsed.length > 0) {
+          parsed.sort((a: any, b: any) => a.order - b.order);
+          footballMatches = parsed.slice(0, 3);
+        }
+      }
+    } catch (e) { }
+
+    // Parse Live / Last Match Cricket Scores (CricAPI + ESPN Cricket APIs)
+    let cricketMatches = [
+      { title: 'India vs England', statusType: 'live', statusText: 'LIVE', team1: 'India', team1Score: '168/8 (20)', team2: 'England', team2Score: '185/9 (19.2)' },
+      { title: 'IPL Final (Last Match)', statusType: 'result', statusText: 'Result', team1: 'RCB', team1Score: '161/5', team2: 'Gujarat Titans', team2Score: '155/8' },
+      { title: 'Ranji Trophy', statusType: 'day', statusText: 'Day 3', team1: 'Gujarat', team1Score: '284/6', team2: 'Mumbai', team2Score: '322/10' }
+    ];
+
+    try {
+      const cricApiKey = process.env.CRICAPI_KEY || process.env.CRICKET_API_KEY;
+      let fetchedCricket: any[] = [];
+
+      // 1. Try CricAPI / CricketData.org if an API Key is set in .env
+      if (cricApiKey) {
+        try {
+          const cricRes = (await fetch(`https://api.cricapi.com/v1/currentMatches?apikey=${cricApiKey}&offset=0`, { headers }).then(r => r.json()).catch(() => null)) as any;
+          if (cricRes?.status === 'success' && Array.isArray(cricRes?.data) && cricRes.data.length > 0) {
+            fetchedCricket = cricRes.data.map((m: any) => {
+              const isLive = m.matchStarted && !m.matchEnded;
+              const isResult = m.matchEnded;
+              const t1 = m.teamInfo?.[0]?.shortname || m.teams?.[0] || 'Team 1';
+              const t2 = m.teamInfo?.[1]?.shortname || m.teams?.[1] || 'Team 2';
+              const s1 = m.score?.[0] ? `${m.score[0].r}/${m.score[0].w} (${m.score[0].o})` : '—';
+              const s2 = m.score?.[1] ? `${m.score[1].r}/${m.score[1].w} (${m.score[1].o})` : '—';
+
+              return {
+                title: m.name || `${t1} vs ${t2}`,
+                statusType: isLive ? 'live' : isResult ? 'result' : 'time',
+                statusText: isLive ? 'LIVE' : isResult ? 'Result' : (m.status || 'Scheduled'),
+                team1: t1,
+                team1Score: s1,
+                team2: t2,
+                team2Score: s2,
+                order: isLive ? 0 : isResult ? 1 : 2
+              };
+            });
+          }
+        } catch (e) { }
+      }
+
+      // 2. Query ESPN Cricket public scoreboards (IPL, ICC, Bilateral series)
+      if (fetchedCricket.length === 0) {
+        const espnCricketEndpoints = [
+          'https://site.api.espn.com/apis/site/v2/sports/cricket/8048/scoreboard',  // IPL
+          'https://site.api.espn.com/apis/site/v2/sports/cricket/19430/scoreboard', // ICC WTC
+        ];
+
+        for (const ep of espnCricketEndpoints) {
+          try {
+            const espnRes = (await fetch(ep, { headers }).then(r => r.json()).catch(() => null)) as any;
+            if (Array.isArray(espnRes?.events)) {
+              for (const evt of espnRes.events) {
+                const comp = evt.competitions?.[0];
+                const home = comp?.competitors?.find((c: any) => c.homeAway === 'home') || comp?.competitors?.[0];
+                const away = comp?.competitors?.find((c: any) => c.homeAway === 'away') || comp?.competitors?.[1];
+                const status = comp?.status?.type;
+                const state = status?.state; // 'in' = live, 'post' = completed/last match, 'pre' = scheduled
+
+                let statusType = 'time';
+                let statusText = status?.shortDetail || 'Scheduled';
+                if (state === 'in') {
+                  statusType = 'live';
+                  statusText = 'LIVE';
+                } else if (state === 'post') {
+                  statusType = 'result';
+                  statusText = 'Result';
+                }
+
+                const cleanScore = (raw: string | undefined) => {
+                  if (!raw) return '—';
+                  return raw.replace(/\(target [^)]+\)/gi, '').trim();
+                };
+
+                fetchedCricket.push({
+                  title: evt.name || evt.shortName || 'Cricket Match',
+                  statusType,
+                  statusText,
+                  team1: home?.team?.shortDisplayName || home?.team?.name || 'Team 1',
+                  team1Score: cleanScore(home?.score),
+                  team2: away?.team?.shortDisplayName || away?.team?.name || 'Team 2',
+                  team2Score: cleanScore(away?.score),
+                  order: state === 'in' ? 0 : state === 'post' ? 1 : 2
+                });
+              }
+            }
+          } catch (e) { }
+        }
+      }
+
+      // If live matches exist, show live match at the top.
+      // If NO live match, show the last completed match at the top.
+      if (fetchedCricket.length > 0) {
+        fetchedCricket.sort((a, b) => a.order - b.order);
+        if (fetchedCricket.length >= 3) {
+          cricketMatches = fetchedCricket.slice(0, 3);
+        } else {
+          // Fill remaining slots from fallback so 3 cards always display
+          const combined = [...fetchedCricket];
+          for (const item of cricketMatches) {
+            if (combined.length >= 3) break;
+            if (!combined.some(c => c.title === item.title)) {
+              combined.push(item);
+            }
+          }
+          cricketMatches = combined.slice(0, 3);
+        }
       }
     } catch (e) { }
 
@@ -1002,11 +1126,7 @@ async function fetchFreshLiveCenterData() {
       },
       stocks,
       usdRate: { rate: inrRate, change: '-0.12' },
-      cricketMatches: [
-        { title: 'India vs England', statusType: 'live', statusText: 'LIVE', team1: 'India', team1Score: '168/8 (20)', team2: 'England', team2Score: '185/9 (19.2)' },
-        { title: 'Ranji Trophy', statusType: 'day', statusText: 'Day 3', team1: 'Gujarat', team1Score: '284/6', team2: 'Mumbai', team2Score: '322/10' },
-        { title: 'IPL', statusType: 'time', statusText: '22:00', team1: 'CSK', team1Score: '—', team2: 'MI', team2Score: '—' }
-      ],
+      cricketMatches,
       footballMatches,
       updatedAt: new Date().toISOString(),
     };

@@ -422,8 +422,8 @@ export default function CrimeSection({
 
       {/* Crime Header */}
       <div className="flex items-end justify-between h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2.5 mb-6">
-        <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
-          {language === 'gu' ? 'કાઇમ' : 'Crime'}
+        <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
+          {language === 'gu' ? 'ક્રાઇમ' : language === 'hi' ? 'क्राइम' : 'Crime'}
         </span>
         <Link
           href="/category/crime"

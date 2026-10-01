@@ -1,11 +1,11 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate } from '@/data';
-import { getPublicArticles, getHeroSettings } from '@/lib/api';
+import { getPublicArticles } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import type { Article } from '@/types';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
@@ -31,34 +31,50 @@ function getDistinctArticleImage(article: Article, index: number): string {
   return DEMO_CARD_IMAGES[index % DEMO_CARD_IMAGES.length];
 }
 
+const isFactCheckArticle = (a: Article): boolean => {
+  if (!a) return false;
+  const cat = (a.category || (a as any).categoryName || '').toLowerCase();
+  const catSlug = ((a as any).categorySlug || (a as any).category?.slug || '').toLowerCase();
+  const slug = (a.slug || '').toLowerCase();
+  const title = (a.title || '').toLowerCase();
+  const titleGu = (a.titleGu || '');
+  return (
+    catSlug === 'fact-check' ||
+    catSlug === 'factcheck' ||
+    cat.includes('fact') ||
+    cat.includes('ફેક્ટ') ||
+    slug.startsWith('fact-check') ||
+    title.includes('fact check') ||
+    titleGu.includes('ફેક્ટ ચેક')
+  );
+};
+
 export default function TrendingSection({ initialArticles }: { initialArticles?: Article[] }) {
   const { language } = useApp();
-  const [trending, setTrending] = useState<Article[]>(initialArticles || []);
+  const [trending, setTrending] = useState<Article[]>(() => {
+    const valid = (initialArticles || []).filter(isFactCheckArticle);
+    return valid.length > 0 ? valid : [];
+  });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
   const isPaused = useRef(false);
 
   useEffect(() => {
-    if (initialArticles && initialArticles.length > 0) {
-      setTrending(initialArticles);
+    const valid = (initialArticles || []).filter(isFactCheckArticle);
+    if (valid.length > 0) {
+      setTrending(valid);
       return;
     }
 
-    Promise.all([
-      getHeroSettings(),
-      getPublicArticles({ isTrending: true, limit: 10 }),
-      getPublicArticles({ limit: 10 }),
-    ]).then(([heroRes, trendingRes, latestRes]) => {
-      if (heroRes && Array.isArray((heroRes as any).trendingNewsArticles) && (heroRes as any).trendingNewsArticles.length > 0) {
-        setTrending((heroRes as any).trendingNewsArticles);
-      } else if (trendingRes && trendingRes.articles && trendingRes.articles.length > 0) {
-        setTrending(trendingRes.articles);
-      } else if (latestRes && latestRes.articles && latestRes.articles.length > 0) {
-        setTrending(latestRes.articles);
+    // Fetch Fact Check category articles from API
+    getPublicArticles({ categorySlug: 'fact-check', limit: 10 }).then((factCheckRes) => {
+      if (factCheckRes && factCheckRes.articles && factCheckRes.articles.length > 0) {
+        setTrending(factCheckRes.articles);
       }
     });
   }, [initialArticles]);
+
 
   // Auto-scroll effect
   useEffect(() => {
@@ -128,14 +144,15 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
     <div className="mx-auto max-w-screen-xl px-4 mt-2 select-none">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-1 mb-2">
-        <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
-          {language === 'gu' ? 'ટ્રેન્ડિંગ  ન્યૂઝ' : language === 'hi' ? 'ट्रेंडिंग  न्यूज' : 'Trending News'}
+        <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight flex items-center gap-2">
+          <span>✅</span>
+          {language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'फैक्ट चेक' : 'Fact Check'}
         </span>
         <Link
-          href="/category/trending"
+          href="/category/fact-check"
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
-          {language === 'gu' ? 'વધુ જુઓ →' : 'More News →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
         </Link>
       </div>
 
@@ -186,6 +203,11 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
                 >
                   {index + 1}
                 </div>
+                {/* Fact Check Badge */}
+                <div className="absolute right-1.5 top-1.5 flex items-center gap-1 rounded bg-emerald-600/95 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-bold text-white shadow-md z-10 select-none">
+                  <span>✓</span>
+                  <span>{language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'फैक्ट चेक' : 'Fact Check'}</span>
+                </div>
               </div>
 
               {/* Info Text below image */}
@@ -193,7 +215,17 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
                 <h3 className="line-clamp-3 text-[11px] md:text-[11.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
                   <AutoArticleTitle article={article} language={language} />
                 </h3>
-
+                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                  <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                    {language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'સत्याપિત' : 'Verified'}
+                  </span>
+                  {(article.publishedAt || article.createdAt) && (
+                    <div className="flex items-center gap-0.5">
+                      <Clock className="h-2.5 w-2.5" />
+                      <span>{formatDate(article.publishedAt || article.createdAt || '', language)}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </Link>
           ))}

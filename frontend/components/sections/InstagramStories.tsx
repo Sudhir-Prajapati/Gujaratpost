@@ -288,11 +288,11 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
   const displayList = reels.length > 0 ? [...reels, ...reels] : [];
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2 mb-3 md:mb-4 relative select-none">
+    <section className="mx-auto max-w-screen-xl px-4 mt-1 mb-0 pb-0 relative select-none">
       <div className="relative">
         {/* Section Header */}
         <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-3">
-          <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
+          <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
             {language === 'gu' ? 'ઇન્સ્ટાગ્રામ રિલ્સ' : language === 'hi' ? 'इन्स्टाग्राम रीલ્સ' : 'Instagram Reels'}
           </span>
           <a
@@ -337,7 +337,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
 
           <div
             ref={scrollContainerRef}
-            className="scrollbar-hide flex gap-4 overflow-x-auto pb-3 pt-1"
+            className="scrollbar-hide flex gap-4 overflow-x-auto pb-1.5 pt-1"
           >
             {reels.map((reel) => {
               const displayTitle = language === 'gu' ? (reel.headingGu || reel.heading) : language === 'hi' ? (reel.headingHi || reel.heading) : reel.heading;
@@ -447,7 +447,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
         </div>
 
         {/* Follow us on Instagram Row */}
-        <div className="relative flex items-center justify-center mt-3">
+        <div className="relative flex items-center justify-center mt-1.5 mb-0">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-red-400 dark:border-red-950/40" />
           </div>
@@ -455,7 +455,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
             href="https://www.instagram.com/gujaratpost.in/"
             target="_blank"
             rel="noopener noreferrer"
-            className="relative flex items-center gap-2.5 rounded-full border border-slate-400 dark:border-slate-800 bg-white dark:bg-slate-900 px-6 py-2.5 shadow-sm text-slate-900 dark:text-white font-black text-[13px] md:text-[14px] hover:border-[#B3121B] hover:text-[#B3121B] transition-all select-none"
+            className="relative flex items-center gap-2 rounded-full border border-slate-400 dark:border-slate-800 bg-white dark:bg-slate-900 px-5 py-1.5 shadow-sm text-slate-900 dark:text-white font-black text-[12.5px] md:text-[13px] hover:border-[#B3121B] hover:text-[#B3121B] transition-all select-none"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5 fill-none stroke-[#B3121B] stroke-[2]" aria-hidden="true">
               <rect x="2" y="2" width="20" height="20" rx="5" />

@@ -548,11 +548,11 @@ export default function HeroManagerPage() {
 
   const handleAddTrendingNewsArticle = (art: Article) => {
     if (trendingNewsArticles.some((a) => a.id === art.id)) {
-      showToast('Article already in Trending News list', false);
+      showToast('Article already in Fact Check News list', false);
       return;
     }
     if (trendingNewsArticles.length >= 10) {
-      showToast('⚠️ Limit reached (10 articles max for Trending News). Please remove one first.', false);
+      showToast('⚠️ Limit reached (10 articles max for Fact Check News). Please remove one first.', false);
       return;
     }
     setTrendingNewsArticles((prev) => [...prev, art]);
@@ -614,12 +614,12 @@ export default function HeroManagerPage() {
 
       if (res && res.success) {
         triggerOnDemandRevalidate();
-        showToast('✅ Saved! Trending News slider articles updated live on user side.', true);
+        showToast('✅ Saved! Fact Check News slider articles updated live on user side.', true);
         if (res.data?.trendingNewsArticles && Array.isArray(res.data.trendingNewsArticles)) {
           setTrendingNewsArticles(res.data.trendingNewsArticles as unknown as Article[]);
         }
       } else {
-        showToast('Failed to save Trending News articles. Please try again.', false);
+        showToast('Failed to save Fact Check News articles. Please try again.', false);
       }
     } catch {
       showToast('Save failed. Please try again.', false);
@@ -1624,23 +1624,23 @@ export default function HeroManagerPage() {
             </div>
           </div>
 
-          {/* Managing Trending News Section (ટ્રેન્ડિંગ ન્યૂઝ Slider) */}
+          {/* Managing Fact Check News Section (ફેક્ટ ચેક ન્યૂઝ Slider) */}
           <div className="mt-8 rounded-2xl border border-gray-400 bg-white p-4 sm:p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-400 pb-4 dark:border-zinc-700 mb-5 gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="text-2xl">⚡</span>
+                <span className="text-2xl">✅</span>
                 <div>
                   <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
-                    <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">Trending News Slider (ટ્રેન્ડિંગ ન્યૂઝ)</h3>
+                    <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">Fact Check News Slider (ફેક્ટ ચેક ન્યૂઝ)</h3>
                     <span className={`text-sm font-bold px-3 py-1 rounded-full border ${trendingNewsArticles.length >= 10 ? 'bg-amber-100 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-gray-400 dark:bg-zinc-800 dark:text-zinc-300'} shrink-0`}>
                       {trendingNewsArticles.length} / 10 Max
                     </span>
                   </div>
-                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1">Select up to 10 articles to feature in the horizontal Trending News (ટ્રેન્ડિંગ ન્યૂઝ) slider on the homepage.</p>
+                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1">Select up to 10 articles to feature in the horizontal Fact Check News (ફેક્ટ ચેક ન્યૂઝ) slider on the homepage.</p>
                 </div>
               </div>
 
-              {/* Dedicated Save Trending News Button */}
+              {/* Dedicated Save Fact Check News Button */}
               <button
                 type="button"
                 onClick={handleSaveTrendingNews}
@@ -1648,27 +1648,27 @@ export default function HeroManagerPage() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] hover:bg-[#B3121B]/90 px-6 py-3 text-sm sm:text-base font-bold text-white shadow-md active:scale-95 transition-all cursor-pointer disabled:opacity-50 shrink-0"
               >
                 {savingTrendingNews ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                <span>Save Trending News</span>
+                <span>Save Fact Check News</span>
               </button>
             </div>
 
-            {/* Article Search Box for Trending News */}
+            {/* Article Search Box for Fact Check News */}
             <div className="mb-5">
               <label className="block text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2">
-                + Add Article to Trending News Slider
+                + Add Article to Fact Check News Slider
               </label>
               <ArticleSearchBox
-                placeholder={trendingNewsArticles.length >= 10 ? '[ Limit 10 reached — remove an article to add new ]' : 'Search published articles by title, article #, or category to add to Trending News...'}
+                placeholder={trendingNewsArticles.length >= 10 ? '[ Limit 10 reached — remove an article to add new ]' : 'Search published articles by title, article #, or category to add to Fact Check News...'}
                 onSelect={(art) => handleAddTrendingNewsArticle(art)}
                 excluded={trendingNewsArticles.map((a) => a.id)}
                 allArticles={allArticles}
               />
             </div>
 
-            {/* Current Selected Trending News Articles Grid */}
+            {/* Current Selected Fact Check News Articles Grid */}
             {trendingNewsArticles.length === 0 ? (
               <div className="rounded-xl border border-dashed border-gray-400 dark:border-zinc-700 p-8 text-center text-sm text-zinc-400">
-                No articles assigned. Default top trending articles will be displayed automatically.
+                No articles assigned. Default top Fact Check articles will be displayed automatically.
               </div>
             ) : (
               <>
@@ -1714,7 +1714,7 @@ export default function HeroManagerPage() {
                             type="button"
                             onClick={(e) => { e.stopPropagation(); handleRemoveTrendingNewsArticle(art.id); }}
                             className="absolute top-1.5 right-1.5 flex h-6 sm:h-7 w-6 sm:w-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-red-600 transition cursor-pointer z-10"
-                            title="Remove from Trending News"
+                            title="Remove from Fact Check News"
                           >
                             <X className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                           </button>
@@ -1760,7 +1760,7 @@ export default function HeroManagerPage() {
           {/* Info note */}
           <div className="mt-6 rounded-xl border border-blue-400 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/20 px-4 py-3 text-sm text-blue-700 dark:text-blue-300 flex items-start gap-2">
             <span className="mt-0.5 shrink-0 inline-flex h-4 w-4 items-center justify-center rounded-full border border-blue-400 text-[10px] font-black">i</span>
-            <span><strong>Note:</strong> Top Main Hero Grid, Bottom row image cards, Most Read 5 Positions, Trending Topics, and Trending News slider articles can all be saved independently using their dedicated <strong>Save</strong> buttons.</span>
+            <span><strong>Note:</strong> Top Main Hero Grid, Bottom row image cards, Most Read 5 Positions, Trending Topics, and Fact Check News slider articles can all be saved independently using their dedicated <strong>Save</strong> buttons.</span>
           </div>
         </>
       )}

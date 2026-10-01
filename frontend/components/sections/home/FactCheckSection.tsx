@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -81,12 +81,15 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   const [factCheckArticles, setFactCheckArticles] = useState<Article[]>(initialArticles || []);
 
   useEffect(() => {
-    if (initialArticles && initialArticles.length >= 3) return;
-    getPublicArticles({ categorySlug: 'fact-check', limit: 9 }).then((res) => {
+    if (initialArticles && initialArticles.length >= 9) {
+      setFactCheckArticles(initialArticles);
+      return;
+    }
+    getPublicArticles({ categorySlug: 'fact-check', limit: 12 }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
         setFactCheckArticles(res.articles);
       } else {
-        getPublicArticles({ categorySlug: 'factcheck', limit: 9 }).then((res2) => {
+        getPublicArticles({ categorySlug: 'factcheck', limit: 12 }).then((res2) => {
           if (res2 && res2.articles && res2.articles.length > 0) {
             setFactCheckArticles(res2.articles);
           }
@@ -128,7 +131,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
     <div className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
-        <span className="bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
+        <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'ફેક્ટ  ચેક' : language === 'hi' ? 'तथ्य  जांच' : 'Fact  Check'}
         </span>
         <Link
