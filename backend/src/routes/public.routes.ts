@@ -1167,15 +1167,17 @@ router.get('/live-center', cacheResponse(120), async (req, res) => {
  */
 router.get('/tickers', cacheResponse(15), async (req, res, next) => {
   try {
-    const [customTickers, heroSettingRows] = await Promise.all([
+    const [customTickers, heroSettingRow]: any[] = await Promise.all([
       prisma.breakingTickerItem.findMany({
         orderBy: { createdAt: 'desc' },
         take: 10,
       }),
-      prisma.$queryRawUnsafe<any[]>('SELECT tickerLabel FROM hero_settings WHERE id = "default" LIMIT 1').catch(() => []),
+      (prisma.heroSetting as any).findUnique({
+        where: { id: 'default' },
+      }).catch(() => null),
     ]);
 
-    const tickerLabel = heroSettingRows?.[0]?.tickerLabel || null;
+    const tickerLabel = heroSettingRow?.tickerLabel || null;
 
     const breakingArticles = await prisma.post.findMany({
       where: { isBreaking: true, status: 'PUBLISHED' },

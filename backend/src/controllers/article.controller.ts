@@ -105,6 +105,16 @@ export async function autoPublishDueArticles() {
 
   try {
     const now = new Date();
+    // Check if there are any scheduled articles due first to avoid unnecessary write operations
+    const dueCount = await prisma.post.count({
+      where: {
+        status: 'SCHEDULED',
+        scheduledAt: { lte: now },
+      },
+    }).catch(() => 0);
+
+    if (dueCount === 0) return;
+
     const updated = await prisma.post.updateMany({
       where: {
         status: 'SCHEDULED',
@@ -118,8 +128,12 @@ export async function autoPublishDueArticles() {
       invalidateHeroSettingsCache();
       clearPublicRoutesCache();
     }
-  } catch (err) {
-    console.error('Error auto-publishing due articles:', err);
+  } catch (err: any) {
+    if (err?.code === '1290' || err?.message?.includes('read-only')) {
+      // Database is in transient read-only mode during cloud maintenance/failover
+      return;
+    }
+    console.error('Error auto-publishing due articles:', err?.message || err);
   }
 }
 
