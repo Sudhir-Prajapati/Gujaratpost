@@ -108,16 +108,68 @@ const companyLinks = [
 ];
 
 /* ─── NavColumn Component ─────────────────────────────────────────────────── */
-function NavColumn({ title, links, titleHref, onSupportClick }: { title: string; links: { label: string; href: string; isSupport?: boolean }[]; titleHref?: string; onSupportClick?: () => void }) {
+function NavColumn({
+    title,
+    links,
+    titleHref,
+    onSupportClick,
+    delay = 0,
+}: {
+    title: string;
+    links: { label: string; href: string; isSupport?: boolean }[];
+    titleHref?: string;
+    onSupportClick?: () => void;
+    delay?: number;
+}) {
     return (
-        <div>
-            <div className="mb-3">
+        <div className="group/col">
+            <div className="mb-3.5 select-none">
                 {titleHref ? (
-                    <Link href={titleHref} className="text-white font-extrabold text-[17px] leading-tight tracking-tight hover:text-slate-300 transition-colors uppercase">
-                        {title}
+                    <Link href={titleHref} className="inline-flex flex-col items-start cursor-pointer group/title">
+                        <div className="flex items-center gap-1.5 transition-transform duration-300 group-hover/col:-translate-y-0.5">
+                            <span className="relative flex h-2 w-2 shrink-0">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 shadow-[0_0_6px_#ef4444]" />
+                            </span>
+                            <span
+                                className="font-black text-[17px] leading-tight uppercase tracking-tight transition-all duration-300 footer-title-shimmer"
+                                style={{ animationDelay: `${delay}s` }}
+                            >
+                                {title}
+                            </span>
+                        </div>
+                        {/* Animated accent underline */}
+                        <div className="relative mt-2 h-[2.5px] w-7 bg-slate-800 rounded-full overflow-hidden transition-all duration-300 group-hover/col:w-16 shadow-sm">
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 rounded-full animate-pulse" />
+                            <div
+                                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent w-full footer-bar-sweep"
+                                style={{ animationDelay: `${delay}s` }}
+                            />
+                        </div>
                     </Link>
                 ) : (
-                    <h3 className="text-white font-extrabold text-[17px] leading-tight tracking-tight uppercase">{title}</h3>
+                    <div className="inline-flex flex-col items-start cursor-default group/title">
+                        <div className="flex items-center gap-1.5 transition-transform duration-300 group-hover/col:-translate-y-0.5">
+                            <span className="relative flex h-2 w-2 shrink-0">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500 shadow-[0_0_6px_#ef4444]" />
+                            </span>
+                            <h3
+                                className="font-black text-[17px] leading-tight uppercase tracking-tight transition-all duration-300 footer-title-shimmer"
+                                style={{ animationDelay: `${delay}s` }}
+                            >
+                                {title}
+                            </h3>
+                        </div>
+                        {/* Animated accent underline */}
+                        <div className="relative mt-2 h-[2.5px] w-7 bg-slate-800 rounded-full overflow-hidden transition-all duration-300 group-hover/col:w-16 shadow-sm">
+                            <div className="absolute inset-0 bg-gradient-to-r from-red-600 via-rose-500 to-red-600 rounded-full animate-pulse" />
+                            <div
+                                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent w-full footer-bar-sweep"
+                                style={{ animationDelay: `${delay}s` }}
+                            />
+                        </div>
+                    </div>
                 )}
             </div>
             <ul className="space-y-2">
@@ -165,6 +217,35 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
     return (
         <>
+            <style dangerouslySetInnerHTML={{ __html: `
+@keyframes footerTitleShimmer {
+  0% { background-position: -200% 0; }
+  50%, 100% { background-position: 200% 0; }
+}
+@keyframes footerBarSweep {
+  0% { transform: translateX(-100%); }
+  50%, 100% { transform: translateX(100%); }
+}
+.footer-title-shimmer {
+  background: linear-gradient(
+    90deg,
+    #ffffff 0%,
+    #ffffff 30%,
+    #ef4444 48%,
+    #fca5a5 52%,
+    #ffffff 70%,
+    #ffffff 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: footerTitleShimmer 4s ease-in-out infinite;
+  display: inline-block;
+}
+.footer-bar-sweep {
+  animation: footerBarSweep 4s ease-in-out infinite;
+}
+            ` }} />
             {!isInline && (
                 <div className="w-full bg-background text-foreground overflow-hidden">
                     <AdSectionBanner section="FOOTER" />
@@ -234,16 +315,16 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 lg:pl-10">
 
                         {/* Topics Col 1 */}
-                        <NavColumn title="Topics" links={topics1Links} />
+                        <NavColumn title="Topics" links={topics1Links} delay={0} />
 
                         {/* Topics Col 2 */}
-                        <NavColumn title="Topics" links={topics2Links} />
+                        <NavColumn title="Topics" links={topics2Links} delay={0.7} />
 
                         {/* Topics Col 3 */}
-                        <NavColumn title="Topics" links={topics3Links} />
+                        <NavColumn title="Topics" links={topics3Links} delay={1.4} />
 
                         {/* Company Col 4 */}
-                        <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} />
+                        <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} />
 
                     </div>
 
