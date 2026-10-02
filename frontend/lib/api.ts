@@ -814,12 +814,38 @@ export async function getPublicAdBySection(section: string): Promise<any | null>
     const formatted = (section || '').toUpperCase().trim();
 
     // 1. Check/fetch the single consolidated batch endpoint GET /api/public/ads
-    // Because fetchCachedJson automatically merges in-flight requests,
-    // all AdSectionBanner instances mounting concurrently share EXACTLY 1 network request!
     const allAds = await getPublicAds();
     if (Array.isArray(allAds) && allAds.length > 0) {
-      const match = allAds.find((ad: any) => (ad?.section || '').toUpperCase().trim() === formatted);
-      if (match) return match;
+      // Direct exact match
+      const exactMatch = allAds.find((ad: any) => (ad?.section || '').toUpperCase().trim() === formatted);
+      if (exactMatch && exactMatch.isActive !== false) return exactMatch;
+
+      // Fuzzy / stripped match
+      const simplified = formatted.replace(/^AFTER_|^IN_SECTION_|^SIDEBAR_/, '').toLowerCase();
+      const fuzzyMatch = allAds.find((ad: any) => {
+        const s = (ad?.section || '').toLowerCase();
+        return s === simplified || s.includes(simplified) || simplified.includes(s);
+      });
+      if (fuzzyMatch && fuzzyMatch.isActive !== false) return fuzzyMatch;
+
+      // Safe fallback to active ads pool
+      const activeAds = allAds.filter(
+        (ad: any) =>
+          ad?.isActive !== false &&
+          ((ad.image1 && typeof ad.image1 === 'string' && ad.image1.trim() !== '') ||
+            (ad.image2 && typeof ad.image2 === 'string' && ad.image2.trim() !== '') ||
+            (ad.image3 && typeof ad.image3 === 'string' && ad.image3.trim() !== ''))
+      );
+
+      if (activeAds.length > 0) {
+        let hash = 0;
+        for (let i = 0; i < section.length; i++) {
+          hash = (hash << 5) - hash + section.charCodeAt(i);
+          hash |= 0;
+        }
+        const pickedIndex = Math.abs(hash) % activeAds.length;
+        return activeAds[pickedIndex];
+      }
     }
 
     // 2. Safe fallback to individual section query if not found in batch

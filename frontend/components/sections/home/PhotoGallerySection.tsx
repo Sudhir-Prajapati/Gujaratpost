@@ -273,7 +273,7 @@ function GalleryScrollStrip({
 
               {/* Caption & View link */}
               <div className="absolute inset-x-0 bottom-0 z-10 p-4 translate-y-0 group-hover:-translate-y-1 transition-transform duration-300 pointer-events-none">
-                <p className="text-white font-bold leading-snug line-clamp-2 drop-shadow-lg text-[13.5px] md:text-[15.5px]">
+                <p className="text-white font-bold leading-snug line-clamp-2 drop-shadow-lg text-[14.5px] md:text-[16.5px]">
                   <AutoTranslateString text={title} language={language} />
                 </p>
 

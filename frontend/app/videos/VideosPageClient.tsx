@@ -69,7 +69,7 @@ function SidebarPhotoCardImage({
       alt={alt}
       fill
       unoptimized
-      sizes="(max-width: 768px) 50vw, 200px"
+      sizes="(max-width: 768px) 100vw, 360px"
       className="object-cover transition-transform duration-500 ease-out group-hover:scale-108"
       onError={() => {
         if (src !== fallback) {
@@ -84,7 +84,7 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
   return (
     <Link
       href={`/photos/${photo.id}`}
-      className="group relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-card border border-border/20 shadow-xs cursor-pointer block select-none transition-transform duration-300 hover:-translate-y-0.5"
+      className="group relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-card border border-border/20 shadow-xs cursor-pointer block select-none transition-transform duration-300 hover:-translate-y-0.5"
     >
       <SidebarPhotoCardImage
         src={photo.image}
@@ -92,21 +92,21 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
         index={index}
       />
       {/* Top subtle ambient shadow */}
-      <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black/40 to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
 
       {/* Dark subtle gradient overlay at bottom for clear text contrast */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
 
       {/* Top-Left Red Pill Badge: "ફોટો ગેલેરી" matching homepage */}
       <div className="absolute top-2.5 left-2.5 z-10">
-        <span className="bg-[#B3121B] text-white text-[9.5px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs select-none">
+        <span className="bg-[#B3121B] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs select-none">
           {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
         </span>
       </div>
 
       {/* Bottom title text overlaid inside */}
-      <div className="absolute inset-x-0 bottom-0 p-2.5 z-10 pointer-events-none">
-        <p className="text-white text-[11px] sm:text-[11.5px] font-bold leading-tight line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
+      <div className="absolute inset-x-0 bottom-0 p-3 z-10 pointer-events-none">
+        <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
           {photo.titleGu || photo.title}
         </p>
       </div>
@@ -578,7 +578,7 @@ export default function VideosPageClient() {
             </div>
 
             {/* ── SECTION 1: LATEST VIDEOS ─────────────────────────────── */}
-            <section id="video" className="mb-10 pt-4">
+            <section id="video" className="mb-2 pt-4">
               <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
                 <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
@@ -763,9 +763,9 @@ export default function VideosPageClient() {
                 </Link>
               </div>
 
-              {/* 2x3 Photo Gallery Grid (6 Images) */}
-              <div className="grid grid-cols-2 gap-3">
-                {latestPhotos.slice(0, 6).map((photo, idx) => (
+              {/* Photo Gallery: 3 Larger Images (1 per row, full width) */}
+              <div className="flex flex-col gap-2.5">
+                {latestPhotos.slice(0, 3).map((photo, idx) => (
                   <SidebarPhotoCard
                     key={photo.id || idx}
                     photo={photo}
@@ -777,7 +777,7 @@ export default function VideosPageClient() {
             </div>
 
             {/* ── 3. LATEST NEWS (તાજા સમાચાર) ── */}
-            <div className="mt-4 pt-3 border-t-2 border-border">
+            <div className="mt-3 pt-2.5 border-t-2 border-border">
               <div className="flex items-center justify-between mb-3.5 pb-2 border-b-2 border-border">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
@@ -790,17 +790,17 @@ export default function VideosPageClient() {
                 </Link>
               </div>
               <div className="flex flex-col divide-y divide-border">
-                {latestImageArticles.map((art) => (
+                {latestImageArticles.slice(0, 4).map((art) => (
                   <Link
                     key={art.id}
                     href={`/news/${art.slug}`}
-                    className="group flex items-start gap-3 py-3 first:pt-1 last:pb-1"
+                    className="group flex items-start gap-3 py-2.5 first:pt-1 last:pb-0"
                   >
                     <div className="flex flex-col flex-1 min-w-0">
                       <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
                         {getCategoryLabel(art, language)}
                       </span>
-                      <h4 className="text-[12.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
+                      <h4 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
                         <AutoArticleTitle article={art} language={language} />
                       </h4>
                       <span className="text-[10px] font-semibold text-muted-foreground mt-1">
@@ -824,11 +824,11 @@ export default function VideosPageClient() {
         </div> {/* CLOSE FIRST GRID */}
 
         {/* ── FULL WIDTH SECTIONS BELOW SIDEBAR ────────────────────────────── */}
-        <div className="mt-4 border-t border-border pt-4">
+        <div className="mt-2 border-t border-border pt-2">
 
           {/* ── SECTION 2: SHORTS ────────────────────────────────────── */}
-          <section id="short" className="mb-5 pt-1">
-            <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
+          <section id="short" className="mb-4 pt-0">
+            <div className="flex items-center gap-2.5 mb-3 pb-1.5 border-b-2 border-border">
               <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
               <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
                 શોર્ટ્સ

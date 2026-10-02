@@ -553,7 +553,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                     <span className="text-xs font-black uppercase tracking-wide text-accent">
                       {getArticleLocation(heroArticle)}
                     </span>
-                    <h2 className="mt-1 text-xl md:text-[22px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                    <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                       <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
                     <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
@@ -571,7 +571,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <span className="text-[10px] font-black uppercase tracking-wide text-accent">
                         {getArticleLocation(subHeroArticle)}
                       </span>
-                      <h3 className="mt-0.5 text-[13.5px] md:text-[14px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                         <AutoArticleTitle article={subHeroArticle} language={language} />
                       </h3>
                       <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
@@ -605,7 +605,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <span className="text-[10px] font-black uppercase tracking-wide text-accent">
                         {getArticleLocation(art)}
                       </span>
-                      <h3 className="mt-0.5 text-[13.5px] md:text-[14.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                      <h3 className="mt-0.5 text-[14.5px] md:text-[15.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
                         {getArticleTitle(art, language)}
                       </h3>
                       <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
@@ -649,7 +649,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                   >
                     {language === 'gu' ? toGu(i + 1) : i + 1}
                   </span>
-                  <p className="text-[13px] md:text-[13.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
+                  <p className="text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
                     {language === 'gu' ? art.titleGu : language === 'hi' ? art.titleHi : art.title}
                   </p>
                 </Link>
@@ -722,7 +722,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                     <span className="text-[10px] font-black text-accent uppercase tracking-wider mt-2">
                       {artCategory}
                     </span>
-                    <h4 className="text-[13px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
+                    <h4 className="text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
                       {artTitle}
                     </h4>
                     <span className="text-[10px] text-muted-foreground font-semibold mt-1">

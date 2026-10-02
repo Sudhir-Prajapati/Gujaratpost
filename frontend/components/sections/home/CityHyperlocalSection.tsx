@@ -1162,7 +1162,7 @@ export default function CityHyperlocalSection({
         </div>
 
         {/* Right Column: Sidebar Ads and widgets */}
-        <div className="flex flex-col gap-6 sticky top-20 select-none">
+        <div className="flex flex-col gap-2.5 sticky top-20 select-none">
 
           <SidebarAdBanner
             slot="SIDEBAR_GUJARAT"
@@ -1174,34 +1174,34 @@ export default function CityHyperlocalSection({
             fallbackCtaGu="અરજી કરો"
             fallbackCtaEn="Apply Now"
             fallbackGradient="linear-gradient(135deg,#0f3d70,#001f3f)"
-            minHeight={180}
+            minHeight={135}
             enableTributeSlides={false}
           />
 
-          {/* WhatsApp Channel widget */}
-          <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366]">
+          {/* WhatsApp Channel widget - Compact */}
+          <div className="relative w-full overflow-hidden rounded-xl border border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/50 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 px-3.5 py-2.5 shadow-sm hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md transition-all border-t-[2.5px] border-t-[#25D366]">
             {/* Ambient decorative WhatsApp glow */}
-            <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
+            <div className="pointer-events-none absolute -top-6 -right-6 h-20 w-20 rounded-full bg-[#25D366]/10 blur-xl" />
 
-            <div className="relative z-10 flex items-center gap-3">
+            <div className="relative z-10 flex items-center gap-2.5">
               {/* WhatsApp branded icon badge */}
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
-                <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-sm ring-2 ring-[#25D366]/10">
+                <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white" />
               </div>
               <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                <div className="flex items-center gap-1">
+                  <h3 className="font-black text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
                     {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
                   </h3>
-                  <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
                 </div>
-                <span className="text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
-                  {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'आधिकारिक समाचार अपडेट' : 'Official News Updates'}
+                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 leading-none">
+                  {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
                 </span>
               </div>
             </div>
 
-            <p className="relative z-10 text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
+            <p className="relative z-10 text-[11px] text-slate-600 dark:text-slate-300 leading-snug my-1.5 font-medium line-clamp-2">
               {language === 'gu'
                 ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
                 : language === 'hi'
@@ -1213,35 +1213,34 @@ export default function CityHyperlocalSection({
               href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+              className="relative z-10 w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[12px] py-1.5 px-3 rounded-lg shadow-sm hover:shadow active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
             >
-              <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
+              <SocialIcon platform="whatsapp" className="h-3.5 w-3.5 text-white shrink-0" />
               <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>
-              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
             </a>
           </div>
 
-          {/* Trending Topics widget */}
-          <div className="w-full rounded-2xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.10)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_8px_28px_rgba(179,18,27,0.12)] transition-all">
-            <div className="flex items-center gap-2 border-b border-slate-200/90 dark:border-slate-800 pb-2 mb-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
-                  <Flame className="h-4.5 w-4.5 fill-[#B3121B] text-[#B3121B]" />
-                </div>
-                <h3 className="text-[16px] md:text-[17px] font-black text-slate-900 dark:text-white tracking-tight">
-                  {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
-                </h3>
-
+          {/* Trending Topics widget - Compact */}
+          <div className="w-full rounded-xl border border-slate-300/80 dark:border-slate-600/80 bg-white px-3 py-2 shadow-sm dark:bg-slate-900 border-t-[2.5px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all">
+            <div className="flex items-center gap-1.5 border-b border-slate-200/90 dark:border-slate-800 pb-1.5 mb-1.5">
+              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
+                <Flame className="h-3.5 w-3.5 fill-[#B3121B] text-[#B3121B]" />
+              </div>
+              <h3 className="text-[13px] md:text-[13.5px] font-black text-slate-900 dark:text-white tracking-tight">
+                {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
+              </h3>
             </div>
 
             <div>
-              <div className="flex flex-wrap gap-2">
-                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).map((tag) => {
+              <div className="flex flex-wrap gap-1.5">
+                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).slice(0, 8).map((tag) => {
                   const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                   return (
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-1 border-[1.5px] border-slate-300 dark:border-slate-600 text-[12.5px] md:text-[13px] font-black px-3 py-1 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_2px_5px_rgba(15,23,42,0.09)] hover:shadow-md cursor-pointer select-none"
+                      className="group inline-flex items-center gap-0.5 border border-slate-300 dark:border-slate-600 text-[10.5px] font-bold px-2 py-0.5 rounded-full text-slate-800 dark:text-slate-200 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-slate-50/70 dark:bg-slate-800 shadow-xs cursor-pointer select-none"
                     >
                       <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />

@@ -218,7 +218,7 @@ export default function LatestUpdatesSection({
                       {locationTag}
                     </span>
                   </div>
-                  <h3 className="text-[13.5px] sm:text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
+                  <h3 className="text-[14.5px] sm:text-[15.5px] md:text-[16.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
                     <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
@@ -263,7 +263,7 @@ export default function LatestUpdatesSection({
                       {locationTag}
                     </span>
                   </div>
-                  <h3 className="text-[13.5px] sm:text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
+                  <h3 className="text-[14.5px] sm:text-[15.5px] md:text-[16.5px] font-extrabold leading-snug line-clamp-2 transition-colors duration-150 text-foreground group-hover:text-[#B3121B]">
                     <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
@@ -315,7 +315,7 @@ export default function LatestUpdatesSection({
                     className="transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <h3 className="text-[12px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                <h3 className="text-[13px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                   <AutoArticleTitle article={art} language={language} />
                 </h3>
 
@@ -366,7 +366,7 @@ export default function LatestUpdatesSection({
                 {language === 'gu' ? toGuDigits(idx + 1) : idx + 1}
               </span>
 
-              <h4 className="text-[13.5px] md:text-[15px] leading-snug text-foreground group-hover:text-[#B3121B] transition-colors duration-150 line-clamp-2 md:line-clamp-3 flex-1 mt-0.5" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
+              <h4 className="text-[14.5px] md:text-[16px] leading-snug text-foreground group-hover:text-[#B3121B] transition-colors duration-150 line-clamp-2 md:line-clamp-3 flex-1 mt-0.5" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
                 <AutoArticleTitle article={art} language={language} />
               </h4>
             </Link>

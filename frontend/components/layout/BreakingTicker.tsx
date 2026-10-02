@@ -127,28 +127,28 @@ export default function BreakingTicker() {
           <Link
             prefetch={false}
             href={`/news/${item.slug}`}
-            className="px-2 text-sm font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none"
+            className="px-2.5 text-[16.5px] sm:text-[17px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
           >
             <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </Link>
         ) : (
-          <span className="px-2 text-sm font-bold text-white/95">
+          <span className="px-2.5 text-[16.5px] sm:text-[17px] font-bold text-white/95 tracking-normal leading-normal">
             <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </span>
         )}
-        <span className="mx-4 inline-block h-1.5 w-1.5 rounded-full bg-white/60 shrink-0" aria-hidden="true" />
+        <span className="mx-4 inline-block h-1.5 w-1.5 rounded-full bg-white/70 shrink-0" aria-hidden="true" />
       </span>
     );
   };
 
   return (
     <div
-      className="flex h-10 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-2 sm:mb-2.5"
+      className="flex h-11 sm:h-11.5 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-2 sm:mb-2.5"
       role="region"
       aria-label="Breaking News Ticker"
     >
       {/* Left Badge */}
-      <div className="z-20 flex h-full shrink-0 items-center bg-black px-3.5 md:px-4 text-xs font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-2 whitespace-nowrap">
+      <div className="z-20 flex h-full shrink-0 items-center bg-black px-3.5 md:px-4 text-[14px] sm:text-[14.5px] font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-2 whitespace-nowrap">
         <span className="relative flex h-2.5 w-2.5 shrink-0">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>

@@ -8,6 +8,7 @@ import type { Article, Language } from '@/types';
 import { getLocalized } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import { stripHtmlTags, getMockTitle } from './homeHelpers';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 
 const mockFactCheckList = [
   {
@@ -132,7 +133,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
-          {language === 'gu' ? 'ફેક્ટ  ચેક' : language === 'hi' ? 'तथ्य  जांच' : 'Fact  Check'}
+          {language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'तथ्य जांच' : 'Fact Check'}
         </span>
         <Link
           href="/category/fact-check"
@@ -164,10 +165,10 @@ export default function FactCheckSection({ language, initialArticles }: { langua
               <span className="text-[10px]">●</span>
               {language === 'gu' ? featStatus.labelGu : featStatus.labelEn}
             </span>
-            <h3 className="text-[15px] md:text-[16px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+            <h3 className="text-[16px] md:text-[17.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
               {featTitle}
             </h3>
-            <p className="text-muted-foreground text-[12.5px] leading-relaxed mt-2.5 line-clamp-3 select-none">
+            <p className="text-muted-foreground text-[13.5px] leading-relaxed mt-2.5 line-clamp-3 select-none">
               {featExcerpt}
             </p>
           </Link>
@@ -206,7 +207,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                         {language === 'gu' ? st.labelGu : st.labelEn}
                       </span>
                     </div>
-                    <h4 className="text-[12.5px] md:text-[13px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                    <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                       {title}
                     </h4>
                   </div>
@@ -245,7 +246,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
                     </span>
                   </div>
-                  <h4 className="text-[12.5px] md:text-[13px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                  <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                     {getMockTitle(item, language)}
                   </h4>
                 </div>

@@ -329,10 +329,10 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             ].map((item) => (
               <div
                 key={item.symbol}
-                className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-300/80 hover:border-red-400 hover:border-l-4 hover:border-l-red-600 transition-all duration-200 hover:scale-[1.025] hover:shadow-lg hover:bg-neutral-50/90 cursor-pointer select-none group/item active:scale-[0.99]"
+                className="flex-1 flex items-center justify-between rounded-xl bg-white px-4 py-3.5 shadow-sm border border-neutral-300/80 transition-all duration-200 hover:bg-rose-50 hover:border-[#B3121B]/50 hover:shadow-md cursor-pointer select-none group/item"
               >
                 <div className="flex items-center gap-3">
-                  <div className={`h-9 w-9 rounded-full flex items-center justify-center font-black text-[15px] shrink-0 transition-transform duration-300 group-hover/item:scale-115 group-hover/item:rotate-6 shadow-2xs
+                  <div className={`h-9 w-9 rounded-full flex items-center justify-center font-black text-[15px] shrink-0 transition-colors duration-300 shadow-2xs
                     ${item.symbol === 'P' ? 'bg-red-50 text-red-600 border border-red-200' : ''}
                     ${item.symbol === 'D' ? 'bg-blue-50 text-blue-600 border border-blue-200' : ''}
                     ${item.symbol === 'C' ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : ''}

@@ -9,6 +9,7 @@ import { formatDate, getArticleTitle, ARTICLES } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   varsad: ['varsad', 'weather', 'rain', 'વરસાદ', 'હવામાન'],
@@ -19,11 +20,14 @@ const CATEGORY_SYNONYMS: Record<string, string[]> = {
   business: ['business', 'vepar', 'વેપાર'],
   education: ['education', 'shikshan', 'શિક્ષણ'],
   lifestyle: ['lifestyle', 'લાઇફસ્ટાઇલ'],
-  election: ['election', 'election-2027', 'ચૂંટણી'],
+  election: ['election', 'election-2027', 'ચૂંટણી 2027', 'ચૂંટણી', 'વિધાનસભા'],
+  'election-2027': ['election-2027', 'election', 'ચૂંટણી 2027', 'ચૂંટણી', 'વિધાનસભા'],
   'gold-silver': ['gold-silver', 'gold', 'silver', 'સોના-ચાંદી'],
   health: ['health', 'helth', 'હેલ્થ', 'આરોગ્ય'],
   entertainment: ['entertainment', 'manoranjan', 'મનોરંજન'],
   technology: ['technology', 'tech', 'ટેકનોલોજી'],
+  podcasts: ['podcasts', 'podcast', 'પોડકાસ્ટ', 'પૉડકાસ્ટ'],
+  podcast: ['podcasts', 'podcast', 'પોડકાસ્ટ', 'પૉડકાસ્ટ'],
 };
 
 /* ─── Dynamic Generic Category Section ─────────────────────────────────── */
@@ -132,7 +136,7 @@ export default function DynamicCategorySection({ category, language, initialArti
           href={`/category/${catSlug}`}
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
         >
-          {language === 'gu' ? 'બધા જુઓ →' : 'View All →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'View More →'}
         </Link>
       </div>
 
@@ -156,10 +160,10 @@ export default function DynamicCategorySection({ category, language, initialArti
               <span className="inline-block text-[11px] font-extrabold uppercase tracking-wide text-[#B3121B] bg-red-50 dark:bg-red-950/30 px-2.5 py-1 rounded w-max">
                 {categoryTitle}
               </span>
-              <h3 className="text-xl sm:text-2xl font-black text-foreground group-hover:text-[#B3121B] transition-colors leading-snug">
+              <h3 className="text-[21px] sm:text-[25px] font-black text-foreground group-hover:text-[#B3121B] transition-colors leading-snug">
                 <AutoArticleTitle article={lead} language={language} />
               </h3>
-              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3 leading-relaxed font-medium">
+              <p className="text-[13.5px] sm:text-[15px] text-muted-foreground line-clamp-3 leading-relaxed font-medium">
                 <AutoArticleExcerpt article={lead} language={language} />
               </p>
 
@@ -187,10 +191,10 @@ export default function DynamicCategorySection({ category, language, initialArti
                   <span className="text-[11px] font-extrabold uppercase tracking-wide text-[#B3121B] bg-red-50 dark:bg-red-950/30 px-2 py-0.5 rounded">
                     {categoryTitle}
                   </span>
-                  <h3 className="text-lg md:text-xl font-black text-foreground mt-2 line-clamp-2 group-hover:text-[#B3121B] transition-colors leading-snug">
+                  <h3 className="text-[19px] md:text-[21px] font-black text-foreground mt-2 line-clamp-2 group-hover:text-[#B3121B] transition-colors leading-snug">
                     <AutoArticleTitle article={lead} language={language} />
                   </h3>
-                  <p className="text-xs md:text-sm text-muted-foreground mt-1.5 line-clamp-2 font-medium">
+                  <p className="text-[13.5px] md:text-[15px] text-muted-foreground mt-1.5 line-clamp-2 font-medium">
                     <AutoArticleExcerpt article={lead} language={language} />
                   </p>
 
@@ -215,7 +219,7 @@ export default function DynamicCategorySection({ category, language, initialArti
                   />
                 </div>
                 <div className="flex flex-col justify-between min-w-0 flex-1 py-0.5">
-                  <h4 className="text-[13px] font-extrabold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
+                  <h4 className="text-[14px] font-extrabold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                     <AutoArticleTitle article={art} language={language} />
                   </h4>
 

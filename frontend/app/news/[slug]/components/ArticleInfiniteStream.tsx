@@ -171,7 +171,7 @@ export default function ArticleInfiniteStream({
                     />
                   </div>
 
-                  <div className="article-body space-y-4 text-[16px] leading-relaxed text-foreground mb-6 text-left w-full">
+                  <div className="article-body space-y-4 text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-foreground mb-6 text-left w-full">
                     {streamParagraphs.map((p, pIdx) => {
                       const trimmed = p.trim();
                       if (!trimmed) return null;

@@ -6,6 +6,7 @@ import type { Article, Language } from '@/types';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { DEMO_IMAGES } from './homeHelpers';
 
 const POLITICS_SLUGS = ['politics', 'rajkaran'];
@@ -152,7 +153,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
               <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase">
                 {(art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || 'રાજકારણ'}
               </span>
-              <h3 className="text-[14px] md:text-[15.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 min-h-[40px] md:min-h-[46px]">
+              <h3 className="text-[15px] md:text-[16.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 min-h-[42px] md:min-h-[48px]">
                 <AutoArticleTitle article={art} language={language} />
               </h3>
             </Link>
@@ -187,7 +188,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
                     <span className="text-[#B3121B] font-extrabold text-[11px] mb-1 select-none uppercase leading-none">
                       {(art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || 'સમાચાર'}
                     </span>
-                    <h4 className="text-[12.5px] md:text-[13px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                    <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                       <AutoArticleTitle article={art} language={language} />
                     </h4>
 

@@ -56,6 +56,8 @@ import WeatherDashboardSection from './home/WeatherDashboardSection';
 import DynamicCategorySection from './home/DynamicCategorySection';
 import EntertainTechLifeSection from './home/EntertainTechLifeSection';
 import PhotoGallerySection from './home/PhotoGallerySection';
+import ElectionSection from './home/ElectionSection';
+import PodcastSection from './home/PodcastSection';
 
 
 const stripHtmlTags = (str?: string) => (str || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '');
@@ -470,12 +472,12 @@ function HeroStorySlider({
         </div>
 
         {/* Headline */}
-        <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[24px] leading-[1.22] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
+        <h1 className="text-foreground font-extrabold text-[21.5px] sm:text-[23.5px] md:text-[25.5px] leading-[1.24] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
           <AutoArticleTitle article={current} language={language} />
         </h1>
 
         {/* Excerpt - Exactly 3 lines, reserving 3-line vertical space even if article has fewer lines */}
-        <p className="text-muted-foreground text-[12.5px] sm:text-[13px] leading-[20px] sm:leading-[22px] min-h-[60px] sm:min-h-[66px] mt-1.5 line-clamp-3 font-medium">
+        <p className="text-muted-foreground text-[13.5px] sm:text-[14px] leading-[21px] sm:leading-[23px] min-h-[63px] sm:min-h-[69px] mt-1.5 line-clamp-3 font-medium">
           <AutoArticleExcerpt article={current} language={language} />
         </p>
 
@@ -841,20 +843,22 @@ export default function HeroSection({
     const STATIC_ORDER = [
       'videos',
       'gujarat',
-      'national',
-      'latest-news',
       'trending',
-      'instagram',
+      'national',
       'world',
+      'latest-news',
       'politics',
-      'webstory',
       'crime',
+      'instagram',
+      'webstory',
       'entertainment',
-      'fact-check',
       'photos',
+      'fact-check',
       'shorts',
       'weather',
       'live-center',
+      'election-2027',
+      'podcasts',
     ];
 
     if (!allCategoriesDB || !Array.isArray(allCategoriesDB) || allCategoriesDB.length === 0) {
@@ -869,45 +873,71 @@ export default function HeroSection({
 
   const sectionMap: Record<string, React.ReactNode> = {
     videos: (
-      <VideoDesk key="videos" videos={videosList.length > 0 ? videosList : (initialVideos && initialVideos.length > 0 ? initialVideos : VIDEOS)} language={language} />
+      <Fragment key="videos-frag">
+        <VideoDesk key="videos" videos={videosList.length > 0 ? videosList : (initialVideos && initialVideos.length > 0 ? initialVideos : VIDEOS)} language={language} />
+        <AdSectionBanner section="AFTER_VIDEOS" />
+      </Fragment>
     ),
-    gujarat: <CityHyperlocalSection key="gujarat" language={language} articles={articlesList} dynamicTrendingTopics={dynamicTrendingTopics} />,
-    national: <NationalSection key="national" language={language} initialArticles={(initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0) ? initialCategoryArticles['national'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; })} />,
+    gujarat: (
+      <Fragment key="gujarat-frag">
+        <CityHyperlocalSection key="gujarat" language={language} articles={articlesList} dynamicTrendingTopics={dynamicTrendingTopics} />
+        <AdSectionBanner section="AFTER_GUJARAT" />
+      </Fragment>
+    ),
     trending: (
       <Fragment key="trending-frag">
         <TrendingSection
           key="trending"
           initialArticles={
-            (initialHeroSettings?.trendingNewsArticles && initialHeroSettings.trendingNewsArticles.length > 0)
-              ? initialHeroSettings.trendingNewsArticles
-              : ((initialHeroSettings as any)?.setting?.trendingNewsArticles && (initialHeroSettings as any)?.setting?.trendingNewsArticles.length > 0)
-                ? (initialHeroSettings as any)?.setting?.trendingNewsArticles
-                : (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
-                  ? initialCategoryArticles['fact-check']
-                  : initialCategoryArticles['factcheck']
+            (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+              ? initialCategoryArticles['fact-check']
+              : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+                ? initialCategoryArticles['factcheck']
+                : (initialHeroSettings?.trendingNewsArticles && initialHeroSettings.trendingNewsArticles.length > 0)
+                  ? initialHeroSettings.trendingNewsArticles
+                  : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
           }
         />
         <AdSectionBanner section="AFTER_TRENDING" />
       </Fragment>
     ),
+    national: (
+      <Fragment key="national-frag">
+        <NationalSection key="national" language={language} initialArticles={(initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0) ? initialCategoryArticles['national'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; })} />
+        <AdSectionBanner section="AFTER_NATIONAL" />
+      </Fragment>
+    ),
     'latest-news': (
-      <LatestUpdatesSection
-        key="latest-news"
-        view="all"
-        initialArticles={articlesList}
-        initialPopularNews={initialHeroSettings?.popularNewsArticles || (initialHeroSettings as any)?.setting?.popularNewsArticles}
-        initialMostRead={initialHeroSettings?.mostReadArticles || undefined}
-      />
+      <Fragment key="latest-news-frag">
+        <LatestUpdatesSection
+          key="latest-news"
+          view="all"
+          initialArticles={articlesList}
+          initialPopularNews={initialHeroSettings?.popularNewsArticles || (initialHeroSettings as any)?.setting?.popularNewsArticles}
+          initialMostRead={initialHeroSettings?.mostReadArticles || undefined}
+        />
+        <AdSectionBanner section="AFTER_LATESTNEWS" />
+      </Fragment>
     ),
     instagram: <InstagramStories key="instagram" initialReels={initialReels} />,
-    world: <WorldSection key="world" language={language} initialArticles={(initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => {
-      const c = ((a as any).category?.slug || (a as any).categorySlug || a.category || '').toLowerCase().trim();
-      const n = ((a as any).category?.name || (a as any).categoryName || '').toLowerCase().trim();
-      const gu = ((a as any).category?.nameGu || (a as any).categoryGu || '').toLowerCase().trim();
-      const loc = (a.location || '').toLowerCase().trim();
-      return c === 'world' || c === 'international' || c === 'videsh' || n === 'world' || n === 'international' || gu.includes('વિશ્વ') || gu.includes('વિદેશ') || loc === 'international';
-    })} />,
-    politics: <PoliticsSection key="politics" language={language} initialArticles={(initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0) ? initialCategoryArticles['politics'] : publishedInitialArticles.filter((a) => { const cs = getCatSlug(a); return cs === 'politics' || cs === 'rajkaran'; })} />,
+    world: (
+      <Fragment key="world-frag">
+        <WorldSection key="world" language={language} initialArticles={(initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => {
+          const c = ((a as any).category?.slug || (a as any).categorySlug || a.category || '').toLowerCase().trim();
+          const n = ((a as any).category?.name || (a as any).categoryName || '').toLowerCase().trim();
+          const gu = ((a as any).category?.nameGu || (a as any).categoryGu || '').toLowerCase().trim();
+          const loc = (a.location || '').toLowerCase().trim();
+          return c === 'world' || c === 'international' || c === 'videsh' || n === 'world' || n === 'international' || gu.includes('વિશ્વ') || gu.includes('વિદેશ') || loc === 'international';
+        })} />
+        <AdSectionBanner section="AFTER_WORLD" />
+      </Fragment>
+    ),
+    politics: (
+      <Fragment key="politics-frag">
+        <PoliticsSection key="politics" language={language} initialArticles={(initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0) ? initialCategoryArticles['politics'] : publishedInitialArticles.filter((a) => { const cs = getCatSlug(a); return cs === 'politics' || cs === 'rajkaran'; })} />
+        <AdSectionBanner section="AFTER_POLITICS" />
+      </Fragment>
+    ),
     webstory: (
       <Fragment key="webstory-frag">
         <WebStoriesSection key="webstory" />
@@ -915,108 +945,198 @@ export default function HeroSection({
       </Fragment>
     ),
     crime: (
-      <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
-          <div className="flex flex-col gap-10 min-w-0">
-            <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
-          </div>
-          <div className="flex flex-col gap-6 sticky top-20 select-none">
-            <div>
-              <div className="flex items-end gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
-                <span className="text-[#B3121B] text-[17px] md:text-[18px] font-black leading-none pb-0.5">♦</span>
-                <h3 className="text-[17px] md:text-[18px] font-black text-foreground leading-none pb-0.5">
-                  {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : 'Gold & Silver Rates'}
-                </h3>
-              </div>
-
-              <div className="border border-border/80 rounded-sm bg-card py-2 px-3 space-y-2 shadow-sm">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-lg font-black select-none shadow-xs">
-                      🏅
-                    </div>
-                    <div>
-                      <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                        {language === 'gu' ? 'Gold (10 Grams)' : 'Gold (10 Grams)'}
-                      </h4>
-                      <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
-                        {language === 'gu' ? '24 Karat' : '24 Karat'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                      {marketRates?.gold?.price || '₹74,850'}
-                    </p>
-                    <p className="text-[13px] md:text-[13.5px] font-black text-emerald-600 flex items-center justify-end gap-0.5 mt-0.5 select-none">
-                      {marketRates?.gold?.change || '▲ ₹450'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t border-border/50" />
-
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 text-lg font-black select-none shadow-xs">
-                      🥈
-                    </div>
-                    <div>
-                      <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                        {language === 'gu' ? 'Silver (1 Kg)' : 'Silver (1 Kg)'}
-                      </h4>
-                      <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
-                        {language === 'gu' ? 'Per Kg' : 'Per Kg'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                      {marketRates?.silver?.price || '₹84,200'}
-                    </p>
-                    <p className="text-[13px] md:text-[13.5px] font-black text-muted-foreground flex items-center justify-end gap-0.5 mt-0.5 select-none">
-                      {marketRates?.silver?.change || '— Stable'}
-                    </p>
-                  </div>
-                </div>
-              </div>
+      <Fragment key="crime-frag">
+        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
+            <div className="flex flex-col gap-10 min-w-0">
+              <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
             </div>
+            <div className="flex flex-col gap-6 sticky top-20 select-none">
+              <div>
+                <div className="flex items-end gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+                  <span className="text-[#B3121B] text-[17px] md:text-[18px] font-black leading-none pb-0.5">♦</span>
+                  <h3 className="text-[17px] md:text-[18px] font-black text-foreground leading-none pb-0.5">
+                    {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : 'Gold & Silver Rates'}
+                  </h3>
+                </div>
 
-            <CrimeSection language={language} view="sidebar" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
+                <div className="border border-border/80 rounded-sm bg-card py-2 px-3 space-y-2 shadow-sm">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-lg font-black select-none shadow-xs">
+                        🏅
+                      </div>
+                      <div>
+                        <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                          {language === 'gu' ? 'Gold (10 Grams)' : 'Gold (10 Grams)'}
+                        </h4>
+                        <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
+                          {language === 'gu' ? '24 Karat' : '24 Karat'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                        {marketRates?.gold?.price || '₹74,850'}
+                      </p>
+                      <p className="text-[13px] md:text-[13.5px] font-black text-emerald-600 flex items-center justify-end gap-0.5 mt-0.5 select-none">
+                        {marketRates?.gold?.change || '▲ ₹450'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border/50" />
+
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 text-lg font-black select-none shadow-xs">
+                        🥈
+                      </div>
+                      <div>
+                        <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                          {language === 'gu' ? 'Silver (1 Kg)' : 'Silver (1 Kg)'}
+                        </h4>
+                        <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
+                          {language === 'gu' ? 'Per Kg' : 'Per Kg'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                        {marketRates?.silver?.price || '₹84,200'}
+                      </p>
+                      <p className="text-[13px] md:text-[13.5px] font-black text-muted-foreground flex items-center justify-end gap-0.5 mt-0.5 select-none">
+                        {marketRates?.silver?.change || '— Stable'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <CrimeSection language={language} view="sidebar" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+        <AdSectionBanner section="AFTER_CRIME" />
+      </Fragment>
     ),
-    entertainment: <EntertainTechLifeSection key="entertainment" language={language} initialArticles={publishedInitialArticles} initialCategoryArticles={initialCategoryArticles} />,
+    entertainment: (
+      <Fragment key="entertainment-frag">
+        <EntertainTechLifeSection key="entertainment" language={language} initialArticles={publishedInitialArticles} initialCategoryArticles={initialCategoryArticles} />
+        <AdSectionBanner section="AFTER_ENTERTAINMENT" />
+      </Fragment>
+    ),
     technology: null,
     health: null,
-    'fact-check': (
-      <FactCheckSection
-        key="fact-check"
-        language={language}
-        initialArticles={
-          (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
-            ? initialCategoryArticles['fact-check']
-            : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
-              ? initialCategoryArticles['factcheck']
-              : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
-        }
-      />
-    ),
+
     photos: (
       <Fragment key="photos-frag">
         <PhotoGallerySection language={language} />
         <AdSectionBanner section="AFTER_GALLERY" />
       </Fragment>
     ),
-    weather: <WeatherDashboardSection key="weather" language={language} />,
+    'fact-check': (
+      <Fragment key="fact-check-frag">
+        <FactCheckSection
+          key="fact-check"
+          language={language}
+          initialArticles={
+            (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+              ? initialCategoryArticles['fact-check']
+              : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+                ? initialCategoryArticles['factcheck']
+                : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
+          }
+        />
+        <AdSectionBanner section="AFTER_FACTCHECK" />
+      </Fragment>
+    ),
+    factcheck: (
+      <Fragment key="factcheck-frag">
+        <FactCheckSection
+          key="factcheck"
+          language={language}
+          initialArticles={
+            (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+              ? initialCategoryArticles['fact-check']
+              : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+                ? initialCategoryArticles['factcheck']
+                : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
+          }
+        />
+        <AdSectionBanner section="AFTER_FACTCHECK" />
+      </Fragment>
+    ),
+    weather: (
+      <Fragment key="weather-frag">
+        <WeatherDashboardSection key="weather" language={language} />
+        <AdSectionBanner section="AFTER_WEATHER" />
+      </Fragment>
+    ),
     shorts: (
       <Fragment key="shorts-frag">
         <YouTubeShorts key="youtube-shorts" />
         <AdSectionBanner section="AFTER_VIDEOS" />
       </Fragment>
     ),
-    'live-center': <LiveCenterSection key="live-center" language={language} />,
+    'live-center': (
+      <Fragment key="live-center-frag">
+        <LiveCenterSection key="live-center" language={language} />
+        <AdSectionBanner section="AFTER_LIVECENTER" />
+      </Fragment>
+    ),
+    'election-2027': (
+      <Fragment key="election-2027-frag">
+        <ElectionSection
+          key="election-2027"
+          language={language}
+          initialArticles={
+            (initialCategoryArticles['election-2027'] && initialCategoryArticles['election-2027'].length > 0)
+              ? initialCategoryArticles['election-2027']
+              : (initialCategoryArticles['election'] && initialCategoryArticles['election'].length > 0)
+                ? initialCategoryArticles['election']
+                : publishedInitialArticles.filter((a) => {
+                    const s = getCatSlug(a);
+                    const t = ((a as any).titleGu || a.title || '').toLowerCase();
+                    return s === 'election-2027' || s === 'election' || t.includes('ચૂંટણી') || t.includes('2027');
+                  })
+          }
+        />
+        <AdSectionBanner section="AFTER_ELECTION" />
+      </Fragment>
+    ),
+    election2027: (
+      <Fragment key="election2027-frag">
+        <ElectionSection
+          key="election2027"
+          language={language}
+          initialArticles={
+            (initialCategoryArticles['election-2027'] && initialCategoryArticles['election-2027'].length > 0)
+              ? initialCategoryArticles['election-2027']
+              : (initialCategoryArticles['election'] && initialCategoryArticles['election'].length > 0)
+                ? initialCategoryArticles['election']
+                : publishedInitialArticles.filter((a) => {
+                    const s = getCatSlug(a);
+                    const t = ((a as any).titleGu || a.title || '').toLowerCase();
+                    return s === 'election-2027' || s === 'election' || t.includes('ચૂંટણી') || t.includes('2027');
+                  })
+          }
+        />
+        <AdSectionBanner section="AFTER_ELECTION" />
+      </Fragment>
+    ),
+    podcasts: (
+      <Fragment key="podcasts-frag">
+        <PodcastSection key="podcasts" language={language} />
+        <AdSectionBanner section="AFTER_PODCASTS" />
+      </Fragment>
+    ),
+    podcast: (
+      <Fragment key="podcast-frag">
+        <PodcastSection key="podcast" language={language} />
+        <AdSectionBanner section="AFTER_PODCASTS" />
+      </Fragment>
+    ),
   };
 
   const currentSidebarVideo = sidebarVideos[activeSidebarVideoIndex] || {
@@ -1182,7 +1302,7 @@ export default function HeroSection({
                             className="transition-transform duration-300 group-hover:scale-[1.03]"
                           />
                         </div>
-                        <h3 className="text-[12.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                        <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                           <AutoArticleTitle article={art} language={language} />
                         </h3>
                       </Link>
@@ -1201,7 +1321,7 @@ export default function HeroSection({
                           <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase tracking-wide mb-1">
                             {getCategoryLabel(story, language)}
                           </span>
-                          <h3 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                          <h3 className="text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                             <AutoArticleTitle article={story} language={language} />
                           </h3>
                         </div>
@@ -1251,7 +1371,7 @@ export default function HeroSection({
                         <span className="text-[#B3121B] font-extrabold text-[11px] md:text-[13px] mb-0.5 md:mb-1 select-none uppercase tracking-wide">
                           {getCategoryLabel(art, language)}
                         </span>
-                        <h3 className="text-[13px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                        <h3 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                           <AutoArticleTitle article={art} language={language} />
                         </h3>
 
@@ -1381,7 +1501,7 @@ export default function HeroSection({
                   <span className="text-[18px] font-black text-[#B3121B]/85 group-hover:text-[#B3121B] font-serif w-5 shrink-0 mt-0.5 transition-colors select-none text-center">
                     {idx + 1}
                   </span>
-                  <h4 className="text-[12.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors flex-1 line-clamp-2">
+                  <h4 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors flex-1 line-clamp-2">
                     <AutoArticleTitle article={art} language={language} />
                   </h4>
                 </Link>
@@ -1414,11 +1534,14 @@ export default function HeroSection({
             {hasCustomNode ? (
               node
             ) : (
-              <DynamicCategorySection
-                category={categoryObj || slug}
-                language={language}
-                initialArticles={publishedInitialArticles}
-              />
+              <>
+                <DynamicCategorySection
+                  category={categoryObj || slug}
+                  language={language}
+                  initialArticles={publishedInitialArticles}
+                />
+                <AdSectionBanner section={`AFTER_${slug.toUpperCase().replace(/-/g, '_')}`} />
+              </>
             )}
           </Fragment>
         );
@@ -1637,6 +1760,8 @@ export {
   DynamicCategorySection,
   EntertainTechLifeSection,
   PhotoGallerySection,
+  ElectionSection,
+  PodcastSection,
 };
 
 

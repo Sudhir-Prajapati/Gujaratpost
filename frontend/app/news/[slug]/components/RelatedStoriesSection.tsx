@@ -105,7 +105,7 @@ export default function RelatedStoriesSection({
                 </div>
                 <div>
                   <span className="kick mb-1 mt-0.5">{itemCategory}</span>
-                  <h3 className="line-clamp-3 leading-snug text-foreground hover:text-accent transition-colors">
+                  <h3 className="line-clamp-3 leading-snug text-[14px] sm:text-[14.5px] font-bold text-foreground hover:text-accent transition-colors">
                     <AutoArticleTitle article={item} language={language} />
                   </h3>
 

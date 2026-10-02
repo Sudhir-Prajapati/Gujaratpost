@@ -86,14 +86,14 @@ export default function Advertisement({ position, section, className = '', showF
     return (
       <aside
         aria-label="Advertisement"
-        className={`flex-1 group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-400/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
+        className={`flex-1 group relative isolate flex flex-col overflow-hidden rounded-xl border border-slate-300/80 dark:border-slate-800 bg-slate-950/95 dark:bg-black/95 shadow-sm transition-all duration-300 hover:border-red-500/40 ${className}`}
         style={{ minHeight: h }}
       >
         <a
           href={redirectLink && redirectLink !== '#' ? redirectLink : undefined}
           target={redirectLink && redirectLink !== '#' ? '_blank' : '_self'}
           rel="noopener noreferrer"
-          className="relative flex flex-1 w-full min-h-full overflow-hidden"
+          className="relative flex flex-1 w-full min-h-full overflow-hidden items-center justify-center"
           style={{ minHeight: h }}
         >
           {isVideo ? (
@@ -103,21 +103,33 @@ export default function Advertisement({ position, section, className = '', showF
               loop
               muted
               playsInline
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="h-full w-full object-contain transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <Image
-              src={mediaUrl}
-              alt={adData.title || 'Advertisement'}
-              fill
-              unoptimized={true}
-              className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
-              priority={effectivePos === 'header'}
-            />
+            <>
+              {/* Ambient blurred backdrop so any size or aspect ratio looks full and natural */}
+              <Image
+                src={mediaUrl}
+                alt=""
+                aria-hidden="true"
+                fill
+                unoptimized={true}
+                className="object-cover object-center blur-2xl scale-125 opacity-35 dark:opacity-25 pointer-events-none select-none transition-transform duration-700 group-hover:scale-135"
+              />
+              {/* Sharp foreground image: object-contain guarantees 100% visible ad content without cropping */}
+              <Image
+                src={mediaUrl}
+                alt={adData.title || 'Advertisement'}
+                fill
+                unoptimized={true}
+                className="object-contain object-center transition-transform duration-500 group-hover:scale-[1.01] drop-shadow-sm z-1"
+                priority={effectivePos === 'header'}
+              />
+            </>
           )}
 
           {/* Top-Right AD Badge */}
-          <div className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm z-10">
+          <div className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm z-10 select-none">
             <span>AD</span>
             {redirectLink && redirectLink !== '#' && (
               <ExternalLink className="h-2.5 w-2.5 opacity-80" />

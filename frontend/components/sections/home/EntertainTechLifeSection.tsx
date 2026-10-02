@@ -377,7 +377,7 @@ export default function EntertainTechLifeSection({
         .cat-card-${uid} .cc-row:hover .cc-thumb img { transform: scale(1.08) !important; }
 
         .cat-card-${uid} .cc-art-title {
-          font-size: 12.5px; font-weight: 800; line-height: 1.4;
+          font-size: 13.5px; font-weight: 800; line-height: 1.4;
           display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
           overflow: hidden; color: inherit;
           transition: color 0.2s ease;

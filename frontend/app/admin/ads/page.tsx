@@ -35,13 +35,34 @@ const HEADER_SLOTS = [
 ];
 
 const HOME_SECTIONS = [
-  { id: 'ARTICLE_BOTTOM', label: 'Article Bottom Horizontal Ad Banner (After Description)', description: 'Horizontal ad banner displayed directly after article description/body text' },
-  { id: 'IN_ARTICLE', label: 'In-Article Body Ad Banner (Inside Paragraphs)', description: 'Banner displayed inside article content between paragraphs when expanded' },
   { id: 'AFTER_HERO', label: 'After Hero Section (Top Banner)', description: 'Placed directly below the main hero news grid' },
+  { id: 'AFTER_GUJARAT', label: 'After Gujarat Hyperlocal Section', description: 'Placed between Gujarat Hyperlocal section and subsequent section' },
+  { id: 'IN_SECTION_GUJARAT', label: 'Inside Gujarat Hyperlocal Section', description: 'Banner placed directly inside Gujarat Hyperlocal section' },
   { id: 'AFTER_TRENDING', label: 'After Trending Section', description: 'Placed below trending news & ticker section' },
+  { id: 'AFTER_NATIONAL', label: 'After National / Bharat Section', description: 'Placed between Bharat section and World section' },
+  { id: 'IN_SECTION_NATIONAL', label: 'Inside National / Bharat Section', description: 'Banner placed directly inside National section' },
+  { id: 'AFTER_WORLD', label: 'After World / International Section', description: 'Placed below World section' },
+  { id: 'IN_SECTION_WORLD', label: 'Inside World / International Section', description: 'Banner placed directly inside World section' },
+  { id: 'AFTER_LATESTNEWS', label: 'After Latest News Section', description: 'Placed below Latest News updates section' },
+  { id: 'IN_SECTION_LATEST_NEWS', label: 'Inside Latest News Section', description: 'Banner placed inside Latest News section' },
+  { id: 'AFTER_POLITICS', label: 'After Politics Section', description: 'Placed below Politics news section' },
+  { id: 'IN_SECTION_POLITICS', label: 'Inside Politics Section', description: 'Banner placed inside Politics section' },
+  { id: 'AFTER_CRIME', label: 'After Crime Section', description: 'Placed below Crime news & Market Rates section' },
+  { id: 'IN_SECTION_CRIME', label: 'Inside Crime Section', description: 'Banner placed inside Crime section' },
+  { id: 'AFTER_ENTERTAINMENT', label: 'After Entertainment Section', description: 'Placed below Manoranjan, Tech & Lifestyle section' },
   { id: 'AFTER_WEBSTORIES', label: 'After Web Stories', description: 'Placed below interactive web stories bar' },
-  { id: 'AFTER_VIDEOS', label: 'After Latest Videos', description: 'Placed below video section' },
   { id: 'AFTER_GALLERY', label: 'After Photo Gallery', description: 'Placed below photo gallery section' },
+  { id: 'AFTER_FACTCHECK', label: 'After Fact Check Section', description: 'Placed below Fact Check section' },
+  { id: 'IN_SECTION_FACTCHECK', label: 'Inside Fact Check Section', description: 'Banner placed inside Fact Check section' },
+  { id: 'AFTER_WEATHER', label: 'After Weather Dashboard', description: 'Placed below Weather Dashboard section' },
+  { id: 'AFTER_VIDEOS', label: 'After YouTube Shorts & Videos', description: 'Placed below video section' },
+  { id: 'AFTER_LIVECENTER', label: 'After Live Center Section', description: 'Placed below Live Center section' },
+  { id: 'AFTER_ELECTION', label: 'After Gujarat Election 2027 Section', description: 'Placed below Gujarat Chunav 2027 section' },
+  { id: 'IN_SECTION_ELECTION', label: 'Inside Gujarat Election 2027 Section', description: 'Banner placed inside Election 2027 section' },
+  { id: 'AFTER_PODCASTS', label: 'After Podcasts Section', description: 'Placed below Podcast episodes section' },
+  { id: 'IN_SECTION_PODCAST', label: 'Inside Podcasts Section', description: 'Banner placed inside Podcasts section' },
+  { id: 'IN_ARTICLE', label: 'In-Article Body Ad Banner (Inside Paragraphs)', description: 'Banner displayed inside article content between paragraphs when expanded' },
+  { id: 'ARTICLE_BOTTOM', label: 'Article Bottom Horizontal Ad Banner (After Description)', description: 'Horizontal ad banner displayed directly after article description/body text' },
   { id: 'RANDOM_ADS_1', label: 'Random Bottom Ads (Section 1 - 7 Cards)', description: 'Displays in 7-card grid section at bottom of website' },
   { id: 'RANDOM_ADS_2', label: 'Random Bottom Ads (Section 2 - 7 Cards)', description: 'Displays in 2nd 7-card grid section at bottom of website' },
   { id: 'RANDOM_ADS_3', label: 'Random Bottom Ads (Section 3 - 7 Cards)', description: 'Displays in 3rd 7-card grid section at bottom of website' },
@@ -556,9 +577,12 @@ export default function AdminAdsPage() {
                     >
                       <div className="flex items-start gap-3 min-w-0">
                         {/* Thumbnail */}
-                        <div className="relative h-14 w-20 shrink-0 rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-800">
+                        <div className="relative h-14 w-20 shrink-0 rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-950 flex items-center justify-center">
                           {ad.image1 ? (
-                            <Image src={ad.image1} alt={ad.title || 'Ad'} fill unoptimized={true} className="object-cover" />
+                            <>
+                              <Image src={ad.image1} alt="" aria-hidden="true" fill unoptimized={true} className="object-cover blur-sm opacity-35" />
+                              <Image src={ad.image1} alt={ad.title || 'Ad'} fill unoptimized={true} className="object-contain p-0.5 z-1" />
+                            </>
                           ) : (
                             <div className="flex items-center justify-center h-full text-[10px] text-zinc-400 font-bold">AD</div>
                           )}
@@ -893,18 +917,28 @@ export default function AdminAdsPage() {
 
                       {/* Media Preview */}
                       {imgVal && (
-                        <div className="relative h-36 w-full rounded-xl border border-gray-400 dark:border-zinc-600 overflow-hidden bg-zinc-900 mt-2 flex items-center justify-center">
+                        <div className="relative h-36 w-full rounded-xl border border-gray-400 dark:border-zinc-600 overflow-hidden bg-zinc-950 mt-2 flex items-center justify-center">
                           {isMediaValid ? (
                             mediaType === 'VIDEO' || /\.(mp4|webm|mov)(\?.*)?$/i.test(imgVal) ? (
-                              <video src={imgVal} autoPlay loop muted playsInline className="h-full w-full object-cover" />
+                              <video src={imgVal} autoPlay loop muted playsInline className="h-full w-full object-contain" />
                             ) : (
-                              <Image
-                                src={imgVal}
-                                alt={`Preview ${idx + 1}`}
-                                fill
-                                unoptimized={true}
-                                className="object-cover"
-                              />
+                              <>
+                                <Image
+                                  src={imgVal}
+                                  alt=""
+                                  aria-hidden="true"
+                                  fill
+                                  unoptimized={true}
+                                  className="object-cover blur-xl scale-110 opacity-35 pointer-events-none"
+                                />
+                                <Image
+                                  src={imgVal}
+                                  alt={`Preview ${idx + 1}`}
+                                  fill
+                                  unoptimized={true}
+                                  className="object-contain object-center z-1"
+                                />
+                              </>
                             )
                           ) : (
                             <div className="flex flex-col items-center justify-center text-amber-400 text-xs p-2">

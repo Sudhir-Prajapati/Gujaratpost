@@ -67,7 +67,7 @@ html, body {
   --t-std: clamp(1.02rem, .92rem + .32vw, 1.2rem);
   --t-compact: clamp(.94rem, .89rem + .18vw, 1.02rem);
   --t-meta: clamp(.72rem, .69rem + .12vw, .8rem);
-  --t-body: clamp(1.06rem, 1rem + .28vw, 1.22rem);
+  --t-body: clamp(1.12rem, 1.05rem + .3vw, 1.28rem);
   --sp-1: 4px;
   --sp-2: 8px;
   --sp-3: 12px;
@@ -2053,7 +2053,7 @@ html[data-theme="dark"] .share-x {
 .article-title {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", sans-serif;
   font-weight: 800;
-  font-size: clamp(1.35rem, 1.15rem + 0.6vw, 1.75rem);
+  font-size: clamp(1.48rem, 1.25rem + 0.75vw, 1.95rem);
   line-height: 1.25;
   color: var(--ink);
   letter-spacing: -.5px;
@@ -2062,7 +2062,7 @@ html[data-theme="dark"] .share-x {
 
 .article-sub {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", sans-serif;
-  font-size: clamp(0.95rem, 0.95rem + 0.2vw, 1.15rem);
+  font-size: clamp(1.05rem, 1rem + 0.22vw, 1.22rem);
   line-height: 1.55;
   color: var(--ink-2);
   margin-bottom: 22px;
@@ -2110,7 +2110,7 @@ html[data-theme="dark"] .share-x {
 }
 
 .gist li {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   color: var(--ink);
   display: list-item !important;

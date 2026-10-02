@@ -18,7 +18,7 @@ export interface AdItemData {
   link: string;
 }
 
-export default function AdSectionBanner({ section, initialAd, className = '', showFallback = false }: AdSectionBannerProps) {
+export default function AdSectionBanner({ section, initialAd, className = '', showFallback = true }: AdSectionBannerProps) {
   const [adData, setAdData] = useState<any>(initialAd || null);
   const [loading, setLoading] = useState<boolean>(!initialAd);
 
@@ -106,19 +106,19 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
 
   const count = items.length;
 
-  // Grid system setting proper width based on image count:
-  // 1 image  -> 100% full width (grid-cols-1)
+  // Grid system setting proper layout based on image count:
+  // 1 image  -> full width banner (grid-cols-1)
   // 2 images -> 50%/50% width (grid-cols-1 md:grid-cols-2)
   // 3 images -> 33.3%/33.3%/33.3% width (grid-cols-1 sm:grid-cols-2 md:grid-cols-3)
   let gridColsClass = 'grid-cols-1';
-  let aspectRatioClass = 'aspect-[21/6] sm:aspect-[24/5]'; // Wide banner for 1 item
+  let bannerHeightClass = 'h-[100px] xs:h-[120px] sm:h-[145px] md:h-[165px] lg:h-[185px]';
 
   if (count === 2) {
     gridColsClass = 'grid-cols-1 md:grid-cols-2';
-    aspectRatioClass = 'aspect-[16/7] sm:aspect-[16/6]'; // 50% split width aspect ratio
+    bannerHeightClass = 'h-[130px] sm:h-[160px] md:h-[180px] lg:h-[200px]';
   } else if (count === 3) {
     gridColsClass = 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3';
-    aspectRatioClass = 'aspect-[16/8] sm:aspect-[16/7]'; // 33.3% split width aspect ratio
+    bannerHeightClass = 'h-[140px] sm:h-[170px] md:h-[190px] lg:h-[210px]';
   }
 
   return (
@@ -134,24 +134,37 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
               href={item.link && item.link !== '#' ? item.link : undefined}
               target={item.link && item.link !== '#' ? '_blank' : '_self'}
               rel="noopener noreferrer"
-              className="group relative flex w-full overflow-hidden rounded-2xl border border-slate-400/80 dark:border-slate-800 bg-slate-900 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-red-500/30"
+              className="group relative flex w-full overflow-hidden rounded-2xl border border-slate-300/80 dark:border-slate-800/80 bg-slate-950/95 dark:bg-black/95 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:border-red-500/40"
             >
-              <div className={`relative w-full ${aspectRatioClass} min-h-[100px] overflow-hidden`}>
+              <div className={`relative w-full ${bannerHeightClass} overflow-hidden flex items-center justify-center`}>
+                {/* 1. Ambient blurred background glow: perfectly fills any extra space with the ad's natural palette */}
+                <Image
+                  src={item.image}
+                  alt=""
+                  aria-hidden="true"
+                  fill
+                  unoptimized={item.image.startsWith('http')}
+                  className="object-cover object-center blur-2xl scale-125 opacity-35 dark:opacity-25 pointer-events-none select-none transition-transform duration-700 group-hover:scale-135"
+                />
+
+                {/* 2. Sharp foreground image: object-contain ensures ANY size/ratio image fits completely without cropping */}
                 <Image
                   src={item.image}
                   alt={`Advertisement ${idx + 1}`}
                   fill
                   unoptimized={item.image.startsWith('http')}
-                  className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                  className="object-contain object-center transition-transform duration-500 group-hover:scale-[1.01] drop-shadow-md z-1"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                
-                {/* Badge top-right */}
-                <div className="absolute top-2 right-2 flex items-center gap-1 rounded-md bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white/90 shadow-sm">
+
+                {/* Subtle hover overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-2 pointer-events-none" />
+
+                {/* AD Badge top-right */}
+                <div className="absolute top-2 right-2 flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm z-10 select-none">
                   <span>AD</span>
                   {item.link && item.link !== '#' && (
-                    <ExternalLink className="h-2.5 w-2.5 opacity-70 group-hover:opacity-100" />
+                    <ExternalLink className="h-2.5 w-2.5 opacity-80 group-hover:opacity-100" />
                   )}
                 </div>
               </div>

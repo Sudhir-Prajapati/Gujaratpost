@@ -44,7 +44,7 @@ const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: st
   return (
     <div
       ref={bodyRef}
-      className="article-body text-base leading-relaxed text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4"
+      className="article-body text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[17px] sm:[&_p]:text-[18px] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4"
     />
   );
 });
@@ -1332,7 +1332,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <span className="text-[#B3121B] font-bold text-sm">♦</span>
                   <span>{uiLabel(language, { en: 'At a Glance', gu: 'એક નજરમાં', hi: 'एक नजर में' })}</span>
                 </div>
-                <ul className="space-y-2.5 text-sm font-semibold text-neutral-800 dark:text-neutral-200">
+                <ul className="space-y-2.5 text-[15px] sm:text-[15.5px] font-semibold text-neutral-800 dark:text-neutral-200">
                   {gistPoints.map((point, index) => (
                     <li key={index} className="flex items-start gap-2.5">
                       <span className="text-[#B3121B] font-bold mt-0.5 shrink-0 select-none">•</span>

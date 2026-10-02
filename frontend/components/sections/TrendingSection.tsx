@@ -212,7 +212,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
 
               {/* Info Text below image */}
               <div className="p-2 flex flex-col justify-between flex-1 min-w-0">
-                <h3 className="line-clamp-3 text-[11px] md:text-[11.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
+                <h3 className="line-clamp-3 text-[12px] md:text-[12.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
                   <AutoArticleTitle article={article} language={language} />
                 </h3>
                 <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">

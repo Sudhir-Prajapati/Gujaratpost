@@ -8,6 +8,7 @@ import type { Article, Language } from '@/types';
 import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import SidebarAdBanner from '@/components/ads/SidebarAdBanner';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { stripHtmlTags, DEMO_IMAGES, getMockRelativeTime } from './homeHelpers';
@@ -296,7 +297,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
   }, [dbWorldArticles, language]);
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 -mt-4 md:-mt-5 pt-0">
+    <div className="mx-auto max-w-screen-xl px-4 mt-4 md:mt-5 pt-0">
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
@@ -326,12 +327,12 @@ export default function WorldSection({ language, initialArticles }: { language: 
               <span className="text-red-600 font-extrabold text-[12px] md:text-[13px] mb-2 select-none uppercase tracking-wide">
                 <AutoTranslateString text={featured.categoryGu} language={language} />
               </span>
-              <h3 className="text-[17px] md:text-[19px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
+              <h3 className="text-[18px] md:text-[20.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
                 {featured.article
                   ? <AutoArticleTitle article={featured.article} language={language} />
                   : <AutoTranslateString text={featured.titleGu} language={language} />}
               </h3>
-              <p className="text-muted-foreground text-[13px] leading-relaxed mt-3.5 line-clamp-4 select-none">
+              <p className="text-muted-foreground text-[14px] leading-relaxed mt-3.5 line-clamp-4 select-none">
                 {featured.article
                   ? <AutoArticleExcerpt article={featured.article} language={language} />
                   : <AutoTranslateString text={stripHtmlTags(featured.excerptGu)} language={language} />}
@@ -369,7 +370,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
                   <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase leading-none">
                     <AutoTranslateString text={card.categoryGu} language={language} />
                   </span>
-                  <h4 className="text-[13px] md:text-[13.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                  <h4 className="text-[14px] md:text-[14.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                     {card.article
                       ? <AutoArticleTitle article={card.article} language={language} />
                       : <AutoTranslateString text={card.titleGu} language={language} />}

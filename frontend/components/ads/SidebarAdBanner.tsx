@@ -222,21 +222,31 @@ export default function SidebarAdBanner({
               </div>
             </div>
           ) : (
-            <div className="relative w-full h-full overflow-hidden">
+            <div className="relative w-full h-full overflow-hidden flex items-center justify-center bg-slate-950/95 dark:bg-black/95">
+              {/* Ambient blurred backdrop so any size/ratio image fits naturally */}
+              <Image
+                src={mediaUrl}
+                alt=""
+                aria-hidden="true"
+                fill
+                unoptimized={mediaUrl.startsWith('http')}
+                className="object-cover object-center blur-xl scale-125 opacity-35 dark:opacity-25 pointer-events-none select-none transition-transform duration-700 group-hover:scale-135"
+              />
+              {/* Sharp foreground image: object-contain guarantees 100% visible ad content without cropping */}
               <Image
                 src={mediaUrl}
                 alt={slideData?.title || 'Advertisement'}
                 fill
                 unoptimized={mediaUrl.startsWith('http')}
-                className="object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                className="object-contain object-center transition-transform duration-500 group-hover:scale-[1.01] drop-shadow-md z-1"
                 sizes="(max-width: 768px) 100vw, 340px"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/25 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100 z-2 pointer-events-none" />
             </div>
           )}
 
           {/* Top-Right AD Badge */}
-          <div className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/60 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm z-10">
+          <div className="absolute top-2 right-2 flex items-center gap-1 rounded bg-black/75 backdrop-blur-md px-2 py-0.5 text-[10px] font-bold text-white shadow-sm z-10 select-none">
             <span>AD</span>
             {redirectLink && redirectLink !== '#' && (
               <ExternalLink className="h-2.5 w-2.5 opacity-80" />

@@ -212,21 +212,21 @@ export default function NewsBriefPageClient() {
         <div
           className="w-full bg-white rounded-2xl shadow-md overflow-hidden flex flex-col border border-neutral-100"
           style={{
-            maxWidth: 420,
-            maxHeight: 'min(680px, calc(100dvh - 92px))',
+            maxWidth: 456,
+            maxHeight: 'min(740px, calc(100dvh - 80px))',
             transform: animDir === 'up' ? 'translateY(-8px)' : animDir === 'down' ? 'translateY(8px)' : 'translateY(0)',
             opacity: animDir ? 0.55 : 1,
             transition: 'transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s',
           }}
         >
           {/* Hero image with rounded corners or Gujarat Post logo fallback */}
-          <div className="relative w-full overflow-hidden rounded-xl mx-3 mt-3 shrink-0 bg-neutral-100" style={{ aspectRatio: '4/3', width: 'calc(100% - 24px)' }}>
+          <div className="relative w-full overflow-hidden rounded-xl mx-3 mt-3 shrink-0 bg-neutral-100" style={{ aspectRatio: '16/10', width: 'calc(100% - 24px)' }}>
             {cleanImg && !imgError ? (
               <Image
                 src={cleanImg}
                 alt={title || 'Gujarat Post'}
                 fill
-                sizes="(max-width: 640px) 380px, 420px"
+                sizes="(max-width: 640px) 380px, 456px"
                 className="object-cover"
                 priority
                 onError={() => setImgError(true)}
@@ -248,31 +248,31 @@ export default function NewsBriefPageClient() {
           </div>
 
           {/* Card content — flex-1 so it fills remaining height */}
-          <div className="flex-1 px-4 pt-3 pb-2 flex flex-col gap-2 min-h-0">
+          <div className="flex-1 px-5 pt-3.5 pb-2.5 flex flex-col gap-2.5 min-h-0">
 
             {/* Category + time row */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[13px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
+              <span className="text-[14.5px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
               {ago && (
                 <>
                   <span className="text-neutral-200 text-xs">·</span>
-                  <span className="text-[12px] text-neutral-500 font-medium">{ago}</span>
+                  <span className="text-[13.5px] text-neutral-500 font-medium">{ago}</span>
                 </>
               )}
             </div>
 
             {/* Title */}
-            <h2 className="font-black text-neutral-900 leading-snug text-[17px] sm:text-[18px] line-clamp-3">
+            <h2 className="font-black text-neutral-900 leading-snug text-[20.5px] sm:text-[22px] line-clamp-3">
               {title}
             </h2>
 
             {/* Excerpt */}
-            <p className="text-neutral-600 text-[14px] leading-relaxed line-clamp-5 flex-1">
+            <p className="text-neutral-700 text-[16.5px] sm:text-[17.5px] leading-relaxed line-clamp-5 flex-1 font-normal">
               {displayParagraph}
             </p>
 
             {/* Disclaimer */}
-            <p className="text-[11px] text-neutral-400 leading-snug italic">
+            <p className="text-[12px] text-neutral-400 leading-snug italic">
               Disclaimer – આ ન્યૂઝ AI-જનરેટેડ સારાંશ છે અને એડિટર દ્વારા રિવ્યૂ કરાયો છે.
             </p>
 
@@ -280,7 +280,7 @@ export default function NewsBriefPageClient() {
             <div className="flex items-center justify-between pt-1">
               <Link
                 href={`/news/${currentArticle.slug}`}
-                className="px-5 py-1.5 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[14px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
+                className="px-5 py-2 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15.5px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
               >
                 {language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}
               </Link>

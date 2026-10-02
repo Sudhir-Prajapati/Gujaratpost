@@ -64,27 +64,15 @@ const topics1Links = [
     { label: 'Videos', href: '/videos' },
     { label: 'Gujarat', href: '/category/gujarat' },
     { label: 'Ahmedabad', href: '/category/ahmedabad' },
-    { label: 'Gandhinagar', href: '/category/gandhinagar' },
     { label: 'Surat', href: '/category/surat' },
-    { label: 'Vadodara', href: '/category/vadodara' },
     { label: 'Rajkot', href: '/category/rajkot' },
+    { label: 'Vadodara', href: '/category/vadodara' },
+    { label: 'Gandhinagar', href: '/category/gandhinagar' },
     { label: 'Other Cities', href: '/category/gujarat' },
     { label: 'Gujarat Election 2027', href: '/category/election-2027' },
 ];
 
 const topics2Links = [
-    { label: 'About Us', href: '/about' },
-    { label: 'Entertainment', href: '/category/entertainment' },
-    { label: 'Technology', href: '/category/technology' },
-    { label: 'Photo Gallery', href: '/photos' },
-    { label: 'Instagram', href: '/category/instagram' },
-    { label: 'Web Stories', href: '/category/webstory' },
-    { label: 'Weather', href: '/category/weather' },
-    { label: 'Gold-Silver', href: '/category/gold-silver' },
-    { label: 'News Brief', href: '/category/news-brief' }
-];
-
-const topics3Links = [
     { label: 'India', href: '/category/national' },
     { label: 'World', href: '/category/world' },
     { label: 'Politics', href: '/category/politics' },
@@ -95,8 +83,22 @@ const topics3Links = [
     { label: 'E-Paper', href: '/epaper' },
 ];
 
-const companyLinks = [
+
+const topics3Links = [
     { label: 'Health', href: '/category/health' },
+    { label: 'Entertainment', href: '/category/entertainment' },
+    { label: 'Technology', href: '/category/technology' },
+    { label: 'Photo Gallery', href: '/photos' },
+    { label: 'Instagram', href: '/category/instagram' },
+    { label: 'Web Stories', href: '/category/webstory' },
+    { label: 'Weather', href: '/category/weather' },
+    { label: 'Gold-Silver', href: '/category/gold-silver' },
+    { label: 'News Brief', href: '/category/news-brief' }
+];
+
+
+const companyLinks = [
+    { label: 'About Us', href: '/about' },
     { label: 'Contact Us', href: '/contact' },
     { label: 'Advertise With Us', href: '/advertise' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
@@ -275,18 +277,17 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         </div>
 
                         {/* Unified Logo & Support Button Container - Exact Same Width & Matching Ends */}
-                        <div className="w-[220px] sm:w-[245px] lg:w-[260px] flex flex-col items-start">
-                            {/* Logo */}
-                            <Link href="/" className="group block w-full transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99]">
+                        <div className="w-[200px] sm:w-[220px] lg:w-[240px] flex flex-col items-start">
+                            {/* Logo — exact same dimensions as Header */}
+                            <Link href="/" className="group relative block h-9 sm:h-11 md:h-12 lg:h-14 w-40 sm:w-50 md:w-54 lg:w-60 overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]">
                                 <Image
                                     src="/assets/gujarat-post-logo-cms.png"
                                     alt="Gujarat Post"
-                                    width={940}
-                                    height={208}
+                                    fill
                                     priority
                                     unoptimized
-                                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                                    className="w-full h-auto object-contain block drop-shadow-sm"
+                                    sizes="(max-width: 640px) 160px, (max-width: 1024px) 216px, 240px"
+                                    className="object-contain object-left block drop-shadow-sm"
                                 />
                             </Link>
 
@@ -294,10 +295,10 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             <button
                                 type="button"
                                 onClick={openSupportModal}
-                                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-3 py-2.5 sm:py-3 text-white shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-red-400/40 select-none"
+                                className="mt-3 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-2.5 sm:px-3 py-2.5 sm:py-3 text-white shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-red-400/40 select-none"
                             >
-                                <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-current animate-pulse text-white shrink-0" />
-                                <span className="text-[13.5px] sm:text-[15px] font-extrabold tracking-wide whitespace-nowrap drop-shadow-sm">
+                                <Heart className="h-4 w-4 sm:h-4.5 sm:w-4.5 fill-current animate-pulse text-white shrink-0" />
+                                <span className="text-[13px] sm:text-[14px] font-extrabold tracking-wide whitespace-nowrap drop-shadow-sm">
                                     {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
                                 </span>
                             </button>

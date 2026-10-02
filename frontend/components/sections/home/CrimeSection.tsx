@@ -475,7 +475,7 @@ export default function CrimeSection({
                 {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
               </span>
               <Link href={`/news/${currentSlide.slug}`} className="group/link flex flex-col justify-start">
-                <h3 className="font-extrabold text-[15px] md:text-[16.5px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-2">
+                <h3 className="font-extrabold text-[16px] md:text-[17.5px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-2">
                   {currentSlide.article
                     ? <AutoArticleTitle article={currentSlide.article} language={language} />
                     : <AutoTranslateString text={currentSlide.titleGu} language={language} />}
@@ -504,7 +504,7 @@ export default function CrimeSection({
                 <span className="text-red-600 font-extrabold text-[10.5px] md:text-[11px] uppercase tracking-wide mb-0.5 leading-none">
                   {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
                 </span>
-                <h4 className="text-[13px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                <h4 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                   {item.article
                     ? <AutoArticleTitle article={item.article} language={language} />
                     : (getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi }))}
@@ -530,7 +530,7 @@ export default function CrimeSection({
                   className="transition-transform duration-300 group-hover:scale-105"
                 />
               </div>
-              <h3 className="text-[13px] md:text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+              <h3 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                 {col.featured.title}
               </h3>
             </Link>
@@ -553,7 +553,7 @@ export default function CrimeSection({
 
                   {/* Title & Metadata on right */}
                   <div className="flex flex-col min-w-0 flex-1">
-                    <h4 className="text-[12.5px] md:text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                    <h4 className="text-[13.5px] md:text-[14px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                       {sub.title}
                     </h4>
                   </div>

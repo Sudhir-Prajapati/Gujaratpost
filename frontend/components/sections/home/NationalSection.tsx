@@ -9,6 +9,7 @@ import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { DEMO_IMAGES, getMockRelativeTime } from './homeHelpers';
 
 const mockNationalColumns = [
@@ -211,7 +212,7 @@ export default function NationalSection({ language, initialArticles }: { languag
               <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
                 <ArticleMedia src={item.image} alt={item.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
               </div>
-              <h3 className="text-[14px] md:text-[15.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+              <h3 className="text-[15px] md:text-[16.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                 {item.article
                   ? <AutoArticleTitle article={item.article} language={language} />
                   : <AutoTranslateString text={item.titleGu} language={language} />}
@@ -234,7 +235,7 @@ export default function NationalSection({ language, initialArticles }: { languag
                     <ArticleMedia src={sub.image} alt={sub.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
                   </div>
                   <div className="flex flex-col justify-center min-w-0 flex-1">
-                    <h4 className="text-[12.5px] font-extrabold leading-snug line-clamp-2 text-foreground group-hover:text-[#B3121B] transition-colors">
+                    <h4 className="text-[13.5px] font-extrabold leading-snug line-clamp-2 text-foreground group-hover:text-[#B3121B] transition-colors">
                       {sub.article
                         ? <AutoArticleTitle article={sub.article} language={language} />
                         : <AutoTranslateString text={sub.titleGu} language={language} />}
