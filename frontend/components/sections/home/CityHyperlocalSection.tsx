@@ -9,6 +9,7 @@ import { formatTime, getLocalized } from '@/data';
 import { getTrendingTopicHref } from '@/lib/utils';
 import { getPublicArticles, getPublicCategories } from '@/lib/api';
 import SidebarAdBanner from '@/components/ads/SidebarAdBanner';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
@@ -328,6 +329,15 @@ export default function CityHyperlocalSection({
           relativeTimeGu: '8 કલાક પહેલાં', relativeTime: '8 hours ago', relativeTimeHi: '8 घंटे पहले',
           categoryGu: 'ટ્રાફિક', category: 'Traffic', categoryHi: 'ट्रैफिक',
           viewsGu: '15K', views: '15K'
+        },
+        {
+          id: 'ahm-l6', slug: 'ahmedabad-riverfront-flower-park-357', image: '/assets/demo/6.jpg',
+          titleGu: 'અમદાવાદ રિવરફ્રન્ટ પર નવો ફ્લાવર પાર્ક ખુલ્લો મુકાયો, લોકોમાં આકર્ષણ',
+          title: 'New flower park opened on Ahmedabad Riverfront, attraction among citizens',
+          titleHi: 'अहमदाबाद रिवरफ्रंट पर नया फ्लावर पार्क खुला, लोगों में आकर्षण',
+          relativeTimeGu: '10 કલાક પહેલાં', relativeTime: '10 hours ago', relativeTimeHi: '10 घंटे पहले',
+          categoryGu: 'અમદાવાદ', category: 'Ahmedabad', categoryHi: 'अहमदाबाद',
+          viewsGu: '22K', views: '22K'
         }
       ]
     },
@@ -418,6 +428,15 @@ export default function CityHyperlocalSection({
           relativeTimeGu: '9 કલાક પહેલાં', relativeTime: '9 hours ago', relativeTimeHi: '9 घंटे पहले',
           categoryGu: 'સિવિક', category: 'Civic', categoryHi: 'सिविक',
           viewsGu: '22K', views: '22K'
+        },
+        {
+          id: 'sur-l6', slug: 'surat-metro-underground-tunnel-367', image: '/assets/demo/6.jpg',
+          titleGu: 'સુરત મેટ્રો માટે અંડરગ્રાઉન્ડ ટનલનું કામ ઝડપથી પ્રગતિમાં, નવી મશીનો કાર્યરત',
+          title: 'Underground tunnel work for Surat Metro progressing fast, new machines deployed',
+          titleHi: 'सूरत मेट्रो के लिए अंडरग्राउंड टनल का काम तेजी से जारी',
+          relativeTimeGu: '10 કલાક પહેલાં', relativeTime: '10 hours ago', relativeTimeHi: '10 घंटे पहले',
+          categoryGu: 'સુરત', category: 'Surat', categoryHi: 'सूरत',
+          viewsGu: '27K', views: '27K'
         }
       ]
     },
@@ -495,6 +514,15 @@ export default function CityHyperlocalSection({
           relativeTimeGu: '10 કલાક પહેલાં', relativeTime: '10 hours ago', relativeTimeHi: '10 घंटे पहले',
           categoryGu: 'રમતગમત', category: 'Sports', categoryHi: 'खेल',
           viewsGu: '18K', views: '18K'
+        },
+        {
+          id: 'vad-l6', slug: 'vadodara-sayaji-baug-toy-train-377', image: '/assets/demo/1.jpg',
+          titleGu: 'વડોદરા સયાજી બાગમાં નવી જોય ટ્રેન શરૂ, બાળકો અને પરિવારોમાં ખુશી',
+          title: 'New joy train started in Vadodara Sayaji Baug, happiness among children and families',
+          titleHi: 'वडोदरा सयाजी बाग में नई टॉय ट्रेन शुरू, बच्चों में खुशी',
+          relativeTimeGu: '12 કલાક પહેલાં', relativeTime: '12 hours ago', relativeTimeHi: '12 घंटे पहले',
+          categoryGu: 'વડોદરા', category: 'Vadodara', categoryHi: 'वडोदरा',
+          viewsGu: '31K', views: '31K'
         }
       ]
     },
@@ -572,6 +600,15 @@ export default function CityHyperlocalSection({
           relativeTimeGu: '11 કલાક પહેલાં', relativeTime: '11 hours ago', relativeTimeHi: '11 घंटे पहले',
           categoryGu: 'વિકાસ', category: 'Development', categoryHi: 'विकास',
           viewsGu: '25K', views: '25K'
+        },
+        {
+          id: 'raj-l6', slug: 'rajkot-aiims-opd-expansion-386', image: '/assets/demo/7.jpg',
+          titleGu: 'રાજકોટ AIIMS ખાતે વધુ નવા ઓપીડી વિભાગો શરૂ, દર્દીઓને મોટી રાહત',
+          title: 'More new OPD departments started at Rajkot AIIMS, big relief for patients',
+          titleHi: 'राजकोट एम्स में नए ओपीडी विभाग शुरू, मरीजों को बड़ी राहत',
+          relativeTimeGu: '12 કલાક પહેલાં', relativeTime: '12 hours ago', relativeTimeHi: '12 घंटे पहले',
+          categoryGu: 'આરોગ્ય', category: 'Health', categoryHi: 'स्वास्थ्य',
+          viewsGu: '29K', views: '29K'
         }
       ]
     },
@@ -649,6 +686,15 @@ export default function CityHyperlocalSection({
           relativeTimeGu: '12 કલાક પહેલાં', relativeTime: '12 hours ago', relativeTimeHi: '12 घंटे पहले',
           categoryGu: 'સૌર ઉર્જા', category: 'Solar', categoryHi: 'सौर ऊर्जा',
           viewsGu: '34K', views: '34K'
+        },
+        {
+          id: 'gan-l6', slug: 'gandhinagar-central-library-modernization-396', image: '/assets/demo/4.jpg',
+          titleGu: 'ગાંધીનગર સેન્ટ્રલ લાઇબ્રેરીનું આધુનિકીકરણ, ડિજિટલ રીડિંગ રૂમ ઉપલબ્ધ',
+          title: 'Modernization of Gandhinagar Central Library, digital reading rooms available',
+          titleHi: 'गांधीनगर सेंट्रल लाइब्रेरी का आधुनिकीकरण, डिजिटल रीडिंग रूम उपलब्ध',
+          relativeTimeGu: '14 કલાક પહેલાં', relativeTime: '14 hours ago', relativeTimeHi: '14 घंटे पहले',
+          categoryGu: 'શિક્ષણ', category: 'Education', categoryHi: 'शिक्षा',
+          viewsGu: '26K', views: '26K'
         }
       ]
     },
@@ -739,6 +785,15 @@ export default function CityHyperlocalSection({
           relativeTimeGu: '9 કલાક પહેલાં', relativeTime: '9 hours ago', relativeTimeHi: '9 घंटे पहले',
           categoryGu: 'મોરબી', category: 'Morbi', categoryHi: 'मोरबी',
           viewsGu: '37K', views: '37K'
+        },
+        {
+          id: 'oth-l6', slug: 'somnath-temple-corridor-development-400', image: '/assets/demo/6.jpg',
+          titleGu: 'સોમનાથ મંદિર કોરિડોર પ્રોજેક્ટને મંજૂરી, યાત્રાળુઓ માટે ભવ્ય સુવિધાઓ',
+          title: 'Somnath Temple corridor project approved, grand facilities for pilgrims',
+          titleHi: 'सोमनाथ मंदिर कॉरिडोर प्रोजेक्ट को मंजूरी, तीर्थयात्रियों के लिए सुविधाएं',
+          relativeTimeGu: '11 કલાક પહેલાં', relativeTime: '11 hours ago', relativeTimeHi: '11 घंटे पहले',
+          categoryGu: 'પ્રવાસન', category: 'Tourism', categoryHi: 'पर्यटन',
+          viewsGu: '48K', views: '48K'
         }
       ]
     }
@@ -935,7 +990,7 @@ export default function CityHyperlocalSection({
   }, [tabApiArticles, activeTab]);
 
   const realList: ListItem[] = useMemo(() => {
-    return tabApiArticles.slice(3, 8).map((art: Article) => ({
+    return tabApiArticles.slice(3, 9).map((art: Article) => ({
       id: art.id,
       slug: art.slug,
       image: art.image || (art as any).featuredImage || '/assets/demo/2.jpg',
@@ -973,11 +1028,11 @@ export default function CityHyperlocalSection({
   }, [realSlides, activeCityData]);
 
   const mockList = useMemo(() => {
-    if (realList.length >= 5) return realList;
+    if (realList.length >= 6) return realList;
     if (realList.length > 0) {
       const combined = [...realList];
       for (const fallback of activeCityData.list) {
-        if (combined.length >= 5) break;
+        if (combined.length >= 6) break;
         if (!combined.some((l) => l.id === fallback.id)) {
           combined.push(fallback);
         }
@@ -1092,15 +1147,15 @@ export default function CityHyperlocalSection({
                   </span>
 
                   <Link href={`/news/${currentSlide.slug}`} className="group/link">
-                    <div className="h-[48px] md:h-[50px] overflow-hidden">
-                      <h3 className="font-extrabold text-[15.5px] md:text-[17px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
+                    <div className="min-h-[48px] md:min-h-[52px]">
+                      <h3 className="font-extrabold text-[16.5px] md:text-[18px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
                         <AutoTranslateString text={getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })} language={language} />
                       </h3>
                     </div>
                   </Link>
 
-                  <div className="h-[38px] overflow-hidden mt-2">
-                    <p className="text-muted-foreground text-[12.5px] leading-relaxed line-clamp-2 font-medium">
+                  <div className="min-h-[38px] md:min-h-[42px] mt-2">
+                    <p className="text-muted-foreground text-[13.5px] leading-relaxed line-clamp-2 font-medium">
                       <AutoTranslateString text={stripHtmlTags(getLocalized(language, { en: currentSlide.excerpt, gu: currentSlide.excerptGu, hi: currentSlide.excerptHi }))} language={language} />
                     </p>
                   </div>
@@ -1147,8 +1202,8 @@ export default function CityHyperlocalSection({
                     <span className="text-[#B3121B] font-extrabold text-[11px] uppercase tracking-wide mb-0.5 select-none leading-none">
                       {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
                     </span>
-                    <div className="h-[36px] overflow-hidden">
-                      <h4 className="text-[13px] md:text-[13.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                    <div className="min-h-[36px] md:min-h-[40px]">
+                      <h4 className="text-[14px] md:text-[14.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                         <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
                       </h4>
                     </div>
@@ -1162,7 +1217,7 @@ export default function CityHyperlocalSection({
         </div>
 
         {/* Right Column: Sidebar Ads and widgets */}
-        <div className="flex flex-col gap-2.5 sticky top-20 select-none">
+        <div className="flex flex-col gap-6 sticky top-20 select-none">
 
           <SidebarAdBanner
             slot="SIDEBAR_GUJARAT"
@@ -1174,34 +1229,34 @@ export default function CityHyperlocalSection({
             fallbackCtaGu="અરજી કરો"
             fallbackCtaEn="Apply Now"
             fallbackGradient="linear-gradient(135deg,#0f3d70,#001f3f)"
-            minHeight={135}
+            minHeight={180}
             enableTributeSlides={false}
           />
 
-          {/* WhatsApp Channel widget - Compact */}
-          <div className="relative w-full overflow-hidden rounded-xl border border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/50 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 px-3.5 py-2.5 shadow-sm hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-md transition-all border-t-[2.5px] border-t-[#25D366]">
+          {/* WhatsApp Channel widget */}
+          <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366]">
             {/* Ambient decorative WhatsApp glow */}
-            <div className="pointer-events-none absolute -top-6 -right-6 h-20 w-20 rounded-full bg-[#25D366]/10 blur-xl" />
+            <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
 
-            <div className="relative z-10 flex items-center gap-2.5">
+            <div className="relative z-10 flex items-center gap-3">
               {/* WhatsApp branded icon badge */}
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-sm ring-2 ring-[#25D366]/10">
-                <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white" />
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
+                <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
               </div>
               <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1">
-                  <h3 className="font-black text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
                     {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
                   </h3>
-                  <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                  <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
                 </div>
-                <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 leading-none">
-                  {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
+                <span className="text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                  {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'आधिकारिक समाचार अपडेट' : 'Official News Updates'}
                 </span>
               </div>
             </div>
 
-            <p className="relative z-10 text-[11px] text-slate-600 dark:text-slate-300 leading-snug my-1.5 font-medium line-clamp-2">
+            <p className="relative z-10 text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
               {language === 'gu'
                 ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
                 : language === 'hi'
@@ -1213,34 +1268,35 @@ export default function CityHyperlocalSection({
               href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[12px] py-1.5 px-3 rounded-lg shadow-sm hover:shadow active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
             >
-              <SocialIcon platform="whatsapp" className="h-3.5 w-3.5 text-white shrink-0" />
+              <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
               <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
             </a>
           </div>
 
-          {/* Trending Topics widget - Compact */}
-          <div className="w-full rounded-xl border border-slate-300/80 dark:border-slate-600/80 bg-white px-3 py-2 shadow-sm dark:bg-slate-900 border-t-[2.5px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-md transition-all">
-            <div className="flex items-center gap-1.5 border-b border-slate-200/90 dark:border-slate-800 pb-1.5 mb-1.5">
-              <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
-                <Flame className="h-3.5 w-3.5 fill-[#B3121B] text-[#B3121B]" />
-              </div>
-              <h3 className="text-[13px] md:text-[13.5px] font-black text-slate-900 dark:text-white tracking-tight">
-                {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
-              </h3>
+          {/* Trending Topics widget */}
+          <div className="w-full rounded-2xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3 shadow-[0_8px_24px_rgba(15,23,42,0.10)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_8px_28px_rgba(179,18,27,0.12)] transition-all">
+            <div className="flex items-center gap-2 border-b border-slate-200/90 dark:border-slate-800 pb-2 mb-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
+                  <Flame className="h-4.5 w-4.5 fill-[#B3121B] text-[#B3121B]" />
+                </div>
+                <h3 className="text-[16px] md:text-[17px] font-black text-slate-900 dark:text-white tracking-tight">
+                  {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
+                </h3>
+
             </div>
 
             <div>
-              <div className="flex flex-wrap gap-1.5">
-                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).slice(0, 8).map((tag) => {
+              <div className="flex flex-wrap gap-2">
+                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).map((tag) => {
                   const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                   return (
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-0.5 border border-slate-300 dark:border-slate-600 text-[10.5px] font-bold px-2 py-0.5 rounded-full text-slate-800 dark:text-slate-200 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-slate-50/70 dark:bg-slate-800 shadow-xs cursor-pointer select-none"
+                      className="group inline-flex items-center gap-1 border-[1.5px] border-slate-300 dark:border-slate-600 text-[12.5px] md:text-[13px] font-black px-3 py-1 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_2px_5px_rgba(15,23,42,0.09)] hover:shadow-md cursor-pointer select-none"
                     >
                       <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />

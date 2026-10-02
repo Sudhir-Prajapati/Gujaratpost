@@ -18,9 +18,9 @@ try {
   } else {
     const errOutput = (prismaRes.stderr || '') + (prismaRes.stdout || '');
     const clientPath = path.join(__dirname, '../node_modules/@prisma/client');
-    // If dev server locked the dll on Windows, keep existing client
-    if (errOutput.includes('EPERM') && fs.existsSync(clientPath)) {
-      console.log('ℹ️  [Build] Active server process detected; existing Prisma Client is up to date.');
+    // If dev server locked the dll or engine on Windows, keep existing client
+    if (fs.existsSync(clientPath)) {
+      console.log('ℹ️  [Build] Active server process detected or generator lock; using existing Prisma Client.');
     } else {
       console.error(errOutput);
       process.exit(prismaRes.status || 1);

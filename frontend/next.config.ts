@@ -18,6 +18,7 @@ const nextConfig: NextConfig = {
   // Disable dev indicators overlay to suppress DevTools pointer capture errors in console
   devIndicators: false,
 
+
   images: {
     unoptimized: true,
     formats: ['image/avif', 'image/webp'],

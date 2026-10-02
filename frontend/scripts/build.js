@@ -12,7 +12,7 @@ if (process.cwd() !== realCwd) {
 
 const nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
 
-const nodeOptions = [process.env.NODE_OPTIONS, '--max-old-space-size=8192'].filter(Boolean).join(' ');
+const nodeOptions = process.env.NODE_OPTIONS || '--max-old-space-size=4096';
 
 const runBuild = (extraArgs = []) => {
   return spawnSync(process.execPath, [nextBin, 'build', ...extraArgs, ...process.argv.slice(2)], {
