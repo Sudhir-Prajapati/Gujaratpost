@@ -10,10 +10,11 @@ if (process.cwd() !== realCwd) {
   console.log(`To:   ${realCwd}\n`);
 }
 
+// Resolve the Next.js binary, looking in this package's node_modules first
 let nextBin;
 try {
-  nextBin = require.resolve('next/dist/bin/next', { paths: [path.join(__dirname, '..'), realCwd] });
-} catch {
+  nextBin = require.resolve('next/dist/bin/next', { paths: [realCwd, path.join(__dirname, '..')] });
+} catch (_e) {
   nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
 }
 
