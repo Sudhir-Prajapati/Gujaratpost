@@ -29,6 +29,7 @@ export default function RandomAdsSection() {
   const [adItems, setAdItems] = useState<RandomAdItem[]>([]);
   const [visibleSectionsCount, setVisibleSectionsCount] = useState<number>(1);
   const [isLoadingNext, setIsLoadingNext] = useState(false);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
   const triggerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -149,6 +150,13 @@ export default function RandomAdsSection() {
     return item.buttonGu || 'હવે ખરીદો';
   };
 
+  const getImageSrc = (item: RandomAdItem) => {
+    if (failedImages[item.id]) {
+      return '/assets/demo/1.jpg';
+    }
+    return item.image;
+  };
+
   return (
     <section id="infinite-ads-section" className="mx-auto max-w-screen-xl px-2 sm:px-4 py-8 select-none">
       {sections.slice(0, visibleSectionsCount).map((secItems, secIdx) => {
@@ -182,34 +190,36 @@ export default function RandomAdsSection() {
                   href={item1.link !== '#' ? item1.link : undefined}
                   target={item1.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[220px] sm:h-[260px] md:h-[280px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item1.image}
+                      src={getImageSrc(item1)}
                       alt={getTitle(item1)}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item1.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[13px] font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item1)}
                       </h4>
                       {getDesc(item1) && (
-                        <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2 mt-1.5 font-medium">
+                        <p className="text-[10px] sm:text-[10.5px] text-muted-foreground leading-relaxed line-clamp-2 mt-1 font-normal">
                           {getDesc(item1)}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item1)}
                       </span>
                       {item1.buttonGu && (
-                        <span className="text-[11.5px] font-black text-[#B3121B] border border-red-500/60 rounded-full px-3 py-0.5 hover:bg-[#B3121B] hover:text-white transition-colors">
+                        <span className="text-[9.5px] sm:text-[10px] font-bold text-[#B3121B] border border-red-500/60 rounded-full px-2.5 py-0.5 hover:bg-[#B3121B] hover:text-white transition-colors">
                           {getBtn(item1)}
                         </span>
                       )}
@@ -222,25 +232,27 @@ export default function RandomAdsSection() {
                   href={item2.link !== '#' ? item2.link : undefined}
                   target={item2.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[220px] sm:h-[260px] md:h-[280px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item2.image}
+                      src={getImageSrc(item2)}
                       alt={getTitle(item2)}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item2.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[13px] font-bold text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item2)}
                       </h4>
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item2)}
                       </span>
                     </div>
@@ -255,34 +267,36 @@ export default function RandomAdsSection() {
                   href={item3.link !== '#' ? item3.link : undefined}
                   target={item3.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[190px] sm:h-[210px] md:h-[230px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item3.image}
+                      src={getImageSrc(item3)}
                       alt={getTitle(item3)}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item3.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[12.5px] font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item3)}
                       </h4>
                       {getDesc(item3) && (
-                        <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2 mt-1.5 font-medium">
+                        <p className="text-[10px] sm:text-[10.5px] text-muted-foreground leading-relaxed line-clamp-2 mt-1 font-normal">
                           {getDesc(item3)}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-4 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item3)}
                       </span>
                       {item3.buttonGu && (
-                        <span className="text-[11.5px] font-black text-[#B3121B] border border-red-500/60 rounded-full px-3 py-0.5 hover:bg-[#B3121B] hover:text-white transition-colors">
+                        <span className="text-[9.5px] sm:text-[10px] font-bold text-[#B3121B] border border-red-500/60 rounded-full px-2.5 py-0.5 hover:bg-[#B3121B] hover:text-white transition-colors">
                           {getBtn(item3)}
                         </span>
                       )}
@@ -295,25 +309,27 @@ export default function RandomAdsSection() {
                   href={item4.link !== '#' ? item4.link : undefined}
                   target={item4.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[190px] sm:h-[210px] md:h-[230px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item4.image}
+                      src={getImageSrc(item4)}
                       alt={getTitle(item4)}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item4.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] font-black text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[12.5px] font-bold text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item4)}
                       </h4>
                     </div>
-                    <div className="flex items-center justify-between mt-4 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item4)}
                       </span>
                     </div>
@@ -325,25 +341,27 @@ export default function RandomAdsSection() {
                   href={item5.link !== '#' ? item5.link : undefined}
                   target={item5.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[190px] sm:h-[210px] md:h-[230px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item5.image}
+                      src={getImageSrc(item5)}
                       alt={getTitle(item5)}
                       fill
                       sizes="(max-width: 768px) 100vw, 30vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item5.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] font-black text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[12.5px] font-bold text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item5)}
                       </h4>
                     </div>
-                    <div className="flex items-center justify-between mt-4 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item5)}
                       </span>
                     </div>
@@ -358,34 +376,36 @@ export default function RandomAdsSection() {
                   href={item6.link !== '#' ? item6.link : undefined}
                   target={item6.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[220px] sm:h-[260px] md:h-[280px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item6.image}
+                      src={getImageSrc(item6)}
                       alt={getTitle(item6)}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item6.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[13px] font-bold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item6)}
                       </h4>
                       {getDesc(item6) && (
-                        <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2 mt-1.5 font-medium">
+                        <p className="text-[10px] sm:text-[10.5px] text-muted-foreground leading-relaxed line-clamp-2 mt-1 font-normal">
                           {getDesc(item6)}
                         </p>
                       )}
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item6)}
                       </span>
                       {item6.buttonGu && (
-                        <span className="text-[11.5px] font-black text-[#B3121B] border border-red-500/60 rounded-full px-3 py-0.5 hover:bg-[#B3121B] hover:text-white transition-colors">
+                        <span className="text-[9.5px] sm:text-[10px] font-bold text-[#B3121B] border border-red-500/60 rounded-full px-2.5 py-0.5 hover:bg-[#B3121B] hover:text-white transition-colors">
                           {getBtn(item6)}
                         </span>
                       )}
@@ -398,25 +418,27 @@ export default function RandomAdsSection() {
                   href={item7.link !== '#' ? item7.link : undefined}
                   target={item7.link !== '#' ? '_blank' : '_self'}
                   rel="noopener noreferrer"
-                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3.5 sm:p-4 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
+                  className="group flex flex-col bg-background dark:bg-card/40 border border-border/60 rounded-2xl p-3 sm:p-3.5 hover:border-red-500/40 hover:shadow-md transition-all duration-300 min-w-0"
                 >
-                  <div className="relative w-full h-[180px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-3">
+                  <div className="relative w-full h-[220px] sm:h-[260px] md:h-[280px] overflow-hidden rounded-xl bg-white dark:bg-slate-900 mb-2.5">
                     <Image
-                      src={item7.image}
+                      src={getImageSrc(item7)}
                       alt={getTitle(item7)}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
+                      unoptimized
+                      onError={() => setFailedImages((prev) => ({ ...prev, [item7.id]: true }))}
                       className="object-contain transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <div className="flex flex-col justify-between flex-1">
                     <div>
-                      <h4 className="text-[14.5px] sm:text-[15.5px] font-black text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
+                      <h4 className="text-[12px] sm:text-[13px] font-bold text-foreground leading-snug line-clamp-3 group-hover:text-[#B3121B] transition-colors">
                         {getTitle(item7)}
                       </h4>
                     </div>
-                    <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/40">
-                      <span className="text-[11px] font-bold text-muted-foreground/90">
+                    <div className="flex items-center justify-between mt-2.5 pt-1.5 border-t border-border/40">
+                      <span className="text-[9.5px] sm:text-[10px] font-semibold text-muted-foreground/80">
                         {getSource(item7)}
                       </span>
                     </div>
