@@ -220,14 +220,14 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                     {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
                                 </span>
                             </button>
+                            {/* Social Icons — same width as button, spread end to end */}
+                            <div className="flex items-center justify-between w-full mt-3">
+                                {SOCIAL_LINKS.map((item) => (
+                                    <SocialIconButton key={item.label} item={item} />
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Social Icons */}
-                        <div className="flex flex-wrap items-center gap-2.5 w-fit mt-3.5 ml-2">
-                            {SOCIAL_LINKS.map((item) => (
-                                <SocialIconButton key={item.label} item={item} />
-                            ))}
-                        </div>
                     </div>
 
                     {/* Nav columns — pushed to the right */}
