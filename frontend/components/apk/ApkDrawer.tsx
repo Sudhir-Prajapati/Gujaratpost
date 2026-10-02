@@ -28,7 +28,7 @@ const ALL_APP_CATEGORIES: CategoryItem[] = [
   { nameGu: 'હવામાન & AQI', nameHi: 'मौसम & AQI', nameEn: 'Weather & AQI', href: '/aqi' },
   { nameGu: 'વીડિયો', nameHi: 'वीडियो', nameEn: 'Videos', href: '/videos' },
   { nameGu: 'ગુજરાત', nameHi: 'गुजरात', nameEn: 'Gujarat', href: '/category/gujarat' },
-  { nameGu: 'દેશ', nameHi: 'देश', nameEn: 'India', href: '/category/national' },
+  { nameGu: 'ભારત', nameHi: 'भारत', nameEn: 'Bharat', href: '/category/national' },
   { nameGu: 'વિદેશ', nameHi: 'विदेश', nameEn: 'World', href: '/category/world' },
   { nameGu: 'રાજકારણ', nameHi: 'राजनीति', nameEn: 'Politics', href: '/category/politics' },
   { nameGu: 'ક્રાઇમ', nameHi: 'क्राइम', nameEn: 'Crime', href: '/category/crime' },

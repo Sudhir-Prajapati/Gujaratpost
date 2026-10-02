@@ -44,7 +44,7 @@ export default function ApkCategoryFeed({
       return getLocalized(language, { gu: 'ગુજરાત', hi: 'गुजरात', en: 'Gujarat' });
     }
     if (slug === 'national' || slug === 'india') {
-      return getLocalized(language, { gu: 'દેશ - ભારત', hi: 'देश', en: 'India' });
+      return getLocalized(language, { gu: 'ભારત', hi: 'भारत', en: 'Bharat' });
     }
     if (slug === 'world') {
       return getLocalized(language, { gu: 'વિદેશ સમાચાર', hi: 'विदेश', en: 'World' });

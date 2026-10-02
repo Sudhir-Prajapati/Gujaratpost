@@ -193,7 +193,7 @@ export default function NationalSection({ language, initialArticles }: { languag
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-3.5">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
-          {language === 'gu' ? 'દેશ' : language === 'hi' ? 'देश' : 'National'}
+          {language === 'gu' ? 'ભારત' : language === 'hi' ? 'भारत' : 'Bharat'}
         </span>
         <Link
           href="/category/national"

@@ -153,7 +153,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
       return getLocalized(language, { en: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' });
     }
     if (slug === 'national') {
-      return getLocalized(language, { en: 'National', gu: 'દેશ', hi: 'देश' });
+      return getLocalized(language, { en: 'Bharat', gu: 'ભારત', hi: 'भारत' });
     }
     if (slug === 'crime') {
       return getLocalized(language, { en: 'Crime', gu: 'ક્રાઈમ', hi: 'क्राइम' });
