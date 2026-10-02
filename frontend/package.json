@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node --max-old-space-size=4096 scripts/dev.js",
     "build": "node --max-old-space-size=4096 scripts/build.js",
-    "start": "next start",
+    "start": "next start -H 0.0.0.0",
     "lint": "eslint"
   },
 

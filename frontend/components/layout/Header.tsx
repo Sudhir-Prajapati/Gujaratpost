@@ -21,7 +21,6 @@ import { useApp } from '@/components/AppProvider';
 import { SocialLinks } from '@/components/ui/SocialLinks';
 import Advertisement from '@/components/ads/Advertisement';
 import DistrictBar from './DistrictBar';
-import gpLogo from '../../public/gujaratpostLogo.png';
 import { getPublicCategories } from '@/lib/api';
 import UserAuthModal from '@/components/ui/UserAuthModal';
 import { prefetchSupportDetails } from '@/components/ui/SupportModal';
@@ -469,18 +468,19 @@ export default function Header() {
             </div>
 
             {/* Logo */}
-            <a href="/" className="logo-3d group relative flex shrink-0 items-center">
-              <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-transparent border-0 shadow-none ring-0 transition-all duration-300">
+            <Link href="/" className="group relative flex shrink-0 items-center">
+              <div className="relative block h-9 sm:h-11 md:h-12 lg:h-14 w-40 sm:w-50 md:w-54 lg:w-60 overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]">
                 <Image
-                  src={gpLogo}
+                  src="/assets/gujarat-post-logo-cms.png"
                   alt="Gujarat Post"
                   fill
                   priority
-                  sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
-                  className="object-contain scale-[4.0] dark:[mix-blend-mode:screen]"
+                  unoptimized
+                  sizes="(max-width: 640px) 160px, (max-width: 1024px) 216px, 240px"
+                  className="object-contain object-left"
                 />
               </div>
-            </a>
+            </Link>
           </div>
 
           {/* Header Ad Slot (visible on desktop) */}

@@ -10,9 +10,16 @@ if (process.cwd() !== realCwd) {
   console.log(`To:   ${realCwd}\n`);
 }
 
-const nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
+const devArgs = ['dev'];
+if (process.env.PORT && !process.argv.includes('-p') && !process.argv.includes('--port')) {
+  devArgs.push('-p', process.env.PORT);
+}
+if (!process.argv.includes('-H') && !process.argv.includes('--hostname')) {
+  devArgs.push('-H', '0.0.0.0');
+}
+devArgs.push(...process.argv.slice(2));
 
-const child = spawn(process.execPath, [nextBin, 'dev', ...process.argv.slice(2)], {
+const child = spawn(process.execPath, [nextBin, ...devArgs], {
   cwd: realCwd,
   stdio: 'inherit',
   env: {

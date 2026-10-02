@@ -575,7 +575,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                         <span>{formatDate(subHeroArticle.publishedAt)}</span>
                       </div>
                     </div>
-                    <div className="relative h-16 w-20 shrink-0 overflow-hidden rounded-sm bg-muted shadow-sm">
+                    <div className="relative w-[105px] h-[75px] sm:w-[125px] sm:h-[88px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                       <ArticleMedia
                         src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                         alt={getArticleTitle(subHeroArticle, language)}
@@ -609,7 +609,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                         <span>{formatDate(art.publishedAt)}</span>
                       </div>
                     </div>
-                    <div style={{ position: 'relative', height: '64px', width: '80px', flexShrink: 0, alignSelf: 'flex-start', overflow: 'hidden', borderRadius: '4px' }} className="bg-muted shadow-sm">
+                    <div className="relative w-[105px] h-[75px] sm:w-[125px] sm:h-[88px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                       <img
                         src={art.image || art.featuredImage || art.thumbnail || '/assets/gujarat-post-logo.png'}
                         alt={getArticleTitle(art, language)}
@@ -656,14 +656,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         </div>
 
         {/* POPULAR ARTICLES GRID */}
-        <div className="mt-1">
-          <div className="flex items-center gap-2.5 mb-1 pb-1 border-b border-border">
-            <span className="w-2 h-2 bg-accent rotate-45 shrink-0 inline-block" />
-            <span className="text-base font-black text-foreground">
-              {getLocalized(language, { en: 'Related News', gu: 'સંબંધિત સમાચાર', hi: 'संबंधित समाचार' })}
-            </span>
-          </div>
-
+        <div className="mt-6">
           <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-8">
             {popularArticles.slice(0, visibleCount).map((article) => (
               <NewsCard key={article.id} article={article} variant="flat" />

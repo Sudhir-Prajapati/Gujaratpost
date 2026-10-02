@@ -9,7 +9,6 @@ import { SOCIAL_LINKS, SocialIcon } from '@/components/ui/SocialLinks';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import { useApp } from '@/components/AppProvider';
-import gpLogo from '../../public/gujaratpostLogo.png';
 
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
 const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
@@ -194,28 +193,34 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             </p>
                         </div>
 
-                        {/* Logo */}
-                        <Link href="/" className="logo-3d group relative flex shrink-0 items-center">
-                            <div className="logo-3d-inner relative block h-9.5 sm:h-12 lg:h-16 w-28 sm:w-44 lg:w-56 overflow-hidden rounded-lg bg-transparent border-0 shadow-none ring-0 transition-all duration-300">
+                        {/* Unified Logo & Support Button Container - Exact Same Width & Matching Ends */}
+                        <div className="w-[220px] sm:w-[245px] lg:w-[260px] flex flex-col items-start">
+                            {/* Logo */}
+                            <Link href="/" className="group block w-full transition-transform duration-200 hover:scale-[1.01] active:scale-[0.99]">
                                 <Image
-                                    src={gpLogo}
+                                    src="/assets/gujarat-post-logo-cms.png"
                                     alt="Gujarat Post"
-                                    fill
+                                    width={940}
+                                    height={208}
                                     priority
-                                    sizes="(max-width: 640px) 112px, (max-width: 1024px) 176px, 224px"
-                                    className="object-contain scale-[4.0] [mix-blend-mode:screen]"
+                                    unoptimized
+                                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                                    className="w-full h-auto object-contain block drop-shadow-sm"
                                 />
-                            </div>
-                        </Link>
-                        {/* Support Us Button in Footer */}
-                        <button
-                            type="button"
-                            onClick={openSupportModal}
-                            className="mt-2.5 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-4 py-2.5 text-xs font-black text-white shadow-md shadow-red-900/30 hover:scale-[1.02] active:scale-95 transition cursor-pointer border border-red-500/30 w-28 sm:w-44 lg:w-56"
-                        >
-                            <Heart className="h-4 w-4 fill-current animate-pulse text-white" />
-                            <span>{language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}</span>
-                        </button>
+                            </Link>
+
+                            {/* Support Us Button in Footer */}
+                            <button
+                                type="button"
+                                onClick={openSupportModal}
+                                className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-3 py-2.5 sm:py-3 text-white shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-red-400/40 select-none"
+                            >
+                                <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-current animate-pulse text-white shrink-0" />
+                                <span className="text-[13.5px] sm:text-[15px] font-extrabold tracking-wide whitespace-nowrap drop-shadow-sm">
+                                    {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
+                                </span>
+                            </button>
+                        </div>
 
                         {/* Social Icons */}
                         <div className="flex flex-wrap items-center gap-2.5 w-fit mt-3.5 ml-2">

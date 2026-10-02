@@ -176,21 +176,21 @@ export default function NewsBriefPageClient() {
       onWheel={handleWheel}
     >
       {/* ── COMPACT NAVBAR ── */}
-      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-neutral-100 shadow-sm" style={{ height: 52 }}>
-        <Link href="/" className="flex items-center h-full py-2 shrink-0">
+      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-neutral-100 shadow-sm" style={{ height: 60 }}>
+        <Link href="/" className="flex items-center h-full py-1 shrink-0">
           <Image
-            src="/assets/gujarat-post-logo-chip.png"
+            src="/assets/gujarat-post-logo-cms.png"
             alt="Gujarat Post"
-            width={36}
-            height={36}
+            width={180}
+            height={48}
             className="object-contain"
-            style={{ height: 32, width: 'auto' }}
+            style={{ height: 46, width: 'auto' }}
             priority
           />
         </Link>
 
         {/* Article counter */}
-        <span className="text-[11px] font-bold text-neutral-400 tabular-nums">
+        <span className="text-[13px] font-bold text-neutral-500 tabular-nums">
           {activeIndex + 1} / {briefArticles.length}
         </span>
 
@@ -213,7 +213,7 @@ export default function NewsBriefPageClient() {
           className="w-full bg-white rounded-2xl shadow-md overflow-hidden flex flex-col border border-neutral-100"
           style={{
             maxWidth: 420,
-            maxHeight: 'min(680px, calc(100dvh - 84px))',
+            maxHeight: 'min(680px, calc(100dvh - 92px))',
             transform: animDir === 'up' ? 'translateY(-8px)' : animDir === 'down' ? 'translateY(8px)' : 'translateY(0)',
             opacity: animDir ? 0.55 : 1,
             transition: 'transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s',
@@ -252,27 +252,27 @@ export default function NewsBriefPageClient() {
 
             {/* Category + time row */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
+              <span className="text-[13px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
               {ago && (
                 <>
                   <span className="text-neutral-200 text-xs">·</span>
-                  <span className="text-[11px] text-neutral-400 font-medium">{ago}</span>
+                  <span className="text-[12px] text-neutral-500 font-medium">{ago}</span>
                 </>
               )}
             </div>
 
             {/* Title */}
-            <h2 className="font-black text-neutral-900 leading-snug text-[14px] sm:text-[15px] line-clamp-3">
+            <h2 className="font-black text-neutral-900 leading-snug text-[17px] sm:text-[18px] line-clamp-3">
               {title}
             </h2>
 
             {/* Excerpt */}
-            <p className="text-neutral-500 text-[12px] leading-relaxed line-clamp-5 flex-1">
+            <p className="text-neutral-600 text-[14px] leading-relaxed line-clamp-5 flex-1">
               {displayParagraph}
             </p>
 
             {/* Disclaimer */}
-            <p className="text-[10px] text-neutral-300 leading-snug italic">
+            <p className="text-[11px] text-neutral-400 leading-snug italic">
               Disclaimer – આ ન્યૂઝ AI-જનરેટેડ સારાંશ છે અને એડિટર દ્વારા રિવ્યૂ કરાયો છે.
             </p>
 
@@ -280,7 +280,7 @@ export default function NewsBriefPageClient() {
             <div className="flex items-center justify-between pt-1">
               <Link
                 href={`/news/${currentArticle.slug}`}
-                className="px-5 py-1.5 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[12px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
+                className="px-5 py-1.5 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[14px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
               >
                 {language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}
               </Link>
