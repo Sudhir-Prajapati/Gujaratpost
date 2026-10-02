@@ -73,7 +73,7 @@ const topics1Links = [
 ];
 
 const topics2Links = [
-    { label: 'Health', href: '/category/health' },
+    { label: 'About Us', href: '/about' },
     { label: 'Entertainment', href: '/category/entertainment' },
     { label: 'Technology', href: '/category/technology' },
     { label: 'Photo Gallery', href: '/photos' },
@@ -96,7 +96,7 @@ const topics3Links = [
 ];
 
 const companyLinks = [
-    { label: 'About Us', href: '/about' },
+    { label: 'Health', href: '/category/health' },
     { label: 'Contact Us', href: '/contact' },
     { label: 'Advertise With Us', href: '/advertise' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
