@@ -19,9 +19,10 @@ function getFullImageUrl(url?: string | null): string {
     return clean;
   }
   if (clean.startsWith('/uploads/') || clean.startsWith('uploads/')) {
+    const defaultBackend = process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000';
     const backendOrigin = typeof window !== 'undefined'
       ? (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:5000' : '')
-      : 'http://127.0.0.1:5000';
+      : (process.env.NEXT_PUBLIC_BACKEND_URL || defaultBackend);
     const path = clean.startsWith('/') ? clean : `/${clean}`;
     return `${backendOrigin}${path}`;
   }

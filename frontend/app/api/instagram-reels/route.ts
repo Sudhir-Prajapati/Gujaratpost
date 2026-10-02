@@ -5,7 +5,11 @@ export const revalidate = 0; // No static caching — runs on each request
 
 export async function GET(_request: NextRequest) {
   try {
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:5000';
+    const defaultBackend = process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000';
+    let backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+    if (!backendUrl || (process.env.NODE_ENV === 'production' && (backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1')))) {
+      backendUrl = defaultBackend;
+    }
     const res = await fetch(`${backendUrl}/api/public/reels?limit=50`, {
       headers: { Accept: 'application/json' },
       next: { revalidate: 60 },

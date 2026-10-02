@@ -55,11 +55,19 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    let rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    if (process.env.NODE_ENV === 'production' && rawUrl && (rawUrl.includes('localhost') || rawUrl.includes('127.0.0.1'))) {
+      rawUrl = undefined;
+    }
+    const defaultBackend = process.env.NODE_ENV === 'production'
+      ? "https://gujaratpost.onrender.com"
+      : "http://127.0.0.1:5000";
     let backendUrl = rawUrl && rawUrl.startsWith('http')
       ? rawUrl.replace(/\/api\/?.*$/, '')
-      : "http://127.0.0.1:5000";
-    backendUrl = backendUrl.replace('://localhost:', '://127.0.0.1:');
+      : defaultBackend;
+    if (backendUrl.includes('localhost:') && process.env.NODE_ENV !== 'production') {
+      backendUrl = backendUrl.replace('://localhost:', '://127.0.0.1:');
+    }
     return [
       {
         source: "/api/public/:path*",

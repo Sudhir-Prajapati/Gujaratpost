@@ -65,7 +65,8 @@ export default function SupportPageClient() {
 
         if (!resData) {
           try {
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/public';
+            const defaultApi = process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com/api/public' : 'http://localhost:5000/api/public';
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || defaultApi;
             const res = await fetch(`${backendUrl}/support`);
             if (res.ok) {
               const json = await res.json();

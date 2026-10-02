@@ -55,11 +55,17 @@ export function formatEpaperPdfUrl(url?: string | null, page: number = 1): strin
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
 
-  const backendOrigin = typeof window !== 'undefined'
-    ? ''
+  let envOrigin = process.env.NEXT_PUBLIC_BACKEND_URL
+    ? process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/api\/?$/, '')
     : (process.env.NEXT_PUBLIC_API_URL
       ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/public\/?$/, '').replace(/\/api\/?$/, '')
-      : 'http://127.0.0.1:5000');
+      : '');
+  if (process.env.NODE_ENV === 'production' && envOrigin && (envOrigin.includes('localhost') || envOrigin.includes('127.0.0.1'))) {
+    envOrigin = '';
+  }
+  const backendOrigin = typeof window !== 'undefined'
+    ? ''
+    : (envOrigin || (process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000'));
 
   if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) {
     const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
@@ -82,11 +88,17 @@ export function formatEpaperDownloadUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return '#';
   const clean = url.trim();
 
-  const backendOrigin = typeof window !== 'undefined'
-    ? ''
+  let envOrigin = process.env.NEXT_PUBLIC_BACKEND_URL
+    ? process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/api\/?$/, '')
     : (process.env.NEXT_PUBLIC_API_URL
       ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/public\/?$/, '').replace(/\/api\/?$/, '')
-      : 'http://127.0.0.1:5000');
+      : '');
+  if (process.env.NODE_ENV === 'production' && envOrigin && (envOrigin.includes('localhost') || envOrigin.includes('127.0.0.1'))) {
+    envOrigin = '';
+  }
+  const backendOrigin = typeof window !== 'undefined'
+    ? ''
+    : (envOrigin || (process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000'));
 
   if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) {
     const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';

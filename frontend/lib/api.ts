@@ -2,15 +2,26 @@ import { cache } from 'react';
 import { Article, Video, Photo } from '@/types';
 import { PHOTOS } from '@/data';
 
+function resolveBackendOrigin(): string {
+  const envUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/public\/?$/, '').replace(/\/api\/?$/, '').replace(/\/public\/?$/, '') : '');
+  if (process.env.NODE_ENV === 'production') {
+    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
+      return 'https://gujaratpost.onrender.com';
+    }
+    return envUrl;
+  }
+  return envUrl || 'http://127.0.0.1:5000';
+}
+
+const BACKEND_ORIGIN = resolveBackendOrigin();
+
 export const BACKEND_API_BASE = typeof window !== 'undefined'
   ? '/api'
-  : (process.env.NEXT_PUBLIC_API_URL
-    ? process.env.NEXT_PUBLIC_API_URL.replace(/\/public\/?$/, '')
-    : 'http://127.0.0.1:5000/api');
+  : `${BACKEND_ORIGIN}/api`;
 
 export const API_BASE_URL = typeof window !== 'undefined'
   ? '/api/public'
-  : (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api/public');
+  : `${BACKEND_ORIGIN}/api/public`;
 
 export function getBackendApiUrl(path: string): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
@@ -688,9 +699,13 @@ export async function updateHeroSettings(payload: {
 
 export async function fetchLiveInstagramReels(): Promise<any[]> {
   try {
+    const appUrlEnv = process.env.NEXT_PUBLIC_APP_URL;
+    const validAppUrl = (appUrlEnv && (!appUrlEnv.includes('localhost') || process.env.NODE_ENV !== 'production'))
+      ? appUrlEnv
+      : (process.env.NODE_ENV === 'production' ? 'https://gujaratpost-1.onrender.com' : 'http://localhost:3000');
     const baseUrl = typeof window !== 'undefined'
       ? window.location.origin
-      : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+      : validAppUrl;
     const apiUrl = `${baseUrl}/api/instagram-reels`;
 
     const res = await fetchCachedJson<any>(apiUrl, 300000); // 5-minute cache

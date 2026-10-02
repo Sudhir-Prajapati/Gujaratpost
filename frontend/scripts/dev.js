@@ -10,6 +10,13 @@ if (process.cwd() !== realCwd) {
   console.log(`To:   ${realCwd}\n`);
 }
 
+let nextBin;
+try {
+  nextBin = require.resolve('next/dist/bin/next', { paths: [path.join(__dirname, '..'), realCwd] });
+} catch {
+  nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
+}
+
 const devArgs = ['dev'];
 if (process.env.PORT && !process.argv.includes('-p') && !process.argv.includes('--port')) {
   devArgs.push('-p', process.env.PORT);
