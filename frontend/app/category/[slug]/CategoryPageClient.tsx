@@ -463,8 +463,11 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         {/* ── TOP ROW: Category name ─────────────────────────────── */}
         <div className="flex items-center justify-between border-b border-border pb-2 mb-3">
           <div className="flex items-center gap-3">
-            <h1 className="section-heading-badge bg-[#B3121B] text-white px-5 py-2 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
-              {categoryName}
+            <h1 className="flex items-center gap-0 select-none leading-none">
+              <span className="inline-block w-1 self-stretch rounded-sm bg-[#B3121B] mr-2" style={{minHeight: '1.5em'}} aria-hidden="true" />
+              <span className="text-[19px] md:text-[21px] font-black tracking-tight text-foreground">
+                {categoryName}
+              </span>
             </h1>
           </div>
         </div>
