@@ -50,7 +50,7 @@ export class UserController {
 
       // 2. Call user creation service
       const user = await UserService.createUser({
-        email: email.trim().toLowerCase(),
+        email: email.trim(),
         password,
         role: role as Role,
         status: accountStatus,

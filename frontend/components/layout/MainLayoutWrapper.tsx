@@ -51,7 +51,7 @@ export default function MainLayoutWrapper({ children }: Props) {
   }, []);
 
   // Admin and login pages manage their own layout — skip all frontend chrome
-  if (pathname === '/login' || pathname.startsWith('/admin')) {
+  if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
     return <>{children}</>;
   }
 

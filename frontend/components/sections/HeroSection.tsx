@@ -1315,17 +1315,17 @@ export default function HeroSection({
                       <Link
                         key={story.id || story.slug || idx}
                         href={`/news/${story.slug}`}
-                        className="group flex flex-row items-center justify-between gap-3 p-2 rounded-lg bg-card/60 hover:bg-muted/30 border border-border/40 transition-all min-w-0"
+                        className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
                       >
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase tracking-wide mb-1">
+                        <div className="flex flex-col flex-1 min-w-0 pr-1">
+                          <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none">
                             {getCategoryLabel(story, language)}
                           </span>
-                          <h3 className="text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                          <h3 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                             <AutoArticleTitle article={story} language={language} />
                           </h3>
                         </div>
-                        <div className="relative aspect-[16/10] w-[95px] h-[64px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                        <div className="relative aspect-[16/10] w-[105px] h-[72px] sm:w-[115px] sm:h-[78px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                           <ArticleMedia
                             src={story.image || (story as any).featuredImage || getArticleImage(story)}
                             alt={story.title || ''}
@@ -1360,7 +1360,7 @@ export default function HeroSection({
                       href={`/news/${art.slug}`}
                       className="group flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 min-w-0 pb-3 md:pb-0 border-b md:border-b-0 border-border/30 last:border-b-0"
                     >
-                      <div className="relative aspect-[16/10] w-28 md:w-full h-20 md:h-auto shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted mb-0 md:mb-2.5">
+                      <div className="relative aspect-[16/10] w-28 md:w-full h-[74px] md:h-auto shrink-0 overflow-hidden rounded-lg md:rounded-sm border border-border/10 bg-muted mb-0 md:mb-2.5">
                         <ArticleMedia
                           src={art.image || (art as any).featuredImage || getArticleImage(art)}
                           alt={art.title || ''}
@@ -1368,10 +1368,10 @@ export default function HeroSection({
                         />
                       </div>
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[#B3121B] font-extrabold text-[11px] md:text-[13px] mb-0.5 md:mb-1 select-none uppercase tracking-wide">
+                        <span className="text-[#B3121B] font-extrabold text-[11.5px] md:text-[13px] mb-0.5 md:mb-1 select-none uppercase tracking-wide">
                           {getCategoryLabel(art, language)}
                         </span>
-                        <h3 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                        <h3 className="text-[16px] md:text-[14.5px] font-extrabold md:font-black leading-[1.32] md:leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3 md:line-clamp-2">
                           <AutoArticleTitle article={art} language={language} />
                         </h3>
 

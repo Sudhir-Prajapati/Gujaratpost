@@ -38,16 +38,16 @@ function EmailGateStep({
     setError(null);
     setEmailError(false);
 
-    const safeEmail = email.trim().toLowerCase();
+    const enteredEmail = email.trim();
 
-    if (!safeEmail) {
+    if (!enteredEmail) {
       setEmailError(true);
       setError('Please enter your email address to continue.');
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(safeEmail)) {
+    if (!emailRegex.test(enteredEmail)) {
       setEmailError(true);
       setError('Please enter a valid email address.');
       return;
@@ -64,7 +64,7 @@ function EmailGateStep({
       const response = await fetch(`/api/auth/check-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: safeEmail }),
+        body: JSON.stringify({ email: enteredEmail }),
       });
 
       const result = await response.json().catch(() => ({}));
@@ -76,7 +76,7 @@ function EmailGateStep({
       const { exists, isStaff } = result?.data || result || {};
 
       if (exists && isStaff) {
-        onAdminVerified(safeEmail);
+        onAdminVerified(enteredEmail);
       } else {
         setEmailError(true);
         setError(
@@ -280,7 +280,7 @@ function PasswordLoginStep({
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
-          email: verifiedEmail,
+          email: verifiedEmail.trim(),
           password: safePassword,
           rememberMe,
         }),

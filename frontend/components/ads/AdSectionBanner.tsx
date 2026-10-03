@@ -18,7 +18,7 @@ export interface AdItemData {
   link: string;
 }
 
-export default function AdSectionBanner({ section, initialAd, className = '', showFallback = true }: AdSectionBannerProps) {
+export default function AdSectionBanner({ section, initialAd, className = '', showFallback = false }: AdSectionBannerProps) {
   const [adData, setAdData] = useState<any>(initialAd || null);
   const [loading, setLoading] = useState<boolean>(!initialAd);
 

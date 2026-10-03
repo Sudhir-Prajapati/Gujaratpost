@@ -358,18 +358,18 @@ export default function EntertainTechLifeSection({
         .cat-card-${uid} .cc-row {
           display: flex; gap: 0.75rem;
           padding: 0.75rem 2px;
-          border-radius: 6px;
+          border-radius: 8px;
           transition: background 0.2s ease;
         }
         .cat-card-${uid} .cc-row:hover { background: ${c.rowHoverBg}; }
 
         .cat-card-${uid} .cc-thumb {
           position: relative;
-          height: 68px; width: 84px;
+          height: 72px; width: 105px;
           flex-shrink: 0;
           overflow: hidden;
-          border-radius: 10px;
-          border: 1px solid rgba(0,0,0,0.06);
+          border-radius: 8px;
+          border: 1px solid rgba(0,0,0,0.08);
           transition: box-shadow 0.25s ease;
         }
         .cat-card-${uid} .cc-row:hover .cc-thumb { box-shadow: ${c.thumbShadow}; }
@@ -377,8 +377,8 @@ export default function EntertainTechLifeSection({
         .cat-card-${uid} .cc-row:hover .cc-thumb img { transform: scale(1.08) !important; }
 
         .cat-card-${uid} .cc-art-title {
-          font-size: 13.5px; font-weight: 800; line-height: 1.4;
-          display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+          font-size: 16px; font-weight: 800; line-height: 1.32;
+          display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
           overflow: hidden; color: inherit;
           transition: color 0.2s ease;
         }
@@ -436,15 +436,15 @@ export default function EntertainTechLifeSection({
             <Link
               key={a.id || a.slug || `art-${i}`}
               href={a.slug ? `/news/${a.slug}` : href}
-              className="cc-row"
+              className="cc-row items-center justify-between"
             >
-              <div className="cc-thumb bg-muted">
-                <Image src={a.img} alt={a.titleGu} fill sizes="84px" className="object-cover" />
-              </div>
-              <div className="flex flex-col justify-center min-w-0 flex-1">
+              <div className="flex flex-col justify-center min-w-0 flex-1 pr-1">
                 <h4 className="cc-art-title">
                   <AutoTranslateString text={a.titleGu || a.title} language={language} />
                 </h4>
+              </div>
+              <div className="cc-thumb bg-muted shrink-0">
+                <Image src={a.img} alt={a.titleGu} fill sizes="105px" className="object-cover" />
               </div>
             </Link>
           ))}

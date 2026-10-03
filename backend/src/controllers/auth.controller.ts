@@ -31,13 +31,15 @@ export class AuthController {
         throw new BadRequestError('Email and password are required');
       }
 
+      const typedEmail = email.trim();
+
       const userAgent = req.headers['user-agent'] || null;
       const ipAddress = req.ip || req.socket.remoteAddress || null;
 
       const isRemembered = Boolean(rememberMe);
 
       const result = await AuthService.login({
-        email,
+        email: typedEmail,
         password,
         userAgent,
         ipAddress,
@@ -86,7 +88,8 @@ export class AuthController {
         throw new BadRequestError('Email address is required');
       }
 
-      const user = await UserRepository.findByEmail(email.trim().toLowerCase());
+      const typedEmail = email.trim();
+      const user = await UserRepository.findByEmailExact(typedEmail);
 
       return sendSuccess(
         res,
@@ -113,20 +116,6 @@ export class AuthController {
       }
 
       const cleanEmail = email.trim().toLowerCase();
-
-      // 1. Fast DB check: check if email belongs to staff/admin user
-      const user = await UserRepository.findByEmail(cleanEmail);
-      if (user) {
-        return sendSuccess(
-          res,
-          {
-            isStaff: true,
-            email: cleanEmail,
-            role: user.role,
-          },
-          'Staff account detected'
-        );
-      }
 
       // 2. Reader: Generate OTP and store in memory (5 minutes validity)
       const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();

@@ -22,6 +22,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
   const [email, setEmail] = useState('');
   const [canSubmit, setCanSubmit] = useState(false);
   const [otp, setOtp] = useState('');
+  const [isOtpFocused, setIsOtpFocused] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const emailInputRef = useRef<HTMLInputElement>(null);
@@ -145,12 +146,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
         throw new Error(jsonOtp.message || 'Failed to send OTP.');
       }
 
-      // Check if staff member was detected -> Redirect to Admin Login page with pre-filled email
-      if (jsonOtp.data?.isStaff) {
-        onClose();
-        router.push(`/login?email=${encodeURIComponent(cleanEmail)}&from=%2Fadmin`);
-        return;
-      }
+
 
       // Reset timers (5 mins validity, 60s resend cooldown)
       setTimeLeft(300);
@@ -395,14 +391,14 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
               <button
                 type="submit"
                 disabled={isSubmitting || !canSubmit}
-                className="w-full py-3 px-4 rounded-xl bg-[#B3121B] hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition transform active:scale-98 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-5 rounded-xl bg-[#B3121B] hover:bg-red-700 active:bg-red-800 text-white flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all transform active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <>
-                    <span>{texts.continue}</span>
-                    <ArrowRight className="h-4 w-4" />
+                    <span className="text-base sm:text-[17px] font-black tracking-wide leading-none">{texts.continue}</span>
+                    <ArrowRight className="h-4 w-4 stroke-[3]" />
                   </>
                 )}
               </button>
@@ -428,16 +424,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
               <span>{texts.googleSignIn}</span>
             </button>
 
-            {/* CMS Admin Link */}
-            <div className="pt-0.5">
-              <Link
-                href="/login"
-                onClick={onClose}
-                className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400 hover:text-red-600 dark:hover:text-red-400 underline underline-offset-2 transition"
-              >
-                {texts.adminLogin}
-              </Link>
-            </div>
+            
           </div>
         )}
 
@@ -475,8 +462,40 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
 
             {/* OTP Form */}
             <form onSubmit={handleVerifyOtp} className="space-y-3 pt-1">
-              <div className="relative w-full">
-                <KeyRound className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none z-10" />
+              {/* 6-Box Segmented OTP Input matching requested design */}
+              <div className="relative w-full rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5 flex items-center gap-1.5 shadow-xs">
+                {/* Left: Key Icon Badge */}
+                <div className="w-10 h-11 sm:h-12 rounded-xl bg-red-50 dark:bg-red-950/40 flex items-center justify-center text-[#B3121B] dark:text-red-400 shrink-0 border border-red-100/80 dark:border-red-950/60">
+                  <KeyRound className="h-5 w-5 stroke-[2.2]" />
+                </div>
+
+                {/* 6 Individual Digit Slots */}
+                <div className="flex-1 flex items-center gap-1.5">
+                  {[0, 1, 2, 3, 4, 5].map((index) => {
+                    const digit = otp[index] || '';
+                    const isFocusedDigit = isOtpFocused && (otp.length === index || (index === 5 && otp.length === 6));
+                    return (
+                      <div
+                        key={index}
+                        className={`flex-1 h-11 sm:h-12 rounded-xl flex items-center justify-center font-bold text-lg sm:text-xl transition-all select-none ${
+                          isFocusedDigit
+                            ? 'border-2 border-red-500 bg-red-50/60 dark:bg-red-950/50 text-zinc-900 dark:text-white shadow-xs'
+                            : digit
+                            ? 'border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white'
+                            : 'border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 text-zinc-300 dark:text-zinc-600'
+                        }`}
+                      >
+                        {digit ? (
+                          <span>{digit}</span>
+                        ) : isFocusedDigit ? (
+                          <span className="w-0.5 h-5 bg-[#B3121B] animate-pulse rounded-full" />
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Invisible Native Input Overlay */}
                 <input
                   ref={otpInputRef}
                   id="gp-user-otp-input"
@@ -485,28 +504,28 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={6}
-                  defaultValue={otp}
+                  value={otp}
                   onChange={(e) => {
-                    const cleaned = e.target.value.replace(/\D/g, '');
-                    e.target.value = cleaned;
+                    const cleaned = e.target.value.replace(/\D/g, '').slice(0, 6);
                     setOtp(cleaned);
                     if (error) setError(null);
                   }}
-                  placeholder="------"
+                  onFocus={() => setIsOtpFocused(true)}
+                  onBlur={() => setIsOtpFocused(false)}
                   disabled={timeLeft === 0}
-                  className="w-full rounded-xl border border-zinc-400 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 py-3 pl-10 pr-4 text-center font-mono text-lg font-black tracking-[0.4em] text-zinc-900 dark:text-white placeholder:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-[#B3121B]/30 focus:border-[#B3121B] shadow-xs disabled:opacity-50"
+                  className="absolute inset-0 w-full h-full opacity-0 z-20 cursor-pointer caret-transparent disabled:cursor-not-allowed"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting || otp.length < 4 || timeLeft === 0}
-                className="w-full py-3 px-4 rounded-xl bg-[#B3121B] hover:bg-red-700 active:bg-red-800 text-white font-bold text-xs md:text-sm flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition transform active:scale-98 cursor-pointer disabled:opacity-50"
+                className="w-full py-3.5 px-5 rounded-xl bg-[#B3121B] hover:bg-red-700 active:bg-red-800 text-white flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all transform active:scale-98 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <span>{texts.verifyOtp}</span>
+                  <span className="text-base sm:text-[17px] font-black tracking-wide leading-none">{texts.verifyOtp}</span>
                 )}
               </button>
             </form>

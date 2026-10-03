@@ -41,8 +41,9 @@ export class AuthService {
   }): Promise<AuthResponse> {
     const { email, password, userAgent, ipAddress, rememberMe } = params;
 
-    // 1. Find user by email
-    const user = await UserRepository.findByEmail(email);
+    // 1. Find user by exact email ("same to same", case-sensitive)
+    const typedEmail = email.trim();
+    const user = await UserRepository.findByEmailExact(typedEmail);
     if (!user) {
       throw new UnauthorizedError('Invalid email or password');
     }

@@ -3,12 +3,64 @@ import { Role, AccountStatus, User } from '@prisma/client';
 
 export class UserRepository {
   /**
+   * Find a user by exact case-sensitive email address ("same to same").
+   * Strictly verifies character-for-character match including capital/small letters.
+   */
+  static async findByEmailExact(email: string): Promise<User | null> {
+    if (!email) return null;
+    const typedEmail = email.trim();
+
+    const candidates = await prisma.user.findMany({
+      select: { id: true, email: true },
+    });
+
+    const match = candidates.find((c) => c.email === typedEmail);
+    if (match) {
+      return prisma.user.findUnique({
+        where: { id: match.id },
+      });
+    }
+
+    return null;
+  }
+
+  /**
    * Find a user by email address.
    */
   static async findByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { email },
+    if (!email) return null;
+    const cleanEmail = email.trim().toLowerCase();
+    const rawEmail = email.trim();
+
+    // 1. Try normalized lowercase (standard)
+    let user = await prisma.user.findUnique({
+      where: { email: cleanEmail },
     });
+
+    if (user) return user;
+
+    // 2. Try raw casing if different (in case an existing record had uppercase letters)
+    if (rawEmail !== cleanEmail) {
+      user = await prisma.user.findUnique({
+        where: { email: rawEmail },
+      });
+      if (user) return user;
+    }
+
+    // 3. Fallback: find across users matching case-insensitively
+    const allUsers = await prisma.user.findMany({
+      select: { id: true, email: true },
+    });
+    const match = allUsers.find(
+      (u) => u.email.trim().toLowerCase() === cleanEmail
+    );
+    if (match) {
+      return prisma.user.findUnique({
+        where: { id: match.id },
+      });
+    }
+
+    return null;
   }
 
   /**
@@ -63,7 +115,7 @@ export class UserRepository {
   }): Promise<User> {
     return prisma.user.create({
       data: {
-        email: data.email,
+        email: data.email.trim(),
         passwordHash: data.passwordHash,
         role: data.role,
         status: data.status,

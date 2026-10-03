@@ -118,7 +118,7 @@ const CATEGORY_TRANSLATIONS: Record<string, { en: string; hi: string; gu: string
 
 export default function Header() {
   const pathname = usePathname();
-  if (pathname === '/login' || pathname.startsWith('/admin')) {
+  if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
     return null;
   }
 
@@ -409,7 +409,7 @@ export default function Header() {
             </div>
 
             {/* Right: Mobile quick access badges (News Brief & AQI) */}
-            <div className="flex md:hidden items-center gap-1.5 shrink-0">
+            <div className="flex md:hidden items-center gap-1 shrink-0">
               <Link
                 href="/news-brief"
                 className="group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-red-950/60 to-zinc-900/90 hover:from-red-900/70 hover:to-zinc-800 text-white text-[10.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-red-500/40 hover:border-red-500/70 shadow-2xs"
@@ -459,7 +459,7 @@ export default function Header() {
             {/* Slogan */}
             <div className="flex flex-col justify-center leading-tight pl-1 sm:pl-1.5 md:pl-2">
               <p
-                className="text-[12px] sm:text-[14px] md:text-[15px] font-black font-sans tracking-wide text-foreground whitespace-nowrap select-none"
+                className="text-[10.5px] sm:text-[13px] md:text-[15px] font-black font-sans tracking-wide text-foreground whitespace-nowrap select-none"
                 style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
                 translate="no"
               >
@@ -469,7 +469,7 @@ export default function Header() {
 
             {/* Logo */}
             <Link href="/" className="group relative flex shrink-0 items-center">
-              <div className="relative block h-9 sm:h-11 md:h-12 lg:h-14 w-40 sm:w-50 md:w-54 lg:w-60 overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]">
+              <div className="relative block h-8 sm:h-10 md:h-12 lg:h-14 w-32 sm:w-44 md:w-54 lg:w-60 overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]">
                 <Image
                   src="/assets/gujarat-post-logo-cms.png"
                   alt="Gujarat Post"
@@ -557,7 +557,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="md:hidden flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
+                className="md:hidden flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />
@@ -568,7 +568,7 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setLanguageOpen((value) => !value)}
-                  className={`inline-flex h-8 sm:h-10 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2.5 sm:px-4 text-[12px] sm:text-[14px] font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
+                  className={`inline-flex h-7.5 sm:h-9 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2 sm:px-3 text-[11px] sm:text-[13px] font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
                     }`}
                   style={{ fontWeight: 800 }}
                   aria-label="Switch language"
@@ -634,7 +634,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
+                className="group inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
                 aria-label="Toggle dark mode"
               >
                 {theme === 'dark' ? (
@@ -648,14 +648,9 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => {
-                  const hasToken = typeof document !== 'undefined' && document.cookie.includes('access_token');
-                  if (hasToken) {
-                    router.push('/admin');
-                  } else {
-                    setAuthModalOpen(true);
-                  }
+                  setAuthModalOpen(true);
                 }}
-                className="group inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+                className="group hidden sm:inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
                 aria-label="Sign In"
                 title="Sign In"
               >
@@ -666,7 +661,7 @@ export default function Header() {
               <button
                 type="button"
                 onClick={() => setMenuOpen((value) => !value)}
-                className="inline-flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95"
+                className="inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95 ml-0.5"
                 aria-label="Open menu"
               >
                 {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
@@ -725,6 +720,40 @@ export default function Header() {
           <div className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200 select-none" style={{ top: `${headerHeight}px` }}>
             {/* Menu Drawer Content Container */}
             <div className="px-4 py-4 space-y-4 pb-24">
+              {/* Mobile User Profile & Theme Toggle Bar */}
+              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/60 border border-border">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setAuthModalOpen(true);
+                  }}
+                  className="flex items-center gap-2 text-xs font-black text-foreground hover:text-red-600 transition"
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-xs">
+                    <User className="h-4 w-4" />
+                  </div>
+                  <span>{language === 'gu' ? 'સાઇન ઇન / એકાઉન્ટ' : language === 'hi' ? 'साइन इन / खाता' : 'Sign In / Account'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-card text-xs font-bold text-foreground transition active:scale-95"
+                >
+                  {theme === 'dark' ? (
+                    <>
+                      <Sun className="h-3.5 w-3.5 text-amber-400" />
+                      <span>Light</span>
+                    </>
+                  ) : (
+                    <>
+                      <Moon className="h-3.5 w-3.5 text-slate-700" />
+                      <span>Dark</span>
+                    </>
+                  )}
+                </button>
+              </div>
               {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
               <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
                 <Link

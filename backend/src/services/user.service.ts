@@ -22,8 +22,10 @@ export class UserService {
       throw new Error('Password is required for creating a new user account.');
     }
 
+    const cleanEmail = email.trim();
+
     // 1. Check if email is already registered
-    const existingUser = await UserRepository.findByEmail(email);
+    const existingUser = await UserRepository.findByEmail(cleanEmail);
     if (existingUser) {
       throw new ConflictError('A user account with this email address already exists.');
     }
@@ -33,7 +35,7 @@ export class UserService {
 
     // 3. Save the user in the database
     const user = await UserRepository.createUser({
-      email,
+      email: cleanEmail,
       passwordHash: hashed,
       role,
       status,
@@ -41,8 +43,8 @@ export class UserService {
 
     // 4. Send the credentials to the user via Resend (fire-and-forget style to avoid blocking the DB response)
     // We run it asynchronously and handle inner exceptions to avoid interrupting the success API response
-    sendCredentialsEmail(email, password, role).catch((error) => {
-      console.error(`Post-user-creation mail delivery failed for ${email}:`, error);
+    sendCredentialsEmail(cleanEmail, password, role).catch((error) => {
+      console.error(`Post-user-creation mail delivery failed for ${cleanEmail}:`, error);
     });
 
     // 5. Return sanitized user metadata

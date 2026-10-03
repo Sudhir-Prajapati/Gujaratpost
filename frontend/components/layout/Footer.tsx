@@ -207,7 +207,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
     const { language, openSupportModal } = useApp();
     const pathname = usePathname();
 
-    if (pathname === '/login' || pathname.startsWith('/admin')) {
+    if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
         return null;
     }
 

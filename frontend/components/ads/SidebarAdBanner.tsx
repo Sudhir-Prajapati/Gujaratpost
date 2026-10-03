@@ -290,7 +290,7 @@ export default function SidebarAdBanner({
   if (loading) {
     return (
       <div className={`ad-slot w-full relative ${className}`}>
-        <div className="flex items-center justify-between mb-1.5 px-1 h-5">
+        <div className="flex items-center justify-between mb-0.5 px-1 h-5">
           <div className="h-3 w-16 bg-slate-200 dark:bg-slate-800 rounded animate-pulse" />
         </div>
         <div
@@ -312,7 +312,7 @@ export default function SidebarAdBanner({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* Dynamic Slide Category Header (Fixed Height to prevent shifts) */}
-      <div className="flex items-center justify-between mb-1.5 px-1 h-5">
+      <div className="flex items-center justify-between mb-0.5 px-1 h-5">
         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider select-none truncate">
           {headerLabel}
         </p>
@@ -367,7 +367,7 @@ export default function SidebarAdBanner({
 
       {/* Carousel Pagination Indicator Dots (Fixed Height) */}
       {slides.length > 1 && (
-        <div className="flex items-center justify-center gap-1.5 mt-2 h-3">
+        <div className="flex items-center justify-center gap-1.5 mt-1 h-3">
           {slides.map((s, idx) => {
             const isActive = idx === activeIndex;
             let dotColor = 'bg-[#B3121B] dark:bg-red-500';

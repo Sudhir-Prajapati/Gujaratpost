@@ -26,7 +26,7 @@ const FALLBACK_TICKERS = [
 
 export default function BreakingTicker() {
   const pathname = usePathname();
-  if (pathname === '/login' || pathname.startsWith('/admin')) {
+  if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
     return null;
   }
 
@@ -127,31 +127,31 @@ export default function BreakingTicker() {
           <Link
             prefetch={false}
             href={`/news/${item.slug}`}
-            className="px-2.5 text-[16.5px] sm:text-[17px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
+            className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16.5px] md:text-[17px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
           >
             <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </Link>
         ) : (
-          <span className="px-2.5 text-[16.5px] sm:text-[17px] font-bold text-white/95 tracking-normal leading-normal">
+          <span className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16.5px] md:text-[17px] font-bold text-white/95 tracking-normal leading-normal">
             <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </span>
         )}
-        <span className="mx-4 inline-block h-1.5 w-1.5 rounded-full bg-white/70 shrink-0" aria-hidden="true" />
+        <span className="mx-2.5 sm:mx-4 inline-block h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-white/70 shrink-0" aria-hidden="true" />
       </span>
     );
   };
 
   return (
     <div
-      className="flex h-11 sm:h-11.5 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-2 sm:mb-2.5"
+      className="flex h-8 sm:h-11 md:h-11.5 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-1.5 sm:mb-2.5"
       role="region"
       aria-label="Breaking News Ticker"
     >
       {/* Left Badge */}
-      <div className="z-20 flex h-full shrink-0 items-center bg-black px-3.5 md:px-4 text-[14px] sm:text-[14.5px] font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-2 whitespace-nowrap">
-        <span className="relative flex h-2.5 w-2.5 shrink-0">
+      <div className="z-20 flex h-full shrink-0 items-center bg-black px-2 sm:px-3.5 md:px-4 text-[11px] sm:text-[14px] md:text-[14.5px] font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-1.5 sm:gap-2 whitespace-nowrap">
+        <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-red-600"></span>
         </span>
         <span>{badgeText}</span>
       </div>
@@ -163,8 +163,8 @@ export default function BreakingTicker() {
         onMouseLeave={() => setPaused(false)}
       >
         {/* Soft edge gradients for subtle smooth enter/exit */}
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-6 md:w-10 bg-gradient-to-r from-[#B3121B] to-transparent z-10" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-6 md:w-10 bg-gradient-to-l from-[#B3121B] to-transparent z-10" />
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-6 md:w-10 bg-gradient-to-r from-[#B3121B] to-transparent z-10" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-6 md:w-10 bg-gradient-to-l from-[#B3121B] to-transparent z-10" />
 
         {/* Scrolling Track */}
         <div
@@ -190,11 +190,11 @@ export default function BreakingTicker() {
       <button
         type="button"
         onClick={() => setPaused((value) => !value)}
-        className="z-20 flex h-full w-10 shrink-0 items-center justify-center bg-black text-white/80 hover:text-white hover:bg-neutral-900 border-l border-black transition-colors focus:outline-none focus:ring-1 focus:ring-white/50"
+        className="z-20 flex h-full w-7 sm:w-10 shrink-0 items-center justify-center bg-black text-white/80 hover:text-white hover:bg-neutral-900 border-l border-black transition-colors focus:outline-none focus:ring-1 focus:ring-white/50 cursor-pointer"
         title={paused ? 'Play ticker' : 'Pause ticker'}
         aria-label={paused ? 'Play ticker' : 'Pause ticker'}
       >
-        {paused ? <Play className="h-3.5 w-3.5 fill-current" /> : <Pause className="h-3.5 w-3.5 fill-current" />}
+        {paused ? <Play className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-current" /> : <Pause className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-current" />}
       </button>
     </div>
   );

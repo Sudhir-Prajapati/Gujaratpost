@@ -486,29 +486,29 @@ export default function CrimeSection({
         )}
 
         {/* Right side 4 articles with images matching slider height */}
-        <div className="flex flex-col justify-between min-w-0 md:border-l md:border-border/60 md:pl-2.5 divide-y divide-border/40 h-full">
+        <div className="flex flex-col justify-between min-w-0 md:border-l md:border-border/60 md:pl-2.5 gap-2 md:gap-0 divide-y md:divide-y divide-border/40 h-full">
           {rightList.map((item, idx) => (
             <Link
               key={`${item.id}-${idx}`}
               href={`/news/${item.slug}`}
-              className="group flex items-center gap-3 py-1.5 md:py-2 first:pt-0 last:pb-0"
+              className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl md:rounded-none bg-card/70 md:bg-transparent border md:border-0 border-border/50 transition-all py-2 first:pt-0 last:pb-0"
             >
-              <div className="relative aspect-[16/10] w-24 sm:w-[108px] shrink-0 overflow-hidden rounded-sm border border-border/15 bg-muted">
+              <div className="flex flex-col min-w-0 flex-1 pr-1">
+                <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+                  {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
+                </span>
+                <h4 className="text-[16px] md:text-[14.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                  {item.article
+                    ? <AutoArticleTitle article={item.article} language={language} />
+                    : (getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi }))}
+                </h4>
+              </div>
+              <div className="relative aspect-[16/10] w-[105px] h-[72px] sm:w-[112px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted">
                 <ArticleMedia
                   src={item.image}
                   alt={item.titleGu || item.title}
                   className="transition-transform duration-300 group-hover:scale-105"
                 />
-              </div>
-              <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-red-600 font-extrabold text-[10.5px] md:text-[11px] uppercase tracking-wide mb-0.5 leading-none">
-                  {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
-                </span>
-                <h4 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                  {item.article
-                    ? <AutoArticleTitle article={item.article} language={language} />
-                    : (getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi }))}
-                </h4>
               </div>
             </Link>
           ))}
@@ -540,22 +540,22 @@ export default function CrimeSection({
                 <Link
                   key={`${col.colId}-${sub.id}-${sIdx}`}
                   href={`/news/${sub.slug}`}
-                  className="group py-3 flex items-center gap-3"
+                  className="group py-2.5 flex items-center justify-between gap-3"
                 >
-                  {/* Thumbnail photo on left */}
-                  <div className="relative h-16 w-20 shrink-0 rounded-lg overflow-hidden border border-border/20 bg-muted">
+                  {/* Title & Metadata on left */}
+                  <div className="flex flex-col min-w-0 flex-1 pr-1">
+                    <h4 className="text-[15.5px] md:text-[14px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3 md:line-clamp-2">
+                      {sub.title}
+                    </h4>
+                  </div>
+
+                  {/* Thumbnail photo on right */}
+                  <div className="relative h-[64px] w-[96px] shrink-0 rounded-lg overflow-hidden border border-border/20 bg-muted">
                     <ArticleMedia
                       src={sub.image}
                       alt={sub.title}
                       className="transition-transform duration-300 group-hover:scale-105"
                     />
-                  </div>
-
-                  {/* Title & Metadata on right */}
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <h4 className="text-[13.5px] md:text-[14px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                      {sub.title}
-                    </h4>
                   </div>
                 </Link>
               ))}

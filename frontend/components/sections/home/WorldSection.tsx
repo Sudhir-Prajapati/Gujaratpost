@@ -64,7 +64,6 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
     { symbol: 'د.إ', code: 'AED', pair: 'AED/INR', nameEn: 'UAE Dirham', nameGu: 'યુએઈ દિરહામ', nameHi: 'યુએઈ દિરહામ', rate: 23.64, change: -0.05, bgColor: 'bg-emerald-500/10', textColor: 'text-emerald-600' },
     { symbol: 'A$', code: 'AUD', pair: 'AUD/INR', nameEn: 'Australian Dollar', nameGu: 'ઑસ્ટ્રેલિયન ડૉલર', nameHi: 'ऑस्ट्रेलियन डॉलर', rate: 55.48, change: 0.03, bgColor: 'bg-yellow-500/10', textColor: 'text-yellow-600' },
     { symbol: '£', code: 'GBP', pair: 'GBP/INR', nameEn: 'British Pound', nameGu: 'બ્રિટિશ પાઉન્ડ', nameHi: 'ब्रिटिश पाउंड', rate: 108.78, change: 0.00, bgColor: 'bg-amber-500/10', textColor: 'text-amber-600' },
-    { symbol: 'C$', code: 'CAD', pair: 'CAD/INR', nameEn: 'Canadian Dollar', nameGu: 'કેનેડિયન ડૉલર', nameHi: 'कनाडाई डॉलर', rate: 61.20, change: 0.08, bgColor: 'bg-red-500/10', textColor: 'text-red-600' },
   ]);
 
   const [lastUpdated, setLastUpdated] = useState<string>('Live');
@@ -105,7 +104,7 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between pb-1.5 mb-2 select-none border-b border-border/80">
+      <div className="flex items-center justify-between pb-1.5 mb-1.5 select-none border-b border-border/80">
         <span className="text-[#B3121B] font-extrabold text-[15px] md:text-[16px]">
           {language === 'gu' ? '• વિદેશી ચલણ' : language === 'hi' ? '• विदेशी मुद्रा' : '• Foreign Exchange'}
         </span>
@@ -115,7 +114,7 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
         </span>
       </div>
       <div className="border border-border/80 rounded-sm bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
-        {rates.map((item) => {
+        {rates.slice(0, 5).map((item) => {
           const name = item.nameEn;
           const isUp = item.change > 0;
           const isDown = item.change < 0;
@@ -383,7 +382,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         </div>
 
         {/* Right Column: Widgets */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2.5 select-none">
 
           <SidebarAdBanner
             slot="SIDEBAR_WORLD"
