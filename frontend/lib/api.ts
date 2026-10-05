@@ -104,7 +104,7 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
     if (isServer && revalidateSeconds > 0) {
       // Safe Next.js Data Cache revalidation for public read requests during SSR
       (fetchOptions as any).next = { revalidate: revalidateSeconds };
-    } else {
+    } else if (revalidateSeconds === 0) {
       // Explicitly bypass cache for dynamic/zero-TTL requests
       fetchOptions.cache = 'no-store';
     }
