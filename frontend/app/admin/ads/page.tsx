@@ -1062,22 +1062,26 @@ export default function AdminAdsPage() {
                   </div>
                 </div>
               ) : activeTab === 'sidebar' ? (
-                <div className="relative aspect-[16/9] rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-900 flex flex-col items-center justify-center text-center p-2">
+                // Sidebar box: matches actual user-side box ~300×210px (10:7 ratio)
+                <div className="relative overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-900 flex flex-col items-center justify-center text-center" style={{ width: '100%', height: 210 }}>
                   {isValidMediaUrl(image1) ? (
                     mediaType === 'VIDEO' || /\.(mp4|webm|mov)(\?.*)?$/i.test(image1) ? (
-                      <video src={image1} autoPlay loop muted playsInline className="h-full w-full object-cover" />
+                      <video src={image1} autoPlay loop muted playsInline className="h-full w-full object-contain" />
                     ) : (
-                      <Image src={image1} alt="Sidebar Preview" fill unoptimized={true} className="object-cover" />
+                      <>
+                        <Image src={image1} alt="" aria-hidden="true" fill unoptimized={true} className="object-cover blur-xl scale-125 opacity-30 pointer-events-none" />
+                        <Image src={image1} alt="Sidebar Preview" fill unoptimized={true} className="object-contain z-[1]" />
+                      </>
                     )
                   ) : (
-                    <div className="flex flex-col items-center justify-center text-zinc-400 text-xs p-4">
+                    <div className="flex flex-col items-center justify-center text-zinc-400 text-xs p-4 z-[1]">
                       <Sidebar className="h-6 w-6 mb-1 opacity-50" />
                       <span className="font-bold">Default Banner Active</span>
                       <span className="text-[10px] text-zinc-500 mt-1">Upload custom media to override default card</span>
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                    SIDEBAR AD
+                  <div className="absolute top-2 right-2 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-10">
+                    SIDEBAR AD · 300×210
                   </div>
                 </div>
               ) : (
@@ -1124,8 +1128,8 @@ export default function AdminAdsPage() {
           </div>
 
           {/* Configured Ads List for Active Tab */}
-          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-400 dark:border-zinc-600 p-6 shadow-sm space-y-4">
-            <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b border-gray-400 dark:border-zinc-600 pb-3">
+          <div className="bg-white dark:bg-zinc-900 rounded-2xl border border-gray-400 dark:border-zinc-600 p-6 shadow-sm flex flex-col">
+            <h3 className="text-lg sm:text-xl font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-2 border-b border-gray-400 dark:border-zinc-600 pb-3 shrink-0">
               <Layers className="h-5 w-5 text-blue-500" />
               {activeTab === 'header'
                 ? 'Configured Header Ad'
@@ -1134,6 +1138,8 @@ export default function AdminAdsPage() {
                 : 'Configured Section Ads'}{' '}
               ({filteredAdsList.length})
             </h3>
+            {/* Scrollable list — capped so right column never outgrows left form */}
+            <div className="overflow-y-auto mt-4" style={{ maxHeight: 520 }}>
             {loading ? (
               <div className="py-8 flex flex-col items-center justify-center text-zinc-400">
                 <Loader2 className="h-6 w-6 animate-spin mb-2 text-red-500" />
@@ -1144,7 +1150,7 @@ export default function AdminAdsPage() {
                 No custom {activeTab} ad created yet. Fill the form to add one.
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 pr-1">
                 {filteredAdsList.map((ad) => {
                   const secLabel =
                     HEADER_SLOTS.find((s) => s.id === ad.section)?.label ||
@@ -1212,6 +1218,7 @@ export default function AdminAdsPage() {
                 })}
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>
@@ -1481,7 +1488,8 @@ export default function AdminAdsPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* 4 sidebar slots shown as vertical boxes matching actual user-side dimensions (~300×210px each) */}
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {FIXED_SIDEBAR_SLOTS.map((slot) => {
                       const foundAd = ads.find((a) => a.section === slot.id);
                       const isFilled = Boolean(foundAd && foundAd.isActive);
@@ -1490,25 +1498,32 @@ export default function AdminAdsPage() {
                       if (modalFilter === 'remaining' && isFilled) return null;
 
                       return (
-                        <div key={slot.id} className={`p-4 rounded-2xl border transition-all ${isFilled ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-500/40' : 'bg-amber-500/5 dark:bg-amber-950/20 border-amber-500/40'}`}>
-                          <div className="flex items-center justify-between gap-1">
-                            <span className="font-extrabold text-xs text-zinc-900 dark:text-zinc-100 truncate">{slot.label}</span>
-                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-black ${isFilled ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
+                        <div key={slot.id} className={`p-3 rounded-2xl border transition-all flex flex-col justify-between ${isFilled ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-500/40' : 'bg-amber-500/5 dark:bg-amber-950/20 border-amber-500/40'}`}>
+                          <div className="flex items-center justify-between gap-1 mb-2">
+                            <span className="font-extrabold text-[11px] text-zinc-900 dark:text-zinc-100 truncate">{slot.label}</span>
+                            <span className={`px-2 py-0.5 rounded-md text-[9px] font-black shrink-0 ${isFilled ? 'bg-emerald-600 text-white' : 'bg-amber-600 text-white'}`}>
                               {isFilled ? '🟢 LIVE' : '⚠️ EMPTY'}
                             </span>
                           </div>
 
-                          <div className="mt-3 relative h-24 w-full rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-950 flex items-center justify-center">
+                          {/* Sidebar box preview: mirrors user-side box (300×210px, ~10:7 ratio) */}
+                          <div className="relative w-full rounded-xl overflow-hidden border border-gray-400 dark:border-zinc-600 bg-zinc-950 flex items-center justify-center" style={{ height: 160 }}>
                             {isFilled && foundAd?.image1 ? (
-                              <Image src={foundAd.image1} alt={slot.label} fill className="object-cover" />
+                              <>
+                                <Image src={foundAd.image1} alt="" aria-hidden="true" fill unoptimized={true} className="object-cover blur-xl scale-125 opacity-30 pointer-events-none" />
+                                <Image src={foundAd.image1} alt={slot.label} fill unoptimized={true} className="object-contain z-[1]" />
+                              </>
                             ) : (
-                              <div className="w-full h-full p-2 flex items-center justify-center text-center" style={{ background: slot.defaultColor }}>
+                              <div className="w-full h-full p-3 flex flex-col items-center justify-center text-center" style={{ background: slot.defaultColor }}>
                                 <span className="text-[9px] font-bold text-white leading-tight">{slot.description}</span>
                               </div>
                             )}
+                            <div className="absolute top-1.5 right-1.5 bg-black/70 text-white text-[8px] font-bold px-1.5 py-0.5 rounded z-10">
+                              AD BOX
+                            </div>
                           </div>
 
-                          <div className="mt-3 flex justify-end">
+                          <div className="mt-2.5 flex justify-end">
                             <button
                               type="button"
                               onClick={() => {
@@ -1574,17 +1589,18 @@ export default function AdminAdsPage() {
                             </span>
                           </div>
 
+                          {/* Horizontal banner preview: mirrors wide full-width in-between section banners on user side */}
                           <div className="mt-3">
                             {isFilled && imageList.length > 0 ? (
                               <div className={`grid gap-1.5 ${imageList.length === 3 ? 'grid-cols-3' : imageList.length === 2 ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                 {imageList.map((imgUrl, idx) => (
-                                  <div key={idx} className="relative h-20 rounded-lg overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-600">
-                                    <Image src={imgUrl!} alt={`Ad Image ${idx + 1}`} fill className="object-cover" />
+                                  <div key={idx} className="relative rounded-lg overflow-hidden bg-zinc-950 border border-gray-400 dark:border-zinc-600" style={{ height: 56 }}>
+                                    <Image src={imgUrl!} alt={`Ad Image ${idx + 1}`} fill unoptimized={true} className="object-cover" />
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <div className="h-20 rounded-lg bg-amber-500/10 border border-dashed border-amber-500/30 flex items-center justify-center p-2 text-center">
+                              <div className="rounded-lg bg-amber-500/10 border border-dashed border-amber-500/30 flex items-center justify-center p-2 text-center" style={{ height: 56 }}>
                                 <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300">Default Promo Banner Active</span>
                               </div>
                             )}

@@ -126,6 +126,7 @@ export default function Header() {
   const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal } = useApp();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedCity, setSelectedCity] = useState('અમદાવાદ');
   const [cityModalOpen, setCityModalOpen] = useState(false);
@@ -179,6 +180,12 @@ export default function Header() {
     }
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
+
+  // Close menu with exit animation then unmount
+  const closeMenu = () => {
+    setMenuClosing(true);
+    setTimeout(() => { setMenuOpen(false); setMenuClosing(false); }, 280);
+  };
 
   const updateSavedCount = () => {
     try {
@@ -657,14 +664,22 @@ export default function Header() {
                 <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
               </button>
 
-              {/* Mobile hamburger */}
+              {/* Mobile hamburger — animates Menu ↔ X */}
               <button
                 type="button"
-                onClick={() => setMenuOpen((value) => !value)}
-                className="inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-red-600 text-white md:hidden shrink-0 shadow-sm active:scale-95 ml-0.5"
-                aria-label="Open menu"
+                onClick={() => {
+                  if (menuOpen) { closeMenu(); }
+                  else { setMenuOpen(true); setMenuClosing(false); }
+                }}
+                className="relative inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-red-600 hover:bg-red-700 text-white md:hidden shrink-0 shadow-sm active:scale-95 ml-0.5 overflow-hidden transition-colors duration-200"
+                aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               >
-                {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', opacity: menuOpen ? 0 : 1, transform: menuOpen ? 'rotate(90deg) scale(0.4)' : 'rotate(0deg) scale(1)', transition: 'opacity 0.25s ease, transform 0.25s ease' }}>
+                  <Menu className="h-4 w-4" />
+                </span>
+                <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', opacity: menuOpen ? 1 : 0, transform: menuOpen ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.4)', transition: 'opacity 0.25s ease, transform 0.25s ease' }}>
+                  <X className="h-4 w-4" />
+                </span>
               </button>
             </div>
           </div>
@@ -716,8 +731,16 @@ export default function Header() {
         </div>
 
         {/* -- Full-Screen Mobile Menu Drawer Overlay (below header) ------------- */}
-        {menuOpen && (
-          <div className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto animate-in fade-in slide-in-from-top-1 duration-200 select-none" style={{ top: `${headerHeight}px` }}>
+        {(menuOpen) && (
+          <>
+            <style>{
+              `@keyframes menuSlideIn { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
+               @keyframes menuSlideOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-16px); } }`
+            }</style>
+          <div
+            className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto select-none"
+            style={{ top: `${headerHeight}px`, animation: menuClosing ? 'menuSlideOut 0.28s cubic-bezier(0.4,0,0.2,1) forwards' : 'menuSlideIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}
+          >
             {/* Menu Drawer Content Container */}
             <div className="px-4 py-4 space-y-4 pb-24">
               {/* Mobile User Profile & Theme Toggle Bar */}
@@ -865,6 +888,7 @@ export default function Header() {
               </div>
             </div>
           </div>
+          </>
         )}
       </header>
 

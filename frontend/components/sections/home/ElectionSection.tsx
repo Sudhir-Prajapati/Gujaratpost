@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Vote, ChevronRight, TrendingUp } from 'lucide-react';
+import { Vote, ChevronRight, TrendingUp } from 'lucide-react';
 import type { Article, Language } from '@/types';
-import { formatDate, getArticleTitle } from '@/data';
+import { getArticleTitle } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
@@ -103,7 +103,7 @@ export default function ElectionSection({
   const sideList = articles.slice(1, 6);
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-4 mb-2 select-none" id="election-2027">
+    <section className="mx-auto max-w-screen-xl px-4 mt-4 mb-2 select-none" id="election-2027" suppressHydrationWarning>
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
         <div className="flex items-center gap-3">
@@ -154,11 +154,7 @@ export default function ElectionSection({
                 </p>
               </div>
 
-              <div className="flex items-center justify-between pt-3 mt-3 border-t border-border/50 text-[12px] font-bold text-muted-foreground">
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground/80" />
-                  <span>{formatDate(lead.publishedAt || (lead as any).createdAt, language)}</span>
-                </span>
+              <div className="flex items-center justify-end pt-3 mt-3 border-t border-border/50 text-[12px] font-bold text-muted-foreground">
                 <span className="text-[#B3121B] font-black group-hover:underline">
                   {language === 'gu' ? 'સંપૂર્ણ અહેવાલ વાંચો →' : 'Read Full Story →'}
                 </span>
@@ -168,37 +164,69 @@ export default function ElectionSection({
         </div>
 
         {/* Side Updates (Right 5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col gap-3">
-          {sideList.map((art, idx) => (
-            <Link
-              key={art.id || idx}
-              href={`/news/${art.slug}`}
-              className="group flex items-center gap-3.5 p-3 rounded-xl border border-border/80 bg-card hover:border-[#B3121B]/40 hover:bg-muted/15 transition-all shadow-2xs"
-            >
-              <div className="relative h-[74px] w-[100px] sm:h-[80px] sm:w-[110px] shrink-0 rounded-lg overflow-hidden bg-muted border border-border/30">
-                <ArticleMedia
-                  src={art.image || (art as any).featuredImage || `/assets/demo/${(idx % 8) + 1}.jpg`}
-                  alt={getArticleTitle(art, language)}
-                  className="object-cover transition-transform duration-300 group-hover:scale-108"
-                />
-              </div>
+        <div className="lg:col-span-5">
+          {/* Mobile View (< md): Flat list with Text on LEFT, Thumbnail on RIGHT (like Image 2) */}
+          <div className="md:hidden flex flex-col divide-y divide-border/40">
+            {sideList.map((art, idx) => (
+              <Link
+                key={`mob-${art.id || idx}`}
+                href={`/news/${art.slug}`}
+                className="group flex flex-row items-center justify-between gap-3.5 py-3 px-1 hover:bg-muted/20 transition-all min-w-0"
+              >
+                {/* Content on Left */}
+                <div className="flex flex-col justify-center min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] text-[#B3121B]">●</span>
+                    <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider select-none leading-none">
+                      #{idx + 1} {language === 'gu' ? 'ચૂંટણી અપડેટ' : language === 'hi' ? 'चुनाव अपडेट' : 'Election Update'}
+                    </span>
+                  </div>
+                  <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                    <AutoArticleTitle article={art} language={language} />
+                  </h4>
+                </div>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1 text-[11px] font-black text-[#B3121B]">
-                  <span>#{idx + 1}</span>
-                  <span>•</span>
-                  <span>{language === 'gu' ? 'ચૂંટણી અપડેટ' : 'Election Update'}</span>
+                {/* Thumbnail on Right */}
+                <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 rounded-lg overflow-hidden border border-border/10 bg-muted">
+                  <ArticleMedia
+                    src={art.image || (art as any).featuredImage || `/assets/demo/${(idx % 8) + 1}.jpg`}
+                    alt={getArticleTitle(art, language)}
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
                 </div>
-                <h4 className="text-[14px] sm:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                  <AutoArticleTitle article={art} language={language} />
-                </h4>
-                <div className="mt-1 flex items-center gap-1 text-[11.5px] font-bold text-muted-foreground">
-                  <Clock className="h-3 w-3" />
-                  <span>{formatDate(art.publishedAt || (art as any).createdAt, language)}</span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop View (>= md): Exactly preserved boxed cards with thumbnail on LEFT */}
+          <div className="hidden md:flex flex-col gap-3">
+            {sideList.map((art, idx) => (
+              <Link
+                key={art.id || idx}
+                href={`/news/${art.slug}`}
+                className="group flex items-center gap-3.5 p-3 rounded-xl border border-border/80 bg-card hover:border-[#B3121B]/40 hover:bg-muted/15 transition-all shadow-2xs"
+              >
+                <div className="relative h-[74px] w-[100px] sm:h-[80px] sm:w-[110px] shrink-0 rounded-lg overflow-hidden bg-muted border border-border/30">
+                  <ArticleMedia
+                    src={art.image || (art as any).featuredImage || `/assets/demo/${(idx % 8) + 1}.jpg`}
+                    alt={getArticleTitle(art, language)}
+                    className="object-cover transition-transform duration-300 group-hover:scale-108"
+                  />
                 </div>
-              </div>
-            </Link>
-          ))}
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 text-[11px] font-black text-[#B3121B]">
+                    <span>#{idx + 1}</span>
+                    <span>•</span>
+                    <span>{language === 'gu' ? 'ચૂંટણી અપડેટ' : 'Election Update'}</span>
+                  </div>
+                  <h4 className="text-[14px] sm:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                    <AutoArticleTitle article={art} language={language} />
+                  </h4>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </section>

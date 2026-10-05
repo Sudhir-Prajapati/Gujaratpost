@@ -109,6 +109,7 @@ const companyLinks = [
     { label: 'Feedback', href: '/feedback' },
 ];
 
+
 /* ─── NavColumn Component ─────────────────────────────────────────────────── */
 function NavColumn({
     title,
@@ -207,6 +208,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
     const { language, openSupportModal } = useApp();
     const pathname = usePathname();
 
+
     if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
         return null;
     }
@@ -260,8 +262,114 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
             >
             <div className={`w-full px-4 sm:px-6 md:px-8 lg:px-10 ${wrap}`}>
 
-                {/* ── Main Layout: Logo left, Nav columns pushed right ── */}
-                <div className="flex flex-col lg:flex-row gap-6 lg:gap-0 pb-4 border-b border-slate-800/80">
+                {/* ── MOBILE ONLY FOOTER (Matching website Image 3 layout) ── */}
+                <div className="md:hidden flex flex-col gap-5 pb-3 pt-1">
+                    {/* Top Branding & Support */}
+                    <div className="flex flex-col items-center text-center pb-5 border-b border-slate-800/80">
+                        {/* Slogan */}
+                        <p
+                            className="text-[12px] font-black tracking-wide text-white uppercase select-none mb-1"
+                            style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
+                            translate="no"
+                        >
+                            Real Stories. <span className="text-red-500 font-black">Real Gujarat.</span>
+                        </p>
+
+                        {/* Logo */}
+                        <Link href="/" className="relative block h-10 w-44 my-1 overflow-hidden">
+                            <Image
+                                src="/assets/gujarat-post-logo-cms.png"
+                                alt="Gujarat Post"
+                                fill
+                                priority
+                                unoptimized
+                                className="object-contain object-center drop-shadow-sm"
+                            />
+                        </Link>
+
+                        {/* Support Us Button in Footer */}
+                        <button
+                            type="button"
+                            onClick={openSupportModal}
+                            className="w-full max-w-xs mt-3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-4 py-3 text-white shadow-lg shadow-red-900/40 active:scale-95 transition-all duration-200 cursor-pointer border border-red-400/40 select-none"
+                        >
+                            <Heart className="h-4.5 w-4.5 fill-current animate-pulse text-white shrink-0" />
+                            <span className="text-[13.5px] font-black tracking-wide drop-shadow-sm">
+                                {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
+                            </span>
+                        </button>
+
+                        {/* Social Icons */}
+                        <div className="flex items-center justify-center gap-3 w-full mt-3.5">
+                            {SOCIAL_LINKS.map((item) => (
+                                <SocialIconButton key={`mob-${item.label}`} item={item} />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Exact 4 NavColumns matching Website (Image 3) in a clean 2x2 grid */}
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-7 px-2">
+                        <NavColumn title="Topics" links={topics1Links} delay={0} />
+                        <NavColumn title="Topics" links={topics2Links} delay={0.7} />
+                        <NavColumn title="Topics" links={topics3Links} delay={1.4} />
+                        <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} />
+                    </div>
+
+                    {/* App Store & Google Play Badges */}
+                    <div className="pt-4 border-t border-slate-800/80 flex flex-col items-center">
+                        <div className="grid grid-cols-2 gap-2.5 w-full max-w-xs">
+                            <a
+                                href="https://apps.apple.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-2 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
+                            >
+                                <AppleIcon className="h-5 w-5 text-white shrink-0" />
+                                <div className="leading-tight text-left" translate="no">
+                                    <span className="block text-[8px] text-zinc-400 font-extrabold uppercase tracking-tight">Download on the</span>
+                                    <span className="block text-[12px] font-black text-white tracking-tight">App Store</span>
+                                </div>
+                            </a>
+
+                            <a
+                                href="https://play.google.com"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-2 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
+                            >
+                                <PlayStoreIcon className="h-5 w-5 shrink-0" />
+                                <div className="leading-tight text-left" translate="no">
+                                    <span className="block text-[8px] text-zinc-400 font-extrabold uppercase tracking-tight">Get it on</span>
+                                    <span className="block text-[12px] font-black text-white tracking-tight">Google Play</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    {/* Legal Policies */}
+                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-extrabold text-slate-400 px-2 text-center">
+                        {[
+                            ['Complain Redressal', '/complaign-redressal'],
+                            ['Your Privacy Choices', '/privacy-choices'],
+                            ["Children's Privacy Policy", '/children-privacy'],
+                            ['Cookie Settings', '/cookie-settings'],
+                            ['DNPA Code Of Ethics', '/dnpa-code-of-ethics'],
+                        ].map(([label, href]) => (
+                            <Link key={href} href={href} className="hover:text-white transition-colors duration-200">
+                                {label}
+                            </Link>
+                        ))}
+                    </div>
+
+                    {/* Copyright */}
+                    <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10px] text-center px-4">
+                        <p>External links are provided for reference purposes. © {new Date().getFullYear()} GUJARAT POST MEDIA. ALL RIGHTS RESERVED.</p>
+                        <p className="tracking-wider text-slate-400 font-black">RNI/GJ-DEMO/2026</p>
+                    </div>
+                </div>
+
+                {/* ── DESKTOP ONLY Main Layout: Preserved 100% Unchanged ── */}
+                <div className="hidden md:flex flex-col lg:flex-row gap-6 lg:gap-0 pb-4 border-b border-slate-800/80">
 
                     {/* Logo & Brand */}
                     <div className="flex flex-col items-start gap-1 lg:w-72 flex-shrink-0 select-none">
@@ -338,8 +446,8 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
                 </div> */}
 
-                {/* ── Bottom Bar: Legal Policies & Copyright ── */}
-                <div className="pt-3 border-t border-slate-900/60 mt-3 grid grid-cols-1 md:grid-cols-3 items-center gap-3 text-[11px] font-extrabold text-slate-400">
+                {/* ── DESKTOP ONLY Bottom Bar ── */}
+                <div className="hidden md:grid pt-3 border-t border-slate-900/60 mt-3 grid-cols-3 items-center gap-3 text-[11px] font-extrabold text-slate-400">
 
                     {/* Left Column: empty spacer on desktop to keep middle centered */}
                     <div className="hidden md:block" />

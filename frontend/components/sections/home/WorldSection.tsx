@@ -316,69 +316,134 @@ export default function WorldSection({ language, initialArticles }: { language: 
         {/* Left Column: Big horizontal featured card + 4-column horizontal card list */}
         <div className="flex flex-col min-w-0">
 
-          {/* Big Horizontal Featured Card */}
-          <Link
-            href={`/news/${featured.slug}`}
-            className="group grid grid-cols-1 md:grid-cols-2 gap-6 bg-card border border-border/80 rounded-sm p-5 md:p-6 mb-8 hover:shadow-sm transition-shadow duration-200"
-          >
-            {/* Content Left */}
-            <div className="flex flex-col justify-center min-w-0 order-2 md:order-1">
-              <span className="text-red-600 font-extrabold text-[12px] md:text-[13px] mb-2 select-none uppercase tracking-wide">
-                <AutoTranslateString text={featured.categoryGu} language={language} />
-              </span>
-              <h3 className="text-[18px] md:text-[20.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
+          {/* Mobile View (< md): 1 Lead Featured Story + Compact News List */}
+          <div className="md:hidden flex flex-col">
+            {/* 1. Lead Featured Story */}
+            <Link
+              href={`/news/${featured.slug}`}
+              className="group flex flex-col pb-3.5 mb-2 border-b border-border/40"
+            >
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-2xs">
+                <ArticleMedia
+                  src={featured.image}
+                  alt={featured.titleGu}
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+                <span className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9.5px] font-black px-2 py-0.5 rounded-sm select-none tracking-tight">
+                  {featured.watermarkGu}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider select-none leading-none">
+                  <AutoTranslateString text={featured.categoryGu} language={language} />
+                </span>
+              </div>
+              <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                 {featured.article
                   ? <AutoArticleTitle article={featured.article} language={language} />
                   : <AutoTranslateString text={featured.titleGu} language={language} />}
               </h3>
-              <p className="text-muted-foreground text-[14px] leading-relaxed mt-3.5 line-clamp-4 select-none">
-                {featured.article
-                  ? <AutoArticleExcerpt article={featured.article} language={language} />
-                  : <AutoTranslateString text={stripHtmlTags(featured.excerptGu)} language={language} />}
-              </p>
-            </div>
+            </Link>
 
-            {/* Image Right with Watermark */}
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-muted order-1 md:order-2">
-              <ArticleMedia
-                src={featured.image}
-                alt={featured.titleGu}
-                className="transition-transform duration-300 group-hover:scale-[1.02]"
-              />
-              <span className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9.5px] font-black px-2 py-0.5 rounded-sm select-none tracking-tight">
-                {featured.watermarkGu}
-              </span>
-            </div>
-          </Link>
-
-          {/* Grid of 4 Vertical Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {cardsList.map((card) => (
-              <div key={card.id} className="flex flex-col min-w-0">
+            {/* 2. Compact List for remaining stories: thumbnail on left, title on right */}
+            <div className="flex flex-col divide-y divide-border/40">
+              {cardsList.map((card) => (
                 <Link
+                  key={`mob-${card.id}`}
                   href={`/news/${card.slug}`}
-                  className="group flex flex-col"
+                  className="group flex flex-row items-start gap-3.5 py-3 px-0.5 hover:bg-muted/20 transition-all min-w-0"
                 >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                  {/* Thumbnail on the left */}
+                  <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                     <ArticleMedia
                       src={card.image}
                       alt={card.titleGu}
-                      className="transition-transform duration-300 group-hover:scale-105"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase leading-none">
-                    <AutoTranslateString text={card.categoryGu} language={language} />
-                  </span>
-                  <h4 className="text-[14px] md:text-[14.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                    {card.article
-                      ? <AutoArticleTitle article={card.article} language={language} />
-                      : <AutoTranslateString text={card.titleGu} language={language} />}
-                  </h4>
-                </Link>
 
-              </div>
-            ))}
+                  {/* Title & Metadata on the right */}
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
+                    <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider mb-1 select-none leading-none">
+                      <AutoTranslateString text={card.categoryGu} language={language} />
+                    </span>
+                    <h4 className="text-[15.5px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                      {card.article
+                        ? <AutoArticleTitle article={card.article} language={language} />
+                        : <AutoTranslateString text={card.titleGu} language={language} />}
+                    </h4>
+                  </div>
+                </Link>
+              ))}
+            </div>
           </div>
+
+          {/* Desktop View (>= md): Exactly preserved big horizontal featured card + 4-column cards */}
+          <div className="hidden md:flex flex-col">
+            {/* Big Horizontal Featured Card */}
+            <Link
+              href={`/news/${featured.slug}`}
+              className="group grid grid-cols-1 md:grid-cols-2 gap-6 bg-card border border-border/80 rounded-sm p-5 md:p-6 mb-8 hover:shadow-sm transition-shadow duration-200"
+            >
+              {/* Content Left */}
+              <div className="flex flex-col justify-center min-w-0 order-2 md:order-1">
+                <span className="text-red-600 font-extrabold text-[12px] md:text-[13px] mb-2 select-none uppercase tracking-wide">
+                  <AutoTranslateString text={featured.categoryGu} language={language} />
+                </span>
+                <h3 className="text-[18px] md:text-[20.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
+                  {featured.article
+                    ? <AutoArticleTitle article={featured.article} language={language} />
+                    : <AutoTranslateString text={featured.titleGu} language={language} />}
+                </h3>
+                <p className="text-muted-foreground text-[14px] leading-relaxed mt-3.5 line-clamp-4 select-none">
+                  {featured.article
+                    ? <AutoArticleExcerpt article={featured.article} language={language} />
+                    : <AutoTranslateString text={stripHtmlTags(featured.excerptGu)} language={language} />}
+                </p>
+              </div>
+
+              {/* Image Right with Watermark */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-muted order-1 md:order-2">
+                <ArticleMedia
+                  src={featured.image}
+                  alt={featured.titleGu}
+                  className="transition-transform duration-300 group-hover:scale-[1.02]"
+                />
+                <span className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9.5px] font-black px-2 py-0.5 rounded-sm select-none tracking-tight">
+                  {featured.watermarkGu}
+                </span>
+              </div>
+            </Link>
+
+            {/* Grid of 4 Vertical Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {cardsList.map((card) => (
+                <div key={card.id} className="flex flex-col min-w-0">
+                  <Link
+                    href={`/news/${card.slug}`}
+                    className="group flex flex-col"
+                  >
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                      <ArticleMedia
+                        src={card.image}
+                        alt={card.titleGu}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase leading-none">
+                      <AutoTranslateString text={card.categoryGu} language={language} />
+                    </span>
+                    <h4 className="text-[14px] md:text-[14.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                      {card.article
+                        ? <AutoArticleTitle article={card.article} language={language} />
+                        : <AutoTranslateString text={card.titleGu} language={language} />}
+                    </h4>
+                  </Link>
+                </div>
+              ))}
+            </div>
+          </div>
+
         </div>
 
         {/* Right Column: Widgets */}

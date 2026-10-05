@@ -131,7 +131,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                   <select
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
-                    className="appearance-none bg-white text-slate-950 dark:bg-slate-950 dark:text-white text-xs font-black px-4 py-2 pr-8 rounded-full border border-slate-400 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#B3121B] cursor-pointer shadow-sm"
+                    className="appearance-none bg-white text-slate-950 dark:bg-slate-950 dark:text-white text-[13.5px] sm:text-xs font-black px-4 py-2 pr-8 rounded-full border border-slate-400 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-[#B3121B] cursor-pointer shadow-sm"
                   >
                     <option value="Ahmedabad">Ahmedabad</option>
                     <option value="Vadodara">Vadodara</option>
@@ -150,29 +150,29 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                     <Link
                       key={city}
                       href={`/aqi?city=${encodeURIComponent(city)}`}
-                      className="group bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4 shadow-sm flex flex-col justify-between gap-3 min-w-[190px] relative hover:shadow-md hover:border-[#B3121B] hover:scale-[1.02] transition-all duration-300 cursor-pointer select-none"
+                      className="group bg-white dark:bg-slate-950 border border-slate-300/80 dark:border-slate-800 rounded-xl p-4.5 sm:p-4 shadow-sm flex flex-col justify-between gap-3.5 sm:gap-3 min-w-[190px] relative hover:shadow-md hover:border-[#B3121B] hover:scale-[1.02] transition-all duration-300 cursor-pointer select-none"
                       title={isGu ? `${city} માટે સંપૂર્ણ હવામાન અને AQI પેજ જુઓ` : `View full Weather & AQI page for ${city}`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[13px] font-black text-slate-950 dark:text-white group-hover:text-[#B3121B] transition-colors">{city}</span>
+                        <span className="text-[15.5px] sm:text-[13px] font-black text-slate-950 dark:text-white group-hover:text-[#B3121B] transition-colors">{city}</span>
                         <span
-                          className="h-6 w-6 bg-[#B3121B] text-white rounded-full flex items-center justify-center group-hover:bg-slate-950 group-hover:scale-110 transition-all shadow-xs"
+                          className="h-7 w-7 sm:h-6 sm:w-6 bg-[#B3121B] text-white rounded-full flex items-center justify-center group-hover:bg-slate-950 group-hover:scale-110 transition-all shadow-xs"
                         >
-                          <ArrowUpRight className="h-3 w-3" />
+                          <ArrowUpRight className="h-3.5 w-3.5 sm:h-3 sm:w-3" />
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-3 mt-1">
-                        {item.icon === 'cloud' && <Cloud className="h-8 w-8 text-slate-950 dark:text-white shrink-0" />}
-                        {item.icon === 'rain' && <CloudRain className="h-8 w-8 text-slate-950 dark:text-white shrink-0" />}
-                        {item.icon === 'sun' && <Sun className="h-8 w-8 text-[#B3121B] shrink-0" />}
+                        {item.icon === 'cloud' && <Cloud className="h-9 w-9 sm:h-8 sm:w-8 text-slate-950 dark:text-white shrink-0" />}
+                        {item.icon === 'rain' && <CloudRain className="h-9 w-9 sm:h-8 sm:w-8 text-slate-950 dark:text-white shrink-0" />}
+                        {item.icon === 'sun' && <Sun className="h-9 w-9 sm:h-8 sm:w-8 text-[#B3121B] shrink-0" />}
 
                         <div className="text-right flex flex-col items-end gap-1">
-                          <span className="text-[12px] font-extrabold text-slate-900 dark:text-slate-200 flex items-center gap-1 select-none">
-                            <Thermometer className="h-3.5 w-3.5 text-[#B3121B]" />
+                          <span className="text-[14px] sm:text-[12px] font-extrabold text-slate-900 dark:text-slate-200 flex items-center gap-1 select-none">
+                            <Thermometer className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#B3121B]" />
                             {item.temp}°C
                           </span>
-                          <span className="text-[12px] font-extrabold text-slate-900 dark:text-slate-200 flex items-center gap-1 select-none">
-                            <Droplet className="h-3.5 w-3.5 text-[#B3121B]" />
+                          <span className="text-[14px] sm:text-[12px] font-extrabold text-slate-900 dark:text-slate-200 flex items-center gap-1 select-none">
+                            <Droplet className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#B3121B]" />
                             {item.humidity}
                           </span>
                         </div>

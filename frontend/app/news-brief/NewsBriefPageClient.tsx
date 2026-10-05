@@ -207,20 +207,20 @@ export default function NewsBriefPageClient() {
       </div>
 
       {/* ── BODY: card + right-side nav ── */}
-      <div className="flex-1 flex items-center justify-center min-h-0 px-4 py-3 gap-4">
+      <div className="flex-1 flex items-center justify-center min-h-0 px-2 sm:px-4 py-1 sm:py-3 gap-0 md:gap-4">
         {/* ── Article Card ── */}
         <div
           className="w-full bg-white rounded-2xl shadow-md overflow-hidden flex flex-col border border-neutral-100"
           style={{
             maxWidth: 456,
-            maxHeight: 'min(740px, calc(100dvh - 80px))',
+            maxHeight: 'min(740px, calc(100dvh - 66px))',
             transform: animDir === 'up' ? 'translateY(-8px)' : animDir === 'down' ? 'translateY(8px)' : 'translateY(0)',
             opacity: animDir ? 0.55 : 1,
             transition: 'transform 0.28s cubic-bezier(.4,0,.2,1), opacity 0.28s',
           }}
         >
           {/* Hero image with rounded corners or Gujarat Post logo fallback */}
-          <div className="relative w-full overflow-hidden rounded-xl mx-3 mt-3 shrink-0 bg-neutral-100" style={{ aspectRatio: '16/10', width: 'calc(100% - 24px)' }}>
+          <div className="relative w-full overflow-hidden rounded-xl mx-2 sm:mx-3 mt-3 shrink-0 bg-neutral-100" style={{ aspectRatio: '16/10', width: 'calc(100% - 16px)' }}>
             {cleanImg && !imgError ? (
               <Image
                 src={cleanImg}
@@ -248,26 +248,26 @@ export default function NewsBriefPageClient() {
           </div>
 
           {/* Card content — flex-1 so it fills remaining height */}
-          <div className="flex-1 px-5 pt-3.5 pb-2.5 flex flex-col gap-2.5 min-h-0">
+          <div className="flex-1 px-4 sm:px-5 pt-3 sm:pt-3.5 pb-2.5 flex flex-col gap-2 sm:gap-2.5 min-h-0">
 
             {/* Category + time row */}
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[14.5px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
+              <span className="text-[15.5px] sm:text-[14.5px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
               {ago && (
                 <>
                   <span className="text-neutral-200 text-xs">·</span>
-                  <span className="text-[13.5px] text-neutral-500 font-medium">{ago}</span>
+                  <span className="text-[14px] sm:text-[13.5px] text-neutral-500 font-medium">{ago}</span>
                 </>
               )}
             </div>
 
             {/* Title */}
-            <h2 className="font-black text-neutral-900 leading-snug text-[20.5px] sm:text-[22px] line-clamp-3">
+            <h2 className="font-black text-neutral-900 leading-snug text-[22px] sm:text-[22px] line-clamp-3">
               {title}
             </h2>
 
             {/* Excerpt */}
-            <p className="text-neutral-700 text-[16.5px] sm:text-[17.5px] leading-relaxed line-clamp-5 flex-1 font-normal">
+            <p className="text-neutral-700 text-[17px] sm:text-[17.5px] leading-relaxed line-clamp-5 flex-1 font-normal">
               {displayParagraph}
             </p>
 
@@ -280,7 +280,7 @@ export default function NewsBriefPageClient() {
             <div className="flex items-center justify-between pt-1">
               <Link
                 href={`/news/${currentArticle.slug}`}
-                className="px-5 py-2 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15.5px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
+                className="px-6 py-2.5 sm:px-5 sm:py-2 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[16px] sm:text-[15.5px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
               >
                 {language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}
               </Link>
@@ -288,7 +288,7 @@ export default function NewsBriefPageClient() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="relative w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center active:scale-95 transition hover:bg-neutral-700"
+                className="relative w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-neutral-800 flex items-center justify-center active:scale-95 transition hover:bg-neutral-700"
                 aria-label="Share"
               >
                 <Share2 className="w-3.5 h-3.5 text-white stroke-[2]" />
@@ -301,14 +301,14 @@ export default function NewsBriefPageClient() {
             </div>
           </div>
 
-          {/* Swipe hint */}
-          <div className="flex justify-center py-2">
+          {/* Swipe hint — hidden on mobile since swipe gesture works; visible on desktop/tablet */}
+          <div className="hidden md:flex justify-center py-2">
             <ChevronDown className="w-3.5 h-3.5 text-neutral-300 animate-bounce" />
           </div>
         </div>
 
-        {/* ── Right-side nav buttons ── */}
-        <div className="flex flex-col gap-3 shrink-0 self-center">
+        {/* ── Right-side nav buttons — hidden on mobile, shown on md+ desktop ── */}
+        <div className="hidden md:flex flex-col gap-3 shrink-0 self-center">
           <button
             onClick={handlePrev}
             disabled={activeIndex === 0}

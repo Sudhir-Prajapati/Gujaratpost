@@ -284,7 +284,7 @@ export default function LatestUpdatesSection({
       {/* ── 2. POPULAR NEWS SECTION (લોકપ્રિય સમાચાર - Admin Managed) ── */}
       <div className="mt-4 pt-3 border-t border-border/60">
         <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
-          <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[17px] md:text-[19px] rounded-lg tracking-tight leading-none">
+          <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[18px] md:text-[19px] rounded-lg tracking-tight leading-none">
             {language === 'gu' ? 'લોકપ્રિય સમાચાર' : language === 'hi' ? 'लोकप्रिय समाचार' : 'Popular News'}
           </span>
           <Link
@@ -306,7 +306,7 @@ export default function LatestUpdatesSection({
                 className="group flex flex-col min-w-0"
               >
                 <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2">
-                  <span className="absolute top-1.5 left-1.5 z-10 bg-black/80 text-white font-extrabold text-[11px] px-1.5 py-0.5 rounded-sm select-none shadow">
+                  <span className="absolute top-1.5 left-1.5 z-10 bg-black/80 text-white font-extrabold text-[12px] md:text-[11px] px-2 py-0.5 md:px-1.5 md:py-0.5 rounded-sm select-none shadow">
                     {language === 'gu' ? toGuDigits(cardRank) : cardRank}
                   </span>
                   <ArticleMedia
@@ -315,7 +315,7 @@ export default function LatestUpdatesSection({
                     className="transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <h3 className="text-[13px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                <h3 className={`font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 ${idx === 0 ? 'text-[16px] sm:text-[17px] md:text-[14.5px]' : 'text-[14.5px] md:text-[14.5px]'}`}>
                   <AutoArticleTitle article={art} language={language} />
                 </h3>
 
@@ -362,11 +362,11 @@ export default function LatestUpdatesSection({
               href={`/news/${art.slug}`}
               className="group flex items-start gap-2.5 md:gap-3.5 py-2 md:py-3 hover:bg-muted/20 transition-colors duration-150 px-1 rounded-sm border-b border-border/40 pb-2 md:pb-3 last:border-b-0 last:pb-0 pt-2 md:pt-3 first:pt-0"
             >
-              <span className="text-[18px] md:text-[24px] font-serif font-black text-slate-300 dark:text-slate-700 group-hover:text-[#B3121B] transition-colors duration-150 leading-none w-5 md:w-6 text-center select-none shrink-0">
+              <span className="text-[24px] md:text-[24px] font-serif font-black text-slate-300 dark:text-slate-700 group-hover:text-[#B3121B] transition-colors duration-150 leading-none w-6 md:w-6 text-center select-none shrink-0">
                 {language === 'gu' ? toGuDigits(idx + 1) : idx + 1}
               </span>
 
-              <h4 className="text-[14.5px] md:text-[16px] leading-snug text-foreground group-hover:text-[#B3121B] transition-colors duration-150 line-clamp-2 md:line-clamp-3 flex-1 mt-0.5" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
+              <h4 className="text-[19px] md:text-[16px] leading-snug text-foreground group-hover:text-[#B3121B] transition-colors duration-150 line-clamp-2 md:line-clamp-3 flex-1 mt-0.5" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif", fontWeight: 700 }}>
                 <AutoArticleTitle article={art} language={language} />
               </h4>
             </Link>

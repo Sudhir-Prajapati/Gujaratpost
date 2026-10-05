@@ -617,13 +617,13 @@ export default function CrimeSection({
       {/* Today's Horoscope Widget */}
       <div>
         <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2.5">
-          <span className="text-[#B3121B] font-black text-[15px] md:text-[15.5px] flex items-center gap-1.5">
-            <Sparkles className="h-4 w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
+          <span className="text-[#B3121B] font-black text-[17px] md:text-[15.5px] flex items-center gap-2 md:gap-1.5">
+            <Sparkles className="h-5 w-5 md:h-4 md:w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
             {language === 'gu' ? '• આજનું રાશિફળ' : language === 'hi' ? '• आज का राशिफल' : '• Today\'s Horoscope'}
           </span>
         </div>
-        <div className="border border-purple-500/20 dark:border-purple-500/30 rounded-xl bg-card p-1.5 sm:p-2 shadow-sm">
-          <div className="grid grid-cols-4 gap-1 sm:gap-1.5">
+        <div className="border border-purple-500/20 dark:border-purple-500/30 rounded-2xl md:rounded-xl bg-card p-2.5 md:p-1.5 lg:p-2 shadow-sm">
+          <div className="grid grid-cols-4 gap-2 md:gap-1 lg:gap-1.5">
             {astrologySigns.map((sign) => {
               const isSelected = selectedZodiac?.id === sign.id;
               const letters = (sign as any).lettersGu ? `(${(sign as any).lettersGu})` : GUJARAT_ZODIAC_LETTERS[sign.id] || `(${sign.name})`;
@@ -634,24 +634,24 @@ export default function CrimeSection({
                 <div
                   key={sign.id}
                   onClick={() => setSelectedZodiac(sign)}
-                  className={`relative flex flex-col items-center justify-center py-1 px-0.5 sm:py-1.5 sm:px-1 rounded-lg border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden ${isSelected
+                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 md:py-1 md:px-0.5 lg:py-1.5 lg:px-1 min-h-[92px] md:min-h-0 rounded-xl md:rounded-lg border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden ${isSelected
                       ? 'bg-[#FFF8F0] dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 shadow-xs'
                       : 'bg-background hover:bg-amber-50/50 dark:hover:bg-amber-950/20 border-border/60 hover:border-amber-300/60'
                     }`}
                 >
                   {/* SVG Illustration Icon */}
-                  <div className="relative flex h-7 w-7 sm:h-7.5 sm:w-7.5 items-center justify-center mb-0.5 select-none">
-                    <ZodiacIcon id={sign.id} className="h-6 w-6 sm:h-6.5 sm:w-6.5" />
+                  <div className="relative flex h-9 w-9 md:h-7 md:w-7 lg:h-7.5 lg:w-7.5 items-center justify-center mb-1 md:mb-0.5 select-none">
+                    <ZodiacIcon id={sign.id} className="h-8 w-8 md:h-6 md:w-6 lg:h-6.5 lg:w-6.5" />
                   </div>
 
                   {/* Gujarati Name */}
-                  <span className={`text-[13.5px] sm:text-[14.5px] font-black leading-tight select-none ${isSelected ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
+                  <span className={`text-[15.5px] md:text-[13.5px] lg:text-[14.5px] font-black leading-tight select-none ${isSelected ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
                     }`}>
                     {primaryName}
                   </span>
 
                   {/* Gujarati Initial Letters (અ, લ, ઈ) */}
-                  <span className={`text-[10.5px] sm:text-[11px] font-bold leading-tight select-none mt-0.5 ${isSelected ? 'text-amber-600 dark:text-amber-300 font-extrabold' : 'text-muted-foreground'
+                  <span className={`text-[11.5px] md:text-[10.5px] lg:text-[11px] font-bold leading-tight select-none mt-0.5 tracking-tight ${isSelected ? 'text-amber-600 dark:text-amber-300 font-extrabold' : 'text-muted-foreground'
                     }`}>
                     {subName}
                   </span>
@@ -687,7 +687,7 @@ export default function CrimeSection({
   }
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2 border-t border-border pt-2">
+    <section className="mx-auto max-w-screen-xl px-4 mt-6 md:mt-8 border-t border-border pt-4">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
         {leftContent}
         {sidebarContent}

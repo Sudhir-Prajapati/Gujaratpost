@@ -946,7 +946,7 @@ export default function HeroSection({
     ),
     crime: (
       <Fragment key="crime-frag">
-        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2">
+        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-6 md:mt-8">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
             <div className="flex flex-col gap-10 min-w-0">
               <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />

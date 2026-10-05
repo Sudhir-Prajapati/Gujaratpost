@@ -1612,13 +1612,13 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                       </h3>
                       <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
                     </div>
-                    <span className="text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                    <span className="text-[13px] md:text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
                       {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
                     </span>
                   </div>
                 </div>
 
-                <p className="relative z-10 text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
+                <p className="relative z-10 text-[14px] md:text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
                   {language === 'gu'
                     ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
                     : language === 'hi'
@@ -1630,7 +1630,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+                  className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[13.5px] py-3 md:py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
                 >
                   <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
                   <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>

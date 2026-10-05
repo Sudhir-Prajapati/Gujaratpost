@@ -160,7 +160,7 @@ export default function NationalSection({ language, initialArticles }: { languag
       });
     }
     return list;
-  }, [dbNationalArticles]);
+  }, [dbNationalArticles, language]);
 
   const bottomGrid = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];
@@ -186,11 +186,15 @@ export default function NationalSection({ language, initialArticles }: { languag
     const col1 = list.filter((_, i) => i % 3 === 0);
     const col2 = list.filter((_, i) => i % 3 === 1);
     const col3 = list.filter((_, i) => i % 3 === 2);
-    return { col1, col2, col3, totalRows: Math.max(col1.length, col2.length, col3.length) };
-  }, [dbNationalArticles]);
+    return { col1, col2, col3, rawList: list, totalRows: Math.max(col1.length, col2.length, col3.length) };
+  }, [dbNationalArticles, language]);
+
+  const mobileList = useMemo(() => {
+    return [...top3.slice(1), ...bottomGrid.rawList].slice(0, 6);
+  }, [top3, bottomGrid.rawList]);
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2" suppressHydrationWarning>
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-3.5">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
@@ -204,49 +208,109 @@ export default function NationalSection({ language, initialArticles }: { languag
         </Link>
       </div>
 
-      {/* Top Row: 3 Featured Big Image Article Cards from DB */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch mb-4">
-        {top3.map((item) => (
-          <div key={item.id} className="flex flex-col justify-between min-w-0 border-b border-border/40 pb-3">
-            <Link href={`/news/${item.slug}`} className="group flex flex-col">
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
-                <ArticleMedia src={item.image} alt={item.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
-              </div>
-              <h3 className="text-[15px] md:text-[16.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                {item.article
-                  ? <AutoArticleTitle article={item.article} language={language} />
-                  : <AutoTranslateString text={item.titleGu} language={language} />}
-              </h3>
-            </Link>
+      {/* Mobile View (< md): 1 Lead Featured Story + Compact News List */}
+      <div className="md:hidden flex flex-col">
+        {/* 1. Lead Featured Story */}
+        {top3[0] && (
+          <Link
+            href={`/news/${top3[0].slug}`}
+            className="group flex flex-col pb-3.5 mb-2 border-b border-border/40"
+          >
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-2xs">
+              <ArticleMedia
+                src={top3[0].image}
+                alt={top3[0].titleGu}
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+              />
+            </div>
+            <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+              {language === 'gu' ? 'ભારત' : language === 'hi' ? 'भारत' : 'Bharat'}
+            </span>
+            <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+              {top3[0].article
+                ? <AutoArticleTitle article={top3[0].article} language={language} />
+                : <AutoTranslateString text={top3[0].titleGu} language={language} />}
+            </h3>
+          </Link>
+        )}
 
-          </div>
-        ))}
+        {/* 2. Compact List for remaining stories: thumbnail on left, title on right matching Image 2 */}
+        <div className="flex flex-col divide-y divide-border/40">
+          {mobileList.map((item) => (
+            <Link
+              key={`mob-${item.id}`}
+              href={`/news/${item.slug}`}
+              className="group flex flex-row items-start gap-3.5 py-3 px-1 hover:bg-muted/30 transition-all min-w-0"
+            >
+              {/* Thumbnail on the left */}
+              <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                <ArticleMedia
+                  src={item.image}
+                  alt={item.titleGu}
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
+              </div>
+
+              {/* Title & Metadata on the right */}
+              <div className="flex flex-col justify-center min-w-0 flex-1">
+                <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider mb-1 select-none leading-none">
+                  {language === 'gu' ? 'ભારત' : language === 'hi' ? 'भारत' : 'Bharat'}
+                </span>
+                <h4 className="text-[15.5px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                  {item.article
+                    ? <AutoArticleTitle article={item.article} language={language} />
+                    : <AutoTranslateString text={item.titleGu} language={language} />}
+                </h4>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
 
-      {/* Bottom Grid: Sub-articles in 3 columns */}
-      <div className="flex flex-col gap-3">
-        {Array.from({ length: bottomGrid.totalRows }).map((_, rowIdx) => (
-          <div key={rowIdx} className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
-            {[bottomGrid.col1[rowIdx], bottomGrid.col2[rowIdx], bottomGrid.col3[rowIdx]].map((sub, colIdx) => {
-              if (!sub) return <div key={colIdx} />;
-              return (
-                <Link key={`${sub.id}-${rowIdx}-${colIdx}`} href={`/news/${sub.slug}`} className="group flex gap-3 hover:bg-muted/10 transition-colors p-1 min-w-0">
-                  <div className="relative h-[56px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
-                    <ArticleMedia src={sub.image} alt={sub.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
-                  </div>
-                  <div className="flex flex-col justify-center min-w-0 flex-1">
-                    <h4 className="text-[13.5px] font-extrabold leading-snug line-clamp-2 text-foreground group-hover:text-[#B3121B] transition-colors">
-                      {sub.article
-                        ? <AutoArticleTitle article={sub.article} language={language} />
-                        : <AutoTranslateString text={sub.titleGu} language={language} />}
-                    </h4>
+      {/* Desktop View (>= md): Exactly preserved 3-column top row + 3-column bottom grid */}
+      <div className="hidden md:block">
+        {/* Top Row: 3 Featured Big Image Article Cards from DB */}
+        <div className="grid grid-cols-3 gap-8 items-stretch mb-4">
+          {top3.map((item) => (
+            <div key={item.id} className="flex flex-col justify-between min-w-0 border-b border-border/40 pb-3">
+              <Link href={`/news/${item.slug}`} className="group flex flex-col">
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                  <ArticleMedia src={item.image} alt={item.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
+                </div>
+                <h3 className="text-[15px] md:text-[16.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                  {item.article
+                    ? <AutoArticleTitle article={item.article} language={language} />
+                    : <AutoTranslateString text={item.titleGu} language={language} />}
+                </h3>
+              </Link>
+            </div>
+          ))}
+        </div>
 
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        ))}
+        {/* Bottom Grid: Sub-articles in 3 columns */}
+        <div className="flex flex-col gap-3">
+          {Array.from({ length: bottomGrid.totalRows }).map((_, rowIdx) => (
+            <div key={rowIdx} className="grid grid-cols-3 gap-8 items-stretch">
+              {[bottomGrid.col1[rowIdx], bottomGrid.col2[rowIdx], bottomGrid.col3[rowIdx]].map((sub, colIdx) => {
+                if (!sub) return <div key={colIdx} />;
+                return (
+                  <Link key={`${sub.id}-${rowIdx}-${colIdx}`} href={`/news/${sub.slug}`} className="group flex gap-3 hover:bg-muted/10 transition-colors p-1 min-w-0">
+                    <div className="relative h-[56px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                      <ArticleMedia src={sub.image} alt={sub.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
+                    </div>
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                      <h4 className="text-[13.5px] font-extrabold leading-snug line-clamp-2 text-foreground group-hover:text-[#B3121B] transition-colors">
+                        {sub.article
+                          ? <AutoArticleTitle article={sub.article} language={language} />
+                          : <AutoTranslateString text={sub.titleGu} language={language} />}
+                      </h4>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

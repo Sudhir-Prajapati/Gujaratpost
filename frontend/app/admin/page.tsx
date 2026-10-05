@@ -582,8 +582,8 @@ export default function AdminDashboard() {
           </div>
 
           {/* Recent Drafts */}
-          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <div className="flex items-center justify-between mb-4">
+          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 flex flex-col">
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <div className="flex items-center gap-2">
                 <Edit3 className="h-5 w-5 text-zinc-500 shrink-0" />
                 <h3 className="text-lg font-black tracking-tight text-zinc-900 dark:text-white">Recent Drafts</h3>
@@ -598,31 +598,34 @@ export default function AdminDashboard() {
             </div>
 
             {data?.recentDrafts && data.recentDrafts.length > 0 ? (
-              <div className="divide-y divide-gray-400 dark:divide-zinc-800">
-                {data.recentDrafts.slice(0, 5).map((art) => (
-                  <div key={art.id} className="flex items-center justify-between gap-4 py-3.5 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <p
-                        onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
-                        className="font-extrabold text-zinc-900 hover:text-red-600 cursor-pointer dark:text-zinc-100 line-clamp-1"
-                      >
-                        {art.title}
-                      </p>
-                      <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400 mt-1 uppercase tracking-wide">
-                        <span>By {art.author?.name || 'Staff'}</span>
-                        <span>•</span>
-                        <span className="text-zinc-600 dark:text-zinc-300">{art.category?.name || 'General'}</span>
+              // Scrollable: shows all drafts, capped at 280px so the card never overflows the page
+              <div className="overflow-y-auto" style={{ maxHeight: 280 }}>
+                <div className="divide-y divide-gray-400 dark:divide-zinc-800 pr-1">
+                  {data.recentDrafts.map((art) => (
+                    <div key={art.id} className="flex items-center justify-between gap-4 py-3.5 hover:bg-zinc-50/50 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <p
+                          onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
+                          className="font-extrabold text-zinc-900 hover:text-red-600 cursor-pointer dark:text-zinc-100 line-clamp-1"
+                        >
+                          {art.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] font-bold text-zinc-400 mt-1 uppercase tracking-wide">
+                          <span>By {art.author?.name || 'Staff'}</span>
+                          <span>•</span>
+                          <span className="text-zinc-600 dark:text-zinc-300">{art.category?.name || 'General'}</span>
+                        </div>
                       </div>
+                      <button
+                        onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
+                        className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 flex items-center justify-center gap-1 shrink-0 self-center cursor-pointer"
+                      >
+                        <span>Edit</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => router.push(`/admin/articles/${art.id}/edit`)}
-                      className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 flex items-center justify-center gap-1 shrink-0 self-center cursor-pointer"
-                    >
-                      <span>Edit</span>
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <div className="py-10 flex flex-col items-center justify-center text-center border-2 border-dashed border-gray-400 rounded-2xl dark:border-zinc-700">
@@ -638,43 +641,46 @@ export default function AdminDashboard() {
         <div className="lg:col-span-1 space-y-6">
           
           {/* Most Read Articles Panel */}
-          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 select-none">
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-400 dark:border-zinc-800">
+          <div className="rounded-3xl border border-gray-400 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900 select-none flex flex-col">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-4 border-b border-gray-400 dark:border-zinc-800 shrink-0">
               <div className="flex items-center gap-2.5 min-w-0">
                 <TrendingUp className="h-6 w-6 text-red-600 shrink-0" />
-                <h3 className="text-base font-extrabold text-zinc-900 dark:text-white whitespace-nowrap">
+                <h3 className="text-base font-extrabold text-zinc-900 dark:text-white">
                   Most Read Articles
                 </h3>
               </div>
 
-              <span className="text-xs font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-md whitespace-nowrap shrink-0 border border-red-400 dark:border-red-900/40">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-md border border-red-400 dark:border-red-900/40">
                 SORTED BY VIEWS
               </span>
             </div>
 
             {mostReadArticles && mostReadArticles.length > 0 ? (
-              <div className="divide-y divide-gray-400 dark:divide-zinc-800">
-                {mostReadArticles.slice(0, 7).map((art) => (
-                  <div key={art.id} className="flex items-center justify-between gap-4 py-3 border-b border-gray-400 last:border-0 dark:border-zinc-800 hover:bg-zinc-50/60 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
-                    <div className="flex-1 min-w-0 flex flex-col justify-center">
-                      <p className="font-extrabold text-sm leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2">
-                        {art.title}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs font-bold text-zinc-400 mt-1">
-                        <span className="text-zinc-500 dark:text-zinc-400 font-semibold">{formatNumber(art.views)} views</span>
+              // Scrollable: shows all articles by view count, capped at 420px
+              <div className="overflow-y-auto" style={{ maxHeight: 420 }}>
+                <div className="divide-y divide-gray-400 dark:divide-zinc-800 pr-1">
+                  {mostReadArticles.map((art) => (
+                    <div key={art.id} className="flex items-center justify-between gap-4 py-3 border-b border-gray-400 last:border-0 dark:border-zinc-800 hover:bg-zinc-50/60 dark:hover:bg-zinc-850/50 px-2 rounded-xl transition-colors">
+                      <div className="flex-1 min-w-0 flex flex-col justify-center">
+                        <p className="font-extrabold text-sm leading-snug text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                          {art.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-400 mt-1">
+                          <span className="text-zinc-500 dark:text-zinc-400 font-semibold">{formatNumber(art.views)} views</span>
+                        </div>
                       </div>
+                      <a
+                        href={`/news/${art.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-lg border border-gray-400 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0 flex items-center justify-center gap-1.5 self-center select-none"
+                      >
+                        <Eye className="h-4 w-4 text-zinc-500 shrink-0" />
+                        <span>Show</span>
+                      </a>
                     </div>
-                    <a
-                      href={`/news/${art.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="rounded-lg border border-gray-400 px-3 py-1.5 text-xs font-bold text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 shrink-0 flex items-center justify-center gap-1.5 self-center select-none"
-                    >
-                      <Eye className="h-4 w-4 text-zinc-500 shrink-0" />
-                      <span>Show</span>
-                    </a>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             ) : (
               <p className="text-xs text-zinc-400 py-6 text-center font-bold">No articles found.</p>

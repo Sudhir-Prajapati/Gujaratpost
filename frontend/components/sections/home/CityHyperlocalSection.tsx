@@ -1180,26 +1180,56 @@ export default function CityHyperlocalSection({
               </div>
             )}
 
-            {/* List updates columns */}
-            <div className="flex flex-col min-w-0 md:border-l md:border-border/60 md:pl-6 gap-2.5">
+            {/* Mobile View (< md): Thumbnail on left, title on right, divider lines matching Image 1 */}
+            <div className="md:hidden flex flex-col divide-y divide-border/40 border-t border-border/40 mt-4">
               {mockList.map((item) => (
                 <Link
-                  key={item.id}
+                  key={`mob-${item.id}`}
                   href={`/news/${item.slug}`}
-                  className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
+                  className="group flex flex-row items-start gap-3.5 py-3 px-1 hover:bg-muted/30 transition-all min-w-0"
+                >
+                  {/* Thumbnail on the left */}
+                  <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                    <ArticleMedia
+                      src={item.image}
+                      alt={item.titleGu}
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+
+                  {/* Details on the right */}
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
+                    <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider mb-1 select-none leading-none">
+                      {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
+                    </span>
+                    <h4 className="text-[15.5px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                      <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
+                    </h4>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {/* Desktop / Website View (>= md): Exactly preserved as before with boxed cards, details left, thumb right, 2 lines */}
+            <div className="hidden md:flex flex-col min-w-0 md:border-l md:border-border/60 md:pl-6 gap-2">
+              {mockList.map((item) => (
+                <Link
+                  key={`desk-${item.id}`}
+                  href={`/news/${item.slug}`}
+                  className="group flex flex-row items-center justify-between gap-2.5 py-1.5 px-2.5 sm:py-2 sm:px-3 rounded-lg bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
                 >
                   {/* Details on the left */}
                   <div className="flex flex-col justify-center min-w-0 flex-1 pr-1">
-                    <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+                    <span className="text-[#B3121B] font-black text-[10.5px] sm:text-[11px] uppercase tracking-wider mb-0.5 select-none leading-none">
                       {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
                     </span>
-                    <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                    <h4 className="text-[14.5px] sm:text-[15.5px] font-extrabold leading-[1.3] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                       <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
                     </h4>
                   </div>
 
                   {/* Thumbnail on the right */}
-                  <div className="relative aspect-[16/10] w-[105px] h-[72px] sm:w-[115px] sm:h-[78px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                  <div className="relative aspect-[16/10] w-[92px] h-[60px] sm:w-[102px] sm:h-[66px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
                     <ArticleMedia
                       src={item.image}
                       alt={item.titleGu}
@@ -1243,18 +1273,18 @@ export default function CityHyperlocalSection({
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-1">
-                  <h3 className="font-black text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                  <h3 className="font-black text-[16px] md:text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
                     {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
                   </h3>
-                  <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                  <CheckCircle2 className="h-4 w-4 md:h-3.5 md:w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
                 </div>
-                <span className="text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                <span className="text-[13px] md:text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
                   {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'आधिकारिक समाचार अपडेट' : 'Official News Updates'}
                 </span>
               </div>
             </div>
 
-            <p className="relative z-10 text-[11.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-2.5 font-medium">
+            <p className="relative z-10 text-[14px] md:text-[11.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-2.5 font-medium">
               {language === 'gu'
                 ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
                 : language === 'hi'
@@ -1266,21 +1296,21 @@ export default function CityHyperlocalSection({
               href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[12.5px] py-2.5 px-3.5 rounded-lg shadow-sm shadow-emerald-500/20 hover:shadow-md hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[12.5px] py-3 md:py-2.5 px-4 md:px-3.5 rounded-lg shadow-sm shadow-emerald-500/20 hover:shadow-md hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
             >
-              <SocialIcon platform="whatsapp" className="h-3.5 w-3.5 text-white shrink-0" />
+              <SocialIcon platform="whatsapp" className="h-4 w-4 md:h-3.5 md:w-3.5 text-white shrink-0" />
               <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>
-              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+              <ArrowRight className="h-4 w-4 md:h-4 md:w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
             </a>
           </div>
 
           {/* Trending Topics widget */}
           <div className="w-full rounded-xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3 shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_6px_18px_rgba(179,18,27,0.12)] transition-all">
             <div className="flex items-center gap-2 border-b border-slate-200/90 dark:border-slate-800 pb-2.5 mb-2.5">
-              <div className="flex h-7.5 w-7.5 items-center justify-center rounded-lg bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
-                <Flame className="h-4 w-4 fill-[#B3121B] text-[#B3121B]" />
+              <div className="flex h-8 w-8 md:h-7.5 md:w-7.5 items-center justify-center rounded-lg bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
+                <Flame className="h-4.5 w-4.5 md:h-4 md:w-4 fill-[#B3121B] text-[#B3121B]" />
               </div>
-              <h3 className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              <h3 className="text-[17.5px] md:text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
                 {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
               </h3>
             </div>
@@ -1293,7 +1323,7 @@ export default function CityHyperlocalSection({
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-0.5 border-[1.5px] border-slate-300 dark:border-slate-600 text-[12.5px] font-black px-3 py-1 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:shadow-md cursor-pointer select-none"
+                      className="group inline-flex items-center gap-0.5 border-[1.5px] border-slate-300 dark:border-slate-600 text-[14.5px] md:text-[12.5px] font-black px-3.5 py-1.5 md:px-3 md:py-1 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:shadow-md cursor-pointer select-none"
                     >
                       <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />

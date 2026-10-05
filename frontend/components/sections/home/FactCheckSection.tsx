@@ -129,7 +129,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   const featImage = featArt?.image || '/assets/demo/5.jpg';
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2" suppressHydrationWarning>
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
@@ -176,12 +176,128 @@ export default function FactCheckSection({ language, initialArticles }: { langua
         </div>
 
         {/* Right Column: Grid of 8 Fact Check items (Spans 2 columns on desktop) */}
-        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pt-4 lg:pt-0">
-          {hasDb && gridDbList.length > 0 ? (
-            gridDbList.map((item) => {
-              const st = getStatusInfo(item);
-              const title = getLocalized(language, { en: item.title, gu: item.titleGu || item.title, hi: (item as any).titleHi || item.title });
-              return (
+        <div className="lg:col-span-2 pt-4 lg:pt-0">
+          {/* Mobile View (< md): List with Content on LEFT, Thumbnail on RIGHT (Like Image 2) */}
+          <div className="md:hidden flex flex-col divide-y divide-border/40">
+            {hasDb && gridDbList.length > 0 ? (
+              gridDbList.map((item) => {
+                const st = getStatusInfo(item);
+                const title = getLocalized(language, { en: item.title, gu: item.titleGu || item.title, hi: (item as any).titleHi || item.title });
+                return (
+                  <Link
+                    key={`mob-${item.id}`}
+                    href={`/news/${item.slug}`}
+                    className="group flex flex-row items-center justify-between gap-3.5 py-3 px-1 hover:bg-muted/20 transition-all min-w-0"
+                  >
+                    {/* Content on Left */}
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                      {/* Status Dot + Category Label */}
+                      <div className="flex mb-1">
+                        <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${st.color}`}>
+                          <span className="text-[10px]">●</span>
+                          {language === 'gu' ? st.labelGu : st.labelEn}
+                        </span>
+                      </div>
+                      <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                        {title}
+                      </h4>
+                    </div>
+
+                    {/* Image on Right */}
+                    <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                      <Image
+                        src={item.image || '/assets/demo/2.jpg'}
+                        alt={title}
+                        fill
+                        sizes="105px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              mockFactCheckList.map((item) => (
+                <Link
+                  key={`mob-mock-${item.id}`}
+                  href={`/news/${item.slug}`}
+                  className="group flex flex-row items-center justify-between gap-3.5 py-3 px-1 hover:bg-muted/20 transition-all min-w-0"
+                >
+                  {/* Content on Left */}
+                  <div className="flex flex-col justify-center min-w-0 flex-1">
+                    {/* Status Dot + Category Label */}
+                    <div className="flex mb-1">
+                      <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${item.status === 'true'
+                        ? 'text-green-600'
+                        : item.status === 'fake'
+                          ? 'text-red-600'
+                          : 'text-yellow-600'
+                        }`}>
+                        <span className="text-[10px]">●</span>
+                        {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                      {getMockTitle(item, language)}
+                    </h4>
+                  </div>
+
+                  {/* Image on Right */}
+                  <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                    <Image
+                      src={item.image}
+                      alt={item.titleGu}
+                      fill
+                      sizes="105px"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+
+          {/* Desktop View (>= md): Exactly preserved 2-column grid with Image on LEFT and Content on RIGHT */}
+          <div className="hidden md:grid md:grid-cols-2 gap-x-6 gap-y-4">
+            {hasDb && gridDbList.length > 0 ? (
+              gridDbList.map((item) => {
+                const st = getStatusInfo(item);
+                const title = getLocalized(language, { en: item.title, gu: item.titleGu || item.title, hi: (item as any).titleHi || item.title });
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/news/${item.slug}`}
+                    className="group flex gap-4 hover:bg-muted/10 transition-colors p-1"
+                  >
+                    {/* Image Left */}
+                    <div className="relative h-[68px] w-[100px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                      <Image
+                        src={item.image || '/assets/demo/2.jpg'}
+                        alt={title}
+                        fill
+                        sizes="100px"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+
+                    {/* Content Right */}
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                      {/* Status Dot + Category Label */}
+                      <div className="flex mb-1">
+                        <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${st.color}`}>
+                          <span className="text-[10px]">●</span>
+                          {language === 'gu' ? st.labelGu : st.labelEn}
+                        </span>
+                      </div>
+                      <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                        {title}
+                      </h4>
+                    </div>
+                  </Link>
+                );
+              })
+            ) : (
+              mockFactCheckList.map((item) => (
                 <Link
                   key={item.id}
                   href={`/news/${item.slug}`}
@@ -190,8 +306,8 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   {/* Image Left */}
                   <div className="relative h-[68px] w-[100px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
                     <Image
-                      src={item.image || '/assets/demo/2.jpg'}
-                      alt={title}
+                      src={item.image}
+                      alt={item.titleGu}
                       fill
                       sizes="100px"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -202,57 +318,24 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   <div className="flex flex-col justify-center min-w-0 flex-1">
                     {/* Status Dot + Category Label */}
                     <div className="flex mb-1">
-                      <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${st.color}`}>
+                      <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${item.status === 'true'
+                        ? 'text-green-600'
+                        : item.status === 'fake'
+                          ? 'text-red-600'
+                          : 'text-yellow-600'
+                        }`}>
                         <span className="text-[10px]">●</span>
-                        {language === 'gu' ? st.labelGu : st.labelEn}
+                        {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
                       </span>
                     </div>
                     <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                      {title}
+                      {getMockTitle(item, language)}
                     </h4>
                   </div>
                 </Link>
-              );
-            })
-          ) : (
-            mockFactCheckList.map((item) => (
-              <Link
-                key={item.id}
-                href={`/news/${item.slug}`}
-                className="group flex gap-4 hover:bg-muted/10 transition-colors p-1"
-              >
-                {/* Image Left */}
-                <div className="relative h-[68px] w-[100px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
-                  <Image
-                    src={item.image}
-                    alt={item.titleGu}
-                    fill
-                    sizes="100px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-
-                {/* Content Right */}
-                <div className="flex flex-col justify-center min-w-0 flex-1">
-                  {/* Status Dot + Category Label */}
-                  <div className="flex mb-1">
-                    <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${item.status === 'true'
-                      ? 'text-green-600'
-                      : item.status === 'fake'
-                        ? 'text-red-600'
-                        : 'text-yellow-600'
-                      }`}>
-                      <span className="text-[10px]">●</span>
-                      {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
-                    </span>
-                  </div>
-                  <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                    {getMockTitle(item, language)}
-                  </h4>
-                </div>
-              </Link>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
 
       </div>

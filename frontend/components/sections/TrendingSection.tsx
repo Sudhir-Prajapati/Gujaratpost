@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDate } from '@/data';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getPublicArticles } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import type { Article } from '@/types';
@@ -75,19 +74,38 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
     });
   }, [initialArticles]);
 
-
   // Auto-scroll effect
   useEffect(() => {
     if (!trending.length) return;
-    const interval = setInterval(() => {
-      const el = scrollContainerRef.current;
-      if (!el || isPaused.current) return;
-      el.scrollLeft += 1;
-      if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) {
-        el.scrollLeft = 0;
-      }
-    }, 25);
-    return () => clearInterval(interval);
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+
+    if (isMobile) {
+      // Mobile: smoothly scroll 1 full card at a time every 3.5s
+      const interval = setInterval(() => {
+        const el = scrollContainerRef.current;
+        if (!el || isPaused.current) return;
+        const cardWidth = el.firstElementChild?.clientWidth || el.clientWidth;
+        const step = cardWidth + 16;
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        if (el.scrollLeft >= maxScroll - 15) {
+          el.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          el.scrollBy({ left: step, behavior: 'smooth' });
+        }
+      }, 3500);
+      return () => clearInterval(interval);
+    } else {
+      // Desktop: preserve continuous crawl
+      const interval = setInterval(() => {
+        const el = scrollContainerRef.current;
+        if (!el || isPaused.current) return;
+        el.scrollLeft += 1;
+        if (el.scrollLeft + el.clientWidth >= el.scrollWidth - 2) {
+          el.scrollLeft = 0;
+        }
+      }, 25);
+      return () => clearInterval(interval);
+    }
   }, [trending]);
 
   const updateArrows = () => {
@@ -113,7 +131,9 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
     const el = scrollContainerRef.current;
     if (!el) return;
     const cardWidth = el.firstElementChild?.clientWidth || 200;
-    const scrollAmount = (cardWidth + 16) * (direction === 'left' ? -2 : 2); // Scroll by 2 cards at a time
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+    const cardsToScroll = isMobile ? 1 : 2;
+    const scrollAmount = (cardWidth + 16) * (direction === 'left' ? -cardsToScroll : cardsToScroll);
     el.scrollBy({
       left: scrollAmount,
       behavior: 'smooth',
@@ -131,8 +151,8 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         {/* Grid Skeleton */}
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="w-[calc((100%-64px)/5)] shrink-0 rounded-lg border border-border bg-card overflow-hidden">
-              <div className="aspect-[4/3] w-full bg-muted/40" />
+            <div key={i} className="w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0 rounded-lg border border-border bg-card overflow-hidden">
+              <div className="aspect-[16/10] sm:aspect-[4/3] w-full bg-muted/40" />
             </div>
           ))}
         </div>
@@ -161,36 +181,38 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         className="relative group/carousel"
         onMouseEnter={() => { isPaused.current = true; }}
         onMouseLeave={() => { isPaused.current = false; }}
+        onTouchStart={() => { isPaused.current = true; }}
+        onTouchEnd={() => { setTimeout(() => { isPaused.current = false; }, 2500); }}
       >
         {/* Left Arrow */}
         {showLeftArrow && (
           <button
             onClick={() => handleScroll('left')}
-            className="absolute -left-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/70 backdrop-blur-md shadow-lg text-[#B3121B] hover:bg-[#B3121B] hover:border-[#B3121B] transition-all cursor-pointer select-none group/btn"
+            className="absolute left-1 md:-left-4 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full border border-white/40 bg-white/80 backdrop-blur-md shadow-lg text-[#B3121B] hover:bg-[#B3121B] hover:border-[#B3121B] transition-all cursor-pointer select-none group/btn"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="h-6 w-6 stroke-[3.5px] text-[#B3121B] group-hover/btn:text-white transition-colors" />
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 stroke-[3.5px] text-[#B3121B] group-hover/btn:text-white transition-colors" />
           </button>
         )}
 
         {/* Scroll Container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto scrollbar-none pb-1"
+          className="flex gap-4 overflow-x-auto scrollbar-none pb-1 snap-x snap-mandatory sm:snap-none"
         >
           {trending.slice(0, 10).map((article, index) => (
             <Link
               key={article.id}
               href={`/news/${article.slug}`}
-              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-400 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-start w-[calc((100%-16px)/2)] sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
+              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-400 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-start w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
             >
               {/* Image Container */}
-              <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+              <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-muted">
                 <Image
                   src={getDistinctArticleImage(article, index)}
                   alt={article.title}
                   fill
-                  sizes="(max-width: 768px) 50vw, 20vw"
+                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 33vw, 20vw"
                   className="object-cover transition duration-300 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = DEMO_CARD_IMAGES[index % DEMO_CARD_IMAGES.length];
@@ -211,20 +233,14 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
               </div>
 
               {/* Info Text below image */}
-              <div className="p-2 flex flex-col justify-between flex-1 min-w-0">
-                <h3 className="line-clamp-3 text-[12px] md:text-[12.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
+              <div className="p-2.5 sm:p-2 flex flex-col justify-between flex-1 min-w-0">
+                <h3 className="line-clamp-3 text-[14px] sm:text-[12px] md:text-[12.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
                   <AutoArticleTitle article={article} language={language} />
                 </h3>
-                <div className="mt-1.5 flex items-center justify-between text-[10px] text-muted-foreground">
+                <div className="mt-1.5 flex items-center text-[10.5px] sm:text-[10px] text-muted-foreground">
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                     {language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'સत्याપિત' : 'Verified'}
                   </span>
-                  {(article.publishedAt || article.createdAt) && (
-                    <div className="flex items-center gap-0.5">
-                      <Clock className="h-2.5 w-2.5" />
-                      <span>{formatDate(article.publishedAt || article.createdAt || '', language)}</span>
-                    </div>
-                  )}
                 </div>
               </div>
             </Link>
@@ -235,10 +251,10 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         {showRightArrow && (
           <button
             onClick={() => handleScroll('right')}
-            className="absolute -right-4 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full border border-white/40 bg-white/70 backdrop-blur-md shadow-lg text-[#B3121B] hover:bg-[#B3121B] hover:border-[#B3121B] transition-all cursor-pointer select-none group/btn"
+            className="absolute right-1 md:-right-4 top-1/2 -translate-y-1/2 z-20 flex h-9 w-9 md:h-10 md:w-10 items-center justify-center rounded-full border border-white/40 bg-white/80 backdrop-blur-md shadow-lg text-[#B3121B] hover:bg-[#B3121B] hover:border-[#B3121B] transition-all cursor-pointer select-none group/btn"
             aria-label="Scroll right"
           >
-            <ChevronRight className="h-6 w-6 stroke-[3.5px] text-[#B3121B] group-hover/btn:text-white transition-colors" />
+            <ChevronRight className="h-5 w-5 md:h-6 md:w-6 stroke-[3.5px] text-[#B3121B] group-hover/btn:text-white transition-colors" />
           </button>
         )}
       </div>
