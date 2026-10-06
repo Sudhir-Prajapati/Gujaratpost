@@ -40,6 +40,13 @@ export function getVideoPosterUrl(url?: string | null): string {
 export function sanitizeImageUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return '';
   let clean = url.trim();
+  if ((clean.startsWith('"') && clean.endsWith('"')) || (clean.startsWith("'") && clean.endsWith("'"))) {
+    clean = clean.slice(1, -1).trim();
+  }
+  if (clean.includes(',')) {
+    const parts = clean.split(',').map((p) => p.trim()).filter(Boolean);
+    clean = parts[0] || '';
+  }
   if (
     clean.includes('res.cloudinary.com') &&
     clean.includes('/raw/upload/') &&

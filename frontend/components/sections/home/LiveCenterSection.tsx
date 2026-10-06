@@ -31,7 +31,7 @@ function LivePanel({
   const borderLine = variant === 'red' ? 'border-white/20' : 'border-white/10';
 
   return (
-    <div className={`group relative flex flex-col rounded-2xl border p-4.5 overflow-hidden min-h-[420px] transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] ${panelBg}`}>
+    <div className={`group relative flex flex-col rounded-2xl border p-4 sm:p-4.5 overflow-hidden min-h-0 sm:min-h-[420px] transition-all duration-300 hover:-translate-y-2 hover:scale-[1.01] ${panelBg}`}>
       {/* Top glowing luxury highlight line */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
 
@@ -270,10 +270,10 @@ export default function LiveCenterSection({ language }: { language: Language }) 
       <div className="absolute top-1/2 left-1/3 -translate-y-1/2 w-80 h-80 bg-red-500/10 rounded-full blur-[90px] pointer-events-none" />
 
       {/* Container Box */}
-      <div className="relative border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 bg-[#f8f9fa] dark:bg-slate-900/40 rounded-2xl p-6 shadow-md">
+      <div className="relative border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 bg-[#f8f9fa] dark:bg-slate-900/40 rounded-2xl p-3.5 sm:p-6 shadow-md">
 
         {/* ── Header Row ──────────────────────────────────────────────── */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-5 border-b-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 select-none">
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-3 sm:pb-4 border-b-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 select-none">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="section-heading-badge bg-[#B3121B] text-white text-[15px] sm:text-[13.5px] md:text-[14.5px] font-black px-4.5 py-1.5 rounded-full inline-flex items-center gap-2 shadow-sm transition-transform duration-200 hover:scale-105 cursor-default">
               <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
@@ -295,7 +295,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         </div>
 
         {/* ── 4-Column Grid ────────────────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6 pt-3 sm:pt-5">
 
           {/* Panel 1: Fuel Price */}
           <LivePanel
@@ -492,7 +492,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         </div>
 
         {/* ── Bottom Live Highlights Ticker Bar ───────────────────── */}
-        <div className="mt-6 pt-4 border-t-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 select-none">
+        <div className="mt-4 pt-3 border-t-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 select-none">
           <div className="flex items-center gap-2 shrink-0">
             <span className="bg-[#B3121B] text-white text-[14.5px] sm:text-[12px] font-black px-4 sm:px-3.5 py-2 sm:py-1.5 rounded-lg flex items-center gap-2 sm:gap-1.5 shadow-xs hover:scale-105 transition-transform duration-200 cursor-default">
               <Megaphone className="h-4.5 w-4.5 sm:h-4 sm:w-4 animate-bounce" />

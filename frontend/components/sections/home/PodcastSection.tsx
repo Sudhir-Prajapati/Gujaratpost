@@ -99,9 +99,9 @@ export default function PodcastSection({ language }: { language: Language }) {
       : 'Gujarat Post Exclusive Podcasts • In-depth Conversations';
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-4 mb-2 select-none" id="podcasts">
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 md:mt-3 mb-2 select-none" id="podcasts">
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-2.5 md:mb-3">
         <div className="flex items-center gap-3">
           <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg leading-none tracking-tight flex items-center gap-2 shadow-xs">
             <Headphones className="h-4.5 w-4.5" />
@@ -120,7 +120,7 @@ export default function PodcastSection({ language }: { language: Language }) {
       </div>
 
       {/* Podcast Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         {podcasts.slice(0, 4).map((item, idx) => {
           const displayTitle = language === 'gu' ? item.titleGu || item.title : language === 'hi' ? item.titleHi || item.title : item.title;
           const safeYt = safeYouTubeId(item.youtubeId);

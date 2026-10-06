@@ -369,20 +369,20 @@ export default function Header() {
       <header ref={headerRef} className="relative z-[60] bg-card/95">
         {/* Top bar: date + social */}
         <div className="bg-black dark:bg-black text-white/95 select-none">
-          <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-1.5">
+          <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-1.5 min-h-[38px] sm:min-h-0">
             {/* Left: Date + City */}
             <div className="min-w-0 flex items-center gap-2 sm:gap-3 truncate text-xs sm:text-sm font-semibold opacity-90">
               <span className="hidden sm:inline">
                 {mounted ? formatDateLong(language) : 'Sunday, 21 June 2026'}
               </span>
-              <span className="sm:hidden text-[11px] font-bold">
+              <span className="sm:hidden text-[13px] font-black text-white tracking-tight whitespace-nowrap">
                 {mounted ? formatDateShort(language) : '21 Jun 2026'}
               </span>
               <span className="opacity-40">|</span>
               <button
                 type="button"
                 onClick={() => setCityModalOpen(true)}
-                className="inline-flex items-center gap-1 text-[11px] sm:text-xs font-bold text-white hover:text-red-200 transition duration-150 cursor-pointer bg-white/10 hover:bg-white/20 px-2 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0"
+                className="inline-flex items-center gap-1.5 text-[12.5px] sm:text-xs font-black text-white hover:text-red-200 transition duration-150 cursor-pointer bg-white/15 hover:bg-white/25 px-2.5 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0 border border-white/10 shadow-2xs"
               >
                 <span>📍</span>
                 <span>{cityTranslations[selectedCity]?.[language] || selectedCity}</span>
@@ -391,23 +391,23 @@ export default function Header() {
 
             {/* Right: Desktop App buttons & Social links */}
             <div className="flex items-center gap-3.5 shrink-0 max-md:hidden">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <a
                   href="https://apps.apple.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-[10.5px] font-black text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all hover:scale-[1.03] active:scale-95 shadow-sm select-none cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg border border-zinc-600 bg-zinc-900 px-3.5 py-1.5 text-[13px] font-black text-white hover:border-zinc-400 hover:bg-zinc-800 transition-all hover:scale-[1.03] active:scale-95 shadow-sm select-none cursor-pointer"
                 >
-                  <AppleIcon className="h-3.5 w-3.5 text-white" />
+                  <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
                   <span translate="no">App Store</span>
                 </a>
                 <a
                   href="https://play.google.com"
                   target="_blank"
                   rel="noreferrer"
-                  className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-[10.5px] font-black text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all hover:scale-[1.03] active:scale-95 shadow-sm select-none cursor-pointer"
+                  className="flex items-center gap-2 rounded-lg border border-zinc-600 bg-zinc-900 px-3.5 py-1.5 text-[13px] font-black text-white hover:border-zinc-400 hover:bg-zinc-800 transition-all hover:scale-[1.03] active:scale-95 shadow-sm select-none cursor-pointer"
                 >
-                  <PlayStoreIcon className="h-3.5 w-3.5 text-white" />
+                  <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
                   <span translate="no">Google Play</span>
                 </a>
               </div>
@@ -416,29 +416,29 @@ export default function Header() {
             </div>
 
             {/* Right: Mobile quick access badges (News Brief & AQI) */}
-            <div className="flex md:hidden items-center gap-1 shrink-0">
+            <div className="flex md:hidden items-center gap-1.5 shrink-0">
               <Link
                 href="/news-brief"
-                className="group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-red-950/60 to-zinc-900/90 hover:from-red-900/70 hover:to-zinc-800 text-white text-[10.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-red-500/40 hover:border-red-500/70 shadow-2xs"
+                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-red-950/80 via-red-900/60 to-zinc-900 hover:from-red-900 hover:to-zinc-800 text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-red-500/60 hover:border-red-400 shadow-sm"
                 title="News Brief"
               >
                 <Image
                   src="/rightSide.png"
                   alt="News Brief"
-                  width={13}
-                  height={13}
+                  width={15}
+                  height={15}
                   className="shrink-0 object-contain group-hover:translate-x-0.5 transition-transform"
                 />
                 <span className="text-zinc-100 group-hover:text-red-300 transition-colors">BRIEF</span>
               </Link>
               <Link
                 href="/aqi"
-                className="group inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-950/60 to-zinc-900/90 hover:from-amber-900/70 hover:to-zinc-800 text-white text-[10.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-amber-500/40 hover:border-amber-500/70 shadow-2xs"
+                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-950/80 via-amber-900/60 to-zinc-900 hover:from-amber-900 hover:to-zinc-800 text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-amber-500/60 hover:border-amber-400 shadow-sm"
                 title="Weather & AQI"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform"
+                  className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.2"
@@ -664,22 +664,21 @@ export default function Header() {
                 <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
               </button>
 
-              {/* Mobile hamburger — animates Menu ↔ X */}
+              {/* Mobile hamburger — premium modern red button */}
               <button
                 type="button"
                 onClick={() => {
                   if (menuOpen) { closeMenu(); }
                   else { setMenuOpen(true); setMenuClosing(false); }
                 }}
-                className="relative inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-lg bg-red-600 hover:bg-red-700 text-white md:hidden shrink-0 shadow-sm active:scale-95 ml-0.5 overflow-hidden transition-colors duration-200"
+                className="relative inline-flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-b from-[#e51d28] via-[#c6111a] to-[#a30b13] text-white md:hidden shrink-0 shadow-[0_2px_8px_rgba(179,18,27,0.35)] border border-white/20 active:scale-90 hover:brightness-110 transition-all duration-200 cursor-pointer overflow-hidden ml-1"
                 aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               >
-                <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', opacity: menuOpen ? 0 : 1, transform: menuOpen ? 'rotate(90deg) scale(0.4)' : 'rotate(0deg) scale(1)', transition: 'opacity 0.25s ease, transform 0.25s ease' }}>
-                  <Menu className="h-4 w-4" />
-                </span>
-                <span style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', opacity: menuOpen ? 1 : 0, transform: menuOpen ? 'rotate(0deg) scale(1)' : 'rotate(-90deg) scale(0.4)', transition: 'opacity 0.25s ease, transform 0.25s ease' }}>
-                  <X className="h-4 w-4" />
-                </span>
+                <div className="flex flex-col justify-center items-center w-5 h-4 gap-[3.5px] pointer-events-none">
+                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-300 ease-out origin-center ${menuOpen ? 'rotate-45 translate-y-[5.5px]' : ''}`} />
+                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-200 ease-out ${menuOpen ? 'opacity-0 scale-x-0' : 'opacity-100'}`} />
+                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-300 ease-out origin-center ${menuOpen ? '-rotate-45 -translate-y-[5.5px]' : ''}`} />
+                </div>
               </button>
             </div>
           </div>
@@ -778,26 +777,26 @@ export default function Header() {
                 </button>
               </div>
               {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
-              <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
+              <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
                 <Link
                   href="/news-brief"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-zinc-900 to-black p-2 text-xs font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-zinc-950 to-black py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition whitespace-nowrap"
                 >
-                  <Image src="/rightSide.png" alt="News Brief" width={14} height={14} className="object-contain" />
-                  <span>BRIEF</span>
+                  <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0" />
+                  <span className="font-black tracking-wide">BRIEF</span>
                 </Link>
                 <Link
                   href="/aqi"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 p-2 text-xs font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap"
                 >
                   <svg
                     viewBox="0 0 24 24"
-                    className="w-3.5 h-3.5 text-amber-500 shrink-0"
+                    className="w-4 h-4 text-amber-500 shrink-0"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.2"
+                    strokeWidth="2.4"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   >
@@ -808,15 +807,15 @@ export default function Header() {
                     <path d="M15.9 16A5 5 0 1 0 9 10.45" />
                     <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
                   </svg>
-                  <span>AQI</span>
+                  <span className="font-black tracking-wide">AQI</span>
                 </Link>
                 <a
                   href="/epaper"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-accent p-2 text-xs font-black text-white shadow-sm hover:bg-accent-hover active:scale-95 transition"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-accent py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm hover:bg-accent-hover active:scale-95 transition whitespace-nowrap"
                 >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  <span>{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  <span className="font-black">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
                 </a>
                 <button
                   type="button"
@@ -825,36 +824,33 @@ export default function Header() {
                     openSupportModal();
                   }}
                   onMouseEnter={prefetchSupportDetails}
-                  className="flex items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 p-2 text-xs font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap"
                 >
-                  <Heart className="h-3.5 w-3.5 fill-current animate-pulse text-white" />
-                  <span>{language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'सपोर्ट' : 'Support'}</span>
+                  <Heart className="h-4 w-4 fill-current animate-pulse text-white shrink-0" />
+                  <span className="font-black">{language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}</span>
                 </button>
               </div>
 
-              {/* App downloads CTA */}
-              <div className="flex items-center gap-2.5 p-2.5 rounded-xl bg-muted/50 border border-border">
-                <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1 shrink-0">App:</span>
-                <div className="flex items-center gap-2">
-                  <a
-                    href="https://apps.apple.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-black text-white hover:border-zinc-500 hover:bg-zinc-800 transition active:scale-95 shadow-sm"
-                  >
-                    <AppleIcon className="h-3.5 w-3.5 text-white" />
-                    <span translate="no">App Store</span>
-                  </a>
-                  <a
-                    href="https://play.google.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 rounded-lg border border-zinc-700 bg-zinc-900 px-2.5 py-1 text-[10px] font-black text-white transition active:scale-95 shadow-sm hover:border-zinc-500 hover:bg-zinc-800"
-                  >
-                    <PlayStoreIcon className="h-3.5 w-3.5 text-white" />
-                    <span translate="no">Google Play</span>
-                  </a>
-                </div>
+              {/* App downloads CTA (Matches Footer Image 1 Style) */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                <a
+                  href="https://apps.apple.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
+                >
+                  <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
+                  <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">App Store</span>
+                </a>
+                <a
+                  href="https://play.google.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
+                >
+                  <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
+                  <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">Google Play</span>
+                </a>
               </div>
 
               {/* Flat Link Grid */}

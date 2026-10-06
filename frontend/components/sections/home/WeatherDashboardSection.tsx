@@ -88,11 +88,11 @@ export default function WeatherDashboardSection({ language }: { language: Langua
       </div>
 
       {/* Main Box - Clean Container with Prominent Visible Border */}
-      <div className="bg-[#f8f9fa] dark:bg-slate-900/90 p-6 md:p-7 rounded-2xl rounded-tl-none border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 shadow-md relative">
+      <div className="bg-[#f8f9fa] dark:bg-slate-900/90 p-4 sm:p-6 md:p-7 rounded-2xl rounded-tl-none border-2 border-[#B3121B]/40 dark:border-[#B3121B]/30 shadow-md relative">
         {activeTab === 'weather' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:gap-8 items-center">
             {/* Left Area - Selected City weather info linking to AQI page */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-4 lg:pb-0 lg:pr-10">
               <Link
                 href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
                 className="group flex flex-col cursor-pointer"
@@ -198,9 +198,9 @@ export default function WeatherDashboardSection({ language }: { language: Langua
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 lg:gap-8 items-center">
             {/* Left Area - Selected City AQI info linking to AQI page */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-6 lg:pb-0 lg:pr-10">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 border-b-2 lg:border-b-0 lg:border-r-2 border-slate-300 dark:border-slate-800 pb-4 lg:pb-0 lg:pr-10">
               <Link
                 href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
                 className="group flex flex-col cursor-pointer"

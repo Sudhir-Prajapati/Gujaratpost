@@ -177,7 +177,7 @@ export default function LatestUpdatesSection({
   const timelineContent = (
     <div className="flex flex-col min-w-0">
       {/* ── 1. LATEST NEWS SECTION (Latest સમાચાર) ── */}
-      <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2.5 mb-6">
+      <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[17px] md:text-[19px] rounded-lg tracking-tight leading-none">
           {labelLatest}
         </span>
@@ -267,7 +267,7 @@ export default function LatestUpdatesSection({
                     <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
-                <div className="relative h-[58px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <div className="relative h-[76px] w-[114px] sm:h-[82px] sm:w-[122px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
                   <ArticleMedia
                     src={mediaSrc}
                     alt={getArticleTitle(art, language)}
@@ -282,8 +282,8 @@ export default function LatestUpdatesSection({
       </div>
 
       {/* ── 2. POPULAR NEWS SECTION (લોકપ્રિય સમાચાર - Admin Managed) ── */}
-      <div className="mt-4 pt-3 border-t border-border/60">
-        <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+      <div className="mt-2.5 md:mt-3 pt-2 md:pt-2.5 border-t border-border/60">
+        <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2 mb-2.5 md:mb-3">
           <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 font-extrabold text-[18px] md:text-[19px] rounded-lg tracking-tight leading-none">
             {language === 'gu' ? 'લોકપ્રિય સમાચાર' : language === 'hi' ? 'लोकप्रिय समाचार' : 'Popular News'}
           </span>
@@ -415,7 +415,7 @@ export default function LatestUpdatesSection({
 
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start border-t border-border/60 pt-2.5">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-4 lg:gap-8 items-start border-t border-border/60 pt-2">
         {timelineContent}
         {sidebarContent}
       </div>

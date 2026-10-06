@@ -126,7 +126,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-2" suppressHydrationWarning>
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics'}
         </span>
@@ -144,16 +144,16 @@ export default function PoliticsSection({ language, initialArticles }: { languag
         {allCards[0] && (
           <Link
             href={`/news/${allCards[0].slug}`}
-            className="group flex flex-col pb-3.5 mb-2 border-b border-border/40"
+            className="group flex flex-col pb-2 mb-1 border-b border-border/40"
           >
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-2xs">
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
               <ArticleMedia
                 src={allCards[0].image || (allCards[0] as any).imageUrl || '/assets/demo/1.jpg'}
                 alt={allCards[0].title}
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
             </div>
-            <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+            <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-0.5 select-none leading-none">
               {(allCards[0] as any).categoryGu || (allCards[0] as any).category?.nameGu || (language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics')}
             </span>
             <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
@@ -162,31 +162,31 @@ export default function PoliticsSection({ language, initialArticles }: { languag
           </Link>
         )}
 
-        {/* 2. Compact List for remaining stories: thumbnail on left, title on right */}
-        <div className="flex flex-col divide-y divide-border/40">
+        {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section */}
+        <div className="flex flex-col gap-2 mt-1">
           {allCards.slice(1, 7).map((art) => (
             <Link
               key={`mob-${art.id}`}
               href={`/news/${art.slug}`}
-              className="group flex flex-row items-start gap-3.5 py-3 px-1 hover:bg-muted/30 transition-all min-w-0"
+              className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
             >
-              {/* Thumbnail on the left */}
-              <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+              {/* Title & Metadata on the left */}
+              <div className="flex flex-col min-w-0 flex-1 pr-1">
+                <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+                  {(art as any).categoryGu || (art as any).category?.nameGu || (language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics')}
+                </span>
+                <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                  <AutoArticleTitle article={art} language={language} />
+                </h4>
+              </div>
+
+              {/* Thumbnail on the right */}
+              <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                 <ArticleMedia
                   src={art.image || (art as any).imageUrl || '/assets/demo/2.jpg'}
                   alt={art.title}
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                 />
-              </div>
-
-              {/* Title & Metadata on the right */}
-              <div className="flex flex-col justify-center min-w-0 flex-1">
-                <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider mb-1 select-none leading-none">
-                  {(art as any).categoryGu || (art as any).category?.nameGu || (language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics')}
-                </span>
-                <h4 className="text-[15.5px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                  <AutoArticleTitle article={art} language={language} />
-                </h4>
               </div>
             </Link>
           ))}
@@ -220,7 +220,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
 
         {/* Bottom 6-card grid — politics first, then other recent articles as fallback */}
         {bottomGrid.length > 0 && (
-          <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 border-t border-border/40 pt-6 mt-6">
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-4 md:gap-6 border-t border-border/40 pt-4 md:pt-5 mt-4 md:mt-5">
             {bottomGrid.map((art) => (
               <div key={art.id} className="flex flex-col min-w-0">
                 <Link href={`/news/${art.slug}`} className="group flex flex-col">

@@ -311,7 +311,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
       </div>
 
       {/* Grid: Left column (main news) vs Right column (sidebar/widgets) */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-4 lg:gap-8 items-start">
 
         {/* Left Column: Big horizontal featured card + 4-column horizontal card list */}
         <div className="flex flex-col min-w-0">
@@ -321,9 +321,9 @@ export default function WorldSection({ language, initialArticles }: { language: 
             {/* 1. Lead Featured Story */}
             <Link
               href={`/news/${featured.slug}`}
-              className="group flex flex-col pb-3.5 mb-2 border-b border-border/40"
+              className="group flex flex-col pb-2 mb-1 border-b border-border/40"
             >
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-2xs">
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
                 <ArticleMedia
                   src={featured.image}
                   alt={featured.titleGu}
@@ -333,7 +333,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
                   {featured.watermarkGu}
                 </span>
               </div>
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-0.5">
                 <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider select-none leading-none">
                   <AutoTranslateString text={featured.categoryGu} language={language} />
                 </span>
@@ -345,33 +345,33 @@ export default function WorldSection({ language, initialArticles }: { language: 
               </h3>
             </Link>
 
-            {/* 2. Compact List for remaining stories: thumbnail on left, title on right */}
-            <div className="flex flex-col divide-y divide-border/40">
+            {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section */}
+            <div className="flex flex-col gap-2 mt-1">
               {cardsList.map((card) => (
                 <Link
                   key={`mob-${card.id}`}
                   href={`/news/${card.slug}`}
-                  className="group flex flex-row items-start gap-3.5 py-3 px-0.5 hover:bg-muted/20 transition-all min-w-0"
+                  className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
                 >
-                  {/* Thumbnail on the left */}
-                  <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                    <ArticleMedia
-                      src={card.image}
-                      alt={card.titleGu}
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-
-                  {/* Title & Metadata on the right */}
-                  <div className="flex flex-col justify-center min-w-0 flex-1">
-                    <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider mb-1 select-none leading-none">
+                  {/* Title & Metadata on the left */}
+                  <div className="flex flex-col min-w-0 flex-1 pr-1">
+                    <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
                       <AutoTranslateString text={card.categoryGu} language={language} />
                     </span>
-                    <h4 className="text-[15.5px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                    <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                       {card.article
                         ? <AutoArticleTitle article={card.article} language={language} />
                         : <AutoTranslateString text={card.titleGu} language={language} />}
                     </h4>
+                  </div>
+
+                  {/* Thumbnail on the right */}
+                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                    <ArticleMedia
+                      src={card.image}
+                      alt={card.titleGu}
+                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                    />
                   </div>
                 </Link>
               ))}
@@ -383,7 +383,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
             {/* Big Horizontal Featured Card */}
             <Link
               href={`/news/${featured.slug}`}
-              className="group grid grid-cols-1 md:grid-cols-2 gap-6 bg-card border border-border/80 rounded-sm p-5 md:p-6 mb-8 hover:shadow-sm transition-shadow duration-200"
+              className="group grid grid-cols-1 md:grid-cols-2 gap-6 bg-card border border-border/80 rounded-sm p-5 md:p-6 mb-5 md:mb-6 hover:shadow-sm transition-shadow duration-200"
             >
               {/* Content Left */}
               <div className="flex flex-col justify-center min-w-0 order-2 md:order-1">

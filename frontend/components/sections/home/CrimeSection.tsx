@@ -421,7 +421,7 @@ export default function CrimeSection({
     <div className="flex flex-col min-w-0">
 
       {/* Crime Header */}
-      <div className="flex items-end justify-between h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2.5 mb-6">
+      <div className="flex items-end justify-between h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'ક્રાઇમ' : language === 'hi' ? 'क्राइम' : 'Crime'}
         </span>
@@ -470,7 +470,7 @@ export default function CrimeSection({
               </div>
             </div>
 
-            <div className="mt-2.5 flex flex-col justify-start">
+            <div className="mt-1.5 md:mt-2.5 flex flex-col justify-start">
               <span className="text-[#B3121B] font-extrabold text-[12px] md:text-[13px] mb-1 select-none uppercase tracking-wide leading-none">
                 {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
               </span>
@@ -503,7 +503,7 @@ export default function CrimeSection({
                     : (getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi }))}
                 </h4>
               </div>
-              <div className="relative aspect-[16/10] w-[105px] h-[72px] sm:w-[112px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted">
+              <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted">
                 <ArticleMedia
                   src={item.image}
                   alt={item.titleGu || item.title}
@@ -550,7 +550,7 @@ export default function CrimeSection({
                   </div>
 
                   {/* Thumbnail photo on right */}
-                  <div className="relative h-[64px] w-[96px] shrink-0 rounded-lg overflow-hidden border border-border/20 bg-muted">
+                  <div className="relative h-[80px] w-[120px] shrink-0 rounded-lg overflow-hidden border border-border/20 bg-muted">
                     <ArticleMedia
                       src={sub.image}
                       alt={sub.title}

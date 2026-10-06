@@ -55,9 +55,9 @@ export default function MainLayoutWrapper({ children }: Props) {
     return <>{children}</>;
   }
 
-  // News brief has a minimal wrapper
+  // News brief has a minimal locked viewport wrapper
   if (pathname === '/news-brief') {
-    return <main className="min-h-screen bg-[#F8F9FA]">{children}</main>;
+    return <main className="fixed inset-0 h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden bg-[#f0f2f5] select-none touch-none overscroll-none">{children}</main>;
   }
 
   // DEDICATED ANDROID MOBILE APK VIEW:

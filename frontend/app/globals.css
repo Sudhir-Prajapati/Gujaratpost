@@ -5,6 +5,16 @@ html.modal-open, body.modal-open {
   height: 100vh !important;
 }
 
+html.news-brief-open, body.news-brief-open {
+  overflow: hidden !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
 /* Remove default browser window scrollbars completely */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
@@ -2646,6 +2656,36 @@ html[lang="gu"] .leading-tight {
 
 .animate-rotate-orbit {
   animation: rotate-orbit 12s linear infinite;
+}
+
+@keyframes fade-in-slogan {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-logo {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-slogan-first {
+  animation: fade-in-slogan 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+}
+
+.animate-logo-after {
+  animation: fade-in-logo 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
 }
 
 /* ── Premium PDF Download Card ─────────────────────────────────────── */

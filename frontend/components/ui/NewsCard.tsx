@@ -137,7 +137,7 @@ export default function NewsCard({
   if (variant === 'compact') {
     return (
       <Link prefetch={false} href={`/news/${article.slug}`} className="flex gap-3 border-b border-border py-3 transition hover:opacity-75">
-        <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
+        <div className="relative h-[80px] w-[120px] shrink-0 overflow-hidden rounded-lg bg-muted">
           <ArticleMedia
             src={mediaSrc}
             alt={article.title}

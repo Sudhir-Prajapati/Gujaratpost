@@ -1055,7 +1055,7 @@ export default function CityHyperlocalSection({
 
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-0 border-t border-border/60 pt-0">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 lg:gap-8 items-start">
 
         {/* Left Column: Tab list + Carousel & Side list */}
         <div className="flex flex-col min-w-0">
@@ -1095,7 +1095,7 @@ export default function CityHyperlocalSection({
           </div>
 
           {/* Main 2-Column Content Section */}
-          <div className="grid grid-cols-1 md:grid-cols-[1.15fr_1fr] gap-8 items-start">
+          <div className="grid grid-cols-1 md:grid-cols-[1.15fr_1fr] gap-2 md:gap-8 items-start">
 
             {/* Carousel Slide */}
             {currentSlide && (
@@ -1141,27 +1141,27 @@ export default function CityHyperlocalSection({
                 </div>
 
                 {/* Info Text below image */}
-                <div className="mt-3.5 flex flex-col">
+                <div className="mt-2 md:mt-3 flex flex-col">
                   <span className="text-[#B3121B] font-black text-[12.5px] uppercase tracking-wide mb-1 select-none">
                     {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
                   </span>
 
                   <Link href={`/news/${currentSlide.slug}`} className="group/link">
-                    <div className="min-h-[48px] md:min-h-[52px]">
+                    <div className="min-h-0 md:min-h-[52px]">
                       <h3 className="font-extrabold text-[16.5px] md:text-[18px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
                         <AutoTranslateString text={getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })} language={language} />
                       </h3>
                     </div>
                   </Link>
 
-                  <div className="min-h-[38px] md:min-h-[42px] mt-2">
+                  <div className="min-h-0 md:min-h-[42px] mt-1 md:mt-1.5">
                     <p className="text-muted-foreground text-[13.5px] leading-relaxed line-clamp-2 font-medium">
                       <AutoTranslateString text={stripHtmlTags(getLocalized(language, { en: currentSlide.excerpt, gu: currentSlide.excerptGu, hi: currentSlide.excerptHi }))} language={language} />
                     </p>
                   </div>
 
                   {/* Meta Details with Inline Tags */}
-                  <div className="h-[38px] flex items-center gap-2.5 mt-3.5 text-[11px] text-muted-foreground font-semibold border-b border-border/40 pb-3 mb-3.5 overflow-hidden">
+                  <div className="flex items-center gap-2.5 mt-1.5 md:mt-3 text-[11px] text-muted-foreground font-semibold md:border-b md:border-border/40 pb-1 md:pb-3 mb-0 md:mb-3.5 overflow-hidden">
                     <div className="flex flex-wrap gap-2">
                       {currentSlide.tags.slice(0, 3).map((tag) => {
                         const tagLabel = getLocalizedTag(tag, language);
@@ -1180,31 +1180,31 @@ export default function CityHyperlocalSection({
               </div>
             )}
 
-            {/* Mobile View (< md): Thumbnail on left, title on right, divider lines matching Image 1 */}
-            <div className="md:hidden flex flex-col divide-y divide-border/40 border-t border-border/40 mt-4">
+            {/* Mobile View (< md): Premium Boxed Cards matching Hero Section */}
+            <div className="md:hidden flex flex-col gap-2 mt-0">
               {mockList.map((item) => (
                 <Link
                   key={`mob-${item.id}`}
                   href={`/news/${item.slug}`}
-                  className="group flex flex-row items-start gap-3.5 py-3 px-1 hover:bg-muted/30 transition-all min-w-0"
+                  className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
                 >
-                  {/* Thumbnail on the left */}
-                  <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                  {/* Details on the left */}
+                  <div className="flex flex-col min-w-0 flex-1 pr-1">
+                    <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+                      {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
+                    </span>
+                    <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                      <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
+                    </h4>
+                  </div>
+
+                  {/* Thumbnail on the right */}
+                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                     <ArticleMedia
                       src={item.image}
                       alt={item.titleGu}
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
                     />
-                  </div>
-
-                  {/* Details on the right */}
-                  <div className="flex flex-col justify-center min-w-0 flex-1">
-                    <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider mb-1 select-none leading-none">
-                      {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
-                    </span>
-                    <h4 className="text-[15.5px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                      <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
-                    </h4>
                   </div>
                 </Link>
               ))}

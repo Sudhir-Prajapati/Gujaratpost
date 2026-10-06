@@ -427,10 +427,10 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* ── Red Panel containing Videos ── */}
-      <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 pt-5 pb-5 border border-white/10 relative overflow-hidden shadow-lg">
+      <div className="w-full bg-[#B3121B] text-white rounded-sm px-3.5 sm:px-5 md:px-8 pt-3.5 sm:pt-4 pb-3.5 sm:pb-4 border border-white/10 relative overflow-hidden shadow-lg">
 
         {/* Header */}
-        <div className="relative z-10 flex items-center justify-between mb-5">
+        <div className="relative z-10 flex items-center justify-between mb-3 md:mb-4">
           <div className="flex items-center gap-3">
             <span className="text-white font-black text-[18px] md:text-[20px] select-none tracking-tight">
               {language === 'gu' ? 'વીડિયો' : 'Videos'}
@@ -445,7 +445,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
         </div>
 
         {/* 2-Column Layout: Featured left, List right */}
-        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-6 items-stretch">
+        <div className="relative z-10 grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-3.5 md:gap-6 items-stretch">
 
           {/* Left: Featured Video */}
           <div
@@ -506,7 +506,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
               {sidebarVideos.map((v) => (
                 <div
                   key={v.id}
-                  className="group flex gap-3 py-3.5 cursor-pointer first:pt-0"
+                  className="group flex gap-3 py-2.5 sm:py-3 cursor-pointer first:pt-0"
                   onClick={() => handleSidebarClick(v.youtubeId, v.id)}
                 >
                   {/* Thumbnail */}

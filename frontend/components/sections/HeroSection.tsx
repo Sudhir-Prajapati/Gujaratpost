@@ -946,9 +946,9 @@ export default function HeroSection({
     ),
     crime: (
       <Fragment key="crime-frag">
-        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-6 md:mt-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-8 items-start">
-            <div className="flex flex-col gap-10 min-w-0">
+        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2.5 md:mt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-4 lg:gap-8 items-start">
+            <div className="flex flex-col gap-4 md:gap-8 min-w-0">
               <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
             </div>
             <div className="flex flex-col gap-6 sticky top-20 select-none">
@@ -1255,7 +1255,7 @@ export default function HeroSection({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
         {/* Left Content Side */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-3 md:gap-5">
 
           {/* Top Row: Hero Story & Middle Column */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 items-stretch">
@@ -1325,7 +1325,7 @@ export default function HeroSection({
                             <AutoArticleTitle article={story} language={language} />
                           </h3>
                         </div>
-                        <div className="relative aspect-[16/10] w-[105px] h-[72px] sm:w-[115px] sm:h-[78px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                        <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                           <ArticleMedia
                             src={story.image || (story as any).featuredImage || getArticleImage(story)}
                             alt={story.title || ''}
@@ -1351,16 +1351,16 @@ export default function HeroSection({
             if (cards.length === 0) return null;
 
             return (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 border-t border-border/80 pt-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 border-t border-border/80 pt-3 md:pt-4">
                 {cards.slice(0, 3).map((art, idx) => {
                   if (!art) return null;
                   return (
                     <Link
                       key={art.id || idx}
                       href={`/news/${art.slug}`}
-                      className="group flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 min-w-0 pb-3 md:pb-0 border-b md:border-b-0 border-border/30 last:border-b-0"
+                      className="group flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 min-w-0 pb-2.5 md:pb-0 border-b md:border-b-0 border-border/30 last:border-b-0"
                     >
-                      <div className="relative aspect-[16/10] w-28 md:w-full h-[74px] md:h-auto shrink-0 overflow-hidden rounded-lg md:rounded-sm border border-border/10 bg-muted mb-0 md:mb-2.5">
+                      <div className="relative aspect-[16/10] w-[128px] md:w-full h-[86px] md:h-auto shrink-0 overflow-hidden rounded-lg md:rounded-sm border border-border/10 bg-muted mb-0 md:mb-2.5">
                         <ArticleMedia
                           src={art.image || (art as any).featuredImage || getArticleImage(art)}
                           alt={art.title || ''}

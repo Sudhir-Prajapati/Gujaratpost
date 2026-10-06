@@ -556,7 +556,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                     <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                       <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
-                    <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
+                    <div className="mt-2 hidden md:flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
                       <span>{formatDate(heroArticle.publishedAt)}</span>
                     </div>
                   </div>
@@ -574,11 +574,11 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                         <AutoArticleTitle article={subHeroArticle} language={language} />
                       </h3>
-                      <div className="mt-1.5 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
+                      <div className="mt-1.5 hidden md:flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
                         <span>{formatDate(subHeroArticle.publishedAt)}</span>
                       </div>
                     </div>
-                    <div className="relative w-[105px] h-[75px] sm:w-[125px] sm:h-[88px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                       <ArticleMedia
                         src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                         alt={getArticleTitle(subHeroArticle, language)}
@@ -608,11 +608,11 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <h3 className="mt-0.5 text-[14.5px] md:text-[15.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
                         {getArticleTitle(art, language)}
                       </h3>
-                      <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
+                      <div className="mt-1 hidden md:flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
                         <span>{formatDate(art.publishedAt)}</span>
                       </div>
                     </div>
-                    <div className="relative w-[105px] h-[75px] sm:w-[125px] sm:h-[88px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                       <img
                         src={art.image || art.featuredImage || art.thumbnail || '/assets/gujarat-post-logo.png'}
                         alt={getArticleTitle(art, language)}
@@ -660,7 +660,44 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
 
         {/* POPULAR ARTICLES GRID */}
         <div className="mt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-8">
+          {/* Mobile view (< md): Single column horizontal card list like Image 5 (no date) */}
+          <div className="md:hidden flex flex-col divide-y divide-border">
+            {popularArticles.slice(0, visibleCount).map((art) => {
+              const artTitle = getArticleTitle(art, language);
+              const artCategory = getArticleLocation(art);
+              const artImg = art.image || (art as any).featuredImage || (art as any).thumbnail || '/assets/gujarat-post-logo.png';
+
+              return (
+                <Link
+                  key={art.id}
+                  href={art.slug ? `/news/${art.slug}` : '#'}
+                  className="group flex items-start gap-4 py-3.5 first:pt-1 last:pb-1"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[11px] font-black uppercase tracking-wide text-accent">
+                      {artCategory}
+                    </span>
+                    <h3 className="mt-0.5 text-[14.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                      {artTitle}
+                    </h3>
+                  </div>
+                  <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                    <img
+                      src={artImg}
+                      alt={artTitle}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      className="transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
+                      loading="lazy"
+                    />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Desktop view (>= md): 3-column grid */}
+          <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-8">
             {popularArticles.slice(0, visibleCount).map((article) => (
               <NewsCard key={article.id} article={article} variant="flat" />
             ))}
@@ -692,7 +729,53 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 gap-x-5 gap-y-6">
+            {/* Mobile view (< md): Single column horizontal card list like Image 5 (no date) */}
+            <div className="md:hidden flex flex-col divide-y divide-border">
+              {alsoReadArticles.map((article: any, idx: number) => {
+                const artTitle = language === 'gu'
+                  ? (article.titleGu || article.title)
+                  : language === 'hi'
+                  ? (article.titleHi || article.title)
+                  : article.title;
+                const artCategory = language === 'gu'
+                  ? (article.categoryGu || article.category)
+                  : language === 'hi'
+                  ? (article.categoryHi || article.category)
+                  : article.category;
+                const fallbackImg = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
+                const artImg = article.image || article.featuredImage || article.thumbnail || fallbackImg;
+
+                return (
+                  <Link
+                    key={article.id || idx}
+                    href={article.slug ? `/news/${article.slug}` : '#'}
+                    className="group flex items-start gap-4 py-3.5 first:pt-1 last:pb-1"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[11px] font-black uppercase tracking-wide text-accent">
+                        {artCategory}
+                      </span>
+                      <h4 className="mt-0.5 text-[14.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                        {artTitle}
+                      </h4>
+                    </div>
+                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                      <img
+                        src={artImg}
+                        alt={artTitle}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
+                        loading="lazy"
+                      />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Desktop view (>= md): 3-column grid with date */}
+            <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-6">
               {alsoReadArticles.map((article: any, idx: number) => {
                 const artTitle = language === 'gu'
                   ? (article.titleGu || article.title)
@@ -749,7 +832,54 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
               </Link>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+            {/* Mobile view (< md): Full-width and full-height single cards like user reference image */}
+            <div className="md:hidden flex flex-col gap-4">
+              {galleryPhotos.map((photo: any, idx: number) => {
+                const photoTitle = language === 'gu'
+                  ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
+                  : language === 'hi'
+                  ? (photo.captionHi || photo.caption || photo.titleHi || photo.title || photo.alt || '')
+                  : (photo.caption || photo.alt || photo.title || '');
+                const photoCategory = photo.category || getLocalized(language, { en: 'News', gu: 'સમાચાર', hi: 'समाचार' });
+                const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
+                const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
+
+                return (
+                  <Link
+                    key={photo.id || idx}
+                    href={`/photos/${photo.id || ''}`}
+                    className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-black shadow-md transition-all duration-300 active:scale-[0.99]"
+                  >
+                    <img
+                      src={photoSrc}
+                      alt={photoTitle || 'Gallery'}
+                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      className="transition-transform duration-500 group-hover:scale-105"
+                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
+                      loading="lazy"
+                    />
+
+                    {/* Dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent pointer-events-none" />
+
+                    {/* Category pill badge top-left */}
+                    <span className="absolute top-3.5 left-3.5 z-10 bg-[#b31217] text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-sm pointer-events-none">
+                      {photoCategory}
+                    </span>
+
+                    {/* Title inside card at bottom */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
+                      <p className="text-white text-[16px] sm:text-[17px] font-black leading-snug line-clamp-2 drop-shadow-md">
+                        {photoTitle}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Desktop view (>= md): 4-column photo grid with red border */}
+            <div className="hidden md:grid sm:grid-cols-4 gap-3.5">
               {galleryPhotos.map((photo: any, idx: number) => {
                 const photoTitle = language === 'gu'
                   ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')

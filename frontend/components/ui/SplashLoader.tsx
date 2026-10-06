@@ -172,6 +172,36 @@ export default function SplashLoader() {
         .animate-rotate-orbit {
           animation: rotate-orbit 12s linear infinite;
         }
+
+        @keyframes fade-in-slogan {
+          0% {
+            opacity: 0;
+            transform: translateY(6px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-logo {
+          0% {
+            opacity: 0;
+            transform: translateY(8px) scale(0.96);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .animate-slogan-first {
+          animation: fade-in-slogan 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+        }
+
+        .animate-logo-after {
+          animation: fade-in-logo 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+        }
       `}</style>
 
       {/* 3D Perspective Animation Container */}
@@ -335,8 +365,13 @@ export default function SplashLoader() {
         </div>
       </div>
 
-      {/* Official Gujarat Post Black Logo */}
-      <div className="relative h-14 w-64 sm:h-16 sm:w-72 my-1 flex items-center justify-center filter drop-shadow-lg">
+      {/* Brand Slogan (Shown First) */}
+      <p className="animate-slogan-first mb-2 text-xs sm:text-sm font-extrabold text-[#c4c4c8] uppercase tracking-[0.22em] leading-none select-none" translate="no">
+        Real Stories. <span className="text-[#B3121B]">Real Gujarat.</span>
+      </p>
+
+      {/* Official Gujarat Post Black Logo (Shown After) */}
+      <div className="animate-logo-after relative h-14 w-64 sm:h-16 sm:w-72 my-1 flex items-center justify-center filter drop-shadow-lg">
         <Image
           src="/assets/logoblack.png"
           alt="Gujarat Post Logo"
@@ -345,11 +380,6 @@ export default function SplashLoader() {
           priority
         />
       </div>
-
-      {/* Brand Slogan */}
-      <p className="mt-2 text-xs sm:text-sm font-extrabold text-[#a3a3a3] uppercase tracking-widest leading-none select-none" translate="no">
-        Real Stories. <span className="text-[#B3121B]">Real Gujarat.</span>
-      </p>
 
       {/* Modern Sweep Loader Bar */}
       <div className="mt-8 h-1 w-52 overflow-hidden rounded-full bg-white/10 shadow-inner">

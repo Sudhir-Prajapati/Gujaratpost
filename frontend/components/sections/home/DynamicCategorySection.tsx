@@ -128,7 +128,7 @@ export default function DynamicCategorySection({ category, language, initialArti
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* Section Header - ALWAYS RED BRAND TAG */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4 select-none">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-2.5 md:mb-3 select-none">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg leading-none tracking-tight">
           {categoryTitle}
         </span>
@@ -143,7 +143,7 @@ export default function DynamicCategorySection({ category, language, initialArti
       {/* DYNAMIC CONTENT LAYOUT BASED ON ARTICLE COUNT */}
       {isSingleArticle ? (
         /* SINGLE ARTICLE: FULL WIDTH BANNER CARD (THURS NO EMPTY RIGHT COLUMN) */
-        <div className="bg-card border border-border/80 rounded-xl p-4 md:p-6 shadow-sm group">
+        <div className="bg-card border border-border/80 rounded-xl p-3.5 sm:p-4 md:p-6 shadow-sm group">
           <Link href={`/news/${lead.slug}`} className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             <div className="md:col-span-7 relative h-[240px] sm:h-[300px] md:h-[340px] w-full overflow-hidden rounded-xl bg-muted border border-border/20">
               <ArticleMedia
@@ -172,10 +172,10 @@ export default function DynamicCategorySection({ category, language, initialArti
         </div>
       ) : (
         /* MULTIPLE ARTICLES: MAIN FEATURED CARD ON LEFT + SIDE LIST ON RIGHT */
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6 items-start">
           {/* Featured Lead Card (7 cols) */}
           {lead ? (
-            <div className="lg:col-span-7 bg-card border border-border/80 rounded-xl p-4 shadow-sm group">
+            <div className="lg:col-span-7 bg-card border border-border/80 rounded-xl p-3 sm:p-4 shadow-sm group">
               <Link href={`/news/${lead.slug}`} className="flex flex-col gap-3">
                 <div className="relative h-[240px] md:h-[300px] w-full overflow-hidden rounded-lg bg-muted border border-border/20">
                   <ArticleMedia
@@ -204,14 +204,14 @@ export default function DynamicCategorySection({ category, language, initialArti
           ) : null}
 
           {/* Side Cards List (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col divide-y divide-border/50 bg-card border border-border/80 rounded-xl p-4 shadow-sm">
+          <div className="lg:col-span-5 flex flex-col divide-y divide-border/50 bg-card border border-border/80 rounded-xl p-3 sm:p-4 shadow-sm">
             {sideArticles.map((art, sIdx) => (
               <Link
                 key={`dyn-${category}-${art.id}-${sIdx}`}
                 href={`/news/${art.slug}`}
-                className="group flex gap-3 py-3 first:pt-0 last:pb-0 hover:bg-muted/10 transition-colors"
+                className="group flex gap-3 py-2 sm:py-2.5 first:pt-0 last:pb-0 hover:bg-muted/10 transition-colors"
               >
-                <div className="relative h-[72px] w-[95px] shrink-0 overflow-hidden rounded-lg bg-muted border border-border/20">
+                <div className="relative h-[86px] w-[128px] shrink-0 overflow-hidden rounded-lg bg-muted border border-border/20">
                   <ArticleMedia
                     src={art.image || (art as any).imageUrl || '/assets/demo/2.jpg'}
                     alt={getArticleTitle(art, language)}

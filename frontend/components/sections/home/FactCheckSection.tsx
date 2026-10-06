@@ -131,7 +131,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-2" suppressHydrationWarning>
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'तथ्य जांच' : 'Fact Check'}
         </span>
@@ -144,7 +144,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
       </div>
 
       {/* Grid: 3 columns layout (1 column for featured, 2 columns for list grid) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 md:gap-8 items-start">
 
         {/* Left Column: Big Featured Fact Check Card (Spans 1 column on desktop) */}
         <div className="lg:col-span-1 flex flex-col min-w-0">
@@ -152,7 +152,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             href={`/news/${featSlug}`}
             className="group flex flex-col"
           >
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-3.5">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2 md:mb-3">
               <Image
                 src={featImage}
                 alt="Fact Check Featured"
@@ -176,7 +176,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
         </div>
 
         {/* Right Column: Grid of 8 Fact Check items (Spans 2 columns on desktop) */}
-        <div className="lg:col-span-2 pt-4 lg:pt-0">
+        <div className="lg:col-span-2 pt-1 lg:pt-0">
           {/* Mobile View (< md): List with Content on LEFT, Thumbnail on RIGHT (Like Image 2) */}
           <div className="md:hidden flex flex-col divide-y divide-border/40">
             {hasDb && gridDbList.length > 0 ? (
@@ -187,7 +187,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   <Link
                     key={`mob-${item.id}`}
                     href={`/news/${item.slug}`}
-                    className="group flex flex-row items-center justify-between gap-3.5 py-3 px-1 hover:bg-muted/20 transition-all min-w-0"
+                    className="group flex flex-row items-center justify-between gap-3.5 py-2 px-1 hover:bg-muted/20 transition-all min-w-0"
                   >
                     {/* Content on Left */}
                     <div className="flex flex-col justify-center min-w-0 flex-1">
@@ -204,12 +204,12 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     </div>
 
                     {/* Image on Right */}
-                    <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                    <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                       <Image
                         src={item.image || '/assets/demo/2.jpg'}
                         alt={title}
                         fill
-                        sizes="105px"
+                        sizes="138px"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
@@ -221,7 +221,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                 <Link
                   key={`mob-mock-${item.id}`}
                   href={`/news/${item.slug}`}
-                  className="group flex flex-row items-center justify-between gap-3.5 py-3 px-1 hover:bg-muted/20 transition-all min-w-0"
+                  className="group flex flex-row items-center justify-between gap-3.5 py-2 px-1 hover:bg-muted/20 transition-all min-w-0"
                 >
                   {/* Content on Left */}
                   <div className="flex flex-col justify-center min-w-0 flex-1">
@@ -243,12 +243,12 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   </div>
 
                   {/* Image on Right */}
-                  <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                     <Image
                       src={item.image}
                       alt={item.titleGu}
                       fill
-                      sizes="105px"
+                      sizes="138px"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>

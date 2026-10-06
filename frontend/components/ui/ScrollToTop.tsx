@@ -25,7 +25,7 @@ export default function ScrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (!mounted || pathname?.startsWith('/admin')) return null;
+  if (!mounted || pathname?.startsWith('/admin') || pathname === '/news-brief') return null;
 
   const bottomPos = isApk ? '72px' : '32px';
   const rightPos = isApk ? '16px' : '32px';

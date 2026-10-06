@@ -13,7 +13,7 @@ import { useApp } from '@/components/AppProvider';
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
 const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
 
-function SocialIconButton({ item }: { item: typeof SOCIAL_LINKS[number] }) {
+function SocialIconButton({ item, className = 'h-9 w-9' }: { item: typeof SOCIAL_LINKS[number]; className?: string }) {
     const [hovered, setHovered] = useState(false);
 
     const hoverStyle = hovered
@@ -32,7 +32,7 @@ function SocialIconButton({ item }: { item: typeof SOCIAL_LINKS[number] }) {
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             style={hoverStyle}
-            className="h-9 w-9 rounded-full border border-white/20 bg-white/10 text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-md cursor-pointer"
+            className={`${className} rounded-full border border-white/20 bg-white/10 text-white flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-md cursor-pointer`}
         >
             <SocialIcon platform={item.platform} className="h-4 w-4" />
         </a>
@@ -300,9 +300,9 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         </button>
 
                         {/* Social Icons */}
-                        <div className="flex items-center justify-center gap-3 w-full mt-3.5">
+                        <div className="flex items-center justify-center gap-2.5 sm:gap-3 w-full max-w-xs mx-auto mt-4">
                             {SOCIAL_LINKS.map((item) => (
-                                <SocialIconButton key={`mob-${item.label}`} item={item} />
+                                <SocialIconButton key={`mob-${item.label}`} item={item} className="h-9.5 w-9.5 shrink-0" />
                             ))}
                         </div>
                     </div>
@@ -322,26 +322,20 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 href="https://apps.apple.com"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-2 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
+                                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
                             >
-                                <AppleIcon className="h-5 w-5 text-white shrink-0" />
-                                <div className="leading-tight text-left" translate="no">
-                                    <span className="block text-[8px] text-zinc-400 font-extrabold uppercase tracking-tight">Download on the</span>
-                                    <span className="block text-[12px] font-black text-white tracking-tight">App Store</span>
-                                </div>
+                                <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
+                                <span translate="no" className="text-[13px] font-black text-white tracking-tight">App Store</span>
                             </a>
 
                             <a
                                 href="https://play.google.com"
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-2 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
+                                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
                             >
-                                <PlayStoreIcon className="h-5 w-5 shrink-0" />
-                                <div className="leading-tight text-left" translate="no">
-                                    <span className="block text-[8px] text-zinc-400 font-extrabold uppercase tracking-tight">Get it on</span>
-                                    <span className="block text-[12px] font-black text-white tracking-tight">Google Play</span>
-                                </div>
+                                <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
+                                <span translate="no" className="text-[13px] font-black text-white tracking-tight">Google Play</span>
                             </a>
                         </div>
                     </div>
@@ -411,10 +405,12 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 </span>
                             </button>
                             {/* Social Icons — same width as button, spread end to end */}
-                            <div className="flex items-center justify-between w-full mt-3">
-                                {SOCIAL_LINKS.map((item) => (
-                                    <SocialIconButton key={item.label} item={item} />
-                                ))}
+                            <div className="w-full flex justify-center mt-4">
+                                <div className="grid grid-cols-3 gap-x-6 gap-y-3.5 place-items-center">
+                                    {SOCIAL_LINKS.map((item) => (
+                                        <SocialIconButton key={item.label} item={item} className="h-10 w-10" />
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
@@ -483,13 +479,10 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             href="https://apps.apple.com"
                             target="_blank"
                             rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
+                            className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
                         >
-                            <AppleIcon className="h-6 w-6 text-white transition-transform duration-300 group-hover:scale-110" />
-                            <div className="leading-tight text-left" translate="no">
-                                <span className="block text-[9px] text-zinc-400 font-extrabold uppercase tracking-tight">Download on the</span>
-                                <span className="block text-[14px] font-black text-white tracking-tight">App Store</span>
-                            </div>
+                            <AppleIcon className="h-5.5 w-5.5 text-white transition-transform duration-300 group-hover:scale-110" />
+                            <span translate="no" className="text-[14px] font-black text-white tracking-tight">App Store</span>
                         </a>
 
                         {/* Google Play Badge */}
@@ -497,13 +490,10 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             href="https://play.google.com"
                             target="_blank"
                             rel="noreferrer"
-                            className="group flex items-center gap-3 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
+                            className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
                         >
-                            <PlayStoreIcon className="h-6 w-6 transition-transform duration-300 group-hover:scale-110" />
-                            <div className="leading-tight text-left" translate="no">
-                                <span className="block text-[9px] text-zinc-400 font-extrabold uppercase tracking-tight">Get it on</span>
-                                <span className="block text-[14px] font-black text-white tracking-tight">Google Play</span>
-                            </div>
+                            <PlayStoreIcon className="h-5.5 w-5.5 transition-transform duration-300 group-hover:scale-110" />
+                            <span translate="no" className="text-[14px] font-black text-white tracking-tight">Google Play</span>
                         </a>
                     </div>
                 </div>

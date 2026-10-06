@@ -103,9 +103,9 @@ export default function ElectionSection({
   const sideList = articles.slice(1, 6);
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-4 mb-2 select-none" id="election-2027" suppressHydrationWarning>
+    <section className="mx-auto max-w-screen-xl px-4 mt-2.5 md:mt-3 mb-2 select-none" id="election-2027" suppressHydrationWarning>
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-2.5 md:mb-3">
         <div className="flex items-center gap-3">
           <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg leading-none tracking-tight flex items-center gap-2 shadow-xs">
             <Vote className="h-4.5 w-4.5" />
@@ -124,7 +124,7 @@ export default function ElectionSection({
       </div>
 
       {/* Grid Layout: Lead (7 cols) + Side List (5 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 md:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-6">
         {/* Lead Article (Left 7 Cols) */}
         <div className="lg:col-span-7">
           <Link
@@ -171,7 +171,7 @@ export default function ElectionSection({
               <Link
                 key={`mob-${art.id || idx}`}
                 href={`/news/${art.slug}`}
-                className="group flex flex-row items-center justify-between gap-3.5 py-3 px-1 hover:bg-muted/20 transition-all min-w-0"
+                className="group flex flex-row items-center justify-between gap-3.5 py-2 px-1 hover:bg-muted/20 transition-all min-w-0"
               >
                 {/* Content on Left */}
                 <div className="flex flex-col justify-center min-w-0 flex-1">
@@ -187,7 +187,7 @@ export default function ElectionSection({
                 </div>
 
                 {/* Thumbnail on Right */}
-                <div className="relative aspect-[16/10] w-[105px] h-[72px] shrink-0 rounded-lg overflow-hidden border border-border/10 bg-muted">
+                <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 rounded-lg overflow-hidden border border-border/10 bg-muted">
                   <ArticleMedia
                     src={art.image || (art as any).featuredImage || `/assets/demo/${(idx % 8) + 1}.jpg`}
                     alt={getArticleTitle(art, language)}

@@ -250,7 +250,7 @@ export default function EntertainTechLifeSection({
     c: ColourScheme,
     uid: string           // unique id so CSS selectors don't bleed between cards
   ) => (
-    <div className={`cat-card-${uid} bg-card border border-border/80 rounded-xl p-5 shadow-sm flex flex-col justify-between min-w-0`}>
+    <div className={`cat-card-${uid} bg-card border border-border/80 rounded-xl p-3.5 sm:p-5 shadow-sm flex flex-col justify-between min-w-0`}>
       <style>{`
         @keyframes ring-spin-${uid} {
           from { transform: rotate(0deg); }
@@ -357,7 +357,7 @@ export default function EntertainTechLifeSection({
         /* ── Article rows ─── */
         .cat-card-${uid} .cc-row {
           display: flex; gap: 0.75rem;
-          padding: 0.75rem 2px;
+          padding: 0.5rem 2px;
           border-radius: 8px;
           transition: background 0.2s ease;
         }
@@ -365,7 +365,7 @@ export default function EntertainTechLifeSection({
 
         .cat-card-${uid} .cc-thumb {
           position: relative;
-          height: 72px; width: 105px;
+          height: 86px; width: 128px;
           flex-shrink: 0;
           overflow: hidden;
           border-radius: 8px;
@@ -387,7 +387,7 @@ export default function EntertainTechLifeSection({
         /* ── CTA button ─── */
         .cat-card-${uid} .cc-btn {
           display: block; width: 100%;
-          margin-top: 1rem; text-align: center;
+          margin-top: 0.625rem; text-align: center;
           font-weight: 800; font-size: 14px;
           padding: 0.625rem 0;
           border-radius: 0.5rem;
@@ -472,7 +472,7 @@ export default function EntertainTechLifeSection({
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-2.5">
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-3 mb-6">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu'
             ? 'હેલ્થ   •   મનોરંજન   •   ટેકનોલોજી'
@@ -483,7 +483,7 @@ export default function EntertainTechLifeSection({
       </div>
 
       {/* 3-Column Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 md:gap-6">
         {categories.map((cat, catIdx) => {
           const scheme = getScheme(cat.slug);
           const uid = cat.slug?.replace(/[^a-z0-9]/g, '') || `col${catIdx}`;

@@ -285,11 +285,11 @@ export default function YouTubeShorts() {
   const displayList = shorts.length > 0 ? [...shorts, ...shorts] : [];
 
   return (
-    <section className="relative mx-auto max-w-screen-xl px-4 py-2 select-none">
-      <div className="w-full bg-[#B3121B] text-white rounded-2xl p-5 sm:p-6 md:p-7 border border-white/10 relative shadow-xl">
+    <section className="relative mx-auto max-w-screen-xl px-4 py-1.5 sm:py-2 select-none">
+      <div className="w-full bg-[#B3121B] text-white rounded-2xl p-3.5 sm:p-6 md:p-7 border border-white/10 relative shadow-xl">
         
         {/* Header Row */}
-        <div className="flex items-center justify-between mb-5 select-none">
+        <div className="flex items-center justify-between mb-3.5 sm:mb-5 select-none">
           <div className="flex items-center gap-2">
             <span className="bg-white/20 text-white font-black text-xs sm:text-sm px-3.5 py-1.5 rounded-md tracking-wide border border-white/25 shadow-sm uppercase flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-white animate-pulse" />
