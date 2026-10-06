@@ -316,7 +316,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={onClose}
-                    className="h-11 flex items-center justify-center text-center rounded-2xl border border-gray-400/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] px-2.5 text-[13px] font-bold text-gray-800 dark:text-gray-200 transition hover:border-[#B3121B]/40 hover:text-[#B3121B] active:scale-95 shadow-2xs"
+                    className="h-11 flex items-center justify-center text-center rounded-2xl border border-gray-400/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] px-2.5 text-[15.5px] font-extrabold text-gray-800 dark:text-gray-200 transition hover:border-[#B3121B]/40 hover:text-[#B3121B] active:scale-95 shadow-2xs"
                   >
                     <span className="truncate">{getCatName(cat)}</span>
                   </a>
@@ -329,7 +329,7 @@ export default function ApkDrawer({ isOpen, onClose }: ApkDrawerProps) {
                   href={cat.href}
                   prefetch={true}
                   onClick={onClose}
-                  className={`h-11 flex items-center justify-center text-center rounded-2xl border px-2.5 text-[13px] font-bold transition active:scale-95 shadow-2xs ${
+                  className={`h-11 flex items-center justify-center text-center rounded-2xl border px-2.5 text-[15.5px] font-extrabold transition active:scale-95 shadow-2xs ${
                     active
                       ? 'border-[#B3121B]/40 bg-[#FDF2F2] dark:bg-red-950/40 text-[#B3121B] font-extrabold gap-1.5'
                       : 'border-gray-400/90 dark:border-gray-800 bg-[#F4F4F6] dark:bg-[#222228] text-gray-800 dark:text-gray-200 hover:border-[#B3121B]/40 hover:text-[#B3121B]'

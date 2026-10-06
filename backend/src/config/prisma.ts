@@ -17,7 +17,7 @@ function createPrismaClient(): PrismaClient {
 
   // Priority: AIVEN_DATABASE_URL (if provided) or DATABASE_URL
   let rawUrl = process.env.AIVEN_DATABASE_URL || process.env.DATABASE_URL;
-  const dbUrl = rawUrl ? rawUrl.replace(/^["']|["']$/g, '').trim() : undefined;
+  let dbUrl = rawUrl ? rawUrl.replace(/^["']|["']$/g, '').trim() : undefined;
 
   if (dbUrl) {
     try {
@@ -27,6 +27,18 @@ function createPrismaClient(): PrismaClient {
         console.error('❌ [Render Config Error] DATABASE_URL is pointing to localhost (127.0.0.1:3306) on Render!');
         console.error('👉 Make sure you clicked "Save Changes" on the Render Environment tab, or check for a Secret File named .env');
       }
+
+      // Automatically ensure robust connection pooling configuration (prevents P2024 pool timeout)
+      if (!parsed.searchParams.has('connection_limit')) {
+        parsed.searchParams.set('connection_limit', '30');
+      }
+      if (!parsed.searchParams.has('pool_timeout')) {
+        parsed.searchParams.set('pool_timeout', '30');
+      }
+      if (!parsed.searchParams.has('connect_timeout')) {
+        parsed.searchParams.set('connect_timeout', '30');
+      }
+      dbUrl = parsed.toString();
     } catch {
       console.log('[Prisma] Initializing with custom DATABASE_URL.');
     }

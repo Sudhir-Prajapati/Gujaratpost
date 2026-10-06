@@ -25,6 +25,8 @@ import {
   searchCache,
   MAX_SEARCH_CACHE_ENTRIES,
   SEARCH_CACHE_TTL_MS,
+  categoryLookupCache,
+  CATEGORY_LOOKUP_TTL_MS,
   clearPublicRoutesCache,
 } from '../utils/publicCache.js';
 
@@ -62,11 +64,15 @@ function cacheResponse(ttlSeconds: number) {
       return res.status(200).json(cached.payload);
     }
 
-    // 2. Redis check
+    // 2. Redis check (fail-soft with 250ms race timeout so Redis hiccups never delay HTTP responses)
     const redisKey = `cache:public:${key}`;
     if (redisClient.isOpen) {
       try {
-        const fromRedis = await redisClient.get(redisKey);
+        const fromRedis = await Promise.race([
+          redisClient.get(redisKey),
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 250)),
+        ]).catch(() => null);
+
         if (fromRedis) {
           const parsed = JSON.parse(fromRedis);
           targetCache.set(key, { timestamp: now, payload: parsed });
@@ -361,57 +367,93 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       }
 
       if (slugLower === 'other-cities' || slugLower === 'othercities') {
-        const otherCitiesCats = await prisma.category.findMany({
-          where: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } },
-          select: { id: true },
-        });
+        const cacheEntry = categoryLookupCache.get('__other_cities__');
+        let otherCityCatIds: string[];
+        if (cacheEntry && Date.now() < cacheEntry.expiresAt) {
+          otherCityCatIds = cacheEntry.ids;
+        } else {
+          const otherCitiesCats = await withDbRetry(() =>
+            prisma.category.findMany({
+              where: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } },
+              select: { id: true },
+            })
+          );
+          otherCityCatIds = otherCitiesCats.map((c) => c.id);
+          categoryLookupCache.set('__other_cities__', {
+            ids: otherCityCatIds,
+            expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
+          });
+        }
+
         if (!where.AND) where.AND = [];
         where.AND.push({
           OR: [
-            { categoryId: { in: otherCitiesCats.map((c) => c.id) } },
+            { categoryId: { in: otherCityCatIds } },
             { location: { notIn: ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'] } },
           ],
         });
       } else {
-        // 1. Direct Category check (indexed lookup supporting aliases and combined slugs)
-        const matchingCategories = await prisma.category.findMany({
-          where: {
-            OR: [
-              { slug: slugLower },
-              { name: categorySlug },
-              { nameGu: categorySlug },
-              ...(slugLower === 'world' || slugLower === 'international'
-                ? [{ slug: 'world' }, { slug: 'international' }, { name: 'World' }, { name: 'International' }, { nameGu: 'વિશ્વ' }]
-                : []),
-              ...(slugLower === 'entertainment' || slugLower === 'entertainment-life-style'
-                ? [{ slug: 'entertainment' }, { slug: 'entertainment-life-style' }, { name: 'Entertainment' }]
-                : []),
-            ],
-          },
-          select: { id: true },
-        });
+        const cacheKey = `cat:${slugLower}`;
+        const cachedCat = categoryLookupCache.get(cacheKey);
+        let categoryIds: string[] | null = null;
 
-        if (matchingCategories.length > 0) {
-          where.categoryId = { in: matchingCategories.map((c) => c.id) };
+        if (cachedCat && Date.now() < cachedCat.expiresAt) {
+          categoryIds = cachedCat.ids;
+        } else {
+          // 1. Direct Category check (indexed lookup supporting aliases and combined slugs)
+          const matchingCategories = await withDbRetry(() =>
+            prisma.category.findMany({
+              where: {
+                OR: [
+                  { slug: slugLower },
+                  { name: categorySlug },
+                  { nameGu: categorySlug },
+                  ...(slugLower === 'world' || slugLower === 'international'
+                    ? [{ slug: 'world' }, { slug: 'international' }, { name: 'World' }, { name: 'International' }, { nameGu: 'વિશ્વ' }]
+                    : []),
+                  ...(slugLower === 'entertainment' || slugLower === 'entertainment-life-style'
+                    ? [{ slug: 'entertainment' }, { slug: 'entertainment-life-style' }, { name: 'Entertainment' }]
+                    : []),
+                ],
+              },
+              select: { id: true },
+            })
+          );
+
+          if (matchingCategories.length > 0) {
+            categoryIds = matchingCategories.map((c) => c.id);
+            categoryLookupCache.set(cacheKey, {
+              ids: categoryIds,
+              expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
+            });
+          }
+        }
+
+        if (categoryIds && categoryIds.length > 0) {
+          where.categoryId = { in: categoryIds };
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
-          const tag = await prisma.tag.findFirst({
-            where: {
-              OR: [
-                { slug: slugLower },
-                { name: categorySlug },
-                { nameGu: categorySlug },
-              ],
-            },
-            select: { id: true },
-          });
+          const tag = await withDbRetry(() =>
+            prisma.tag.findFirst({
+              where: {
+                OR: [
+                  { slug: slugLower },
+                  { name: categorySlug },
+                  { nameGu: categorySlug },
+                ],
+              },
+              select: { id: true },
+            })
+          );
 
           if (tag) {
-            const postTags = await prisma.postTag.findMany({
-              where: { tagId: tag.id },
-              select: { postId: true },
-              take: 200,
-            });
+            const postTags = await withDbRetry(() =>
+              prisma.postTag.findMany({
+                where: { tagId: tag.id },
+                select: { postId: true },
+                take: 200,
+              })
+            );
             where.id = { in: postTags.map((pt) => pt.postId) };
           } else {
             // 3. Fallback to location match
@@ -738,10 +780,12 @@ router.get('/categories', cacheResponse(60), async (req, res, next) => {
     if (showInHeader) orderBy = [{ headerOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
     else if (showInHome) orderBy = [{ homeOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
 
-    const allCategories = await prisma.category.findMany({
-      where,
-      orderBy,
-    });
+    const allCategories = await withDbRetry(() =>
+      prisma.category.findMany({
+        where,
+        orderBy,
+      })
+    );
 
     // Apply headerType filter in JavaScript
     const categories = allCategories.filter((c: any) => {

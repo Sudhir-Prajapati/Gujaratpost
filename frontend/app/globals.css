@@ -3006,5 +3006,23 @@ div[class*="from-red-50"]:has(.gp-pdf-card-v2) {
   box-shadow: 0 6px 20px rgba(179, 18, 27, 0.68), 0 0 0 3px rgba(179, 18, 27, 0.3) !important;
 }
 
+/* DistrictBar Gujarat Map Logo constraint — prevents vertical overflow and overlaps */
+.district-gujarat-logo {
+  height: 24px !important;
+  max-height: 24px !important;
+  width: auto !important;
+  max-width: 36px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+@media (min-width: 768px) {
+  .district-gujarat-logo {
+    height: 30px !important;
+    max-height: 30px !important;
+    max-width: 44px !important;
+  }
+}
+
 
 

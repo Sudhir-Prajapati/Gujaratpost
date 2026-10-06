@@ -7,11 +7,13 @@ const isTls = redisUrl.startsWith('rediss://');
 
 export const redisClient = createClient({
   url: redisUrl,
+  disableOfflineQueue: true, // Never hang or stall requests if Redis is offline or reconnecting
   socket: {
     tls: isTls,
     rejectUnauthorized: false,
     keepAlive: 10000,
-    connectTimeout: 3000,
+    connectTimeout: 2500,
+    timeout: 2500,
     reconnectStrategy: (retries) => {
       // Stop reconnecting after 3 failed attempts to avoid hanging or infinite retry loops
       if (retries >= 3) {

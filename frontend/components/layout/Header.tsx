@@ -862,16 +862,16 @@ export default function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
+                      className={`flex min-h-[44px] items-center gap-2 rounded-xl border px-3 py-2 text-[15.5px] sm:text-[16.5px] font-bold transition ${active
                         ? 'border-accent/30 bg-accent/8 text-accent font-extrabold'
                         : 'border-border bg-muted/60 text-foreground hover:border-accent/25 hover:text-accent'
                         }`}
                       aria-current={active ? 'page' : undefined}
                     >
                       {active && (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true" />
                       )}
-                      <span className="truncate">{getNavLabel(link)}</span>
+                      <span className="truncate font-bold tracking-tight">{getNavLabel(link)}</span>
                     </a>
                   );
                 })}

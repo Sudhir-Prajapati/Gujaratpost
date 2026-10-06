@@ -77,27 +77,26 @@ export default function DistrictBar() {
         {/* Gujarat Map Logo and vertical separator */}
         <Link
           href="/category/gujarat"
-          className="flex items-center shrink-0 ml-1 sm:ml-2.5 pr-0.5 border-r border-border/60 h-10 md:h-11"
+          className="flex items-center justify-center shrink-0 ml-1 sm:ml-2.5 pr-1.5 sm:pr-2 border-r border-border/60 h-8 md:h-9 self-center overflow-hidden"
           title={language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'गुजरात' : 'Gujarat'}
         >
           <img
-            src="/assets/GujaratLogo.png?v=2"
+            src="/assets/GujaratLogo.png"
             alt="Gujarat Logo"
-            style={{ height: '24px', width: 'auto', display: 'block' }}
-            className="object-contain transform transition-transform duration-300 hover:scale-110 cursor-pointer select-none md:h-[30px]"
+            width={28} height={24} style={{ height: "24px", maxHeight: "24px", width: "auto", maxWidth: "36px", objectFit: "contain" }} className="district-gujarat-logo h-6 md:h-7.5 max-h-6 md:max-h-7.5 w-auto object-contain transition-transform duration-200 hover:scale-105 cursor-pointer select-none shrink-0"
           />
         </Link>
 
         {/* Scrollable list of Districts - Ahmedabad starts immediately with minimal spacing */}
-        <div className="flex-1 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-3 sm:gap-4 md:gap-5 py-0 pl-0.5 pr-2 md:pr-4">
+        <div className="flex-1 overflow-x-auto scrollbar-none overscroll-x-contain touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex items-center gap-4 sm:gap-4.5 md:gap-5 py-0 pl-1 pr-3 md:pr-4">
             {displayList.map((item) => {
               const active = isActive(item.slug);
               return (
                 <Link
                   key={`${item.slug}-${language}`}
                   href={`/category/${item.slug}`}
-                  className={`relative flex h-10 md:h-11 items-center whitespace-nowrap text-[13px] md:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'
+                  className={`relative flex shrink-0 h-10 md:h-11 items-center whitespace-nowrap text-[15.5px] sm:text-[16px] md:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'
                     }`}
                   style={{ fontWeight: 800 }}
                   aria-current={active ? 'page' : undefined}
