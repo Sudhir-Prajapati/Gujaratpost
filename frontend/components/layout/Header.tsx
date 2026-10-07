@@ -1024,7 +1024,7 @@ export default function Header() {
 
         {/* District Bar (Hidden on mobile when mobile menu drawer is open) */}
         <div className={menuOpen ? 'max-md:hidden' : ''}>
-          <DistrictBar navLinks={navLinks} />
+          <DistrictBar navLinks={navLinks} otherLinks={otherLinks} />
         </div>
       </div>
 

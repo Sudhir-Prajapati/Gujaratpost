@@ -143,7 +143,7 @@ export default function BreakingTicker() {
 
   return (
     <div
-      className="flex h-8 sm:h-11 md:h-11.5 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-1.5 sm:mb-2.5"
+      className="flex h-8 sm:h-11 md:h-11.5 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-3 sm:mb-3.5 md:mb-4"
       role="region"
       aria-label="Breaking News Ticker"
     >

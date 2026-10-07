@@ -412,7 +412,7 @@ function HeroStorySlider({
       {/* ─── MOBILE VIEW (< md): Header First, then Image, then Category & Share (matches Image 2) ─── */}
       <div className="flex md:hidden flex-col w-full">
         {/* 1. Header on Top: LIVE badge inline with Headline */}
-        <Link href={`/news/${current.slug}`} className="group block mb-2">
+        <Link href={`/news/${current.slug}`} className="group block mb-3">
           <h1 className="text-foreground font-black text-[18px] sm:text-[20px] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
             <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
               LIVE
@@ -468,7 +468,7 @@ function HeroStorySlider({
         </div>
 
         {/* 3. Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-        <div className="flex items-center justify-between mt-2.5 pt-0.5">
+        <div className="flex items-center justify-between mt-3.5 mb-2 pt-0.5">
           <Link
             href={`/category/${(current as any).category?.slug || (current as any).categorySlug || 'news'}`}
             className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
@@ -1356,10 +1356,10 @@ export default function HeroSection({
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6 items-start">
 
         {/* Left Content Side */}
-        <div className="flex flex-col gap-3 md:gap-5">
+        <div className="flex flex-col gap-4 md:gap-5">
 
           {/* Top Row: Hero Story & Middle Column */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-3.5 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-3.5 items-stretch">
 
             {/* Hero Story Column -- Top 3 News Slider */}
             <HeroStorySlider
@@ -1422,7 +1422,7 @@ export default function HeroSection({
                       return (
                         <div
                           key={story.id || story.slug || idx}
-                          className="group flex flex-col py-3 first:pt-0 last:pb-0 min-w-0"
+                          className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0"
                         >
                           {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
                           <Link
@@ -1454,7 +1454,7 @@ export default function HeroSection({
                           </Link>
 
                           {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-                          <div className="flex items-center justify-between mt-2.5 pt-0.5">
+                          <div className="flex items-center justify-between mt-3.5 pt-0.5">
                             <Link
                               href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
                               className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
@@ -1506,23 +1506,23 @@ export default function HeroSection({
             if (cards.length === 0) return null;
 
             return (
-              <div className="border-t border-border/80 pt-3 md:pt-4">
+              <div className="border-t border-border/80 pt-4 md:pt-4">
                 {/* ─── MOBILE VIEW (< md): 1 Lead Featured Story with Big Image + 2 Compact Boxed Cards ─── */}
                 <div className="md:hidden flex flex-col">
                   {/* 1. Lead Featured Story */}
                   {cards[0] && (
                     <Link
                       href={`/news/${cards[0].slug}`}
-                      className="group flex flex-col pb-2.5 mb-2 border-b border-border/40"
+                      className="group flex flex-col pb-3.5 mb-3 border-b border-border/40"
                     >
-                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
+                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2 shadow-2xs">
                         <ArticleMedia
                           src={cards[0].image || (cards[0] as any).featuredImage || getArticleImage(cards[0])}
                           alt={cards[0].title || ''}
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       </div>
-                      <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-0.5 select-none leading-none">
+                      <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
                         {getCategoryLabel(cards[0], language)}
                       </span>
                       <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
@@ -1533,7 +1533,7 @@ export default function HeroSection({
 
                   {/* 2. Next 2 Compact Boxed Cards */}
                   {cards.length > 1 && (
-                    <div className="flex flex-col gap-2 mt-1">
+                    <div className="flex flex-col gap-2.5 mt-1.5">
                       {cards.slice(1, 3).map((art, idx) => (
                         <Link
                           key={art.id || idx}
