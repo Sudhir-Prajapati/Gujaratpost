@@ -812,7 +812,7 @@ export default function Header() {
                 <a
                   href="/epaper"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-accent py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm hover:bg-accent-hover active:scale-95 transition whitespace-nowrap"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap"
                 >
                   <BookOpen className="h-4 w-4 shrink-0" />
                   <span className="font-black">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
@@ -862,16 +862,16 @@ export default function Header() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
-                      className={`flex min-h-[44px] items-center gap-2 rounded-xl border px-3 py-2 text-[15.5px] sm:text-[16.5px] font-bold transition ${active
+                      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
                         ? 'border-accent/30 bg-accent/8 text-accent font-extrabold'
                         : 'border-border bg-muted/60 text-foreground hover:border-accent/25 hover:text-accent'
                         }`}
                       aria-current={active ? 'page' : undefined}
                     >
                       {active && (
-                        <span className="h-2 w-2 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
                       )}
-                      <span className="truncate font-bold tracking-tight">{getNavLabel(link)}</span>
+                      <span className="truncate">{getNavLabel(link)}</span>
                     </a>
                   );
                 })}
@@ -1024,7 +1024,7 @@ export default function Header() {
 
         {/* District Bar (Hidden on mobile when mobile menu drawer is open) */}
         <div className={menuOpen ? 'max-md:hidden' : ''}>
-          <DistrictBar />
+          <DistrictBar navLinks={navLinks} />
         </div>
       </div>
 

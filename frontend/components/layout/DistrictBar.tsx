@@ -8,13 +8,13 @@ import { useApp } from '@/components/AppProvider';
 const DISTRICTS = [
   { gu: 'અમદાવાદ', hi: 'अहमदाबाद', en: 'Ahmedabad', slug: 'ahmedabad' },
   { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar', slug: 'gandhinagar' },
-  { gu: 'સુરત', hi: 'સુરત', en: 'Surat', slug: 'surat' },
+  { gu: 'સુરત', hi: 'सूरत', en: 'Surat', slug: 'surat' },
   { gu: 'વડોદરા', hi: 'वडोदरा', en: 'Vadodara', slug: 'vadodara' },
-  { gu: 'રાજકોટ', hi: 'રાજકોટ', en: 'Rajkot', slug: 'rajkot' },
+  { gu: 'રાજકોટ', hi: 'राजकोट', en: 'Rajkot', slug: 'rajkot' },
   { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities', slug: 'other-cities' }
 ];
 
-export default function DistrictBar() {
+export default function DistrictBar({ navLinks = [] }: { navLinks?: { label: string; labelGu?: string; labelHi?: string; href: string }[] }) {
   const { language } = useApp();
   const pathname = usePathname();
   const [gujaratCategories, setGujaratCategories] = useState<any[]>([]);
@@ -25,7 +25,7 @@ export default function DistrictBar() {
         getPublicCategories({ showInHeader: true, headerType: 'GUJARAT' })
           .then((cats) => {
             if (cats && Array.isArray(cats) && cats.length > 0) {
-              setGujaratCategories(cats.sort((a, b) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0)));
+              setGujaratCategories(cats.sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0)));
             }
           })
           .catch(() => {});
@@ -41,13 +41,17 @@ export default function DistrictBar() {
     };
   }, []);
 
-  const isActive = (slug: string) => {
-    return pathname === `/category/${slug}` || pathname.startsWith(`/category/${slug}/`);
+  const isActive = (href: string) => {
+    if (href === '/') return pathname === '/';
+    if (!href.startsWith('/')) {
+      return pathname === `/category/${href}` || pathname.startsWith(`/category/${href}/`);
+    }
+    return pathname === href || pathname.startsWith(href + '/') || pathname.startsWith(href + '?');
   };
 
   const displayList = useMemo(() => {
     const rawList = gujaratCategories && gujaratCategories.length > 0
-      ? gujaratCategories.map((cat) => {
+      ? gujaratCategories.map((cat: any) => {
         const slug = (cat.slug || '').toLowerCase();
         const distMatch = DISTRICTS.find((d) => d.slug === slug);
         let label = cat.name;
@@ -63,13 +67,18 @@ export default function DistrictBar() {
         label: language === 'hi' ? dist.hi : language === 'gu' ? dist.gu : dist.en,
       }));
 
-    // Ensure Ahmedabad starts first right after the Gujarat logo
     return [...rawList].sort((a, b) => {
       if (a.slug === 'ahmedabad') return -1;
       if (b.slug === 'ahmedabad') return 1;
       return 0;
     });
   }, [gujaratCategories, language]);
+
+  const getNavLabel = (link: { label: string; labelGu?: string; labelHi?: string; href: string }) => {
+    if (language === 'hi') return link.labelHi || link.label;
+    if (language === 'gu') return link.labelGu || link.label;
+    return link.label;
+  };
 
   return (
     <div className="w-full border-t border-border/40 bg-card/95 backdrop-blur-md select-none">
@@ -83,34 +92,57 @@ export default function DistrictBar() {
           <img
             src="/assets/GujaratLogo.png"
             alt="Gujarat Logo"
-            width={28} height={24} style={{ height: "24px", maxHeight: "24px", width: "auto", maxWidth: "36px", objectFit: "contain" }} className="district-gujarat-logo h-6 md:h-7.5 max-h-6 md:max-h-7.5 w-auto object-contain transition-transform duration-200 hover:scale-105 cursor-pointer select-none shrink-0"
+            width={28} height={24} style={{ height: '24px', maxHeight: '24px', width: 'auto', maxWidth: '36px', objectFit: 'contain' }} className="district-gujarat-logo h-6 md:h-7.5 max-h-6 md:max-h-7.5 w-auto object-contain transition-transform duration-200 hover:scale-105 cursor-pointer select-none shrink-0"
           />
         </Link>
 
-        {/* Scrollable list of Districts - Ahmedabad starts immediately with minimal spacing */}
+        {/* Scrollable list - cities first, then nav links on mobile */}
         <div className="flex-1 overflow-x-auto scrollbar-none overscroll-x-contain touch-pan-x" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div className="flex items-center gap-4 sm:gap-4.5 md:gap-5 py-0 pl-1 pr-3 md:pr-4">
+            {/* City/District links */}
             {displayList.map((item) => {
               const active = isActive(item.slug);
               return (
                 <Link
                   key={`${item.slug}-${language}`}
                   href={`/category/${item.slug}`}
-                  className={`relative flex shrink-0 h-10 md:h-11 items-center whitespace-nowrap text-[15.5px] sm:text-[16px] md:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'
-                    }`}
+                  className={`relative flex shrink-0 h-10 md:h-11 items-center whitespace-nowrap text-[15.5px] sm:text-[16px] md:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'}`}
                   style={{ fontWeight: 800 }}
                   aria-current={active ? 'page' : undefined}
                 >
                   <span>{item.label}</span>
                   {active && (
-                    <span
-                      className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent"
-                      aria-hidden="true"
-                    />
+                    <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
                   )}
                 </Link>
               );
             })}
+
+            {/* Mobile-only: separator + nav category links */}
+            {navLinks.length > 0 && (
+              <>
+                <span className="md:hidden shrink-0 w-px h-5 bg-border/70 mx-0.5" aria-hidden="true" />
+                {navLinks
+                  .filter((link) => link.href !== '/')
+                  .map((link) => {
+                    const active = isActive(link.href);
+                    return (
+                      <Link
+                        key={`nav-${link.href}-${language}`}
+                        href={link.href}
+                        className={`md:hidden relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] sm:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'}`}
+                        style={{ fontWeight: 800 }}
+                        aria-current={active ? 'page' : undefined}
+                      >
+                        <span>{getNavLabel(link)}</span>
+                        {active && (
+                          <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
+                        )}
+                      </Link>
+                    );
+                  })}
+              </>
+            )}
           </div>
         </div>
       </div>

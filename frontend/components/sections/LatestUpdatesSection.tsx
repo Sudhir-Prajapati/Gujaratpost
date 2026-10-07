@@ -204,7 +204,7 @@ export default function LatestUpdatesSection({
               >
                 {idx === 0 && <div className="absolute left-[-14px] top-[18px] bottom-0 w-[1.5px] bg-[#d6c7b5]/85" />}
                 {idx > 0 && idx < 4 && <div className="absolute left-[-14px] top-0 bottom-0 w-[1.5px] bg-[#d6c7b5]/85" />}
-                {idx === 4 && <div className="absolute left-[-14px] top-0 h-[18px] w-[1.5px] bg-[#d6c7b5]/85" />}
+                {idx === 4 && <div className="absolute left-[-14px] top-0 bottom-0 md:bottom-auto md:h-[18px] w-[1.5px] bg-[#d6c7b5]/85" />}
 
                 <div
                   className={`absolute left-[-19.5px] top-[18px] z-10 w-[12px] h-[12px] rounded-full transition-transform duration-200 group-hover:scale-110 ${
@@ -222,7 +222,7 @@ export default function LatestUpdatesSection({
                     <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
-                <div className="relative h-[58px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <div className="relative h-[76px] w-[114px] sm:h-[82px] sm:w-[122px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
                   <ArticleMedia
                     src={mediaSrc}
                     alt={getArticleTitle(art, language)}
@@ -238,7 +238,7 @@ export default function LatestUpdatesSection({
         <div className="relative pl-5 flex flex-col">
           {latestNews.slice(5, 10).map((art, idx) => {
             const locationTag = getCategoryLabel(art, language);
-            const isRedBullet = idx % 2 === 0;
+            const isRedBullet = idx % 2 === 1;
             const mediaSrc = art.image || (art as any).featuredImage || getArticleImage(art);
 
             return (
@@ -247,7 +247,7 @@ export default function LatestUpdatesSection({
                 href={`/news/${art.slug}`}
                 className="group relative flex items-start justify-between gap-3 py-3 border-b border-border/30 last:border-b-0 hover:bg-muted/10 transition-colors duration-150 rounded-sm"
               >
-                {idx === 0 && <div className="absolute left-[-14px] top-[18px] bottom-0 w-[1.5px] bg-[#d6c7b5]/85" />}
+                {idx === 0 && <div className="absolute left-[-14px] top-0 md:top-[18px] bottom-0 w-[1.5px] bg-[#d6c7b5]/85" />}
                 {idx > 0 && idx < 4 && <div className="absolute left-[-14px] top-0 bottom-0 w-[1.5px] bg-[#d6c7b5]/85" />}
                 {idx === 4 && <div className="absolute left-[-14px] top-0 h-[18px] w-[1.5px] bg-[#d6c7b5]/85" />}
 
