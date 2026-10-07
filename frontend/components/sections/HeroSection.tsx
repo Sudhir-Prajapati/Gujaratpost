@@ -43,6 +43,7 @@ import { useIsApk } from '@/lib/useIsApk';
 import ApkHomeFeed from '@/components/apk/ApkHomeFeed';
 import ApkHomeSkeleton from '@/components/apk/ApkHomeSkeleton';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 
 import VideoDesk from './home/VideoDesk';
 import CityHyperlocalSection from './home/CityHyperlocalSection';
@@ -396,13 +397,113 @@ function HeroStorySlider({
     setSlideIndex(idx);
   };
 
+  const rawTitle = (language === 'hi' ? (current as any).titleHi : language === 'gu' ? ((current as any).titleGu || current.title) : (current as any).titleEn || current.title) || current.title || '';
+  const colonIdx = rawTitle.indexOf(':');
+  const hasPrefix = colonIdx > 3 && colonIdx <= 48;
+  const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
+  const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
+
   return (
     <div
       className="flex flex-col gap-3 group/hero-slider relative h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link href={`/news/${current.slug}`} className="group flex flex-col w-full">
+      {/* ─── MOBILE VIEW (< md): Header First, then Image, then Category & Share (matches Image 2) ─── */}
+      <div className="flex md:hidden flex-col w-full">
+        {/* 1. Header on Top: LIVE badge inline with Headline */}
+        <Link href={`/news/${current.slug}`} className="group block mb-2">
+          <h1 className="text-foreground font-black text-[18px] sm:text-[20px] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
+            <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
+              LIVE
+            </span>
+            {hasPrefix ? (
+              <>
+                <span className="text-[#B3121B] font-black mr-1">{prefixText}</span>
+                <span>{restText}</span>
+              </>
+            ) : (
+              <AutoArticleTitle article={current} language={language} />
+            )}
+          </h1>
+        </Link>
+
+        {/* 2. Image in the Middle with Slider Controls */}
+        <div className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[16/10] bg-muted">
+          <Link href={`/news/${current.slug}`} className="block w-full h-full">
+            <ArticleMedia
+              key={`mob-${current.id || slideIndex}`}
+              src={current.image || (current as any).featuredImage}
+              alt={current.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+          </Link>
+
+          {/* Controls (if total > 1) */}
+          {total > 1 && (
+            <>
+              {/* Dots Progress Indicator */}
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/55 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 pointer-events-auto">
+                {articles.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={(e) => handleDotClick(idx, e)}
+                    aria-label={`Go to slide ${idx + 1}`}
+                    className={`transition-all duration-300 rounded-full cursor-pointer ${
+                      idx === slideIndex
+                        ? 'w-5 h-1.5 bg-[#B3121B]'
+                        : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
+                    }`}
+                  />
+                ))}
+              </div>
+
+              {/* Slide Counter Badge */}
+              <div className="absolute top-2.5 right-2.5 z-20 bg-black/70 backdrop-blur-md text-white text-[10px] font-extrabold px-2 py-0.5 rounded-md shadow-md border border-white/15 tracking-wider">
+                {slideIndex + 1} / {total}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* 3. Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
+        <div className="flex items-center justify-between mt-2.5 pt-0.5">
+          <Link
+            href={`/category/${(current as any).category?.slug || (current as any).categorySlug || 'news'}`}
+            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
+          >
+            <span>{getCategoryLabel(current, language)}</span>
+            <ChevronRight className="w-3 h-3 text-muted-foreground" />
+          </Link>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const title = getArticleTitle(current, language);
+              const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${current.slug}`;
+              const text = `${title}\n\n${url}`;
+              if (typeof navigator !== 'undefined' && navigator.share) {
+                navigator.share({ title, url, text }).catch(() => {
+                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                });
+              } else {
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+              }
+            }}
+            className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
+            aria-label="Share"
+          >
+            <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
+            <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ─── DESKTOP VIEW (>= md): 100% Untouched Existing Layout (Image First, Excerpt, Author) ─── */}
+      <Link href={`/news/${current.slug}`} className="group hidden md:flex flex-col w-full">
         {/* Hero image with slider controls */}
         <div className="relative w-full overflow-hidden rounded-sm shadow-sm aspect-[16/9] md:aspect-[3/2] bg-muted">
           <ArticleMedia
@@ -1309,31 +1410,85 @@ export default function HeroSection({
                     ))}
                   </div>
 
-                  {/* ─── MOBILE VIEW (< md): Clean List with Image Thumbnails ─── */}
-                  <div className="flex flex-col gap-2.5 md:hidden">
-                    {afterTop3News.map((story, idx) => (
-                      <Link
-                        key={story.id || story.slug || idx}
-                        href={`/news/${story.slug}`}
-                        className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-                      >
-                        <div className="flex flex-col flex-1 min-w-0 pr-1">
-                          <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none">
-                            {getCategoryLabel(story, language)}
-                          </span>
-                          <h3 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                            <AutoArticleTitle article={story} language={language} />
-                          </h3>
+                  {/* ─── MOBILE VIEW (< md): Divya Bhaskar / Gujarat Samachar style matching Image 2 ─── */}
+                  <div className="flex flex-col divide-y divide-border/60 md:hidden">
+                    {afterTop3News.slice(0, 6).map((story, idx) => {
+                      const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
+                      const colonIdx = rawTitle.indexOf(':');
+                      const hasPrefix = colonIdx > 3 && colonIdx <= 48;
+                      const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
+                      const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
+
+                      return (
+                        <div
+                          key={story.id || story.slug || idx}
+                          className="group flex flex-col py-3 first:pt-0 last:pb-0 min-w-0"
+                        >
+                          {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
+                          <Link
+                            href={`/news/${story.slug}`}
+                            className="flex flex-row items-start justify-between gap-3 min-w-0"
+                          >
+                            <div className="flex-1 min-w-0 pr-1">
+                              <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                                {hasPrefix ? (
+                                  <>
+                                    <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
+                                      {prefixText}
+                                    </span>
+                                    <span>{restText}</span>
+                                  </>
+                                ) : (
+                                  <AutoArticleTitle article={story} language={language} />
+                                )}
+                              </h3>
+                            </div>
+
+                            <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                              <ArticleMedia
+                                src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                                alt={story.title || ''}
+                                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                              />
+                            </div>
+                          </Link>
+
+                          {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
+                          <div className="flex items-center justify-between mt-2.5 pt-0.5">
+                            <Link
+                              href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
+                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
+                            >
+                              <span>{getCategoryLabel(story, language)}</span>
+                              <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                            </Link>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const title = getArticleTitle(story, language);
+                                const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
+                                const text = `${title}\n\n${url}`;
+                                if (typeof navigator !== 'undefined' && navigator.share) {
+                                  navigator.share({ title, url, text }).catch(() => {
+                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                  });
+                                } else {
+                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
+                              aria-label="Share"
+                            >
+                              <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
+                              <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'शेयर' : 'Share'}</span>
+                            </button>
+                          </div>
                         </div>
-                        <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                          <ArticleMedia
-                            src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                            alt={story.title || ''}
-                            className="transition-transform duration-300 group-hover:scale-[1.03]"
-                          />
-                        </div>
-                      </Link>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               );
@@ -1351,34 +1506,93 @@ export default function HeroSection({
             if (cards.length === 0) return null;
 
             return (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6 border-t border-border/80 pt-3 md:pt-4">
-                {cards.slice(0, 3).map((art, idx) => {
-                  if (!art) return null;
-                  return (
+              <div className="border-t border-border/80 pt-3 md:pt-4">
+                {/* ─── MOBILE VIEW (< md): 1 Lead Featured Story with Big Image + 2 Compact Boxed Cards ─── */}
+                <div className="md:hidden flex flex-col">
+                  {/* 1. Lead Featured Story */}
+                  {cards[0] && (
                     <Link
-                      key={art.id || idx}
-                      href={`/news/${art.slug}`}
-                      className="group flex flex-row md:flex-col items-center md:items-start gap-3 md:gap-0 min-w-0 pb-2.5 md:pb-0 border-b md:border-b-0 border-border/30 last:border-b-0"
+                      href={`/news/${cards[0].slug}`}
+                      className="group flex flex-col pb-2.5 mb-2 border-b border-border/40"
                     >
-                      <div className="relative aspect-[16/10] w-[128px] md:w-full h-[86px] md:h-auto shrink-0 overflow-hidden rounded-lg md:rounded-sm border border-border/10 bg-muted mb-0 md:mb-2.5">
+                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
                         <ArticleMedia
-                          src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                          alt={art.title || ''}
-                          className="transition-transform duration-300 group-hover:scale-105"
+                          src={cards[0].image || (cards[0] as any).featuredImage || getArticleImage(cards[0])}
+                          alt={cards[0].title || ''}
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                       </div>
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[#B3121B] font-extrabold text-[11.5px] md:text-[13px] mb-0.5 md:mb-1 select-none uppercase tracking-wide">
-                          {getCategoryLabel(art, language)}
-                        </span>
-                        <h3 className="text-[16px] md:text-[14.5px] font-extrabold md:font-black leading-[1.32] md:leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3 md:line-clamp-2">
-                          <AutoArticleTitle article={art} language={language} />
-                        </h3>
-
-                      </div>
+                      <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-0.5 select-none leading-none">
+                        {getCategoryLabel(cards[0], language)}
+                      </span>
+                      <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                        <AutoArticleTitle article={cards[0]} language={language} />
+                      </h3>
                     </Link>
-                  );
-                })}
+                  )}
+
+                  {/* 2. Next 2 Compact Boxed Cards */}
+                  {cards.length > 1 && (
+                    <div className="flex flex-col gap-2 mt-1">
+                      {cards.slice(1, 3).map((art, idx) => (
+                        <Link
+                          key={art.id || idx}
+                          href={`/news/${art.slug}`}
+                          className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
+                        >
+                          {/* Title & Metadata on the left */}
+                          <div className="flex flex-col min-w-0 flex-1 pr-1">
+                            <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
+                              {getCategoryLabel(art, language)}
+                            </span>
+                            <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                              <AutoArticleTitle article={art} language={language} />
+                            </h4>
+                          </div>
+
+                          {/* Thumbnail on the right */}
+                          <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                            <ArticleMedia
+                              src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                              alt={art.title || ''}
+                              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                            />
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* ─── DESKTOP VIEW (>= md): 3-Column Image Cards Grid ─── */}
+                <div className="hidden md:grid md:grid-cols-3 gap-6">
+                  {cards.slice(0, 3).map((art, idx) => {
+                    if (!art) return null;
+                    return (
+                      <Link
+                        key={art.id || idx}
+                        href={`/news/${art.slug}`}
+                        className="group flex flex-col items-start gap-0 min-w-0"
+                      >
+                        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                          <ArticleMedia
+                            src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                            alt={art.title || ''}
+                            className="transition-transform duration-300 group-hover:scale-105"
+                          />
+                        </div>
+                        <div className="flex flex-col flex-1 min-w-0">
+                          <span className="text-[#B3121B] font-extrabold text-[13px] mb-1 select-none uppercase tracking-wide">
+                            {getCategoryLabel(art, language)}
+                          </span>
+                          <h3 className="text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                            <AutoArticleTitle article={art} language={language} />
+                          </h3>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             );
           })()}
