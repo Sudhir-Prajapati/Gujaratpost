@@ -196,7 +196,14 @@ const mockWorldCards = [
 /* --- World Section ("વિશ્વ" Zone) ----------------------------- */
 export default function WorldSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
   const initialWorld = useMemo(() => {
-    return (initialArticles || []).filter(isWorldArticle);
+    return (initialArticles || [])
+      .filter(isWorldArticle)
+      .sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+      });
   }, [initialArticles]);
 
   const [dbWorldArticles, setDbWorldArticles] = useState<Article[]>(initialWorld);
@@ -205,7 +212,13 @@ export default function WorldSection({ language, initialArticles }: { language: 
   useEffect(() => {
     const preFetched = (initialArticles || []).filter(isWorldArticle);
     if (preFetched.length >= 5) {
-      setDbWorldArticles(preFetched.slice(0, 10));
+      const sortedPrefetched = [...preFetched].sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+      });
+      setDbWorldArticles(sortedPrefetched.slice(0, 10));
       setLoading(false);
       return;
     }
@@ -225,11 +238,12 @@ export default function WorldSection({ language, initialArticles }: { language: 
         seen.add(a.id);
         return true;
       });
-      unique.sort(
-        (a, b) =>
-          new Date(b.publishedAt || (b as any).createdAt || 0).getTime() -
-          new Date(a.publishedAt || (a as any).createdAt || 0).getTime()
-      );
+      unique.sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+      });
 
       if (unique.length > 0) {
         setDbWorldArticles(unique.slice(0, 10));

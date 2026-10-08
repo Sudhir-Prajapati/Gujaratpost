@@ -85,9 +85,21 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         const combined = [...factCheckRes.articles, ...valid];
         const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
         setTrending(sortFactCheckLatest(unique).slice(0, 10));
-      } else if (valid.length > 0) {
-        setTrending(sortFactCheckLatest(valid).slice(0, 10));
+      } else {
+        getPublicArticles({ categorySlug: 'factcheck', limit: 10, sort: 'latest' }).then((res2) => {
+          if (res2 && res2.articles && res2.articles.length > 0) {
+            const combined = [...res2.articles, ...valid];
+            const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+            setTrending(sortFactCheckLatest(unique).slice(0, 10));
+          } else if (valid.length > 0) {
+            setTrending(sortFactCheckLatest(valid).slice(0, 10));
+          }
+        }).catch(() => {
+          if (valid.length > 0) setTrending(sortFactCheckLatest(valid).slice(0, 10));
+        });
       }
+    }).catch(() => {
+      if (valid.length > 0) setTrending(sortFactCheckLatest(valid).slice(0, 10));
     });
   }, [initialArticles]);
 

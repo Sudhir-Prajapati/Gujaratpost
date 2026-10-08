@@ -33,11 +33,19 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
 const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: string }) {
   const bodyRef = useRef<HTMLDivElement>(null);
 
+  const cleanHtml = useMemo(() => {
+    return (html || '')
+      .replace(/\\r\\n/g, '\n')
+      .replace(/\\r/g, '')
+      .replace(/\\n/g, '\n')
+      .replace(/\\t/g, ' ');
+  }, [html]);
+
   useEffect(() => {
     if (bodyRef.current) {
-      bodyRef.current.innerHTML = html;
+      bodyRef.current.innerHTML = cleanHtml;
     }
-  }, [html]);
+  }, [cleanHtml]);
 
   // Both SSR and client initial render produce identical empty <div>
   // innerHTML is set imperatively after mount via ref â€” no hydration mismatch
@@ -313,7 +321,12 @@ function stripArticleUtilityLines(rawHtml: string): string {
 }
 
 function normalizeArticleMarkdown(rawHtml: string): string {
-  return stripArticleUtilityLines(rawHtml)
+  const clean = (rawHtml || '')
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\r/g, '')
+    .replace(/\\n/g, '\n')
+    .replace(/\\t/g, ' ');
+  return stripArticleUtilityLines(clean)
     .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
     .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
     .replace(/^#\s+(.+)$/gm, '<h2>$1</h2>');
@@ -377,7 +390,7 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
         const before = currentBody.substring(0, idx).trim();
         if (before) {
           before.split(/\n+/).forEach((line) => {
-            const lTrim = line.trim();
+            const lTrim = line.replace(/\\r|\\n/g, '').trim();
             if (lTrim) rawBlocks.push(lTrim);
           });
         }
@@ -387,7 +400,7 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
     });
     if (currentBody.trim()) {
       currentBody.trim().split(/\n+/).forEach((line) => {
-        const lTrim = line.trim();
+        const lTrim = line.replace(/\\r|\\n/g, '').trim();
         if (lTrim) rawBlocks.push(lTrim);
       });
     }
@@ -411,10 +424,10 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
   let galleryImageCount = 0;
 
   for (const block of rawBlocks) {
-    let trimmed = block.trim();
+    let trimmed = block.replace(/\\r\\n/g, ' ').replace(/\\r|\\n/g, ' ').trim();
     if (!trimmed) continue;
 
-    const plainText = trimmed.replace(/<[^>]*>/g, '').trim();
+    const plainText = trimmed.replace(/<[^>]*>/g, '').replace(/\\r|\\n/g, '').trim();
 
     if (!plainText && !trimmed.includes('<img') && !trimmed.includes('![')) {
       continue;

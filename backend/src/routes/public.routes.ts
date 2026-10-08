@@ -279,6 +279,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
   international: 'world',
   videsh: 'world',
   'entertainment-life-style': 'entertainment',
+  manoranjan: 'entertainment',
   'web-stories': 'webstory',
   webstories: 'webstory',
   rain: 'weather',
@@ -445,6 +446,52 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
             { slug: { contains: 'fact-check' } },
           ];
           where.AND.push({ OR: factOrConditions });
+        } else if (slugLower === 'health' || slugLower === 'helth') {
+          if (!where.AND) where.AND = [];
+          const healthOrConditions: any[] = [
+            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
+            { title: { contains: 'આરોગ્ય' } },
+            { title: { contains: 'હેલ્થ' } },
+            { title: { contains: 'સ્વાસ્થ્ય' } },
+            { title: { contains: 'ડાયેટ' } },
+            { title: { contains: 'બીમારી' } },
+            { title: { contains: 'Health' } },
+          ];
+          where.AND.push({ OR: healthOrConditions });
+        } else if (slugLower === 'technology' || slugLower === 'tech') {
+          if (!where.AND) where.AND = [];
+          const techOrConditions: any[] = [
+            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
+            { title: { contains: 'ટેકનોલોજી' } },
+            { title: { contains: 'ટેક્નોલોજી' } },
+            { title: { contains: 'મોબાઇલ' } },
+            { title: { contains: 'સ્માર્ટફોન' } },
+            { title: { contains: 'AI' } },
+            { title: { contains: 'Tech' } },
+          ];
+          where.AND.push({ OR: techOrConditions });
+        } else if (slugLower === 'sports' || slugLower === 'ramat-jagat') {
+          if (!where.AND) where.AND = [];
+          const sportsOrConditions: any[] = [
+            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
+            { title: { contains: 'સ્પોર્ટ્સ' } },
+            { title: { contains: 'ક્રિકેટ' } },
+            { title: { contains: 'મેચ' } },
+            { title: { contains: 'IPL' } },
+            { title: { contains: 'રમત' } },
+          ];
+          where.AND.push({ OR: sportsOrConditions });
+        } else if (slugLower === 'business' || slugLower === 'vepar') {
+          if (!where.AND) where.AND = [];
+          const bizOrConditions: any[] = [
+            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
+            { title: { contains: 'બિઝનેસ' } },
+            { title: { contains: 'શેર બજાર' } },
+            { title: { contains: 'સેન્સેક્સ' } },
+            { title: { contains: 'વેપાર' } },
+            { title: { contains: 'સોનું' } },
+          ];
+          where.AND.push({ OR: bizOrConditions });
         } else if (categoryIds && categoryIds.length > 0) {
           where.categoryId = { in: categoryIds };
         } else {
@@ -486,7 +533,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
     const orderByClause: any = (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
-      ? [{ views: 'desc' }, { articleNumber: 'desc' }]
+      ? [{ views: 'desc' }, { articleNumber: 'desc' }, { createdAt: 'desc' }]
       : [{ articleNumber: 'desc' }, { createdAt: 'desc' }];
 
     // Optimisation: content fields (content, contentGu, contentHi) are NOT
@@ -613,7 +660,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           bioGu: p.author?.bioGu || '',
           bioHi: p.author?.bioHi || '',
         },
-        publishedAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : new Date(p.createdAt).toISOString()) : new Date().toISOString(),
+        publishedAt: (p as any).publishedAt ? ((p as any).publishedAt instanceof Date ? (p as any).publishedAt.toISOString() : new Date((p as any).publishedAt).toISOString()) : (p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : new Date(p.createdAt).toISOString()) : new Date().toISOString()),
         updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt.toISOString() : new Date(p.updatedAt).toISOString()) : new Date().toISOString(),
         readingTime: p.readingTime,
         isTrending: p.isTrending,

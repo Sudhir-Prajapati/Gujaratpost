@@ -54,24 +54,35 @@ export default async function HomePage() {
     getPublicArticles({ categorySlug: 'business', limit: 8, sort: 'latest' }).catch(() => ({ articles: [] })),
   ]);
 
-  const articles = (articlesRes && Array.isArray(articlesRes.articles)) ? articlesRes.articles : [];
+  const sortByLatest = <T extends any>(list: T[]): T[] => {
+    return [...(list || [])].sort((a: any, b: any) => {
+      const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+      const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+      if (bNum !== aNum) return bNum - aNum;
+      const aTime = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const bTime = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+  };
+
+  const articles = (articlesRes && Array.isArray(articlesRes.articles)) ? sortByLatest(articlesRes.articles) : [];
   const videos = Array.isArray(videosRes) ? videosRes : [];
   const reels = Array.isArray(reelsRes) ? reelsRes : [];
 
   const initialCategoryArticles: Record<string, any[]> = {
-    gujarat: gujaratRes.articles || [],
-    crime: crimeRes.articles || [],
-    national: nationalRes.articles || [],
-    world: worldRes.articles || [],
-    manoranjan: entertainRes.articles || [],
-    entertainment: entertainRes.articles || [],
-    health: healthRes.articles || [],
-    technology: techRes.articles || [],
-    factcheck: factcheckRes.articles || [],
-    'fact-check': factcheckRes.articles || [],
-    sports: sportsRes.articles || [],
-    politics: politicsRes.articles || [],
-    business: businessRes.articles || [],
+    gujarat: sortByLatest(gujaratRes.articles || []),
+    crime: sortByLatest(crimeRes.articles || []),
+    national: sortByLatest(nationalRes.articles || []),
+    world: sortByLatest(worldRes.articles || []),
+    manoranjan: sortByLatest(entertainRes.articles || []),
+    entertainment: sortByLatest(entertainRes.articles || []),
+    health: sortByLatest(healthRes.articles || []),
+    technology: sortByLatest(techRes.articles || []),
+    factcheck: sortByLatest(factcheckRes.articles || []),
+    'fact-check': sortByLatest(factcheckRes.articles || []),
+    sports: sortByLatest(sportsRes.articles || []),
+    politics: sortByLatest(politicsRes.articles || []),
+    business: sortByLatest(businessRes.articles || []),
   };
 
   return (

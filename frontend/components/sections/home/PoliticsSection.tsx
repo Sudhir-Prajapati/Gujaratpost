@@ -39,7 +39,14 @@ function isPolitics(art: Article): boolean {
 /* --- Politics Section ("રાજકારણ" Zone) ----------------------------- */
 export default function PoliticsSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
   const initialPolitics = useMemo(() => {
-    return (initialArticles || []).filter(isPolitics);
+    return (initialArticles || [])
+      .filter(isPolitics)
+      .sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+      });
   }, [initialArticles]);
 
   const [dbPoliticsArticles, setDbPoliticsArticles] = useState<Article[]>(initialPolitics.slice(0, 9));
@@ -50,15 +57,21 @@ export default function PoliticsSection({ language, initialArticles }: { languag
     const preFetched = (initialArticles || []).filter(isPolitics);
 
     if (preFetched.length >= 9) {
-      setDbPoliticsArticles(preFetched.slice(0, 9));
+      const sortedPre = [...preFetched].sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+      });
+      setDbPoliticsArticles(sortedPre.slice(0, 9));
       setLoading(false);
       return;
     }
 
     // Fetch from both slugs in parallel
     Promise.all([
-      getPublicArticles({ categorySlug: 'politics', limit: 12 }).catch(() => null),
-      getPublicArticles({ categorySlug: 'rajkaran', limit: 12 }).catch(() => null),
+      getPublicArticles({ categorySlug: 'politics', limit: 12, sort: 'latest' }).catch(() => null),
+      getPublicArticles({ categorySlug: 'rajkaran', limit: 12, sort: 'latest' }).catch(() => null),
     ]).then(([res1, res2]) => {
       const combined = [
         ...(res1?.articles || []),
@@ -73,16 +86,18 @@ export default function PoliticsSection({ language, initialArticles }: { languag
         return true;
       });
       // Sort newest first
-      unique.sort((a, b) =>
-        new Date(b.publishedAt || (b as any).createdAt || 0).getTime() -
-        new Date(a.publishedAt || (a as any).createdAt || 0).getTime()
-      );
+      unique.sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+      });
 
       setDbPoliticsArticles(unique.slice(0, 9));
 
       // If fewer than 9 politics articles, also fetch recent articles as fallback
       if (unique.length < 9) {
-        getPublicArticles({ limit: 20 }).then(res3 => {
+        getPublicArticles({ limit: 20, sort: 'latest' }).then(res3 => {
           const nonPolitics = (res3?.articles || []).filter(a => !unique.some(p => p.id === a.id));
           setFallbackArticles(nonPolitics.slice(0, 9 - unique.length));
           setLoading(false);

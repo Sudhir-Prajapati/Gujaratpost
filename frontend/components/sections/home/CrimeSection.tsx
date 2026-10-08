@@ -31,7 +31,17 @@ export default function CrimeSection({
   const [popularStartIndex, setPopularStartIndex] = useState(0);
   const [selectedZodiac, setSelectedZodiac] = useState<ZodiacSign | null>(null);
   const [astrologySigns, setAstrologySigns] = useState<ZodiacSign[]>(initialAstrology || ZODIAC_SIGNS);
-  const [dbCrimeArticles, setDbCrimeArticles] = useState<Article[]>(initialArticles || []);
+  const sortCrimeLatest = (list: Article[]) =>
+    [...(list || [])].sort((a: any, b: any) => {
+      const aNum = a?.articleNumber || 0;
+      const bNum = b?.articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+  const [dbCrimeArticles, setDbCrimeArticles] = useState<Article[]>(() => sortCrimeLatest(initialArticles || []));
   const [weatherData, setWeatherData] = useState<any>(initialWeather || {
     city: 'અમદાવાદ',
     cityEn: 'Ahmedabad',
@@ -43,9 +53,12 @@ export default function CrimeSection({
   });
 
   useEffect(() => {
-    getPublicArticles({ categorySlug: 'crime', limit: 25 }).then((crimeRes) => {
+    if (initialArticles && initialArticles.length > 0) {
+      setDbCrimeArticles(sortCrimeLatest(initialArticles));
+    }
+    getPublicArticles({ categorySlug: 'crime', limit: 25, sort: 'latest' }).then((crimeRes) => {
       if (crimeRes && crimeRes.articles && crimeRes.articles.length > 0) {
-        setDbCrimeArticles(crimeRes.articles);
+        setDbCrimeArticles(sortCrimeLatest(crimeRes.articles));
       }
     });
     if (!initialWeather) {

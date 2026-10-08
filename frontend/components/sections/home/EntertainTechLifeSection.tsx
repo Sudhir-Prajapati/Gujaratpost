@@ -117,6 +117,14 @@ function getScheme(slug: string): ColourScheme {
   return HEALTH_SCHEME;
 }
 
+const sortLatest = (list: Article[]) =>
+  [...(list || [])].sort((a: any, b: any) => {
+    const aNum = a?.articleNumber || 0;
+    const bNum = b?.articleNumber || 0;
+    if (bNum !== aNum) return bNum - aNum;
+    return new Date(b?.publishedAt || b?.createdAt || 0).getTime() - new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+  });
+
 /* ─── Entertainment · Tech · Health 3-Column Section ─────────────────── */
 export default function EntertainTechLifeSection({
   language,
@@ -129,10 +137,10 @@ export default function EntertainTechLifeSection({
 }) {
   const buildInitialMap = (): Record<string, Article[]> => {
     const map: Record<string, Article[]> = {};
-    if (initialCategoryArticles['health']?.length) map['health'] = initialCategoryArticles['health'].slice(0, 4);
+    if (initialCategoryArticles['health']?.length) map['health'] = sortLatest(initialCategoryArticles['health']).slice(0, 4);
     const entertainmentKey = initialCategoryArticles['manoranjan']?.length ? 'manoranjan' : 'entertainment';
-    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = initialCategoryArticles[entertainmentKey].slice(0, 4);
-    if (initialCategoryArticles['technology']?.length) map['technology'] = initialCategoryArticles['technology'].slice(0, 4);
+    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = sortLatest(initialCategoryArticles[entertainmentKey]).slice(0, 4);
+    if (initialCategoryArticles['technology']?.length) map['technology'] = sortLatest(initialCategoryArticles['technology']).slice(0, 4);
     return map;
   };
 
@@ -183,16 +191,25 @@ export default function EntertainTechLifeSection({
             const key = targetSlug === 'entertainment' ? 'manoranjan' : targetSlug;
             return { slug: targetSlug, articles: existingMap[key] || [] };
           }
+
+          const sortLatest = (list: Article[]) =>
+            [...(list || [])].sort((a: any, b: any) => {
+              const aNum = a?.articleNumber || 0;
+              const bNum = b?.articleNumber || 0;
+              if (bNum !== aNum) return bNum - aNum;
+              return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
+            });
+
           if (initialArticles?.length) {
             const matched = initialArticles.filter((a: any) => {
               const cSlug = (a.category?.slug || a.categorySlug || a.category || '').toLowerCase();
-              return cSlug === targetSlug || (targetSlug === 'manoranjan' && (cSlug === 'entertainment' || cSlug === 'manoranjan'));
+              return cSlug === targetSlug || (targetSlug === 'manoranjan' && (cSlug === 'entertainment' || cSlug === 'manoranjan' || cSlug === 'entertainment-life-style'));
             });
-            if (matched.length >= 2) return { slug: targetSlug, articles: matched.slice(0, 4) };
+            if (matched.length >= 2) return { slug: targetSlug, articles: sortLatest(matched).slice(0, 4) };
           }
           try {
-            const res = await getPublicArticles({ categorySlug: cat.slug, limit: 4 });
-            return { slug: cat.slug, articles: res.articles || [] };
+            const res = await getPublicArticles({ categorySlug: cat.slug, limit: 4, sort: 'latest' });
+            return { slug: cat.slug, articles: sortLatest(res.articles || []) };
           } catch {
             return { slug: cat.slug, articles: [] };
           }

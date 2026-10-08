@@ -185,7 +185,7 @@ export default function CityHyperlocalSection({
     if (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length >= 8) return;
 
     let isMounted = true;
-    getPublicArticles({ categorySlug: slug, limit: 12 }).then((res) => {
+    getPublicArticles({ categorySlug: slug, limit: 12, sort: 'latest' }).then((res) => {
       if (isMounted && res?.articles && res.articles.length > 0) {
         setFetchedCityArticles((prev) => ({
           ...prev,
@@ -205,7 +205,7 @@ export default function CityHyperlocalSection({
     dynamicCityTabs.forEach((tabObj) => {
       const { gu: tab, slug } = tabObj;
       if (slug) {
-        getPublicArticles({ categorySlug: slug, limit: 12 }).then((res) => {
+        getPublicArticles({ categorySlug: slug, limit: 12, sort: 'latest' }).then((res) => {
           if (res?.articles && res.articles.length > 0) {
             setFetchedCityArticles((prev) => {
               if (prev[tab] && prev[tab].length >= res.articles.length) return prev;
@@ -889,6 +889,10 @@ export default function CityHyperlocalSection({
       if (exactLocA && !exactLocB) return -1;
       if (!exactLocA && exactLocB) return 1;
 
+      const aNum = (a as any).articleNumber || 0;
+      const bNum = (b as any).articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+
       const timeA = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
       const timeB = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
       return timeB - timeA;
@@ -958,10 +962,18 @@ export default function CityHyperlocalSection({
 
 
   const tabApiArticles = useMemo(() => {
-    if (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length > 0) {
-      return fetchedCityArticles[activeTab];
-    }
-    return getArticlesForTab(activeTab);
+    const list = (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length > 0)
+      ? fetchedCityArticles[activeTab]
+      : getArticlesForTab(activeTab);
+
+    return [...list].sort((a: any, b: any) => {
+      const aNum = a?.articleNumber || 0;
+      const bNum = b?.articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
   }, [fetchedCityArticles, activeTab, getArticlesForTab]);
 
   const realSlides: SlideItem[] = useMemo(() => {

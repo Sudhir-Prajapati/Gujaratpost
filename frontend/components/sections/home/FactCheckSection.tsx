@@ -79,20 +79,30 @@ const mockFactCheckList = [
 
 /* --- Fact Check Section ("ફેક્ટ ચેક" Zone) ----------------------------- */
 export default function FactCheckSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
-  const [factCheckArticles, setFactCheckArticles] = useState<Article[]>(initialArticles || []);
+  const sortFactCheckLatest = (list: Article[]) =>
+    [...(list || [])].sort((a: any, b: any) => {
+      const aNum = a?.articleNumber || 0;
+      const bNum = b?.articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+  const [factCheckArticles, setFactCheckArticles] = useState<Article[]>(() => sortFactCheckLatest(initialArticles || []));
 
   useEffect(() => {
     if (initialArticles && initialArticles.length >= 9) {
-      setFactCheckArticles(initialArticles);
+      setFactCheckArticles(sortFactCheckLatest(initialArticles));
       return;
     }
-    getPublicArticles({ categorySlug: 'fact-check', limit: 12 }).then((res) => {
+    getPublicArticles({ categorySlug: 'fact-check', limit: 12, sort: 'latest' }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
-        setFactCheckArticles(res.articles);
+        setFactCheckArticles(sortFactCheckLatest(res.articles));
       } else {
-        getPublicArticles({ categorySlug: 'factcheck', limit: 12 }).then((res2) => {
+        getPublicArticles({ categorySlug: 'factcheck', limit: 12, sort: 'latest' }).then((res2) => {
           if (res2 && res2.articles && res2.articles.length > 0) {
-            setFactCheckArticles(res2.articles);
+            setFactCheckArticles(sortFactCheckLatest(res2.articles));
           }
         });
       }

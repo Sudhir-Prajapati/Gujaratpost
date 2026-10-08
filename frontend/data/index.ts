@@ -63,8 +63,17 @@ export function normalizeDisplayText(value?: string | null): string {
   }
 }
 
+export function cleanLiteralEscapeSequences(text?: string | null): string {
+  if (!text) return '';
+  return text
+    .replace(/\\r\\n/g, '\n')
+    .replace(/\\r/g, '')
+    .replace(/\\n/g, '\n')
+    .replace(/\\t/g, ' ');
+}
+
 export function decodeHtmlEntities(value?: string | null): string {
-  return normalizeDisplayText(value)
+  return cleanLiteralEscapeSequences(normalizeDisplayText(value))
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
     .replace(/&nbsp;/gi, ' ')
@@ -248,7 +257,8 @@ export const getArticleContent = (article: Article, language: Language) => {
   const richest = available.reduce((best, entry) => (entry.score > best.score ? entry : best), available[0]);
   const preferredScore = getContentScore(preferred);
 
-  return preferredScore >= richest.score * 0.6 ? preferred : richest.content;
+  const selected = preferredScore >= richest.score * 0.6 ? preferred : richest.content;
+  return cleanLiteralEscapeSequences(selected);
 };
 
 export const getCategoryLabel = (

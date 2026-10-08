@@ -660,7 +660,18 @@ export default function HeroSection({
     return true;
   };
 
-  const publishedInitialArticles = (initialArticles || []).filter(isPublicArticle);
+  const publishedInitialArticles = useMemo(() => {
+    return [...(initialArticles || [])]
+      .filter(isPublicArticle)
+      .sort((a: any, b: any) => {
+        const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+        const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+        if (bNum !== aNum) return bNum - aNum;
+        const aTime = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+        const bTime = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+        return bTime - aTime;
+      });
+  }, [initialArticles]);
 
   // Helper to compute heroPool identically for both initial SSR state and client useEffect:
   // 1. Slider: Articles 1 to 3
@@ -802,10 +813,25 @@ export default function HeroSection({
     const handleSyncArticles = () => {
       getPublicArticles({ limit: 60, sort: 'latest' }).then((res) => {
         if (res && res.articles && res.articles.length > 0) {
-          setArticlesList(res.articles);
-          const pool = computeHeroPoolList(res.articles, initialHeroSettings);
+          const sorted = [...res.articles].sort((a: any, b: any) => {
+            const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+            const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+            if (bNum !== aNum) return bNum - aNum;
+            const aTime = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+            const bTime = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+            return bTime - aTime;
+          });
+          setArticlesList(sorted);
+          setTopNews(sorted.slice(0, 6));
+          const pool = computeHeroPoolList(sorted, initialHeroSettings);
           setTopStories(pool);
           setBottomFeatured(pool.slice(9, 12));
+          setGujaratArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
+          setCrimeArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 4));
+          setNationalArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4));
+          setWorldArtDB(sorted.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international'; }).slice(0, 4));
+          setBusinessArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
+          setSportsArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
         }
       }).catch(() => {});
     };
@@ -909,17 +935,17 @@ export default function HeroSection({
         const customTrendingArts: Article[] = (heroRes?.trendingNewsArticles || []).filter(Boolean);
         const customPopularArts: Article[] = (heroRes?.popularNewsArticles || []).filter(Boolean);
         const customMostReadArts: Article[] = (heroRes?.mostReadArticles || []).filter(Boolean);
-        const trendingArts = arts.filter((a: Article) => a.isTrending);
-        const popularPool = fillPool([...customTrendingArts, ...trendingArts, ...customPopularArts], arts, 10);
+        const trendingArts = sortedArts.filter((a: Article) => a.isTrending);
+        const popularPool = fillPool([...customTrendingArts, ...trendingArts, ...customPopularArts], sortedArts, 10);
         setTrendingArtDB(popularPool);
-        const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : arts).slice(0, 3);
+        const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : sortedArts).slice(0, 3);
         setMostReadArtDB(mostReadPool);
-        setGujaratArtDB(arts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
-        setCrimeArtDB(arts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 4));
-        setNationalArtDB(arts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4));
-        setWorldArtDB(arts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international'; }).slice(0, 4));
-        setBusinessArtDB(arts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
-        setSportsArtDB(arts.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
+        setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
+        setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 4));
+        setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4));
+        setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international'; }).slice(0, 4));
+        setBusinessArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
+        setSportsArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
       }
 
       if (videoRes && videoRes.length > 0) {

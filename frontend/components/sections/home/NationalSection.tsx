@@ -129,13 +129,26 @@ const mockNationalColumns = [
 
 /* --- National Section ("દેશ" Zone) ----------------------------- */
 export default function NationalSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
-  const [dbNationalArticles, setDbNationalArticles] = useState<Article[]>(initialArticles || []);
+  const sortNationalLatest = (list: Article[]) =>
+    [...(list || [])].sort((a: any, b: any) => {
+      const aNum = a?.articleNumber || 0;
+      const bNum = b?.articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+  const [dbNationalArticles, setDbNationalArticles] = useState<Article[]>(() => sortNationalLatest(initialArticles || []));
 
   useEffect(() => {
-    if (initialArticles && initialArticles.length >= 3) return;
-    getPublicArticles({ categorySlug: 'national', limit: 12 }).then((res) => {
+    if (initialArticles && initialArticles.length >= 3) {
+      setDbNationalArticles(sortNationalLatest(initialArticles));
+      return;
+    }
+    getPublicArticles({ categorySlug: 'national', limit: 12, sort: 'latest' }).then((res) => {
       if (res && res.articles && res.articles.length > 0) {
-        setDbNationalArticles(res.articles);
+        setDbNationalArticles(sortNationalLatest(res.articles));
       }
     });
   }, [initialArticles]);

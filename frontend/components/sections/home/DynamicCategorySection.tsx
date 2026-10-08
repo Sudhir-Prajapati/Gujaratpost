@@ -68,9 +68,12 @@ export default function DynamicCategorySection({ category, language, initialArti
   const initialMatched = useMemo(() => {
     if (!initialArticles || initialArticles.length === 0 || !catSlug) return [];
     const matched = initialArticles.filter(filterFn);
-    return [...matched].sort((a, b) => {
-      const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-      const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+    return [...matched].sort((a: any, b: any) => {
+      const aNum = a?.articleNumber || 0;
+      const bNum = b?.articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const aTime = new Date(a.publishedAt || a.createdAt || 0).getTime();
+      const bTime = new Date(b.publishedAt || b.createdAt || 0).getTime();
       return bTime - aTime;
     });
   }, [initialArticles, catSlug, filterFn]);
@@ -88,13 +91,16 @@ export default function DynamicCategorySection({ category, language, initialArti
     let isMounted = true;
     setLoading(true);
 
-    getPublicArticles({ categorySlug: catSlug, limit: 12 }).then((res1) => {
+    getPublicArticles({ categorySlug: catSlug, limit: 12, sort: 'latest' }).then((res1) => {
       if (!isMounted) return;
       let combined = res1?.articles || [];
       const categoryFiltered = combined.filter(filterFn);
-      const sorted = [...categoryFiltered].sort((a, b) => {
-        const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-        const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+      const sorted = [...categoryFiltered].sort((a: any, b: any) => {
+        const aNum = a?.articleNumber || 0;
+        const bNum = b?.articleNumber || 0;
+        if (bNum !== aNum) return bNum - aNum;
+        const aTime = new Date(a.publishedAt || a.createdAt || 0).getTime();
+        const bTime = new Date(b.publishedAt || b.createdAt || 0).getTime();
         return bTime - aTime;
       });
       setArticles(sorted);

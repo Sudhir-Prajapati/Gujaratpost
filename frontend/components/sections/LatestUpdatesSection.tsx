@@ -15,6 +15,21 @@ import { getArticleImage } from '@/components/sections/HeroSection';
 import Advertisement from '@/components/ads/Advertisement';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
+const sortArticlesByLatest = (items: Article[]): Article[] => {
+  return [...(items || [])].sort((a: any, b: any) => {
+    const numA = typeof a?.articleNumber === 'number' ? a.articleNumber : parseInt(a?.articleNumber || '0', 10);
+    const numB = typeof b?.articleNumber === 'number' ? b.articleNumber : parseInt(b?.articleNumber || '0', 10);
+    if (!isNaN(numA) && !isNaN(numB) && numA > 0 && numB > 0 && numA !== numB) {
+      return numB - numA;
+    }
+    const tA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+    const tB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+    const validTA = isNaN(tA) ? 0 : tA;
+    const validTB = isNaN(tB) ? 0 : tB;
+    return validTB - validTA;
+  });
+};
+
 export default function LatestUpdatesSection({
   view = 'all',
   initialArticles,
@@ -27,11 +42,12 @@ export default function LatestUpdatesSection({
   initialPopularNews?: Article[];
 }) {
   const { language } = useApp();
-  const [latestNews, setLatestNews] = useState<Article[]>(
-    initialArticles ? initialArticles.slice(0, 10) : []
+  const [latestNews, setLatestNews] = useState<Article[]>(() =>
+    initialArticles && initialArticles.length > 0 ? sortArticlesByLatest(initialArticles).slice(0, 10) : []
   );
   const [mostRead, setMostRead] = useState<Article[]>(() => {
-    const latestIdSet = new Set((initialArticles || []).slice(0, 10).map((a) => a.id));
+    const sortedInit = initialArticles ? sortArticlesByLatest(initialArticles) : [];
+    const latestIdSet = new Set(sortedInit.slice(0, 10).map((a) => a.id));
     const pool: Article[] = [
       ...(initialMostRead || []),
     ];
@@ -50,21 +66,6 @@ export default function LatestUpdatesSection({
     initialPopularNews || []
   );
   const [currentPopularIdx, setCurrentPopularIdx] = useState(0);
-
-  const sortArticlesByLatest = (items: Article[]): Article[] => {
-    return [...items].sort((a: any, b: any) => {
-      const numA = typeof a.articleNumber === 'number' ? a.articleNumber : parseInt(a.articleNumber || '0', 10);
-      const numB = typeof b.articleNumber === 'number' ? b.articleNumber : parseInt(b.articleNumber || '0', 10);
-      if (!isNaN(numA) && !isNaN(numB) && numA > 0 && numB > 0 && numA !== numB) {
-        return numB - numA;
-      }
-      const tA = new Date(a.createdAt || a.publishedAt || 0).getTime();
-      const tB = new Date(b.createdAt || b.publishedAt || 0).getTime();
-      const validTA = isNaN(tA) ? 0 : tA;
-      const validTB = isNaN(tB) ? 0 : tB;
-      return validTB - validTA;
-    });
-  };
 
   useEffect(() => {
     if (initialArticles && initialArticles.length > 0) {

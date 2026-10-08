@@ -70,16 +70,26 @@ export default function ElectionSection({
   language: Language;
   initialArticles?: Article[];
 }) {
-  const [articles, setArticles] = useState<Article[]>(
-    initialArticles && initialArticles.length >= 3 ? initialArticles : FALLBACK_ELECTION_ARTICLES
+  const sortElectionLatest = (list: Article[]) =>
+    [...(list || [])].sort((a: any, b: any) => {
+      const aNum = a?.articleNumber || 0;
+      const bNum = b?.articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const aTime = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const bTime = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return bTime - aTime;
+    });
+
+  const [articles, setArticles] = useState<Article[]>(() =>
+    initialArticles && initialArticles.length >= 3 ? sortElectionLatest(initialArticles) : FALLBACK_ELECTION_ARTICLES
   );
 
   useEffect(() => {
     let isMounted = true;
-    getPublicArticles({ categorySlug: 'election-2027', limit: 10 })
+    getPublicArticles({ categorySlug: 'election-2027', limit: 10, sort: 'latest' })
       .then((res) => {
         if (isMounted && res?.articles && res.articles.length > 0) {
-          setArticles(res.articles);
+          setArticles(sortElectionLatest(res.articles));
         }
       })
       .catch(() => {
