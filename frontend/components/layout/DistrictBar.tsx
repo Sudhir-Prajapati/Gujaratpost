@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown, ChevronRight } from 'lucide-react';
@@ -31,6 +31,34 @@ export default function DistrictBar({
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownLeft, setDropdownLeft] = useState(12);
   const [caretLeft, setCaretLeft] = useState(70);
+
+  // Scroll arrow state
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [showScrollArrow, setShowScrollArrow] = useState(false);
+
+  const checkScrollEnd = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const atEnd = el.scrollWidth - el.scrollLeft - el.clientWidth < 4;
+    setShowScrollArrow(!atEnd);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    checkScrollEnd();
+    el.addEventListener('scroll', checkScrollEnd, { passive: true });
+    const ro = new ResizeObserver(checkScrollEnd);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', checkScrollEnd);
+      ro.disconnect();
+    };
+  }, [checkScrollEnd]);
+
+  const handleScrollRight = () => {
+    scrollRef.current?.scrollBy({ left: 120, behavior: 'smooth' });
+  };
 
   // Close dropdown on route change
   useEffect(() => {
@@ -197,88 +225,106 @@ export default function DistrictBar({
           />
         </Link>
 
-        {/* Scrollable list */}
-        <div
-          className="flex-1 overflow-x-auto scrollbar-none overscroll-x-contain touch-pan-x"
-          style={{ WebkitOverflowScrolling: 'touch' }}
-        >
-          {/* ─── DESKTOP VIEW (>= md): Full horizontal city list ─── */}
-          <div className="hidden md:flex items-center gap-4 sm:gap-4.5 md:gap-5 py-0 pl-1 pr-3 md:pr-4">
-            {displayList.map((item) => {
-              const active = isActive(item.slug);
-              return (
-                <Link
-                  key={`desk-${item.slug}-${language}`}
-                  href={`/category/${item.slug}`}
-                  className={`relative flex shrink-0 h-10 md:h-11 items-center whitespace-nowrap text-[15.5px] sm:text-[16px] md:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'}`}
-                  style={{ fontWeight: 800 }}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span>{item.label}</span>
-                  {active && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
-                  )}
-                </Link>
-              );
-            })}
+        {/* Scrollable list + right arrow wrapper */}
+        <div className="relative flex-1 min-w-0">
+          <div
+            ref={scrollRef}
+            className="flex-1 overflow-x-auto scrollbar-none overscroll-x-contain touch-pan-x"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
+            {/* ─── DESKTOP VIEW (>= md): Full horizontal city list ─── */}
+            <div className="hidden md:flex items-center gap-4 sm:gap-4.5 md:gap-5 py-0 pl-1 pr-3 md:pr-4">
+              {displayList.map((item) => {
+                const active = isActive(item.slug);
+                return (
+                  <Link
+                    key={`desk-${item.slug}-${language}`}
+                    href={`/category/${item.slug}`}
+                    className={`relative flex shrink-0 h-10 md:h-11 items-center whitespace-nowrap text-[15.5px] sm:text-[16px] md:text-[16px] font-extrabold tracking-tight transition-colors duration-150 ${active ? 'text-accent font-black' : 'text-foreground hover:text-accent'}`}
+                    style={{ fontWeight: 800 }}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <span>{item.label}</span>
+                    {active && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* ─── MOBILE VIEW (< md): 1st Video, 2nd Gujarat (with Dropdown of all cities), then other categories ─── */}
+            <div className="flex md:hidden items-center gap-4 py-0 pl-1 pr-3">
+              {/* 1. Video Link */}
+              <Link
+                href="/videos"
+                className={`relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 ${
+                  isVideosActive ? 'text-accent font-black' : 'text-foreground hover:text-accent'
+                }`}
+                style={{ fontWeight: 800 }}
+                aria-current={isVideosActive ? 'page' : undefined}
+              >
+                <span>{getNavLabel(videoLink)}</span>
+                {isVideosActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
+                )}
+              </Link>
+
+              {/* 2. Gujarat Dropdown Trigger */}
+              <button
+                ref={gujaratButtonRef}
+                type="button"
+                onClick={toggleGujaratDropdown}
+                className={`relative flex shrink-0 h-10 items-center gap-1 whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 cursor-pointer ${
+                  isGujaratActive || gujaratDropdownOpen ? 'text-accent font-black' : 'text-foreground hover:text-accent'
+                }`}
+                style={{ fontWeight: 800 }}
+                aria-expanded={gujaratDropdownOpen}
+              >
+                <span>{language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${gujaratDropdownOpen ? 'rotate-180 text-accent' : 'text-muted-foreground'}`} />
+                {isGujaratActive && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
+                )}
+              </button>
+
+              {/* 3. All remaining categories (India, World, Politics, Crime, Health, etc.) */}
+              {mobileOtherCategories.map((link) => {
+                const active = isActive(link.href);
+                return (
+                  <Link
+                    key={`mob-${link.href}-${language}`}
+                    href={link.href}
+                    className={`relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 ${
+                      active ? 'text-accent font-black' : 'text-foreground hover:text-accent'
+                    }`}
+                    style={{ fontWeight: 800 }}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    <span>{getNavLabel(link)}</span>
+                    {active && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
-          {/* ─── MOBILE VIEW (< md): 1st Video, 2nd Gujarat (with Dropdown of all cities), then other categories ─── */}
-          <div className="flex md:hidden items-center gap-4 py-0 pl-1 pr-3">
-            {/* 1. Video Link */}
-            <Link
-              href="/videos"
-              className={`relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 ${
-                isVideosActive ? 'text-accent font-black' : 'text-foreground hover:text-accent'
-              }`}
-              style={{ fontWeight: 800 }}
-              aria-current={isVideosActive ? 'page' : undefined}
-            >
-              <span>{getNavLabel(videoLink)}</span>
-              {isVideosActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
-              )}
-            </Link>
-
-            {/* 2. Gujarat Dropdown Trigger */}
+          {/* ─── Right Scroll Arrow (mobile only, hides at end) ─── */}
+          {showScrollArrow && (
             <button
-              ref={gujaratButtonRef}
               type="button"
-              onClick={toggleGujaratDropdown}
-              className={`relative flex shrink-0 h-10 items-center gap-1 whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 cursor-pointer ${
-                isGujaratActive || gujaratDropdownOpen ? 'text-accent font-black' : 'text-foreground hover:text-accent'
-              }`}
-              style={{ fontWeight: 800 }}
-              aria-expanded={gujaratDropdownOpen}
+              onClick={handleScrollRight}
+              aria-label="Scroll right"
+              className="md:hidden absolute right-0 top-0 bottom-0 flex items-center justify-end pr-1 z-10 cursor-pointer w-12"
+              style={{
+                background: 'linear-gradient(to right, transparent, var(--color-card, #fff) 40%)',
+              }}
             >
-              <span>{language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${gujaratDropdownOpen ? 'rotate-180 text-accent' : 'text-muted-foreground'}`} />
-              {isGujaratActive && (
-                <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
-              )}
+              <ChevronRight className="w-5 h-5 text-foreground/70" strokeWidth={2.5} />
             </button>
-
-            {/* 3. All remaining categories (India, World, Politics, Crime, Health, etc.) */}
-            {mobileOtherCategories.map((link) => {
-              const active = isActive(link.href);
-              return (
-                <Link
-                  key={`mob-${link.href}-${language}`}
-                  href={link.href}
-                  className={`relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 ${
-                    active ? 'text-accent font-black' : 'text-foreground hover:text-accent'
-                  }`}
-                  style={{ fontWeight: 800 }}
-                  aria-current={active ? 'page' : undefined}
-                >
-                  <span>{getNavLabel(link)}</span>
-                  {active && (
-                    <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
+          )}
         </div>
       </div>
 

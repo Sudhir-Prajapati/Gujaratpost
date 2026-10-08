@@ -126,7 +126,6 @@ export default function Header() {
   const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal } = useApp();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [menuClosing, setMenuClosing] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedCity, setSelectedCity] = useState('અમદાવાદ');
   const [cityModalOpen, setCityModalOpen] = useState(false);
@@ -181,11 +180,7 @@ export default function Header() {
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
 
-  // Close menu with exit animation then unmount
-  const closeMenu = () => {
-    setMenuClosing(true);
-    setTimeout(() => { setMenuOpen(false); setMenuClosing(false); }, 280);
-  };
+  const closeMenu = () => setMenuOpen(false);
 
   const updateSavedCount = () => {
     try {
@@ -667,17 +662,14 @@ export default function Header() {
               {/* Mobile hamburger — premium modern red button */}
               <button
                 type="button"
-                onClick={() => {
-                  if (menuOpen) { closeMenu(); }
-                  else { setMenuOpen(true); setMenuClosing(false); }
-                }}
+                onClick={() => setMenuOpen((v) => !v)}
                 className="relative inline-flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-b from-[#e51d28] via-[#c6111a] to-[#a30b13] text-white md:hidden shrink-0 shadow-[0_2px_8px_rgba(179,18,27,0.35)] border border-white/20 active:scale-90 hover:brightness-110 transition-all duration-200 cursor-pointer overflow-hidden ml-1"
                 aria-label={menuOpen ? 'Close menu' : 'Open menu'}
               >
                 <div className="flex flex-col justify-center items-center w-5 h-4 gap-[3.5px] pointer-events-none">
-                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-300 ease-out origin-center ${menuOpen ? 'rotate-45 translate-y-[5.5px]' : ''}`} />
-                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-200 ease-out ${menuOpen ? 'opacity-0 scale-x-0' : 'opacity-100'}`} />
-                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-300 ease-out origin-center ${menuOpen ? '-rotate-45 -translate-y-[5.5px]' : ''}`} />
+                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-250 ease-out origin-center ${menuOpen ? 'rotate-45 translate-y-[5.5px]' : ''}`} />
+                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-150 ease-out ${menuOpen ? 'opacity-0 scale-x-0' : 'opacity-100'}`} />
+                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-250 ease-out origin-center ${menuOpen ? '-rotate-45 -translate-y-[5.5px]' : ''}`} />
                 </div>
               </button>
             </div>
@@ -730,16 +722,17 @@ export default function Header() {
         </div>
 
         {/* -- Full-Screen Mobile Menu Drawer Overlay (below header) ------------- */}
-        {(menuOpen) && (
-          <>
-            <style>{
-              `@keyframes menuSlideIn { from { opacity:0; transform:translateY(-16px); } to { opacity:1; transform:translateY(0); } }
-               @keyframes menuSlideOut { from { opacity:1; transform:translateY(0); } to { opacity:0; transform:translateY(-16px); } }`
-            }</style>
-          <div
-            className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto select-none"
-            style={{ top: `${headerHeight}px`, animation: menuClosing ? 'menuSlideOut 0.28s cubic-bezier(0.4,0,0.2,1) forwards' : 'menuSlideIn 0.3s cubic-bezier(0.16,1,0.3,1) forwards' }}
-          >
+        {/* -- Mobile Menu Drawer: always mounted, CSS-transitioned open/close -- */}
+        <div
+          className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto select-none"
+          style={{
+            top: `${headerHeight}px`,
+            opacity: menuOpen ? 1 : 0,
+            transform: menuOpen ? 'translateY(0)' : 'translateY(-10px)',
+            pointerEvents: menuOpen ? 'auto' : 'none',
+            transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+          }}
+        >
             {/* Menu Drawer Content Container */}
             <div className="px-4 py-4 space-y-4 pb-24">
               {/* Mobile User Profile & Theme Toggle Bar */}
@@ -883,9 +876,7 @@ export default function Header() {
                 <SocialLinks size="sm" />
               </div>
             </div>
-          </div>
-          </>
-        )}
+        </div>
       </header>
 
       {/* -- Sticky Nav Section (Category Bar + District Bar) ------------------ */}

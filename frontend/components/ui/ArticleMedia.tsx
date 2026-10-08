@@ -9,6 +9,7 @@ interface ArticleMediaProps {
   src?: string | null;
   alt?: string;
   className?: string;
+  style?: React.CSSProperties;
   fill?: boolean;
   priority?: boolean;
   unoptimized?: boolean;
@@ -23,6 +24,7 @@ export default function ArticleMedia({
   src,
   alt = '',
   className = '',
+  style,
   fill = false,
   priority = false,
   unoptimized = true,
@@ -145,6 +147,7 @@ export default function ArticleMedia({
       src={cleanSrc}
       alt={alt}
       className={`absolute inset-0 w-full h-full object-cover ${className}`}
+      style={isAbsolute ? { width: '100%', height: '100%', objectFit: 'cover', ...style } : style}
       onError={() => setHasError(true)}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}

@@ -1507,61 +1507,41 @@ export default function HeroSection({
 
             return (
               <div className="border-t border-border/80 pt-4 md:pt-4">
-                {/* ─── MOBILE VIEW (< md): 1 Lead Featured Story with Big Image + 2 Compact Boxed Cards ─── */}
-                <div className="md:hidden flex flex-col">
-                  {/* 1. Lead Featured Story */}
-                  {cards[0] && (
-                    <Link
-                      href={`/news/${cards[0].slug}`}
-                      className="group flex flex-col pb-3.5 mb-3 border-b border-border/40"
-                    >
-                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2 shadow-2xs">
+                {/* ─── MOBILE VIEW (< md): ABC News-style vertical card strip matching Image 1 ─── */}
+                <div className="md:hidden -mx-4 overflow-x-auto scrollbar-none">
+                  <div className="flex gap-3 px-4 pb-2">
+                    {cards.slice(0, 3).map((art, idx) => (
+                      <Link
+                        key={art.id || idx}
+                        href={`/news/${art.slug}`}
+                        className="group relative shrink-0 w-[175px] sm:w-[195px] aspect-[10/14] rounded-2xl overflow-hidden bg-muted border border-border/20 shadow-md flex flex-col justify-end select-none"
+                      >
+                        {/* Full-bleed background media */}
                         <ArticleMedia
-                          src={cards[0].image || (cards[0] as any).featuredImage || getArticleImage(cards[0])}
-                          alt={cards[0].title || ''}
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                          alt={art.title || ''}
+                          showPlayBadge={false}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
-                      </div>
-                      <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
-                        {getCategoryLabel(cards[0], language)}
-                      </span>
-                      <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                        <AutoArticleTitle article={cards[0]} language={language} />
-                      </h3>
-                    </Link>
-                  )}
 
-                  {/* 2. Next 2 Compact Boxed Cards */}
-                  {cards.length > 1 && (
-                    <div className="flex flex-col gap-2.5 mt-1.5">
-                      {cards.slice(1, 3).map((art, idx) => (
-                        <Link
-                          key={art.id || idx}
-                          href={`/news/${art.slug}`}
-                          className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-                        >
-                          {/* Title & Metadata on the left */}
-                          <div className="flex flex-col min-w-0 flex-1 pr-1">
-                            <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
-                              {getCategoryLabel(art, language)}
-                            </span>
-                            <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                              <AutoArticleTitle article={art} language={language} />
-                            </h4>
-                          </div>
+                        {/* Gradient overlay: smooth dark fade from bottom */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pointer-events-none" />
 
-                          {/* Thumbnail on the right */}
-                          <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                            <ArticleMedia
-                              src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                              alt={art.title || ''}
-                              className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                            />
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
+                        {/* Category badge top-right */}
+                        <span className="absolute top-2.5 right-2.5 bg-[#B3121B] text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm uppercase tracking-wider select-none z-10">
+                          {getCategoryLabel(art, language)}
+                        </span>
+
+                        {/* Bottom content overlay (Headline only - no date or time) */}
+                        <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end text-left z-10">
+                          <h4 className="text-[13.5px] sm:text-[14px] font-black leading-[1.32] text-white group-hover:text-red-300 transition-colors line-clamp-3 drop-shadow-sm">
+                            <AutoArticleTitle article={art} language={language} />
+                          </h4>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
                 </div>
 
                 {/* ─── DESKTOP VIEW (>= md): 3-Column Image Cards Grid ─── */}
