@@ -42,17 +42,30 @@ const isFactCheckArticle = (a: Article): boolean => {
     catSlug === 'factcheck' ||
     cat.includes('fact') ||
     cat.includes('ફેક્ટ') ||
-    slug.startsWith('fact-check') ||
+    slug.includes('fact-check') ||
     title.includes('fact check') ||
-    titleGu.includes('ફેક્ટ ચેક')
+    title.includes('fack check') ||
+    titleGu.includes('ફેક્ટ ચેક') ||
+    titleGu.includes('ફેકટ ચેક')
   );
+};
+
+const sortFactCheckLatest = (list: Article[]): Article[] => {
+  return [...list].sort((a: any, b: any) => {
+    const aNum = a.articleNumber || 0;
+    const bNum = b.articleNumber || 0;
+    if (bNum !== aNum) return bNum - aNum;
+    const aTime = new Date(a.publishedAt || a.createdAt || 0).getTime();
+    const bTime = new Date(b.publishedAt || b.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
 };
 
 export default function TrendingSection({ initialArticles }: { initialArticles?: Article[] }) {
   const { language } = useApp();
   const [trending, setTrending] = useState<Article[]>(() => {
     const valid = (initialArticles || []).filter(isFactCheckArticle);
-    return valid.length > 0 ? valid : [];
+    return valid.length > 0 ? sortFactCheckLatest(valid).slice(0, 10) : [];
   });
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
@@ -61,15 +74,19 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
 
   useEffect(() => {
     const valid = (initialArticles || []).filter(isFactCheckArticle);
-    if (valid.length > 0) {
-      setTrending(valid);
+    if (valid.length >= 10) {
+      setTrending(sortFactCheckLatest(valid).slice(0, 10));
       return;
     }
 
-    // Fetch Fact Check category articles from API
-    getPublicArticles({ categorySlug: 'fact-check', limit: 10 }).then((factCheckRes) => {
+    // Ensure latest 10 Fact Check articles are fetched from API
+    getPublicArticles({ categorySlug: 'fact-check', limit: 10, sort: 'latest' }).then((factCheckRes) => {
       if (factCheckRes && factCheckRes.articles && factCheckRes.articles.length > 0) {
-        setTrending(factCheckRes.articles);
+        const combined = [...factCheckRes.articles, ...valid];
+        const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+        setTrending(sortFactCheckLatest(unique).slice(0, 10));
+      } else if (valid.length > 0) {
+        setTrending(sortFactCheckLatest(valid).slice(0, 10));
       }
     });
   }, [initialArticles]);

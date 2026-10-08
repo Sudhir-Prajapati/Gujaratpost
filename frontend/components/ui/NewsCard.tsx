@@ -126,9 +126,11 @@ export default function NewsCard({
               {title}
             </h3>
           </div>
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2">
-            <span>{displayDate}</span>
-          </div>
+          {showDate && (
+            <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-2">
+              <span>{displayDate}</span>
+            </div>
+          )}
         </div>
       </Link>
     );
@@ -169,9 +171,11 @@ export default function NewsCard({
               <span className="text-[11px] font-black uppercase tracking-wide text-accent truncate">
                 {displayCategory}
               </span>
-              <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
-                {displayDate}
-              </span>
+              {showDate && (
+                <span className="text-[11px] text-muted-foreground whitespace-nowrap shrink-0">
+                  {displayDate}
+                </span>
+              )}
             </div>
             <h3 className="line-clamp-2 text-[13.5px] md:text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors mt-0.5 tracking-tight min-h-[2.6rem]">
               {title}

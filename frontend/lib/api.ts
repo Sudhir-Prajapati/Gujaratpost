@@ -67,7 +67,7 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 // Memory cache & In-flight request deduplication map
 const apiCache = new Map<string, { timestamp: number; data: any }>();
 const inFlightRequests = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = 180000; // 3 minutes cache TTL for public API calls
+const CACHE_TTL_MS = process.env.NODE_ENV === 'development' ? 5000 : 180000; // 5s in dev for instant reactivity, 3 mins in prod
 
 export function clearApiCache(): void {
   apiCache.clear();
@@ -77,9 +77,10 @@ export function clearApiCache(): void {
  * Fetch wrapper with caching & in-flight request deduplication
  */
 async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_TTL_MS): Promise<T | null> {
+  const effectiveTtl = process.env.NODE_ENV === 'development' ? Math.min(cacheTtlMs, 5000) : cacheTtlMs;
   const now = Date.now();
   const cached = apiCache.get(url);
-  if (cached && now - cached.timestamp < cacheTtlMs) {
+  if (cached && now - cached.timestamp < effectiveTtl) {
     return cached.data as T;
   }
 
@@ -95,7 +96,7 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
     const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 
     const isServer = typeof window === 'undefined';
-    const revalidateSeconds = cacheTtlMs > 0 ? Math.max(10, Math.round(cacheTtlMs / 1000)) : 0;
+    const revalidateSeconds = process.env.NODE_ENV === 'development' ? 0 : (effectiveTtl > 0 ? Math.max(10, Math.round(effectiveTtl / 1000)) : 0);
 
     const fetchOptions: RequestInit = {
       signal: controller.signal,

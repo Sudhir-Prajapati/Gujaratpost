@@ -11,7 +11,6 @@ import {
   getArticleTitle,
   getCategoryLabel,
   formatViews,
-  formatDate,
 } from '@/data';
 import { getCategoryColor, toGu } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
@@ -556,9 +555,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                     <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                       <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
-                    <div className="mt-2 hidden md:flex items-center gap-3 text-[11px] text-muted-foreground font-semibold">
-                      <span>{formatDate(heroArticle.publishedAt)}</span>
-                    </div>
                   </div>
                 </div>
               )}
@@ -574,9 +570,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
                         <AutoArticleTitle article={subHeroArticle} language={language} />
                       </h3>
-                      <div className="mt-1.5 hidden md:flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
-                        <span>{formatDate(subHeroArticle.publishedAt)}</span>
-                      </div>
                     </div>
                     <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                       <ArticleMedia
@@ -608,9 +601,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       <h3 className="mt-0.5 text-[14.5px] md:text-[15.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
                         {getArticleTitle(art, language)}
                       </h3>
-                      <div className="mt-1 hidden md:flex items-center gap-2 text-[10px] text-muted-foreground font-semibold">
-                        <span>{formatDate(art.publishedAt)}</span>
-                      </div>
                     </div>
                     <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                       <img
@@ -808,9 +798,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                     <h4 className="text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
                       {artTitle}
                     </h4>
-                    <span className="text-[10px] text-muted-foreground font-semibold mt-1">
-                      {formatDate(article.publishedAt)}
-                    </span>
                   </Link>
                 );
               })}

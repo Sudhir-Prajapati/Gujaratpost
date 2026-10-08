@@ -219,11 +219,11 @@ export class HeroController {
               ).catch(() => [])
             : Promise.resolve([]),
 
-          // Query B: Featured fallback for slots and heroGrid
+          // Query B: Fallback for slots and heroGrid (latest posts first)
           withDbRetry(() =>
             prisma.post.findMany({
               where: { status: 'PUBLISHED' },
-              orderBy: [{ isFeatured: 'desc' }, { articleNumber: 'desc' }],
+              orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
               take: 16,
               select: heroPostSelect,
             })
@@ -248,10 +248,17 @@ export class HeroController {
                   { category: { slug: 'fact-check' } },
                   { category: { slug: 'factcheck' } },
                   { category: { name: { contains: 'Fact Check' } } },
-                  { isTrending: true },
+                  { category: { nameGu: { contains: 'ફેક્ટ ચેક' } } },
+                  { title: { contains: 'FACT CHECK' } },
+                  { title: { contains: 'Fact Check' } },
+                  { title: { contains: 'Fact check' } },
+                  { title: { contains: 'Fack check' } },
+                  { title: { contains: 'Fact-Check' } },
+                  { title: { contains: 'ફેક્ટ ચેક' } },
+                  { slug: { contains: 'fact-check' } },
                 ],
               },
-              orderBy: [{ createdAt: 'desc' }],
+              orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
               take: 10,
               select: heroPostSelect,
             })
@@ -294,13 +301,16 @@ export class HeroController {
         const fallbackFormatted = featuredFallbackRes.map(formatPost);
 
         // Resolve Slots
-        if (!slot1Id && fallbackFormatted[0]) slot1Id = fallbackFormatted[0].id;
-        if (!slot2Id && fallbackFormatted[1]) slot2Id = fallbackFormatted[1].id;
-        if (!slot3Id && fallbackFormatted[2]) slot3Id = fallbackFormatted[2].id;
+        let s1 = (slot1Id ? postsMap.get(slot1Id) : null) || fallbackFormatted[0] || null;
+        let s2 = (slot2Id ? postsMap.get(slot2Id) : null) || fallbackFormatted[1] || null;
+        let s3 = (slot3Id ? postsMap.get(slot3Id) : null) || fallbackFormatted[2] || null;
 
-        const s1 = (slot1Id ? postsMap.get(slot1Id) : null) || fallbackFormatted[0] || null;
-        const s2 = (slot2Id ? postsMap.get(slot2Id) : null) || fallbackFormatted[1] || null;
-        const s3 = (slot3Id ? postsMap.get(slot3Id) : null) || fallbackFormatted[2] || null;
+        // If saved slots are older than the freshest available articles, automatically promote newest articles
+        if (fallbackFormatted.length >= 3 && fallbackFormatted[0]?.articleNumber > (s1?.articleNumber || 0)) {
+          s1 = fallbackFormatted[0];
+          s2 = fallbackFormatted[1];
+          s3 = fallbackFormatted[2];
+        }
         const slots = [s1, s2, s3];
 
         // Resolve Trending News (preserving order and fallback)
@@ -311,15 +321,29 @@ export class HeroController {
             .filter(Boolean);
         }
 
-        if (trendingNewsArticles.length === 0) {
-          const defaultTrending = activeTrendingRes.length > 0 ? activeTrendingRes : fallbackFormatted.slice(0, 10);
-          trendingNewsArticles = defaultTrending.map(formatPost);
-          parsedTrendingNewsIds = trendingNewsArticles.map((a: any) => a.id);
-        }
+        const isFactCheckPost = (a: any) => {
+          if (!a) return false;
+          const catSlug = (a.category?.slug || a.categorySlug || '').toLowerCase();
+          const title = (a.title || '').toLowerCase();
+          const slug = (a.slug || '').toLowerCase();
+          return (
+            catSlug === 'fact-check' ||
+            catSlug === 'factcheck' ||
+            catSlug.includes('fact') ||
+            title.includes('fact check') ||
+            title.includes('fack check') ||
+            title.includes('ફેક્ટ ચેક') ||
+            slug.includes('fact-check')
+          );
+        };
 
-        const formattedTrending = activeTrendingRes.map(formatPost);
-        const combinedTrending = [...trendingNewsArticles, ...formattedTrending];
-        trendingNewsArticles = combinedTrending.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+        const validTrendingFromSetting = trendingNewsArticles.filter(isFactCheckPost);
+        const formattedTrendingRes = activeTrendingRes.map(formatPost);
+        const allFactChecks = [...formattedTrendingRes, ...validTrendingFromSetting];
+        trendingNewsArticles = allFactChecks
+          .filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx)
+          .sort((a: any, b: any) => (b.articleNumber || 0) - (a.articleNumber || 0))
+          .slice(0, 10);
 
         // Resolve Popular News (preserving order and fallback)
         let popularNewsArticles: any[] = [];
@@ -342,7 +366,7 @@ export class HeroController {
             .filter(Boolean);
         }
 
-        if (heroGridArticles.length === 0) {
+        if (heroGridArticles.length === 0 || (fallbackFormatted.length > 0 && fallbackFormatted[0]?.articleNumber > (heroGridArticles[0]?.articleNumber || 0))) {
           heroGridArticles = fallbackFormatted.slice(0, 16);
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }

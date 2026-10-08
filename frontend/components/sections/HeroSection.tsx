@@ -662,31 +662,44 @@ export default function HeroSection({
 
   const publishedInitialArticles = (initialArticles || []).filter(isPublicArticle);
 
-  // Helper to compute heroPool identically for both initial SSR state and client useEffect
-  const computeHeroPoolList = (arts: Article[], heroSettingsData: any) => {
+  // Helper to compute heroPool identically for both initial SSR state and client useEffect:
+  // 1. Slider: Articles 1 to 3
+  // 2. Side Box: Articles 4 to 9 (6 cards, prioritizing articles marked "Main Hero Grid Banner" isFeatured === true)
+  // 3. Bottom 3 Hero Boxes: Articles 10 to 12 (3 cards)
+  const computeHeroPoolList = (arts: Article[], _heroSettingsData?: any) => {
     const pubArts = (arts || []).filter(isPublicArticle);
-    const slots: Article[] = (heroSettingsData?.slots || []).filter(isPublicArticle);
-    const slotIds = new Set(slots.map((a: Article) => a.id));
 
-    const customGridArts: Article[] = (heroSettingsData?.heroGridArticles || []).filter(isPublicArticle);
-    const featuredArts = pubArts.filter((a: Article) => a.isFeatured);
+    // Sort strictly latest first: articleNumber desc, then publishedAt desc
+    const sortedLatest = [...pubArts].sort((a: Article, b: Article) => {
+      const aNum = (a as any).articleNumber || 0;
+      const bNum = (b as any).articleNumber || 0;
+      if (bNum !== aNum) return bNum - aNum;
+      const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+      const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+      return bTime - aTime;
+    });
 
-    const autoPool = pubArts
-      .filter((a: Article) => !slotIds.has(a.id))
-      .sort((a: Article, b: Article) => {
-        const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-        const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
-        const aScore = (a.isFeatured ? 10 : 0) + (a.isBreaking ? 5 : 0) + (a.isTrending ? 5 : 0);
-        const bScore = (b.isFeatured ? 10 : 0) + (b.isBreaking ? 5 : 0) + (b.isTrending ? 5 : 0);
-        if (bScore !== aScore) return bScore - aScore;
-        return bTime - aTime;
-      });
+    // 1. Articles with "Main Hero Grid Banner" checked in Admin (isFeatured === true)
+    const featuredArts = sortedLatest.filter((a) => a.isFeatured === true);
+    const featuredIds = new Set(featuredArts.map((a) => a.id).filter(Boolean));
 
-    const uniqueList = [...featuredArts, ...customGridArts].filter(
-      (art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx
-    );
+    // 2. Slider (Articles 1 to 3): Top 3 latest articles not pinned to side box
+    const sliderArts = sortedLatest.filter((a) => !featuredIds.has(a.id)).slice(0, 3);
+    const sliderIds = new Set(sliderArts.map((a) => a.id).filter(Boolean));
 
-    return fillPool(uniqueList, autoPool, 16);
+    // 3. Side Box (Articles 4 to 9, total 6 cards): Prioritize featured articles, then fill with next available latest
+    const sideBoxFillers = sortedLatest.filter((a) => !sliderIds.has(a.id) && !featuredIds.has(a.id));
+    const sideBoxArts = [...featuredArts, ...sideBoxFillers].slice(0, 6);
+    const sideBoxIds = new Set(sideBoxArts.map((a) => a.id).filter(Boolean));
+
+    // 4. Bottom 3 Hero Boxes (Articles 10 to 12, total 3 cards): Next 3 available articles
+    const bottom3Arts = sortedLatest.filter((a) => !sliderIds.has(a.id) && !sideBoxIds.has(a.id)).slice(0, 3);
+    const bottom3Ids = new Set(bottom3Arts.map((a) => a.id).filter(Boolean));
+
+    // 5. Remaining articles for other home feeds
+    const remaining = sortedLatest.filter((a) => !sliderIds.has(a.id) && !sideBoxIds.has(a.id) && !bottom3Ids.has(a.id));
+
+    return [...sliderArts, ...sideBoxArts, ...bottom3Arts, ...remaining].slice(0, 16);
   };
 
   // Pre-calculate initial hero slots & grid from initialHeroSettings
@@ -707,10 +720,12 @@ export default function HeroSection({
     : [];
   const initialCategorySlugs = initialCategoriesDB.map((c) => c.slug?.toLowerCase()).filter(Boolean);
 
-  // DB-backed article state
+  // DB-backed article state (latest news first)
   const [topNews, setTopNews] = useState<Article[]>(publishedInitialArticles.slice(0, 6));
   const [topStories, setTopStories] = useState<Article[]>(initialHeroPool);
-  const [bottomFeatured, setBottomFeatured] = useState<Article[]>(initialSlots.length > 0 ? initialSlots : initFeatured.slice(0, 3));
+  const [bottomFeatured, setBottomFeatured] = useState<Article[]>(
+    initialHeroPool.slice(9, 12)
+  );
   const [trendingArtDB, setTrendingArtDB] = useState<Article[]>(initialPopularPool);
   const [mostReadArtDB, setMostReadArtDB] = useState<Article[]>(initialMostReadPool);
   const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>(
@@ -784,11 +799,26 @@ export default function HeroSection({
       }).catch(() => {});
     };
 
+    const handleSyncArticles = () => {
+      getPublicArticles({ limit: 60, sort: 'latest' }).then((res) => {
+        if (res && res.articles && res.articles.length > 0) {
+          setArticlesList(res.articles);
+          const pool = computeHeroPoolList(res.articles, initialHeroSettings);
+          setTopStories(pool);
+          setBottomFeatured(pool.slice(9, 12));
+        }
+      }).catch(() => {});
+    };
+
     window.addEventListener('focus', handleSyncCategories);
     window.addEventListener('gp-categories-updated', handleSyncCategories);
+    window.addEventListener('focus', handleSyncArticles);
+    window.addEventListener('gp-articles-updated', handleSyncArticles);
     return () => {
       window.removeEventListener('focus', handleSyncCategories);
       window.removeEventListener('gp-categories-updated', handleSyncCategories);
+      window.removeEventListener('focus', handleSyncArticles);
+      window.removeEventListener('gp-articles-updated', handleSyncArticles);
     };
   }, []);
 
@@ -834,7 +864,7 @@ export default function HeroSection({
 
     // Fallback if SSR had empty data (e.g. direct client route navigation)
     Promise.all([
-      getPublicArticles({ limit: 60 }),
+      getPublicArticles({ limit: 60, sort: 'latest' }),
       getHeroSettings(),
       getPublicVideos('video'),
       getMarketRates(),
@@ -861,20 +891,21 @@ export default function HeroSection({
         setDynamicTrendingTopics(heroRes.setting.trendingTopics);
       }
 
-      // Admin-selected bottom 3 image articles from Hero Settings API
-      const slotsArticles: Article[] = (heroRes?.slots || []).filter(Boolean);
-      if (slotsArticles.length > 0) {
-        setBottomFeatured(slotsArticles);
-      }
-
       // Main pool — powers main hero, right 2, text articles
       if (mainRes && mainRes.articles && mainRes.articles.length > 0) {
-        const arts: Article[] = mainRes.articles;
-        setArticlesList(arts);
-        setTopNews(arts.filter((a) => a.isBreaking || a.isFeatured).concat(arts).filter((a, idx, arr) => arr.findIndex((x) => x.id === a.id) === idx).slice(0, 6));
+        const sortedArts: Article[] = [...mainRes.articles].sort((a: Article, b: Article) => {
+          const aNum = (a as any).articleNumber || 0;
+          const bNum = (b as any).articleNumber || 0;
+          if (bNum !== aNum) return bNum - aNum;
+          return new Date(b.publishedAt || (b as any).createdAt || 0).getTime() - new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+        });
+        setArticlesList(sortedArts);
+        setTopNews(sortedArts.slice(0, 6));
 
-        const heroPool = computeHeroPoolList(arts, heroRes);
+        const heroPool = computeHeroPoolList(sortedArts, heroRes);
         setTopStories(heroPool);
+
+        setBottomFeatured(heroPool.slice(9, 12));
         const customTrendingArts: Article[] = (heroRes?.trendingNewsArticles || []).filter(Boolean);
         const customPopularArts: Article[] = (heroRes?.popularNewsArticles || []).filter(Boolean);
         const customMostReadArts: Article[] = (heroRes?.mostReadArticles || []).filter(Boolean);
@@ -1367,23 +1398,17 @@ export default function HeroSection({
               language={language}
             />
 
-            {/* ═══ MIDDLE COLUMN — 6 Image Article Boxes (News directly after Top 3) ════════════════ */}
+            {/* ═══ MIDDLE COLUMN — 6 Image Article Boxes (Articles 4 to 9, or Main Hero Grid Banner featured) ════════════════ */}
             {(() => {
-              // Gather articles after the Top 3 news (indices 3 onwards), ensuring no duplication with the Top 3 slider
               const top3Ids = new Set(uniqueTopStories.slice(0, 3).map((a) => a.id).filter(Boolean));
-              const candidatePool = [
-                ...uniqueTopStories.slice(3),
-                ...middleColumnPool.filter((a) => !top3Ids.has(a.id)),
-                ...articlesList.filter((a) => !top3Ids.has(a.id)),
-              ];
-              const seen = new Set<string>();
-              const afterTop3News: Article[] = [];
-              for (const art of candidatePool) {
-                if (art && art.id && !seen.has(art.id)) {
-                  seen.add(art.id);
-                  afterTop3News.push(art);
+              const afterTop3News: Article[] = uniqueTopStories.slice(3, 9);
+              if (afterTop3News.length < 6) {
+                for (const art of articlesList) {
+                  if (afterTop3News.length >= 6) break;
+                  if (art && art.id && !top3Ids.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                    afterTop3News.push(art);
+                  }
                 }
-                if (afterTop3News.length >= 6) break;
               }
 
               return (
@@ -1495,13 +1520,11 @@ export default function HeroSection({
             })()}
           </div> {/* Close Top Row grid */}
 
-          {/* Bottom Row: Three image cards (#14, #15, #16 articles in sequence right after the top 13, or Admin custom picks) */}
+          {/* Bottom Row: Three image cards (Articles 10, 11, 12 in sequence right after slider & side box) */}
           {(() => {
-            const card14 = bottomFeatured[0] || uniqueTopStories[13] || articlesList[13];
-            const card15 = bottomFeatured[1] || uniqueTopStories[14] || articlesList[14];
-            const card16 = bottomFeatured[2] || uniqueTopStories[15] || articlesList[15];
-
-            const cards = [card14, card15, card16].filter(Boolean);
+            const cards = uniqueTopStories.slice(9, 12).length >= 3
+              ? uniqueTopStories.slice(9, 12)
+              : [bottomFeatured[0] || uniqueTopStories[9], bottomFeatured[1] || uniqueTopStories[10], bottomFeatured[2] || uniqueTopStories[11]].filter(Boolean);
 
             if (cards.length === 0) return null;
 

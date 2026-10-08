@@ -414,6 +414,9 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
                   ...(slugLower === 'entertainment' || slugLower === 'entertainment-life-style'
                     ? [{ slug: 'entertainment' }, { slug: 'entertainment-life-style' }, { name: 'Entertainment' }]
                     : []),
+                  ...(slugLower === 'fact-check' || slugLower === 'factcheck'
+                    ? [{ slug: 'fact-check' }, { slug: 'factcheck' }, { name: 'Fact Check' }, { nameGu: 'ફેક્ટ ચેક' }]
+                    : []),
                 ],
               },
               select: { id: true },
@@ -429,7 +432,20 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           }
         }
 
-        if (categoryIds && categoryIds.length > 0) {
+        if (slugLower === 'fact-check' || slugLower === 'factcheck') {
+          if (!where.AND) where.AND = [];
+          const factOrConditions: any[] = [
+            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
+            { title: { contains: 'FACT CHECK' } },
+            { title: { contains: 'Fact Check' } },
+            { title: { contains: 'Fact check' } },
+            { title: { contains: 'Fack check' } },
+            { title: { contains: 'Fact-Check' } },
+            { title: { contains: 'ફેક્ટ ચેક' } },
+            { slug: { contains: 'fact-check' } },
+          ];
+          where.AND.push({ OR: factOrConditions });
+        } else if (categoryIds && categoryIds.length > 0) {
           where.categoryId = { in: categoryIds };
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
@@ -469,18 +485,9 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
 
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
-    const orderByClause: any = (sortParam === 'latest')
-      ? [{ articleNumber: 'desc' }, { createdAt: 'desc' }]
-      : (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
+    const orderByClause: any = (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
       ? [{ views: 'desc' }, { articleNumber: 'desc' }]
-      : isFeatured
-      ? [{ createdAt: 'desc' }]
-      : (categorySlug)
-      ? [{ articleNumber: 'desc' }, { createdAt: 'desc' }]
-      : [
-        { isFeatured: 'desc' },
-        { articleNumber: 'desc' },
-      ];
+      : [{ articleNumber: 'desc' }, { createdAt: 'desc' }];
 
     // Optimisation: content fields (content, contentGu, contentHi) are NOT
     // included in list responses — they are large @db.Text columns that article cards
