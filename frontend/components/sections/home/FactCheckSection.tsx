@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Shield, Eye, ChevronRight } from 'lucide-react';
@@ -79,35 +79,77 @@ const mockFactCheckList = [
 
 /* --- Fact Check Section ("ફેક્ટ ચેક" Zone) ----------------------------- */
 export default function FactCheckSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
-  const sortFactCheckLatest = (list: Article[]) =>
-    [...(list || [])].sort((a: any, b: any) => {
-      const aNum = a?.articleNumber || 0;
-      const bNum = b?.articleNumber || 0;
-      if (bNum !== aNum) return bNum - aNum;
+  const sortFactCheckLatest = useCallback((list: Article[]) => {
+    return [...(list || [])].sort((a: any, b: any) => {
+      const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+      const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+      if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+      if (bNum > 0 && aNum === 0) return -1;
+      if (aNum > 0 && bNum === 0) return 1;
       const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
       const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
       return timeB - timeA;
     });
+  }, []);
 
   const [factCheckArticles, setFactCheckArticles] = useState<Article[]>(() => sortFactCheckLatest(initialArticles || []));
 
+  // Sync state if initialArticles prop changes from parent
   useEffect(() => {
-    if (initialArticles && initialArticles.length >= 9) {
-      setFactCheckArticles(sortFactCheckLatest(initialArticles));
-      return;
+    if (initialArticles && initialArticles.length > 0) {
+      setFactCheckArticles((prev) => {
+        const map = new Map<string, Article>();
+        prev.forEach((a) => { if (a?.id) map.set(a.id, a); });
+        initialArticles.forEach((a) => { if (a?.id) map.set(a.id, a); });
+        return sortFactCheckLatest(Array.from(map.values())).slice(0, 12);
+      });
     }
-    getPublicArticles({ categorySlug: 'fact-check', limit: 12, sort: 'latest' }).then((res) => {
-      if (res && res.articles && res.articles.length > 0) {
-        setFactCheckArticles(sortFactCheckLatest(res.articles));
-      } else {
-        getPublicArticles({ categorySlug: 'factcheck', limit: 12, sort: 'latest' }).then((res2) => {
-          if (res2 && res2.articles && res2.articles.length > 0) {
-            setFactCheckArticles(sortFactCheckLatest(res2.articles));
-          }
+  }, [initialArticles, sortFactCheckLatest]);
+
+  const fetchFreshFactCheckArticles = useCallback(async () => {
+    try {
+      const [res1, res2] = await Promise.all([
+        getPublicArticles({ categorySlug: 'fact-check', limit: 12, sort: 'latest' }).catch(() => null),
+        getPublicArticles({ categorySlug: 'factcheck', limit: 12, sort: 'latest' }).catch(() => null),
+      ]);
+      const fetched = [
+        ...(res1?.articles || []),
+        ...(res2?.articles || []),
+      ];
+      if (fetched.length > 0) {
+        setFactCheckArticles((prev) => {
+          const map = new Map<string, Article>();
+          fetched.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          prev.forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          (initialArticles || []).forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          return sortFactCheckLatest(Array.from(map.values())).slice(0, 12);
         });
       }
-    });
-  }, [initialArticles]);
+    } catch {
+      // keep existing
+    }
+  }, [initialArticles, sortFactCheckLatest]);
+
+  useEffect(() => {
+    fetchFreshFactCheckArticles();
+
+    const handleSync = () => {
+      fetchFreshFactCheckArticles();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFreshFactCheckArticles]);
 
   const getStatusInfo = (art: any) => {
     const tagStr = (art.tagsGu?.[0] || art.tags?.[0] || art.titleGu || art.title || '').toLowerCase();

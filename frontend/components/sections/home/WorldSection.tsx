@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronRight, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
@@ -14,17 +14,26 @@ import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/com
 import { stripHtmlTags, DEMO_IMAGES, getMockRelativeTime } from './homeHelpers';
 
 const WORLD_SLUGS = ['world', 'international', 'videsh'];
+const WORLD_CATEGORY_IDS = [
+  'f7afc75b-6ce9-4e78-942e-569780c4ea25', // World (વિશ્વ)
+  'e57b253f-5950-437f-83f0-30532883d3f3', // International
+];
 
 function isWorldArticle(art: Article): boolean {
+  if (!art) return false;
+  const catId = (art as any).categoryId || (art as any).category?.id || '';
+  if (WORLD_CATEGORY_IDS.includes(catId)) return true;
+
   const slug = (
     (art as any).category?.slug ||
     (art as any).categorySlug ||
-    (art as any).category ||
+    (typeof art.category === 'string' ? art.category : '') ||
     ''
   ).toLowerCase().trim();
   const name = (
     (art as any).category?.name ||
     (art as any).categoryName ||
+    (typeof art.category === 'string' ? art.category : '') ||
     ''
   ).toLowerCase().trim();
   const nameGu = (
@@ -41,8 +50,25 @@ function isWorldArticle(art: Article): boolean {
     nameGu.includes('વિદેશ') ||
     name.includes('world') ||
     name.includes('international') ||
-    loc === 'international'
+    loc === 'international' ||
+    loc === 'world' ||
+    loc.includes('international') ||
+    loc.includes('વિદેશ') ||
+    loc.includes('વિશ્વ')
   );
+}
+
+function sortWorldArticlesLatest(list: Article[]): Article[] {
+  return [...list].sort((a: any, b: any) => {
+    const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+    const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+    if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+    if (bNum > 0 && aNum === 0) return -1;
+    if (aNum > 0 && bNum === 0) return 1;
+    const aTime = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+    const bTime = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
 }
 
 /* --- Dynamic Foreign Exchange Rates Widget ──────────────────────────────── */
@@ -196,61 +222,82 @@ const mockWorldCards = [
 /* --- World Section ("વિશ્વ" Zone) ----------------------------- */
 export default function WorldSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
   const initialWorld = useMemo(() => {
-    return (initialArticles || [])
-      .filter(isWorldArticle)
-      .sort((a: any, b: any) => {
-        const aNum = a?.articleNumber || 0;
-        const bNum = b?.articleNumber || 0;
-        if (bNum !== aNum) return bNum - aNum;
-        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-      });
+    return sortWorldArticlesLatest((initialArticles || []).filter(isWorldArticle));
   }, [initialArticles]);
 
   const [dbWorldArticles, setDbWorldArticles] = useState<Article[]>(initialWorld);
-  const [loading, setLoading] = useState(initialWorld.length < 5);
+  const [loading, setLoading] = useState(initialWorld.length === 0);
 
+  // Sync state if initialArticles prop changes from parent
   useEffect(() => {
-    const preFetched = (initialArticles || []).filter(isWorldArticle);
-    if (preFetched.length >= 5) {
-      const sortedPrefetched = [...preFetched].sort((a: any, b: any) => {
-        const aNum = a?.articleNumber || 0;
-        const bNum = b?.articleNumber || 0;
-        if (bNum !== aNum) return bNum - aNum;
-        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-      });
-      setDbWorldArticles(sortedPrefetched.slice(0, 10));
-      setLoading(false);
-      return;
+    if (initialArticles && initialArticles.length > 0) {
+      const filtered = (initialArticles || []).filter(isWorldArticle);
+      if (filtered.length > 0) {
+        setDbWorldArticles((prev) => {
+          const map = new Map<string, Article>();
+          prev.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          filtered.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          return sortWorldArticlesLatest(Array.from(map.values())).slice(0, 10);
+        });
+      }
     }
+  }, [initialArticles]);
 
-    Promise.all([
-      getPublicArticles({ categorySlug: 'world', sort: 'latest', limit: 10 }).catch(() => null),
-      getPublicArticles({ categorySlug: 'international', sort: 'latest', limit: 10 }).catch(() => null),
-    ]).then(([res1, res2]) => {
-      const combined = [
+  // Always fetch fresh latest articles directly from the API
+  const fetchFreshWorldArticles = useCallback(async () => {
+    try {
+      const [res1, res2] = await Promise.all([
+        getPublicArticles({ categorySlug: 'world', sort: 'latest', limit: 10 }).catch(() => null),
+        getPublicArticles({ categorySlug: 'international', sort: 'latest', limit: 10 }).catch(() => null),
+      ]);
+      const fetched = [
         ...(res1?.articles || []),
         ...(res2?.articles || []),
-        ...preFetched,
       ];
-      const seen = new Set<string>();
-      const unique = combined.filter((a) => {
-        if (!a?.id || seen.has(a.id)) return false;
-        seen.add(a.id);
-        return true;
-      });
-      unique.sort((a: any, b: any) => {
-        const aNum = a?.articleNumber || 0;
-        const bNum = b?.articleNumber || 0;
-        if (bNum !== aNum) return bNum - aNum;
-        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-      });
-
-      if (unique.length > 0) {
-        setDbWorldArticles(unique.slice(0, 10));
+      if (fetched.length > 0) {
+        setDbWorldArticles((prev) => {
+          const map = new Map<string, Article>();
+          // 1. Newly fetched articles get priority
+          fetched.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          // 2. Merge with previous state to avoid losing articles
+          prev.forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          // 3. Merge with initialArticles
+          (initialArticles || []).filter(isWorldArticle).forEach((a) => {
+            if (a?.id && !map.has(a.id)) map.set(a.id, a);
+          });
+          const sorted = sortWorldArticlesLatest(Array.from(map.values()));
+          return sorted.slice(0, 10);
+        });
       }
+    } catch {
+      // Retain existing articles on network error
+    } finally {
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }
   }, [initialArticles]);
+
+  useEffect(() => {
+    // 1. Fetch immediately on client mount to ensure latest world articles
+    fetchFreshWorldArticles();
+
+    // 2. Re-fetch on window focus and custom update events
+    const handleSync = () => {
+      fetchFreshWorldArticles();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFreshWorldArticles]);
 
   const featured = useMemo(() => {
     if (dbWorldArticles.length > 0) {

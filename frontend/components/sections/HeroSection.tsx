@@ -747,17 +747,29 @@ export default function HeroSection({
   const [crimeArtDB, setCrimeArtDB] = useState<Article[]>(
     (initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0)
       ? initialCategoryArticles['crime']
-      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime').slice(0, 4)
+      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime').slice(0, 8)
   );
   const [nationalArtDB, setNationalArtDB] = useState<Article[]>(
     (initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0)
       ? initialCategoryArticles['national']
-      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4)
+      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 8)
   );
   const [worldArtDB, setWorldArtDB] = useState<Article[]>(
     (initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0)
       ? initialCategoryArticles['world']
       : publishedInitialArticles.filter((a) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4)
+  );
+  const [politicsArtDB, setPoliticsArtDB] = useState<Article[]>(
+    (initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0)
+      ? initialCategoryArticles['politics']
+      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 10)
+  );
+  const [factCheckArtDB, setFactCheckArtDB] = useState<Article[]>(
+    (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+      ? initialCategoryArticles['fact-check']
+      : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+        ? initialCategoryArticles['factcheck']
+        : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10)
   );
   const [businessArtDB, setBusinessArtDB] = useState<Article[]>(
     (initialCategoryArticles['business'] && initialCategoryArticles['business'].length > 0)
@@ -827,9 +839,11 @@ export default function HeroSection({
           setTopStories(pool);
           setBottomFeatured(pool.slice(9, 12));
           setGujaratArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
-          setCrimeArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 4));
-          setNationalArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4));
-          setWorldArtDB(sorted.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international'; }).slice(0, 4));
+          setCrimeArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
+          setNationalArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 8));
+          setWorldArtDB(sorted.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
+          setPoliticsArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 10));
+          setFactCheckArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10));
           setBusinessArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
           setSportsArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
         }
@@ -941,9 +955,11 @@ export default function HeroSection({
         const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : sortedArts).slice(0, 3);
         setMostReadArtDB(mostReadPool);
         setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
-        setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 4));
-        setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 4));
-        setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international'; }).slice(0, 4));
+        setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
+        setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 8));
+        setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
+        setPoliticsArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 10));
+        setFactCheckArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10));
         setBusinessArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
         setSportsArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
       }
@@ -1047,13 +1063,15 @@ export default function HeroSection({
         <TrendingSection
           key="trending"
           initialArticles={
-            (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
-              ? initialCategoryArticles['fact-check']
-              : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
-                ? initialCategoryArticles['factcheck']
-                : (initialHeroSettings?.trendingNewsArticles && initialHeroSettings.trendingNewsArticles.length > 0)
-                  ? initialHeroSettings.trendingNewsArticles
-                  : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
+            (factCheckArtDB && factCheckArtDB.length > 0)
+              ? factCheckArtDB
+              : (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+                ? initialCategoryArticles['fact-check']
+                : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+                  ? initialCategoryArticles['factcheck']
+                  : (initialHeroSettings?.trendingNewsArticles && initialHeroSettings.trendingNewsArticles.length > 0)
+                    ? initialHeroSettings.trendingNewsArticles
+                    : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
           }
         />
         <AdSectionBanner section="AFTER_TRENDING" />
@@ -1061,7 +1079,7 @@ export default function HeroSection({
     ),
     national: (
       <Fragment key="national-frag">
-        <NationalSection key="national" language={language} initialArticles={(initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0) ? initialCategoryArticles['national'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; })} />
+        <NationalSection key="national" language={language} initialArticles={(nationalArtDB && nationalArtDB.length > 0) ? nationalArtDB : ((initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0) ? initialCategoryArticles['national'] : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }))} />
         <AdSectionBanner section="AFTER_NATIONAL" />
       </Fragment>
     ),
@@ -1080,19 +1098,19 @@ export default function HeroSection({
     instagram: <InstagramStories key="instagram" initialReels={initialReels} />,
     world: (
       <Fragment key="world-frag">
-        <WorldSection key="world" language={language} initialArticles={(initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => {
+        <WorldSection key="world" language={language} initialArticles={(worldArtDB && worldArtDB.length > 0) ? worldArtDB : ((initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => {
           const c = ((a as any).category?.slug || (a as any).categorySlug || a.category || '').toLowerCase().trim();
           const n = ((a as any).category?.name || (a as any).categoryName || '').toLowerCase().trim();
           const gu = ((a as any).category?.nameGu || (a as any).categoryGu || '').toLowerCase().trim();
           const loc = (a.location || '').toLowerCase().trim();
-          return c === 'world' || c === 'international' || c === 'videsh' || n === 'world' || n === 'international' || gu.includes('વિશ્વ') || gu.includes('વિદેશ') || loc === 'international';
-        })} />
+          return c === 'world' || c === 'international' || c === 'videsh' || n === 'world' || n === 'international' || gu.includes('વિશ્વ') || gu.includes('વિદેશ') || loc === 'international' || loc === 'world';
+        }))} />
         <AdSectionBanner section="AFTER_WORLD" />
       </Fragment>
     ),
     politics: (
       <Fragment key="politics-frag">
-        <PoliticsSection key="politics" language={language} initialArticles={(initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0) ? initialCategoryArticles['politics'] : publishedInitialArticles.filter((a) => { const cs = getCatSlug(a); return cs === 'politics' || cs === 'rajkaran'; })} />
+        <PoliticsSection key="politics" language={language} initialArticles={(politicsArtDB && politicsArtDB.length > 0) ? politicsArtDB : ((initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0) ? initialCategoryArticles['politics'] : publishedInitialArticles.filter((a) => { const cs = getCatSlug(a); return cs === 'politics' || cs === 'rajkaran'; }))} />
         <AdSectionBanner section="AFTER_POLITICS" />
       </Fragment>
     ),
@@ -1107,7 +1125,7 @@ export default function HeroSection({
         <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2.5 md:mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-4 lg:gap-8 items-start">
             <div className="flex flex-col gap-4 md:gap-8 min-w-0">
-              <CrimeSection language={language} view="content" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
+              <CrimeSection language={language} view="content" initialArticles={(crimeArtDB && crimeArtDB.length > 0) ? crimeArtDB : ((initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime'))} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
             </div>
             <div className="flex flex-col gap-6 sticky top-20 select-none">
               <div>
@@ -1171,7 +1189,7 @@ export default function HeroSection({
                 </div>
               </div>
 
-              <CrimeSection language={language} view="sidebar" initialArticles={(initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime')} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
+              <CrimeSection language={language} view="sidebar" initialArticles={(crimeArtDB && crimeArtDB.length > 0) ? crimeArtDB : ((initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime'))} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
             </div>
           </div>
         </section>
@@ -1199,11 +1217,13 @@ export default function HeroSection({
           key="fact-check"
           language={language}
           initialArticles={
-            (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
-              ? initialCategoryArticles['fact-check']
-              : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
-                ? initialCategoryArticles['factcheck']
-                : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
+            (factCheckArtDB && factCheckArtDB.length > 0)
+              ? factCheckArtDB
+              : (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+                ? initialCategoryArticles['fact-check']
+                : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+                  ? initialCategoryArticles['factcheck']
+                  : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
           }
         />
         <AdSectionBanner section="AFTER_FACTCHECK" />
@@ -1215,11 +1235,13 @@ export default function HeroSection({
           key="factcheck"
           language={language}
           initialArticles={
-            (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
-              ? initialCategoryArticles['fact-check']
-              : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
-                ? initialCategoryArticles['factcheck']
-                : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
+            (factCheckArtDB && factCheckArtDB.length > 0)
+              ? factCheckArtDB
+              : (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
+                ? initialCategoryArticles['fact-check']
+                : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
+                  ? initialCategoryArticles['factcheck']
+                  : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; })
           }
         />
         <AdSectionBanner section="AFTER_FACTCHECK" />

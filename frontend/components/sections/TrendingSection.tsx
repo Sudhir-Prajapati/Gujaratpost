@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
@@ -52,9 +52,11 @@ const isFactCheckArticle = (a: Article): boolean => {
 
 const sortFactCheckLatest = (list: Article[]): Article[] => {
   return [...list].sort((a: any, b: any) => {
-    const aNum = a.articleNumber || 0;
-    const bNum = b.articleNumber || 0;
-    if (bNum !== aNum) return bNum - aNum;
+    const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+    const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+    if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+    if (bNum > 0 && aNum === 0) return -1;
+    if (aNum > 0 && bNum === 0) return 1;
     const aTime = new Date(a.publishedAt || a.createdAt || 0).getTime();
     const bTime = new Date(b.publishedAt || b.createdAt || 0).getTime();
     return bTime - aTime;
@@ -72,35 +74,62 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
   const [showRightArrow, setShowRightArrow] = useState(true);
   const isPaused = useRef(false);
 
-  useEffect(() => {
+  const fetchFreshTrendingArticles = useCallback(() => {
     const valid = (initialArticles || []).filter(isFactCheckArticle);
-    if (valid.length >= 10) {
-      setTrending(sortFactCheckLatest(valid).slice(0, 10));
-      return;
-    }
+    getPublicArticles({ categorySlug: 'fact-check', limit: 12, sort: 'latest' })
+      .then((factCheckRes) => {
+        if (factCheckRes && factCheckRes.articles && factCheckRes.articles.length > 0) {
+          const combined = [...factCheckRes.articles, ...valid];
+          const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+          setTrending(sortFactCheckLatest(unique).slice(0, 10));
+        } else {
+          getPublicArticles({ categorySlug: 'factcheck', limit: 12, sort: 'latest' })
+            .then((res2) => {
+              if (res2 && res2.articles && res2.articles.length > 0) {
+                const combined = [...res2.articles, ...valid];
+                const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
+                setTrending(sortFactCheckLatest(unique).slice(0, 10));
+              } else if (valid.length > 0) {
+                setTrending(sortFactCheckLatest(valid).slice(0, 10));
+              }
+            })
+            .catch(() => {
+              if (valid.length > 0) setTrending(sortFactCheckLatest(valid).slice(0, 10));
+            });
+        }
+      })
+      .catch(() => {
+        if (valid.length > 0) setTrending(sortFactCheckLatest(valid).slice(0, 10));
+      });
+  }, [initialArticles]);
 
-    // Ensure latest 10 Fact Check articles are fetched from API
-    getPublicArticles({ categorySlug: 'fact-check', limit: 10, sort: 'latest' }).then((factCheckRes) => {
-      if (factCheckRes && factCheckRes.articles && factCheckRes.articles.length > 0) {
-        const combined = [...factCheckRes.articles, ...valid];
-        const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
-        setTrending(sortFactCheckLatest(unique).slice(0, 10));
-      } else {
-        getPublicArticles({ categorySlug: 'factcheck', limit: 10, sort: 'latest' }).then((res2) => {
-          if (res2 && res2.articles && res2.articles.length > 0) {
-            const combined = [...res2.articles, ...valid];
-            const unique = combined.filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx);
-            setTrending(sortFactCheckLatest(unique).slice(0, 10));
-          } else if (valid.length > 0) {
-            setTrending(sortFactCheckLatest(valid).slice(0, 10));
-          }
-        }).catch(() => {
-          if (valid.length > 0) setTrending(sortFactCheckLatest(valid).slice(0, 10));
-        });
+  useEffect(() => {
+    fetchFreshTrendingArticles();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchFreshTrendingArticles();
       }
-    }).catch(() => {
-      if (valid.length > 0) setTrending(sortFactCheckLatest(valid).slice(0, 10));
-    });
+    };
+
+    window.addEventListener('focus', fetchFreshTrendingArticles);
+    window.addEventListener('gp-articles-updated', fetchFreshTrendingArticles);
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', fetchFreshTrendingArticles);
+      window.removeEventListener('gp-articles-updated', fetchFreshTrendingArticles);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFreshTrendingArticles]);
+
+  useEffect(() => {
+    if (initialArticles && initialArticles.length > 0) {
+      const valid = initialArticles.filter(isFactCheckArticle);
+      if (valid.length > 0) {
+        setTrending(sortFactCheckLatest(valid).slice(0, 10));
+      }
+    }
   }, [initialArticles]);
 
   // Auto-scroll effect

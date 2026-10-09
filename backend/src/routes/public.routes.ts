@@ -275,9 +275,18 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'state-news': 'gujarat',
   factcheck: 'fact-check',
   'fact check': 'fact-check',
+  'all-cities': 'all-cities',
+  allcities: 'all-cities',
+  'all-city': 'all-cities',
+  all: 'all-cities',
   othercities: 'other-cities',
   international: 'world',
   videsh: 'world',
+  rajkaran: 'politics',
+  rajneeti: 'politics',
+  rajniti: 'politics',
+  gunho: 'crime',
+  gunha: 'crime',
   'entertainment-life-style': 'entertainment',
   manoranjan: 'entertainment',
   'web-stories': 'webstory',
@@ -367,7 +376,33 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         slugLower = CATEGORY_ALIASES[slugLower];
       }
 
-      if (slugLower === 'other-cities' || slugLower === 'othercities') {
+      if (slugLower === 'all-cities' || slugLower === 'allcities') {
+        const cacheEntry = categoryLookupCache.get('__all_cities__');
+        let allCityCatIds: string[];
+        if (cacheEntry && Date.now() < cacheEntry.expiresAt) {
+          allCityCatIds = cacheEntry.ids;
+        } else {
+          const allCityCats = await withDbRetry(() =>
+            prisma.category.findMany({
+              where: {
+                slug: {
+                  in: [
+                    'ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot',
+                    'other-cities', 'othercities', 'gujarat', 'state'
+                  ]
+                }
+              },
+              select: { id: true },
+            })
+          );
+          allCityCatIds = allCityCats.map((c) => c.id);
+          categoryLookupCache.set('__all_cities__', {
+            ids: allCityCatIds,
+            expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
+          });
+        }
+        where.categoryId = { in: allCityCatIds };
+      } else if (slugLower === 'other-cities' || slugLower === 'othercities') {
         const cacheEntry = categoryLookupCache.get('__other_cities__');
         let otherCityCatIds: string[];
         if (cacheEntry && Date.now() < cacheEntry.expiresAt) {
@@ -385,14 +420,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
             expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
           });
         }
-
-        if (!where.AND) where.AND = [];
-        where.AND.push({
-          OR: [
-            { categoryId: { in: otherCityCatIds } },
-            { location: { notIn: ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'] } },
-          ],
-        });
+        where.categoryId = { in: otherCityCatIds };
       } else {
         const cacheKey = `cat:${slugLower}`;
         const cachedCat = categoryLookupCache.get(cacheKey);
@@ -409,8 +437,17 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
                   { slug: slugLower },
                   { name: categorySlug },
                   { nameGu: categorySlug },
-                  ...(slugLower === 'world' || slugLower === 'international'
+                  ...(slugLower === 'national' || slugLower === 'india' || slugLower === 'bharat' || slugLower === 'desh'
+                    ? [{ slug: 'national' }, { slug: 'india' }, { name: 'National' }, { name: 'India' }, { nameGu: 'ભારત' }]
+                    : []),
+                  ...(slugLower === 'world' || slugLower === 'international' || slugLower === 'videsh'
                     ? [{ slug: 'world' }, { slug: 'international' }, { name: 'World' }, { name: 'International' }, { nameGu: 'વિશ્વ' }]
+                    : []),
+                  ...(slugLower === 'politics' || slugLower === 'rajkaran'
+                    ? [{ slug: 'politics' }, { slug: 'rajkaran' }, { name: 'Politics' }, { nameGu: 'રાજનીતિ' }, { nameGu: 'રાજકારણ' }]
+                    : []),
+                  ...(slugLower === 'crime' || slugLower === 'gunho'
+                    ? [{ slug: 'crime' }, { name: 'Crime' }, { nameGu: 'ક્રાઇમ' }]
                     : []),
                   ...(slugLower === 'entertainment' || slugLower === 'entertainment-life-style'
                     ? [{ slug: 'entertainment' }, { slug: 'entertainment-life-style' }, { name: 'Entertainment' }]
@@ -433,66 +470,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           }
         }
 
-        if (slugLower === 'fact-check' || slugLower === 'factcheck') {
-          if (!where.AND) where.AND = [];
-          const factOrConditions: any[] = [
-            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
-            { title: { contains: 'FACT CHECK' } },
-            { title: { contains: 'Fact Check' } },
-            { title: { contains: 'Fact check' } },
-            { title: { contains: 'Fack check' } },
-            { title: { contains: 'Fact-Check' } },
-            { title: { contains: 'ફેક્ટ ચેક' } },
-            { slug: { contains: 'fact-check' } },
-          ];
-          where.AND.push({ OR: factOrConditions });
-        } else if (slugLower === 'health' || slugLower === 'helth') {
-          if (!where.AND) where.AND = [];
-          const healthOrConditions: any[] = [
-            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
-            { title: { contains: 'આરોગ્ય' } },
-            { title: { contains: 'હેલ્થ' } },
-            { title: { contains: 'સ્વાસ્થ્ય' } },
-            { title: { contains: 'ડાયેટ' } },
-            { title: { contains: 'બીમારી' } },
-            { title: { contains: 'Health' } },
-          ];
-          where.AND.push({ OR: healthOrConditions });
-        } else if (slugLower === 'technology' || slugLower === 'tech') {
-          if (!where.AND) where.AND = [];
-          const techOrConditions: any[] = [
-            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
-            { title: { contains: 'ટેકનોલોજી' } },
-            { title: { contains: 'ટેક્નોલોજી' } },
-            { title: { contains: 'મોબાઇલ' } },
-            { title: { contains: 'સ્માર્ટફોન' } },
-            { title: { contains: 'AI' } },
-            { title: { contains: 'Tech' } },
-          ];
-          where.AND.push({ OR: techOrConditions });
-        } else if (slugLower === 'sports' || slugLower === 'ramat-jagat') {
-          if (!where.AND) where.AND = [];
-          const sportsOrConditions: any[] = [
-            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
-            { title: { contains: 'સ્પોર્ટ્સ' } },
-            { title: { contains: 'ક્રિકેટ' } },
-            { title: { contains: 'મેચ' } },
-            { title: { contains: 'IPL' } },
-            { title: { contains: 'રમત' } },
-          ];
-          where.AND.push({ OR: sportsOrConditions });
-        } else if (slugLower === 'business' || slugLower === 'vepar') {
-          if (!where.AND) where.AND = [];
-          const bizOrConditions: any[] = [
-            ...(categoryIds && categoryIds.length > 0 ? [{ categoryId: { in: categoryIds } }] : []),
-            { title: { contains: 'બિઝનેસ' } },
-            { title: { contains: 'શેર બજાર' } },
-            { title: { contains: 'સેન્સેક્સ' } },
-            { title: { contains: 'વેપાર' } },
-            { title: { contains: 'સોનું' } },
-          ];
-          where.AND.push({ OR: bizOrConditions });
-        } else if (categoryIds && categoryIds.length > 0) {
+        if (categoryIds && categoryIds.length > 0) {
           where.categoryId = { in: categoryIds };
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
@@ -532,9 +510,10 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
 
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
+    // Use single-column { articleNumber: 'desc' } to match @@index([categoryId, status, articleNumber]) perfectly
     const orderByClause: any = (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
-      ? [{ views: 'desc' }, { articleNumber: 'desc' }, { createdAt: 'desc' }]
-      : [{ articleNumber: 'desc' }, { createdAt: 'desc' }];
+      ? [{ views: 'desc' }, { articleNumber: 'desc' }]
+      : { articleNumber: 'desc' };
 
     // Optimisation: content fields (content, contentGu, contentHi) are NOT
     // included in list responses — they are large @db.Text columns that article cards
@@ -588,18 +567,45 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       tags: { include: { tag: true } },
     };
 
-    let [posts, total] = await withDbRetry(() =>
-      Promise.all([
-        prisma.post.findMany({
-          where,
-          select: publicArticleSelect,
-          orderBy: orderByClause,
-          skip,
-          take: limit,
-        }),
-        prisma.post.count({ where }),
-      ])
+    let posts = await withDbRetry(() =>
+      prisma.post.findMany({
+        where,
+        select: publicArticleSelect,
+        orderBy: orderByClause,
+        skip,
+        take: limit,
+      })
     );
+
+    let total = 0;
+
+    // Fast fallback if 0 posts were returned for a category with no mapped articles (e.g. sports/health/business)
+    if (posts.length === 0 && categorySlug) {
+      const fallbackKeywords: Record<string, string[]> = {
+        sports: ['સ્પોર્ટ્સ', 'ક્રિકેટ', 'મેચ', 'IPL', 'sports'],
+        'ramat-jagat': ['સ્પોર્ટ્સ', 'ક્રિકેટ', 'મેચ', 'IPL', 'sports'],
+        health: ['આરોગ્ય', 'હેલ્થ', 'સ્વાસ્થ્ય', 'ડાયેટ', 'health'],
+        helth: ['આરોગ્ય', 'હેલ્થ', 'સ્વાસ્થ્ય', 'ડાયેટ', 'health'],
+        technology: ['ટેકનોલોજી', 'મોબાઇલ', 'સ્માર્ટફોન', 'tech'],
+        tech: ['ટેકનોલોજી', 'મોબાઇલ', 'સ્માર્ટફોન', 'tech'],
+        business: ['બિઝનેસ', 'શેર બજાર', 'સેન્સેક્સ', 'વેપાર', 'business'],
+        vepar: ['બિઝનેસ', 'શેર બજાર', 'સેન્સેક્સ', 'વેપાર', 'business'],
+      };
+      const kw = fallbackKeywords[categorySlug.toLowerCase().trim()];
+      if (kw && kw.length > 0) {
+        posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: {
+              status: 'PUBLISHED',
+              OR: kw.map((k) => ({ title: { contains: k } })),
+            },
+            select: publicArticleSelect,
+            orderBy: orderByClause,
+            take: limit,
+          })
+        );
+      }
+    }
 
     // Fallback: If query returned 0 articles (only for general feed, never for specific category or search query)
     if (posts.length === 0 && !categorySlug && !query) {
@@ -610,11 +616,17 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         prisma.post.findMany({
           where: fallbackWhere,
           select: publicArticleSelect,
-          orderBy: [{ articleNumber: 'desc' }],
+          orderBy: { articleNumber: 'desc' },
           take: limit,
         })
       );
+    }
+
+    // Efficient count: If on first page and returned fewer than limit, total is known without extra DB hit
+    if (skip === 0 && posts.length < limit) {
       total = posts.length;
+    } else {
+      total = await withDbRetry(() => prisma.post.count({ where }));
     }
 
     const articles = posts.map((p: any) => {
@@ -640,6 +652,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         contentHi: sanitizeUrlInContent(p.contentHi || rawContentGu),
         image: sanitizeSingleUrl(p.featuredImage),
         featuredImage: sanitizeSingleUrl(p.featuredImage),
+        categoryId: p.categoryId || p.category?.id || '',
+        categorySlug: p.category?.slug || '',
         category: p.category?.name || '',
         categoryGu: p.category?.nameGu || p.category?.name || '',
         categoryHi: p.category?.nameHi || p.category?.name || '',
@@ -660,6 +674,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           bioGu: p.author?.bioGu || '',
           bioHi: p.author?.bioHi || '',
         },
+        createdAt: p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : new Date(p.createdAt).toISOString()) : new Date().toISOString(),
         publishedAt: (p as any).publishedAt ? ((p as any).publishedAt instanceof Date ? (p as any).publishedAt.toISOString() : new Date((p as any).publishedAt).toISOString()) : (p.createdAt ? (p.createdAt instanceof Date ? p.createdAt.toISOString() : new Date(p.createdAt).toISOString()) : new Date().toISOString()),
         updatedAt: p.updatedAt ? (p.updatedAt instanceof Date ? p.updatedAt.toISOString() : new Date(p.updatedAt).toISOString()) : new Date().toISOString(),
         readingTime: p.readingTime,
@@ -684,30 +699,41 @@ router.get('/articles/:slug', cacheResponse(60), async (req, res, next) => {
   try {
     const { slug } = req.params;
     const now = new Date();
-    const p = await prisma.post.findFirst({
-      where: {
-        OR: [{ slug }, { id: slug }],
-        AND: [
-          {
-            OR: [
-              { status: 'PUBLISHED' },
-              { status: 'SCHEDULED', scheduledAt: { lte: now } }
-            ]
-          },
-          {
-            OR: [
-              { scheduledAt: null },
-              { scheduledAt: { lte: now } }
-            ]
-          }
-        ]
-      },
-      include: {
-        category: true,
-        author: true,
-        tags: { include: { tag: true } },
-      },
-    });
+    const cleanSlug = decodeURIComponent(slug).trim();
+    const matchNumber = cleanSlug.match(/(\d+)$/);
+    const num = matchNumber ? parseInt(matchNumber[1], 10) : null;
+
+    const p = await withDbRetry(() =>
+      prisma.post.findFirst({
+        where: {
+          OR: [
+            { slug: cleanSlug },
+            { id: cleanSlug },
+            { slug },
+            ...(num ? [{ articleNumber: num }] : [])
+          ],
+          AND: [
+            {
+              OR: [
+                { status: 'PUBLISHED' },
+                { status: 'SCHEDULED', scheduledAt: { lte: now } }
+              ]
+            },
+            {
+              OR: [
+                { scheduledAt: null },
+                { scheduledAt: { lte: now } }
+              ]
+            }
+          ]
+        },
+        include: {
+          category: true,
+          author: true,
+          tags: { include: { tag: true } },
+        },
+      })
+    );
 
     if (!p) {
       return res.status(404).json({ success: false, message: 'Article not found' });

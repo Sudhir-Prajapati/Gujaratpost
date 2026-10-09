@@ -59,7 +59,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const article = await getPublicArticleBySlug(slug);
+  let article = await getPublicArticleBySlug(slug);
+  if (!article) {
+    const decoded = decodeURIComponent(slug);
+    if (decoded !== slug) {
+      article = await getPublicArticleBySlug(decoded);
+    }
+  }
 
   if (!article) notFound();
 

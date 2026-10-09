@@ -42,7 +42,9 @@ const CITY_NAME_MAP: Record<string, { gu: string; hi: string; en: string }> = {
   'વડોદરા': { gu: 'વડોદરા', hi: 'वडोदरा', en: 'Vadodara' },
   'રાજકોટ': { gu: 'રાજકોટ', hi: 'राजकोट', en: 'Rajkot' },
   'ગાંધીનગર': { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar' },
-  'અન્ય': { gu: 'અન્ય', hi: 'अन्य', en: 'Other Cities' }
+  'અન્ય શહેરો': { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities' },
+  'અન્ય': { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities' },
+  'ગુજરાત': { gu: 'ગુજરાત', hi: 'गुजरात', en: 'Gujarat' }
 };
 
 const TAG_NAME_MAP: Record<string, { gu: string; hi: string; en: string }> = {
@@ -119,7 +121,7 @@ const DEFAULT_CITY_TABS = [
   { gu: 'વડોદરા', hi: 'वडोदरा', en: 'Vadodara', slug: 'vadodara' },
   { gu: 'રાજકોટ', hi: 'राजकोट', en: 'Rajkot', slug: 'rajkot' },
   { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar', slug: 'gandhinagar' },
-  { gu: 'અન્ય', hi: 'अन्य', en: 'Other Cities', slug: 'gujarat' },
+  { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities', slug: 'other-cities' },
 ];
 
 /* --- City Hyperlocal Section ("ગુજરાત" Zone) ----------------------------- */
@@ -156,14 +158,14 @@ export default function CityHyperlocalSection({
               slug,
             };
           });
-          // Always put Ahmedabad first
-          const sorted2 = [...tabs].sort((a, b) => {
+          // Show Ahmedabad first by default, followed by Gandhinagar, Surat, Vadodara, etc. from API
+          const sortedCities = [...tabs.filter((t) => t.slug !== 'all-cities')].sort((a, b) => {
             if (a.slug === 'ahmedabad') return -1;
             if (b.slug === 'ahmedabad') return 1;
             return 0;
           });
-          setDynamicCityTabs(sorted2);
-          setActiveTab(sorted2[0]?.gu || DEFAULT_CITY_TABS[0].gu);
+          setDynamicCityTabs(sortedCities);
+          setActiveTab(sortedCities[0]?.gu || DEFAULT_CITY_TABS[0].gu);
         }
       })
       .catch(() => { });
@@ -876,21 +878,10 @@ export default function CityHyperlocalSection({
       );
     });
 
-    // Sort so articles with explicit Location or Category match come FIRST, ordered by latest date!
+    // Sort strictly by newest articleNumber and publication date first!
     return matched.sort((a, b) => {
-      const locA = ((a as any).location || '').toLowerCase();
-      const locB = ((b as any).location || '').toLowerCase();
-      const catA = getCategoryStr(a);
-      const catB = getCategoryStr(b);
-
-      const exactLocA = locA === targetCity || locA.includes(targetCity) || catA.includes(targetCity);
-      const exactLocB = locB === targetCity || locB.includes(targetCity) || catB.includes(targetCity);
-
-      if (exactLocA && !exactLocB) return -1;
-      if (!exactLocA && exactLocB) return 1;
-
-      const aNum = (a as any).articleNumber || 0;
-      const bNum = (b as any).articleNumber || 0;
+      const aNum = typeof (a as any)?.articleNumber === 'number' ? (a as any).articleNumber : (parseInt((a as any)?.articleNumber, 10) || 0);
+      const bNum = typeof (b as any)?.articleNumber === 'number' ? (b as any).articleNumber : (parseInt((b as any)?.articleNumber, 10) || 0);
       if (bNum !== aNum) return bNum - aNum;
 
       const timeA = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
@@ -949,15 +940,18 @@ export default function CityHyperlocalSection({
     if (CITY_NAME_MAP[catName]) return getLocalized('gu', CITY_NAME_MAP[catName]);
     if (CITY_NAME_MAP[tabGuKey]) return getLocalized('gu', CITY_NAME_MAP[tabGuKey]);
 
-    return (art as any).categoryGu || 'અન્ય શહેરો';
+    return (art as any).categoryGu || 'અમદાવાદ';
   };
 
   const getArtCategoryNameEn = (art: Article, tabGuKey: string) => {
+    const loc = (art as any).location;
+    if (loc) return loc;
     if (typeof art.category === 'object' && (art.category as any).name) {
       return (art.category as any).name;
     }
     if (typeof art.category === 'string') return art.category;
-    return CITY_NAME_MAP[tabGuKey]?.en || 'City';
+    if (CITY_NAME_MAP[tabGuKey]?.en) return CITY_NAME_MAP[tabGuKey].en;
+    return 'Ahmedabad';
   };
 
 
@@ -967,8 +961,8 @@ export default function CityHyperlocalSection({
       : getArticlesForTab(activeTab);
 
     return [...list].sort((a: any, b: any) => {
-      const aNum = a?.articleNumber || 0;
-      const bNum = b?.articleNumber || 0;
+      const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+      const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
       if (bNum !== aNum) return bNum - aNum;
       const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
       const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
@@ -997,7 +991,7 @@ export default function CityHyperlocalSection({
       excerptHi: art.excerptHi || art.excerpt || art.title,
       tags: (art.tags as any) && (art.tags as any).length > 0
         ? (art.tags as any).map((t: any) => typeof t === 'string' ? t : t.tag?.nameGu || t.tag?.name || t.name || t)
-        : [activeTab, 'સમાચાર', 'લાઇવ'],
+        : [getArtCategoryNameGu(art, activeTab), 'સમાચાર', 'લાઇવ'],
     }));
   }, [tabApiArticles, activeTab]);
 

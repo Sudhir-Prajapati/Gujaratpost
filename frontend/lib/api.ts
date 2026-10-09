@@ -215,7 +215,8 @@ export async function getPublicArticles(options: {
  */
 export const getPublicArticleBySlug = cache(async (slug: string): Promise<Article | null> => {
   try {
-    const url = `${API_BASE_URL}/articles/${slug}`;
+    const cleanSlug = encodeURIComponent(decodeURIComponent(slug).trim());
+    const url = `${API_BASE_URL}/articles/${cleanSlug}`;
     const json = await fetchCachedJson<any>(url, 120 * 1000);
 
     if (json?.success && json.data?.article) {

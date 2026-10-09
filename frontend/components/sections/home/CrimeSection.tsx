@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo, Fragment } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, Play, ChevronRight, ChevronLeft, Shield, Sun, Cloud, CloudRain, Flame, Thermometer, Droplet, Wind, Sparkles } from 'lucide-react';
@@ -31,15 +31,18 @@ export default function CrimeSection({
   const [popularStartIndex, setPopularStartIndex] = useState(0);
   const [selectedZodiac, setSelectedZodiac] = useState<ZodiacSign | null>(null);
   const [astrologySigns, setAstrologySigns] = useState<ZodiacSign[]>(initialAstrology || ZODIAC_SIGNS);
-  const sortCrimeLatest = (list: Article[]) =>
-    [...(list || [])].sort((a: any, b: any) => {
-      const aNum = a?.articleNumber || 0;
-      const bNum = b?.articleNumber || 0;
-      if (bNum !== aNum) return bNum - aNum;
+  const sortCrimeLatest = useCallback((list: Article[]) => {
+    return [...(list || [])].sort((a: any, b: any) => {
+      const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+      const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+      if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+      if (bNum > 0 && aNum === 0) return -1;
+      if (aNum > 0 && bNum === 0) return 1;
       const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
       const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
       return timeB - timeA;
     });
+  }, []);
 
   const [dbCrimeArticles, setDbCrimeArticles] = useState<Article[]>(() => sortCrimeLatest(initialArticles || []));
   const [weatherData, setWeatherData] = useState<any>(initialWeather || {
@@ -52,15 +55,38 @@ export default function CrimeSection({
     conditionEn: 'Partly cloudy',
   });
 
+  // Sync state if initialArticles prop changes from parent
   useEffect(() => {
     if (initialArticles && initialArticles.length > 0) {
-      setDbCrimeArticles(sortCrimeLatest(initialArticles));
+      setDbCrimeArticles((prev) => {
+        const map = new Map<string, Article>();
+        prev.forEach((a) => { if (a?.id) map.set(a.id, a); });
+        initialArticles.forEach((a) => { if (a?.id) map.set(a.id, a); });
+        return sortCrimeLatest(Array.from(map.values())).slice(0, 25);
+      });
     }
-    getPublicArticles({ categorySlug: 'crime', limit: 25, sort: 'latest' }).then((crimeRes) => {
+  }, [initialArticles, sortCrimeLatest]);
+
+  const fetchFreshCrimeArticles = useCallback(async () => {
+    try {
+      const crimeRes = await getPublicArticles({ categorySlug: 'crime', limit: 25, sort: 'latest' });
       if (crimeRes && crimeRes.articles && crimeRes.articles.length > 0) {
-        setDbCrimeArticles(sortCrimeLatest(crimeRes.articles));
+        setDbCrimeArticles((prev) => {
+          const map = new Map<string, Article>();
+          crimeRes.articles.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          prev.forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          (initialArticles || []).forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          return sortCrimeLatest(Array.from(map.values())).slice(0, 25);
+        });
       }
-    });
+    } catch {
+      // keep existing
+    }
+  }, [initialArticles, sortCrimeLatest]);
+
+  useEffect(() => {
+    fetchFreshCrimeArticles();
+
     if (!initialWeather) {
       getPublicWeather('ahmedabad').then((wRes) => {
         if (wRes) {
@@ -75,7 +101,24 @@ export default function CrimeSection({
         }
       });
     }
-  }, []);
+
+    const handleSync = () => {
+      fetchFreshCrimeArticles();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFreshCrimeArticles, initialWeather, initialAstrology]);
 
   const mockSlides = [
     {

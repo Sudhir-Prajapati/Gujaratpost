@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import type { Article, Language } from '@/types';
 import { getPublicArticles } from '@/lib/api';
@@ -11,102 +11,130 @@ import { DEMO_IMAGES } from './homeHelpers';
 
 const POLITICS_SLUGS = ['politics', 'rajkaran'];
 
+const POLITICS_CATEGORY_ID = '33c842e2-4efa-4b25-a12d-ac1a1fe1f561';
+
 function isPolitics(art: Article): boolean {
+  if (!art) return false;
+  const catId = (art as any).categoryId || (art as any).category?.id || '';
+  if (catId === POLITICS_CATEGORY_ID) return true;
+
   const slug = (
     (art as any).category?.slug ||
     (art as any).categorySlug ||
-    (art as any).category ||
+    (typeof art.category === 'string' ? art.category : '') ||
     ''
   ).toLowerCase().trim();
   const name = (
     (art as any).category?.name ||
     (art as any).categoryName ||
+    (typeof art.category === 'string' ? art.category : '') ||
     ''
   ).toLowerCase().trim();
   const nameGu = (
-    (art as any).category?.nameGu || ''
+    (art as any).category?.nameGu ||
+    (art as any).categoryGu ||
+    ''
   ).toLowerCase().trim();
+  const titleGu = (art.titleGu || '').toLowerCase();
 
   return (
     POLITICS_SLUGS.includes(slug) ||
     POLITICS_SLUGS.includes(name) ||
     nameGu.includes('રાજ') ||
     name.includes('politic') ||
-    name.includes('raj')
+    name.includes('raj') ||
+    titleGu.includes('રાજકારણ') ||
+    titleGu.includes('રાજનીતિ')
   );
+}
+
+function sortPoliticsLatest(list: Article[]): Article[] {
+  return [...(list || [])].sort((a: any, b: any) => {
+    const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+    const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+    if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+    if (bNum > 0 && aNum === 0) return -1;
+    if (aNum > 0 && bNum === 0) return 1;
+    const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+    const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+    return timeB - timeA;
+  });
 }
 
 /* --- Politics Section ("રાજકારણ" Zone) ----------------------------- */
 export default function PoliticsSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
   const initialPolitics = useMemo(() => {
-    return (initialArticles || [])
-      .filter(isPolitics)
-      .sort((a: any, b: any) => {
-        const aNum = a?.articleNumber || 0;
-        const bNum = b?.articleNumber || 0;
-        if (bNum !== aNum) return bNum - aNum;
-        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-      });
+    return sortPoliticsLatest((initialArticles || []).filter(isPolitics));
   }, [initialArticles]);
 
-  const [dbPoliticsArticles, setDbPoliticsArticles] = useState<Article[]>(initialPolitics.slice(0, 9));
+  const [dbPoliticsArticles, setDbPoliticsArticles] = useState<Article[]>(() => initialPolitics.slice(0, 9));
   const [fallbackArticles, setFallbackArticles] = useState<Article[]>([]);
-  const [loading, setLoading] = useState(initialPolitics.length < 3);
+  const [loading, setLoading] = useState(initialPolitics.length === 0);
 
+  // Sync state if initialArticles prop changes from parent
   useEffect(() => {
-    const preFetched = (initialArticles || []).filter(isPolitics);
-
-    if (preFetched.length >= 9) {
-      const sortedPre = [...preFetched].sort((a: any, b: any) => {
-        const aNum = a?.articleNumber || 0;
-        const bNum = b?.articleNumber || 0;
-        if (bNum !== aNum) return bNum - aNum;
-        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-      });
-      setDbPoliticsArticles(sortedPre.slice(0, 9));
-      setLoading(false);
-      return;
+    if (initialArticles && initialArticles.length > 0) {
+      const filtered = (initialArticles || []).filter(isPolitics);
+      if (filtered.length > 0) {
+        setDbPoliticsArticles((prev) => {
+          const map = new Map<string, Article>();
+          prev.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          filtered.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          return sortPoliticsLatest(Array.from(map.values())).slice(0, 9);
+        });
+      }
     }
+  }, [initialArticles]);
 
-    // Fetch from both slugs in parallel
-    Promise.all([
-      getPublicArticles({ categorySlug: 'politics', limit: 12, sort: 'latest' }).catch(() => null),
-      getPublicArticles({ categorySlug: 'rajkaran', limit: 12, sort: 'latest' }).catch(() => null),
-    ]).then(([res1, res2]) => {
+  const fetchFreshPoliticsArticles = useCallback(async () => {
+    try {
+      const [res1, res2] = await Promise.all([
+        getPublicArticles({ categorySlug: 'politics', limit: 12, sort: 'latest' }).catch(() => null),
+        getPublicArticles({ categorySlug: 'rajkaran', limit: 12, sort: 'latest' }).catch(() => null),
+      ]);
       const combined = [
         ...(res1?.articles || []),
         ...(res2?.articles || []),
-        ...preFetched,
       ];
-      // Deduplicate by id
-      const seen = new Set<string>();
-      const unique = combined.filter(a => {
-        if (!a?.id || seen.has(a.id)) return false;
-        seen.add(a.id);
-        return true;
-      });
-      // Sort newest first
-      unique.sort((a: any, b: any) => {
-        const aNum = a?.articleNumber || 0;
-        const bNum = b?.articleNumber || 0;
-        if (bNum !== aNum) return bNum - aNum;
-        return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-      });
-
-      setDbPoliticsArticles(unique.slice(0, 9));
-
-      // If fewer than 9 politics articles, also fetch recent articles as fallback
-      if (unique.length < 9) {
-        getPublicArticles({ limit: 20, sort: 'latest' }).then(res3 => {
-          const nonPolitics = (res3?.articles || []).filter(a => !unique.some(p => p.id === a.id));
-          setFallbackArticles(nonPolitics.slice(0, 9 - unique.length));
-          setLoading(false);
-        }).catch(() => setLoading(false));
-      } else {
-        setLoading(false);
+      if (combined.length > 0) {
+        setDbPoliticsArticles((prev) => {
+          const map = new Map<string, Article>();
+          combined.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          prev.forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          (initialArticles || []).filter(isPolitics).forEach((a) => {
+            if (a?.id && !map.has(a.id)) map.set(a.id, a);
+          });
+          const sorted = sortPoliticsLatest(Array.from(map.values()));
+          return sorted.slice(0, 9);
+        });
       }
-    }).catch(() => setLoading(false));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    } catch {
+      // keep existing
+    } finally {
+      setLoading(false);
+    }
+  }, [initialArticles]);
+
+  useEffect(() => {
+    fetchFreshPoliticsArticles();
+
+    const handleSync = () => {
+      fetchFreshPoliticsArticles();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFreshPoliticsArticles]);
 
   // Combine politics + fallback to always fill 9 slots
   const allCards = useMemo(() => {

@@ -1275,6 +1275,9 @@ interface ExtraDescriptionSlot {
       if (!response.ok) throw new Error(result.error || 'Failed to save article.');
 
       clearApiCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gp-articles-updated'));
+      }
       fetch('/api/revalidate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

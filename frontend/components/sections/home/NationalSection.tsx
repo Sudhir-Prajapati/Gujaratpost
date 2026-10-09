@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, ChevronRight, TrendingUp } from 'lucide-react';
@@ -129,29 +129,70 @@ const mockNationalColumns = [
 
 /* --- National Section ("દેશ" Zone) ----------------------------- */
 export default function NationalSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
-  const sortNationalLatest = (list: Article[]) =>
-    [...(list || [])].sort((a: any, b: any) => {
-      const aNum = a?.articleNumber || 0;
-      const bNum = b?.articleNumber || 0;
-      if (bNum !== aNum) return bNum - aNum;
+  const sortNationalLatest = useCallback((list: Article[]) => {
+    return [...(list || [])].sort((a: any, b: any) => {
+      const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+      const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+      if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+      if (bNum > 0 && aNum === 0) return -1;
+      if (aNum > 0 && bNum === 0) return 1;
       const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
       const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
       return timeB - timeA;
     });
+  }, []);
 
   const [dbNationalArticles, setDbNationalArticles] = useState<Article[]>(() => sortNationalLatest(initialArticles || []));
 
+  // Sync state if initialArticles prop changes from parent
   useEffect(() => {
-    if (initialArticles && initialArticles.length >= 3) {
-      setDbNationalArticles(sortNationalLatest(initialArticles));
-      return;
+    if (initialArticles && initialArticles.length > 0) {
+      setDbNationalArticles((prev) => {
+        const map = new Map<string, Article>();
+        prev.forEach((a) => { if (a?.id) map.set(a.id, a); });
+        initialArticles.forEach((a) => { if (a?.id) map.set(a.id, a); });
+        return sortNationalLatest(Array.from(map.values())).slice(0, 12);
+      });
     }
-    getPublicArticles({ categorySlug: 'national', limit: 12, sort: 'latest' }).then((res) => {
+  }, [initialArticles, sortNationalLatest]);
+
+  const fetchFreshNationalArticles = useCallback(async () => {
+    try {
+      const res = await getPublicArticles({ categorySlug: 'national', limit: 12, sort: 'latest' });
       if (res && res.articles && res.articles.length > 0) {
-        setDbNationalArticles(sortNationalLatest(res.articles));
+        setDbNationalArticles((prev) => {
+          const map = new Map<string, Article>();
+          res.articles.forEach((a) => { if (a?.id) map.set(a.id, a); });
+          prev.forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          (initialArticles || []).forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
+          return sortNationalLatest(Array.from(map.values())).slice(0, 12);
+        });
       }
-    });
-  }, [initialArticles]);
+    } catch {
+      // keep existing
+    }
+  }, [initialArticles, sortNationalLatest]);
+
+  useEffect(() => {
+    fetchFreshNationalArticles();
+
+    const handleSync = () => {
+      fetchFreshNationalArticles();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') handleSync();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [fetchFreshNationalArticles]);
 
   const top3 = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];

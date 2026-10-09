@@ -33,7 +33,8 @@ export async function withDbRetry<T>(
         throw err;
       }
 
-      const backoff = delayMs * attempt;
+      const jitter = Math.floor(Math.random() * 250);
+      const backoff = delayMs * attempt + jitter;
       console.warn(`[DB] Attempt ${attempt}/${maxRetries} failed (${err?.code || 'unknown'}). Retrying in ${backoff}ms...`);
       await new Promise((res) => setTimeout(res, backoff));
     }
