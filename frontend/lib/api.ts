@@ -125,62 +125,82 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
   }
 
   const fetchPromise = (async (): Promise<T | null> => {
-    const controller = new AbortController();
-    // 12s for SSR to prevent server hangs; 25s in browser so concurrent client requests do not abort prematurely
-    const timeoutDuration = typeof window === 'undefined' ? 12000 : 25000;
-    const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
-
     const isServer = typeof window === 'undefined';
     const revalidateSeconds = process.env.NODE_ENV === 'development' ? 0 : (effectiveTtl > 0 ? Math.max(10, Math.round(effectiveTtl / 1000)) : 0);
-
-    const fetchOptions: RequestInit = {
-      signal: controller.signal,
-    };
-
-    if (isServer && revalidateSeconds > 0) {
-      // Safe Next.js Data Cache revalidation for public read requests during SSR
-      (fetchOptions as any).next = { revalidate: revalidateSeconds };
-    } else if (revalidateSeconds === 0) {
-      // Explicitly bypass cache for dynamic/zero-TTL requests
-      fetchOptions.cache = 'no-store';
-    }
+    const maxAttempts = isServer ? 2 : 3;
 
     try {
-      const res = await fetch(url, fetchOptions);
-      clearTimeout(timeoutId);
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        const controller = new AbortController();
+        // 12s for SSR to prevent server hangs; 25s in browser so concurrent client requests do not abort prematurely
+        const timeoutDuration = isServer ? 12000 : 25000;
+        const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
 
-      if (!res.ok) {
-        throw new Error(`HTTP error ${res.status}`);
-      }
+        const fetchOptions: RequestInit = {
+          signal: controller.signal,
+        };
 
-      const text = await res.text();
-      if (!text || !text.trim()) {
-        return null;
-      }
-
-      let json: any = null;
-      try {
-        json = JSON.parse(text);
-      } catch (parseErr: any) {
-        console.warn(`JSON parse error for ${url}:`, parseErr?.message || parseErr);
-        return null;
-      }
-
-      apiCache.set(url, { timestamp: Date.now(), data: json });
-      return json as T;
-    } catch (error: any) {
-      clearTimeout(timeoutId);
-      const isAbort = error?.name === 'AbortError' || error?.message?.includes('aborted');
-      if (isAbort) {
-        if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
-          console.warn(`SSR fetch timed out for ${url}`);
-        } else if (typeof window !== 'undefined') {
-          console.debug(`Fetch aborted for ${url}`);
+        if (isServer && revalidateSeconds > 0) {
+          // Safe Next.js Data Cache revalidation for public read requests during SSR
+          (fetchOptions as any).next = { revalidate: revalidateSeconds };
+        } else if (revalidateSeconds === 0) {
+          // Explicitly bypass cache for dynamic/zero-TTL requests
+          fetchOptions.cache = 'no-store';
         }
-      } else {
-        const isClientAbort = typeof window !== 'undefined' && (error?.message === 'Failed to fetch' || error?.name === 'TypeError');
-        if (!isClientAbort && process.env.NODE_ENV === 'development') {
-          console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
+
+        try {
+          const res = await fetch(url, fetchOptions);
+          clearTimeout(timeoutId);
+
+          // Handle rate limit (e.g., Render free tier waking up with 'hibernate-rate-limited') or temporary gateway blip
+          if ((res.status === 429 || res.status === 502 || res.status === 503) && attempt < maxAttempts) {
+            const retryAfterHeader = res.headers.get('retry-after');
+            const delayMs = retryAfterHeader ? Math.min(parseInt(retryAfterHeader, 10) * 1000, 6000) : attempt * 1500;
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
+            continue;
+          }
+
+          if (!res.ok) {
+            throw new Error(`HTTP error ${res.status}`);
+          }
+
+          const text = await res.text();
+          if (!text || !text.trim()) {
+            return null;
+          }
+
+          let json: any = null;
+          try {
+            json = JSON.parse(text);
+          } catch (parseErr: any) {
+            console.warn(`JSON parse error for ${url}:`, parseErr?.message || parseErr);
+            return null;
+          }
+
+          apiCache.set(url, { timestamp: Date.now(), data: json });
+          return json as T;
+        } catch (error: any) {
+          clearTimeout(timeoutId);
+          const isAbort = error?.name === 'AbortError' || error?.message?.includes('aborted');
+
+          if (attempt < maxAttempts && !isAbort) {
+            await new Promise((resolve) => setTimeout(resolve, attempt * 1000));
+            continue;
+          }
+
+          if (isAbort) {
+            if (isServer && process.env.NODE_ENV === 'development') {
+              console.warn(`SSR fetch timed out for ${url}`);
+            } else if (!isServer) {
+              console.debug(`Fetch aborted for ${url}`);
+            }
+          } else {
+            const isClientAbort = !isServer && (error?.message === 'Failed to fetch' || error?.name === 'TypeError');
+            if (!isClientAbort && process.env.NODE_ENV === 'development') {
+              console.warn(`Backend API fetch error for ${url}:`, error?.message || error);
+            }
+          }
+          return null;
         }
       }
       return null;
