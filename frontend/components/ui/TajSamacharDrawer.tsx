@@ -19,10 +19,14 @@ function getFullImageUrl(url?: string | null): string {
     return clean;
   }
   if (clean.startsWith('/uploads/') || clean.startsWith('uploads/')) {
-    const defaultBackend = process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000';
+    const defaultBackend = process.env.NODE_ENV === 'production' ? 'https://api.gujaratpost.in' : 'http://127.0.0.1:5000';
+    const rawEnv = process.env.NEXT_PUBLIC_BACKEND_URL;
+    const validEnv = rawEnv && rawEnv.startsWith('http') && rawEnv !== 'https://api' && (process.env.NODE_ENV !== 'production' || rawEnv.includes('.'))
+      ? rawEnv.replace(/\/+$/, '')
+      : defaultBackend;
     const backendOrigin = typeof window !== 'undefined'
       ? (window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:5000' : '')
-      : (process.env.NEXT_PUBLIC_BACKEND_URL || defaultBackend);
+      : validEnv;
     const path = clean.startsWith('/') ? clean : `/${clean}`;
     return `${backendOrigin}${path}`;
   }

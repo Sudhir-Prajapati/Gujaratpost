@@ -4,7 +4,7 @@ import { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, slugi
 export { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, slugify };
 export type { Article, Author, NavItem, Photo, Video, Language };
 
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://gujaratpost.com';
+export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'production' ? 'https://guj-stg.gujaratpost.in' : 'http://localhost:3000');
 
 // Empty static arrays - backend API is the single source of truth
 export const ARTICLES: Article[] = [];

@@ -2,15 +2,50 @@ import { cache } from 'react';
 import { Article, Video, Photo } from '@/types';
 import { PHOTOS } from '@/data';
 
+export function cleanBackendUrl(rawUrl?: string, isProd = process.env.NODE_ENV === 'production'): string {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  const trimmed = rawUrl.trim();
+  if (!trimmed || trimmed.startsWith('/')) return '';
+  try {
+    const urlStr = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+    const parsed = new URL(urlStr);
+
+    if (isProd && (!parsed.hostname.includes('.') && parsed.hostname !== 'localhost')) {
+      return '';
+    }
+    if (parsed.hostname === 'api') {
+      return '';
+    }
+
+    let pathname = parsed.pathname.replace(/\/+$/, '');
+    if (pathname.endsWith('/api/public')) {
+      pathname = pathname.slice(0, -'/api/public'.length);
+    } else if (pathname.endsWith('/api')) {
+      pathname = pathname.slice(0, -'/api'.length);
+    }
+    return `${parsed.origin}${pathname}`;
+  } catch {
+    return '';
+  }
+}
+
 function resolveBackendOrigin(): string {
-  const envUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (process.env.NEXT_PUBLIC_API_URL ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/public\/?$/, '').replace(/\/api\/?$/, '').replace(/\/public\/?$/, '') : '');
-  if (process.env.NODE_ENV === 'production') {
-    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1')) {
-      return 'https://gujaratpost.onrender.com';
+  const isProd = process.env.NODE_ENV === 'production';
+  const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+  const envUrl = cleanBackendUrl(rawUrl, isProd);
+  if (isProd) {
+    if (!envUrl || envUrl.includes('localhost') || envUrl.includes('127.0.0.1') || envUrl === 'https://api') {
+      return 'https://api.gujaratpost.in';
     }
     return envUrl;
   }
-  return envUrl || 'http://127.0.0.1:5000';
+  let devUrl = envUrl || 'http://127.0.0.1:5000';
+  if (devUrl.includes('localhost:')) {
+    devUrl = devUrl.replace('://localhost:', '://127.0.0.1:');
+  }
+  return devUrl;
 }
 
 const BACKEND_ORIGIN = resolveBackendOrigin();
@@ -704,7 +739,7 @@ export async function fetchLiveInstagramReels(): Promise<any[]> {
     const appUrlEnv = process.env.NEXT_PUBLIC_APP_URL;
     const validAppUrl = (appUrlEnv && (!appUrlEnv.includes('localhost') || process.env.NODE_ENV !== 'production'))
       ? appUrlEnv
-      : (process.env.NODE_ENV === 'production' ? 'https://gujaratpost-1.onrender.com' : 'http://localhost:3000');
+      : (process.env.NODE_ENV === 'production' ? 'https://guj-stg.gujaratpost.in' : 'http://localhost:3000');
     const baseUrl = typeof window !== 'undefined'
       ? window.location.origin
       : validAppUrl;

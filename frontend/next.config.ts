@@ -67,19 +67,52 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
-    let rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
-    if (process.env.NODE_ENV === 'production' && rawUrl && (rawUrl.includes('localhost') || rawUrl.includes('127.0.0.1'))) {
-      rawUrl = undefined;
+    function cleanBackendUrl(raw?: string, isProd = false): string {
+      if (!raw || typeof raw !== 'string') return '';
+      const trimmed = raw.trim();
+      if (!trimmed || trimmed.startsWith('/')) return '';
+      try {
+        const urlStr = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+          ? trimmed
+          : `https://${trimmed}`;
+        const parsed = new URL(urlStr);
+
+        if (isProd && (!parsed.hostname.includes('.') && parsed.hostname !== 'localhost')) {
+          return '';
+        }
+        if (parsed.hostname === 'api') {
+          return '';
+        }
+
+        let pathname = parsed.pathname.replace(/\/+$/, '');
+        if (pathname.endsWith('/api/public')) {
+          pathname = pathname.slice(0, -'/api/public'.length);
+        } else if (pathname.endsWith('/api')) {
+          pathname = pathname.slice(0, -'/api'.length);
+        }
+        return `${parsed.origin}${pathname}`;
+      } catch {
+        return '';
+      }
     }
-    const defaultBackend = process.env.NODE_ENV === 'production'
-      ? "https://gujaratpost.onrender.com"
-      : "http://127.0.0.1:5000";
-    let backendUrl = rawUrl && rawUrl.startsWith('http')
-      ? rawUrl.replace(/\/api\/?.*$/, '')
-      : defaultBackend;
-    if (backendUrl.includes('localhost:') && process.env.NODE_ENV !== 'production') {
-      backendUrl = backendUrl.replace('://localhost:', '://127.0.0.1:');
+
+    const isProduction = process.env.NODE_ENV === 'production';
+    const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    let backendUrl = cleanBackendUrl(rawUrl, isProduction);
+
+    if (isProduction) {
+      if (!backendUrl || backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1') || backendUrl === 'https://api') {
+        backendUrl = 'https://api.gujaratpost.in';
+      }
+    } else {
+      if (!backendUrl) {
+        backendUrl = 'http://127.0.0.1:5000';
+      }
+      if (backendUrl.includes('localhost:')) {
+        backendUrl = backendUrl.replace('://localhost:', '://127.0.0.1:');
+      }
     }
+
     return [
       {
         source: "/api/public/:path*",

@@ -5,9 +5,30 @@ export const revalidate = 0; // No static caching — runs on each request
 
 export async function GET(_request: NextRequest) {
   try {
-    const defaultBackend = process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000';
-    let backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-    if (!backendUrl || (process.env.NODE_ENV === 'production' && (backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1')))) {
+    const isProd = process.env.NODE_ENV === 'production';
+    const defaultBackend = isProd ? 'https://api.gujaratpost.in' : 'http://127.0.0.1:5000';
+    let rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+    let backendUrl = '';
+    if (rawUrl && typeof rawUrl === 'string') {
+      const trimmed = rawUrl.trim();
+      if (trimmed && !trimmed.startsWith('/')) {
+        try {
+          const url = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`);
+          if (!isProd || (url.hostname.includes('.') && url.hostname !== 'api')) {
+            let pathname = url.pathname.replace(/\/+$/, '');
+            if (pathname.endsWith('/api/public')) {
+              pathname = pathname.slice(0, -'/api/public'.length);
+            } else if (pathname.endsWith('/api')) {
+              pathname = pathname.slice(0, -'/api'.length);
+            }
+            backendUrl = `${url.origin}${pathname}`;
+          }
+        } catch {
+          backendUrl = '';
+        }
+      }
+    }
+    if (!backendUrl || (isProd && (backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1') || backendUrl === 'https://api'))) {
       backendUrl = defaultBackend;
     }
     const res = await fetch(`${backendUrl}/api/public/reels?limit=50`, {

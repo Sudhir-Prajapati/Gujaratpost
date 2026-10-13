@@ -58,21 +58,50 @@ export function sanitizeImageUrl(url?: string | null): string {
   return clean;
 }
 
+function getBackendOrigin(): string {
+  const isProd = process.env.NODE_ENV === 'production';
+  const rawUrl = process.env.NEXT_PUBLIC_BACKEND_URL || process.env.NEXT_PUBLIC_API_URL;
+  let backendUrl = '';
+  if (rawUrl && typeof rawUrl === 'string') {
+    const trimmed = rawUrl.trim();
+    if (trimmed && !trimmed.startsWith('/')) {
+      try {
+        const url = new URL(trimmed.startsWith('http://') || trimmed.startsWith('https://') ? trimmed : `https://${trimmed}`);
+        if (!isProd || (url.hostname.includes('.') && url.hostname !== 'api')) {
+          let pathname = url.pathname.replace(/\/+$/, '');
+          if (pathname.endsWith('/api/public')) {
+            pathname = pathname.slice(0, -'/api/public'.length);
+          } else if (pathname.endsWith('/api')) {
+            pathname = pathname.slice(0, -'/api'.length);
+          }
+          backendUrl = `${url.origin}${pathname}`;
+        }
+      } catch {
+        backendUrl = '';
+      }
+    }
+  }
+
+  if (isProd) {
+    if (!backendUrl || backendUrl.includes('localhost') || backendUrl.includes('127.0.0.1') || backendUrl === 'https://api') {
+      return 'https://api.gujaratpost.in';
+    }
+    return backendUrl;
+  }
+  let devUrl = backendUrl || 'http://127.0.0.1:5000';
+  if (devUrl.includes('localhost:')) {
+    devUrl = devUrl.replace('://localhost:', '://127.0.0.1:');
+  }
+  return devUrl;
+}
+
 export function formatEpaperPdfUrl(url?: string | null, page: number = 1): string {
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
 
-  let envOrigin = process.env.NEXT_PUBLIC_BACKEND_URL
-    ? process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/api\/?$/, '')
-    : (process.env.NEXT_PUBLIC_API_URL
-      ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/public\/?$/, '').replace(/\/api\/?$/, '')
-      : '');
-  if (process.env.NODE_ENV === 'production' && envOrigin && (envOrigin.includes('localhost') || envOrigin.includes('127.0.0.1'))) {
-    envOrigin = '';
-  }
   const backendOrigin = typeof window !== 'undefined'
     ? ''
-    : (envOrigin || (process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000'));
+    : getBackendOrigin();
 
   if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) {
     const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
@@ -95,17 +124,9 @@ export function formatEpaperDownloadUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return '#';
   const clean = url.trim();
 
-  let envOrigin = process.env.NEXT_PUBLIC_BACKEND_URL
-    ? process.env.NEXT_PUBLIC_BACKEND_URL.replace(/\/api\/?$/, '')
-    : (process.env.NEXT_PUBLIC_API_URL
-      ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/public\/?$/, '').replace(/\/api\/?$/, '')
-      : '');
-  if (process.env.NODE_ENV === 'production' && envOrigin && (envOrigin.includes('localhost') || envOrigin.includes('127.0.0.1'))) {
-    envOrigin = '';
-  }
   const backendOrigin = typeof window !== 'undefined'
     ? ''
-    : (envOrigin || (process.env.NODE_ENV === 'production' ? 'https://gujaratpost.onrender.com' : 'http://127.0.0.1:5000'));
+    : getBackendOrigin();
 
   if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) {
     const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
