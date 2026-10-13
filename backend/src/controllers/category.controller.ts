@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
-import { BadRequestError, ConflictError } from '../utils/errors.js';
+import { BadRequestError, ConflictError, NotFoundError } from '../utils/errors.js';
 import { clearPublicRoutesCache } from '../utils/publicCache.js';
 
 export class CategoryController {
@@ -13,6 +13,14 @@ export class CategoryController {
       const categories = await prisma.category.findMany({
         orderBy: {
           displayOrder: 'desc',
+        },
+        include: {
+          _count: {
+            select: {
+              posts: true,
+              videos: true,
+            },
+          },
         },
       });
       return sendSuccess(res, categories, 'Categories list retrieved successfully.');
@@ -246,25 +254,111 @@ export class CategoryController {
 
   /**
    * Delete a category.
+   * If articles are assigned to this category, they will be automatically
+   * reassigned to a designated category (or the fallback "uncategorized" category).
+   * Any linked videos will be unlinked (categoryId set to null).
    */
   static async deleteCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
+      const reassignTo = (req.query.reassignTo as string) || (req.body?.reassignTo as string);
 
-      // Restrict deletion if there are posts assigned to this category
-      const postsCount = await prisma.post.count({
-        where: { categoryId: id },
+      const category = await prisma.category.findUnique({
+        where: { id },
+        include: {
+          _count: {
+            select: { posts: true, videos: true },
+          },
+        },
       });
-      if (postsCount > 0) {
-        throw new BadRequestError('Cannot delete category: posts are associated with it.');
+
+      if (!category) {
+        throw new NotFoundError('Category not found.');
       }
 
-      await prisma.category.delete({
-        where: { id },
+      // Prevent deleting the permanent fallback uncategorized category while it contains articles
+      if (category.slug === 'uncategorized' && category._count.posts > 0 && !reassignTo) {
+        throw new BadRequestError('Cannot delete the default Uncategorized category while it contains articles.');
+      }
+
+      let targetCategoryId: string | null = null;
+
+      if (category._count.posts > 0) {
+        if (reassignTo && reassignTo !== id) {
+          const target = await prisma.category.findUnique({
+            where: { id: reassignTo },
+          });
+          if (!target) {
+            throw new BadRequestError('Target category for reassigning articles was not found.');
+          }
+          targetCategoryId = target.id;
+        } else {
+          // Find or create default "uncategorized" category
+          let fallback = await prisma.category.findFirst({
+            where: {
+              slug: 'uncategorized',
+              id: { not: id },
+            },
+          });
+
+          if (!fallback) {
+            fallback = await prisma.category.create({
+              data: {
+                slug: 'uncategorized',
+                name: 'Uncategorized',
+                nameGu: 'સામાન્ય',
+                nameHi: 'सामान्य',
+                description: 'Default category for uncategorized articles',
+                displayOrder: 0,
+                headerOrder: 0,
+                homeOrder: 0,
+                isActive: true,
+                showInHome: false,
+                showInHeader: false,
+              },
+            });
+          }
+          targetCategoryId = fallback.id;
+        }
+      }
+
+      // Execute in a transaction to guarantee data integrity
+      await prisma.$transaction(async (tx) => {
+        // 1. Reassign posts if any exist
+        if (targetCategoryId && category._count.posts > 0) {
+          await tx.post.updateMany({
+            where: { categoryId: id },
+            data: { categoryId: targetCategoryId },
+          });
+        }
+
+        // 2. Unlink any videos linked to this category
+        if (category._count.videos > 0) {
+          await tx.video.updateMany({
+            where: { categoryId: id },
+            data: { categoryId: null, categoryName: null },
+          });
+        }
+
+        // 3. Delete the category itself
+        await tx.category.delete({
+          where: { id },
+        });
       });
 
       clearPublicRoutesCache();
-      return sendSuccess(res, null, 'Category deleted successfully.');
+
+      return sendSuccess(
+        res,
+        {
+          deletedCategoryId: id,
+          reassignedPosts: category._count.posts,
+          targetCategoryId,
+        },
+        category._count.posts > 0
+          ? `Category deleted. ${category._count.posts} article(s) were moved to uncategorized.`
+          : 'Category deleted successfully.'
+      );
     } catch (error) {
       next(error);
     }

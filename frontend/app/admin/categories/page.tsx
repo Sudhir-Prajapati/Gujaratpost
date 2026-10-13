@@ -42,6 +42,10 @@ interface CategoryData {
   showInHeader?: boolean;
   headerType?: string;
   createdAt: string;
+  _count?: {
+    posts: number;
+    videos: number;
+  };
 }
 
 const GUJARATI_TRANSLIT_MAP: Record<string, string> = {
@@ -557,11 +561,18 @@ export default function CategoriesPage() {
     setDeleting(true);
     try {
       const res = await authFetch(getBackendApiUrl(`/api/admin/categories/${deleteTarget.id}`), { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete category');
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.message || data?.error || 'Failed to delete category');
+      }
       setCategories(prev => prev.filter(c => c.id !== deleteTarget.id));
       setDeleteTarget(null);
+      clearApiCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gp-categories-updated'));
+      }
     } catch (err: any) {
-      alert(err.message);
+      alert(err.message || 'Failed to delete category');
     } finally {
       setDeleting(false);
     }
@@ -1968,8 +1979,17 @@ export default function CategoriesPage() {
                 Delete Category?
               </h3>
               <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed max-w-xs mx-auto">
-                Are you sure you want to delete <strong className="text-zinc-900 dark:text-zinc-100 font-extrabold">&quot;{deleteTarget.nameGu || deleteTarget.name}&quot;</strong>? All articles in this category will become uncategorized.
+                Are you sure you want to delete <strong className="text-zinc-900 dark:text-zinc-100 font-extrabold">&quot;{deleteTarget.nameGu || deleteTarget.name}&quot;</strong>?
               </p>
+              {deleteTarget._count && deleteTarget._count.posts > 0 ? (
+                <div className="mt-2.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 text-amber-800 dark:text-amber-200 text-xs font-semibold text-left">
+                  ⚠️ This category has <strong>{deleteTarget._count.posts}</strong> article(s). They will automatically be moved to <strong>&quot;સામાન્ય / Uncategorized&quot;</strong> before deletion so no content is lost.
+                </div>
+              ) : (
+                <p className="text-[11px] text-zinc-400 dark:text-zinc-500">
+                  This category has no articles and will be permanently removed.
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-center gap-3 pt-2">
