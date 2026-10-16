@@ -105,6 +105,7 @@ const companyLinks = [
     { label: 'Terms Of Use', href: '/terms' },
     { label: 'Disclaimer', href: '/disclaimer' },
     { label: 'Site Map', href: '/sitemap' },
+    { label: 'RSS Feeds', href: '/rss' },
     { label: 'RSS Terms of Service', href: '/rss-terms-of-service' },
     { label: 'Feedback', href: '/feedback' },
 ];
@@ -268,39 +269,47 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     <div className="flex flex-col items-center text-center pb-5 border-b border-slate-800/80">
                         {/* Slogan */}
                         <p
-                            className="text-[12px] font-black tracking-wide text-white uppercase select-none mb-1"
+                            className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
                             style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
                             translate="no"
                         >
-                            Real Stories. <span className="text-red-500 font-black">Real Gujarat.</span>
+                            Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
                         </p>
 
                         {/* Logo */}
-                        <Link href="/" className="relative block h-10 w-44 my-1 overflow-hidden">
-                            <Image
-                                src="/assets/gujarat-post-logo-cms.png"
-                                alt="Gujarat Post"
-                                fill
-                                priority
-                                unoptimized
-                                className="object-contain object-center drop-shadow-sm"
-                            />
-                        </Link>
+                        <div className="w-[240px] max-w-full flex flex-col items-center mt-5">
+                            {/* Logo */}
+                            <Link
+                                href="/"
+                                className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
+                                style={{ aspectRatio: '940 / 208' }}
+                            >
+                                <Image
+                                    src="/assets/gujarat-post-logo-cms.png"
+                                    alt="Gujarat Post"
+                                    fill
+                                    priority
+                                    unoptimized
+                                    sizes="240px"
+                                    className="object-contain object-center drop-shadow-sm"
+                                />
+                            </Link>
 
                         {/* Support Us Button in Footer */}
                         <button
                             type="button"
                             onClick={openSupportModal}
-                            className="w-full max-w-xs mt-3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-4 py-3 text-white shadow-lg shadow-red-900/40 active:scale-95 transition-all duration-200 cursor-pointer border border-red-400/40 select-none"
+                            className="w-full mt-5 flex items-center justify-center gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3.5 text-white shadow-lg shadow-[#CF0907]/30 active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
                         >
                             <Heart className="h-4.5 w-4.5 fill-current animate-pulse text-white shrink-0" />
-                            <span className="text-[13.5px] font-black tracking-wide drop-shadow-sm">
+                            <span className="text-[15.5px] sm:text-[16.5px] font-black tracking-wide drop-shadow-sm">
                                 {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
                             </span>
                         </button>
+                        </div>
 
                         {/* Social Icons */}
-                        <div className="flex items-center justify-center gap-2.5 sm:gap-3 w-full max-w-xs mx-auto mt-4">
+                        <div className="flex items-center justify-center gap-3 sm:gap-3.5 w-full max-w-xs mx-auto mt-5">
                             {SOCIAL_LINKS.map((item) => (
                                 <SocialIconButton key={`mob-${item.label}`} item={item} className="h-9.5 w-9.5 shrink-0" />
                             ))}
@@ -344,10 +353,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-extrabold text-slate-400 px-2 text-center">
                         {[
                             ['Complain Redressal', '/complaign-redressal'],
-                            ['Your Privacy Choices', '/privacy-choices'],
-                            ["Children's Privacy Policy", '/children-privacy'],
                             ['Cookie Settings', '/cookie-settings'],
-                            ['DNPA Code Of Ethics', '/dnpa-code-of-ethics'],
                         ].map(([label, href]) => (
                             <Link key={href} href={href} className="hover:text-white transition-colors duration-200">
                                 {label}
@@ -358,7 +364,6 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     {/* Copyright */}
                     <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10px] text-center px-4">
                         <p>External links are provided for reference purposes. © {new Date().getFullYear()} GUJARAT POST MEDIA. ALL RIGHTS RESERVED.</p>
-                        <p className="tracking-wider text-slate-400 font-black">RNI/GJ-DEMO/2026</p>
                     </div>
                 </div>
 
@@ -370,25 +375,29 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         {/* Slogan */}
                         <div className="flex flex-col justify-center leading-tight pl-1 sm:pl-1.5 md:pl-2">
                             <p
-                                className="text-[12px] sm:text-[14px] md:text-[15px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
+                                className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
                                 style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
                                 translate="no"
                             >
-                                Real Stories. <span className="text-red-600">Real Gujarat.</span>
+                                Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
                             </p>
                         </div>
 
                         {/* Unified Logo & Support Button Container - Exact Same Width & Matching Ends */}
-                        <div className="w-[200px] sm:w-[220px] lg:w-[240px] flex flex-col items-start">
-                            {/* Logo — exact same dimensions as Header */}
-                            <Link href="/" className="group relative block h-9 sm:h-11 md:h-12 lg:h-14 w-40 sm:w-50 md:w-54 lg:w-60 overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]">
+                        <div className="w-[240px] flex flex-col items-start">
+                            {/* Logo — exact same width as Support Button */}
+                            <Link
+                                href="/"
+                                className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
+                                style={{ aspectRatio: '940 / 208' }}
+                            >
                                 <Image
                                     src="/assets/gujarat-post-logo-cms.png"
                                     alt="Gujarat Post"
                                     fill
                                     priority
                                     unoptimized
-                                    sizes="(max-width: 640px) 160px, (max-width: 1024px) 216px, 240px"
+                                    sizes="240px"
                                     className="object-contain object-left block drop-shadow-sm"
                                 />
                             </Link>
@@ -397,16 +406,16 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             <button
                                 type="button"
                                 onClick={openSupportModal}
-                                className="mt-3 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 px-2.5 sm:px-3 py-2.5 sm:py-3 text-white shadow-lg shadow-red-900/40 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-red-400/40 select-none"
+                                className="mt-5 sm:mt-6 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3 sm:py-3.5 text-white shadow-lg shadow-[#CF0907]/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
                             >
-                                <Heart className="h-4 w-4 sm:h-4.5 sm:w-4.5 fill-current animate-pulse text-white shrink-0" />
-                                <span className="text-[13px] sm:text-[14px] font-extrabold tracking-wide whitespace-nowrap drop-shadow-sm">
+                                <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-current animate-pulse text-white shrink-0" />
+                                <span className="text-[15px] sm:text-[16px] font-black tracking-wide whitespace-nowrap drop-shadow-sm">
                                     {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
                                 </span>
                             </button>
                             {/* Social Icons — same width as button, spread end to end */}
-                            <div className="w-full flex justify-center mt-4">
-                                <div className="grid grid-cols-3 gap-x-6 gap-y-3.5 place-items-center">
+                            <div className="w-full flex justify-center mt-5 sm:mt-6">
+                                <div className="grid grid-cols-3 gap-x-6.5 sm:gap-x-7 gap-y-4 sm:gap-y-4.5 place-items-center">
                                     {SOCIAL_LINKS.map((item) => (
                                         <SocialIconButton key={item.label} item={item} className="h-10 w-10" />
                                     ))}
@@ -454,10 +463,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
                             {[
                                 ['Complaign Redressal', '/complaign-redressal'],
-                                ['Your Privacy Choices', '/privacy-choices'],
-                                ["Children's Privacy Policy", '/children-privacy'],
                                 ['Cookie Settings', '/cookie-settings'],
-                                ['DNPA Code Of Ethics', '/dnpa-code-of-ethics'],
                             ].map(([label, href]) => (
                                 <Link key={href} href={href} className="hover:text-white transition-colors duration-200">
                                     {label}
@@ -468,7 +474,6 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         {/* Copyright Line */}
                         <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10.5px] mt-0.5">
                             <p>External links are provided for reference purposes. © {new Date().getFullYear()} GUJARAT POST MEDIA. ALL RIGHTS RESERVED.</p>
-                            <p className="tracking-wider text-slate-400 font-black">RNI/GJ-DEMO/2026</p>
                         </div>
                     </div>
 

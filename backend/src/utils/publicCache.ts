@@ -1,3 +1,5 @@
+import { invalidatePublicRssCache } from '../services/rss.service.js';
+
 export const publicCache = new Map<string, { timestamp: number; payload: any }>();
 export const MAX_PUBLIC_CACHE_ENTRIES = 500;
 
@@ -12,4 +14,6 @@ export function clearPublicRoutesCache() {
   publicCache.clear();
   searchCache.clear();
   categoryLookupCache.clear();
+  invalidatePublicRssCache();
 }
+

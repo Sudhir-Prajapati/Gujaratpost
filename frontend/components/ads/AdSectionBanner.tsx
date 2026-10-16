@@ -44,7 +44,8 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
 
   // Extract non-empty image items (up to 3)
   const items: AdItemData[] = [];
-  if (adData && adData.isActive) {
+  const isAdActive = adData && adData.isActive !== false && adData.isActive !== 0 && adData.isActive !== '0';
+  if (isAdActive) {
     if (adData.image1 && adData.image1.trim() !== '') {
       items.push({ image: adData.image1, link: adData.link1 || '#' });
     }

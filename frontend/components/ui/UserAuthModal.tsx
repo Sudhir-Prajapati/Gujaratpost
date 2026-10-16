@@ -586,7 +586,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
 
         {/* WhatsApp Channel CTA Button */}
         <a
-          href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
+          href="https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:opacity-95 text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition transform active:scale-98 cursor-pointer"

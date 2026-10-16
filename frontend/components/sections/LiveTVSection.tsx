@@ -82,7 +82,7 @@ export default function LiveTVSection() {
               <div className="flex flex-col gap-3 border-t border-white/10 bg-black/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
                   <span className="grid h-10 w-10 place-items-center rounded-full bg-accent text-xs font-black">GP</span>
-                  <div><p className="text-sm font-black">Gujarat Post</p><p className="text-[10px] font-semibold text-white/40">Real stories. Real Gujarat.</p></div>
+                  <div><p className="text-sm font-black">Gujarat Post</p><p className="text-[10px] font-black text-red-500 tracking-wide">Real Stories. Real Gujarat.</p></div>
                 </div>
                 <a href={`${CHANNEL_URL}?sub_confirmation=1`} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-black transition hover:bg-white hover:text-slate-950">
                   <Bell className="h-3.5 w-3.5" /> Subscribe on YouTube

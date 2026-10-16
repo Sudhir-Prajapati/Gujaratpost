@@ -1438,213 +1438,221 @@ export default function HeroSection({
         <div className="flex flex-col gap-4 md:gap-5">
 
           {/* Top Row: Hero Story & Middle Column */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-3.5 items-stretch">
-
-            {/* Hero Story Column -- Top 3 News Slider */}
-            <HeroStorySlider
-              articles={uniqueTopStories.slice(0, 3)}
-              language={language}
-            />
-
-            {/* ═══ MIDDLE COLUMN — 6 Image Article Boxes (Articles 4 to 9, or Main Hero Grid Banner featured) ════════════════ */}
-            {(() => {
-              const top3Ids = new Set(uniqueTopStories.slice(0, 3).map((a) => a.id).filter(Boolean));
-              const afterTop3News: Article[] = uniqueTopStories.slice(3, 9);
-              if (afterTop3News.length < 6) {
-                for (const art of articlesList) {
-                  if (afterTop3News.length >= 6) break;
-                  if (art && art.id && !top3Ids.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
-                    afterTop3News.push(art);
-                  }
+          {(() => {
+            const top3Ids = new Set(uniqueTopStories.slice(0, 3).map((a) => a.id).filter(Boolean));
+            const afterTop3News: Article[] = uniqueTopStories.slice(3, 9);
+            if (afterTop3News.length < 6) {
+              for (const art of articlesList) {
+                if (afterTop3News.length >= 6) break;
+                if (art && art.id && !top3Ids.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                  afterTop3News.push(art);
                 }
               }
+            }
 
-              return (
-                <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0 h-full">
-                  {/* ─── DESKTOP VIEW (md: and up): 6 Image Article Boxes (3 Rows x 2 Columns, Perfectly Aligned with Left Hero) ─── */}
-                  <div className="hidden md:grid md:grid-cols-2 md:gap-x-2.5 md:gap-y-2.5 items-start">
-                    {afterTop3News.map((art, idx) => (
-                      <Link
-                        key={art.id || art.slug || idx}
-                        href={`/news/${art.slug}`}
-                        className="group flex flex-col gap-1 min-w-0"
-                      >
-                        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                          <ArticleMedia
-                            src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                            alt={art.title || ''}
-                            className="transition-transform duration-300 group-hover:scale-[1.03]"
-                          />
-                        </div>
-                        <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                          <AutoArticleTitle article={art} language={language} />
-                        </h3>
-                      </Link>
-                    ))}
-                  </div>
+            const heroThreeArticles = afterTop3News.slice(3, 6).length >= 3
+              ? afterTop3News.slice(3, 6)
+              : (uniqueTopStories.slice(6, 9).length >= 3 ? uniqueTopStories.slice(6, 9) : afterTop3News.slice(3, 6));
 
-                  {/* ─── MOBILE VIEW (< md): Divya Bhaskar / Gujarat Samachar style matching Image 2 ─── */}
-                  <div className="flex flex-col divide-y divide-border/60 md:hidden">
-                    {afterTop3News.slice(0, 6).map((story, idx) => {
-                      const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
-                      const colonIdx = rawTitle.indexOf(':');
-                      const hasPrefix = colonIdx > 3 && colonIdx <= 48;
-                      const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
-                      const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
-
-                      return (
-                        <div
-                          key={story.id || story.slug || idx}
-                          className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0"
-                        >
-                          {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
-                          <Link
-                            href={`/news/${story.slug}`}
-                            className="flex flex-row items-start justify-between gap-3 min-w-0"
-                          >
-                            <div className="flex-1 min-w-0 pr-1">
-                              <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                                {hasPrefix ? (
-                                  <>
-                                    <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
-                                      {prefixText}
-                                    </span>
-                                    <span>{restText}</span>
-                                  </>
-                                ) : (
-                                  <AutoArticleTitle article={story} language={language} />
-                                )}
-                              </h3>
-                            </div>
-
-                            <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                              <ArticleMedia
-                                src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                                alt={story.title || ''}
-                                className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                              />
-                            </div>
-                          </Link>
-
-                          {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-                          <div className="flex items-center justify-between mt-3.5 pt-0.5">
-                            <Link
-                              href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
-                              className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
-                            >
-                              <span>{getCategoryLabel(story, language)}</span>
-                              <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                            </Link>
-
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                const title = getArticleTitle(story, language);
-                                const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
-                                const text = `${title}\n\n${url}`;
-                                if (typeof navigator !== 'undefined' && navigator.share) {
-                                  navigator.share({ title, url, text }).catch(() => {
-                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                  });
-                                } else {
-                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                }
-                              }}
-                              className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
-                              aria-label="Share"
-                            >
-                              <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-                              <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'शेयर' : 'Share'}</span>
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })()}
-          </div> {/* Close Top Row grid */}
-
-          {/* Bottom Row: Three image cards (Articles 10, 11, 12 in sequence right after slider & side box) */}
-          {(() => {
-            const cards = uniqueTopStories.slice(9, 12).length >= 3
+            // Desktop cards for the bottom row (100% UNTOUCHED):
+            const desktopCards = uniqueTopStories.slice(9, 12).length >= 3
               ? uniqueTopStories.slice(9, 12)
               : [bottomFeatured[0] || uniqueTopStories[9], bottomFeatured[1] || uniqueTopStories[10], bottomFeatured[2] || uniqueTopStories[11]].filter(Boolean);
 
-            if (cards.length === 0) return null;
+            // Total 6 articles in mobile horizontal scroll (3 from upper hero + 3 other bottom cards):
+            const mobileHorizontalCards = [
+              ...heroThreeArticles,
+              ...desktopCards.slice(0, 3),
+            ].filter((art, index, self) => art && (art.id || art.slug) && self.findIndex((a) => (a.id && a.id === art.id) || (a.slug && a.slug === art.slug)) === index);
 
             return (
-              <div className="border-t border-border/80 pt-4 md:pt-4">
-                {/* ─── MOBILE VIEW (< md): ABC News-style vertical card strip matching Image 1 ─── */}
-                <div className="md:hidden -mx-4 overflow-x-auto scrollbar-none">
-                  <div className="flex gap-3 px-4 pb-2">
-                    {cards.slice(0, 3).map((art, idx) => (
-                      <Link
-                        key={art.id || idx}
-                        href={`/news/${art.slug}`}
-                        className="group relative shrink-0 w-[175px] sm:w-[195px] aspect-[10/14] rounded-2xl overflow-hidden bg-muted border border-border/20 shadow-md flex flex-col justify-end select-none"
-                      >
-                        {/* Full-bleed background media */}
-                        <ArticleMedia
-                          src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                          alt={art.title || ''}
-                          showPlayBadge={false}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-3.5 items-stretch">
+                  {/* Hero Story Column -- Top 3 News Slider */}
+                  <HeroStorySlider
+                    articles={uniqueTopStories.slice(0, 3)}
+                    language={language}
+                  />
 
-                        {/* Gradient overlay: smooth dark fade from bottom */}
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pointer-events-none" />
-
-                        {/* Category badge top-right */}
-                        <span className="absolute top-2.5 right-2.5 bg-[#B3121B] text-white text-[10px] font-black px-2 py-0.5 rounded shadow-sm uppercase tracking-wider select-none z-10">
-                          {getCategoryLabel(art, language)}
-                        </span>
-
-                        {/* Bottom content overlay (Headline only - no date or time) */}
-                        <div className="absolute inset-x-0 bottom-0 p-3 flex flex-col justify-end text-left z-10">
-                          <h4 className="text-[13.5px] sm:text-[14px] font-black leading-[1.32] text-white group-hover:text-red-300 transition-colors line-clamp-3 drop-shadow-sm">
+                  {/* ═══ MIDDLE COLUMN — 6 Image Article Boxes on Desktop / Top 3 List on Mobile ════════════════ */}
+                  <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0 h-full">
+                    {/* ─── DESKTOP VIEW (md: and up): 6 Image Article Boxes (3 Rows x 2 Columns, 100% UNTOUCHED) ─── */}
+                    <div className="hidden md:grid md:grid-cols-2 md:gap-x-2.5 md:gap-y-2.5 items-start">
+                      {afterTop3News.map((art, idx) => (
+                        <Link
+                          key={art.id || art.slug || idx}
+                          href={`/news/${art.slug}`}
+                          className="group flex flex-col gap-1 min-w-0"
+                        >
+                          <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                            <ArticleMedia
+                              src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                              alt={art.title || ''}
+                              className="transition-transform duration-300 group-hover:scale-[1.03]"
+                            />
+                          </div>
+                          <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                             <AutoArticleTitle article={art} language={language} />
-                          </h4>
-                        </div>
-                      </Link>
-                    ))}
+                          </h3>
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* ─── MOBILE VIEW (< md): Divya Bhaskar / Gujarat Samachar style list (First 3 Articles) ─── */}
+                    <div className="flex flex-col divide-y divide-border/60 md:hidden">
+                      {afterTop3News.slice(0, 3).map((story, idx) => {
+                        const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
+                        const colonIdx = rawTitle.indexOf(':');
+                        const hasPrefix = colonIdx > 3 && colonIdx <= 48;
+                        const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
+                        const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
+
+                        return (
+                          <div
+                            key={story.id || story.slug || idx}
+                            className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0"
+                          >
+                            {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
+                            <Link
+                              href={`/news/${story.slug}`}
+                              className="flex flex-row items-start justify-between gap-3 min-w-0"
+                            >
+                              <div className="flex-1 min-w-0 pr-1">
+                                <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                                  {hasPrefix ? (
+                                    <>
+                                      <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
+                                        {prefixText}
+                                      </span>
+                                      <span>{restText}</span>
+                                    </>
+                                  ) : (
+                                    <AutoArticleTitle article={story} language={language} />
+                                  )}
+                                </h3>
+                              </div>
+
+                              <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                                <ArticleMedia
+                                  src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                                  alt={story.title || ''}
+                                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                />
+                              </div>
+                            </Link>
+
+                            {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
+                            <div className="flex items-center justify-between mt-3.5 pt-0.5">
+                              <Link
+                                href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
+                                className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
+                              >
+                                <span>{getCategoryLabel(story, language)}</span>
+                                <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                              </Link>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  const title = getArticleTitle(story, language);
+                                  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
+                                  const text = `${title}\n\n${url}`;
+                                  if (typeof navigator !== 'undefined' && navigator.share) {
+                                    navigator.share({ title, url, text }).catch(() => {
+                                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                    });
+                                  } else {
+                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                  }
+                                }}
+                                className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
+                                aria-label="Share"
+                              >
+                                <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
+                                <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
 
-                {/* ─── DESKTOP VIEW (>= md): 3-Column Image Cards Grid ─── */}
-                <div className="hidden md:grid md:grid-cols-3 gap-6">
-                  {cards.slice(0, 3).map((art, idx) => {
-                    if (!art) return null;
-                    return (
-                      <Link
-                        key={art.id || idx}
-                        href={`/news/${art.slug}`}
-                        className="group flex flex-col items-start gap-0 min-w-0"
-                      >
-                        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
-                          <ArticleMedia
-                            src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                            alt={art.title || ''}
-                            className="transition-transform duration-300 group-hover:scale-105"
-                          />
-                        </div>
-                        <div className="flex flex-col flex-1 min-w-0">
-                          <span className="text-[#B3121B] font-extrabold text-[13px] mb-1 select-none uppercase tracking-wide">
-                            {getCategoryLabel(art, language)}
-                          </span>
-                          <h3 className="text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                            <AutoArticleTitle article={art} language={language} />
-                          </h3>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
+                {/* Bottom Row: Three image cards */}
+                {(desktopCards.length > 0 || mobileHorizontalCards.length > 0) && (
+                  <div className="border-t border-border/80 pt-4 md:pt-4">
+                    {/* ─── MOBILE VIEW (< md): Premium Verts-style horizontal card strip (Matching Image 2) ─── */}
+                    <div className="md:hidden -mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain scroll-pl-5 sm:scroll-pl-6">
+                      <div className="flex gap-3.5 pl-5 pr-5 sm:pl-6 sm:pr-6 pb-3 pt-0.5 items-stretch">
+                        {mobileHorizontalCards.slice(0, 6).map((art, idx) => (
+                          <Link
+                            key={art.id || idx}
+                            href={`/news/${art.slug}`}
+                            className="group relative shrink-0 snap-start w-[220px] sm:w-[245px] h-[320px] sm:h-[340px] rounded-[20px] overflow-hidden bg-muted border border-border/20 shadow-[0_8px_20px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] flex flex-col justify-end select-none active:scale-[0.98] transition-transform duration-200"
+                          >
+                            {/* Full-bleed background media */}
+                            <ArticleMedia
+                              src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                              alt={art.title || ''}
+                              showPlayBadge={false}
+                              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+
+                            {/* Gradient overlay: smooth dark fade from bottom */}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/75 via-55% to-transparent pointer-events-none" />
+
+                            {/* Category badge top-right */}
+                            <span className="absolute top-3 right-3 bg-[#B3121B] text-white text-[10.5px] font-black px-2.5 py-0.5 rounded shadow-sm uppercase tracking-wider select-none z-10">
+                              {getCategoryLabel(art, language)}
+                            </span>
+
+                            {/* Bottom content overlay */}
+                            <div className="absolute inset-x-0 bottom-0 p-3.5 flex flex-col justify-end text-left z-10">
+                              <h4 className="text-[18.5px] sm:text-[19.5px] font-black leading-[1.3] text-white line-clamp-3 drop-shadow-md">
+                                <AutoArticleTitle article={art} language={language} />
+                              </h4>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* ─── DESKTOP VIEW (>= md): 3-Column Image Cards Grid (100% UNTOUCHED) ─── */}
+                    <div className="hidden md:grid md:grid-cols-3 gap-6">
+                      {desktopCards.slice(0, 3).map((art, idx) => {
+                        if (!art) return null;
+                        return (
+                          <Link
+                            key={art.id || idx}
+                            href={`/news/${art.slug}`}
+                            className="group flex flex-col items-start gap-0 min-w-0"
+                          >
+                            <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                              <ArticleMedia
+                                src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                                alt={art.title || ''}
+                                className="transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="flex flex-col flex-1 min-w-0">
+                              <span className="text-[#B3121B] font-extrabold text-[13px] mb-1 select-none uppercase tracking-wide">
+                                {getCategoryLabel(art, language)}
+                              </span>
+                              <h3 className="text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                                <AutoArticleTitle article={art} language={language} />
+                              </h3>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </>
             );
           })()}
 

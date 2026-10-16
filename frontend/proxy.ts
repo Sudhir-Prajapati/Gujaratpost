@@ -40,6 +40,7 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
     "/admin/support",
     "/admin/stats",
     "/admin/tributes",
+    "/admin/rss",
   ],
   REPORTER: ["/admin/articles"],
   SEO: ["/admin/seo"],

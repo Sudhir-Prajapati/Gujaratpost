@@ -1299,7 +1299,7 @@ export default function CityHyperlocalSection({
             </p>
 
             <a
-              href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
+              href="https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0"
               target="_blank"
               rel="noopener noreferrer"
               className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[12.5px] py-3 md:py-2.5 px-4 md:px-3.5 rounded-lg shadow-sm shadow-emerald-500/20 hover:shadow-md hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"

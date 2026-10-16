@@ -79,6 +79,8 @@ model Category {
   updatedAt     DateTime @updatedAt
   posts         Post[]
   videos        Video[]
+  rssSources    RssSource[]
+  rssItems      RssItem[]
 
   @@map("categories")
 }
@@ -379,6 +381,136 @@ model SupportSetting {
   @@map("support_settings")
 }
 
+model AboutSetting {
+  id              String   @id @default("default")
+  titleGu         String?  @db.Text
+  titleEn         String?  @db.Text
+  titleHi         String?  @db.Text
+  subtitleGu      String?  @db.Text
+  subtitleEn      String?  @db.Text
+  subtitleHi      String?  @db.Text
+  descriptionGu   String?  @db.LongText
+  descriptionEn   String?  @db.LongText
+  descriptionHi   String?  @db.LongText
+  bannerImage     String?  @db.Text
+  missionGu       String?  @db.Text
+  missionEn       String?  @db.Text
+  missionHi       String?  @db.Text
+  visionGu        String?  @db.Text
+  visionEn        String?  @db.Text
+  visionHi        String?  @db.Text
+  rulesTitle      String?  @default("અમારા અડગ નિયમો") @db.VarChar(255)
+  rulesJson       String?  @db.LongText
+  valuesJson      String?  @db.LongText
+  statsJson       String?  @db.LongText
+  teamJson        String?  @db.LongText
+  contactEmail    String?
+  contactPhone    String?
+  contactAddress  String?  @db.Text
+  whatsappNumber  String?
+  updatedAt       DateTime @updatedAt
+
+  @@map("about_settings")
+}
+
+model ContactSetting {
+  id                  String   @id @default("default")
+  pageTitle           String?  @default("સંપર્ક કરો (Contact Us)") @db.VarChar(255)
+  pageSubtitle        String?  @db.Text
+  headOfficeAddress   String?  @db.Text
+  primaryPhone        String?  @default("+91 99099 07237")
+  whatsappNumber      String?  @default("+91 99099 07237")
+  primaryEmail        String?  @default("contact@gujaratpost.in")
+  workingHours        String?  @default("સોમવાર - શનિવાર: 9:00 AM - 9:00 PM | રવિવાર: 24x7 ન્યૂઝ ડેસ્ક") @db.VarChar(255)
+  mapEmbedUrl         String?  @db.Text
+  editorialEmail      String?  @default("editorial@gujaratpost.in")
+  editorialPhone      String?  @default("+91 99099 07237")
+  adsEmail            String?  @default("ads@gujaratpost.in")
+  adsPhone            String?  @default("+91 99099 07237")
+  grievanceName       String?  @default("મહેશ પટેલ (Mahesh Patel)")
+  grievanceDesignation String? @default("તકરાર નિવારણ અધિકારી (Grievance Redressal Officer)")
+  grievanceEmail      String?  @default("grievance@gujaratpost.in")
+  grievanceAddress    String?  @db.Text
+  bureauOfficesJson   String?  @db.LongText
+  socialLinksJson     String?  @db.Text
+  updatedAt           DateTime @updatedAt
+
+  @@map("contact_settings")
+}
+
+model AdvertiseSetting {
+  id              String   @id @default("default")
+  pageTitle       String?  @default("Advertise With Us") @db.VarChar(255)
+  description     String?  @db.LongText
+  officeAddress   String?  @db.Text
+  locationUrl     String?  @db.Text
+  contactPhone    String?  @default("079 4000 4000 / +91 99099 07237")
+  onlineAdsEmail  String?  @default("digital.advertising@gujaratpost.in")
+  printAdsEmail   String?  @default("advt@gujaratpost.in & epaper@gujaratpost.in")
+  websiteUrl      String?  @default("https://gujaratpost.in/") @db.VarChar(255)
+  socialLinksJson String?  @db.LongText
+  appLinksJson    String?  @db.LongText
+  badgeText       String?  @default("Partner With Gujarat Post") @db.VarChar(255)
+  pageSubtitle    String?  @db.Text
+  contactEmail    String?  @default("ads@gujaratpost.in")
+  whatsappNumber  String?  @default("+91 99099 07237")
+  workingHours    String?  @default("Monday - Saturday: 9:00 AM - 8:00 PM") @db.VarChar(255)
+  rateCardNote    String?  @db.Text
+  rateCardPdfUrl  String?  @db.Text
+  statsJson       String?  @db.LongText
+  adOptionsJson   String?  @db.LongText
+  benefitsJson    String?  @db.LongText
+  updatedAt       DateTime @updatedAt
+
+  @@map("advertise_settings")
+}
+
+model ContactMessage {
+  id         String   @id @default(uuid())
+  name       String
+  email      String
+  phone      String?
+  department String?  @default("General")
+  subject    String   @db.VarChar(255)
+  message    String   @db.LongText
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@map("contact_messages")
+}
+
+model LegalPage {
+  id           String   @id
+  pageTitle    String   @db.VarChar(255)
+  lastUpdated  String?  @db.VarChar(191)
+  introText    String?  @db.LongText
+  sectionsJson String?  @db.LongText
+  contentHtml  String?  @db.LongText
+  updatedAt    DateTime @updatedAt
+
+  @@map("legal_pages")
+}
+
+model Tribute {
+  id         String   @id @default(uuid())
+  type       String   @default("BIRTHDAY") @db.VarChar(50)
+  name       String   @db.VarChar(255)
+  photo      String?  @db.Text
+  date       String?  @db.VarChar(100)
+  info       String?  @db.Text
+  templateId String   @default("golden") @db.VarChar(50)
+  isActive   Boolean  @default(true)
+  order      Int      @default(0)
+  startDate  String?  @db.VarChar(50)
+  endDate    String?  @db.VarChar(50)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([type, isActive])
+  @@map("tributes")
+}
+
+
 enum Role {
   SUPER_ADMIN
   EDITOR
@@ -399,3 +531,81 @@ enum PostStatus {
   PUBLISHED
   SCHEDULED
 }
+
+enum RssItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PUBLISHED
+}
+
+model RssSource {
+  id              String         @id @default(uuid())
+  name            String
+  url             String         @db.Text
+  categoryId      String?
+  isActive        Boolean        @default(true)
+  pollingInterval Int            @default(60)
+  lastFetchedAt   DateTime?
+  lastSuccessAt   DateTime?
+  lastError       String?        @db.Text
+  etag            String?
+  lastModified    String?
+  itemCount       Int            @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  category        Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  items           RssItem[]
+  logs            RssFetchLog[]
+
+  @@index([categoryId], map: "rss_sources_categoryId_fkey")
+  @@map("rss_sources")
+}
+
+model RssItem {
+  id               String        @id @default(uuid())
+  sourceId         String
+  guid             String        @db.VarChar(500)
+  sourceUrl        String        @db.Text
+  title            String        @db.Text
+  titleGu          String?       @db.Text
+  excerpt          String?       @db.Text
+  content          String?       @db.LongText
+  author           String?
+  imageUrl         String?       @db.Text
+  categoryName     String?
+  targetCategoryId String?
+  pubDate          DateTime?
+  status           RssItemStatus @default(PENDING)
+  publishedPostId  String?
+  reviewedAt       DateTime?
+  reviewedById     String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  source           RssSource     @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  targetCategory   Category?     @relation(fields: [targetCategoryId], references: [id], onDelete: SetNull)
+
+  @@unique([sourceId, guid(255)])
+  @@index([status, createdAt])
+  @@index([sourceId, status])
+  @@index([targetCategoryId], map: "rss_items_targetCategoryId_fkey")
+  @@map("rss_items")
+}
+
+model RssFetchLog {
+  id            String    @id @default(uuid())
+  sourceId      String
+  status        String
+  itemsFound    Int       @default(0)
+  itemsImported Int       @default(0)
+  errorMessage  String?   @db.Text
+  durationMs    Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  source        RssSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@index([sourceId, createdAt])
+  @@map("rss_fetch_logs")
+}
+

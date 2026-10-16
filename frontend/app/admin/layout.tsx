@@ -29,6 +29,11 @@ import {
   Gift,
   Film,
   Trash2,
+  Info,
+  PhoneCall,
+  BadgePercent,
+  Scale,
+  Rss,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -67,7 +72,11 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/epaper',
       '/admin/users',
       '/admin/support',
+      '/admin/about',
+      '/admin/contact',
+      '/admin/advertise',
       '/admin/cleanup',
+      '/admin/rss',
     ],
   },
   EDITOR: {
@@ -88,6 +97,11 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/reels',
       '/admin/web-stories',
       '/admin/epaper',
+      '/admin/about',
+      '/admin/contact',
+      '/admin/advertise',
+      '/admin/legal',
+      '/admin/rss',
     ],
   },
   REPORTER: {
@@ -112,7 +126,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
     badgeBg: 'bg-amber-500/10 dark:bg-amber-500/20 border-amber-500/30',
     badgeText: 'text-amber-600 dark:text-amber-400',
     defaultPath: '/admin/ads',
-    permittedPaths: ['/admin/ads', '/admin/tributes'],
+    permittedPaths: ['/admin/ads', '/admin/advertise', '/admin/tributes'],
   },
   PHOTOGRAPHER: {
     title: 'Photographer',
@@ -195,6 +209,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const menuItems = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Articles', href: '/admin/articles', icon: FileText },
+    { label: 'RSS Feeds', href: '/admin/rss', icon: Rss },
     { label: 'Hero Section', href: '/admin/hero', icon: LayoutTemplate },
     { label: 'Advertisements', href: '/admin/ads', icon: Megaphone },
     { label: 'Birthday & Shradhanjali', href: '/admin/tributes', icon: Gift },
@@ -207,6 +222,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'E-Paper', href: '/admin/epaper', icon: Newspaper },
     { label: 'Users', href: '/admin/users', icon: Users },
     { label: 'Support QR & Bank', href: '/admin/support', icon: Heart },
+    { label: 'About Us', href: '/admin/about', icon: Info },
+    { label: 'Contact Us', href: '/admin/contact', icon: PhoneCall },
+    { label: 'Advertise Page', href: '/admin/advertise', icon: BadgePercent },
+    { label: 'Legal Pages', href: '/admin/legal', icon: Scale },
   ];
 
   const currentRoleMeta = userRole ? ROLE_CONFIG[userRole] : null;

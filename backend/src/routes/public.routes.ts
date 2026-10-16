@@ -14,6 +14,11 @@ import { EPaperController } from '../controllers/epaper.controller.js';
 import { GalleryController } from '../controllers/gallery.controller.js';
 import { SupportController } from '../controllers/support.controller.js';
 import { TributeController } from '../controllers/tribute.controller.js';
+import { AboutController } from '../controllers/about.controller.js';
+import { ContactController } from '../controllers/contact.controller.js';
+import { AdvertiseController } from '../controllers/advertise.controller.js';
+import { LegalController } from '../controllers/legal.controller.js';
+import { RssController } from '../controllers/rss.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 import { redisClient } from '../config/redis.js';
 
@@ -179,6 +184,19 @@ function generateRichGujaratiNewsBody(title?: string, excerpt?: string, category
 
 // Public Support Details route
 router.get('/support', cacheResponse(60), SupportController.getSupportSettings);
+
+// Public About Us route
+router.get('/about', cacheResponse(60), AboutController.getAboutSettings);
+
+// Public Contact Us routes
+router.get('/contact', cacheResponse(60), ContactController.getContactSettings);
+router.post('/contact/message', ContactController.submitContactMessage);
+
+// Public Advertise With Us route
+router.get('/advertise', cacheResponse(60), AdvertiseController.getAdvertiseSettings);
+
+// Public Legal / Policy routes (Privacy Policy, Terms of Use, Disclaimer)
+router.get('/legal/:slug', cacheResponse(60), LegalController.getLegalPage);
 
 // Public E-Paper routes
 router.get('/epaper', EPaperController.getPublicEditions);
@@ -1363,76 +1381,12 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
 
 /**
  * GET /api/public/rss
- * Generate RSS 2.0 XML feed of published news articles
+ * GET /api/public/rss/:category
+ * Generate RSS 2.0 XML feed of published news articles with Unicode, ETag, and category filtering.
  */
-// Dedicated RSS cache (returns XML, not JSON — cannot use cacheResponse() middleware)
-let rssCache: { xml: string; timestamp: number } | null = null;
-const RSS_CACHE_TTL_MS = 300 * 1000; // 300 seconds
+router.get('/rss', RssController.getPublicRss);
+router.get('/rss/:category', RssController.getPublicRss);
 
-router.get('/rss', async (req, res, next) => {
-  try {
-    const now = Date.now();
-    if (rssCache && now - rssCache.timestamp < RSS_CACHE_TTL_MS) {
-      res.set('Content-Type', 'text/xml; charset=utf-8');
-      return res.status(200).send(rssCache.xml);
-    }
-
-    const articles = await prisma.post.findMany({
-      where: { status: 'PUBLISHED' },
-      take: 50,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        slug: true,
-        title: true,
-        titleGu: true,
-        excerpt: true,
-        excerptGu: true,
-        createdAt: true,
-        category: { select: { name: true, nameGu: true } },
-      },
-    });
-
-    const baseUrl = process.env.CLIENT_URL || 'https://gujaratpost.com';
-
-    let rssXml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
-  <channel>
-    <title>Gujarat Post - ગુજરાત સમાચાર</title>
-    <link>${baseUrl}</link>
-    <description>Latest Gujarati Breaking News, Politics, Crime, Business, Sports, and Entertainment</description>
-    <language>gu-IN</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${baseUrl}/api/public/rss" rel="self" type="application/rss+xml" />
-`;
-
-    articles.forEach((art: any) => {
-      const artUrl = `${baseUrl}/news/${art.slug}`;
-      const pubDate = art.createdAt ? new Date(art.createdAt).toUTCString() : new Date().toUTCString();
-      const catName = art.category?.nameGu || art.category?.name || 'સમાચાર';
-      const titleGu = art.titleGu || art.title;
-      const excerptGu = art.excerptGu || art.excerpt || art.title;
-
-      rssXml += `    <item>
-      <title><![CDATA[${titleGu}]]></title>
-      <link>${artUrl}</link>
-      <guid isPermaLink="true">${artUrl}</guid>
-      <description><![CDATA[${excerptGu}]]></description>
-      <category><![CDATA[${catName}]]></category>
-      <pubDate>${pubDate}</pubDate>
-    </item>\n`;
-    });
-
-    rssXml += `  </channel>\n</rss>`;
-
-    // Cache the generated XML
-    rssCache = { xml: rssXml, timestamp: now };
-
-    res.set('Content-Type', 'text/xml; charset=utf-8');
-    return res.status(200).send(rssXml);
-  } catch (error) {
-    next(error);
-  }
-});
 
 /**
  * GET /api/public/astrology

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, getCategoryLabel } from '@/data';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 interface RelatedStoriesSectionProps {
   article: Article;
@@ -79,7 +80,20 @@ export default function RelatedStoriesSection({
         <div className="flex-1 h-px bg-gradient-to-r from-neutral-200 dark:from-neutral-700 to-transparent"></div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      {/* Mobile view (< md): Hero Section style list */}
+      <div className="flex flex-col divide-y divide-border/60 md:hidden">
+        {displayRelated.slice(0, relatedLimit).map((item, index) => (
+          <MobileHeroArticleCard
+            key={`rel-mob-${item.id || index}`}
+            article={item}
+            language={language}
+            index={index}
+          />
+        ))}
+      </div>
+
+      {/* Desktop view (>= md): original grid */}
+      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
         {displayRelated.slice(0, relatedLimit).map((item, index) => {
           const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
           const isSaved = savedIds.includes(item.id);

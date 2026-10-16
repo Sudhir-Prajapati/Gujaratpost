@@ -4,8 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Article, Language } from '@/types';
-import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle } from '@/data';
+import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 interface ArticleInfiniteStreamProps {
   mounted: boolean;
@@ -171,7 +172,7 @@ export default function ArticleInfiniteStream({
                     />
                   </div>
 
-                  <div className="article-body space-y-4 text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-foreground mb-6 text-left w-full">
+                  <div className="article-body space-y-4 text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-foreground mb-2.5 text-left w-full">
                     {streamParagraphs.map((p, pIdx) => {
                       const trimmed = p.trim();
                       if (!trimmed) return null;
@@ -213,7 +214,7 @@ export default function ArticleInfiniteStream({
                   </div>
 
                   {readAlsoArticles.length > 0 && (
-                    <div className="w-full mt-4 mb-5">
+                    <div className="w-full mt-2.5 mb-4">
                       {/* Section header */}
                       <div className="flex items-center gap-3 mb-3">
                         <div className="flex items-center gap-2">
@@ -224,14 +225,28 @@ export default function ArticleInfiniteStream({
                         </h4>
                         <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                      {/* Mobile View (< md): Hero Section style list */}
+                      <div className="flex flex-col divide-y divide-border/60 md:hidden">
+                        {readAlsoArticles.map((raArt, index) => (
+                          <MobileHeroArticleCard
+                            key={`mobile-stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
+                            article={raArt}
+                            language={language}
+                            index={index}
+                          />
+                        ))}
+                      </div>
+
+                      {/* Desktop View (>= md): existing 2-column card grid */}
+                      <div className="hidden md:grid md:grid-cols-2 gap-3">
                         {readAlsoArticles.map((raArt, index) => {
                           const raCat = normalizeDisplayText(getCategoryLabel(raArt, language) || raArt.category || '');
                           return (
                             <Link
                               key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
                               href={`/news/${raArt.slug}`}
-                              className="group flex items-start gap-3 p-3 rounded-xl bg-white dark:bg-neutral-900 border border-[#B3121B]/40 dark:border-neutral-700 shadow-sm hover:border-[#B3121B] hover:shadow-[0_4px_20px_rgba(179,18,27,0.16)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.25)] hover:-translate-y-0.5 transition-all duration-300 text-left"
+                              className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
                             >
                               {/* Thumbnail Image */}
                               <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
@@ -255,7 +270,7 @@ export default function ArticleInfiniteStream({
                                 </p>
                               </div>
                               {/* Arrow indicator */}
-                              <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] transition-colors duration-200 text-sm">→</span>
+                              <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
                             </Link>
                           );
                         })}
@@ -283,11 +298,12 @@ export default function ArticleInfiniteStream({
           })()}
         </div>
 
+
         {/* Read Also Section for Primary Article */}
         {related.length > 0 && (
-          <div className="w-full mt-6 mb-6">
+          <div className="w-full mt-2.5 mb-4">
             {/* Section header */}
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-3">
               <div className="flex items-center gap-2">
                 <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
                 <span className="block w-[3px] h-3.5 rounded-full bg-[#B3121B]/40"></span>
@@ -297,14 +313,28 @@ export default function ArticleInfiniteStream({
               </h4>
               <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+            {/* Mobile View (< md): Hero Section style list */}
+            <div className="flex flex-col divide-y divide-border/60 md:hidden">
+              {related.slice(0, 4).map((raArt, index) => (
+                <MobileHeroArticleCard
+                  key={`mobile-bottom-ra-${raArt.id}-${index}`}
+                  article={raArt}
+                  language={language}
+                  index={index}
+                />
+              ))}
+            </div>
+
+            {/* Desktop View (>= md): existing 2-column card grid */}
+            <div className="hidden md:grid md:grid-cols-2 gap-3">
               {related.slice(0, 4).map((raArt, index) => {
                 const raCat = normalizeDisplayText(getCategoryLabel(raArt, language));
                 return (
                   <Link
                     key={`bottom-ra-${raArt.id}-${index}`}
                     href={`/news/${raArt.slug}`}
-                    className="group flex gap-3 p-3 rounded-xl border border-[#B3121B]/40 dark:border-neutral-700 shadow-sm bg-white dark:bg-neutral-900 hover:border-[#B3121B] hover:shadow-[0_4px_20px_rgba(179,18,27,0.16)] dark:hover:shadow-[0_4px_20px_rgba(179,18,27,0.25)] hover:-translate-y-0.5 transition-all duration-300 items-start text-left"
+                    className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl border border-neutral-200/90 dark:border-neutral-800 shadow-xs bg-white dark:bg-neutral-900 hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
                   >
                     <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
                       <Image
@@ -324,7 +354,7 @@ export default function ArticleInfiniteStream({
                       </p>
                     </div>
                     {/* Arrow indicator */}
-                    <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] transition-colors duration-200 text-sm">→</span>
+                    <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
                   </Link>
                 );
               })}
@@ -349,24 +379,51 @@ export default function ArticleInfiniteStream({
         </div>
       </article>
 
-      <aside className="select-none h-fit sticky top-[100px]" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
+      <aside className="select-none h-fit sticky top-[100px] w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
         {/* Heading and recommended stories stick together below header */}
         <div className="wtitle mb-3">
           <span className="d"></span>
           <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
         </div>
-        <div className="space-y-0">
+
+        {/* Mobile View (< md): Hero Section style list */}
+        <div className="flex flex-col divide-y divide-border/60 md:hidden">
+          {sidebarRecommendedPool.slice(0, 6).map((item, index) => (
+            <MobileHeroArticleCard
+              key={`stream-rec-mob-${item.id || index}`}
+              article={item}
+              language={language}
+              index={index}
+            />
+          ))}
+        </div>
+
+        {/* Desktop View (>= md): existing */}
+        <div className="hidden md:block space-y-0">
           {sidebarRecommendedPool.slice(0, 6).map((item, index) => {
             const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
             return (
-              <Link key={item.id} href={`/news/${item.slug}`} className="s-compact hover:opacity-85 transition-opacity">
-                <div>
-                  <span className="kick">{itemCategory}</span>
-                  <h3><AutoArticleTitle article={item} language={language} /></h3>
-
+              <Link
+                key={item.id}
+                href={`/news/${item.slug}`}
+                className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
+              >
+                <div className="min-w-0 flex-1 pr-1">
+                  <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
+                    {itemCategory}
+                  </span>
+                  <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
+                    <AutoArticleTitle article={item} language={language} />
+                  </h3>
                 </div>
-                <div className="imgwrap">
-                  <Image src={getCardThumbnail(item, index)} alt={item.title} fill sizes="92px" className="object-cover" />
+                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-xs self-start">
+                  <Image
+                    src={getCardThumbnail(item, index)}
+                    alt={item.title || ''}
+                    fill
+                    sizes="114px"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
                 </div>
               </Link>
             );

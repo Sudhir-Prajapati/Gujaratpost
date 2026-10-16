@@ -11,6 +11,7 @@ import { prisma } from './config/prisma.js';
 import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { autoPublishDueArticles } from './controllers/article.controller.js';
+import { pollDueRssFeeds } from './services/rssImport.service.js';
 
 // Extend globalThis so TypeScript knows about our stored HTTP server reference
 declare global {
@@ -200,6 +201,16 @@ setInterval(async () => {
 autoPublishDueArticles().catch((err: any) => {
   console.warn('Startup autoPublish error (non-fatal):', err?.message || err);
 });
+
+// ── Background: poll due external RSS feeds every 10 minutes ─────────────────
+setInterval(async () => {
+  try {
+    await pollDueRssFeeds();
+  } catch (err: any) {
+    console.warn('Background RSS feed poll error (non-fatal):', err?.message || err);
+  }
+}, 10 * 60 * 1000); // every 10 minutes
+
 
 // Graceful shutdown handling — MUST close HTTP server first to release the port
 const gracefulShutdown = async (signal: string) => {

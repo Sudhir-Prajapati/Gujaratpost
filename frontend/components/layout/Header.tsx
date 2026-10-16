@@ -77,10 +77,84 @@ const NAV_LINKS = [
 
 // The links shown under the "More/Other" (અન્ય) dropdown
 const OTHER_LINKS = [
-  { label: 'Webstory', labelGu: 'વેબસ્ટોરી', labelHi: 'वेब स्टोरीज', href: '/category/webstory' },
-  { label: 'Weather', labelGu: 'હવામાન', labelHi: 'मौसम', href: '/category/weather' },
   { label: 'Gold - Silver', labelGu: 'ગોલ્ડ - સિલ્વર', labelHi: 'गोल्ड - सिल्वर', href: '/category/gold-silver' },
 ];
+
+// Slugs explicitly hidden from the navbar / "અન્ય" dropdown (accessible directly via category pages)
+export const HIDDEN_NAVBAR_SLUGS = new Set([
+  'latest-news',
+  'taja-samachar',
+  'taza-news',
+  'latest',
+  'webstory',
+  'web-stories',
+  'web-story',
+  'business',
+  'weather',
+  'havaman',
+  'sports',
+  'ramatgamat',
+  'ramat-gamat',
+  'education',
+  'shikshan',
+  'varsad',
+  'rain',
+  'rainfall',
+  'breaking-news',
+  'mukhya-samachar',
+  'mukhya-news',
+  'jobs',
+  'nokri-karkidi',
+  'nokri-ane-karkidi',
+  'career',
+  'live-center',
+  'live',
+]);
+
+export const isHiddenFromNavbar = (c: any) => {
+  if (!c) return false;
+  if (c.showInHeader === false || c.showInHeader === 'false' || c.showInHeader === 0) return true;
+
+  const slug = (c.slug || (c.href ? c.href.replace(/^\/category\//, '').replace(/^\//, '') : '')).toLowerCase().trim();
+  if (HIDDEN_NAVBAR_SLUGS.has(slug)) return true;
+
+  const nameGu = (c.nameGu || c.labelGu || '').trim();
+  if (
+    nameGu === 'તાજા સમાચાર' ||
+    nameGu === 'વેબસ્ટોરી' ||
+    nameGu === 'બિઝનેસ' ||
+    nameGu === 'હવામાન' ||
+    nameGu === 'સ્પોર્ટ્સ' ||
+    nameGu === 'રમત-જગત' ||
+    nameGu === 'શિક્ષણ' ||
+    nameGu === 'વરસાદ' ||
+    nameGu === 'મુખ્ય સમાચાર' ||
+    nameGu === 'નોકરી & કારકિર્દી' ||
+    nameGu === 'લાઈવ સેન્ટર'
+  ) {
+    return true;
+  }
+
+  const name = (c.name || c.label || '').toLowerCase().trim();
+  if (
+    name === 'latest news' ||
+    name === 'taza news' ||
+    name === 'web stories' ||
+    name === 'webstory' ||
+    name === 'business' ||
+    name === 'weather' ||
+    name === 'sports' ||
+    name === 'education' ||
+    name === 'rainfall' ||
+    name === 'rain' ||
+    name === 'breaking news' ||
+    name === 'jobs' ||
+    name === 'live center'
+  ) {
+    return true;
+  }
+  return false;
+};
 
 const formatDateLong = (lang: string) => {
   const locale = lang === 'gu' ? 'gu-IN' : lang === 'hi' ? 'hi-IN' : 'en-GB';
@@ -304,7 +378,10 @@ export default function Header() {
 
   const { navLinks, otherLinks } = useMemo(() => {
     if (!dbCategories || dbCategories.length === 0) {
-      return { navLinks: NAV_LINKS, otherLinks: OTHER_LINKS };
+      return {
+        navLinks: NAV_LINKS.filter((l) => !isHiddenFromNavbar(l)),
+        otherLinks: OTHER_LINKS.filter((l) => !isHiddenFromNavbar(l)),
+      };
     }
 
     const mapCategory = (c: any) => {
@@ -326,16 +403,16 @@ export default function Header() {
       return { label: labelEn, labelGu, labelHi, href };
     };
 
-    // Unified Header Categories: all active header categories (excluding GUJARAT cities for DistrictBar)
+    // Unified Header Categories: all active header categories (excluding GUJARAT cities for DistrictBar and hidden categories)
     const headerCats = dbCategories
-      .filter((c) => c.showInHeader !== false && c.headerType !== 'GUJARAT')
+      .filter((c) => !isHiddenFromNavbar(c) && c.headerType !== 'GUJARAT')
       .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
 
     const homeLink = { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' };
 
     const nonHomeLinks = headerCats
       .map(mapCategory)
-      .filter((l) => l.href !== '/');
+      .filter((l) => l.href !== '/' && !isHiddenFromNavbar(l));
 
     // Top 14 categories + Home = 15 total links in main navbar before "અન્ય" (matching Image 3)
     const mainNavLinks = nonHomeLinks.slice(0, 14);
@@ -461,11 +538,11 @@ export default function Header() {
             {/* Slogan */}
             <div className="flex flex-col justify-center leading-tight pl-1 sm:pl-1.5 md:pl-2">
               <p
-                className="text-[10.5px] sm:text-[13px] md:text-[15px] font-black font-sans tracking-wide text-foreground whitespace-nowrap select-none"
+                className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-foreground whitespace-nowrap select-none"
                 style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
                 translate="no"
               >
-                Real Stories. <span className="text-red-600">Real Gujarat.</span>
+                Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
               </p>
             </div>
 
@@ -774,15 +851,15 @@ export default function Header() {
                 <Link
                   href="/news-brief"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-zinc-950 to-black py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition whitespace-nowrap"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-zinc-950 to-black h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
                 >
                   <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0" />
-                  <span className="font-black tracking-wide">BRIEF</span>
+                  <span className="font-black tracking-wide leading-none">BRIEF</span>
                 </Link>
                 <Link
                   href="/aqi"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -800,15 +877,17 @@ export default function Header() {
                     <path d="M15.9 16A5 5 0 1 0 9 10.45" />
                     <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
                   </svg>
-                  <span className="font-black tracking-wide">AQI</span>
+                  <span className="font-black tracking-wide leading-none">AQI</span>
                 </Link>
                 <a
                   href="/epaper"
                   onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
                 >
-                  <BookOpen className="h-4 w-4 shrink-0" />
-                  <span className="font-black">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
+                  <BookOpen className="h-4 w-4 shrink-0 text-white" strokeWidth={2.4} />
+                  <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
+                    {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
+                  </span>
                 </a>
                 <button
                   type="button"
@@ -817,13 +896,15 @@ export default function Header() {
                     openSupportModal();
                   }}
                   onMouseEnter={prefetchSupportDetails}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 py-2.5 px-1 sm:px-2 min-h-[42px] text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap"
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
                 >
-                  <Heart className="h-4 w-4 fill-current animate-pulse text-white shrink-0" />
-                  <span className="font-black">{language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}</span>
+                  <Heart className="h-4 w-4 shrink-0 fill-white text-white" />
+                  <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
+                    {language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}
+                  </span>
                 </button>
               </div>
-
+              
               {/* App downloads CTA (Matches Footer Image 1 Style) */}
               <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                 <a

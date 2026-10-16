@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight, ChevronLeft, Rss } from 'lucide-react';
 import { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import {
@@ -17,6 +17,7 @@ import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api'
 import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkCategoryFeed from '@/components/apk/ApkCategoryFeed';
@@ -49,6 +50,7 @@ interface Props {
   currentPage: number;
   totalPages: number;
   slug: string;
+  resolvedSlug: string;
 }
 
 type FilterTab = 'all' | 'latest' | 'video';
@@ -82,11 +84,163 @@ export default function CategoryPageClient(props: Props) {
   return <WebCategoryPageClient {...props} />;
 }
 
-function WebCategoryPageClient({ articles, category, slug }: Props) {
+/* ── Reusable Mobile Category Article Card (Identical to Hero Section Mobile Box) ── */
+function MobileCategoryArticleCard({
+  article,
+  language,
+  fallbackImage,
+  defaultCategorySlug,
+  defaultCategoryLabel,
+  index = 0,
+}: {
+  article: any;
+  language: any;
+  fallbackImage?: string;
+  defaultCategorySlug?: string;
+  defaultCategoryLabel?: string;
+  index?: number;
+}) {
+  if (!article) return null;
+
+  const rawTitle =
+    (language === 'hi'
+      ? article.titleHi
+      : language === 'gu'
+      ? (article.titleGu || article.title)
+      : (article.titleEn || article.title)) ||
+    article.title ||
+    '';
+
+  const colonIdx = rawTitle.indexOf(':');
+  const hasPrefix = colonIdx > 3 && colonIdx <= 48;
+  const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
+  const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
+
+  const catLabel =
+    getCategoryLabel(article, language) ||
+    defaultCategoryLabel ||
+    (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
+
+  const catSlug =
+    article.category?.slug ||
+    article.categorySlug ||
+    (typeof article.category === 'string' && article.category.length < 30
+      ? article.category.toLowerCase().replace(/\s+/g, '-')
+      : '') ||
+    defaultCategorySlug ||
+    'news';
+
+  const imgSrc =
+    article.image ||
+    article.featuredImage ||
+    article.thumbnail ||
+    fallbackImage ||
+    '/assets/gujarat-post-logo.png';
+
+  const href = article.slug ? `/news/${article.slug}` : '#';
+
+  const handleShare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const title = getArticleTitle(article, language);
+    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}${href}`;
+    const text = `${title}\n\n${url}`;
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({ title, url, text }).catch(() => {
+        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+      });
+    } else {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+    }
+  };
+
+  return (
+    <div className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0">
+      {/* Top: Headline (left) + Thumbnail (right) */}
+      <Link
+        href={href}
+        className="flex flex-row items-start justify-between gap-3 min-w-0"
+      >
+        <div className="flex-1 min-w-0 pr-1">
+          <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+            {hasPrefix ? (
+              <>
+                <span
+                  className={
+                    index % 2 === 0
+                      ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
+                      : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
+                  }
+                >
+                  {prefixText}
+                </span>
+                <span>{restText}</span>
+              </>
+            ) : (
+              <AutoArticleTitle article={article} language={language} />
+            )}
+          </h3>
+        </div>
+
+        <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+          <ArticleMedia
+            src={imgSrc}
+            alt={rawTitle || ''}
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          />
+        </div>
+      </Link>
+
+      {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
+      <div className="flex items-center justify-between mt-3.5 pt-0.5">
+        <Link
+          href={`/category/${catSlug}`}
+          className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
+        >
+          <span>{catLabel}</span>
+          <ChevronRight className="w-3 h-3 text-muted-foreground" />
+        </Link>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
+          aria-label="Share"
+        >
+          <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trending, currentPage, totalPages }: Props) {
   const { language } = useApp();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
-  const [visibleCount, setVisibleCount] = useState(12);
+  // On page 2+: show all articles immediately; on page 1: start with 12 then load more
+  const [visibleCount, setVisibleCount] = useState(currentPage > 1 ? 9999 : 12);
+  // On page 2+: skip "View More" and show pagination right away
+  const [hasLoadedMore, setHasLoadedMore] = useState(currentPage > 1);
+  const articlesGridRef = useRef<HTMLDivElement>(null);
+
+  // Client-side pagination — no SSR round-trip, instant updates
+  const pageCacheRef = useRef<Record<number, Article[]>>({
+    [currentPage]: articles || [],
+  });
+  const [pagedArticles, setPagedArticles] = useState<Article[]>([]);
+  const [pagedPage, setPagedPage] = useState(currentPage);
+  const [pagedTotalPages, setPagedTotalPages] = useState(totalPages);
+  const [pageLoading, setPageLoading] = useState(false);
+
+  // Active articles for the current page (updates dynamically when page changes)
+  const currentArticles = useMemo(() => {
+    if (pagedArticles && pagedArticles.length > 0) {
+      return pagedArticles;
+    }
+    return articles || [];
+  }, [pagedArticles, articles]);
 
   // Videos state for Video filter
   const [videos, setVideos] = useState<any[]>([]);
@@ -102,6 +256,9 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
   // Scroll page to top instantly whenever category page mounts or slug changes
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    pageCacheRef.current = { [currentPage]: articles || [] };
+    setPagedArticles([]);
+    setPagedPage(currentPage);
   }, [slug]);
 
   // Fetch public videos stream for Video tab
@@ -190,33 +347,6 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     return (art as any).views || formatViews(art.views);
   };
 
-  /* Most-read = Top 7 articles published/updated within current running month (last 30 days) sorted by views */
-  const mostReadToDisplay = useMemo(() => {
-    const all = articles || [];
-    if (all.length === 0) return [];
-
-    const now = Date.now();
-    const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-
-    const currentMonthArticles = all.filter((art) => {
-      const artTime = new Date((art as any).updatedAt || art.publishedAt || (art as any).createdAt || 0).getTime();
-      return !isNaN(artTime) && artTime > 0 && (now - artTime) <= THIRTY_DAYS_MS;
-    });
-
-    const recentSorted = [...currentMonthArticles].sort((a, b) => (b.views || 0) - (a.views || 0));
-
-    // If fewer than 7 recent articles, fill remaining from full pool
-    if (recentSorted.length < 7) {
-      const usedIds = new Set(recentSorted.map((a) => a.id));
-      const extras = [...all]
-        .filter((a) => !usedIds.has(a.id))
-        .sort((a, b) => (b.views || 0) - (a.views || 0));
-      return [...recentSorted, ...extras].slice(0, 7);
-    }
-
-    return recentSorted.slice(0, 7);
-  }, [articles]);
-
   const getArticleTimeMs = (art: Article) => {
     const updatedVal = (art as any).updatedAt;
     const publishedVal = art.publishedAt || (art as any).createdAt;
@@ -235,7 +365,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     const slugLower = (slug || '').toLowerCase().trim();
 
     // Articles in this category with video
-    const videoArticles = (articles || [])
+    const videoArticles = (currentArticles || [])
       .filter((a: any) => a.videoUrl || a.youtubeUrl || a.mediaType === 'video' || a.isVideo)
       .map((a: any) => ({
         id: a.id,
@@ -291,10 +421,10 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     // If fewer than 6 video items exist, fill remaining slots with standard category news articles
     // so Top Stories and Sub-Hero slots are always 100% full with no empty space
     const usedIds = new Set(combined.map((item) => item.id).filter(Boolean));
-    const fillArticles = (articles || []).filter((art) => !usedIds.has(art.id));
+    const fillArticles = (currentArticles || []).filter((art) => !usedIds.has(art.id));
 
     return [...combined, ...fillArticles];
-  }, [articles, videos, category, slug, categoryName]);
+  }, [currentArticles, videos, category, slug, categoryName]);
 
   // Items for "બધું" (All) tab: Mix of standard news articles, video articles, and 1-2 YouTube videos
   const allSectionItems = useMemo(() => {
@@ -354,7 +484,7 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         }));
 
     // Sort all articles by date descending (latest first)
-    const sortedArticles = [...(articles || [])].sort((a, b) => {
+    const sortedArticles = [...(currentArticles || [])].sort((a, b) => {
       const aTime = new Date((a as any).updatedAt || a.publishedAt || (a as any).createdAt || 0).getTime();
       const bTime = new Date((b as any).updatedAt || b.publishedAt || (b as any).createdAt || 0).getTime();
       return bTime - aTime;
@@ -399,13 +529,13 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     });
 
     return result;
-  }, [articles, videos, category, slug, categoryName]);
+  }, [currentArticles, videos, category, slug, categoryName]);
 
   // Dynamic Section Items (Hero + Sub-Hero + Top Stories) driven by activeTab
   const currentSectionItems = useMemo(() => {
     if (activeTab === 'latest') {
       // Strictly latest uploaded articles sorted by time descending
-      return [...(articles || [])].sort((a, b) => getArticleTimeMs(b) - getArticleTimeMs(a));
+      return [...(currentArticles || [])].sort((a, b) => getArticleTimeMs(b) - getArticleTimeMs(a));
     }
 
     if (activeTab === 'video') {
@@ -414,10 +544,10 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
 
     // Default 'all' (બધું): Mixed feed of standard news articles, 1-2 YouTube videos, and video articles
     return allSectionItems;
-  }, [activeTab, articles, categoryVideoItems, allSectionItems]);
+  }, [activeTab, currentArticles, categoryVideoItems, allSectionItems]);
 
   // Section Hero Article / Item
-  const heroArticle = currentSectionItems[0] || articles[0];
+  const heroArticle = currentSectionItems[0] || currentArticles[0];
 
   // Section Sub-Hero Small Article
   const subHeroArticle = currentSectionItems[1];
@@ -433,12 +563,103 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
     return [...sliced, ...fallbacks].slice(0, 4);
   }, [currentSectionItems, heroArticle, subHeroArticle]);
 
+  const topStoriesFirstThree = useMemo(() => topStories.slice(0, 3), [topStories]);
+  const fourthStory = topStories[3];
+
   const topStoriesIds = useMemo(() => new Set([heroArticle?.id, subHeroArticle?.id, ...topStories.map((a: any) => a.id)].filter(Boolean)), [heroArticle, subHeroArticle, topStories]);
 
   // Remaining articles for Popular News grid (steady view)
   const popularArticles = useMemo(() => {
-    return (articles || []).filter((art) => !topStoriesIds.has(art.id));
-  }, [articles, topStoriesIds]);
+    return (currentArticles || []).filter((art) => !topStoriesIds.has(art.id));
+  }, [currentArticles, topStoriesIds]);
+
+  // Fast background prefetch of adjacent pages for instant 0ms clicking
+  useEffect(() => {
+    const prefetch = (p: number) => {
+      if (p >= 1 && p <= pagedTotalPages && !pageCacheRef.current[p]) {
+        getPublicArticles({ categorySlug: resolvedSlug, page: p, limit: 40 })
+          .then((res) => {
+            if (res?.articles?.length) {
+              const sorted = (res.articles as any[]).sort((a, b) => {
+                const at = new Date(a.updatedAt || a.publishedAt || 0).getTime();
+                const bt = new Date(b.updatedAt || b.publishedAt || 0).getTime();
+                return bt - at;
+              });
+              pageCacheRef.current[p] = sorted;
+            }
+          })
+          .catch(() => {});
+      }
+    };
+    prefetch(pagedPage + 1);
+    if (pagedPage > 1) prefetch(pagedPage - 1);
+  }, [pagedPage, pagedTotalPages, resolvedSlug]);
+
+  const handlePageChange = useCallback(async (page: number) => {
+    if (page === pagedPage || pageLoading) return;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // 1. Instant switch if page is 1
+    if (page === 1) {
+      const p1 = pageCacheRef.current[1] || articles;
+      setPagedArticles(p1);
+      setPagedPage(1);
+      setHasLoadedMore(true);
+      setVisibleCount(9999);
+      window.history.pushState({}, '', `/category/${slug}`);
+      return;
+    }
+
+    // 2. Instant switch if page is cached (0ms delay)
+    if (pageCacheRef.current[page]) {
+      setPagedArticles(pageCacheRef.current[page]);
+      setPagedPage(page);
+      setHasLoadedMore(true);
+      setVisibleCount(9999);
+      window.history.pushState({}, '', `/category/${slug}?page=${page}`);
+      return;
+    }
+
+    // 3. Otherwise fetch from API with fast loading indicator
+    setPageLoading(true);
+    try {
+      const res = await getPublicArticles({ categorySlug: resolvedSlug, page, limit: 40 });
+      const fetched = (res?.articles || []).sort((a: any, b: any) => {
+        const at = new Date((a as any).updatedAt || a.publishedAt || 0).getTime();
+        const bt = new Date((b as any).updatedAt || b.publishedAt || 0).getTime();
+        return bt - at;
+      });
+      pageCacheRef.current[page] = fetched;
+      setPagedArticles(fetched);
+      setPagedPage(page);
+      if (res?.totalPages) setPagedTotalPages(res.totalPages);
+      setHasLoadedMore(true);
+      setVisibleCount(9999);
+      window.history.pushState({}, '', `/category/${slug}?page=${page}`);
+    } catch {
+      // silent fail — keep current articles visible
+    } finally {
+      setPageLoading(false);
+    }
+  }, [pagedPage, pageLoading, resolvedSlug, slug, articles]);
+
+  // Handle browser back/forward buttons
+  useEffect(() => {
+    const onPopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const p = parseInt(params.get('page') || '1', 10);
+      if (p !== pagedPage) {
+        handlePageChange(p);
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [pagedPage, handlePageChange]);
+
+  // Compute display articles for the grid
+  const displayArticles = useMemo(() => {
+    return popularArticles;
+  }, [popularArticles]);
 
   /* 3 Filter tabs */
   const tabs: { id: FilterTab; gu: string; hi: string; en: string }[] = [
@@ -469,6 +690,17 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
               </span>
             </h1>
           </div>
+
+          <Link
+            href={`/rss/${resolvedSlug || slug}.xml`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`${categoryName} RSS Feed`}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 hover:border-orange-500/40 transition-all shadow-xs"
+          >
+            <Rss className="w-3.5 h-3.5 text-orange-500" />
+            <span className="hidden sm:inline">RSS ફીડ</span>
+          </Link>
         </div>
 
         {/* ── FILTER TABS (3 Options: Badhu, Taja Samachar, Video) ────── */}
@@ -494,10 +726,9 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
 
           {/* ── LEFT: Hero + Top Stories (Controlled by activeTab) ── */}
-          <div className="grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-8 min-w-0">
-            {/* Left Column: Hero Article + Sub Hero Small Article */}
-            <div className="flex flex-col">
-              {/* Main Big Hero Article / Video Card */}
+          <div className={`grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-x-8 gap-y-0 min-w-0 transition-opacity duration-200 ${pageLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+            {/* Row 1, Col 1: Main Big Hero Article / Video Card */}
+            <div className="order-1 md:col-start-1 md:row-start-1 flex flex-col justify-start pb-4">
               {heroArticle && (
                 <div>
                   {heroArticle.videoId ? (
@@ -558,16 +789,77 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                   </div>
                 </div>
               )}
+            </div>
 
-              {/* Small Article below Hero Article */}
+            {/* Row 1, Col 2: Top Stories (Items 1-3) */}
+            <div className="order-3 md:col-start-2 md:row-start-1 flex flex-col justify-start pb-0 md:pb-4 mt-4 md:mt-0">
+              <div className="flex items-center gap-2.5 mb-2.5 pb-2 border-b-2 border-accent/25">
+                <span className="w-1 h-4 bg-accent inline-block shrink-0 rounded-sm" />
+                <span className="text-sm font-black text-foreground">
+                  {getLocalized(language, { en: 'Top Stories', gu: 'ટોપ સ્ટોરીઝ', hi: 'टॉप स्टोरीज' })}
+                </span>
+              </div>
+
+              {/* Mobile (< md): Divya Bhaskar / Hero section style list with divide-y */}
+              <div className="flex flex-col divide-y divide-border/60 md:hidden">
+                {topStoriesFirstThree.map((art: any, idx: number) => (
+                  <MobileCategoryArticleCard
+                    key={art.id || idx}
+                    article={art}
+                    language={language}
+                    defaultCategorySlug={slug}
+                    defaultCategoryLabel={categoryName}
+                    index={idx}
+                  />
+                ))}
+              </div>
+
+              {/* Desktop (>= md): UNTOUCHED */}
+              <div className="hidden md:flex flex-1 flex-col justify-between divide-y divide-border">
+                {topStoriesFirstThree.map((art: any) => (
+                  <Link key={art.id} href={art.slug ? `/news/${art.slug}` : '#'} className="group flex items-start gap-4 py-2.5 first:pt-0">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wide text-accent">
+                        {getArticleLocation(art)}
+                      </span>
+                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                        <AutoArticleTitle article={art} language={language} />
+                      </h3>
+                    </div>
+                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                      <ArticleMedia
+                        src={art.image || art.featuredImage || art.thumbnail}
+                        alt={getArticleTitle(art, language)}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Row 2, Col 1: Small Sub-Hero Article below Hero Article */}
+            <div className={`order-2 md:col-start-1 md:row-start-2 ${subHeroArticle ? 'border-t border-border/60 md:border-border md:pt-3.5 md:pb-2' : ''}`}>
               {subHeroArticle && (
-                <div className="mt-4 pt-3.5 border-t border-border">
-                  <Link href={subHeroArticle.slug ? `/news/${subHeroArticle.slug}` : '#'} className="group flex items-start gap-4">
+                <>
+                  {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
+                  <div className="md:hidden">
+                    <MobileCategoryArticleCard
+                      article={subHeroArticle}
+                      language={language}
+                      defaultCategorySlug={slug}
+                      defaultCategoryLabel={categoryName}
+                      index={0}
+                    />
+                  </div>
+
+                  {/* Desktop view (>= md): UNTOUCHED */}
+                  <Link href={subHeroArticle.slug ? `/news/${subHeroArticle.slug}` : '#'} className="hidden md:flex group items-start gap-4">
                     <div className="min-w-0 flex-1">
                       <span className="text-[10px] font-black uppercase tracking-wide text-accent">
                         {getArticleLocation(subHeroArticle)}
                       </span>
-                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
                         <AutoArticleTitle article={subHeroArticle} language={language} />
                       </h3>
                     </div>
@@ -579,55 +871,58 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
                       />
                     </div>
                   </Link>
-                </div>
+                </>
               )}
             </div>
 
-            {/* Top Stories column */}
-            <div>
-              <div className="flex items-center gap-2.5 mb-3 pb-2 border-b-2 border-accent/25">
-                <span className="w-1 h-4 bg-accent inline-block shrink-0 rounded-sm" />
-                <span className="text-sm font-black text-foreground">
-                  {getLocalized(language, { en: 'Top Stories', gu: 'ટોપ સ્ટોરીઝ', hi: 'टॉप स्टोरीज' })}
-                </span>
-              </div>
-              <div className="flex flex-col divide-y divide-border">
-                {topStories.map((art: any) => (
-                  <Link key={art.id} href={art.slug ? `/news/${art.slug}` : '#'} className="group flex items-start gap-4 py-3 first:pt-1 last:pb-1">
+            {/* Row 2, Col 2: Fourth Top Story (Aligned perfectly with Sub-Hero Article) */}
+            <div className={`order-4 md:col-start-2 md:row-start-2 ${fourthStory ? 'border-t border-border/60 md:border-border md:pt-3.5 md:pb-2' : ''}`}>
+              {fourthStory && (
+                <>
+                  {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
+                  <div className="md:hidden">
+                    <MobileCategoryArticleCard
+                      article={fourthStory}
+                      language={language}
+                      defaultCategorySlug={slug}
+                      defaultCategoryLabel={categoryName}
+                      index={3}
+                    />
+                  </div>
+
+                  {/* Desktop view (>= md): UNTOUCHED */}
+                  <Link href={fourthStory.slug ? `/news/${fourthStory.slug}` : '#'} className="hidden md:flex group items-start gap-4">
                     <div className="min-w-0 flex-1">
                       <span className="text-[10px] font-black uppercase tracking-wide text-accent">
-                        {getArticleLocation(art)}
+                        {getArticleLocation(fourthStory)}
                       </span>
-                      <h3 className="mt-0.5 text-[14.5px] md:text-[15.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                        {getArticleTitle(art, language)}
+                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                        <AutoArticleTitle article={fourthStory} language={language} />
                       </h3>
                     </div>
                     <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                      <img
-                        src={art.image || art.featuredImage || art.thumbnail || '/assets/gujarat-post-logo.png'}
-                        alt={getArticleTitle(art, language)}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                      <ArticleMedia
+                        src={fourthStory.image || (fourthStory as any).featuredImage || (fourthStory as any).thumbnail}
+                        alt={getArticleTitle(fourthStory, language)}
                         className="transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
-                        loading="lazy"
                       />
                     </div>
                   </Link>
-                ))}
-              </div>
+                </>
+              )}
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Most Read */}
+          {/* RIGHT COLUMN: Trending Stories */}
           <div className="hidden lg:block">
             <div className="flex items-center gap-2.5 mb-3 pb-2 border-b border-border">
               <span className="w-2 h-2 bg-accent rotate-45 shrink-0 inline-block" />
               <span className="text-sm font-black text-foreground">
-                {getLocalized(language, { en: 'Most Read', gu: 'સૌથી વધુ વંચાયેલા', hi: 'सबसे ज़्यादा पढ़े गए' })}
+                {getLocalized(language, { en: 'Trending Stories', gu: 'ટ્રેન્ડિંગ સ્ટોરીઝ', hi: 'ट्रेंडिंग स्टोरीज़' })}
               </span>
             </div>
             <div className="flex flex-col divide-y divide-border">
-              {mostReadToDisplay.map((art: any, i: number) => (
+              {trending.slice(0, 7).map((art: any, i: number) => (
                 <Link key={art.id} href={`/news/${art.slug}`} className="group flex items-start gap-3 py-3 first:pt-1.5 last:pb-1.5">
                   <span
                     className="text-[28px] font-extrabold leading-none select-none w-8 shrink-0 text-center"
@@ -649,66 +944,133 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
         </div>
 
         {/* POPULAR ARTICLES GRID */}
-        <div className="mt-6">
-          {/* Mobile view (< md): Single column horizontal card list like Image 5 (no date) */}
-          <div className="md:hidden flex flex-col divide-y divide-border">
-            {popularArticles.slice(0, visibleCount).map((art) => {
-              const artTitle = getArticleTitle(art, language);
-              const artCategory = getArticleLocation(art);
-              const artImg = art.image || (art as any).featuredImage || (art as any).thumbnail || '/assets/gujarat-post-logo.png';
-
-              return (
-                <Link
-                  key={art.id}
-                  href={art.slug ? `/news/${art.slug}` : '#'}
-                  className="group flex items-start gap-4 py-3.5 first:pt-1 last:pb-1"
-                >
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[11px] font-black uppercase tracking-wide text-accent">
-                      {artCategory}
-                    </span>
-                    <h3 className="mt-0.5 text-[14.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                      {artTitle}
-                    </h3>
-                  </div>
-                  <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                    <img
-                      src={artImg}
-                      alt={artTitle}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      className="transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
-                      loading="lazy"
-                    />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Desktop view (>= md): 3-column grid */}
-          <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-8">
-            {popularArticles.slice(0, visibleCount).map((article) => (
-              <NewsCard key={article.id} article={article} variant="flat" />
-            ))}
-          </div>
-
-          {/* Load More */}
-          {visibleCount < popularArticles.length && (
-            <div className="mt-6 flex justify-center">
-              <button
-                type="button"
-                onClick={() => setVisibleCount((v) => v + 9)}
-                className="group inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-2.5 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
-              >
-                <span className="text-base md:text-lg font-black tracking-wide leading-none">
-                  {getLocalized(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'और देखें' })}
+        <div className="mt-6" ref={articlesGridRef}>
+          {/* Loading spinner during page fetch */}
+          {pageLoading && (
+            <div className="flex justify-center items-center py-16">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 rounded-full border-[3px] border-accent border-t-transparent animate-spin" />
+                <span className="text-sm font-bold text-muted-foreground">
+                  {getLocalized(language, { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...' })}
                 </span>
-                <ChevronDown className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[2.5]" />
-              </button>
+              </div>
             </div>
           )}
+
+          {!pageLoading && (
+            <>
+              {/* Mobile view (< md) */}
+              <div className="md:hidden flex flex-col divide-y divide-border/60">
+                {displayArticles.slice(0, visibleCount).map((art, idx) => (
+                  <MobileCategoryArticleCard
+                    key={art.id || idx}
+                    article={art}
+                    language={language}
+                    defaultCategorySlug={slug}
+                    defaultCategoryLabel={categoryName}
+                    index={idx}
+                  />
+                ))}
+              </div>
+
+              {/* Desktop view (>= md): 3-column grid */}
+              <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-8">
+                {displayArticles.slice(0, visibleCount).map((article) => (
+                  <NewsCard key={article.id} article={article} variant="flat" />
+                ))}
+              </div>
+
+              {/* View More — page 1 only, before pagination appears */}
+              {visibleCount < displayArticles.length && !hasLoadedMore && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVisibleCount(9999);
+                      setHasLoadedMore(true);
+                    }}
+                    className="group inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-2.5 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
+                  >
+                    <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                      {getLocalized(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'और देखें' })}
+                    </span>
+                    <ChevronDown className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[2.5]" />
+                  </button>
+                </div>
+              )}
+
+              {/* Pagination — shown after "View More" or on page 2+ */}
+              {hasLoadedMore && pagedTotalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-1.5 flex-wrap">
+                  {/* Prev */}
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(pagedPage - 1)}
+                    disabled={pagedPage <= 1 || pageLoading}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${
+                      pagedPage <= 1
+                        ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
+                        : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
+                  </button>
+
+                  {/* Page numbers */}
+                  {Array.from({ length: pagedTotalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      if (pagedTotalPages <= 7) return true;
+                      if (p === 1 || p === pagedTotalPages) return true;
+                      if (Math.abs(p - pagedPage) <= 2) return true;
+                      return false;
+                    })
+                    .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
+                      if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push('ellipsis');
+                      acc.push(p);
+                      return acc;
+                    }, [])
+                    .map((item, idx) =>
+                      item === 'ellipsis' ? (
+                        <span key={`ellipsis-${idx}`} className="w-9 h-9 flex items-center justify-center text-muted-foreground text-sm font-bold select-none">
+                          …
+                        </span>
+                      ) : (
+                        <button
+                          key={item}
+                          type="button"
+                          onClick={() => handlePageChange(item as number)}
+                          disabled={pageLoading}
+                          className={`flex items-center justify-center w-9 h-9 rounded-full border text-sm font-black transition-all duration-150 ${
+                            item === pagedPage
+                              ? 'bg-accent border-accent text-white shadow-sm'
+                              : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
+                          }`}
+                        >
+                          {language === 'gu' ? toGu(item as number) : item}
+                        </button>
+                      )
+                    )}
+
+                  {/* Next */}
+                  <button
+                    type="button"
+                    onClick={() => handlePageChange(pagedPage + 1)}
+                    disabled={pagedPage >= pagedTotalPages || pageLoading}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${
+                      pagedPage >= pagedTotalPages
+                        ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
+                        : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
+                    }`}
+                  >
+                    <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
+
+
 
         {/* ── AE PAN VACHO: Also Read (24 Articles: 12 Crime + 12 Fact-Check) ─────── */}
         {alsoReadArticles.length > 0 && (
@@ -719,47 +1081,20 @@ function WebCategoryPageClient({ articles, category, slug }: Props) {
               </span>
             </div>
 
-            {/* Mobile view (< md): Single column horizontal card list like Image 5 (no date) */}
-            <div className="md:hidden flex flex-col divide-y divide-border">
+            {/* Mobile view (< md): Single column hero section style list */}
+            <div className="md:hidden flex flex-col divide-y divide-border/60">
               {alsoReadArticles.map((article: any, idx: number) => {
-                const artTitle = language === 'gu'
-                  ? (article.titleGu || article.title)
-                  : language === 'hi'
-                  ? (article.titleHi || article.title)
-                  : article.title;
-                const artCategory = language === 'gu'
-                  ? (article.categoryGu || article.category)
-                  : language === 'hi'
-                  ? (article.categoryHi || article.category)
-                  : article.category;
                 const fallbackImg = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
-                const artImg = article.image || article.featuredImage || article.thumbnail || fallbackImg;
-
                 return (
-                  <Link
+                  <MobileCategoryArticleCard
                     key={article.id || idx}
-                    href={article.slug ? `/news/${article.slug}` : '#'}
-                    className="group flex items-start gap-4 py-3.5 first:pt-1 last:pb-1"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[11px] font-black uppercase tracking-wide text-accent">
-                        {artCategory}
-                      </span>
-                      <h4 className="mt-0.5 text-[14.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                        {artTitle}
-                      </h4>
-                    </div>
-                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                      <img
-                        src={artImg}
-                        alt={artTitle}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
-                        loading="lazy"
-                      />
-                    </div>
-                  </Link>
+                    article={article}
+                    language={language}
+                    fallbackImage={fallbackImg}
+                    defaultCategorySlug={article.categorySlug || 'news'}
+                    defaultCategoryLabel={article.categoryGu || article.category}
+                    index={idx}
+                  />
                 );
               })}
             </div>

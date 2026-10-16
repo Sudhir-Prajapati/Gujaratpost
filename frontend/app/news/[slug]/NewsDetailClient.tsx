@@ -10,7 +10,9 @@ import { SocialIcon } from '@/components/ui/SocialLinks';
 import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
+
 import RelatedStoriesSection from './components/RelatedStoriesSection';
+import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
 
@@ -1255,7 +1257,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   return (
     <>
       <ReadingProgressBar />
-      <div className="wrap py-2">
+      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2 overflow-x-clip">
         <div key={`${article.id}-${language}`} className="article-grid" suppressHydrationWarning>
           <article suppressHydrationWarning>
             <nav className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium">
@@ -1481,6 +1483,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 return (
                   <div>
                     <ArticleContentBody html={formattedArticleBodyHtml} />
+
                     {/* Horizontal Ad Banner placed directly after article description */}
                     <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
                   </div>
@@ -1491,7 +1494,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 <div className="relative">
                   <ArticleContentBody html={topHtml} />
 
-                  {/* IN_ARTICLE Ad Banner displayed inside description BEFORE the "àªµàª§à« àªµàª¾àª‚àªšà«‹" button */}
+                  {/* IN_ARTICLE Ad Banner displayed inside description */}
                   <AdSectionBanner section="IN_ARTICLE" className="my-6" />
 
                   {!isContentExpanded ? (
@@ -1548,7 +1551,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
           </article>
 
-          <aside className="side select-none" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
+          <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
             <div className="side-sticky sticky top-20 transition-all duration-300">
               {/* Most Read widget */}
               <div className="mostread">
@@ -1579,23 +1582,52 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <span className="d"></span>
                   <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
                 </div>
-                <div className="space-y-0 mt-3 transition-all duration-300">
+
+                {/* Mobile view (< md): Hero Section style list */}
+                <div className="flex flex-col divide-y divide-border/60 md:hidden mt-3">
+                  {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 2).map((item, index) => (
+                    <MobileHeroArticleCard
+                      key={`rec-mob-${item.id || index}`}
+                      article={item}
+                      language={language}
+                      index={index}
+                    />
+                  ))}
+                </div>
+
+                {/* Desktop view (>= md): UNTOUCHED */}
+                <div className="hidden md:block space-y-0 mt-3 transition-all duration-300">
                   {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 2).map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
-                      <Link key={item.id || index} href={`/news/${item.slug}`} className="s-compact hover:opacity-85 transition-opacity">
-                        <div>
-                          <span className="kick">{itemCategory}</span>
-                          <h3><AutoArticleTitle article={item} language={language} /></h3>
+                      <Link
+                        key={item.id || index}
+                        href={`/news/${item.slug}`}
+                        className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
+                      >
+                        <div className="min-w-0 flex-1 pr-1">
+                          <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
+                            {itemCategory}
+                          </span>
+                          <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
+                            <AutoArticleTitle article={item} language={language} />
+                          </h3>
                         </div>
-                        <div className="imgwrap">
-                          <Image src={getCardThumbnail(item, index)} alt={item.title} fill sizes="92px" className="object-cover" />
+                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-xs self-start">
+                          <Image
+                            src={getCardThumbnail(item, index)}
+                            alt={item.title || ''}
+                            fill
+                            sizes="114px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
                         </div>
                       </Link>
                     );
                   })}
+                </div>
 
-                  {!isRecommendedExpanded && sidebarRecommendedPool.length > 2 && (
+                {!isRecommendedExpanded && sidebarRecommendedPool.length > 2 && (
                     <button
                       type="button"
                       onClick={() => setSidebarMoreRecommended(true)}
@@ -1605,7 +1637,6 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                       <ChevronDown className="w-4 h-4 stroke-[2.5]" />
                     </button>
                   )}
-                </div>
               </div>
 
               {/* WhatsApp Channel widget */}
@@ -1640,7 +1671,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </p>
 
                 <a
-                  href="https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a"
+                  href="https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[13.5px] py-3 md:py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"

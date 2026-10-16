@@ -25,6 +25,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: `Latest ${name} news, photos and videos from Gujarat Post.`,
     alternates: {
       canonical: `/category/${slug}`,
+      types: {
+        'application/rss+xml': `/rss/${resolvedSlug || slug}.xml`,
+      },
     },
     openGraph: {
       title: `${name} News | Gujarat Post`,
@@ -128,6 +131,7 @@ export default async function CategoryPage({
       currentPage={page}
       totalPages={totalPages || Math.ceil(total / limit)}
       slug={slug}
+      resolvedSlug={resolvedSlug}
     />
   );
 }

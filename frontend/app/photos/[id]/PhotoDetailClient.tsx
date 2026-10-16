@@ -394,7 +394,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
         </div>
       )}
 
-      <div className="wrap py-6">
+      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-6 overflow-x-clip">
         <div className="article-grid" suppressHydrationWarning>
           <article suppressHydrationWarning>
             

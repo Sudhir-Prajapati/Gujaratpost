@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 
 const DISTRICTS = [
@@ -32,32 +32,77 @@ export default function DistrictBar({
   const [dropdownLeft, setDropdownLeft] = useState(12);
   const [caretLeft, setCaretLeft] = useState(70);
 
-  // Scroll arrow state
+  // Scroll arrows state (mobile only)
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [showScrollArrow, setShowScrollArrow] = useState(false);
+  const [showScrollRightArrow, setShowScrollRightArrow] = useState(false);
+  const [showScrollLeftArrow, setShowScrollLeftArrow] = useState(false);
 
-  const checkScrollEnd = useCallback(() => {
+  const checkScrollState = useCallback(() => {
     const el = scrollRef.current;
     if (!el) return;
-    const atEnd = el.scrollWidth - el.scrollLeft - el.clientWidth < 4;
-    setShowScrollArrow(!atEnd);
+    const canScrollRight = el.scrollWidth - el.scrollLeft - el.clientWidth > 8;
+    const canScrollLeft = el.scrollLeft > 6;
+    setShowScrollRightArrow(canScrollRight);
+    setShowScrollLeftArrow(canScrollLeft);
   }, []);
 
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    checkScrollEnd();
-    el.addEventListener('scroll', checkScrollEnd, { passive: true });
-    const ro = new ResizeObserver(checkScrollEnd);
+    checkScrollState();
+
+    const t1 = setTimeout(checkScrollState, 50);
+    const t2 = setTimeout(checkScrollState, 300);
+
+    el.addEventListener('scroll', checkScrollState, { passive: true });
+    const ro = new ResizeObserver(checkScrollState);
     ro.observe(el);
+    if (el.firstElementChild) {
+      ro.observe(el.firstElementChild);
+    }
+    window.addEventListener('resize', checkScrollState);
+
     return () => {
-      el.removeEventListener('scroll', checkScrollEnd);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      el.removeEventListener('scroll', checkScrollState);
+      window.removeEventListener('resize', checkScrollState);
       ro.disconnect();
     };
-  }, [checkScrollEnd]);
+  }, [checkScrollState, navLinks, otherLinks, language]);
 
-  const handleScrollRight = () => {
-    scrollRef.current?.scrollBy({ left: 120, behavior: 'smooth' });
+  const handleScrollLeft = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollAmount = Math.max(160, Math.floor(el.clientWidth * 0.65));
+    try {
+      el.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+    } catch {
+      el.scrollLeft -= scrollAmount;
+    }
+    setTimeout(checkScrollState, 150);
+    setTimeout(checkScrollState, 400);
+  };
+
+  const handleScrollRight = (e?: React.MouseEvent | React.TouchEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const el = scrollRef.current;
+    if (!el) return;
+    const scrollAmount = Math.max(160, Math.floor(el.clientWidth * 0.65));
+    try {
+      el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    } catch {
+      el.scrollLeft += scrollAmount;
+    }
+    setTimeout(checkScrollState, 150);
+    setTimeout(checkScrollState, 400);
   };
 
   // Close dropdown on route change
@@ -208,11 +253,11 @@ export default function DistrictBar({
 
   return (
     <div className="w-full border-t border-border/40 bg-card/95 backdrop-blur-md select-none relative z-40">
-      <div className="mx-auto flex max-w-[1700px] items-center gap-2 px-1.5 sm:px-2 xl:px-3">
+      <div className="mx-auto flex max-w-[1700px] items-center gap-0 md:gap-2 px-0 md:px-2 xl:px-3">
         {/* Gujarat Map Logo and vertical separator (At start for both mobile & desktop) */}
         <Link
           href="/category/gujarat"
-          className="flex items-center justify-center shrink-0 ml-1 sm:ml-2.5 pr-1.5 sm:pr-2 border-r border-border/60 h-8 md:h-9 self-center overflow-hidden"
+          className="flex items-center justify-center shrink-0 pl-1.5 sm:pl-2 md:pl-0 md:ml-2.5 pr-1.5 sm:pr-2 border-r border-border/60 h-8 md:h-9 self-center overflow-hidden"
           title={language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}
         >
           <img
@@ -225,11 +270,26 @@ export default function DistrictBar({
           />
         </Link>
 
-        {/* Scrollable list + right arrow wrapper */}
+        {/* Scrollable list + scroll arrows wrapper */}
         <div className="relative flex-1 min-w-0">
+          {/* ─── Left Scroll Arrow (mobile only, shown when scrolled right, same to same as right) ─── */}
+          {showScrollLeftArrow && (
+            <div className="md:hidden absolute left-0 top-0 bottom-0 flex items-center z-20 pointer-events-none bg-gradient-to-r from-card via-card/80 to-transparent w-10">
+              <button
+                type="button"
+                onClick={handleScrollLeft}
+                onTouchEnd={(e) => { e.preventDefault(); handleScrollLeft(); }}
+                aria-label="Scroll left"
+                className="pointer-events-auto ml-1 flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border/60 shadow-md text-foreground/70 hover:text-accent hover:border-accent/40 active:scale-90 transition-all duration-150"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
+          )}
+
           <div
             ref={scrollRef}
-            className="flex-1 overflow-x-auto scrollbar-none overscroll-x-contain touch-pan-x"
+            className="flex-1 overflow-x-auto scroll-smooth scrollbar-none overscroll-x-contain touch-pan-x"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {/* ─── DESKTOP VIEW (>= md): Full horizontal city list ─── */}
@@ -254,7 +314,7 @@ export default function DistrictBar({
             </div>
 
             {/* ─── MOBILE VIEW (< md): 1st Video, 2nd Gujarat (with Dropdown of all cities), then other categories ─── */}
-            <div className="flex md:hidden items-center gap-4 py-0 pl-1 pr-3">
+            <div className="flex md:hidden items-center gap-3.5 py-0 pl-2 pr-2">
               {/* 1. Video Link */}
               <Link
                 href="/videos"
@@ -270,23 +330,33 @@ export default function DistrictBar({
                 )}
               </Link>
 
-              {/* 2. Gujarat Dropdown Trigger */}
-              <button
-                ref={gujaratButtonRef}
-                type="button"
-                onClick={toggleGujaratDropdown}
-                className={`relative flex shrink-0 h-10 items-center gap-1 whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 cursor-pointer ${
-                  isGujaratActive || gujaratDropdownOpen ? 'text-accent font-black' : 'text-foreground hover:text-accent'
-                }`}
-                style={{ fontWeight: 800 }}
-                aria-expanded={gujaratDropdownOpen}
-              >
-                <span>{language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${gujaratDropdownOpen ? 'rotate-180 text-accent' : 'text-muted-foreground'}`} />
-                {isGujaratActive && (
-                  <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
-                )}
-              </button>
+              {/* 2. Gujarat Category Link (Opens Gujarat on click) + Cities Dropdown */}
+              <div className="relative flex shrink-0 h-10 items-center gap-0.5">
+                <Link
+                  href="/category/gujarat"
+                  className={`relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 ${
+                    isGujaratActive ? 'text-accent font-black' : 'text-foreground hover:text-accent'
+                  }`}
+                  style={{ fontWeight: 800 }}
+                  aria-current={isGujaratActive ? 'page' : undefined}
+                >
+                  <span>{language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}</span>
+                  {isGujaratActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[3px] rounded-t-full bg-accent" aria-hidden="true" />
+                  )}
+                </Link>
+
+                <button
+                  ref={gujaratButtonRef}
+                  type="button"
+                  onClick={toggleGujaratDropdown}
+                  className="flex items-center justify-center h-8 w-5 text-muted-foreground hover:text-accent cursor-pointer active:scale-90 transition-transform"
+                  aria-expanded={gujaratDropdownOpen}
+                  aria-label="Gujarat cities"
+                >
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${gujaratDropdownOpen ? 'rotate-180 text-accent' : ''}`} />
+                </button>
+              </div>
 
               {/* 3. All remaining categories (India, World, Politics, Crime, Health, etc.) */}
               {mobileOtherCategories.map((link) => {
@@ -311,19 +381,19 @@ export default function DistrictBar({
             </div>
           </div>
 
-          {/* ─── Right Scroll Arrow (mobile only, hides at end) ─── */}
-          {showScrollArrow && (
-            <button
-              type="button"
-              onClick={handleScrollRight}
-              aria-label="Scroll right"
-              className="md:hidden absolute right-0 top-0 bottom-0 flex items-center justify-end pr-1 z-10 cursor-pointer w-12"
-              style={{
-                background: 'linear-gradient(to right, transparent, var(--color-card, #fff) 40%)',
-              }}
-            >
-              <ChevronRight className="w-5 h-5 text-foreground/70" strokeWidth={2.5} />
-            </button>
+          {/* ─── Right Scroll Arrow (mobile only, flush at right edge) ─── */}
+          {showScrollRightArrow && (
+            <div className="md:hidden absolute right-0 top-0 bottom-0 flex items-center justify-end z-20 pointer-events-none bg-gradient-to-l from-card via-card/80 to-transparent w-10">
+              <button
+                type="button"
+                onClick={handleScrollRight}
+                onTouchEnd={(e) => { e.preventDefault(); handleScrollRight(); }}
+                aria-label="Scroll right"
+                className="pointer-events-auto mr-1 flex items-center justify-center w-6 h-6 rounded-full bg-card border border-border/60 shadow-md text-foreground/70 hover:text-accent hover:border-accent/40 active:scale-90 transition-all duration-150"
+              >
+                <ChevronRight className="w-3.5 h-3.5" strokeWidth={2.5} />
+              </button>
+            </div>
           )}
         </div>
       </div>

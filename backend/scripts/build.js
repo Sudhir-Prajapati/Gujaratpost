@@ -35,6 +35,10 @@ console.log('🔨 [Build] Compiling TypeScript into dist/ ...');
 const tscRes = spawnSync('npx', ['tsc'], {
   stdio: 'inherit',
   shell: true,
+  env: {
+    ...process.env,
+    NODE_OPTIONS: '--max-old-space-size=4096',
+  },
 });
 
 if (tscRes.status !== 0) {

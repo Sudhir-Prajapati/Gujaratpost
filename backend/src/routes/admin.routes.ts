@@ -14,6 +14,11 @@ import { AdController } from '../controllers/ad.controller.js';
 import { AiController } from '../controllers/ai.controller.js';
 import { SupportController } from '../controllers/support.controller.js';
 import { TributeController } from '../controllers/tribute.controller.js';
+import { AboutController } from '../controllers/about.controller.js';
+import { ContactController } from '../controllers/contact.controller.js';
+import { AdvertiseController } from '../controllers/advertise.controller.js';
+import { LegalController } from '../controllers/legal.controller.js';
+import { RssController } from '../controllers/rss.controller.js';
 import uploadRoutes from './upload.routes.js';
 
 import { requireAuth } from '../middleware/auth.middleware.js';
@@ -201,5 +206,61 @@ router.put('/tributes/:id', requireAuth, requireRole(tributeRoles), TributeContr
 router.put('/tributes/:id/toggle', requireAuth, requireRole(tributeRoles), TributeController.toggleActive);
 router.delete('/tributes/:id', requireAuth, requireRole(tributeRoles), TributeController.deleteTribute);
 
+// ==========================================
+// 17. About Us Settings Management (SUPER_ADMIN, EDITOR)
+// ==========================================
+const aboutRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+router.get('/about', requireAuth, requireRole(aboutRoles), AboutController.getAboutSettings);
+router.put('/about', requireAuth, requireRole(aboutRoles), AboutController.updateAboutSettings);
+
+// ==========================================
+// 18. Contact Us Settings & Messages (SUPER_ADMIN, EDITOR)
+// ==========================================
+const contactRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+router.get('/contact', requireAuth, requireRole(contactRoles), ContactController.getContactSettings);
+router.put('/contact', requireAuth, requireRole(contactRoles), ContactController.updateContactSettings);
+router.get('/contact/messages', requireAuth, requireRole(contactRoles), ContactController.getContactMessages);
+router.put('/contact/messages/mark-all-read', requireAuth, requireRole(contactRoles), ContactController.markAllMessagesRead);
+router.put('/contact/messages/:id/read', requireAuth, requireRole(contactRoles), ContactController.toggleMessageRead);
+router.delete('/contact/messages/:id', requireAuth, requireRole(contactRoles), ContactController.deleteContactMessage);
+
+// ==========================================
+// 19. Advertise With Us Settings Management (SUPER_ADMIN, EDITOR, ADVERTISEMENT)
+// ==========================================
+const advertiseRoles = [Role.SUPER_ADMIN, Role.EDITOR, Role.ADVERTISEMENT];
+router.get('/advertise', requireAuth, requireRole(advertiseRoles), AdvertiseController.getAdvertiseSettings);
+router.put('/advertise', requireAuth, requireRole(advertiseRoles), AdvertiseController.updateAdvertiseSettings);
+
+// ==========================================
+// 20. Legal Pages (Privacy Policy, Terms of Use, Disclaimer) (SUPER_ADMIN, EDITOR)
+// ==========================================
+const legalRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+router.get('/legal', requireAuth, requireRole(legalRoles), LegalController.getAllLegalPages);
+router.get('/legal/:slug', requireAuth, requireRole(legalRoles), LegalController.getLegalPage);
+router.put('/legal/:slug', requireAuth, requireRole(legalRoles), LegalController.updateLegalPage);
+
+// ==========================================
+// 21. RSS Feed Sources & Imported Items Management (SUPER_ADMIN, EDITOR)
+// ==========================================
+const rssRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+router.get('/rss/sources', requireAuth, requireRole(rssRoles), RssController.listSources);
+router.post('/rss/sources', requireAuth, requireRole(rssRoles), RssController.createSource);
+router.get('/rss/sources/:id', requireAuth, requireRole(rssRoles), RssController.getSourceById);
+router.put('/rss/sources/:id', requireAuth, requireRole(rssRoles), RssController.updateSource);
+router.put('/rss/sources/:id/toggle', requireAuth, requireRole(rssRoles), RssController.toggleSource);
+router.delete('/rss/sources/:id', requireAuth, requireRole(rssRoles), RssController.deleteSource);
+router.post('/rss/test', requireAuth, requireRole(rssRoles), RssController.testFeedUrl);
+router.post('/rss/sources/:id/sync', requireAuth, requireRole(rssRoles), RssController.triggerSourceSync);
+router.get('/rss/logs', requireAuth, requireRole(rssRoles), RssController.listLogs);
+
+router.get('/rss/items', requireAuth, requireRole(rssRoles), RssController.listItems);
+router.get('/rss/items/:id', requireAuth, requireRole(rssRoles), RssController.getItemById);
+router.put('/rss/items/:id', requireAuth, requireRole(rssRoles), RssController.updateItem);
+router.post('/rss/items/:id/approve', requireAuth, requireRole(rssRoles), RssController.approveItem);
+router.post('/rss/items/:id/publish', requireAuth, requireRole(rssRoles), RssController.publishItem);
+router.post('/rss/items/:id/reject', requireAuth, requireRole(rssRoles), RssController.rejectItem);
+router.post('/rss/items/bulk', requireAuth, requireRole(rssRoles), RssController.bulkAction);
+
 export default router;
+
 

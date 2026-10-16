@@ -367,11 +367,11 @@ export default function SplashLoader() {
 
       {/* Brand Slogan (Shown First) */}
       <p
-        className="animate-slogan-first mb-2 text-[14px] sm:text-[16px] md:text-[18px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none drop-shadow-md"
+        className="animate-slogan-first mb-2 text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
         style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
         translate="no"
       >
-        Real Stories. <span className="text-red-600">Real Gujarat.</span>
+        Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
       </p>
 
       {/* Official Gujarat Post Black Logo (Shown After) */}

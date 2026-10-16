@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
+import { clearPublicRoutesCache } from '../utils/publicCache.js';
 import { randomUUID } from 'crypto';
 
 let tableEnsured = false;
@@ -12,6 +13,9 @@ const ADS_CACHE_TTL_MS = 10 * 1000; // 10 seconds
 
 export function invalidateAdsCache() {
   adsCache.clear();
+  try {
+    clearPublicRoutesCache();
+  } catch (_) {}
 }
 
 async function ensureAdsTableExists() {

@@ -84,7 +84,7 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
   return (
     <Link
       href={`/photos/${photo.id}`}
-      className="group relative aspect-[16/10] w-full rounded-2xl overflow-hidden bg-card border border-border/20 shadow-xs cursor-pointer block select-none transition-transform duration-300 hover:-translate-y-0.5"
+      className="group relative h-[280px] md:h-[350px] w-full rounded-2xl overflow-hidden bg-card border border-border/20 shadow-xs cursor-pointer block select-none transition-transform duration-300 hover:-translate-y-0.5"
     >
       <SidebarPhotoCardImage
         src={photo.image}
@@ -127,6 +127,24 @@ export default function VideosPageClient() {
   const [apkSelectedVideo, setApkSelectedVideo] = useState<any | null>(null);
   const [apkModalMuted, setApkModalMuted] = useState(false);
   const apkModalIframeRef = useRef<HTMLIFrameElement | null>(null);
+
+  // Left column ref & height measurement for flexible dynamic right sidebar alignment
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const [leftColHeight, setLeftColHeight] = useState<number>(0);
+
+  useEffect(() => {
+    const el = leftColRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.height > 0) {
+          setLeftColHeight(Math.round(entry.contentRect.height));
+        }
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const closeApkModal = () => setApkModalVideoId(null);
 
@@ -236,10 +254,19 @@ export default function VideosPageClient() {
     };
   }, [cleanVideos]);
 
-  // Top 20 latest videos from YouTube (excluding the active featured video to avoid duplicate on page)
+  // Top 21 latest videos from YouTube (excluding the active featured video to avoid duplicate on page)
   const latestVideos = useMemo(() => {
     if (cleanVideos.length <= 1) return cleanVideos;
-    return cleanVideos.filter((v) => v.youtubeId !== featuredVideo.youtubeId).slice(0, 20);
+    const filtered = cleanVideos.filter((v) => v.youtubeId !== featuredVideo.youtubeId);
+    if (filtered.length % 3 !== 0) {
+      const missingCount = 3 - (filtered.length % 3);
+      const usedIds = new Set(filtered.map((v) => v.id || v.youtubeId));
+      const candidates = cleanVideos.filter((v) => !usedIds.has(v.id || v.youtubeId));
+      if (candidates.length >= missingCount) {
+        filtered.push(...candidates.slice(0, missingCount));
+      }
+    }
+    return filtered.slice(0, 21);
   }, [cleanVideos, featuredVideo.youtubeId]);
 
   const shortsVideos = useMemo(() => {
@@ -432,6 +459,61 @@ export default function VideosPageClient() {
     ];
   }, [galleryList]);
 
+  // Dynamic flexible counts for right sidebar so its height matches the left column
+  const sidebarCounts = useMemo(() => {
+    // If not measured yet or on small screen, provide balanced defaults
+    if (!leftColHeight || leftColHeight <= 600) {
+      return { popularCount: 4, photoCount: 2, newsCount: 2 };
+    }
+
+    const bannerH = 204;
+    const popularHeaderH = 36;
+    const popularItemH = 72;
+    const photoHeaderH = 46;
+    const photoItemH = 360; // 350px card + 10px gap
+    const newsHeaderH = 36;
+    const newsItemH = 85;
+
+    let photoCount = 1;
+    let popularCount = 3;
+    let newsCount = 0;
+
+    let currentH = bannerH + popularHeaderH + (3 * popularItemH) + photoHeaderH + photoItemH;
+    let remaining = leftColHeight - currentH;
+
+    // Can we add 2nd photo?
+    if (remaining >= photoItemH) {
+      photoCount = 2;
+      remaining -= photoItemH;
+    }
+
+    // Can we add 4th popular video?
+    if (remaining >= popularItemH) {
+      popularCount = 4;
+      remaining -= popularItemH;
+    }
+
+    // Can we add 3rd photo?
+    if (remaining >= photoItemH + 60) {
+      photoCount = 3;
+      remaining -= photoItemH;
+    }
+
+    // Can we add news articles?
+    if (remaining >= newsHeaderH + newsItemH) {
+      remaining -= newsHeaderH;
+      newsCount = Math.min(4, Math.max(1, Math.floor(remaining / newsItemH)));
+      remaining -= (newsCount * newsItemH);
+    }
+
+    // If extra room and popularCount < 5:
+    if (remaining >= popularItemH && popularCount < 5) {
+      popularCount = 5;
+    }
+
+    return { popularCount, photoCount, newsCount };
+  }, [leftColHeight]);
+
   return (
     <div className="bg-background min-h-screen">
       <div className="mx-auto max-w-screen-xl px-4 py-6">
@@ -527,7 +609,7 @@ export default function VideosPageClient() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8 items-start">
 
           {/* ── LEFT COLUMN: Featured & Sections ──────────────────────────── */}
-          <div className="min-w-0">
+          <div ref={leftColRef} className="min-w-0">
 
             {/* Featured Video Player Box */}
             <div className="p-4 bg-card border border-border rounded-xl mb-8 shadow-sm">
@@ -636,8 +718,14 @@ export default function VideosPageClient() {
 
           </div> {/* CLOSE LEFT COLUMN */}
 
-          {/* ── RIGHT COLUMN: Sidebar ───────────────────────────────────── */}
-          <div className="sticky top-4 self-start">
+          {/* ── RIGHT COLUMN: Sidebar (Flexible to match left column height) ── */}
+          <div
+            className="sticky top-4 self-start"
+            style={{
+              maxHeight: leftColHeight > 0 ? `${leftColHeight}px` : undefined,
+              overflow: 'hidden',
+            }}
+          >
 
             <div className="group rounded-xl border border-red-100 dark:border-red-950/20 bg-gradient-to-br from-red-50/10 to-red-50/30 dark:from-red-950/5 dark:to-red-950/10 p-5 mb-6 text-center shadow-sm hover:shadow transition-all duration-300">
               <div className="flex items-center justify-center gap-2 text-accent font-black text-[13px] uppercase tracking-wide mb-2.5">
@@ -667,7 +755,7 @@ export default function VideosPageClient() {
                 </span>
               </div>
               <div className="flex flex-col divide-y divide-border">
-                {popularSidebarVideos.map((item, i) => (
+                {popularSidebarVideos.slice(0, sidebarCounts.popularCount).map((item, i) => (
                   <div
                     key={item.id}
                     className="group flex items-start gap-3 py-3 first:pt-1 last:pb-1"
@@ -748,78 +836,82 @@ export default function VideosPageClient() {
               </div>
             </div>
 
-            {/* ── 2. PHOTO GALLERY (ફોટો ગેલેરી) - 6 IMAGES ── */}
-            <div className="mt-4 pt-3 border-t-2 border-border">
-              <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
-                <span className="bg-[#B3121B] text-white px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
-                  {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
-                </span>
-                <Link
-                  href="/photos"
-                  className="text-xs md:text-[13px] font-extrabold text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
-                >
-                  <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : 'More Photo Gallery'}</span>
-                  <span>→</span>
-                </Link>
-              </div>
+            {/* ── 2. PHOTO GALLERY (ફોટો ગેલેરી) ── */}
+            {sidebarCounts.photoCount > 0 && (
+              <div className="mt-4 pt-3 border-t-2 border-border">
+                <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
+                  <span className="bg-[#B3121B] text-white px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
+                    {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
+                  </span>
+                  <Link
+                    href="/photos"
+                    className="text-xs md:text-[13px] font-extrabold text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
+                  >
+                    <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : 'More Photo Gallery'}</span>
+                    <span>→</span>
+                  </Link>
+                </div>
 
-              {/* Photo Gallery: 3 Larger Images (1 per row, full width) */}
-              <div className="flex flex-col gap-2.5">
-                {latestPhotos.slice(0, 3).map((photo, idx) => (
-                  <SidebarPhotoCard
-                    key={photo.id || idx}
-                    photo={photo}
-                    index={idx}
-                    language={language}
-                  />
-                ))}
+                {/* Photo Gallery: Dynamic count based on left column height */}
+                <div className="flex flex-col gap-2.5">
+                  {latestPhotos.slice(0, sidebarCounts.photoCount).map((photo, idx) => (
+                    <SidebarPhotoCard
+                      key={photo.id || idx}
+                      photo={photo}
+                      index={idx}
+                      language={language}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ── 3. LATEST NEWS (તાજા સમાચાર) ── */}
-            <div className="mt-3 pt-2.5 border-t-2 border-border">
-              <div className="flex items-center justify-between mb-3.5 pb-2 border-b-2 border-border">
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
-                  <span className="text-sm font-black text-foreground">
-                    {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
-                  </span>
-                </div>
-                <Link href="/category/latest" className="text-xs font-bold text-accent hover:underline">
-                  {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
-                </Link>
-              </div>
-              <div className="flex flex-col divide-y divide-border">
-                {latestImageArticles.slice(0, 4).map((art) => (
-                  <Link
-                    key={art.id}
-                    href={`/news/${art.slug}`}
-                    className="group flex items-start gap-3 py-2.5 first:pt-1 last:pb-0"
-                  >
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
-                        {getCategoryLabel(art, language)}
-                      </span>
-                      <h4 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
-                        <AutoArticleTitle article={art} language={language} />
-                      </h4>
-                      <span className="text-[10px] font-semibold text-muted-foreground mt-1">
-                        {timeAgo(art.publishedAt || (art as any).createdAt, language)}
-                      </span>
-                    </div>
-                    <div className="relative w-24 h-18 sm:w-28 sm:h-20 shrink-0 self-start rounded-lg overflow-hidden bg-muted border border-border/40">
-                      <img
-                        src={(art as any).featuredImage || art.image || (art as any).thumbnail || '/assets/gujarat-post-logo.png'}
-                        alt={art.title}
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
-                        loading="lazy"
-                      />
-                    </div>
+            {sidebarCounts.newsCount > 0 && (
+              <div className="mt-3 pt-2.5 border-t-2 border-border">
+                <div className="flex items-center justify-between mb-3.5 pb-2 border-b-2 border-border">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
+                    <span className="text-sm font-black text-foreground">
+                      {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+                    </span>
+                  </div>
+                  <Link href="/category/latest" className="text-xs font-bold text-accent hover:underline">
+                    {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
                   </Link>
-                ))}
+                </div>
+                <div className="flex flex-col divide-y divide-border">
+                  {latestImageArticles.slice(0, sidebarCounts.newsCount).map((art) => (
+                    <Link
+                      key={art.id}
+                      href={`/news/${art.slug}`}
+                      className="group flex items-start gap-3 py-2.5 first:pt-1 last:pb-0"
+                    >
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
+                          {getCategoryLabel(art, language)}
+                        </span>
+                        <h4 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
+                          <AutoArticleTitle article={art} language={language} />
+                        </h4>
+                        <span className="text-[10px] font-semibold text-muted-foreground mt-1">
+                          {timeAgo(art.publishedAt || (art as any).createdAt, language)}
+                        </span>
+                      </div>
+                      <div className="relative w-24 h-18 sm:w-28 sm:h-20 shrink-0 self-start rounded-lg overflow-hidden bg-muted border border-border/40">
+                        <img
+                          src={(art as any).featuredImage || art.image || (art as any).thumbnail || '/assets/gujarat-post-logo.png'}
+                          alt={art.title}
+                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
+                          loading="lazy"
+                        />
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div> {/* CLOSE FIRST GRID */}
 

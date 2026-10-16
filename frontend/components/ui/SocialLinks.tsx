@@ -1,11 +1,11 @@
 import { Newspaper } from 'lucide-react';
 
 export const SOCIAL_LINKS = [
-  { label: 'Facebook', platform: 'facebook', href: 'https://www.facebook.com/gujaratpostnews', hover: 'hover:bg-[#1877f2]', hoverBg: '#1877f2' },
+  { label: 'Facebook', platform: 'facebook', href: 'https://www.facebook.com/Gujarat-Post-165183530766504', hover: 'hover:bg-[#1877f2]', hoverBg: '#1877f2' },
   { label: 'Instagram', platform: 'instagram', href: 'https://www.instagram.com/gujaratpost.in/', hover: 'hover:bg-gradient-to-br hover:from-[#833ab4] hover:via-[#fd1d1d] hover:to-[#fcb045]', hoverBg: '#c13584' },
   { label: 'YouTube', platform: 'youtube', href: 'https://www.youtube.com/@Gujaratpostnews', hover: 'hover:bg-[#ff0000]', hoverBg: '#ff0000' },
-  { label: 'WhatsApp', platform: 'whatsapp', href: 'https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a', hover: 'hover:bg-[#25d366]', hoverBg: '#25d366' },
-  { label: 'X', platform: 'x', href: 'https://x.com/gujaratpostnews', hover: 'hover:bg-black', hoverBg: '#000000' },
+  { label: 'WhatsApp', platform: 'whatsapp', href: 'https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0', hover: 'hover:bg-[#25d366]', hoverBg: '#25d366' },
+  { label: 'X', platform: 'x', href: 'https://x.com/maheshrpat59606', hover: 'hover:bg-black', hoverBg: '#000000' },
   { label: 'Google News', platform: 'news', href: 'https://news.google.com/publications/CAAqBwgKMMT_nwsw5-axAw', hover: 'hover:bg-[#4285f4]', hoverBg: '#4285f4' },
 ] as const;
 

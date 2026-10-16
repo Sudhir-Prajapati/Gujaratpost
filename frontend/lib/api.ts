@@ -854,7 +854,7 @@ export async function getPublicWeather(city?: string): Promise<any> {
 export async function getPublicAds(): Promise<any[]> {
   try {
     const url = `${API_BASE_URL}/ads`;
-    const json = await fetchCachedJson<any>(url, 5 * 60 * 1000); // 5 minutes cache
+    const json = await fetchCachedJson<any>(url, 5 * 1000); // 5 seconds cache for fast admin sync
     if (json && json.success && json.data?.ads) {
       return json.data.ads;
     }
@@ -869,47 +869,40 @@ export async function getPublicAds(): Promise<any[]> {
 export async function getPublicAdBySection(section: string): Promise<any | null> {
   try {
     const formatted = (section || '').toUpperCase().trim();
+    if (!formatted) return null;
 
-    // 1. Check/fetch the single consolidated batch endpoint GET /api/public/ads
+    // 1. Check allAds from GET /api/public/ads
     const allAds = await getPublicAds();
     if (Array.isArray(allAds) && allAds.length > 0) {
-      // Direct exact match
+      // Direct exact match by section identifier
       const exactMatch = allAds.find((ad: any) => (ad?.section || '').toUpperCase().trim() === formatted);
-      if (exactMatch && exactMatch.isActive !== false) return exactMatch;
-
-      // Fuzzy / stripped match
-      const simplified = formatted.replace(/^AFTER_|^IN_SECTION_|^SIDEBAR_/, '').toLowerCase();
-      const fuzzyMatch = allAds.find((ad: any) => {
-        const s = (ad?.section || '').toLowerCase();
-        return s === simplified || s.includes(simplified) || simplified.includes(s);
-      });
-      if (fuzzyMatch && fuzzyMatch.isActive !== false) return fuzzyMatch;
-
-      // Safe fallback to active ads pool
-      const activeAds = allAds.filter(
-        (ad: any) =>
-          ad?.isActive !== false &&
-          ((ad.image1 && typeof ad.image1 === 'string' && ad.image1.trim() !== '') ||
-            (ad.image2 && typeof ad.image2 === 'string' && ad.image2.trim() !== '') ||
-            (ad.image3 && typeof ad.image3 === 'string' && ad.image3.trim() !== ''))
-      );
-
-      if (activeAds.length > 0) {
-        let hash = 0;
-        for (let i = 0; i < section.length; i++) {
-          hash = (hash << 5) - hash + section.charCodeAt(i);
-          hash |= 0;
+      if (exactMatch) {
+        // If the admin disabled this section, strictly return null (no fallback)
+        if (exactMatch.isActive === false || exactMatch.isActive === 0 || exactMatch.isActive === '0') {
+          return null;
         }
-        const pickedIndex = Math.abs(hash) % activeAds.length;
-        return activeAds[pickedIndex];
+        // If active from admin, verify it has actual media uploaded
+        const hasMedia =
+          (exactMatch.image1 && typeof exactMatch.image1 === 'string' && exactMatch.image1.trim() !== '') ||
+          (exactMatch.image2 && typeof exactMatch.image2 === 'string' && exactMatch.image2.trim() !== '') ||
+          (exactMatch.image3 && typeof exactMatch.image3 === 'string' && exactMatch.image3.trim() !== '');
+        return hasMedia ? exactMatch : null;
       }
     }
 
-    // 2. Safe fallback to individual section query if not found in batch
+    // 2. Fetch specific section directly from backend API: GET /api/public/ads/:section
     const url = `${API_BASE_URL}/ads/${encodeURIComponent(section)}`;
-    const json = await fetchCachedJson<any>(url, 30 * 1000);
+    const json = await fetchCachedJson<any>(url, 5 * 1000);
     if (json && json.success && json.data?.ad) {
-      return json.data.ad;
+      const ad = json.data.ad;
+      if (ad.isActive === false || ad.isActive === 0 || ad.isActive === '0') {
+        return null;
+      }
+      const hasMedia =
+        (ad.image1 && typeof ad.image1 === 'string' && ad.image1.trim() !== '') ||
+        (ad.image2 && typeof ad.image2 === 'string' && ad.image2.trim() !== '') ||
+        (ad.image3 && typeof ad.image3 === 'string' && ad.image3.trim() !== '');
+      return hasMedia ? ad : null;
     }
   } catch (error: any) {
     if (process.env.NODE_ENV === 'development') {
@@ -976,4 +969,272 @@ export async function getPublicTributes(): Promise<PublicTributesResponse> {
   }
   return { birthdays: [], shradhanjalis: [], all: [] };
 }
+
+/**
+ * Fetch public About Us page details
+ */
+export async function getPublicAbout(): Promise<any | null> {
+  try {
+    const url = `${API_BASE_URL}/about?t=${Date.now()}`;
+    const json = await fetchCachedJson<any>(url, 30 * 1000); // 30 sec cache
+    if (json && json.success && json.data) {
+      return json.data;
+    }
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public about details:', error?.message || error);
+    }
+  }
+  return null;
+}
+
+/**
+ * Fetch About Us page details for Admin
+ */
+export async function getAdminAbout(): Promise<any | null> {
+  const res = await authFetch('/api/admin/about');
+  if (!res.ok) {
+    throw new Error('Failed to fetch admin about settings');
+  }
+  const json = await res.json();
+  return json?.data || null;
+}
+
+/**
+ * Update About Us page details (Admin)
+ */
+export async function updateAdminAbout(payload: any): Promise<any> {
+  const res = await authFetch('/api/admin/about', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update about settings');
+  }
+  clearApiCache();
+  return res.json();
+}
+
+/**
+ * Fetch public Contact Us page details
+ */
+export async function getPublicContact(): Promise<any | null> {
+  try {
+    const url = `${API_BASE_URL}/contact?t=${Date.now()}`;
+    const json = await fetchCachedJson<any>(url, 30 * 1000); // 30 sec cache
+    if (json && json.success && json.data) {
+      return json.data;
+    }
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public contact details:', error?.message || error);
+    }
+  }
+  return null;
+}
+
+/**
+ * Submit contact message (Public)
+ */
+export async function submitContactMessage(payload: {
+  name: string;
+  email: string;
+  phone?: string;
+  department?: string;
+  subject: string;
+  message: string;
+}): Promise<any> {
+  const url = `${API_BASE_URL}/contact/message`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to submit message');
+  }
+  return json;
+}
+
+/**
+ * Fetch Contact Us page details for Admin
+ */
+export async function getAdminContact(): Promise<any | null> {
+  const res = await authFetch('/api/admin/contact');
+  if (!res.ok) {
+    throw new Error('Failed to fetch admin contact settings');
+  }
+  const json = await res.json();
+  return json?.data || null;
+}
+
+/**
+ * Update Contact Us page details (Admin)
+ */
+export async function updateAdminContact(payload: any): Promise<any> {
+  const res = await authFetch('/api/admin/contact', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update contact settings');
+  }
+  clearApiCache();
+  return res.json();
+}
+
+/**
+ * Fetch received contact messages (Admin)
+ */
+export async function getAdminContactMessages(): Promise<any[]> {
+  const res = await authFetch('/api/admin/contact/messages');
+  if (!res.ok) {
+    throw new Error('Failed to fetch contact messages');
+  }
+  const json = await res.json();
+  return json?.data || [];
+}
+
+/**
+ * Mark contact message as read/unread (Admin)
+ */
+export async function toggleAdminContactMessageRead(id: string, isRead: boolean): Promise<any> {
+  const res = await authFetch(`/api/admin/contact/messages/${id}/read`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isRead }),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update message status');
+  }
+  return res.json();
+}
+
+/**
+ * Delete contact message (Admin)
+ */
+export async function deleteAdminContactMessage(id: string): Promise<any> {
+  const res = await authFetch(`/api/admin/contact/messages/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete contact message');
+  }
+  return res.json();
+}
+
+/**
+ * Mark all contact messages as read (Admin)
+ */
+export async function markAllAdminContactMessagesRead(): Promise<any> {
+  const res = await authFetch('/api/admin/contact/messages/mark-all-read', {
+    method: 'PUT',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to mark all messages as read');
+  }
+  return res.json();
+}
+
+/**
+ * Fetch public Advertise With Us page details
+ */
+export async function getPublicAdvertise(): Promise<any | null> {
+  try {
+    const url = `${API_BASE_URL}/advertise?t=${Date.now()}`;
+    const json = await fetchCachedJson<any>(url, 30 * 1000); // 30 sec cache
+    if (json && json.success && json.data) {
+      return json.data;
+    }
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public advertise details:', error?.message || error);
+    }
+  }
+  return null;
+}
+
+/**
+ * Fetch Advertise With Us details for Admin
+ */
+export async function getAdminAdvertise(): Promise<any | null> {
+  const res = await authFetch('/api/admin/advertise');
+  if (!res.ok) {
+    throw new Error('Failed to fetch admin advertise settings');
+  }
+  const json = await res.json();
+  return json?.data || null;
+}
+
+/**
+ * Update Advertise With Us details (Admin)
+ */
+export async function updateAdminAdvertise(payload: any): Promise<any> {
+  const res = await authFetch('/api/admin/advertise', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update advertise settings');
+  }
+  clearApiCache();
+  return res.json();
+}
+
+/**
+ * Public Legal / Policy Page by slug
+ */
+export async function getPublicLegalPage(slug: string): Promise<any | null> {
+  const url = getBackendApiUrl(`/api/public/legal/${encodeURIComponent(slug)}`);
+  const json = await fetchCachedJson<any>(url, 60000);
+  return json?.data || null;
+}
+
+/**
+ * Admin: Get all legal pages
+ */
+export async function getAdminLegalPages(): Promise<any[]> {
+  const res = await authFetch(getBackendApiUrl('/api/admin/legal'));
+  if (!res.ok) {
+    throw new Error('Failed to fetch admin legal pages');
+  }
+  const json = await res.json();
+  return json?.data || [];
+}
+
+/**
+ * Admin: Get single legal page by slug
+ */
+export async function getAdminLegalPage(slug: string): Promise<any | null> {
+  const res = await authFetch(getBackendApiUrl(`/api/admin/legal/${encodeURIComponent(slug)}`));
+  if (!res.ok) {
+    throw new Error(`Failed to fetch admin legal page: ${slug}`);
+  }
+  const json = await res.json();
+  return json?.data || null;
+}
+
+/**
+ * Admin: Update legal page by slug
+ */
+export async function updateAdminLegalPage(slug: string, payload: any): Promise<any> {
+  const res = await authFetch(getBackendApiUrl(`/api/admin/legal/${encodeURIComponent(slug)}`), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const errJson = await res.json().catch(() => null);
+    throw new Error(errJson?.message || 'Failed to update legal page');
+  }
+  clearApiCache();
+  return res.json();
+}
+
+
+
 

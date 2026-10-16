@@ -27,16 +27,49 @@ if (!process.argv.includes('-H') && !process.argv.includes('--hostname')) {
 }
 devArgs.push(...process.argv.slice(2));
 
+const nodeOptions = process.env.NODE_OPTIONS || '--max-old-space-size=4096';
+
 const child = spawn(process.execPath, [nextBin, ...devArgs], {
   cwd: realCwd,
   stdio: 'inherit',
   env: {
     ...process.env,
+    NODE_OPTIONS: nodeOptions,
     PWD: realCwd,
     INIT_CWD: realCwd,
   }
 });
 
+let cleanedUp = false;
+const cleanup = () => {
+  if (cleanedUp) return;
+  cleanedUp = true;
+  if (child && child.pid && !child.killed) {
+    try {
+      if (process.platform === 'win32') {
+        require('child_process').execSync(`taskkill /pid ${child.pid} /T /F`, { stdio: 'ignore' });
+      } else {
+        child.kill('SIGTERM');
+      }
+    } catch (_) {}
+  }
+};
+
+process.on('SIGINT', () => {
+  cleanup();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  cleanup();
+  process.exit(0);
+});
+
+process.on('exit', () => {
+  cleanup();
+});
+
 child.on('exit', (code) => {
   process.exit(code ?? 0);
 });
+

@@ -26,6 +26,7 @@ body::-webkit-scrollbar {
 html, body {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
+  overflow-x: clip;
 }
 
 @custom-variant dark (&:where(.dark, [data-theme="dark"], .dark *, [data-theme="dark"] *));
@@ -1937,7 +1938,7 @@ html[data-theme="dark"] .share-x {
 
 .s-compact {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(64px, 25%, 92px);
+  grid-template-columns: minmax(0, 1fr) 124px;
   gap: 10px;
   align-items: start;
   padding: 8px 0;
@@ -1953,7 +1954,9 @@ html[data-theme="dark"] .share-x {
 }
 
 .s-compact .imgwrap {
-  aspect-ratio: 1;
+  height: 82px;
+  width: 124px;
+  aspect-ratio: auto;
   border-radius: var(--radius);
   position: relative;
   overflow: hidden;
@@ -2017,15 +2020,25 @@ html[data-theme="dark"] .share-x {
 
 .article-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) var(--rail);
-  gap: var(--sp-6);
+  grid-template-columns: minmax(0, 1fr) minmax(280px, var(--rail));
+  gap: clamp(16px, 2.5vw, 28px);
   padding: var(--sp-4) 0 0;
   align-items: start;
+  width: 100%;
+  max-width: 100%;
 }
 
 .article-grid>article {
   min-width: 0;
   width: 100%;
+  max-width: 100%;
+}
+
+.article-grid>aside,
+.side {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
 }
 
 .breadcrumb {
@@ -2450,7 +2463,7 @@ html[data-theme="dark"] .share-x {
 
 .s-compact {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(64px, 25%, 92px);
+  grid-template-columns: minmax(0, 1fr) 124px;
   gap: 10px;
   align-items: start;
   padding: 8px 0;
@@ -2467,7 +2480,9 @@ html[data-theme="dark"] .share-x {
 }
 
 .s-compact .imgwrap {
-  aspect-ratio: 1;
+  height: 82px;
+  width: 124px;
+  aspect-ratio: auto;
   border-radius: var(--radius);
   position: relative;
   overflow: hidden;

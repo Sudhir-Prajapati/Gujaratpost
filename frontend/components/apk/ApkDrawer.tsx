@@ -58,7 +58,7 @@ const ALL_APP_CATEGORIES: CategoryItem[] = [
 const APK_SOCIAL_LINKS = [
   {
     label: 'Facebook',
-    href: 'https://www.facebook.com/gujaratpostnews',
+    href: 'https://www.facebook.com/Gujarat-Post-165183530766504',
     bg: 'bg-[#1877F2] text-white hover:bg-[#166fe5]',
     icon: (
       <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white" aria-hidden="true">
@@ -90,7 +90,7 @@ const APK_SOCIAL_LINKS = [
   },
   {
     label: 'WhatsApp',
-    href: 'https://whatsapp.com/channel/0029Va9y6Xn9RZAY5m4f8V1a',
+    href: 'https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0',
     bg: 'bg-[#25D366] text-white hover:bg-[#20bd5a]',
     icon: (
       <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white" aria-hidden="true">
@@ -101,7 +101,7 @@ const APK_SOCIAL_LINKS = [
   },
   {
     label: 'X (Twitter)',
-    href: 'https://x.com/gujaratpostnews',
+    href: 'https://x.com/maheshrpat59606',
     bg: 'bg-black text-white hover:bg-neutral-800 dark:bg-white dark:text-black dark:hover:bg-neutral-200 border border-black/10 dark:border-white/10',
     icon: (
       <svg viewBox="0 0 24 24" className="w-3 h-3 fill-current" aria-hidden="true">
