@@ -285,7 +285,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 style={{ aspectRatio: '940 / 208' }}
                             >
                                 <Image
-                                    src="/assets/gujarat-post-logo-cms.png"
+                                    src="/GujaratpostFinalLogo.png"
                                     alt="Gujarat Post"
                                     fill
                                     priority
@@ -392,7 +392,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 style={{ aspectRatio: '940 / 208' }}
                             >
                                 <Image
-                                    src="/assets/gujarat-post-logo-cms.png"
+                                    src="/GujaratpostFinalLogo.png"
                                     alt="Gujarat Post"
                                     fill
                                     priority

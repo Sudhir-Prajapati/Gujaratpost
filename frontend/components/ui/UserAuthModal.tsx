@@ -319,7 +319,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
         <div className="mb-4 flex flex-col items-center">
           <div className="relative h-11 w-44 flex items-center justify-center">
             <img
-              src="/assets/gujarat-post-logo-chip.png"
+              src="/GujaratpostFinalLogo.png"
               alt="Gujarat Post"
               className="h-full w-auto object-contain"
             />

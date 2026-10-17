@@ -442,7 +442,7 @@ export default function VideosPageClient() {
         id: '2ec6d55b-81f2-4d39-8806-49f8284d9c57',
         title: 'ઇશા સિંહનો ડીપનેક ડ્રેસમાં હોટ લુક',
         titleGu: 'ઇશા સિંહનો ડીપનેક ડ્રેસમાં હોટ લુક',
-        image: '/uploads/àª\x87àª¶àª¾-àª¸àª¿àª\x82àª¹3.jpg',
+        image: '/uploads/ઇશા-સિંહ3.jpg',
       },
       {
         id: '73b5b1a7-92cf-4db9-ae22-004583cd2368',
@@ -454,7 +454,7 @@ export default function VideosPageClient() {
         id: 'b7efd181-7557-4edc-903e-85bcdc549aea',
         title: 'ગ્રીન સાડીમાં ઈશિતા રાજ લાગી રહી છે ગોર્જિયસ',
         titleGu: 'ગ્રીન સાડીમાં ઈશિતા રાજ લાગી રહી છે ગોર્જિયસ',
-        image: '/uploads/àª\x88àª¶àª¿àª¤àª¾-àª°àª¾àª\x9C1.jpg',
+        image: '/uploads/ઈશિતા-રાજ1.jpg',
       },
     ];
   }, [galleryList]);

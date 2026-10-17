@@ -299,7 +299,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             >
               {/* Inline size: globals.css `img { height: auto; max-width: 100% }` is unlayered and beats Tailwind utilities */}
               <Image
-                src="/assets/gujarat-post-logo-cms.png"
+                src="/GujaratpostFinalLogo.png"
                 alt="Gujarat Post"
                 width={940}
                 height={208}

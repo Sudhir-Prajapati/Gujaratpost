@@ -300,17 +300,11 @@ export class HeroController {
 
         const fallbackFormatted = featuredFallbackRes.map(formatPost);
 
-        // Resolve Slots
-        let s1 = (slot1Id ? postsMap.get(slot1Id) : null) || fallbackFormatted[0] || null;
-        let s2 = (slot2Id ? postsMap.get(slot2Id) : null) || fallbackFormatted[1] || null;
-        let s3 = (slot3Id ? postsMap.get(slot3Id) : null) || fallbackFormatted[2] || null;
-
-        // If saved slots are older than the freshest available articles, automatically promote newest articles
-        if (fallbackFormatted.length >= 3 && fallbackFormatted[0]?.articleNumber > (s1?.articleNumber || 0)) {
-          s1 = fallbackFormatted[0];
-          s2 = fallbackFormatted[1];
-          s3 = fallbackFormatted[2];
-        }
+        // Resolve Slots: Return explicitly assigned articles if set by Admin.
+        // If not assigned by admin (null/empty), leave as null so client/user side knows to use auto fallback (Articles 10, 11, 12).
+        const s1 = (slot1Id && postsMap.get(slot1Id)) ? postsMap.get(slot1Id) : null;
+        const s2 = (slot2Id && postsMap.get(slot2Id)) ? postsMap.get(slot2Id) : null;
+        const s3 = (slot3Id && postsMap.get(slot3Id)) ? postsMap.get(slot3Id) : null;
         const slots = [s1, s2, s3];
 
         // Resolve Trending News (preserving order and fallback)

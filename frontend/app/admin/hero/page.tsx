@@ -5,6 +5,7 @@ import {
   Search, RefreshCw, Eye, CheckCircle2, XCircle,
   LayoutTemplate, ArrowUpRight, Trash2, Save,
   Calendar, User, Tag, X, ImageIcon, GripVertical, ChevronLeft, ChevronRight,
+  Layers, MoveHorizontal, ArrowUp, ArrowDown, Clock, Sparkles, Check,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -29,6 +30,7 @@ type Article = {
   author?: string | AuthorObj;
   isFeatured: boolean;
   isTrending: boolean;
+  isBreaking?: boolean;
   status?: string;
   publishedAt?: string;
   createdAt?: string;
@@ -93,14 +95,14 @@ function ArticleSearchBox({
   const available = sourcePool.filter((a) => !excluded.includes(a.id));
   const results = q.trim()
     ? available.filter((a) => {
-        const low = q.toLowerCase().replace(/^#/, '').trim();
-        const numMatch = a.articleNumber ? String(a.articleNumber).includes(low) : false;
-        return (
-          (a.titleGu ?? a.title ?? '').toLowerCase().includes(low) ||
-          catName(a.category).toLowerCase().includes(low) ||
-          numMatch
-        );
-      }).slice(0, 100)
+      const low = q.toLowerCase().replace(/^#/, '').trim();
+      const numMatch = a.articleNumber ? String(a.articleNumber).includes(low) : false;
+      return (
+        (a.titleGu ?? a.title ?? '').toLowerCase().includes(low) ||
+        catName(a.category).toLowerCase().includes(low) ||
+        numMatch
+      );
+    }).slice(0, 100)
     : available.slice(0, 100);
 
   return (
@@ -276,13 +278,12 @@ function SlotCard({
         {/* Change / Select button */}
         <button
           onClick={() => setShowSearch((v) => !v)}
-          className={`mt-auto flex items-center justify-center gap-2 w-full rounded-xl text-sm sm:text-base font-bold py-3 transition-all cursor-pointer ${
-            showSearch
+          className={`mt-auto flex items-center justify-center gap-2 w-full rounded-xl text-sm sm:text-base font-bold py-3 transition-all cursor-pointer ${showSearch
               ? 'bg-[#B3121B] text-white shadow-md shadow-[#B3121B]/20'
               : article
-              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-[#B3121B]/10 hover:text-[#B3121B]'
-              : 'bg-[#B3121B] text-white hover:bg-[#8E0E15] shadow-sm shadow-[#B3121B]/30'
-          }`}
+                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-[#B3121B]/10 hover:text-[#B3121B]'
+                : 'bg-[#B3121B] text-white hover:bg-[#8E0E15] shadow-sm shadow-[#B3121B]/30'
+            }`}
         >
           {showSearch ? (
             <><X className="h-4 w-4" /> Close Search</>
@@ -332,9 +333,13 @@ export default function HeroManagerPage() {
   const [heroGridArticles, setHeroGridArticles] = useState<Article[]>([]);
   const [savingHeroGrid, setSavingHeroGrid] = useState(false);
 
-    // Breaking News ticker badge label
+  // Breaking News ticker badge label, mode, speed and custom articles
   const [tickerBadgeText, setTickerBadgeText] = useState('બ્રેકિંગ ન્યૂઝ');
+  const [tickerMode, setTickerMode] = useState<'scroll' | 'single'>('scroll');
+  const [tickerSpeed, setTickerSpeed] = useState<number>(4500);
+  const [selectedTickerArticles, setSelectedTickerArticles] = useState<Article[]>([]);
   const [savingTickerBadge, setSavingTickerBadge] = useState(false);
+  const [previewTickerIndex, setPreviewTickerIndex] = useState(0);
 
   const showToast = (msg: string, ok: boolean) => {
     setToast({ msg, ok });
@@ -347,7 +352,7 @@ export default function HeroManagerPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path: '/' }),
-    }).catch(() => {});
+    }).catch(() => { });
   };
 
   const fetchArticles = useCallback(async () => {
@@ -362,14 +367,26 @@ export default function HeroManagerPage() {
       const arts = (pubRes.articles || []) as unknown as Article[];
       setAllArticles(arts);
 
-            // Parse and populate ticker badge label
+      // Parse and populate ticker badge label, mode, speed, and custom articles
       if (heroRes) {
         const rawLabel = (heroRes as any)?.tickerLabel || heroRes?.setting?.tickerLabel;
         if (rawLabel) {
           try {
             const parsed = typeof rawLabel === 'string' && rawLabel.trim().startsWith('{') ? JSON.parse(rawLabel) : rawLabel;
             if (typeof parsed === 'object' && parsed !== null) {
-              setTickerBadgeText(parsed.gu || parsed.en || parsed.hi || '');
+              setTickerBadgeText(parsed.text || parsed.gu || parsed.en || parsed.hi || 'બ્રેકિંગ ન્યૂઝ');
+              if (parsed.mode === 'single' || parsed.mode === 'scroll') {
+                setTickerMode(parsed.mode);
+              }
+              if (parsed.speed && typeof parsed.speed === 'number') {
+                setTickerSpeed(parsed.speed);
+              }
+              if (Array.isArray(parsed.articleIds) && parsed.articleIds.length > 0) {
+                const artMap = new Map<string, Article>();
+                arts.forEach((a) => artMap.set(a.id, a));
+                const foundArts = parsed.articleIds.map((id: string) => artMap.get(id)).filter(Boolean) as Article[];
+                setSelectedTickerArticles(foundArts);
+              }
             } else if (typeof parsed === 'string') {
               setTickerBadgeText(parsed);
             }
@@ -384,17 +401,18 @@ export default function HeroManagerPage() {
       const combinedGrid = [...featured, ...serverGrid, ...arts].filter((a, idx, arr) => a && arr.findIndex((x) => x?.id === a.id) === idx);
       setHeroGridArticles(combinedGrid.slice(0, 16));
 
+      // Default slots: Articles 10, 11, 12 from published list (the bottom 3 cards)
       const defaultSlots = [
-        featured[0] || arts[0] || null,
-        featured[1] || arts[1] || null,
-        featured[2] || arts[2] || null,
+        arts[9] || featured[0] || arts[0] || null,
+        arts[10] || featured[1] || arts[1] || null,
+        arts[11] || featured[2] || arts[2] || null,
       ];
 
       if (heroRes && Array.isArray(heroRes.slots) && heroRes.slots.length > 0) {
         setSlots([
-          heroRes.slots[0] ? (heroRes.slots[0] as unknown as Article) : defaultSlots[0],
-          heroRes.slots[1] ? (heroRes.slots[1] as unknown as Article) : defaultSlots[1],
-          heroRes.slots[2] ? (heroRes.slots[2] as unknown as Article) : defaultSlots[2],
+          heroRes.slots[0] ? (heroRes.slots[0] as unknown as Article) : (heroRes.setting?.slot1Id ? null : defaultSlots[0]),
+          heroRes.slots[1] ? (heroRes.slots[1] as unknown as Article) : (heroRes.setting?.slot2Id ? null : defaultSlots[1]),
+          heroRes.slots[2] ? (heroRes.slots[2] as unknown as Article) : (heroRes.setting?.slot3Id ? null : defaultSlots[2]),
         ]);
       } else {
         setSlots(defaultSlots);
@@ -431,18 +449,64 @@ export default function HeroManagerPage() {
 
   useEffect(() => { fetchArticles(); }, [fetchArticles]);
 
-    const handleSaveTickerBadge = async () => {
+  // Preview cycling in Single mode
+  useEffect(() => {
+    if (tickerMode !== 'single') return;
+    const count = selectedTickerArticles.length > 0
+      ? selectedTickerArticles.length
+      : 1;
+    if (count <= 1) return;
+    const interval = setInterval(() => {
+      setPreviewTickerIndex((prev) => (prev + 1) % count);
+    }, tickerSpeed);
+    return () => clearInterval(interval);
+  }, [tickerMode, tickerSpeed, selectedTickerArticles.length]);
+
+  const handleMoveTickerArticle = (index: number, direction: 'up' | 'down') => {
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= selectedTickerArticles.length) return;
+    const copy = [...selectedTickerArticles];
+    const item = copy[index];
+    copy[index] = copy[target];
+    copy[target] = item;
+    setSelectedTickerArticles(copy);
+  };
+
+  const handleRemoveTickerArticle = (index: number) => {
+    setSelectedTickerArticles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleAddTickerArticle = (article: Article) => {
+    if (selectedTickerArticles.some((a) => a.id === article.id)) {
+      showToast('Article is already in the ticker list', false);
+      return;
+    }
+    setSelectedTickerArticles((prev) => [...prev, article]);
+    showToast(`Added "${getTitle(article).slice(0, 30)}..." to ticker`, true);
+  };
+
+  const handleSaveTickerBadge = async () => {
+    if (tickerMode === 'single' && selectedTickerArticles.length === 0) {
+      showToast('⚠️ Please select at least 1 article for the Single Headline slider.', false);
+      return;
+    }
     setSavingTickerBadge(true);
     try {
+      const payloadObj = {
+        text: tickerBadgeText.trim() || 'બ્રેકિંગ ન્યૂઝ',
+        mode: tickerMode,
+        speed: tickerSpeed,
+        articleIds: tickerMode === 'single' ? selectedTickerArticles.map((a) => a.id) : [],
+      };
       const payload = {
-        tickerLabel: tickerBadgeText.trim() || 'બ્રેકિંગ ન્યૂઝ',
+        tickerLabel: JSON.stringify(payloadObj),
       };
       const res = await updateHeroSettings(payload);
       if (res && res.success) {
         triggerOnDemandRevalidate();
-        showToast('✅ Saved! Breaking News ticker badge updated live on user side.', true);
+        showToast('✅ Saved! Breaking News ticker settings updated live on user side.', true);
       } else {
-        showToast('Failed to save ticker badge. Please try again.', false);
+        showToast('Failed to save ticker settings. Please try again.', false);
       }
     } catch {
       showToast('Save failed. Please try again.', false);
@@ -731,7 +795,7 @@ export default function HeroManagerPage() {
     e.dataTransfer.effectAllowed = 'move';
     try {
       e.dataTransfer.setData('text/plain', String(index));
-    } catch {}
+    } catch { }
   };
 
   const handleDragOverMostRead = (e: React.DragEvent, targetIndex: number) => {
@@ -803,7 +867,7 @@ export default function HeroManagerPage() {
     e.dataTransfer.effectAllowed = 'move';
     try {
       e.dataTransfer.setData('text/plain', String(index));
-    } catch {}
+    } catch { }
   };
 
   const handleHeroDragOver = (e: React.DragEvent, targetIndex: number) => {
@@ -898,6 +962,10 @@ export default function HeroManagerPage() {
 
       if (res && res.success) {
         triggerOnDemandRevalidate();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('gp-hero-updated'));
+          window.dispatchEvent(new CustomEvent('gp-articles-updated'));
+        }
         showToast('✅ Saved! Bottom Row 3 Image Cards updated live on user side.', true);
         if (res.data?.slots) {
           setSlots([
@@ -984,10 +1052,11 @@ export default function HeroManagerPage() {
       ) : (
         <>
           {/* ════════════════════════════════════════════════════════════════
-             BREAKING NEWS TICKER BADGE SETTINGS
+             BREAKING NEWS TICKER SETTINGS (MODE & ARTICLE SELECTION)
              ════════════════════════════════════════════════════════════════ */}
           <div className="mb-8 rounded-2xl border border-gray-400 bg-white p-4 sm:p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-4 dark:border-zinc-700 mb-5 gap-4">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-4 dark:border-zinc-700 mb-6 gap-4">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="flex h-3.5 w-3.5 relative">
@@ -995,14 +1064,14 @@ export default function HeroManagerPage() {
                     <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
-                    Breaking News Ticker Badge Settings
+                    Breaking News Ticker Settings
                   </h3>
-                  <span className="text-sm font-bold px-3 py-1 rounded-full border bg-zinc-100 text-zinc-700 border-gray-400 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-700">
-                    Live Header Badge
+                  <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full border bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900">
+                    Live Header Bar
                   </span>
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Change the badge text displayed next to the live pulsing dot in the top Breaking News ticker bar.
+                  Choose display style (Continuous Marquee vs Single One-by-One), customize badge label, and select specific articles to feature.
                 </p>
               </div>
 
@@ -1010,19 +1079,123 @@ export default function HeroManagerPage() {
                 type="button"
                 onClick={handleSaveTickerBadge}
                 disabled={savingTickerBadge}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-6 py-3 text-sm sm:text-base font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer"
               >
                 {savingTickerBadge ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {savingTickerBadge ? 'Saving Badge...' : 'Save Ticker Badge Text'}
+                {savingTickerBadge ? 'Saving Settings...' : 'Save Ticker Settings'}
               </button>
             </div>
 
-            {/* Single Input & Live Preview Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              {/* Single Input */}
-              <div className="lg:col-span-2 space-y-2.5">
+            {/* 1. Mode Selection (Option 1 vs Option 2) */}
+            <div className="mb-6">
+              <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-2.5">
+                1. Choose Display Mode (ડિસ્પ્લે પદ્ધતિ પસંદ કરો)
+              </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Option 1: Continuous Marquee Scroll */}
+                <div
+                  onClick={() => setTickerMode('scroll')}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'scroll'
+                      ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                      : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
+                    }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-xl ${tickerMode === 'scroll' ? 'bg-[#B3121B] text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
+                        <MoveHorizontal className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+                          Continuous Marquee Scroll
+                        </h4>
+                        <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                          સતત સ્ક્રોલિંગ (Left to Left continuous stream)
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerMode === 'scroll' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400'
+                      }`}>
+                      {tickerMode === 'scroll' && <div className="h-2 w-2 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
+                    બધી હેડલાઇન્સ જમણેથી ડાબે એકધારા પ્રવાહમાં સતત સ્ક્રોલ થશે. યુઝર માઉસ રાખે ત્યારે પોઝ થશે.
+                  </p>
+                </div>
+
+                {/* Option 2: Single Headline One-by-One */}
+                <div
+                  onClick={() => setTickerMode('single')}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'single'
+                      ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                      : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
+                    }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2.5 rounded-xl ${tickerMode === 'single' ? 'bg-[#B3121B] text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
+                        <Layers className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+                          Single Headline One-by-One
+                          <span className="text-xs bg-[#B3121B] text-white px-2 py-0.5 rounded-full font-bold">New</span>
+                        </h4>
+                        <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                          એક પછી એક હેડલાઇન સ્લાઇડર (Single article transition)
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerMode === 'single' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400'
+                      }`}>
+                      {tickerMode === 'single' && <div className="h-2 w-2 rounded-full bg-white" />}
+                    </div>
+                  </div>
+                  <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
+                    સ્ક્રીન પર એક જ આર્ટિકલ દેખાશે. થોડી સેકન્ડ પછી સ્મૂધ એનિમેશન સાથે આપમેળે બીજો આર્ટિકલ આવશે.
+                  </p>
+                </div>
+              </div>
+
+              {/* Speed Selector (Active when Single mode is selected) */}
+              {tickerMode === 'single' && (
+                <div className="mt-4 p-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-[#B3121B]" />
+                    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                      સ્લાઇડ બદલાવવાનો સમય (Slide Duration per Article):
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[
+                      { ms: 3000, label: '3s (ઝડપી)' },
+                      { ms: 4500, label: '4.5s (ડિફોલ્ટ)' },
+                      { ms: 6000, label: '6s (સામાન્ય)' },
+                      { ms: 8000, label: '8s (શાંતિથી)' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.ms}
+                        type="button"
+                        onClick={() => setTickerSpeed(opt.ms)}
+                        className={`text-xs sm:text-sm px-3.5 py-1.5 rounded-lg font-bold transition cursor-pointer ${tickerSpeed === opt.ms
+                            ? 'bg-[#B3121B] text-white shadow-xs'
+                            : 'bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400'
+                          }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 2. Badge Text Input */}
+            <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+              <div className="lg:col-span-2 space-y-2">
                 <label className="text-sm sm:text-base font-bold text-zinc-800 dark:text-zinc-200 flex items-center justify-between">
-                  <span>Badge Text / Label</span>
+                  <span>2. Badge Text / Label (હેડર બેજ લખાણ)</span>
                   <span className="text-xs sm:text-sm text-zinc-500 font-medium">Type any text in any language</span>
                 </label>
                 <div className="relative">
@@ -1045,17 +1218,16 @@ export default function HeroManagerPage() {
                   )}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-sm text-zinc-500 font-semibold">Quick suggestions:</span>
+                  <span className="text-xs sm:text-sm text-zinc-500 font-semibold">Quick suggestions:</span>
                   {['બ્રેકિંગ ન્યૂઝ', 'BREAKING NEWS', 'લાઈવ સમાચાર', 'LIVE UPDATES', 'ખાસ અહેવાલ'].map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       onClick={() => setTickerBadgeText(preset)}
-                      className={`text-sm px-3.5 py-1 rounded-full border font-semibold transition cursor-pointer ${
-                        tickerBadgeText === preset
+                      className={`text-xs sm:text-sm px-3.5 py-1 rounded-full border font-semibold transition cursor-pointer ${tickerBadgeText === preset
                           ? 'bg-[#B3121B] text-white border-[#B3121B]'
                           : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
-                      }`}
+                        }`}
                     >
                       {preset}
                     </button>
@@ -1065,20 +1237,184 @@ export default function HeroManagerPage() {
 
               {/* Live Preview Card */}
               <div className="rounded-xl border border-gray-400 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/40 p-4 flex flex-col justify-center">
-                <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 mb-2.5">Live Bar Preview</span>
-                <div className="flex items-center gap-2 overflow-hidden rounded-md border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1.5">
-                  <div className="flex shrink-0 items-center gap-1.5 bg-black px-3 py-1.5 text-sm font-black tracking-wide text-white border-r-2 border-[#B3121B] rounded-xs select-none">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
-                    </span>
-                    <span>{tickerBadgeText || 'બ્રેકિંગ ન્યૂઝ'}</span>
-                  </div>
-                  <div className="text-sm text-zinc-400 italic truncate pl-1.5">
-                    ન્યૂઝ હેડલાઇન્સ અહીં સ્લાઇડ થશે...
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Live Bar Preview</span>
+                  <span className="text-xs font-bold text-[#B3121B]">
+                    {tickerMode === 'single' ? 'Single One-by-One' : 'Continuous Scroll'}
+                  </span>
+                </div>
+                <div className="overflow-hidden rounded-lg border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                  <div className="flex items-center gap-2 p-1.5 min-h-[44px]">
+                    <div className="flex shrink-0 items-center gap-1.5 bg-black px-3 py-1.5 text-xs sm:text-sm font-black tracking-wide text-white border-r-2 border-[#B3121B] rounded-xs select-none">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                      </span>
+                      <span>{tickerBadgeText || 'બ્રેકિંગ ન્યૂઝ'}</span>
+                    </div>
+
+                    {tickerMode === 'single' ? (
+                      <div className="flex-1 flex items-center justify-between gap-2 overflow-hidden px-2 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                        <div className="flex items-center gap-2 truncate">
+                          <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0"></span>
+                          <span className="truncate">
+                            {selectedTickerArticles.length > 0
+                              ? getTitle(selectedTickerArticles[previewTickerIndex % selectedTickerArticles.length])
+                              : 'નીચેથી આર્ટિકલ્સ પસંદ કરો (Select articles below)...'}
+                          </span>
+                        </div>
+                        {selectedTickerArticles.length > 0 && (
+                          <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-400 font-bold">
+                            <span>
+                              {(previewTickerIndex % selectedTickerArticles.length) + 1} / {selectedTickerArticles.length}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 font-medium italic truncate pl-1.5">
+                        {allArticles.filter((a) => a.isBreaking).length > 0
+                          ? allArticles.filter((a) => a.isBreaking).map((a) => getTitle(a)).slice(0, 5).join('  ●  ')
+                          : allArticles.slice(0, 4).map((a) => getTitle(a)).join('  ●  ')}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* 3. Articles Selection (ONLY FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
+            {tickerMode === 'single' ? (
+              <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <div>
+                    <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
+                      3. Select Articles for Single Headline Slider (એક પછી એક સ્લાઇડર માટે આર્ટિકલ્સ પસંદ કરો)
+                    </label>
+                    <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
+                      Search and select the specific articles you want to rotate one-by-one in this single headline slider.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
+                    {selectedTickerArticles.length} articles selected
+                  </span>
+                </div>
+
+                <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
+                  {/* Search box to add articles */}
+                  <ArticleSearchBox
+                    allArticles={allArticles}
+                    excluded={selectedTickerArticles.map((a) => a.id)}
+                    placeholder="Search news by title, category or article # to add to slider..."
+                    onSelect={handleAddTickerArticle}
+                  />
+
+                  {/* List of currently selected ticker articles */}
+                  {selectedTickerArticles.length === 0 ? (
+                    <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
+                      <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                        No articles selected yet for Single Headline Slider.
+                      </p>
+                      <p className="text-xs mt-1 text-zinc-500">
+                        Please search in the box above to select at least 1 or more articles to rotate one-by-one.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
+                      {selectedTickerArticles.map((art, idx) => (
+                        <div
+                          key={art.id}
+                          className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
+                        >
+                          <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
+                            #{idx + 1}
+                          </span>
+
+                          <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
+                            <ArticleMedia
+                              src={getArticleImage(art)}
+                              alt={getTitle(art)}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                              {getTitle(art)}
+                            </p>
+                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
+                              {catName(art.category) && <span>{catName(art.category)}</span>}
+                              {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
+                            </div>
+                          </div>
+
+                          {/* Reorder and Delete buttons */}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveTickerArticle(idx, 'up')}
+                              disabled={idx === 0}
+                              title="Move up"
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveTickerArticle(idx, 'down')}
+                              disabled={idx === selectedTickerArticles.length - 1}
+                              title="Move down"
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveTickerArticle(idx)}
+                              title="Remove from slider"
+                              className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Informative Banner for Option 1: Continuous Marquee Scroll */
+              <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
+                <div className="p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-3">
+                  <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
+                      Continuous Marquee Scroll uses Automatic Breaking News (ઓટોમેટિક બ્રેકિંગ ન્યૂઝ)
+                    </p>
+                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                      આ મોડમાં અલગથી આર્ટિકલ સિલેક્ટ કરવાનો કોઈ ઓપ્શન નથી. જ્યારે પણ તમે નવી ન્યૂઝ બનાવો અથવા એડિટ કરો અને તેમાં <strong>&quot;Breaking News&quot;</strong> ઓપ્શન પસંદ કરો, ત્યારે તે આપમેળે આ સ્ક્રોલિંગ પટ્ટીમાં લાઈવ સ્ટ્રીમ થશે.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Bottom Save Action Bar */}
+            <div className="mt-6 pt-4 border-t border-gray-300 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <span className="text-xs sm:text-sm text-zinc-500 font-semibold text-center sm:text-left">
+                All changes will apply immediately to the user-side top Breaking News ticker.
+              </span>
+              <button
+                type="button"
+                onClick={handleSaveTickerBadge}
+                disabled={savingTickerBadge}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-8 py-3 text-sm sm:text-base font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer"
+              >
+                {savingTickerBadge ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                {savingTickerBadge ? 'Saving Settings...' : 'Save Ticker Settings'}
+              </button>
             </div>
           </div>
 
@@ -1098,9 +1434,9 @@ export default function HeroManagerPage() {
                   </span>
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Manage the exact positions of articles displayed in the top homepage Hero Grid: 
-                  <strong> Position #1 = Spotlight Banner</strong>, 
-                  <strong> Positions #2 & #3 = Top Middle Image Cards</strong>, 
+                  Manage the exact positions of articles displayed in the top homepage Hero Grid:
+                  <strong> Position #1 = Spotlight Banner</strong>,
+                  <strong> Positions #2 & #3 = Top Middle Image Cards</strong>,
                   <strong> Positions #4 to #13 = Middle Headline List</strong>.
                 </p>
               </div>
@@ -1140,8 +1476,8 @@ export default function HeroManagerPage() {
                 const slotTitle = isSpotlight
                   ? '🌟 Main Hero Spotlight Banner (#1 Big Card)'
                   : isTopCard
-                  ? `🖼️ Middle Column - Top Image Card #${index}`
-                  : `📰 Middle Column - Text Headline #${index - 2}`;
+                    ? `🖼️ Middle Column - Top Image Card #${index}`
+                    : `📰 Middle Column - Text Headline #${index - 2}`;
 
                 const isDragging = draggedHeroIndex === index;
 
@@ -1152,23 +1488,20 @@ export default function HeroManagerPage() {
                     onDragStart={(e) => handleHeroDragStart(e, index)}
                     onDragOver={(e) => handleHeroDragOver(e, index)}
                     onDragEnd={handleHeroDragEnd}
-                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${
-                      isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
-                    } ${
-                      isSpotlight
+                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
+                      } ${isSpotlight
                         ? 'border-[#B3121B]/40 bg-red-50/40 dark:bg-red-950/10'
                         : isTopCard
-                        ? 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
-                        : 'border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80'
-                    } hover:shadow-md`}
+                          ? 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
+                          : 'border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80'
+                      } hover:shadow-md`}
                   >
                     {/* Left Info */}
                     <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
                       <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder position">
                         <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
-                        <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${
-                          isSpotlight ? 'bg-[#B3121B]' : isTopCard ? 'bg-blue-600' : 'bg-zinc-700'
-                        }`}>
+                        <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${isSpotlight ? 'bg-[#B3121B]' : isTopCard ? 'bg-blue-600' : 'bg-zinc-700'
+                          }`}>
                           #{index + 1}
                         </span>
                       </div>
@@ -1179,9 +1512,8 @@ export default function HeroManagerPage() {
 
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
-                            isSpotlight ? 'bg-red-100 text-[#B3121B]' : isTopCard ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
-                          }`}>
+                          <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${isSpotlight ? 'bg-red-100 text-[#B3121B]' : isTopCard ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
+                            }`}>
                             {slotTitle}
                           </span>
                           {art.articleNumber && (
@@ -1340,9 +1672,8 @@ export default function HeroManagerPage() {
                       onDragStart={(e) => handleDragStartPopular(e, idx)}
                       onDragOver={(e) => handleDragOverPopular(e, idx)}
                       onDragEnd={handleDragEndPopular}
-                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${
-                        isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
-                      } hover:shadow-md`}
+                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
+                        } hover:shadow-md`}
                     >
                       {/* Left Info */}
                       <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
@@ -1474,9 +1805,8 @@ export default function HeroManagerPage() {
                       onDragStart={(e) => handleDragStartMostRead(e, idx)}
                       onDragOver={(e) => handleDragOverMostRead(e, idx)}
                       onDragEnd={handleDragEndMostRead}
-                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${
-                        isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
-                      } hover:shadow-md`}
+                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
+                        } hover:shadow-md`}
                     >
                       {/* Left Info */}
                       <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
@@ -1688,11 +2018,10 @@ export default function HeroManagerPage() {
                       onDragStart={(e) => handleDragStart(e, idx)}
                       onDragOver={(e) => handleDragOver(e, idx)}
                       onDragEnd={handleDragEnd}
-                      className={`relative flex flex-col justify-between overflow-hidden rounded-xl border p-3 transition-all duration-150 cursor-grab active:cursor-grabbing group ${
-                        draggedIndex === idx
+                      className={`relative flex flex-col justify-between overflow-hidden rounded-xl border p-3 transition-all duration-150 cursor-grab active:cursor-grabbing group ${draggedIndex === idx
                           ? 'border-[#B3121B] bg-[#B3121B]/10 shadow-xl scale-105 z-20 ring-2 ring-[#B3121B]/40'
                           : 'border-gray-400 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-800/40 hover:border-[#B3121B]/50 hover:shadow-md'
-                      }`}
+                        }`}
                     >
                       <div>
                         {/* Thumbnail, Rank Badge & Drag Handle */}

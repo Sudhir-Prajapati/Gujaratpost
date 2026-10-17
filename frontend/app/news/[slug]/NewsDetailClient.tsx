@@ -15,6 +15,7 @@ import RelatedStoriesSection from './components/RelatedStoriesSection';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
+const ArticlePdfPagesViewer = dynamic(() => import('@/components/sections/ArticlePdfPagesViewer'), { ssr: false });
 
 const ReadingProgressBar = memo(function ReadingProgressBar() {
   const [progress, setProgress] = useState(0);
@@ -50,7 +51,7 @@ const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: st
   }, [cleanHtml]);
 
   // Both SSR and client initial render produce identical empty <div>
-  // innerHTML is set imperatively after mount via ref â€” no hydration mismatch
+  // innerHTML is set imperatively after mount via ref — no hydration mismatch
   return (
     <div
       ref={bodyRef}
@@ -114,61 +115,46 @@ import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 const CATEGORY_SLUG_MAP: Record<string, string> = {
-  'gujarat': 'gujarat',
-  'ahmedabad': 'ahmedabad',
-  'gandhinagar': 'gandhinagar',
-  'surat': 'surat',
-  'vadodara': 'vadodara',
-  'rajkot': 'rajkot',
-  'state': 'state',
-  'india': 'india',
-  'world': 'world',
-  'business': 'business',
-  'sports': 'sports',
-  'entertainment': 'entertainment',
-  'technology': 'technology',
-  'education': 'education',
-  'fact-check': 'fact-check',
-  'factcheck': 'fact-check',
-  'election': 'election',
   'trending': 'trending',
+  'breaking': 'trending',
 
-  'àª—à«àªœàª°àª¾àª¤': 'gujarat',
-  'àª…àª®àª¦àª¾àªµàª¾àª¦': 'ahmedabad',
-  'àª…àª¹àª®àª¦àª¾àª¬àª¾àª¦': 'ahmedabad',
-  'àª—àª¾àª‚àª§à«€àª¨àª—àª°': 'gandhinagar',
-  'àª¸à«àª°àª¤': 'surat',
-  'àªµàª¡à«‹àª¦àª°àª¾': 'vadodara',
-  'àª°àª¾àªœàª•à«‹àªŸ': 'rajkot',
-  'àª­àª¾àª°àª¤': 'india',
-  'àªµàª¿àª¶à«àªµ': 'world',
-  'àª¬àª¿àªàª¨à«‡àª¸': 'business',
-  'àª—à«‹àª²à«àª¡ - àª¸àª¿àª²à«àªµàª°': 'business',
-  'àª¸à«àªªà«‹àª°à«àªŸà«àª¸': 'sports',
-  'àª°àª®àª¤-àª—àª®àª¤': 'sports',
-  'àª®àª¨à«‹àª°àª‚àªœàª¨': 'entertainment',
-  'àªŸà«‡àª•àª¨à«‹àª²à«‹àªœà«€': 'technology',
-  'àª¶àª¿àª•à«àª·àª£': 'education',
-  'àª«à«‡àª•à«àªŸ àªšà«‡àª•': 'fact-check',
-  'àªšà«‚àª‚àªŸàª£à«€ 2027': 'election',
-  'àªŸà«àª°à«‡àª¨à«àª¡àª¿àª‚àª—': 'trending',
+  // Gujarati
+  'ગુજરાત': 'gujarat',
+  'અમદાવાદ': 'ahmedabad',
+  'ગાંધીનગર': 'gandhinagar',
+  'સુરત': 'surat',
+  'વડોદરા': 'vadodara',
+  'રાજકોટ': 'rajkot',
+  'ભારત': 'india',
+  'વિશ્વ': 'world',
+  'બિઝનેસ': 'business',
+  'ગોલ્ડ - સિલ્વર': 'business',
+  'સ્પોર્ટ્સ': 'sports',
+  'રમત-ગમત': 'sports',
+  'મનોરંજન': 'entertainment',
+  'ટેકનોલોજી': 'technology',
+  'શિક્ષણ': 'education',
+  'ફેક્ટ ચેક': 'fact-check',
+  'ચૂંટણી 2027': 'election',
+  'ટ્રેન્ડિંગ': 'trending',
 
-  'à¤—à¥à¤œà¤°à¤¾à¤¤': 'gujarat',
-  'à¤…à¤¹à¤®à¤¦à¤¾à¤¬à¤¾à¤¦': 'ahmedabad',
-  'à¤—à¤¾à¤‚à¤§à¥€à¤¨à¤—à¤°': 'gandhinagar',
-  'à¤¸à¥‚à¤°à¤¤': 'surat',
-  'à¤µà¤¡à¥‹à¤¦à¤°à¤¾': 'vadodara',
-  'à¤°à¤¾à¤œà¤•à¥‹à¤Ÿ': 'rajkot',
-  'à¤­à¤¾à¤°à¤¤': 'india',
-  'à¤µà¤¿à¤¶à¥à¤µ': 'world',
-  'à¤¬à¤¿à¤œà¤¨à¥‡à¤¸': 'business',
-  'à¤–à¥‡à¤²': 'sports',
-  'à¤®à¤¨à¥‹à¤°à¤‚à¤œà¤¨': 'entertainment',
-  'à¤Ÿà¥‡à¤•à¥à¤¨à¥‹à¤²à¥‰à¤œà¥€': 'technology',
-  'à¤¶à¤¿à¤•à¥à¤·à¤¾': 'education',
-  'à¤«à¥ˆà¤•à¥à¤Ÿ à¤šà¥‡à¤•': 'fact-check',
-  'à¤šà¥à¤¨à¤¾à¤µ à¥¨à¥¦à¥¨à¥­': 'election',
-  'à¤Ÿà¥à¤°à¥‡à¤‚à¤¡à¤¿à¤‚à¤—': 'trending',
+  // Hindi
+  'गुजरात': 'gujarat',
+  'अहमदाबाद': 'ahmedabad',
+  'गांधीनगर': 'gandhinagar',
+  'सूरत': 'surat',
+  'वडोदरा': 'vadodara',
+  'राजकोट': 'rajkot',
+  'भारत': 'india',
+  'विश्व': 'world',
+  'बिजनेस': 'business',
+  'खेल': 'sports',
+  'मनोरंजन': 'entertainment',
+  'टेक्नोलॉजी': 'technology',
+  'शिक्षा': 'education',
+  'फैक्ट चेक': 'fact-check',
+  'चुनाव २०२७': 'election',
+  'ट्रेंडिंग': 'trending',
 };
 
 function getTopicHref(tag: string): string {
@@ -229,26 +215,68 @@ function formatPdfDownloadUrl(url: string): string {
   return getBackendApiUrl(`/api/public/download-pdf?url=${encodeURIComponent(cleanUrl)}`);
 }
 
-function buildPdfCardHtml(url: string, titleText: string, descText: string, btnText: string): string {
-  const downloadUrl = formatPdfDownloadUrl(url);
-  if (!downloadUrl) return '';
-  const fileName = downloadUrl.split('/').pop()?.split('?')[0] || 'Official_Document.pdf';
-  return `<div class="gp-pdf-card-v2" style="display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:20px 22px;border-radius:16px;background:#ffffff;border:1px solid rgba(0,0,0,0.08);margin:24px 0;box-shadow:0 4px 18px rgba(0,0,0,0.03);">
-    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:4px;">
-      <div class="gp-pdf-v2-title" style="color:#0f172a;font-weight:800;font-size:16px;line-height:1.3;letter-spacing:-0.01em;">${titleText}</div>
-      <div class="gp-pdf-v2-sub" style="color:#64748b;font-size:13px;font-weight:600;display:flex;align-items:center;gap:6px;">
-        <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;"></span>
-        <span>${descText}</span>
+function buildTwitterCardHtml(url: string, language?: string): string {
+  const cleanUrl = url && url.trim() !== '#' ? url.trim() : '#';
+  const isGu = language === 'gu';
+  const isHi = language === 'hi';
+  const title = 'View Official Post on X (Twitter)';
+  const sub = isGu
+    ? 'સત્તાવાર ટ્વીટ જોવા માટે અહીં ક્લિક કરો'
+    : isHi
+    ? 'आधिकारिक ट्वीट देखने के लिए यहाँ क्लिक करें'
+    : 'Click to view official post on X';
+  const btn = isGu ? 'ટ્વીટ જુઓ ↗' : isHi ? 'ट्वीट देखें ↗' : 'View Post ↗';
+
+  return `<div class="gp-x-card my-6">
+    <div style="display:flex;align-items:center;gap:14px;min-width:0;position:relative;z-index:1">
+      <span class="gp-x-icon">𝕏</span>
+      <div style="min-width:0">
+        <span class="gp-x-title">${title}</span>
+        <span class="gp-x-sub">${sub}</span>
       </div>
     </div>
-    <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" download="${fileName}" data-pdfv2="1" style="display:inline-flex;align-items:center;gap:9px;padding:12px 24px;border-radius:12px;background:#18181b;color:#ffffff !important;font-weight:700;font-size:14.5px;text-decoration:none !important;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,0.25);transition:transform 0.2s;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      <span style="color:#ffffff !important;">${btnText}</span>
+    <a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="gp-x-btn" style="position:relative;z-index:1">
+      <span>${btn}</span>
     </a>
   </div>`;
 }
 
-function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: string): string {
+function buildPdfCardHtml(url: string, language?: string): string {
+  const downloadUrl = formatPdfDownloadUrl(url);
+  if (!downloadUrl) return '';
+  const fileName = (url || '').split('/').pop()?.split('?')[0] || 'Official_Document.pdf';
+  const isGu = language === 'gu';
+  const isHi = language === 'hi';
+  const title = isGu
+    ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ'
+    : isHi
+    ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़'
+    : 'Attached Official Document (PDF)';
+  const sub = isGu
+    ? 'ચકાસાયેલ સત્તાવાર સરકારી / પ્રેસ દસ્તાવેજ'
+    : isHi
+    ? 'सत्यापित आधिकारिक दस्तावेज़'
+    : 'Verified Official Document';
+  const btn = isGu ? 'ડાઉનલોડ PDF' : isHi ? 'डाउनलोड पीडीएफ' : 'Download PDF';
+
+  return `<div class="gp-pdf-card my-6" data-pdf-url="${url.trim()}">
+    <div class="gp-pdf-inner">
+      <div class="gp-pdf-icon-wrap">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      </div>
+      <div class="gp-pdf-text">
+        <span class="gp-pdf-title">${title}</span>
+        <span class="gp-pdf-sub">${sub}</span>
+      </div>
+    </div>
+    <a href="${downloadUrl}" target="_blank" rel="noopener noreferrer" download="${fileName}" class="gp-pdf-btn">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      <span>${btn}</span>
+    </a>
+  </div>`;
+}
+
+function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: string, hasPdfPages?: boolean): string {
   if (!rawHtml && !articlePdfUrl) return '';
 
   let cleaned = rawHtml || '';
@@ -256,64 +284,50 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
   // Clean duplicate fl_attachment if any in legacy content
   cleaned = cleaned.replace(/\/fl_attachment\/fl_attachment\//gi, '/fl_attachment/');
 
-  // Upgrade Twitter / X cards
+  // Upgrade Twitter / X cards to clean official design
   cleaned = cleaned.replace(
-    /<(div|p)[^>]*class=["'][^"']*(?:border|rounded|bg-|p-|my-|gp-x)[^"']*["'][^>]*>[\s\S]*?(?:View Tweet|View Official Post|Post on X|Twitter|àª¸àª¤à«àª¤àª¾àªµàª¾àª° àªŸà«àªµà«€àªŸ)[\s\S]*?<\/(?:div|p)>/gi,
+    /<(div|p)[^>]*class=["'][^"']*(?:border|rounded|bg-|p-|my-|gp-x)[^"']*["'][^>]*>[\s\S]*?(?:View Tweet|View Official Post|Post on X|Twitter|ટ્વીટ)[\s\S]*?<\/(?:div|p)>(?:\s*<\/div>)?/gi,
     (match) => {
-      if (match.startsWith('<div class="gp-x-card"') || (match.includes('gp-x-card') && !match.includes('border-red'))) {
-        return match;
-      }
       const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-      const url = (hrefMatch && hrefMatch[1]) ? hrefMatch[1] : '#';
-      const guLabel = language === 'gu' ? 'àª¸àª¤à«àª¤àª¾àªµàª¾àª° àªŸà«àªµà«€àªŸ àªœà«‹àªµàª¾ àª®àª¾àªŸà«‡ àª…àª¹à«€ àª•à«àª²àª¿àª• àª•àª°à«‹' : language === 'hi' ? 'àª†à¤§à¤¿à¤•à¤¾à¤°à¤¿à¤• à¤Ÿà¥à¤µà¥€à¤Ÿ à¤¦à¥‡à¤–à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤¯à¤¹à¤¾à¤‚ à¤•à¥à¤²à¤¿à¤• à¤•à¤°à¥‡à¤‚' : 'Click to view the official post on X';
-      const guBtn = language === 'gu' ? 'àªŸà«àªµà«€àªŸ àªœà«àª“ â†—' : language === 'hi' ? 'àªŸà«àªµà«€àªŸ Ø¯ÛŒÚ©Ú¾ÛŒÚº â†—' : 'View Post â†—';
-      return `<div class="gp-x-card"><div style="display:flex;align-items:center;gap:14px;min-width:0;position:relative;z-index:1"><span class="gp-x-icon">ð•</span><div style="min-width:0"><span class="gp-x-title">View Official Post on X (Twitter)</span><span class="gp-x-sub">${guLabel}</span></div></div><a href="${url}" target="_blank" rel="noopener noreferrer" class="gp-x-btn" style="position:relative;z-index:1"><span>${guBtn}</span></a></div>`;
+      const url = hrefMatch && hrefMatch[1] && hrefMatch[1] !== '#' ? hrefMatch[1] : '#';
+      return buildTwitterCardHtml(url, language);
     }
   );
 
-  // Upgrade ALL PDF Attachment card blocks (old gp-pdf-card or legacy red border boxes) to premium red v2 card
-  cleaned = cleaned.replace(
-    /<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/div>(?:\s*<\/div>)?/gi,
-    (match) => {
-      let extractUrl = '';
-      const proxyParam = match.match(/download-pdf\?url=([^"'\s&]+)/i);
-      if (proxyParam && proxyParam[1]) {
-        extractUrl = decodeURIComponent(proxyParam[1]);
-      } else {
-        const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-        if (hrefMatch && hrefMatch[1] && hrefMatch[1] !== '#') extractUrl = hrefMatch[1];
-      }
+  // Extract PDF URL from body or props
+  let detectedPdf = articlePdfUrl || '';
+  if (!detectedPdf) {
+    const pdfMatch =
+      cleaned.match(/data-pdf-url=["']([^"']+)["']/i) ||
+      cleaned.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
+      cleaned.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i);
+    if (pdfMatch && pdfMatch[1]) detectedPdf = pdfMatch[1];
+  }
 
-      const finalPdfUrl = extractUrl || articlePdfUrl || '';
-      if (!finalPdfUrl || finalPdfUrl === '#' || !finalPdfUrl.trim()) return '';
-
-      const titleText = language === 'gu' ? 'àª¸àª‚àª¦àª°à«àª­àª¿àª¤ àª¸àª¤à«àª¤àª¾àªµàª¾àª° PDF àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : language === 'hi' ? 'à¤¸à¤‚à¤²à¤—à¥à¤¨ à¤†à¤§à¤¿à¤•à¤¾à¤°à¤¿à¤• à¤ªà¥€à¤¡à¥€à¤à¤« à¤¦à¤¸à¥à¤¤à¤¾à¤µà¥‡à¤œ' : 'Attached Official Document (PDF)';
-      const descText = language === 'gu' ? 'àªšàª•àª¾àª¸àª¾àª¯à«‡àª² àª¸àª¤à«àª¤àª¾àªµàª¾àª° PDF àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : language === 'hi' ? 'àª¸àª¤à«àª¯àª¾àªªàª¿àª¤ àª…àª§àª¿àª•àª¾àª°àª¿àª• àªªà«€àª¡à«€àªàª« àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : 'Verified Official PDF Document';
-      const btnText = language === 'gu' ? 'àª¡àª¾àª‰àª¨àª²à«‹àª¡ PDF' : language === 'hi' ? 'àª¡àª¾àª‰àª¨àª²à«‹àª¡ àªªà«€àª¡à«€àªàª«' : 'Download PDF';
-      return buildPdfCardHtml(finalPdfUrl, titleText, descText, btnText);
-    }
-  );
+  // Strip ALL PDF cards, fragments, and legacy boxes completely from the body paragraphs
+  cleaned = cleaned
+    .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
+    .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '')
+    .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
+    .replace(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][\s\S]*?<\/div>/gi, '')
+    .replace(/<div[^>]*class=["'][^"']*gp-pdf-inner[^"']*["'][\s\S]*?<\/div>/gi, '')
+    .replace(/<a[^>]*class=["'][^"']*gp-pdf-btn[^"']*["'][\s\S]*?<\/a>/gi, '');
 
   // Strip orphan standalone buttons
-  cleaned = cleaned.replace(/<a[^>]*>[\s\S]*?(?:Download\s*PDF|Attached Official Document|Official Document \(PDF\)|Attached PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*àªªà«€àª¡à«€àªàª«|àª¡àª¾àª‰àª¨àª²à«‹àª¡|Download|àªŸà«àªµà«€àªŸ\s*àªœà«àª“|View\s*Post|Open\s*Tweet)[\s\S]*?<\/a>/gi, (match) => {
-    if (match.includes('gp-pdf-btn') || match.includes('gp-x-btn') || match.includes('gp-pdf-card') || match.includes('gp-x-card') || match.includes('data-pdfv2')) return match;
+  cleaned = cleaned.replace(/<a[^>]*>[\s\S]*?(?:Download\s*PDF|Attached Official Document|Official Document \(PDF\)|Attached PDF|ડાઉનલોડ\s*PDF|ડાઉનલોડ|Download)[\s\S]*?<\/a>/gi, (match) => {
+    if (match.includes('gp-pdf-btn') || match.includes('gp-x-btn') || match.includes('gp-pdf-card') || match.includes('gp-x-card')) return match;
     return '';
   });
 
-  // Remove any leftover empty red border container divs
+  // Remove any leftover empty container divs
   cleaned = cleaned.replace(/<div[^>]*class=["'][^"']*(?:border-red-200|border-red-900|from-red-50|via-rose-50|gp-pdf-card)[^"']*["']>\s*<\/div>/gi, '');
 
-  return cleaned;
-  // Strip orphan standalone buttons
-  cleaned = cleaned.replace(/<a[^>]*>[\s\S]*?(?:Download\s*PDF|Attached Official Document|Official Document \(PDF\)|Attached PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*àªªà«€àª¡à«€àªàª«|àª¡àª¾àª‰àª¨àª²à«‹àª¡|Download|àªŸà«àªµà«€àªŸ\s*àªœà«àª“|View\s*Post|Open\s*Tweet)[\s\S]*?<\/a>/gi, (match) => {
-    if (match.includes('gp-pdf-btn') || match.includes('gp-x-btn') || match.includes('gp-pdf-card') || match.includes('gp-x-card') || match.includes('data-pdfv2')) return match;
-    return '';
-  });
+  // If a PDF is attached AND the full page-by-page reader is NOT active, append EXACTLY ONE clean PDF card
+  if (detectedPdf && detectedPdf.trim() && detectedPdf !== '#' && !hasPdfPages) {
+    cleaned += '\n\n' + buildPdfCardHtml(detectedPdf.trim(), language);
+  }
 
-  // Remove any leftover empty red border container divs
-  cleaned = cleaned.replace(/<div[^>]*class=["'][^"']*(?:border-red-200|border-red-900|from-red-50|via-rose-50|gp-pdf-card)[^"']*["']>\s*<\/div>/gi, '');
-
-  return cleaned;
+  return cleaned.trim();
 }
 
 function stripArticleUtilityLines(rawHtml: string): string {
@@ -337,7 +351,7 @@ function normalizeArticleMarkdown(rawHtml: string): string {
 const MARKDOWN_IMAGE_RE = /!\[([^\]]*)\]\s*\(\s*((?:https?:\/\/|\/uploads\/|\/assets\/)[^)]+)\s*\)/gi;
 
 function isGalleryImageAlt(alt: string): boolean {
-  return /gallery\s*image|àª—à«‡àª²à«‡àª°à«€|à¤—à¥ˆà¤²à¤°à¥€|à¤›à¤µà¤¿|àª›àª¬à«€/i.test(alt || '');
+  return /gallery\s*image|ગેલેરી|गैलरी|छवि|છબી/i.test(alt || '');
 }
 
 function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, includeCaption = false): string {
@@ -367,7 +381,7 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
   if (!rawBody) return [];
 
   let cleaned = normalizeArticleMarkdown(upgradeEmbedCards(rawBody, language, articlePdfUrl))
-    .replace(/^##\s*ðŸ“Œ?\s*(àªàª• àª¨àªœàª°àª®àª¾àª‚|KEY HIGHLIGHTS|à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚|AT A GLANCE).*?$/gmi, '')
+    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
     .replace(/----------------+/g, '')
     .replace(/\s*data-start="[^"]*"/gi, '')
     .replace(/\s*data-end="[^"]*"/gi, '')
@@ -437,10 +451,10 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
 
     if (
       plainText.includes('KEY HIGHLIGHTS') ||
-      plainText.includes('àªàª• àª¨àªœàª°àª®àª¾àª‚') ||
-      plainText.includes('à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚') ||
+      plainText.includes('એક નજરમાં') ||
+      plainText.includes('एक नजर में') ||
       plainText.includes('AT A GLANCE') ||
-      plainText.includes('ðŸ“Œ') ||
+      plainText.includes('📌') ||
       plainText.startsWith('----------------') ||
       plainText.startsWith('---')
     ) {
@@ -472,7 +486,7 @@ function sanitizeParagraphHtml(html: string, language?: string): string {
   if (!html) return '';
 
   let cleaned = normalizeArticleMarkdown(html)
-    .replace(/^##\s*ðŸ“Œ?\s*(àªàª• àª¨àªœàª°àª®àª¾àª‚|KEY HIGHLIGHTS|à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚|AT A GLANCE).*?$/gmi, '')
+    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
     .replace(/----------------+/g, '')
     .replace(/\s*data-start="[^"]*"/gi, '')
     .replace(/\s*data-end="[^"]*"/gi, '')
@@ -493,55 +507,6 @@ function sanitizeParagraphHtml(html: string, language?: string): string {
   });
 
   cleaned = cleaned.replace(/<p\s+class="[^"]*"[^>]*>/gi, '<p>');
-
-  // Upgrade X / Twitter card blocks to premium design
-  cleaned = cleaned.replace(
-    /<(div|p)[^>]+(?:class|style)=["'][^"']*(?:border|rounded|bg-|p-|my-)[^"']*["'][^>]*>(?:(?!<\/(?:div|p)>)[\s\S])*?(?:View Tweet|View Official Post|Post on X|Twitter)(?:(?!<\/(?:div|p)>)[\s\S])*?<\/(?:div|p)>/gi,
-    (match) => {
-      if (match.includes('gp-x-card')) return match;
-      const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-      const url = (hrefMatch && hrefMatch[1]) ? hrefMatch[1] : '#';
-      const guLabel = language === 'gu' ? 'àª¸àª¤à«àª¤àª¾àªµàª¾àª° àªŸà«àªµà«€àªŸ àªœà«‹àªµàª¾ àª®àª¾àªŸà«‡ àª…àª¹à«€ àª•à«àª²àª¿àª• àª•àª°à«‹' : language === 'hi' ? 'à¤†à¤§à¤¿à¤•à¤¾à¤°à¤¿à¤• à¤Ÿà¥à¤µà¥€à¤Ÿ à¤¦à¥‡à¤–à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤¯à¤¹à¤¾à¤‚ à¤•à¥à¤²à¤¿à¤• à¤•à¤°à¥‡à¤‚' : 'Click to view the official post on X';
-      const guBtn = language === 'gu' ? 'àªŸà«àªµà«€àªŸ àªœà«àª“ â†—' : language === 'hi' ? 'à¤Ÿà¥à¤µà¥€à¤Ÿ à¤¦à¥‡à¤–à¥‡à¤‚ â†—' : 'View Post â†—';
-      return `<div class="gp-x-card"><div style="display:flex;align-items:center;gap:14px;min-width:0;position:relative;z-index:1"><span class="gp-x-icon">ð•</span><div style="min-width:0"><span class="gp-x-title">View Official Post on X (Twitter)</span><span class="gp-x-sub">${guLabel}</span></div></div><a href="${url}" target="_blank" rel="noopener noreferrer" class="gp-x-btn" style="position:relative;z-index:1"><span>${guBtn}</span></a></div>`;
-    }
-  );
-
-  // Upgrade PDF Attachment card blocks to premium design (matches entire legacy container box)
-  cleaned = cleaned.replace(
-    /<(div|p)[^>]*class=["'][^"']*(?:border-red|from-red|via-rose|rounded-2xl|my-6|my-4|gp-pdf)[^"']*["'][^>]*>[\s\S]*?(?:Attached Official Document|Official Document \(PDF\)|Attached PDF|Download PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*PDF)[\s\S]*?<\/(?:div|p)>(?:\s*<\/div>)?/gi,
-    (match) => {
-      // If it's already a clean single gp-pdf-card without legacy outer wrappers, keep it
-      if (match.startsWith('<div class="gp-pdf-card"') || (match.includes('gp-pdf-card') && !match.includes('border-red') && !match.includes('from-red'))) {
-        return match;
-      }
-      const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-      const url = (hrefMatch && hrefMatch[1]) ? hrefMatch[1] : '#';
-      const titleText = language === 'gu' ? 'àª¸àª‚àª¦àª°à«àª­àª¿àª¤ àª¸àª¤à«àª¤àª¾àªµàª¾àª° PDF àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : language === 'hi' ? 'à¤¸à¤‚à¤²à¤—à¥à¤¨ à¤†à¤§à¤¿à¤•à¤¾à¤°à¤¿à¤• à¤ªà¥€à¤¡à¥€à¤à¤« à¤¦à¤¸à¥à¤¤à¤¾à¤µà¥‡à¤œ' : 'Attached Official Document (PDF)';
-      const descText = language === 'gu' ? 'àªšàª•àª¾àª¸àª¾àª¯à«‡àª² àª¸àª¤à«àª¤àª¾àªµàª¾àª° PDF àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : language === 'hi' ? 'àª¸àª¤à«àª¯àª¾àªªàª¿àª¤ àª…àª§àª¿àª•àª¾àª°àª¿àª• àªªà«€àª¡à«€àªàª« àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : 'Verified Official PDF Document';
-      const btnText = language === 'gu' ? 'àª¡àª¾àª‰àª¨àª²à«‹àª¡ PDF' : language === 'hi' ? 'àª¡àª¾àª‰àª¨àª²à«‹àª¡ àªªà«€àª¡à«€àªàª«' : 'Download PDF';
-      return buildPdfCardHtml(url, titleText, descText, btnText);
-    }
-  );
-
-  // Strip ALL orphan/standalone Download PDF & Twitter buttons (catches plain text, spans, icons, arrows)
-  cleaned = cleaned.replace(/<a[^>]*>[\s\S]*?(?:Download\s*PDF|Attached Official Document|Official Document \(PDF\)|Attached PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*àªªà«€àª¡à«€àªàª«|àª¡àª¾àª‰àª¨àª²à«‹àª¡|Download|àªŸà«àªµà«€àªŸ\s*àªœà«àª“|View\s*Post|Open\s*Tweet)[\s\S]*?<\/a>/gi, (match) => {
-    // Only keep if it contains the full container card or button class
-    if (match.includes('gp-pdf-btn') || match.includes('gp-x-btn') || match.includes('gp-pdf-card') || match.includes('gp-x-card') || match.includes('data-pdfv2')) return match;
-    return '';
-  });
-  cleaned = cleaned.replace(/<button[^>]*>[\s\S]*?(?:Download\s*PDF|Attached Official Document|Official Document \(PDF\)|Attached PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*PDF|àª¡àª¾àª‰àª¨àª²à«‹àª¡\s*àªªà«€àª¡à«€àªàª«|àª¡àª¾àª‰àª¨àª²à«‹àª¡|Download|àªŸà«àªµà«€àªŸ\s*àªœà«àª“|View\s*Post|Open\s*Tweet)[\s\S]*?<\/button>/gi, (match) => {
-    if (match.includes('gp-pdf-btn') || match.includes('gp-x-btn') || match.includes('gp-pdf-card') || match.includes('gp-x-card') || match.includes('data-pdfv2')) return match;
-    return '';
-  });
-
-  // Remove leftover legacy PDF card fragments (old class names, no longer used by the new design)
-  cleaned = cleaned.replace(/<div[^>]*class="gp-pdf-inner"[\s\S]*?<\/div>\s*<\/div>/gi, '');
-  cleaned = cleaned.replace(/<div[^>]*class="gp-pdf-icon-wrap"[^>]*>[\s\S]*?<\/div>/gi, '');
-  cleaned = cleaned.replace(/<div[^>]*class="gp-pdf-text"[^>]*>[\s\S]*?<\/div>/gi, '');
-  cleaned = cleaned.replace(/<span[^>]*class="gp-pdf-title"[^>]*>[\s\S]*?<\/span>/gi, '');
-  cleaned = cleaned.replace(/<span[^>]*class="gp-pdf-sub"[^>]*>[\s\S]*?<\/span>/gi, '');
-  cleaned = cleaned.replace(/<a[^>]*class="gp-pdf-btn"[^>]*>[\s\S]*?<\/a>/gi, '');
 
   return cleaned.trim();
 }
@@ -906,11 +871,38 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     return parseArticleBodyBlocks(body, language, (article as any)?.pdfUrl || (article as any)?.pdf);
   }, [body, language, article]);
 
+  const pdfDocumentUrl = useMemo(() => {
+    let rawPdf = (article as any)?.pdfUrl || (article as any)?.pdf || '';
+    if (!rawPdf && body) {
+      const match =
+        body.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
+        body.match(/data-pdf-url=["']([^"']+)["']/i) ||
+        body.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i);
+      if (match && match[1]) rawPdf = match[1];
+    }
+    return rawPdf;
+  }, [article, body]);
+
+  const hasPdfPages = useMemo(() => {
+    if (!pdfDocumentUrl || !pdfDocumentUrl.trim()) return false;
+    return Boolean(
+      (article as any)?.showPdfPages ||
+      body?.includes('data-show-pages="true"') ||
+      body?.includes('gp-pdf-pages-viewer') ||
+      (article as any)?.content?.includes('data-show-pages="true"') ||
+      (article as any)?.contentGu?.includes('data-show-pages="true"') ||
+      (article as any)?.contentHi?.includes('data-show-pages="true"') ||
+      (article as any)?.content?.includes('gp-pdf-pages-viewer') ||
+      (article as any)?.contentGu?.includes('gp-pdf-pages-viewer') ||
+      (article as any)?.contentHi?.includes('gp-pdf-pages-viewer')
+    );
+  }, [article, body, pdfDocumentUrl]);
+
   const formattedArticleBodyHtml = useMemo(() => {
     if (!body) return '';
 
-    let cleaned = normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf))
-      .replace(/^##\s*ðŸ“Œ?\s*(àªàª• àª¨àªœàª°àª®àª¾àª‚|KEY HIGHLIGHTS|à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚|AT A GLANCE).*?$/gmi, '')
+    let cleaned = normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages))
+    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
       .replace(/\s*data-end="[^"]*"/gi, '')
@@ -925,10 +917,10 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     // Convert markdown blockquotes (> "Quote"\n> — Author) to styled HTML blockquotes
     cleaned = upgradeMarkdownQuotes(cleaned).replace(/(?:^|\n)(>[^\n]+(?:\n>[^\n]+)*)/g, (match, bqBlock) => {
       const lines = bqBlock.split('\n');
-      const quoteLines = lines.filter((l: string) => l.startsWith('>') && !l.includes('> â€”') && !l.includes('> -'));
+      const quoteLines = lines.filter((l: string) => l.startsWith('>') && !l.includes('> —') && !l.includes('> -'));
       const quoteText = quoteLines.map((l: string) => l.replace(/^>\s*"?/, '').replace(/"?$/, '')).join(' ').trim();
-      const citeLine = lines.find((l: string) => l.includes('> â€”') || l.includes('> -'));
-      const citeText = citeLine ? citeLine.replace(/^>\s*â€”\s*/, '').replace(/^>\s*-\s*/, '').trim() : '';
+      const citeLine = lines.find((l: string) => l.includes('> —') || l.includes('> -'));
+      const citeText = citeLine ? citeLine.replace(/^>\s*—\s*/, '').replace(/^>\s*-\s*/, '').trim() : '';
       const finalQuote = (quoteText || bqBlock.replace(/^>\s*"?/, '').replace(/"?$/, '')).replace(/^"/, '').replace(/"$/, '');
 
       return buildStyledQuoteHtml(finalQuote, citeText);
@@ -936,30 +928,6 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     // Convert markdown images after translation as labels may no longer be English.
     cleaned = convertMarkdownImagesToFigures(cleaned, title);
-
-    // Upgrade X / Twitter cards styling in body HTML
-    cleaned = cleaned.replace(
-      /<(div|p)[^>]+(?:class|style)=["'][^"']*(?:border|rounded|bg-|p-|my-)[^"']*["'][^>]*>(?:(?!<\/(?:div|p)>)[\s\S])*?(?:View Tweet|View Official Post|Post on X|Twitter)(?:(?!<\/(?:div|p)>)[\s\S])*?<\/(?:div|p)>/gi,
-      (match) => {
-        if (match.includes('gp-x-card')) return match;
-        const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-        const url = (hrefMatch && hrefMatch[1]) ? hrefMatch[1] : (article as any).twitterUrl || (article as any).tweetUrl || '#';
-        const guLabel = language === 'gu' ? 'àª¸àª¤à«àª¤àª¾àªµàª¾àª° àªŸà«àªµà«€àªŸ àªœà«‹àªµàª¾ àª®àª¾àªŸà«‡ àª…àª¹à«€ àª•à«àª²àª¿àª• àª•àª°à«‹' : language === 'hi' ? 'à¤†à¤§à¤¿à¤•à¤¾à¤°à¤¿à¤• à¤Ÿà¥à¤µà¥€à¤Ÿ à¤¦à¥‡à¤–à¤¨à¥‡ à¤•à¥‡ à¤²à¤¿à¤ à¤¯à¤¹à¤¾à¤‚ à¤•à¥à¤²à¤¿à¤• à¤•à¤°à¥‡à¤‚' : 'Click to view the official post on X';
-        const guBtn = language === 'gu' ? 'àªŸà«àªµà«€àªŸ àªœà«àª“ â†—' : language === 'hi' ? 'à¤Ÿà¥à¤µà¥€à¤Ÿ à¤¦à¥‡à¤–à¥‡à¤‚ â†—' : 'View Post â†—';
-        return `<div class="gp-x-card">
-          <div style="display:flex;align-items:center;gap:14px;min-width:0;position:relative;z-index:1">
-            <span class="gp-x-icon">ð•</span>
-            <div style="min-width:0">
-              <span class="gp-x-title">View Official Post on X (Twitter)</span>
-              <span class="gp-x-sub">${guLabel}</span>
-            </div>
-          </div>
-          <a href="${url}" target="_blank" rel="noopener noreferrer" class="gp-x-btn" style="position:relative;z-index:1">
-            <span>${guBtn}</span>
-          </a>
-        </div>`;
-      }
-    );
 
     // Collapse multiple nested blockquotes
     cleaned = cleaned
@@ -971,7 +939,6 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#B3121B] font-bold underline hover:text-[#8E0E15] break-all">${url}</a>`;
     });
 
-    // If cleaned does not contain HTML block tags, wrap paragraphs in <p> tags
     // Append YouTube embed if set on article object and not already present in body HTML
     const ytUrl = (article as any).youtubeUrl || (article as any).youtube;
     if (ytUrl && ytUrl.trim() && !cleaned.includes('iframe') && !cleaned.includes('youtube.com/embed')) {
@@ -983,19 +950,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
-    // Append PDF card if set on article object and not already present in body HTML
-    const pdfDocumentUrl = (article as any).pdfUrl || (article as any).pdf;
-    if (pdfDocumentUrl && pdfDocumentUrl.trim() && !cleaned.includes('gp-pdf-card')) {
-      const titleText = language === 'gu' ? 'àª¸àª‚àª¦àª°à«àª­àª¿àª¤ àª¸àª¤à«àª¤àª¾àªµàª¾àª° PDF àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : language === 'hi' ? 'à¤¸à¤‚à¤²à¤—à¥à¤¨ à¤†à¤§à¤¿à¤•à¤¾à¤°à¤¿à¤• à¤ªà¥€à¤¡à¥€à¤à¤« à¤¦à¤¸à¥à¤¤à¤¾à¤µà¥‡à¤œ' : 'Attached Official Document (PDF)';
-      const descText = language === 'gu' ? 'àªšàª•àª¾àª¸àª¾àª¯à«‡àª² àª¸àª¤à«àª¤àª¾àªµàª¾àª° PDF àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : language === 'hi' ? 'àª¸àª¤à«àª¯àª¾àªªàª¿àª¤ àª…àª§àª¿àª•àª¾àª°àª¿àª• àªªà«€àª¡à«€àªàª« àª¦àª¸à«àª¤àª¾àªµà«‡àªœ' : 'Verified Official PDF Document';
-      const btnText = language === 'gu' ? 'àª¡àª¾àª‰àª¨àª²à«‹àª¡ PDF' : language === 'hi' ? 'àª¡àª¾àª‰àª¨àª²à«‹àª¡ àªªà«€àª¡à«€àªàª«' : 'Download PDF';
-      cleaned += buildPdfCardHtml(pdfDocumentUrl.trim(), titleText, descText, btnText);
+    // Append Twitter card if set on article object and not already present in body HTML
+    const twUrl = (article as any).twitterUrl || (article as any).twitter;
+    if (twUrl && twUrl.trim() && !cleaned.includes('gp-x-card')) {
+      cleaned += buildTwitterCardHtml(twUrl.trim(), language);
     }
 
     return cleaned;
-  }, [body, title, language, article]);
-
-
+  }, [body, title, language, article, hasPdfPages]);
 
   const gistPoints = useMemo(() => {
     const rawContent = getArticleContent(article, 'gu') || article.content || (article as any).contentGu || (article as any).contentHi || '';
@@ -1005,15 +967,13 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       return normalizeDisplayText(s)
         .replace(/<[^>]*>/g, '')
         .replace(/^[•*\-#\d\.\s📌]+/, '')
-        .replace(/^[â€¢*\-#\d\.\sðŸ“Œ]+/, '')
-        .replace(/^[â€¢*\-#\d\.\s]+/, '')
-        .replace(/[📌ðŸ“Œ]/gi, '')
+        .replace(/^[•*\-#\d\.\s📌]+/, '')
+        .replace(/^[•*\-#\d\.\s]+/, '')
+        .replace(/[📌📌]/gi, '')
         .replace(/#+/g, '')
         .replace(/\(KEY HIGHLIGHTS\)/gi, '')
         .replace(/એક નજરમાં/gi, '')
         .replace(/एक नजर में/gi, '')
-        .replace(/àªàª• àª¨àªœàª°àª®àª¾àª‚/gi, '')
-        .replace(/à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚/gi, '')
         .replace(/AT A GLANCE/gi, '')
         .replace(/[*#]/g, '')
         .trim();
@@ -1030,11 +990,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         trimmed.includes('KEY HIGHLIGHTS') ||
         normalizeDisplayText(trimmed).includes('એક નજરમાં') ||
         normalizeDisplayText(trimmed).includes('एक नजर में') ||
-        trimmed.includes('àªàª• àª¨àªœàª°àª®àª¾àª‚') ||
-        trimmed.includes('à¤à¤• à¤¨à¤œà¤° à¤®à¥‡à¤‚') ||
         trimmed.includes('AT A GLANCE') ||
         trimmed.includes('📌') ||
-        trimmed.includes('ðŸ“Œ')
+        trimmed.includes('📌')
       ) {
         insideHighlights = true;
         continue;
@@ -1052,7 +1010,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           points.push(cleaned);
         }
       } else if (
-        trimmed.startsWith('â€¢') ||
+        trimmed.startsWith('•') ||
         trimmed.startsWith('•') ||
         trimmed.startsWith('-') ||
         trimmed.startsWith('*')
@@ -1077,9 +1035,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   const trendingTopics = useMemo(() => {
     if (language === 'gu') {
-      return ['àªšà«‚àª‚àªŸàª£à«€ 2027', 'àªµàª°àª¸àª¾àª¦', 'àª¸à«‹àª¨àª¾-àªšàª¾àª‚àª¦à«€', 'àª•à«àª°àª¿àª•à«‡àªŸ', 'àª®à«‡àªŸà«àª°à«‹', 'àª¸à«‡àª®àª¿àª•àª¨à«àª¡àª•à«àªŸàª°', 'àª¡àª¾àª¯àª®àª‚àª¡ àª‰àª¦à«àª¯à«‹àª—', 'àªŸà«àª°àª¾àª«àª¿àª•'];
+      return ['ચૂંટણી 2027', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડાયમંડ ઉદ્યોગ', 'ટ્રાફિક'];
     } else if (language === 'hi') {
-      return ['à¤šà¥à¤¨à¤¾à¤µ à¥¨à¥¦à¥¨à¥­', 'à¤¬à¤¾à¤°à¤¿à¤¶', 'à¤¸à¥‹à¤¨à¤¾-à¤šà¤¾à¤‚à¤¦à¥€', 'à¤•à¥à¤°à¤¿à¤•à¥‡à¤Ÿ', 'à¤®à¥‡à¤Ÿà¥à¤°à¥‹', 'à¤¸à¥‡à¤®à¥€à¤•à¤‚à¤¡à¤•à¥à¤Ÿà¤°', 'à¤¹à¥€à¤°à¤¾ à¤‰à¤¦à¥à¤¯à¥‹à¤—', 'à¤¯à¤¾à¤¤à¤¾à¤¯à¤¾à¤¤'];
+      return ['चुनाव 2027', 'बारिश', 'सोना-चांदी', 'क्रिकेट', 'मेट्रो', 'सेमीकंडक्टर', 'हीरा उद्योग', 'यातायात'];
     } else {
       return ['Election 2027', 'Rain', 'Gold-Silver', 'Cricket', 'Metro', 'Semiconductor', 'Diamond Industry', 'Traffic'];
     }
@@ -1113,7 +1071,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const excludeIds = new Set([mainId, ...streamList.map(a => String(a.id))]);
 
     // Priority State & National top headline categories
-    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'àª—à«àªœàª°àª¾àª¤', 'àª­àª¾àª°àª¤', 'àªµàª¿àª¶à«àªµ', 'àª°àª¾àªœàª¨à«€àª¤àª¿', 'àªµà«àª¯àª¾àªªàª¾àª°'];
+    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
 
     // Gather candidate articles excluding main article & all stream articles
     const pool = [...trending, ...related, ...mostReadArticles].filter(
@@ -1225,9 +1183,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     });
 
     const fallbackTags = language === 'gu'
-      ? ['àª¸àª®àª¾àªšàª¾àª°', 'àª—à«àªœàª°àª¾àª¤', 'àª²àª¾àª‡àªµ', 'àª…àª®àª¦àª¾àªµàª¾àª¦', 'àª¬à«àª°à«‡àª•àª¿àª‚àª— àª¨à«àª¯à«‚àª', 'àª•à«àª°àª¿àª•à«‡àªŸ', 'àª¸à«àªªà«‹àª°à«àªŸà«àª¸', 'àª¬à«‹àª²àª¿àªµà«‚àª¡', 'àªàª¨à«àªŸàª°àªŸà«‡àª‡àª¨àª®à«‡àª¨à«àªŸ', 'àª°àª¾àªœàª•àª¾àª°àª£', 'àª¬àª¿àªàª¨à«‡àª¸', 'àªŸà«‡àª•àª¨à«‹àª²à«‹àªœà«€', 'àªµà«‡àª§àª°', 'àª°àª¾àªœàª•à«‹àªŸ', 'àª¸à«àª°àª¤', 'àªµàª¡à«‹àª¦àª°àª¾', 'àª²àª¾àª‡àª«àª¸à«àªŸàª¾àª‡àª²', 'àª°àª¾àª·à«àªŸà«àª°à«€àª¯', 'àª†àª‚àª¤àª°àª°àª¾àª·à«àªŸà«àª°à«€àª¯', 'àªµàª¿àª¶à«‡àª·', 'àª®àª¨à«‹àª°àª‚àªœàª¨', 'àª°àª®àª¤àª—àª®àª¤']
+      ? ['સમાચાર', 'ગુજરાત', 'લાઇવ', 'અમદાવાદ', 'બ્રેકિંગ ન્યૂઝ', 'ક્રિકેટ', 'સ્પોર્ટ્સ', 'બોલિવૂડ', 'એન્ટરટેઇનમેન્ટ', 'રાજકારણ', 'બિઝનેસ', 'ટેકનોલોજી', 'વેધર', 'રાજકોટ', 'સુરત', 'વડોદરા', 'લાઇફસ્ટાઇલ', 'રાષ્ટ્રીય', 'આંતરરાષ્ટ્રીય', 'વિશેષ', 'મનોરંજન', 'રમતગમત']
       : language === 'hi'
-        ? ['à¤¸à¤®à¤¾à¤šà¤¾à¤°', 'à¤—à¥à¤œà¤°à¤¾à¤¤', 'à¤²à¤¾à¤‡à¤µ', 'à¤…à¤¹à¤®à¤¦à¤¾à¤¬à¤¾à¤¦', 'à¤¬à¥à¤°à¥‡à¤•à¤¿à¤‚à¤— à¤¨à¥à¤¯à¥‚à¤œ', 'à¤•à¥à¤°à¤¿à¤•à¥‡à¤Ÿ', 'à¤¸à¥à¤ªà¥‹à¤°à¥à¤Ÿà¥à¤¸', 'à¤¬à¥‰à¤²à¥€à¤µà¥à¤¡', 'à¤®à¤¨à¥‹à¤°à¤‚à¤œà¤¨', 'à¤°à¤¾à¤œà¤¨à¥€à¤¤à¤¿', 'à¤¬à¤¿à¤œà¤¨à¥‡à¤¸', 'à¤Ÿà¥‡à¤•à¥à¤¨à¥‹à¤²à¥‰à¤œà¥€', 'à¤®à¥Œà¤¸à¤®', 'à¤°à¤¾à¤œà¤•à¥‹à¤Ÿ', 'à¤¸à¥‚à¤°à¤¤', 'à¤µà¤¡à¥‹à¤¦à¤°à¤¾', 'à¤²à¤¾à¤‡à¤«à¤¸à¥à¤Ÿà¤¾à¤‡à¤²', 'à¤°à¤¾à¤·à¥à¤Ÿà¥à¤°à¥€à¤¯', 'à¤…à¤‚à¤¤à¤°à¤°à¤¾à¤·à¥à¤Ÿà¥à¤°à¥€à¤¯', 'à¤µà¤¿à¤¶à¥‡à¤·', 'à¤–à¥‡à¤²']
+        ? ['समाचार', 'गुजरात', 'लाइव', 'अहमदाबाद', 'ब्रेकिंग न्यूज़', 'क्रिकेट', 'स्पोर्ट्स', 'बॉलीवुड', 'मनोरंजन', 'राजनीति', 'बिजनेस', 'टेक्नोलॉजी', 'मौसम', 'राजकोट', 'सूरत', 'वडोदरा', 'लाइफस्टाइल', 'राष्ट्रीय', 'अंतरराष्ट्रीय', 'विशेष', 'खेल']
         : ['News', 'Gujarat', 'Live', 'Ahmedabad', 'Breaking News', 'Cricket', 'Sports', 'Bollywood', 'Entertainment', 'Politics', 'Business', 'Technology', 'Weather', 'Rajkot', 'Surat', 'Vadodara', 'Lifestyle', 'National', 'International', 'Special', 'Entertainment', 'Sports'];
 
     fallbackTags.forEach(t => otherTagsSet.add(t));
@@ -1340,7 +1298,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               </div>
             </div>
 
-            {/* Gist: àªàª• àª¨àªœàª°àª®àª¾àª‚ */}
+            {/* Gist: એક નજરમાં */}
             {gistPoints.length > 0 && (
               <div className="my-2 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
                 <div className="flex items-center gap-2 font-black text-[#B3121B] text-base mb-3 select-none">
@@ -1432,9 +1390,11 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               <figcaption>
                 <span>
                   {isTrafficArticle && language === 'gu'
-                    ? 'àª…àª®àª¦àª¾àªµàª¾àª¦àª¨àª¾ SG àª¹àª¾àªˆàªµà«‡ àªªàª° àª¨àªµà«€ àªŸà«àª°àª¾àª«àª¿àª• àª¸àª¿àª—à«àª¨àª² àªªà«àª°àª£àª¾àª²à«€.'
+                    ? 'અમદાવાદના SG હાઇવે પર નવી ટ્રાફિક સિગ્નલ પ્રણાલી.'
                     : isTrafficArticle && language === 'hi'
-                      ? 'à¤…à¤¹à¤®à¤¦à¤¾à¤¬à¤¾à¤¦ à¤•à¥‡ à¤à¤¸à¤œà¥€ à¤¹à¤¾à¤ˆà¤µà¥‡ à¤ªà¤° à¤¨à¤ˆ à¤Ÿà¥à¤°à¥ˆà¤«à¤¿à¤• à¤¸à¤‚à¤•à¥‡à¤¤ à¤ªà¥à¤°à¤£à¤¾à¤²à¥€à¥¤'
+                      ? 'अहमदाबाद के एसजी हाईवे पर नई ट्रैफिक संकेत प्रणाली।'
+                    : isTrafficArticle && language === 'hi'
+                      ? 'अहमदाबाद के एसजी हाईवे पर नई ट्रैफिक संकेत प्रणाली।'
                       : isTrafficArticle
                         ? 'New traffic signal system on SG Highway in Ahmedabad.'
                         : title}
@@ -1459,7 +1419,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               uiLabel={uiLabel}
             />
 
-            {/* Article Main Content Body â€” with "àªµàª§à« àªµàª¾àª‚àªšà«‹" (Read More) expand button */}
+              {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
             {(() => {
               const SPLIT_AT = 2;
               const splitHtml = (html: string, atPara: number): [string, string] => {
@@ -1483,6 +1443,15 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 return (
                   <div>
                     <ArticleContentBody html={formattedArticleBodyHtml} />
+
+                    {/* Full PDF Page-by-Page Document Viewer */}
+                    {hasPdfPages && pdfDocumentUrl && (
+                      <ArticlePdfPagesViewer
+                        pdfUrl={pdfDocumentUrl}
+                        language={language}
+                        title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
+                      />
+                    )}
 
                     {/* Horizontal Ad Banner placed directly after article description */}
                     <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
@@ -1522,6 +1491,15 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   ) : (
                     <div className="space-y-4 transition-all duration-500 ease-in-out">
                       <ArticleContentBody html={bottomHtml} />
+
+                      {/* Full PDF Page-by-Page Document Viewer */}
+                      {hasPdfPages && pdfDocumentUrl && (
+                        <ArticlePdfPagesViewer
+                          pdfUrl={pdfDocumentUrl}
+                          language={language}
+                          title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
+                        />
+                      )}
 
                       {/* Horizontal Ad Banner placed directly after full article description */}
                       <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />

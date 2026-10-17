@@ -1,13 +1,15 @@
 'use client';
 
 /* eslint-disable @next/next/no-html-link-for-pages */
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   BookOpen,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Menu,
   Moon,
   Search,
@@ -436,6 +438,63 @@ export default function Header() {
     return link.label;
   };
 
+  // Desktop navbar horizontal scroll arrows state
+  const navScrollRef = useRef<HTMLUListElement>(null);
+  const [canNavScrollLeft, setCanNavScrollLeft] = useState(false);
+  const [canNavScrollRight, setCanNavScrollRight] = useState(false);
+  const isGujarati = !mounted || !languageChosen || language === 'gu';
+
+  const checkNavScroll = useCallback(() => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    const hasOverflow = el.scrollWidth - el.clientWidth > 4;
+    setCanNavScrollLeft(el.scrollLeft > 4);
+    setCanNavScrollRight(hasOverflow && el.scrollWidth - el.scrollLeft - el.clientWidth > 4);
+  }, []);
+
+  useEffect(() => {
+    const el = navScrollRef.current;
+    if (!el) return;
+    checkNavScroll();
+    const t1 = setTimeout(checkNavScroll, 60);
+    const t2 = setTimeout(checkNavScroll, 300);
+
+    el.addEventListener('scroll', checkNavScroll, { passive: true });
+    window.addEventListener('resize', checkNavScroll);
+    const ro = new ResizeObserver(checkNavScroll);
+    ro.observe(el);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      el.removeEventListener('scroll', checkNavScroll);
+      window.removeEventListener('resize', checkNavScroll);
+      ro.disconnect();
+    };
+  }, [checkNavScroll, language, navLinks]);
+
+  const handleNavScrollLeft = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const el = navScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: -220, behavior: 'smooth' });
+    setTimeout(checkNavScroll, 250);
+  };
+
+  const handleNavScrollRight = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const el = navScrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: 220, behavior: 'smooth' });
+    setTimeout(checkNavScroll, 250);
+  };
+
   return (
     <>
       <header ref={headerRef} className="relative z-[60] bg-card/95">
@@ -550,7 +609,7 @@ export default function Header() {
             <Link href="/" className="group relative flex shrink-0 items-center">
               <div className="relative block h-8 sm:h-10 md:h-12 lg:h-14 w-32 sm:w-44 md:w-54 lg:w-60 overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]">
                 <Image
-                  src="/assets/gujarat-post-logo-cms.png"
+                  src="/GujaratpostFinalLogo.png"
                   alt="Gujarat Post"
                   fill
                   priority
@@ -968,9 +1027,26 @@ export default function Header() {
           aria-label="Main navigation"
         >
           <div className="mx-auto max-w-[1700px] px-1.5 sm:px-2 xl:px-3 flex items-center gap-1 xl:gap-1.5 relative">
-            {/* Main scrollable navigation list */}
-            <div className="min-w-0 max-w-full overflow-hidden">
-              <ul className="flex items-center gap-0 overflow-x-auto scrollbar-none">
+            {/* Main scrollable navigation list with Left & Right scroll arrows */}
+            <div className={`relative min-w-0 overflow-hidden flex items-center ${isGujarati ? 'flex-initial max-w-full' : 'flex-1'}`}>
+              {/* Left Scroll Arrow Button */}
+              {canNavScrollLeft && (
+                <div className="absolute left-0 top-0 bottom-0 z-20 flex items-center bg-gradient-to-r from-card via-card/90 to-transparent pr-4 pl-0.5 pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={handleNavScrollLeft}
+                    aria-label="Scroll navigation left"
+                    className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-card border border-border/70 shadow-md text-foreground/80 hover:text-accent hover:border-accent/40 active:scale-90 transition-all duration-150 cursor-pointer"
+                  >
+                    <ChevronLeft className="h-4 w-4" strokeWidth={2.5} />
+                  </button>
+                </div>
+              )}
+
+              <ul
+                ref={navScrollRef}
+                className={`flex items-center gap-0 overflow-x-auto scrollbar-none scroll-smooth ${isGujarati ? '' : 'w-full'}`}
+              >
                 {navLinks.map((link) => {
                   const active = isActive(link.href);
                   return (
@@ -1003,6 +1079,20 @@ export default function Header() {
                   );
                 })}
               </ul>
+
+              {/* Right Scroll Arrow Button */}
+              {canNavScrollRight && (
+                <div className="absolute right-0 top-0 bottom-0 z-20 flex items-center justify-end bg-gradient-to-l from-card via-card/90 to-transparent pl-4 pr-0.5 pointer-events-none">
+                  <button
+                    type="button"
+                    onClick={handleNavScrollRight}
+                    aria-label="Scroll navigation right"
+                    className="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-card border border-border/70 shadow-md text-foreground/80 hover:text-accent hover:border-accent/40 active:scale-90 transition-all duration-150 cursor-pointer"
+                  >
+                    <ChevronRight className="h-4 w-4" strokeWidth={2.5} />
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Other / અન્ય Dropdown Trigger — sits right after the last nav link (Podcast) */}
@@ -1022,7 +1112,15 @@ export default function Header() {
             >
               <button
                 type="button"
-                onClick={() => setOtherMenuOpen(!otherMenuOpen)}
+                onClick={() => {
+                  const rect = triggerRef.current?.getBoundingClientRect();
+                  const navWrapper = triggerRef.current?.closest('nav > div');
+                  const navRect = navWrapper?.getBoundingClientRect();
+                  if (rect && navRect) {
+                    setDropdownLeft(rect.left - navRect.left);
+                  }
+                  setOtherMenuOpen(!otherMenuOpen);
+                }}
                 className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
                   }`}
                 style={{ fontWeight: 800 }}

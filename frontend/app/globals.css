@@ -3040,6 +3040,25 @@ div[class*="from-red-50"]:has(.gp-pdf-card-v2) {
     max-width: 44px !important;
   }
 }
+/* Breaking Ticker Single Headline Broadcast Animations */
+@keyframes singleHeadlineEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(22px);
+    filter: blur(3px);
+  }
+  60% {
+    opacity: 0.95;
+    transform: translateY(-1.5px);
+    filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0px);
+  }
+}
 
-
-
+.headline-enter-anim {
+  animation: singleHeadlineEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}

@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink, Search, Filter, Check, Layers, ChevronDown, ChevronUp, RotateCcw, BookOpen, FileText } from 'lucide-react';
 import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache } from '@/lib/api';
 import { sanitizeImageUrl } from '@/lib/media';
 import { translateOnFly } from '@/lib/translate';
 import CustomSelect from '@/components/ui/CustomSelect';
 import RichTextArea from '@/components/ui/RichTextArea';
+import ArticlePdfPagesViewer from './ArticlePdfPagesViewer';
 
 interface ArticleFormProps {
   articleId?: string; // If present, we are in Edit mode
@@ -16,6 +17,11 @@ interface ArticleFormProps {
 interface CategoryData {
   id: string;
   name: string;
+  nameGu?: string;
+  nameHi?: string;
+  slug?: string;
+  headerType?: string;
+  displayOrder?: number;
 }
 
 interface AuthorData {
@@ -112,6 +118,36 @@ export const isDisplayOnlySectionCategory = (cat: any): boolean => {
     nameGu.includes(term) || 
     nameHi.includes(term)
   );
+};
+
+// Helper functions to categorize categories
+export const isGujaratCat = (c: CategoryData): boolean => {
+  if (!c) return false;
+  const slug = (c.slug || '').toLowerCase().trim();
+  const name = (c.name || '').toLowerCase().trim();
+  const nameGu = (c.nameGu || '').trim();
+  return slug === 'gujarat' || name === 'gujarat' || nameGu === 'ગુજરાત' || nameGu.includes('ગુજરાત');
+};
+
+export const isGujaratDistrictCat = (c: CategoryData): boolean => {
+  if (!c || isGujaratCat(c)) return false;
+  const slug = (c.slug || '').toLowerCase().trim();
+  const name = (c.name || '').toLowerCase().trim();
+  const cityList = [
+    'ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot', 'other-cities',
+    'bhavnagar', 'jamnagar', 'junagadh', 'kutch', 'anand', 'mehsana', 'morbi',
+    'bharuch', 'navsari', 'valsad', 'amreli', 'banaskantha', 'dahod', 'kheda',
+    'narmada', 'panchmahal', 'patan', 'porbandar', 'sabarkantha', 'surendranagar',
+    'tapi', 'gir somnath', 'botad', 'aravalli', 'chhota udepur', 'devbhoomi dwarka', 'mahisagar'
+  ];
+  return c.headerType === 'GUJARAT' || cityList.includes(slug) || cityList.some(ct => name === ct || name.includes(ct));
+};
+
+export const isElectionCat = (c: CategoryData): boolean => {
+  if (!c || isGujaratCat(c) || isGujaratDistrictCat(c)) return false;
+  const slug = (c.slug || '').toLowerCase();
+  const name = (c.name || '').toLowerCase();
+  return slug.includes('election') || name.includes('election') || slug.includes('poll') || name.includes('poll');
 };
 
 // Map categories to location group
@@ -345,6 +381,13 @@ interface ExtraDescriptionSlot {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [categoryId, setCategoryId] = useState('');
   const [additionalCategoryIds, setAdditionalCategoryIds] = useState<string[]>([]);
+  const [categorySearch, setCategorySearch] = useState('');
+  const [categoryFilterTab, setCategoryFilterTab] = useState<'all' | 'gujarat' | 'news' | 'elections' | 'selected'>('all');
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({
+    gujarat: false,
+    news: false,
+    elections: false,
+  });
   const [location, setLocation] = useState('');
   const [authorId, setAuthorId] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'SCHEDULED'>('DRAFT');
@@ -356,6 +399,7 @@ interface ExtraDescriptionSlot {
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [twitterUrl, setTwitterUrl] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
+  const [showPdfPages, setShowPdfPages] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
 
   // Helper: Format YouTube URL to Embed URL or ID
@@ -511,6 +555,17 @@ interface ExtraDescriptionSlot {
     else if (contentLang === 'hi') setContentHi((prev) => prev + snippet);
   };
 
+  // Helper to thoroughly purge any lingering PDF HTML markup from description text
+  const purgePdfFromText = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][\s\S]*?<\/div>(?:\s*<\/div>)?/gi, '')
+      .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div class="gp-pdf-pages-viewer"[^>]*><\/div>/gi, '')
+      .trim();
+  };
+
   // Helper to compile separate section fields into full article body
   const compileStructuredContent = (
     hl: string,
@@ -526,8 +581,9 @@ interface ExtraDescriptionSlot {
       const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 एक नजर में (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
       parts.push(`${header}\n--------------------------------------------------\n${hl.trim()}\n--------------------------------------------------`);
     }
-    if (d1Str.trim()) {
-      parts.push(d1Str.trim());
+    const cleanD1 = purgePdfFromText(d1Str);
+    if (cleanD1) {
+      parts.push(cleanD1);
     }
     // Save all gallery photos (Images 2..10) in structured content
     galleryImages.forEach((img, idx) => {
@@ -540,8 +596,9 @@ interface ExtraDescriptionSlot {
       parts.push(`> "${qT.trim()}"${citeStr}`);
     }
     extraDescList.forEach((desc) => {
-      if (desc && desc.trim()) {
-        parts.push(desc.trim());
+      const cleanDesc = purgePdfFromText(desc);
+      if (cleanDesc) {
+        parts.push(cleanDesc);
       }
     });
 
@@ -553,13 +610,34 @@ interface ExtraDescriptionSlot {
     }
 
     if (twitterUrl && twitterUrl.trim()) {
-      const guLabel = 'સત્તાવાર ટ્વીટ જોવા માટે અહી ક્લિક કરો';
-      const guBtn = 'ટ્વીટ જુઓ ↗';
+      const guLabel = lang === 'gu'
+        ? 'સત્તાવાર ટ્વીટ જોવા માટે અહીં ક્લિક કરો'
+        : lang === 'hi'
+        ? 'आधिकारिक ट्वीट देखने के लिए यहाँ क्लिक करें'
+        : 'Click to view official post on X';
+      const guBtn = lang === 'gu' ? 'ટ્વીટ જુઓ ↗' : lang === 'hi' ? 'ट्वीट देखें ↗' : 'Open Tweet ↗';
       parts.push(`<div class="gp-x-card"><div style="display:flex;align-items:center;gap:14px;min-width:0;position:relative;z-index:1"><span class="gp-x-icon">𝕏</span><div style="min-width:0"><span class="gp-x-title">View Official Post on X (Twitter)</span><span class="gp-x-sub">${guLabel}</span></div></div><a href="${twitterUrl.trim()}" target="_blank" rel="noopener noreferrer" class="gp-x-btn" style="position:relative;z-index:1"><span>${guBtn}</span></a></div>`);
     }
 
     if (pdfUrl && pdfUrl.trim()) {
-      parts.push(`<div class="gp-pdf-card"><div class="gp-pdf-inner"><div class="gp-pdf-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="gp-pdf-text"><span class="gp-pdf-title">Attached Official Document (PDF)</span><span class="gp-pdf-sub">Verified Official Document</span></div></div><a href="${pdfUrl.trim()}" target="_blank" rel="noopener noreferrer" download class="gp-pdf-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Download PDF</span></a></div>`);
+      const cleanPdf = pdfUrl.trim();
+      const showPagesAttr = showPdfPages ? 'data-show-pages="true"' : 'data-show-pages="false"';
+      const pdfTitle = lang === 'gu'
+        ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ'
+        : lang === 'hi'
+        ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़'
+        : 'Attached Official Document (PDF)';
+      const pdfSub = lang === 'gu'
+        ? 'ચકાસાયેલ સત્તાવાર સરકારી / પ્રેસ દસ્તાવેજ'
+        : lang === 'hi'
+        ? 'सत्यापित आधिकारिक दस्तावेज़'
+        : 'Verified Official Document';
+      const pdfBtn = lang === 'gu' ? 'ડાઉનલોડ PDF' : lang === 'hi' ? 'डाउनलोड पीडीएफ' : 'Download PDF';
+
+      parts.push(`<div class="gp-pdf-card" ${showPagesAttr} data-pdf-url="${cleanPdf}"><div class="gp-pdf-inner"><div class="gp-pdf-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="gp-pdf-text"><span class="gp-pdf-title">${pdfTitle}</span><span class="gp-pdf-sub">${pdfSub}</span></div></div><a href="${cleanPdf}" target="_blank" rel="noopener noreferrer" download class="gp-pdf-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${pdfBtn}</span></a></div>`);
+      if (showPdfPages) {
+        parts.push(`<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`);
+      }
     }
 
     return parts.join('\n\n');
@@ -720,7 +798,17 @@ interface ExtraDescriptionSlot {
 
         if (catRes.ok) {
           const rawCats: any[] = catJson.data?.categories || catJson.data || [];
-          setCategories(rawCats.filter((c) => !isDisplayOnlySectionCategory(c)));
+          const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c));
+          setCategories(filtered);
+
+          if (!isEditMode) {
+            setCategoryId((prev) => {
+              if (prev) return prev;
+              const guj = filtered.find(isGujaratCat);
+              return guj ? guj.id : (filtered[0]?.id || '');
+            });
+            setLocation((prev) => prev || 'Gujarat');
+          }
         }
         if (autRes.ok) setAuthors(autJson.data?.authors || autJson.data || []);
 
@@ -752,9 +840,10 @@ interface ExtraDescriptionSlot {
     let extractedYt = '';
     let extractedTw = '';
     let extractedPdfUrl = '';
+    let hasPdfPages = false;
     const extractedImgs: string[] = [];
 
-    if (!raw) return { hl, d1Str, qT, qC, d2Str, extractedImgs, extractedYt, extractedTw, extractedPdfUrl };
+    if (!raw) return { hl, d1Str, qT, qC, d2Str, extractedImgs, extractedYt, extractedTw, extractedPdfUrl, hasPdfPages };
 
     // Extract embed URLs before parsing paragraphs
     const ytMatch =
@@ -774,6 +863,10 @@ interface ExtraDescriptionSlot {
       raw.match(/href=["']([^"']+)["'][^>]*download/i);
     if (pdfMatch && pdfMatch[1]) extractedPdfUrl = pdfMatch[1];
 
+    if (raw.includes('data-show-pages="true"') || raw.includes('gp-pdf-pages-viewer')) {
+      hasPdfPages = true;
+    }
+
     const galleryMatches = [...raw.matchAll(/!\[Gallery Image \d+\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi)];
     for (const match of galleryMatches) {
       if (match[1]) {
@@ -781,6 +874,15 @@ interface ExtraDescriptionSlot {
         raw = raw.replace(match[0], '');
       }
     }
+
+    // Strip embed blocks from raw so they NEVER contaminate description paragraphs
+    raw = raw
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][\s\S]*?<\/div>(?:\s*<\/div>)?/gi, '')
+      .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div class="gp-pdf-pages-viewer"[^>]*><\/div>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*gp-x-card[^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>/gi, '');
 
     const paragraphs = raw.split(/\n\n+/);
     const d1Paras: string[] = [];
@@ -829,6 +931,9 @@ interface ExtraDescriptionSlot {
         const isEmbedBlock =
           trimmed.includes('<iframe') ||
           trimmed.includes('gp-pdf-card') ||
+          trimmed.includes('gp-pdf-pages-viewer') ||
+          trimmed.includes('data-pdf-url') ||
+          trimmed.includes('data-show-pages') ||
           trimmed.includes('gp-x-card') ||
           trimmed.includes('Attached Official Document') ||
           trimmed.includes('View Post on X') ||
@@ -836,10 +941,13 @@ interface ExtraDescriptionSlot {
           trimmed.includes('Download PDF');
 
         if (!isEmbedBlock) {
-          if (!pastQuote) {
-            d1Paras.push(trimmed);
-          } else {
-            d2Paras.push(trimmed);
+          const cleanP = purgePdfFromText(trimmed);
+          if (cleanP) {
+            if (!pastQuote) {
+              d1Paras.push(cleanP);
+            } else {
+              d2Paras.push(cleanP);
+            }
           }
         }
       }
@@ -848,10 +956,10 @@ interface ExtraDescriptionSlot {
     d1Str = d1Paras.join('\n\n');
 
     if (!d1Str && !hl && !qT && d2Paras.length === 0) {
-      d1Str = raw.trim();
+      d1Str = purgePdfFromText(raw.trim());
     }
 
-    return { hl, d1Str, qT, qC, extractedDescs: d2Paras, extractedImgs, extractedYt, extractedTw, extractedPdfUrl };
+    return { hl, d1Str, qT, qC, extractedDescs: d2Paras, extractedImgs, extractedYt, extractedTw, extractedPdfUrl, hasPdfPages };
   };
 
   // Load article values if in edit mode
@@ -998,6 +1106,14 @@ interface ExtraDescriptionSlot {
         setYoutubeUrl(art.youtubeUrl || art.youtube || parsedEn.extractedYt || parsedGu.extractedYt || parsedHi.extractedYt || '');
         setTwitterUrl(art.twitterUrl || art.twitter || parsedEn.extractedTw || parsedGu.extractedTw || parsedHi.extractedTw || '');
         setPdfUrl(art.pdfUrl || art.pdf || parsedEn.extractedPdfUrl || parsedGu.extractedPdfUrl || parsedHi.extractedPdfUrl || '');
+        setShowPdfPages(
+          Boolean(
+            (art as any).showPdfPages ||
+            parsedEn.hasPdfPages ||
+            parsedGu.hasPdfPages ||
+            parsedHi.hasPdfPages
+          )
+        );
         setCategoryId(art.categoryId || art.category?.id || '');
         setLocation(art.location || '');
         setAuthorId(art.authorId || art.author?.id || '');
@@ -1242,6 +1358,7 @@ interface ExtraDescriptionSlot {
       youtubeUrl: youtubeUrl.trim() || undefined,
       twitterUrl: twitterUrl.trim() || undefined,
       pdfUrl: pdfUrl.trim() || undefined,
+      showPdfPages: Boolean(pdfUrl.trim() && showPdfPages),
       location: location || null,
       authorId,
       status,
@@ -1539,6 +1656,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
   const handleCategorySelect = (val: string) => {
     setCategoryId(val);
+    setAdditionalCategoryIds((prev) => prev.filter((id) => id !== val));
     const selectedCat = categories.find((c) => c.id === val);
     let resolvedLoc = location;
     if (selectedCat) {
@@ -1573,41 +1691,77 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
     generateSeoWithGeminiAI(currentTitle, val, resolvedLoc, true);
   };
 
+  const sortedCategories = useMemo(() => {
+    const valid = categories.filter((c) => !isDisplayOnlySectionCategory(c));
+
+    // 1. Gujarat State (Always #1)
+    const gujaratCats = valid.filter(isGujaratCat);
+
+    // 2. All State Cities / Districts of Gujarat (Ordered logically: Ahmedabad, Gandhinagar, Surat, Vadodara, Rajkot, Other Cities, etc.)
+    const districtOrder = [
+      'ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot', 'other-cities',
+      'bhavnagar', 'jamnagar', 'junagadh', 'kutch', 'anand', 'mehsana', 'morbi'
+    ];
+    const districtCats = valid.filter(isGujaratDistrictCat).sort((a, b) => {
+      const slugA = (a.slug || a.name || '').toLowerCase().trim();
+      const slugB = (b.slug || b.name || '').toLowerCase().trim();
+      const idxA = districtOrder.indexOf(slugA);
+      const idxB = districtOrder.indexOf(slugB);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    // 3. Main News Topics
+    const newsPriority = [
+      'national', 'world', 'politics', 'crime', 'business', 'sports',
+      'health', 'entertainment', 'technology', 'education', 'weather',
+      'varsad', 'rainfall', 'lifestyle', 'fact-check', 'editorial',
+      'trending', 'latest-news', 'breaking-news', 'jobs', 'gold-silver'
+    ];
+    const mainNewsCats = valid.filter(c => !isGujaratCat(c) && !isGujaratDistrictCat(c) && !isElectionCat(c)).sort((a, b) => {
+      const slugA = (a.slug || a.name || '').toLowerCase().trim();
+      const slugB = (b.slug || b.name || '').toLowerCase().trim();
+      const idxA = newsPriority.indexOf(slugA);
+      const idxB = newsPriority.indexOf(slugB);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    // 4. Election & Special Categories
+    const electionCats = valid.filter(isElectionCat).sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      gujaratGroup: [...gujaratCats, ...districtCats],
+      gujaratOnly: gujaratCats,
+      districtsOnly: districtCats,
+      mainNewsGroup: mainNewsCats,
+      electionGroup: electionCats,
+      allSorted: [...gujaratCats, ...districtCats, ...mainNewsCats, ...electionCats],
+    };
+  }, [categories]);
 
   const categoryOptions = useMemo(() => {
-    const topTopics = [
-      'gujarat',
-      'politics',
-      'business',
-      'crime',
-      'education',
-      'entertainment',
-      'health',
-      'sports',
-      'fact check',
-      'lifestyle',
-      'technology',
-      'weather',
-      'world',
-    ];
+    return sortedCategories.allSorted.map((cat) => ({
+      value: cat.id,
+      label: cat.nameGu && cat.nameGu !== cat.name ? `${cat.name} (${cat.nameGu})` : cat.name,
+    }));
+  }, [sortedCategories]);
 
-    const getPriority = (name: string) => {
-      const lower = name.toLowerCase().trim();
-      const idx = topTopics.indexOf(lower);
-      if (idx !== -1) return idx;
-      return 999;
-    };
+  // Bulletproof Selected Category IDs & Count
+  const selectedCatIds = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...(categoryId ? [categoryId] : []),
+        ...additionalCategoryIds.filter(Boolean),
+      ])
+    );
+  }, [categoryId, additionalCategoryIds]);
 
-    return [...categories]
-      .filter((c) => !isDisplayOnlySectionCategory(c))
-      .sort((a, b) => {
-        const pA = getPriority(a.name);
-        const pB = getPriority(b.name);
-        if (pA !== pB) return pA - pB;
-        return a.name.localeCompare(b.name);
-      })
-      .map((cat) => ({ value: cat.id, label: cat.name }));
-  }, [categories]);
+  const selectedCount = selectedCatIds.length;
 
   if (fetching) {
     return (
@@ -1850,68 +2004,533 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           </div>
         </div>
 
-        {/* 🏷️ MULTIPLE CATEGORY CHECKBOX GRID (Like Old Website) */}
-        <div className="rounded-2xl border border-gray-400 bg-[#ebf5ea] p-4 dark:border-zinc-700 dark:bg-emerald-950/20 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
-              <span>Category (*) [Select Multiple News Sections]</span>
-              <span className="text-xs font-bold bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400 px-2.5 py-0.5 rounded-full">
-                {1 + additionalCategoryIds.filter(id => id !== categoryId).length} Selected
-              </span>
-            </label>
-            <span className="text-xs text-gray-600 dark:text-zinc-400 font-medium">
-              Check all news sections where this article should appear.
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 pt-1">
-            {categories.filter((c) => !isDisplayOnlySectionCategory(c)).map((cat) => {
-              const isPrimary = cat.id === categoryId;
-              const isChecked = isPrimary || additionalCategoryIds.includes(cat.id);
-
-              return (
-                <label
-                  key={cat.id}
-                  title={cat.name}
-                  className={`group/cat relative flex items-center gap-2 rounded-xl border p-2.5 text-sm font-medium transition-all cursor-pointer select-none ${
-                    isChecked
-                      ? 'border-red-500 bg-red-50/80 text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300 shadow-2xs'
-                      : 'border-gray-400 bg-white text-gray-900 hover:border-gray-500 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-zinc-800'
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={(e) => {
-                      if (isPrimary) {
-                        // If unchecking primary, don't allow unchecking main category directly
-                        return;
-                      }
-                      if (e.target.checked) {
-                        setAdditionalCategoryIds((prev) => Array.from(new Set([...prev, cat.id])));
-                      } else {
-                        setAdditionalCategoryIds((prev) => prev.filter((id) => id !== cat.id));
-                      }
-                    }}
-                    className="h-4 w-4 shrink-0 rounded border-gray-400 text-red-600 focus:ring-red-500 cursor-pointer"
-                  />
-                  <span className="truncate min-w-0 flex-1">{cat.name}</span>
-                  {isPrimary && (
-                    <span className="ml-auto shrink-0 text-[9px] font-black uppercase tracking-wider bg-red-600 text-white px-1.5 py-0.5 rounded">
-                      Main
+        {/* 🏷️ MULTIPLE CATEGORY SELECTOR (Modern UI/UX with Active Preview Tray, Accordions & Polished Cards) */}
+        <div className="rounded-2xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden transition-all">
+          {/* 1. Header Bar: Title, Status Badge, Explanatory Hint & Quick Actions */}
+          <div className="border-b border-zinc-100 bg-gradient-to-r from-emerald-50/80 via-teal-50/30 to-white px-5 py-4 dark:border-zinc-800 dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+                    <Layers className="h-4 w-4" />
+                  </div>
+                  <label className="text-base font-bold text-zinc-900 dark:text-zinc-100">
+                    Publish Categories & News Sections
+                  </label>
+                  <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                    (સમાચાર વિભાગો અને શ્રેણીઓ)
+                  </span>
+                  <span className="text-red-500 font-bold">*</span>
+                  {selectedCount === 0 ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
+                      <AlertCircle className="h-3 w-3" /> Select at least 1 section
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-black text-white shadow-xs">
+                      <Check className="h-3.5 w-3.5" />
+                      {selectedCount} {selectedCount === 1 ? 'Section' : 'Sections'} Selected
                     </span>
                   )}
+                </div>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  The <span className="font-semibold text-emerald-700 dark:text-emerald-400">Primary (Main)</span> category sets your article's canonical URL & main section. Extra checked sections cross-publish this article across multiple topic feeds.
+                </p>
+              </div>
 
-                  {/* Floating tooltip showing full name on hover without increasing box size */}
-                  <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover/cat:flex flex-col items-center z-50">
-                    <div className="whitespace-nowrap rounded-lg bg-zinc-900 px-2.5 py-1 text-[11px] font-bold text-white shadow-xl dark:bg-zinc-100 dark:text-zinc-900">
-                      {cat.name}
-                    </div>
-                    <div className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900 dark:border-t-zinc-100" />
+              {/* Quick Helper Actions */}
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const guj = categories.find(isGujaratCat);
+                    if (guj) {
+                      handleCategorySelect(guj.id);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-800 bg-emerald-100/80 hover:bg-emerald-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/70"
+                  title="Quickly set Gujarat as the Primary Category"
+                >
+                  <span>📍 Quick: Gujarat</span>
+                </button>
+                {additionalCategoryIds.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setAdditionalCategoryIds([])}
+                    className="text-xs font-semibold text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-400 px-2 py-1.5 transition-colors cursor-pointer"
+                    title="Remove all additional cross-post categories"
+                  >
+                    Clear Extras
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 2. Active Selections Quick Tray (Visible whenever at least 1 category is checked) */}
+          {selectedCount > 0 && (
+            <div className="bg-emerald-50/40 dark:bg-emerald-950/15 border-b border-zinc-100 dark:border-zinc-800/80 px-5 py-3">
+              <div className="flex items-center gap-2 flex-wrap text-xs">
+                <span className="font-bold text-zinc-600 dark:text-zinc-400 shrink-0 flex items-center gap-1">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                  Active Selections:
+                </span>
+
+                {/* Primary Category Chip */}
+                {(() => {
+                  const primaryCat = categories.find((c) => c.id === categoryId);
+                  if (!primaryCat) return null;
+                  return (
+                    <span
+                      key={primaryCat.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-700 text-white font-bold px-3 py-1 shadow-xs"
+                      title="Primary Category (Sets Article URL)"
+                    >
+                      <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1.5 py-0.2 rounded">Primary</span>
+                      <span>{primaryCat.name}</span>
+                      {primaryCat.nameGu && primaryCat.nameGu !== primaryCat.name && (
+                        <span className="text-[11px] opacity-85 font-normal">({primaryCat.nameGu})</span>
+                      )}
+                    </span>
+                  );
+                })()}
+
+                {/* Additional Category Chips */}
+                {additionalCategoryIds.map((addId) => {
+                  const addCat = categories.find((c) => c.id === addId);
+                  if (!addCat || addCat.id === categoryId) return null;
+                  return (
+                    <span
+                      key={addCat.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-white dark:bg-zinc-800 border border-emerald-300 dark:border-zinc-700 font-semibold text-zinc-800 dark:text-zinc-200 px-2.5 py-1 shadow-2xs"
+                    >
+                      <span className="text-[10px] uppercase font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1 rounded">+Extra</span>
+                      <span>{addCat.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setAdditionalCategoryIds((prev) => prev.filter((id) => id !== addId))}
+                        className="text-zinc-400 hover:text-red-600 dark:hover:text-red-400 transition-colors cursor-pointer p-0.5 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-700"
+                        title="Remove category"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 3. Search Bar & Quick Filter Tabs Toolbar */}
+          <div className="p-4 sm:p-5 bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 space-y-3">
+            <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3">
+              {/* Live Search Input with generous width */}
+              <div className="relative flex-1 min-w-[280px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+                <input
+                  type="text"
+                  value={categorySearch}
+                  onChange={(e) => setCategorySearch(e.target.value)}
+                  placeholder="Search category (e.g. Gujarat, Surat, Politics, Crime, Sports, અમદાવાદ)..."
+                  className="w-full h-10.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 pl-10 pr-9 text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-xs"
+                />
+                {categorySearch && (
+                  <button
+                    type="button"
+                    onClick={() => setCategorySearch('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center rounded-full bg-zinc-200 hover:bg-zinc-300 text-zinc-600 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-zinc-300 cursor-pointer transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Filter Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilterTab('all')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    categoryFilterTab === 'all'
+                      ? 'bg-zinc-900 text-white shadow-xs dark:bg-white dark:text-zinc-900'
+                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                  }`}
+                >
+                  <span>All</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    categoryFilterTab === 'all'
+                      ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900'
+                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
+                  }`}>
+                    {sortedCategories.allSorted.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilterTab('gujarat')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    categoryFilterTab === 'gujarat'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'bg-white border border-zinc-200 text-emerald-800 hover:bg-emerald-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-emerald-400 dark:hover:bg-zinc-750'
+                  }`}
+                >
+                  <span>📍 Gujarat & Cities</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    categoryFilterTab === 'gujarat' ? 'bg-white/20 text-white' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                  }`}>
+                    {sortedCategories.gujaratGroup.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilterTab('news')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    categoryFilterTab === 'news'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                  }`}
+                >
+                  <span>📰 Main News</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    categoryFilterTab === 'news' ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
+                  }`}>
+                    {sortedCategories.mainNewsGroup.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilterTab('elections')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    categoryFilterTab === 'elections'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                  }`}
+                >
+                  <span>🗳️ Elections</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                    categoryFilterTab === 'elections' ? 'bg-white/20 text-white' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
+                  }`}>
+                    {sortedCategories.electionGroup.length}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setCategoryFilterTab('selected')}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
+                    categoryFilterTab === 'selected'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'bg-emerald-50/70 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
+                  }`}
+                >
+                  <span>✓ Selected</span>
+                  <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
+                    categoryFilterTab === 'selected'
+                      ? 'bg-white text-emerald-700'
+                      : 'bg-emerald-600 text-white'
+                  }`}>
+                    {selectedCount}
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Category Grid Content */}
+          <div className="p-4 sm:p-5">
+            {(() => {
+              const matchesSearch = (cat: CategoryData) => {
+                if (!categorySearch.trim()) return true;
+                const q = categorySearch.trim().toLowerCase();
+                const name = (cat.name || '').toLowerCase();
+                const nameGu = (cat.nameGu || '').toLowerCase();
+                const nameHi = (cat.nameHi || '').toLowerCase();
+                const slug = (cat.slug || '').toLowerCase();
+                return name.includes(q) || nameGu.includes(q) || nameHi.includes(q) || slug.includes(q);
+              };
+
+              const isSelected = (cat: CategoryData) => cat.id === categoryId || additionalCategoryIds.includes(cat.id);
+
+              const gujaratList = sortedCategories.gujaratGroup
+                .filter(matchesSearch)
+                .filter((c) => categoryFilterTab === 'all' || categoryFilterTab === 'gujarat' || (categoryFilterTab === 'selected' && isSelected(c)));
+
+              const mainNewsList = sortedCategories.mainNewsGroup
+                .filter(matchesSearch)
+                .filter((c) => categoryFilterTab === 'all' || categoryFilterTab === 'news' || (categoryFilterTab === 'selected' && isSelected(c)));
+
+              const electionList = sortedCategories.electionGroup
+                .filter(matchesSearch)
+                .filter((c) => categoryFilterTab === 'all' || categoryFilterTab === 'elections' || (categoryFilterTab === 'selected' && isSelected(c)));
+
+              const totalMatches = gujaratList.length + mainNewsList.length + electionList.length;
+
+              if (totalMatches === 0) {
+                return (
+                  <div className="py-12 text-center text-sm font-semibold text-zinc-500 dark:text-zinc-400 bg-zinc-50 dark:bg-zinc-800/40 rounded-xl border border-dashed border-zinc-200 dark:border-zinc-700">
+                    {categoryFilterTab === 'selected' ? (
+                      <div className="space-y-2">
+                        <div className="h-10 w-10 mx-auto rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-zinc-400">
+                          <CheckCircle2 className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">No categories selected yet</p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 max-w-sm mx-auto">
+                          Please check at least one category to assign where your article appears on the website.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => { setCategorySearch(''); setCategoryFilterTab('all'); }}
+                          className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition-colors shadow-xs cursor-pointer"
+                        >
+                          Browse All Categories
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="h-10 w-10 mx-auto rounded-full bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center text-zinc-400">
+                          <Search className="h-5 w-5" />
+                        </div>
+                        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                          No categories found matching &quot;{categorySearch}&quot;
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => { setCategorySearch(''); setCategoryFilterTab('all'); }}
+                          className="mt-2 text-xs font-bold text-emerald-700 hover:underline dark:text-emerald-400 cursor-pointer"
+                        >
+                          Clear search and show all categories
+                        </button>
+                      </div>
+                    )}
                   </div>
-                </label>
+                );
+              }
+
+              // Card Renderer with Sleek Design, Custom Check Indicator, and Clear Typography
+              const renderCategoryCard = (cat: CategoryData, isSpecialGujaratState = false) => {
+                const isPrimary = cat.id === categoryId;
+                const isChecked = isPrimary || additionalCategoryIds.includes(cat.id);
+
+                return (
+                  <div
+                    key={cat.id}
+                    onClick={() => {
+                      if (!isChecked) {
+                        if (!categoryId) {
+                          handleCategorySelect(cat.id);
+                        } else {
+                          setAdditionalCategoryIds((prev) => Array.from(new Set([...prev, cat.id])));
+                        }
+                      } else {
+                        // Unchecking
+                        if (isPrimary) {
+                          if (additionalCategoryIds.length > 0) {
+                            const nextPrimary = additionalCategoryIds[0];
+                            setCategoryId(nextPrimary);
+                            setAdditionalCategoryIds((prev) => prev.filter((id) => id !== nextPrimary));
+                          } else {
+                            setCategoryId('');
+                          }
+                        } else {
+                          setAdditionalCategoryIds((prev) => prev.filter((id) => id !== cat.id));
+                        }
+                      }
+                    }}
+                    className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                      isPrimary
+                        ? 'border-emerald-500 bg-emerald-50/80 text-emerald-950 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100 shadow-xs ring-1 ring-emerald-500/30'
+                        : isChecked
+                          ? 'border-blue-400 bg-blue-50/70 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-100 shadow-xs ring-1 ring-blue-400/30'
+                          : isSpecialGujaratState
+                            ? 'border-emerald-200/90 bg-emerald-50/30 text-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/70 dark:border-emerald-900/50 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-emerald-700 shadow-2xs'
+                            : 'border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-700 dark:hover:bg-zinc-850 shadow-2xs'
+                    }`}
+                  >
+                    {/* Custom Styled Check Indicator */}
+                    <div className="pt-0.5 shrink-0">
+                      <div
+                        className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
+                          isPrimary
+                            ? 'bg-emerald-600 text-white shadow-2xs'
+                            : isChecked
+                              ? 'bg-blue-600 text-white shadow-2xs'
+                              : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-emerald-500'
+                        }`}
+                      >
+                        {isChecked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                      </div>
+                    </div>
+
+                    {/* Category Name & Badges */}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <span
+                          className={`text-[13.5px] font-bold leading-snug break-words ${
+                            isPrimary
+                              ? 'text-emerald-900 dark:text-emerald-200'
+                              : isChecked
+                                ? 'text-blue-900 dark:text-blue-200'
+                                : 'text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300'
+                          }`}
+                        >
+                          {cat.name}
+                        </span>
+
+                        {/* Badges */}
+                        <div className="shrink-0 flex items-center gap-1">
+                          {isPrimary ? (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                              ★ Primary
+                            </span>
+                          ) : isChecked ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (categoryId && categoryId !== cat.id) {
+                                  setAdditionalCategoryIds((prev) => Array.from(new Set([...prev.filter((id) => id !== cat.id), categoryId])));
+                                }
+                                setCategoryId(cat.id);
+                              }}
+                              className="text-[9px] font-bold uppercase tracking-wider bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-1.5 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-colors cursor-pointer"
+                              title="Set as the Primary Canonical Category"
+                            >
+                              Set Main
+                            </button>
+                          ) : isSpecialGujaratState ? (
+                            <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded shadow-2xs">
+                              State
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {/* Gujarati Script Subtitle */}
+                      {cat.nameGu && cat.nameGu !== cat.name && (
+                        <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
+                          {cat.nameGu}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              };
+
+              return (
+                <div className="space-y-6">
+                  {/* SECTION 1: GUJARAT & CITIES / DISTRICTS */}
+                  {gujaratList.length > 0 && (
+                    <div className="space-y-3">
+                      <div
+                        onClick={() => setCollapsedSections((p) => ({ ...p, gujarat: !p.gujarat }))}
+                        className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-bold">
+                            📍
+                          </div>
+                          <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 group-hover/sec:text-emerald-700 dark:group-hover/sec:text-emerald-300 transition-colors">
+                            Gujarat & State Cities / Districts (ગુજરાત અને શહેરો / જિલ્લાઓ)
+                          </span>
+                          <span className="text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full">
+                            {gujaratList.length}
+                          </span>
+                          {gujaratList.some(isSelected) && (
+                            <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.2 rounded-full">
+                              ✓ {gujaratList.filter(isSelected).length} selected
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-zinc-400 group-hover/sec:text-zinc-700 dark:group-hover/sec:text-zinc-200">
+                          {collapsedSections.gujarat ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                        </div>
+                      </div>
+
+                      {!collapsedSections.gujarat && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                          {gujaratList.map((cat) => renderCategoryCard(cat, isGujaratCat(cat)))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SECTION 2: MAIN NEWS SECTIONS */}
+                  {mainNewsList.length > 0 && (
+                    <div className="space-y-3">
+                      <div
+                        onClick={() => setCollapsedSections((p) => ({ ...p, news: !p.news }))}
+                        className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-xs font-bold">
+                            📰
+                          </div>
+                          <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 group-hover/sec:text-blue-700 dark:group-hover/sec:text-blue-300 transition-colors">
+                            Main News Sections (મુખ્ય સમાચાર વિભાગો)
+                          </span>
+                          <span className="text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                            {mainNewsList.length}
+                          </span>
+                          {mainNewsList.some(isSelected) && (
+                            <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.2 rounded-full">
+                              ✓ {mainNewsList.filter(isSelected).length} selected
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-zinc-400 group-hover/sec:text-zinc-700 dark:group-hover/sec:text-zinc-200">
+                          {collapsedSections.news ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                        </div>
+                      </div>
+
+                      {!collapsedSections.news && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                          {mainNewsList.map((cat) => renderCategoryCard(cat, false))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* SECTION 3: ELECTIONS & SPECIAL TOPICS */}
+                  {electionList.length > 0 && (
+                    <div className="space-y-3">
+                      <div
+                        onClick={() => setCollapsedSections((p) => ({ ...p, elections: !p.elections }))}
+                        className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 text-xs font-bold">
+                            🗳️
+                          </div>
+                          <span className="text-sm font-extrabold text-zinc-900 dark:text-zinc-100 group-hover/sec:text-purple-700 dark:group-hover/sec:text-purple-300 transition-colors">
+                            Elections & Special Topics (ચૂંટણી અને વિશેષ વિષયો)
+                          </span>
+                          <span className="text-xs font-bold bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 px-2 py-0.5 rounded-full">
+                            {electionList.length}
+                          </span>
+                          {electionList.some(isSelected) && (
+                            <span className="text-[10px] font-bold bg-purple-600 text-white px-1.5 py-0.2 rounded-full">
+                              ✓ {electionList.filter(isSelected).length} selected
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-zinc-400 group-hover/sec:text-zinc-700 dark:group-hover/sec:text-zinc-200">
+                          {collapsedSections.elections ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                        </div>
+                      </div>
+
+                      {!collapsedSections.elections && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                          {electionList.map((cat) => renderCategoryCard(cat, false))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               );
-            })}
+            })()}
           </div>
         </div>
 
@@ -2511,26 +3130,35 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             </div>
 
             {/* PDF File / Attachment */}
-            <div className="md:col-span-3 lg:col-span-1">
+            <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
                 <span className="text-red-500">📄</span> PDF Document File / URL
               </label>
 
               {pdfUrl && pdfUrl.trim() ? (
-                <div className="rounded-xl border border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 p-3 space-y-2">
-                  <div className="flex items-center gap-2 text-xs font-black text-emerald-700 dark:text-emerald-400">
-                    <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                    <span>PDF Document Attached & Ready!</span>
+                <div className="flex items-center justify-between gap-2.5 rounded-xl border border-emerald-500/50 bg-emerald-50/70 dark:border-emerald-800/60 dark:bg-emerald-950/20 px-3.5 py-2.5 shadow-2xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white shadow-xs">
+                      <FileText className="h-4.5 w-4.5" />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-emerald-950 dark:text-emerald-200 truncate font-mono" title={pdfUrl}>
+                        {pdfUrl.split('/').pop()?.split('?')[0] || 'document.pdf'}
+                      </p>
+                      <p className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3" />
+                        <span>Attached & Ready</span>
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="text-xs font-mono text-gray-700 dark:text-zinc-300 truncate bg-white dark:bg-zinc-900 border border-gray-400 dark:border-zinc-700 px-2.5 py-1.5 rounded-lg">
-                    {pdfUrl}
-                  </div>
-
-                  <div className="flex items-center gap-2 pt-1">
-                    <label className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 px-3 py-1.5 text-xs font-black hover:bg-zinc-800 transition cursor-pointer shadow-xs">
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <label
+                      className="inline-flex items-center gap-1 rounded-lg bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 px-2.5 py-1.5 text-xs font-bold cursor-pointer transition-all shadow-xs"
+                      title="Replace PDF file"
+                    >
                       {uploadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                      <span>{uploadingPdf ? 'Uploading...' : 'Re-upload PDF'}</span>
+                      <span>{uploadingPdf ? '...' : 'Change'}</span>
                       <input
                         type="file"
                         accept=".pdf,application/pdf"
@@ -2541,10 +3169,25 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                     </label>
                     <button
                       type="button"
-                      onClick={() => setPdfUrl('')}
-                      className="px-3 py-1.5 rounded-lg border border-red-400 bg-red-50 text-red-600 hover:bg-red-100 text-xs font-black transition cursor-pointer"
+                      onClick={() => {
+                        setPdfUrl('');
+                        setShowPdfPages(false);
+                        setDesc1((p) => purgePdfFromText(p));
+                        setDesc1Gu((p) => purgePdfFromText(p));
+                        setDesc1Hi((p) => purgePdfFromText(p));
+                        setExtraDescriptions((prev) =>
+                          prev.map((item) => ({
+                            ...item,
+                            en: purgePdfFromText(item.en),
+                            gu: purgePdfFromText(item.gu),
+                            hi: purgePdfFromText(item.hi),
+                          }))
+                        );
+                      }}
+                      className="rounded-lg p-1.5 text-red-500 hover:bg-red-100 hover:text-red-700 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                      title="Remove PDF document"
                     >
-                      Remove
+                      <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
                 </div>
@@ -2567,7 +3210,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                       value={pdfUrl}
                       onChange={(e) => setPdfUrl(e.target.value)}
                       placeholder="https://.../document.pdf or /uploads/..."
-                      className="w-full rounded-xl border border-gray-400 bg-white px-3 py-2 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
+                      className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-3 py-2.5 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
                     />
                   </div>
                   <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Upload PDF file from computer or enter URL.</p>
@@ -2575,6 +3218,57 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               )}
             </div>
           </div>
+
+          {/* Full-Width PDF Page-by-Page Document Reader Toggle Banner */}
+          {pdfUrl && pdfUrl.trim() && (
+            <div className={`rounded-xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${
+              showPdfPages
+                ? 'border-blue-300 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 dark:border-blue-800/80 dark:from-blue-950/40 dark:via-zinc-900 dark:to-blue-950/40 ring-1 ring-blue-500/20'
+                : 'border-gray-300 bg-zinc-50/70 dark:border-zinc-700/80 dark:bg-zinc-950/40'
+            }`}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors shadow-xs ${
+                    showPdfPages
+                      ? 'bg-blue-600 text-white shadow-blue-600/30'
+                      : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                  }`}>
+                    <BookOpen className="h-5 w-5 stroke-[2.2]" />
+                  </div>
+
+                  <div className="space-y-0.5 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-extrabold text-slate-900 dark:text-white">
+                        Show Full PDF Page-by-Page in Article
+                      </span>
+                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
+                        (આર્ટિકલના અંતે આખું PDF પાનાવાર દર્શાવો)
+                      </span>
+                      {showPdfPages && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                          ✓ Reader Active
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      Displays every page of the document sequentially like images at the end of the article, allowing readers to read the full document directly without downloading.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Modern Switch Toggle */}
+                <label className="relative inline-flex items-center cursor-pointer shrink-0 self-end sm:self-center">
+                  <input
+                    type="checkbox"
+                    checked={showPdfPages}
+                    onChange={(e) => setShowPdfPages(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-12 h-6.5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5.5 after:w-5.5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
+                </label>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* LINE 7: SEO Details & Publication Status */}
@@ -3030,21 +3724,29 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
               {/* PDF Document Attachment Preview */}
               {pdfUrl && pdfUrl.trim() && (
-                <div className="gp-pdf-card my-4">
-                  <div className="gp-pdf-inner">
-                    <div className="gp-pdf-icon-wrap">
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                showPdfPages ? (
+                  <ArticlePdfPagesViewer
+                    pdfUrl={pdfUrl}
+                    title="Attached Official Document (Live Preview)"
+                    language={articleLanguage}
+                  />
+                ) : (
+                  <div className="gp-pdf-card my-4">
+                    <div className="gp-pdf-inner">
+                      <div className="gp-pdf-icon-wrap">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+                      </div>
+                      <div className="gp-pdf-text">
+                        <span className="gp-pdf-title">Attached Official Document (PDF)</span>
+                        <span className="gp-pdf-sub">Verified Official Document</span>
+                      </div>
                     </div>
-                    <div className="gp-pdf-text">
-                      <span className="gp-pdf-title">Attached Official Document (PDF)</span>
-                      <span className="gp-pdf-sub">Verified Official Document</span>
-                    </div>
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" download className="gp-pdf-btn">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                      <span>Download PDF</span>
+                    </a>
                   </div>
-                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer" download className="gp-pdf-btn">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                    <span>Download PDF</span>
-                  </a>
-                </div>
+                )
               )}
 
             </div>

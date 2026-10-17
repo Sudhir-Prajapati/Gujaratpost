@@ -1319,35 +1319,91 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
       }).catch(() => null),
     ]);
 
-    const tickerLabel = heroSettingRow?.tickerLabel || null;
+    let rawLabel = heroSettingRow?.tickerLabel || null;
+    let tickerLabel = rawLabel;
+    let tickerMode = 'scroll';
+    let tickerSpeed = 5000;
+    let selectedArticleIds: string[] = [];
 
-    const breakingArticles = await prisma.post.findMany({
-      where: { isBreaking: true, status: 'PUBLISHED' },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-      select: {
-        id: true,
-        title: true,
-        titleGu: true,
-        titleHi: true,
-        slug: true,
-      },
-    });
+    if (rawLabel && typeof rawLabel === 'string' && rawLabel.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(rawLabel);
+        if (parsed && typeof parsed === 'object') {
+          tickerLabel = parsed.text || parsed.gu || parsed.en || rawLabel;
+          tickerMode = parsed.mode === 'single' ? 'single' : 'scroll';
+          if (parsed.speed) tickerSpeed = Number(parsed.speed) || 5000;
+          if (Array.isArray(parsed.articleIds)) {
+            selectedArticleIds = parsed.articleIds.filter((id: any) => typeof id === 'string' && id.trim());
+          }
+        }
+      } catch {}
+    }
 
-    const articleTickers = breakingArticles.map((a) => ({
-      id: a.id,
-      en: a.title,
-      gu: a.titleGu || a.title,
-      hi: a.titleHi || a.title,
-      title: a.title,
-      titleGu: a.titleGu,
-      titleHi: a.titleHi,
-      slug: a.slug,
-    }));
+    let articleTickers: any[] = [];
 
-    let combinedTickers = [...articleTickers, ...customTickers];
+    // 1. If Option 2 (Single Headline One-by-One) is chosen and custom articles are selected in CMS, use them!
+    if (tickerMode === 'single' && selectedArticleIds.length > 0) {
+      const selectedPosts = await prisma.post.findMany({
+        where: { id: { in: selectedArticleIds }, status: 'PUBLISHED' },
+        select: {
+          id: true,
+          title: true,
+          titleGu: true,
+          titleHi: true,
+          slug: true,
+        },
+      });
+      const postMap = new Map<string, any>();
+      selectedPosts.forEach((p) => postMap.set(p.id, p));
+      articleTickers = selectedArticleIds
+        .map((id) => postMap.get(id))
+        .filter(Boolean)
+        .map((a) => ({
+          id: a.id,
+          en: a.title,
+          gu: a.titleGu || a.title,
+          hi: a.titleHi || a.title,
+          title: a.title,
+          titleGu: a.titleGu,
+          titleHi: a.titleHi,
+          slug: a.slug,
+        }));
+    }
 
-    // Fallback: If no breaking articles or custom tickers exist, pick latest 5 published articles
+    // 2. If no custom articles selected, auto-fetch breaking news articles
+    if (articleTickers.length === 0) {
+      const breakingArticles = await prisma.post.findMany({
+        where: { isBreaking: true, status: 'PUBLISHED' },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+        select: {
+          id: true,
+          title: true,
+          titleGu: true,
+          titleHi: true,
+          slug: true,
+        },
+      });
+
+      articleTickers = breakingArticles.map((a) => ({
+        id: a.id,
+        en: a.title,
+        gu: a.titleGu || a.title,
+        hi: a.titleHi || a.title,
+        title: a.title,
+        titleGu: a.titleGu,
+        titleHi: a.titleHi,
+        slug: a.slug,
+      }));
+    }
+
+    // Use articleTickers directly so only selected articles (in Single mode) or breaking articles (in Scroll mode) are shown
+    let combinedTickers = articleTickers;
+
+    // Fallback 1: If no breaking/selected articles exist, use custom tickers
+    if (combinedTickers.length === 0 && customTickers.length > 0) {
+      combinedTickers = customTickers;
+    }
     if (combinedTickers.length === 0) {
       const latestArticles = await prisma.post.findMany({
         where: { status: 'PUBLISHED' },
@@ -1373,7 +1429,14 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
       }));
     }
 
-    return sendSuccess(res, { tickers: combinedTickers, tickerLabel }, 'Breaking tickers retrieved');
+    return sendSuccess(res, {
+      tickers: combinedTickers,
+      tickerLabel: rawLabel,
+      tickerBadge: tickerLabel,
+      tickerMode,
+      tickerSpeed,
+      selectedArticleIds
+    }, 'Breaking tickers retrieved');
   } catch (error) {
     next(error);
   }

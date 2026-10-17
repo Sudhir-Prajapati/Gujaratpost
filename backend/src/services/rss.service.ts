@@ -53,7 +53,11 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   const now = new Date();
   const where: any = {
     status: 'PUBLISHED',
-    OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+    AND: [
+      {
+        OR: [{ scheduledAt: null }, { scheduledAt: { lte: now } }],
+      },
+    ],
   };
 
   let channelTitle = 'Gujarat Post - ગુજરાત સમાચાર';
@@ -64,17 +68,38 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     selfRoute = `/api/public/rss/${encodeURIComponent(categorySlug)}`;
     const categoryRecord = await prisma.category.findUnique({
       where: { slug: categorySlug },
-      select: { id: true, name: true, nameGu: true, descriptionGu: true },
+      select: { id: true, name: true, nameGu: true, slug: true, descriptionGu: true },
     });
 
     if (categoryRecord) {
-      where.categoryId = categoryRecord.id;
+      where.AND.push({
+        OR: [
+          { categoryId: categoryRecord.id },
+          {
+            tags: {
+              some: {
+                tag: {
+                  OR: [
+                    { name: categoryRecord.name },
+                    { nameGu: categoryRecord.nameGu },
+                    { slug: categoryRecord.slug },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      });
       const catName = categoryRecord.nameGu || categoryRecord.name;
       channelTitle = `${catName} સમાચાર - Gujarat Post`;
       channelDescription = categoryRecord.descriptionGu || `Latest ${categoryRecord.name} news from Gujarat Post`;
     } else {
-      // Also match by category slug filter on relation if not found directly
-      where.category = { slug: categorySlug };
+      where.AND.push({
+        OR: [
+          { category: { slug: categorySlug } },
+          { tags: { some: { tag: { slug: categorySlug } } } },
+        ],
+      });
       channelTitle = `${categorySlug.toUpperCase()} News - Gujarat Post`;
     }
   }

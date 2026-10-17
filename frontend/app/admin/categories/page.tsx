@@ -23,6 +23,8 @@ import {
   AlertCircle,
   Navigation,
   Lock,
+  ChevronDown,
+  MapPin,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch, clearApiCache } from '@/lib/api';
 
@@ -482,15 +484,22 @@ export default function CategoriesPage() {
     }
   };
 
-  // Switch Header Placement Type (GLOBAL → OTHER → GUJARAT) directly
-  const handleSwitchHeaderType = async (cat: CategoryData) => {
-    // Cycle: GLOBAL → OTHER → GUJARAT → GLOBAL
-    let nextType: string;
-    if (!cat.headerType || cat.headerType === 'GLOBAL') nextType = 'OTHER';
-    else if (cat.headerType === 'OTHER') nextType = 'GUJARAT';
-    else nextType = 'GLOBAL';
+  // Set Header Placement Type directly (GLOBAL, GUJARAT, OTHER, HIDDEN)
+  const handleSetHeaderPlacement = async (cat: CategoryData, newPlacement: string) => {
+    let nextShowInHeader = true;
+    let nextType = cat.headerType || 'GLOBAL';
+    let nextShowInHome = cat.showInHome;
 
-    const nextShowInHome = nextType === 'GUJARAT' ? false : cat.showInHome;
+    if (newPlacement === 'HIDDEN') {
+      nextShowInHeader = false;
+    } else {
+      nextShowInHeader = true;
+      nextType = newPlacement;
+      if (newPlacement === 'GUJARAT') {
+        nextShowInHome = false;
+      }
+    }
+
     try {
       const res = await authFetch(getBackendApiUrl(`/api/admin/categories/${cat.id}`), {
         method: 'PUT',
@@ -498,12 +507,22 @@ export default function CategoriesPage() {
         body: JSON.stringify({
           ...cat,
           headerType: nextType,
-          showInHeader: true,
+          showInHeader: nextShowInHeader,
           showInHome: nextShowInHome,
         }),
       });
       if (!res.ok) throw new Error('Failed to update category header placement');
-      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, headerType: nextType, showInHeader: true, showInHome: nextShowInHome } : c));
+      setCategories(prev =>
+        prev.map(c =>
+          c.id === cat.id
+            ? { ...c, headerType: nextType, showInHeader: nextShowInHeader, showInHome: nextShowInHome }
+            : c
+        )
+      );
+      clearApiCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gp-categories-updated'));
+      }
     } catch (err: any) {
       alert(err.message);
     }
@@ -731,7 +750,6 @@ export default function CategoriesPage() {
                   <th className="px-4 py-4 text-center">Order Position</th>
                   <th className="px-4 py-4">Category Name</th>
                   <th className="px-4 py-4">Slug</th>
-                  <th className="px-4 py-4">Translations</th>
                   <th className="px-4 py-4 text-center">Header Nav</th>
                   <th className="px-4 py-4 text-center">Home Page</th>
                   <th className="px-4 py-4 text-center">Status</th>
@@ -790,61 +808,64 @@ export default function CategoriesPage() {
                         </span>
                       </td>
 
-                      {/* Regional Translations */}
-                      <td className="px-4 py-4">
-                        <div className="flex flex-col items-start gap-2">
-                          <span className="inline-flex items-center gap-2 text-base font-semibold leading-normal text-slate-700 dark:text-slate-200">
-                            <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-sm font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">GU</span>
-                            {cat.nameGu || cat.name}
-                          </span>
-                          <span className="inline-flex items-center gap-2 text-base font-semibold leading-normal text-slate-700 dark:text-slate-200">
-                            <span className="rounded-md bg-slate-200/80 px-2 py-0.5 text-sm font-black text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">HI</span>
-                            {cat.nameHi || cat.name}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Header Visibility & Placement Row Toggle */}
-                      <td className="px-4 py-4 text-center">
-                        <div className="flex flex-col items-center justify-center gap-1.5">
-                          <button
-                            onClick={() => handleToggleShowInHeader(cat)}
-                            className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-base font-semibold transition-all cursor-pointer ${
-                              inHeader 
-                                ? (cat.headerType === 'GUJARAT'
-                                    ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 ring-1 ring-amber-500/20'
-                                    : cat.headerType === 'OTHER'
-                                      ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 ring-1 ring-purple-500/20'
-                                      : 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-500/20')
-                                : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500'
-                            }`}
-                            title={inHeader ? 'Visible in Header Nav (Click to hide)' : 'Hidden from Header Nav (Click to show)'}
-                          >
-                            <Layers className="h-4.5 w-4.5 shrink-0" />
-                            <span>
-                              {inHeader
-                                ? (cat.headerType === 'GUJARAT'
-                                    ? 'Row 2: Cities Bar'
-                                    : cat.headerType === 'OTHER'
-                                      ? '↓ Other Dropdown'
-                                      : 'Row 1: Primary Bar')
-                                : 'Hidden'}
-                            </span>
-                          </button>
-                          {inHeader && (
-                            <button
-                              type="button"
-                              onClick={() => handleSwitchHeaderType(cat)}
-                              className="text-sm font-bold text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 underline transition cursor-pointer mt-0.5"
-                              title="Cycle: Row 1 (Primary) → Other Dropdown → Row 2 (Cities)"
-                            >
-                              {cat.headerType === 'GLOBAL' || !cat.headerType
-                                ? 'Move to → Other Dropdown'
+                      {/* Header Visibility & Placement Selector */}
+                      <td className="px-4 py-3.5 text-center">
+                        <div className="flex items-center justify-center">
+                          <div
+                            className={`group relative inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold tracking-wide transition-all cursor-pointer shadow-xs border ${
+                              !inHeader
+                                ? 'bg-zinc-100 text-zinc-500 border-zinc-200 hover:bg-zinc-200/70 hover:border-zinc-300 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700 dark:hover:bg-zinc-750'
+                                : cat.headerType === 'GUJARAT'
+                                ? 'bg-amber-50 text-amber-800 border-amber-200/80 hover:bg-amber-100/80 hover:border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60 dark:hover:bg-amber-900/40'
                                 : cat.headerType === 'OTHER'
-                                  ? 'Move to → Row 2 (Cities)'
-                                  : 'Move to → Row 1 (Primary)'}
-                            </button>
-                          )}
+                                ? 'bg-purple-50 text-purple-800 border-purple-200/80 hover:bg-purple-100/80 hover:border-purple-300 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800/60 dark:hover:bg-purple-900/40'
+                                : 'bg-blue-50 text-blue-800 border-blue-200/80 hover:bg-blue-100/80 hover:border-blue-300 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/60 dark:hover:bg-blue-900/40'
+                            }`}
+                            title="Click to change Header Navigation placement"
+                          >
+                            {!inHeader ? (
+                              <EyeOff className="h-3.5 w-3.5 shrink-0 text-zinc-400 dark:text-zinc-500" />
+                            ) : cat.headerType === 'GUJARAT' ? (
+                              <MapPin className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            ) : cat.headerType === 'OTHER' ? (
+                              <FolderOpen className="h-3.5 w-3.5 shrink-0 text-purple-600 dark:text-purple-400" />
+                            ) : (
+                              <Layers className="h-3.5 w-3.5 shrink-0 text-blue-600 dark:text-blue-400" />
+                            )}
+
+                            <span className="whitespace-nowrap font-medium">
+                              {!inHeader
+                                ? 'Hidden'
+                                : cat.headerType === 'GUJARAT'
+                                ? 'Row 2: Cities Bar'
+                                : cat.headerType === 'OTHER'
+                                ? 'Other Dropdown'
+                                : 'Row 1: Primary Bar'}
+                            </span>
+
+                            <ChevronDown className="h-3 w-3 opacity-50 group-hover:opacity-90 transition-opacity shrink-0" />
+
+                            {/* Invisible overlay native select for seamless, accessible 1-click change */}
+                            <select
+                              value={!inHeader ? 'HIDDEN' : (cat.headerType || 'GLOBAL')}
+                              onChange={(e) => handleSetHeaderPlacement(cat, e.target.value)}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              title="Select Header Navigation Placement"
+                            >
+                              <option value="GLOBAL" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                                Row 1: Primary Bar
+                              </option>
+                              <option value="GUJARAT" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                                Row 2: Cities Bar
+                              </option>
+                              <option value="OTHER" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                                Other Dropdown
+                              </option>
+                              <option value="HIDDEN" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-slate-100">
+                                Hidden from Header
+                              </option>
+                            </select>
+                          </div>
                         </div>
                       </td>
 
@@ -1504,12 +1525,12 @@ export default function CategoriesPage() {
                       Header Navigation Bar Row Assignment
                     </label>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                       <div
                         onClick={() => setHeaderType('GLOBAL')}
-                        className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                        className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
                           headerType === 'GLOBAL'
-                            ? 'bg-red-50/80 dark:bg-red-950/40 border-red-500 ring-2 ring-red-500/20'
+                            ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-500 ring-2 ring-blue-500/20'
                             : 'bg-white dark:bg-zinc-800 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
                         }`}
                       >
@@ -1519,23 +1540,23 @@ export default function CategoriesPage() {
                           value="GLOBAL" 
                           checked={headerType === 'GLOBAL'} 
                           onChange={() => setHeaderType('GLOBAL')} 
-                          className="mt-0.5 accent-red-600 cursor-pointer"
+                          className="mt-0.5 accent-blue-600 cursor-pointer"
                         />
                         <div>
                           <span className="text-xs font-black text-zinc-900 dark:text-white block">
-                            First Row: Primary Header Bar
+                            Row 1: Primary Bar
                           </span>
                           <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
-                            Top global navigation (Home, Videos, Gujarat, National, World, Politics, etc.)
+                            Main top navigation bar
                           </p>
                         </div>
                       </div>
 
                       <div
                         onClick={() => setHeaderType('GUJARAT')}
-                        className={`p-3 rounded-xl border flex items-start gap-3 cursor-pointer transition-all ${
+                        className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
                           headerType === 'GUJARAT'
-                            ? 'bg-red-50/80 dark:bg-red-950/40 border-red-500 ring-2 ring-red-500/20'
+                            ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/20'
                             : 'bg-white dark:bg-zinc-800 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
                         }`}
                       >
@@ -1545,14 +1566,40 @@ export default function CategoriesPage() {
                           value="GUJARAT" 
                           checked={headerType === 'GUJARAT'} 
                           onChange={() => setHeaderType('GUJARAT')} 
-                          className="mt-0.5 accent-red-600 cursor-pointer"
+                          className="mt-0.5 accent-amber-600 cursor-pointer"
                         />
                         <div>
                           <span className="text-xs font-black text-zinc-900 dark:text-white block">
-                            Second Row: Gujarat Cities Bar
+                            Row 2: Cities Bar
                           </span>
                           <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
-                            Sub-header regional bar below logo (Ahmedabad, Surat, Vadodara, Rajkot, etc.)
+                            Regional Gujarat cities bar
+                          </p>
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={() => setHeaderType('OTHER')}
+                        className={`p-3 rounded-xl border flex items-start gap-2.5 cursor-pointer transition-all ${
+                          headerType === 'OTHER'
+                            ? 'bg-purple-50/80 dark:bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/20'
+                            : 'bg-white dark:bg-zinc-800 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
+                        }`}
+                      >
+                        <input 
+                          type="radio" 
+                          name="headerType" 
+                          value="OTHER" 
+                          checked={headerType === 'OTHER'} 
+                          onChange={() => setHeaderType('OTHER')} 
+                          className="mt-0.5 accent-purple-600 cursor-pointer"
+                        />
+                        <div>
+                          <span className="text-xs font-black text-zinc-900 dark:text-white block">
+                            Other Dropdown
+                          </span>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
+                            Nested under 'More / Other'
                           </p>
                         </div>
                       </div>

@@ -106,7 +106,7 @@ function EmailGateStep({
       <div className="mb-8 text-center">
         <div className="relative mx-auto mb-3 h-10 w-32">
           <Image
-            src="/assets/gujarat-post-logo-chip.png"
+            src="/GujaratpostFinalLogo.png"
             alt="Gujarat Post"
             fill
             priority
@@ -339,7 +339,7 @@ function PasswordLoginStep({
       <div className="mb-8 text-center">
         <div className="relative mx-auto mb-3 h-10 w-32">
           <Image
-            src="/assets/gujarat-post-logo-chip.png"
+            src="/GujaratpostFinalLogo.png"
             alt="Gujarat Post"
             fill
             priority

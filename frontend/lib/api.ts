@@ -661,10 +661,14 @@ export async function getLiveCenterData(): Promise<any> {
 export async function getPublicTickers(): Promise<any[]> {
   try {
     const url = `${API_BASE_URL}/tickers`;
-    const json = await fetchCachedJson<any>(url);
+    const json = await fetchCachedJson<any>(url, 5000);
     if (json?.success && json.data?.tickers) {
       const arr = json.data.tickers;
       (arr as any).tickerLabel = json.data.tickerLabel;
+      (arr as any).tickerBadge = json.data.tickerBadge;
+      (arr as any).tickerMode = json.data.tickerMode || 'scroll';
+      (arr as any).tickerSpeed = json.data.tickerSpeed || 5000;
+      (arr as any).selectedArticleIds = json.data.selectedArticleIds || [];
       return arr;
     }
   } catch (error: any) {

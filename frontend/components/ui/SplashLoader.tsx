@@ -256,7 +256,7 @@ export default function SplashLoader() {
                 {/* Specular Light Sweep */}
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/gujarat-post-logo-chip.png"
+                  src="/GujaratpostFinalLogo.png"
                   alt="Gujarat Post Logo"
                   fill
                   className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
@@ -273,7 +273,7 @@ export default function SplashLoader() {
               <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/gujarat-post-logo-chip.png"
+                  src="/GujaratpostFinalLogo.png"
                   alt="Gujarat Post Logo"
                   fill
                   className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
@@ -290,7 +290,7 @@ export default function SplashLoader() {
               <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/gujarat-post-logo-chip.png"
+                  src="/GujaratpostFinalLogo.png"
                   alt="Gujarat Post Logo"
                   fill
                   className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
@@ -307,7 +307,7 @@ export default function SplashLoader() {
               <div className="relative w-full h-full rounded-md bg-gradient-to-r from-[#9e0d15] via-[#B3121B] to-[#85080f] border border-red-500/40 p-1 flex items-center justify-center overflow-hidden shadow-inner">
                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/18 to-transparent pointer-events-none z-10" />
                 <Image
-                  src="/assets/gujarat-post-logo-chip.png"
+                  src="/GujaratpostFinalLogo.png"
                   alt="Gujarat Post Logo"
                   fill
                   className="object-contain p-0.5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
@@ -377,7 +377,7 @@ export default function SplashLoader() {
       {/* Official Gujarat Post Black Logo (Shown After) */}
       <div className="animate-logo-after relative h-14 w-64 sm:h-16 sm:w-72 my-1 flex items-center justify-center filter drop-shadow-lg">
         <Image
-          src="/assets/logoblack.png"
+          src="/GujaratpostFinalLogo.png"
           alt="Gujarat Post Logo"
           fill
           className="object-contain"

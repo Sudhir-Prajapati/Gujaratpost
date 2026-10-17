@@ -34,6 +34,11 @@ export default function BreakingTicker() {
   const { language } = useApp();
   const [breaking, setBreaking] = useState<any[]>([]);
   const [tickerLabel, setTickerLabel] = useState<any>(null);
+  const [tickerMode, setTickerMode] = useState<'scroll' | 'single'>('scroll');
+  const [tickerSpeed, setTickerSpeed] = useState<number>(4500);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const firstSetRef = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(70);
 
@@ -42,6 +47,13 @@ export default function BreakingTicker() {
       .then((res) => {
         setBreaking(res || []);
         if ((res as any)?.tickerLabel) setTickerLabel((res as any).tickerLabel);
+        if ((res as any)?.tickerBadge) setTickerLabel((res as any).tickerBadge);
+        if ((res as any)?.tickerMode === 'single' || (res as any)?.tickerMode === 'scroll') {
+          setTickerMode((res as any).tickerMode);
+        }
+        if ((res as any)?.tickerSpeed && typeof (res as any).tickerSpeed === 'number') {
+          setTickerSpeed((res as any).tickerSpeed);
+        }
       })
       .catch(() => {
         setBreaking([]);
@@ -64,21 +76,36 @@ export default function BreakingTicker() {
           if (tickerLabel.trim().startsWith('{')) {
             const parsed = JSON.parse(tickerLabel);
             if (parsed && typeof parsed === 'object') {
-              return getLocalized(language, parsed) || parsed.gu || parsed.en || parsed.hi || tickerLabel;
+              return getLocalized(language, parsed) || parsed.text || parsed.gu || parsed.en || parsed.hi || tickerLabel;
             }
           }
         } catch {}
         return tickerLabel.trim();
       }
       if (typeof tickerLabel === 'object') {
-        return getLocalized(language, tickerLabel) || tickerLabel.gu || tickerLabel.en || tickerLabel.hi;
+        return getLocalized(language, tickerLabel) || tickerLabel.text || tickerLabel.gu || tickerLabel.en || tickerLabel.hi;
       }
     }
-    return getLocalized(language, { en: 'BREAKING NEWS', gu: 'બ્રેકિંગ ન્યૂઝ', hi: 'ब्रेકિંગ न्यूज़' });
+    return getLocalized(language, { en: 'BREAKING NEWS', gu: 'બ્રેકિંગ ન્યૂઝ', hi: 'ब्रेकिंग न्यूज़' });
   }, [tickerLabel, language]);
+
   const activeItems = itemsToRender.length > 0 ? itemsToRender : FALLBACK_TICKERS;
 
-  // Ensure there are enough items in a single set to span wide screens seamlessly
+  // Single mode auto-advancing interval with smooth exit and enter animation
+  useEffect(() => {
+    if (tickerMode !== 'single' || paused || activeItems.length <= 1) return;
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % activeItems.length);
+        setIsTransitioning(false);
+      }, 300);
+    }, tickerSpeed);
+
+    return () => clearInterval(interval);
+  }, [tickerMode, paused, activeItems.length, tickerSpeed]);
+
+  // Ensure there are enough items in a single set to span wide screens seamlessly in scroll mode
   const singleSet = useMemo(() => {
     if (activeItems.length === 0) return [];
     if (activeItems.length < 5) {
@@ -88,12 +115,13 @@ export default function BreakingTicker() {
     return activeItems;
   }, [activeItems]);
 
-  // Dynamically calculate animation duration based on measured content width for a smooth, constant speed
+  // Dynamically calculate animation duration based on measured content width for smooth scroll
   useEffect(() => {
+    if (tickerMode !== 'scroll') return;
+
     const measureAndSetDuration = () => {
       if (firstSetRef.current) {
         const width = firstSetRef.current.offsetWidth;
-        // 42 pixels per second provides a very smooth, comfortable broadcast-style reading pace
         const speedPxPerSec = 42;
         const calculatedDuration = Math.max(30, Math.round(width / speedPxPerSec));
         setDuration(calculatedDuration);
@@ -102,7 +130,6 @@ export default function BreakingTicker() {
 
     measureAndSetDuration();
 
-    // Re-calculate on window resize or content changes
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && firstSetRef.current) {
       resizeObserver = new ResizeObserver(() => {
@@ -114,9 +141,11 @@ export default function BreakingTicker() {
     return () => {
       if (resizeObserver) resizeObserver.disconnect();
     };
-  }, [singleSet, language]);
+  }, [singleSet, language, tickerMode]);
 
-  const renderItem = (item: any, keyPrefix: string, index: number) => {
+
+
+  const renderScrollItem = (item: any, keyPrefix: string, index: number) => {
     const label = getLocalized(language, { en: item.en, gu: item.gu, hi: item.hi });
     if (!label) return null;
     const isLink = Boolean(item.slug);
@@ -127,12 +156,12 @@ export default function BreakingTicker() {
           <Link
             prefetch={false}
             href={`/news/${item.slug}`}
-            className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16.5px] md:text-[17px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
+            className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16px] md:text-[16.5px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
           >
             <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </Link>
         ) : (
-          <span className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16.5px] md:text-[17px] font-bold text-white/95 tracking-normal leading-normal">
+          <span className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16px] md:text-[16.5px] font-bold text-white/95 tracking-normal leading-normal">
             <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
           </span>
         )}
@@ -140,6 +169,8 @@ export default function BreakingTicker() {
       </span>
     );
   };
+
+  const currentSingleItem = activeItems[currentIndex] || activeItems[0];
 
   return (
     <div
@@ -156,35 +187,96 @@ export default function BreakingTicker() {
         <span>{badgeText}</span>
       </div>
 
-      {/* Marquee Viewport */}
-      <div
-        className="relative flex h-full flex-1 items-center overflow-hidden"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
-        {/* Soft edge gradients for subtle smooth enter/exit */}
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-6 md:w-10 bg-gradient-to-r from-[#B3121B] to-transparent z-10" />
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-6 md:w-10 bg-gradient-to-l from-[#B3121B] to-transparent z-10" />
-
-        {/* Scrolling Track */}
+      {/* ── MODE 1: CONTINUOUS MARQUEE SCROLL (Right to Left) ── */}
+      {tickerMode === 'scroll' ? (
         <div
-          className="ticker-animation"
-          style={{
-            animationDuration: `${duration}s`,
-            animationPlayState: paused ? 'paused' : 'running',
-          }}
+          className="relative flex h-full flex-1 items-center overflow-hidden"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
         >
-          {/* Primary Set (Measured for dynamic duration) */}
-          <div ref={firstSetRef} className="inline-flex shrink-0 items-center">
-            {singleSet.map((item, index) => renderItem(item, 'primary', index))}
-          </div>
+          {/* Soft edge gradients */}
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-4 sm:w-6 md:w-10 bg-gradient-to-r from-[#B3121B] to-transparent z-10" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-4 sm:w-6 md:w-10 bg-gradient-to-l from-[#B3121B] to-transparent z-10" />
 
-          {/* Seamless Duplicate Set */}
-          <div className="inline-flex shrink-0 items-center" aria-hidden="true">
-            {singleSet.map((item, index) => renderItem(item, 'clone', index))}
+          {/* Scrolling Track */}
+          <div
+            className="ticker-animation"
+            style={{
+              animationDuration: `${duration}s`,
+              animationPlayState: paused ? 'paused' : 'running',
+            }}
+          >
+            {/* Primary Set */}
+            <div ref={firstSetRef} className="inline-flex shrink-0 items-center">
+              {singleSet.map((item, index) => renderScrollItem(item, 'primary', index))}
+            </div>
+
+            {/* Seamless Duplicate Set */}
+            <div className="inline-flex shrink-0 items-center" aria-hidden="true">
+              {singleSet.map((item, index) => renderScrollItem(item, 'clone', index))}
+            </div>
           </div>
         </div>
-      </div>
+      ) : (
+        /* ── MODE 2: SINGLE / ONE-BY-ONE HEADLINE SLIDER ── */
+        <div
+          className="relative flex h-full flex-1 items-center overflow-hidden px-2.5 sm:px-4"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+        >
+          {currentSingleItem && (
+            <div
+              key={currentIndex}
+              className={`w-full flex items-center justify-between gap-3 transition-all duration-300 ease-in-out ${
+                isTransitioning
+                  ? 'opacity-0 -translate-y-4 filter blur-[1px]'
+                  : 'headline-enter-anim'
+              }`}
+            >
+              <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
+                </span>
+                {currentSingleItem.slug ? (
+                  <Link
+                    prefetch={false}
+                    href={`/news/${currentSingleItem.slug}`}
+                    className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white hover:underline focus:outline-none tracking-normal leading-normal"
+                  >
+                    <AutoTranslatedText
+                      values={{
+                        en: currentSingleItem.en,
+                        gu: currentSingleItem.gu,
+                        hi: currentSingleItem.hi,
+                      }}
+                      language={language}
+                    />
+                  </Link>
+                ) : (
+                  <span className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white tracking-normal leading-normal">
+                    <AutoTranslatedText
+                      values={{
+                        en: currentSingleItem.en,
+                        gu: currentSingleItem.gu,
+                        hi: currentSingleItem.hi,
+                      }}
+                      language={language}
+                    />
+                  </span>
+                )}
+              </div>
+
+              {/* Counter Pill e.g. 1 / 3 */}
+              {activeItems.length > 1 && (
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-black bg-black/35 text-white/90 shrink-0 tabular-nums border border-white/10 shadow-xs">
+                  {currentIndex + 1} / {activeItems.length}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Play/Pause Control Button */}
       <button
@@ -194,7 +286,11 @@ export default function BreakingTicker() {
         title={paused ? 'Play ticker' : 'Pause ticker'}
         aria-label={paused ? 'Play ticker' : 'Pause ticker'}
       >
-        {paused ? <Play className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-current" /> : <Pause className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-current" />}
+        {paused ? (
+          <Play className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-current" />
+        ) : (
+          <Pause className="h-2.5 w-2.5 sm:h-3.5 sm:w-3.5 fill-current" />
+        )}
       </button>
     </div>
   );

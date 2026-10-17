@@ -64,7 +64,7 @@ export default function NewsBriefPageClient() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const defaultLogo = new window.Image();
-      defaultLogo.src = '/assets/gujarat-post-logo.png';
+      defaultLogo.src = '/GujaratpostFinalLogo.png';
     }
   }, []);
 
@@ -296,7 +296,7 @@ export default function NewsBriefPageClient() {
       <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-neutral-100 shadow-sm z-10" style={{ height: 56 }}>
         <Link href="/" className="flex items-center h-full py-1 shrink-0">
           <Image
-            src="/assets/gujarat-post-logo-cms.png"
+            src="/GujaratpostFinalLogo.png"
             alt="Gujarat Post"
             width={160}
             height={42}
@@ -346,7 +346,7 @@ export default function NewsBriefPageClient() {
               <div className="absolute w-44 h-24 bg-[#B3121B]/25 rounded-full blur-2xl pointer-events-none" />
               <div className="relative z-10 w-48 h-14 sm:w-56 sm:h-16 flex items-center justify-center">
                 <Image
-                  src="/assets/gujarat-post-logo.png"
+                  src="/GujaratpostFinalLogo.png"
                   alt="Gujarat Post"
                   fill
                   sizes="260px"
