@@ -2,6 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Noto_Sans_Gujarati, Hind_Vadodara } from "next/font/google";
 import { AppProvider } from "@/components/AppProvider";
+import { CookieConsentProvider } from "@/components/consent/CookieConsentProvider";
+import { CookieConsentBanner } from "@/components/consent/CookieConsentBanner";
+import { CookieSettingsModal } from "@/components/consent/CookieSettingsModal";
 import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 import ScrollToTop from "@/components/ui/ScrollToTop";
 
@@ -80,16 +83,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
-        <link rel="preconnect" href="https://www.youtube.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://i.ytimg.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
-        <link rel="dns-prefetch" href="https://www.youtube.com" />
         <link rel="dns-prefetch" href="https://i.ytimg.com" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <AppProvider>
-          <MainLayoutWrapper>{children}</MainLayoutWrapper>
+          <CookieConsentProvider>
+            <MainLayoutWrapper>{children}</MainLayoutWrapper>
+            <CookieConsentBanner />
+            <CookieSettingsModal />
+          </CookieConsentProvider>
         </AppProvider>
         <ScrollToTop />
       </body>

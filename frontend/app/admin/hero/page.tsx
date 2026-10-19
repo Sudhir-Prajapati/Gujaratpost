@@ -396,16 +396,15 @@ export default function HeroManagerPage() {
         }
       }
 
-      const featured = arts.filter((a) => a.isFeatured);
       const serverGrid = Array.isArray((heroRes as any)?.heroGridArticles) ? (heroRes as any).heroGridArticles : [];
-      const combinedGrid = [...featured, ...serverGrid, ...arts].filter((a, idx, arr) => a && arr.findIndex((x) => x?.id === a.id) === idx);
+      const combinedGrid = [...serverGrid, ...arts].filter((a, idx, arr) => a && arr.findIndex((x) => x?.id === a.id) === idx);
       setHeroGridArticles(combinedGrid.slice(0, 16));
 
       // Default slots: Articles 10, 11, 12 from published list (the bottom 3 cards)
       const defaultSlots = [
-        arts[9] || featured[0] || arts[0] || null,
-        arts[10] || featured[1] || arts[1] || null,
-        arts[11] || featured[2] || arts[2] || null,
+        arts[9] || arts[0] || null,
+        arts[10] || arts[1] || null,
+        arts[11] || arts[2] || null,
       ];
 
       if (heroRes && Array.isArray(heroRes.slots) && heroRes.slots.length > 0) {
@@ -952,10 +951,6 @@ export default function HeroManagerPage() {
         slot1Id: slots[0]?.id || null,
         slot2Id: slots[1]?.id || null,
         slot3Id: slots[2]?.id || null,
-        trendingTopics: trendingTopics,
-        trendingNewsIds: trendingNewsArticles.map((a) => a.id),
-        popularNewsIds: popularNewsArticles.map((a) => a.id),
-        heroGridIds: heroGridArticles.map((a) => a.id),
       };
 
       const res = await updateHeroSettings(payload);

@@ -673,53 +673,32 @@ export default function HeroSection({
 
   // Helper to compute heroPool identically for both initial SSR state and client useEffect:
   // 1. Slider: Articles 1 to 3
-  // 2. Side Box: Articles 4 to 9 (6 cards, prioritizing articles marked "Main Hero Grid Banner" isFeatured === true)
+  // 2. Side Box: Articles 4 to 9 (6 cards)
   // 3. Bottom 3 Hero Boxes: Articles 10 to 12 (3 cards)
   const computeHeroPoolList = (arts: Article[], _heroSettingsData?: any) => {
     const pubArts = (arts || []).filter(isPublicArticle);
 
     // Sort strictly latest first: articleNumber desc, then publishedAt desc
     const sortedLatest = [...pubArts].sort((a: Article, b: Article) => {
-      const aNum = (a as any).articleNumber || 0;
-      const bNum = (b as any).articleNumber || 0;
+      const aNum = typeof (a as any).articleNumber === 'number' ? (a as any).articleNumber : (parseInt((a as any).articleNumber, 10) || 0);
+      const bNum = typeof (b as any).articleNumber === 'number' ? (b as any).articleNumber : (parseInt((b as any).articleNumber, 10) || 0);
       if (bNum !== aNum) return bNum - aNum;
       const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
       const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
       return bTime - aTime;
     });
 
-    // 1. Articles with "Main Hero Grid Banner" checked in Admin (isFeatured === true)
-    const featuredArts = sortedLatest.filter((a) => a.isFeatured === true);
-    const featuredIds = new Set(featuredArts.map((a) => a.id).filter(Boolean));
-
-    // 2. Slider (Articles 1 to 3): Top 3 latest articles not pinned to side box
-    const sliderArts = sortedLatest.filter((a) => !featuredIds.has(a.id)).slice(0, 3);
-    const sliderIds = new Set(sliderArts.map((a) => a.id).filter(Boolean));
-
-    // 3. Side Box (Articles 4 to 9, total 6 cards): Prioritize featured articles, then fill with next available latest
-    const sideBoxFillers = sortedLatest.filter((a) => !sliderIds.has(a.id) && !featuredIds.has(a.id));
-    const sideBoxArts = [...featuredArts, ...sideBoxFillers].slice(0, 6);
-    const sideBoxIds = new Set(sideBoxArts.map((a) => a.id).filter(Boolean));
-
-    // 4. Bottom 3 Hero Boxes (Articles 10 to 12, total 3 cards): Next 3 available articles
-    const bottom3Arts = sortedLatest.filter((a) => !sliderIds.has(a.id) && !sideBoxIds.has(a.id)).slice(0, 3);
-    const bottom3Ids = new Set(bottom3Arts.map((a) => a.id).filter(Boolean));
-
-    // 5. Remaining articles for other home feeds
-    const remaining = sortedLatest.filter((a) => !sliderIds.has(a.id) && !sideBoxIds.has(a.id) && !bottom3Ids.has(a.id));
-
-    return [...sliderArts, ...sideBoxArts, ...bottom3Arts, ...remaining].slice(0, 16);
+    return sortedLatest;
   };
 
   // Helper to determine the 3 bottom cards:
-  // Scenario 1 (Default / Automatic): Articles 10, 11, 12 from latest articles pool (uniqueTopStories.slice(9, 12))
-  // Scenario 2 (Admin Manual): If admin explicitly configured slots (slot1Id, slot2Id, slot3Id in heroSettings),
-  // use the admin-selected articles. For any slot not manually set, fall back to the corresponding auto article (10, 11, or 12).
+  // If admin selected custom slot articles in /admin/hero, use them.
+  // Otherwise, automatically falls back to Articles 10, 11, 12 from latest articles pool.
   const getBottomCards = (
     pool: Article[],
     heroSettingsData?: any
   ): Article[] => {
-    // Automatic fallback: Articles 10, 11, 12 (0-indexed 9, 10, 11)
+    // Default fallback: Articles 10, 11, 12 (0-indexed 9, 10, 11)
     const auto10 = pool[9] || articlesList[9] || null;
     const auto11 = pool[10] || articlesList[10] || null;
     const auto12 = pool[11] || articlesList[11] || null;
@@ -739,14 +718,6 @@ export default function HeroSection({
       ? slots[2]
       : (setting?.slot3Id ? articlesList.find((a) => a.id === setting.slot3Id) : null);
 
-    const hasAdminCustom = Boolean(slot1 || slot2 || slot3 || setting?.slot1Id || setting?.slot2Id || setting?.slot3Id);
-
-    if (!hasAdminCustom) {
-      // Scenario 1: Default / Automatic Articles 10, 11, 12
-      return [auto10, auto11, auto12].filter(Boolean) as Article[];
-    }
-
-    // Scenario 2: Admin customized slots (with fallback to 10, 11, 12 if a specific slot is left blank)
     const card1 = slot1 || auto10;
     const card2 = slot2 || auto11;
     const card3 = slot3 || auto12;
@@ -1492,11 +1463,36 @@ export default function HeroSection({
             {/* Top Row: Hero Story & Middle Column */}
             {(() => {
               const top3Ids = new Set(uniqueTopStories.slice(0, 3).map((a) => a.id).filter(Boolean));
-              const afterTop3News: Article[] = uniqueTopStories.slice(3, 9);
+              const customSlotIds = new Set(
+                [
+                  heroSettingsState?.setting?.slot1Id,
+                  heroSettingsState?.setting?.slot2Id,
+                  heroSettingsState?.setting?.slot3Id,
+                  heroSettingsState?.slots?.[0]?.id,
+                  heroSettingsState?.slots?.[1]?.id,
+                  heroSettingsState?.slots?.[2]?.id,
+                  initialHeroSettings?.setting?.slot1Id,
+                  initialHeroSettings?.setting?.slot2Id,
+                  initialHeroSettings?.setting?.slot3Id,
+                  initialHeroSettings?.slots?.[0]?.id,
+                  initialHeroSettings?.slots?.[1]?.id,
+                  initialHeroSettings?.slots?.[2]?.id,
+                ].filter(Boolean)
+              );
+
+              // Upper side 6 articles: strictly latest articles after top 3 slider, skipping custom bottom slot selections to avoid duplication
+              const afterTop3News: Article[] = [];
+              for (const art of uniqueTopStories.slice(3)) {
+                if (afterTop3News.length >= 6) break;
+                if (art && art.id && !top3Ids.has(art.id) && !customSlotIds.has(art.id)) {
+                  afterTop3News.push(art);
+                }
+              }
+
               if (afterTop3News.length < 6) {
                 for (const art of articlesList) {
                   if (afterTop3News.length >= 6) break;
-                  if (art && art.id && !top3Ids.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                  if (art && art.id && !top3Ids.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
                     afterTop3News.push(art);
                   }
                 }

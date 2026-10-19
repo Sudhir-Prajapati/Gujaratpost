@@ -102,11 +102,11 @@ const companyLinks = [
     { label: 'Contact Us', href: '/contact' },
     { label: 'Advertise With Us', href: '/advertise' },
     { label: 'Privacy Policy', href: '/privacy-policy' },
+    { label: 'Cookie Policy', href: '/cookie-policy' },
     { label: 'Terms Of Use', href: '/terms' },
     { label: 'Disclaimer', href: '/disclaimer' },
     { label: 'Site Map', href: '/sitemap' },
     { label: 'RSS Feeds', href: '/rss' },
-    { label: 'RSS Terms of Service', href: '/rss-terms-of-service' },
     { label: 'Feedback', href: '/feedback' },
 ];
 
@@ -353,9 +353,22 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-extrabold text-slate-400 px-2 text-center">
                         {[
                             ['Complain Redressal', '/complaign-redressal'],
+                            ['Cookie Policy', '/cookie-policy'],
                             ['Cookie Settings', '/cookie-settings'],
                         ].map(([label, href]) => (
-                            <Link key={href} href={href} className="hover:text-white transition-colors duration-200">
+                            <Link
+                                key={href}
+                                href={href}
+                                onClick={
+                                    href === '/cookie-settings'
+                                        ? (e) => {
+                                            e.preventDefault();
+                                            window.dispatchEvent(new CustomEvent('gp-open-cookie-settings'));
+                                          }
+                                        : undefined
+                                }
+                                className="hover:text-white transition-colors duration-200"
+                            >
                                 {label}
                             </Link>
                         ))}
@@ -463,9 +476,22 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
                             {[
                                 ['Complaign Redressal', '/complaign-redressal'],
+                                ['Cookie Policy', '/cookie-policy'],
                                 ['Cookie Settings', '/cookie-settings'],
                             ].map(([label, href]) => (
-                                <Link key={href} href={href} className="hover:text-white transition-colors duration-200">
+                                <Link
+                                    key={href}
+                                    href={href}
+                                    onClick={
+                                        href === '/cookie-settings'
+                                            ? (e) => {
+                                                e.preventDefault();
+                                                window.dispatchEvent(new CustomEvent('gp-open-cookie-settings'));
+                                              }
+                                            : undefined
+                                    }
+                                    className="hover:text-white transition-colors duration-200"
+                                >
                                     {label}
                                 </Link>
                             ))}

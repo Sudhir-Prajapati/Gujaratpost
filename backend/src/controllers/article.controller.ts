@@ -57,15 +57,9 @@ export async function syncArticleToHeroSettings(postId: string, isFeatured?: boo
 
     if (effectiveFeatured) {
       heroGridIds = [postId, ...heroGridIds.filter((id) => id !== postId)].slice(0, 20);
-      if (slot1Id !== postId) {
-        slot1Id = postId;
-      }
       updated = true;
     } else {
       heroGridIds = heroGridIds.filter((id) => id !== postId);
-      if (slot1Id === postId) slot1Id = heroGridIds[0] || null;
-      if (slot2Id === postId) slot2Id = null;
-      if (slot3Id === postId) slot3Id = null;
       updated = true;
     }
 

@@ -479,6 +479,27 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
+model FeedbackComplaint {
+  id         String   @id @default(uuid())
+  type       String   @default("FEEDBACK") @db.VarChar(50) // 'FEEDBACK' or 'COMPLAINT'
+  name       String   @db.VarChar(191)
+  email      String   @db.VarChar(191)
+  phone      String?  @db.VarChar(100)
+  category   String   @default("General") @db.VarChar(100)
+  subject    String   @db.VarChar(255)
+  message    String   @db.LongText
+  articleUrl String?  @db.Text
+  status     String   @default("PENDING") @db.VarChar(50) // 'PENDING', 'IN_REVIEW', 'RESOLVED'
+  adminNotes String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([type, status], map: "idx_fc_type_status")
+  @@index([createdAt], map: "idx_fc_created")
+  @@map("feedback_complaints")
+}
+
+
 model LegalPage {
   id           String   @id
   pageTitle    String   @db.VarChar(255)

@@ -495,15 +495,9 @@ export class HeroController {
         } as any,
       });
 
-      const featuredIds = [slot1Id, slot2Id, slot3Id].filter((id): id is string => Boolean(id));
-
-      // Mark the selected slot articles as isFeatured: true
-      if (featuredIds.length > 0) {
-        await prisma.post.updateMany({
-          where: { id: { in: featuredIds } },
-          data: { isFeatured: true },
-        });
-      }
+      // Do NOT set isFeatured: true on slot articles.
+      // Slot articles are explicitly assigned to slot1Id, slot2Id, slot3Id in heroSettings
+      // and must not mutate post flags or bleed into heroGrid/upper positions.
 
       // Update isTrending flag for assigned trending news articles
       if (Array.isArray(trendingNewsIds) && trendingNewsIds.length > 0) {

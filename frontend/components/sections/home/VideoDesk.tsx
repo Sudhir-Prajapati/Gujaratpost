@@ -8,6 +8,7 @@ import type { Language } from '@/types';
 import { VIDEOS, formatViews, getLocalized } from '@/data';
 import { safeYouTubeId } from '@/lib/youtube';
 import { cleanVideoTitle, getRealisticViews, getRealisticDuration } from './homeHelpers';
+import { ConsentGate } from '@/components/consent/ConsentGate';
 
 export default function VideoDesk({ videos, language, showShorts = true, onlyShorts = false }: { videos: typeof VIDEOS; language: Language; showShorts?: boolean; onlyShorts?: boolean }) {
   const [playId, setPlayId] = useState<string | null>(null);
@@ -410,12 +411,14 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 </button>
               </div>
               <div className="relative aspect-video bg-black">
+                <ConsentGate type="youtube" category="marketing" title="Gujarat Post Video Player" aspectRatioClass="aspect-video" className="w-full h-full">
                 <iframe
-                  src={`https://www.youtube.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
+                  src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
                   className="absolute inset-0 h-full w-full"
                   allow="autoplay; encrypted-media"
                   allowFullScreen
                 />
+                </ConsentGate>
               </div>
             </div>
           </div>
@@ -570,12 +573,14 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
               </button>
             </div>
             <div className="relative aspect-video bg-black">
+              <ConsentGate type="youtube" category="marketing" title="Gujarat Post Video Player" aspectRatioClass="aspect-video" className="w-full h-full">
               <iframe
-                src={`https://www.youtube.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
+                src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
                 className="absolute inset-0 h-full w-full"
                 allow="autoplay; encrypted-media"
                 allowFullScreen
               />
+              </ConsentGate>
             </div>
           </div>
         </div>

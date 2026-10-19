@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ChevronRight, Calendar, ShieldCheck, FileText, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { ChevronRight, Calendar, ShieldCheck, FileText, AlertTriangle, ArrowLeft, Cookie, Sliders } from 'lucide-react';
 
 export interface LegalSection {
   id?: string;
@@ -129,6 +129,35 @@ export default function LegalPageClient({ initialData, defaultTitle = 'Legal Pol
           {data.introText && (
             <div className="prose prose-neutral dark:prose-invert max-w-none text-base sm:text-lg leading-relaxed text-gray-700 dark:text-gray-300">
               <FormattedLegalText text={data.introText} />
+            </div>
+          )}
+
+          {/* Quick interactive action for Cookie Policy */}
+          {(data.id === 'cookie-policy' || data.slug === 'cookie-policy' || pageTitle.toLowerCase().includes('cookie')) && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-red-50/70 dark:bg-red-950/25 border border-red-200 dark:border-red-900/50">
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-2">
+                  <Cookie className="h-4 w-4 text-red-600 dark:text-red-400 shrink-0" />
+                  <p className="text-sm font-bold text-gray-900 dark:text-white">
+                    Manage Your Cookie Preferences Anytime
+                  </p>
+                </div>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                  You have the legal right under India’s DPDPA 2023 to adjust or revoke optional consent at any time.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('gp-open-cookie-settings'));
+                  }
+                }}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white text-xs sm:text-sm font-bold shadow-xs transition shrink-0 cursor-pointer"
+              >
+                <Sliders className="h-4 w-4" />
+                <span>Open Cookie Settings</span>
+              </button>
             </div>
           )}
 

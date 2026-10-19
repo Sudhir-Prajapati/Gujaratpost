@@ -200,7 +200,7 @@ export default function SidebarAdBanner({
             <div className="relative w-full h-full bg-black overflow-hidden flex items-center justify-center">
               {mediaUrl.includes('youtube.com') || mediaUrl.includes('youtu.be') ? (
                 <iframe
-                  src={`${mediaUrl.replace('watch?v=', 'embed/')}?autoplay=1&mute=1&loop=1&playlist=${mediaUrl.split('v=')[1] || ''}`}
+                  src={`${mediaUrl.replace('watch?v=', 'embed/').replace('youtube.com', 'youtube-nocookie.com')}?autoplay=1&mute=1&loop=1&playlist=${mediaUrl.split('v=')[1] || ''}`}
                   title="Advertisement Video"
                   className="w-full h-full pointer-events-none"
                   allow="autoplay; encrypted-media"

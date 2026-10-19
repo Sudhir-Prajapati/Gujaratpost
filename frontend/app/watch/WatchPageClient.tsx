@@ -20,6 +20,7 @@ import { getPublicVideos } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import Footer from '@/components/layout/Footer';
 import { useIsApk } from '@/lib/useIsApk';
+import { ConsentGate } from '@/components/consent/ConsentGate';
 
 interface YoutubePlayerProps {
   youtubeId: string;
@@ -30,15 +31,17 @@ interface YoutubePlayerProps {
 
 function YoutubePlayer({ youtubeId, title, initialMuted, iframeRef }: YoutubePlayerProps) {
   return (
+    <ConsentGate type="youtube" category="marketing" title={title} className="absolute inset-0 h-full w-full" aspectRatioClass="h-full">
     <iframe
       ref={iframeRef}
       id="active-iframe"
       className="absolute inset-0 h-full w-full object-cover pointer-events-none"
-      src={`https://www.youtube.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&controls=1&mute=0&loop=1&playlist=${youtubeId}&rel=0`}
+      src={`https://www.youtube-nocookie.com/embed/${youtubeId}?enablejsapi=1&autoplay=1&controls=1&mute=0&loop=1&playlist=${youtubeId}&rel=0`}
       title={title}
       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
       allowFullScreen
     />
+    </ConsentGate>
   );
 }
 

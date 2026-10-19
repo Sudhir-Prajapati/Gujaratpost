@@ -18,6 +18,7 @@ import { AboutController } from '../controllers/about.controller.js';
 import { ContactController } from '../controllers/contact.controller.js';
 import { AdvertiseController } from '../controllers/advertise.controller.js';
 import { LegalController } from '../controllers/legal.controller.js';
+import { FeedbackController } from '../controllers/feedback.controller.js';
 import { RssController } from '../controllers/rss.controller.js';
 import uploadRoutes from './upload.routes.js';
 
@@ -260,6 +261,15 @@ router.post('/rss/items/:id/approve', requireAuth, requireRole(rssRoles), RssCon
 router.post('/rss/items/:id/publish', requireAuth, requireRole(rssRoles), RssController.publishItem);
 router.post('/rss/items/:id/reject', requireAuth, requireRole(rssRoles), RssController.rejectItem);
 router.post('/rss/items/bulk', requireAuth, requireRole(rssRoles), RssController.bulkAction);
+
+// ==========================================
+// 22. Feedback & Complaint Redressal (SUPER_ADMIN, EDITOR)
+// ==========================================
+const feedbackRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+router.get('/feedback', requireAuth, requireRole(feedbackRoles), FeedbackController.getAdminFeedbacks);
+router.patch('/feedback/:id', requireAuth, requireRole(feedbackRoles), FeedbackController.updateFeedbackStatus);
+router.put('/feedback/:id', requireAuth, requireRole(feedbackRoles), FeedbackController.updateFeedbackStatus);
+router.delete('/feedback/:id', requireAuth, requireRole(feedbackRoles), FeedbackController.deleteFeedback);
 
 export default router;
 

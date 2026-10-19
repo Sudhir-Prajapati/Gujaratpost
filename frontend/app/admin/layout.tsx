@@ -34,6 +34,7 @@ import {
   BadgePercent,
   Scale,
   Rss,
+  MessageSquareText,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -77,6 +78,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/advertise',
       '/admin/cleanup',
       '/admin/rss',
+      '/admin/feedback',
     ],
   },
   EDITOR: {
@@ -102,6 +104,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/advertise',
       '/admin/legal',
       '/admin/rss',
+      '/admin/feedback',
     ],
   },
   REPORTER: {
@@ -226,6 +229,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Contact Us', href: '/admin/contact', icon: PhoneCall },
     { label: 'Advertise Page', href: '/admin/advertise', icon: BadgePercent },
     { label: 'Legal Pages', href: '/admin/legal', icon: Scale },
+    { label: 'Feedback & Complaints', href: '/admin/feedback', icon: MessageSquareText },
   ];
 
   const currentRoleMeta = userRole ? ROLE_CONFIG[userRole] : null;
@@ -257,6 +261,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     try {
       await fetch(getBackendApiUrl('/api/auth/logout'), { method: 'POST', credentials: 'include' });
       document.cookie = 'access_token=; path=/; max-age=0; SameSite=Lax';
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem('access_token');
+      }
       window.location.href = '/login';
     } catch (err) {
       console.error('Logout failed:', err);

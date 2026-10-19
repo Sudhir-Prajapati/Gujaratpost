@@ -21,6 +21,7 @@ import {
   AlertCircle,
   HelpCircle,
   Sparkles,
+  Cookie,
 } from 'lucide-react';
 import { getAdminLegalPage, updateAdminLegalPage } from '@/lib/api';
 import { FormattedLegalText } from '@/components/legal/LegalPageClient';
@@ -68,10 +69,19 @@ const TABS = [
     bg: 'bg-amber-50 dark:bg-amber-950/30',
     border: 'border-amber-200 dark:border-amber-800',
   },
+  {
+    id: 'cookie-policy',
+    label: 'Cookie Policy',
+    publicHref: '/cookie-policy',
+    icon: Cookie,
+    color: 'text-red-600 dark:text-red-400',
+    bg: 'bg-red-50 dark:bg-red-950/30',
+    border: 'border-red-200 dark:border-red-800',
+  },
 ];
 
 export default function AdminLegalPage() {
-  const [activeTab, setActiveTab] = useState<'privacy-policy' | 'terms-of-use' | 'disclaimer'>('privacy-policy');
+  const [activeTab, setActiveTab] = useState<'privacy-policy' | 'terms-of-use' | 'disclaimer' | 'cookie-policy'>('privacy-policy');
   const [viewMode, setViewMode] = useState<'edit' | 'preview'>('edit');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -224,7 +234,7 @@ export default function AdminLegalPage() {
                 Legal & Policy Pages Management
               </h1>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                Manage Privacy Policy, Terms of Use, and Disclaimer with custom points, bold words, and spacing.
+                Manage Privacy Policy, Terms of Use, Disclaimer, and Cookie Policy with custom points, bold words, and spacing.
               </p>
             </div>
           </div>

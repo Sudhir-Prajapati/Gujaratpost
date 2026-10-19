@@ -27,6 +27,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { submitContactMessage } from '@/lib/api';
+import { ConsentGate } from '@/components/consent/ConsentGate';
 
 interface SocialLinks {
   whatsapp?: string;
@@ -104,16 +105,16 @@ export default function ContactPageClient({ initialData }: ContactPageClientProp
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize message textarea dynamically with minimum height & maximum limit before scrolling
+  // Auto-resize message textarea dynamically with minimum height & strict maximum limit
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = 'auto';
     const minHeight = 110;
-    const maxHeight = 260;
+    const maxHeight = 200;
     const nextHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
     textarea.style.height = `${nextHeight}px`;
-    textarea.style.overflowY = textarea.scrollHeight > maxHeight ? 'auto' : 'hidden';
+    textarea.style.overflowY = textarea.scrollHeight >= maxHeight ? 'auto' : 'hidden';
   }, [formState.message]);
 
   const handleCopy = (text: string, key: string) => {
@@ -678,7 +679,7 @@ export default function ContactPageClient({ initialData }: ContactPageClientProp
                       onChange={(e) => handleChange('message', e.target.value)}
                       onBlur={() => handleBlur('message')}
                       placeholder="Write your news tip, inquiry, press note, or question here..."
-                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm text-neutral-900 leading-relaxed min-h-[110px] max-h-[260px] resize-y transition-[border-color,box-shadow] focus:outline-none focus:ring-2 dark:text-neutral-100 ${
+                      className={`w-full rounded-xl border px-3.5 py-2.5 text-xs sm:text-sm text-neutral-900 leading-relaxed min-h-[110px] max-h-[200px] resize-none overflow-y-auto transition-[border-color,box-shadow] focus:outline-none focus:ring-2 dark:text-neutral-100 ${
                         touched.message && errors.message
                           ? 'border-red-500 bg-red-50/20 focus:border-red-500 focus:ring-red-500/20 dark:bg-red-950/20 dark:border-red-500'
                           : 'border-neutral-300 bg-white focus:border-red-600 focus:ring-red-600/10 dark:border-neutral-700 dark:bg-zinc-800'
@@ -834,16 +835,18 @@ export default function ContactPageClient({ initialData }: ContactPageClientProp
               </a>
             </div>
 
-            <div className="overflow-hidden rounded-xl h-[240px] sm:h-[340px] border border-neutral-200 dark:border-neutral-800 relative bg-neutral-100 dark:bg-zinc-800">
-              <iframe
-                src={mapEmbedUrl}
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                loading="lazy"
-                title="Gujarat Post Office Location"
-                allowFullScreen
-              />
+            <div className="overflow-hidden rounded-xl min-h-[240px] sm:min-h-[340px] border border-neutral-200 dark:border-neutral-800 relative bg-neutral-100 dark:bg-zinc-800 flex items-center justify-center">
+              <ConsentGate type="map" category="marketing" title="Gujarat Post Office Location" className="w-full h-full min-h-[240px] sm:min-h-[340px]">
+                <iframe
+                  src={mapEmbedUrl}
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, minHeight: '300px' }}
+                  loading="lazy"
+                  title="Gujarat Post Office Location"
+                  allowFullScreen
+                />
+              </ConsentGate>
             </div>
           </div>
         </section>

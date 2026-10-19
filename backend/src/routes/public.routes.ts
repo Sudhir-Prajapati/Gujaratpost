@@ -18,6 +18,7 @@ import { AboutController } from '../controllers/about.controller.js';
 import { ContactController } from '../controllers/contact.controller.js';
 import { AdvertiseController } from '../controllers/advertise.controller.js';
 import { LegalController } from '../controllers/legal.controller.js';
+import { FeedbackController } from '../controllers/feedback.controller.js';
 import { RssController } from '../controllers/rss.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 import { redisClient } from '../config/redis.js';
@@ -191,6 +192,9 @@ router.get('/about', cacheResponse(60), AboutController.getAboutSettings);
 // Public Contact Us routes
 router.get('/contact', cacheResponse(60), ContactController.getContactSettings);
 router.post('/contact/message', ContactController.submitContactMessage);
+
+// Public Feedback & Complaint Redressal route
+router.post('/feedback', FeedbackController.submitFeedback);
 
 // Public Advertise With Us route
 router.get('/advertise', cacheResponse(60), AdvertiseController.getAdvertiseSettings);

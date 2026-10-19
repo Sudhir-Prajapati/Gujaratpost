@@ -1144,6 +1144,91 @@ export async function markAllAdminContactMessagesRead(): Promise<any> {
 }
 
 /**
+ * Submit Feedback or Complaint (Public)
+ */
+export async function submitFeedback(payload: {
+  type: 'FEEDBACK' | 'COMPLAINT';
+  name: string;
+  email: string;
+  phone?: string;
+  category?: string;
+  subject: string;
+  message: string;
+  articleUrl?: string;
+}): Promise<any> {
+  const url = `${API_BASE_URL}/feedback`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  if (!res.ok || !json.success) {
+    throw new Error(json.message || 'Failed to submit feedback');
+  }
+  return json;
+}
+
+/**
+ * Fetch received feedbacks & complaints (Admin)
+ */
+export async function getAdminFeedbacks(params?: {
+  type?: string;
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}): Promise<any> {
+  const query = new URLSearchParams();
+  if (params?.type && params.type !== 'ALL') query.set('type', params.type);
+  if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+  if (params?.search) query.set('search', params.search);
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+
+  const qs = query.toString();
+  const url = `/api/admin/feedback${qs ? `?${qs}` : ''}`;
+  const res = await authFetch(url);
+  if (!res.ok) {
+    throw new Error('Failed to fetch feedback records');
+  }
+  const json = await res.json();
+  return json?.data || { items: [], total: 0, stats: {} };
+}
+
+/**
+ * Update feedback/complaint status and notes (Admin)
+ */
+export async function updateAdminFeedbackStatus(
+  id: string,
+  payload: { status?: string; adminNotes?: string }
+): Promise<any> {
+  const res = await authFetch(`/api/admin/feedback/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    throw new Error('Failed to update feedback status');
+  }
+  return res.json();
+}
+
+/**
+ * Delete feedback or complaint (Admin)
+ */
+export async function deleteAdminFeedback(id: string): Promise<any> {
+  const res = await authFetch(`/api/admin/feedback/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    throw new Error('Failed to delete feedback record');
+  }
+  return res.json();
+}
+
+
+/**
  * Fetch public Advertise With Us page details
  */
 export async function getPublicAdvertise(): Promise<any | null> {

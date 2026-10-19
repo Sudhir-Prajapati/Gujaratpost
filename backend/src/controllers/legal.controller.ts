@@ -8,6 +8,7 @@ function normalizeSlug(slug: string): string {
   if (s === 'privacy' || s === 'privacy-policy') return 'privacy-policy';
   if (s === 'terms' || s === 'terms-of-use' || s === 'terms-and-conditions') return 'terms-of-use';
   if (s === 'disclaimer') return 'disclaimer';
+  if (s === 'cookie' || s === 'cookies' || s === 'cookie-policy' || s === 'cookies-policy') return 'cookie-policy';
   return s;
 }
 
@@ -130,8 +131,8 @@ export class LegalController {
         );
       } else {
         await prisma.$executeRawUnsafe(
-          `INSERT INTO legal_pages (id, pageTitle, lastUpdated, introText, sectionsJson, contentHtml)
-           VALUES (?, ?, ?, ?, ?, ?)`,
+          `INSERT INTO legal_pages (id, pageTitle, lastUpdated, introText, sectionsJson, contentHtml, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP(3))`,
           slug,
           pageTitle,
           lastUpdated,

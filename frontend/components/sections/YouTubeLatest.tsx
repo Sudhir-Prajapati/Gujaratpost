@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { Play, ExternalLink, Bell, RefreshCw, AlertCircle, X, ChevronLeft, ChevronRight, Flame, Check } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { getLocalized } from '@/data';
+import { ConsentGate } from '@/components/consent/ConsentGate';
 
 function YoutubeIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
@@ -407,14 +408,22 @@ export default function YouTubeLatest() {
             </button>
 
             {/* Video Player Embed */}
-            <iframe
-              className="h-full w-full"
-              src={`https://www.youtube.com/embed/${selectedVideoId}?enablejsapi=1&autoplay=1&mute=0&controls=1&rel=0&playsinline=1&modestbranding=1`}
+            <ConsentGate
+              type="youtube"
+              category="marketing"
               title="YouTube video player"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
+              aspectRatioClass="aspect-video"
+              className="h-full w-full"
+            >
+              <iframe
+                className="h-full w-full"
+                src={`https://www.youtube-nocookie.com/embed/${selectedVideoId}?enablejsapi=1&autoplay=1&mute=0&controls=1&rel=0&playsinline=1&modestbranding=1`}
+                title="YouTube video player"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerPolicy="strict-origin-when-cross-origin"
+                allowFullScreen
+              />
+            </ConsentGate>
           </div>
         </div>
       )}

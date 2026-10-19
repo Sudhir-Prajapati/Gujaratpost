@@ -618,7 +618,7 @@ export default function VideosPageClient() {
                   {playingVideoId === featuredVideo.id ? (
                     <iframe
                       className="absolute inset-0 h-full w-full"
-                      src={`https://www.youtube.com/embed/${safeYouTubeId(featuredVideo.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
+                      src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(featuredVideo.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                       title={featuredVideo.titleGu}
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                       allowFullScreen
@@ -675,7 +675,7 @@ export default function VideosPageClient() {
                       {playingVideoId === item.id ? (
                         <iframe
                           className="absolute inset-0 h-full w-full"
-                          src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
+                          src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                           title={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                           allowFullScreen
@@ -786,7 +786,7 @@ export default function VideosPageClient() {
                       {playingVideoId === item.id ? (
                         <iframe
                           className="absolute inset-0 h-full w-full"
-                          src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
+                          src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                           title={item.titleGu}
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                           referrerPolicy="strict-origin-when-cross-origin"
@@ -975,7 +975,7 @@ export default function VideosPageClient() {
                     {playingVideoId === item.id ? (
                       <iframe
                         className="absolute inset-0 h-full w-full"
-                        src={`https://www.youtube.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
+                        src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
                         title={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
                         allowFullScreen

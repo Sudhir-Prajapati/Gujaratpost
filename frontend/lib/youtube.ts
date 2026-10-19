@@ -39,7 +39,7 @@ export function safeYouTubeId(input: string | null | undefined): string {
 export function youtubeEmbedUrl(input: string | null | undefined, params = ''): string {
   const id = safeYouTubeId(input);
   if (!id) return '';
-  return `https://www.youtube.com/embed/${id}${params ? '?' + params : ''}`;
+  return `https://www.youtube-nocookie.com/embed/${id}${params ? '?' + params : ''}`;
 }
 
 /**

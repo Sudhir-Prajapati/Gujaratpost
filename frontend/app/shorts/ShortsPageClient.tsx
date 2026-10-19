@@ -301,7 +301,7 @@ export default function ShortsPageClient() {
                         if (el) iframeRefs.current.set(index, el);
                         else iframeRefs.current.delete(index);
                       }}
-                      src={`https://www.youtube.com/embed/${safeYouTubeId(
+                      src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(
                         ytId
                       )}?enablejsapi=1&autoplay=${isActive ? 1 : 0}&mute=${
                         isMuted ? 1 : (isActive ? 0 : 1)

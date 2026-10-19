@@ -5,6 +5,7 @@ import { ArrowUpRight, Bell, CalendarClock, Radio, Tv } from 'lucide-react';
 import { getLocalized } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import { SocialIcon } from '@/components/ui/SocialLinks';
+import { ConsentGate } from '@/components/consent/ConsentGate';
 
 const CHANNEL_URL = 'https://www.youtube.com/@Gujaratpostnews';
 const CHANNEL_ID = 'UCqQ8YbFSZ4j8J4iVJOHurTw';
@@ -22,8 +23,8 @@ export default function LiveTVSection() {
   const { language } = useApp();
   const [mode, setMode] = useState<'latest' | 'live'>('latest');
   const embedUrl = mode === 'live'
-    ? `https://www.youtube.com/embed/live_stream?channel=${CHANNEL_ID}&autoplay=1&mute=1&rel=0`
-    : `https://www.youtube.com/embed/${LATEST_VIDEO_ID}?rel=0&modestbranding=1`;
+    ? `https://www.youtube-nocookie.com/embed/live_stream?channel=${CHANNEL_ID}&autoplay=1&mute=1&rel=0`
+    : `https://www.youtube-nocookie.com/embed/${LATEST_VIDEO_ID}?rel=0&modestbranding=1`;
 
   return (
     <section className="relative overflow-hidden bg-[#070d18] py-10 text-white md:py-14">
@@ -68,6 +69,13 @@ export default function LiveTVSection() {
               </div>
 
               <div className="relative aspect-video overflow-hidden bg-black">
+                <ConsentGate
+                  type="youtube"
+                  category="marketing"
+                  title={mode === 'live' ? 'Gujarat Post live stream' : 'Latest Gujarat Post broadcast'}
+                  aspectRatioClass="aspect-video"
+                  className="w-full h-full"
+                >
                 <iframe
                   key={mode}
                   className="absolute inset-0 h-full w-full"
@@ -77,6 +85,7 @@ export default function LiveTVSection() {
                   referrerPolicy="strict-origin-when-cross-origin"
                   allowFullScreen
                 />
+                </ConsentGate>
               </div>
 
               <div className="flex flex-col gap-3 border-t border-white/10 bg-black/25 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
