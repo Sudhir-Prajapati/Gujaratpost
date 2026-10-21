@@ -282,16 +282,15 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             <Link
                                 href="/"
                                 className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
-                                style={{ aspectRatio: '940 / 208' }}
                             >
                                 <Image
                                     src="/GujaratpostFinalLogo.png"
                                     alt="Gujarat Post"
-                                    fill
+                                    width={662}
+                                    height={163}
                                     priority
                                     unoptimized
-                                    sizes="240px"
-                                    className="object-contain object-center drop-shadow-sm"
+                                    className="w-full h-auto block drop-shadow-sm"
                                 />
                             </Link>
 
@@ -385,33 +384,32 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
                     {/* Logo & Brand */}
                     <div className="flex flex-col items-start gap-1 lg:w-72 flex-shrink-0 select-none">
-                        {/* Slogan */}
-                        <div className="flex flex-col justify-center leading-tight pl-1 sm:pl-1.5 md:pl-2">
-                            <p
-                                className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
-                                style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
-                                translate="no"
-                            >
-                                Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
-                            </p>
-                        </div>
-
                         {/* Unified Logo & Support Button Container - Exact Same Width & Matching Ends */}
                         <div className="w-[240px] flex flex-col items-start">
+                            {/* Slogan */}
+                            <div className="w-full flex flex-col justify-center leading-tight mb-2">
+                                <p
+                                    className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
+                                    style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
+                                    translate="no"
+                                >
+                                    Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
+                                </p>
+                            </div>
+
                             {/* Logo — exact same width as Support Button */}
                             <Link
                                 href="/"
                                 className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
-                                style={{ aspectRatio: '940 / 208' }}
                             >
                                 <Image
                                     src="/GujaratpostFinalLogo.png"
                                     alt="Gujarat Post"
-                                    fill
+                                    width={662}
+                                    height={163}
                                     priority
                                     unoptimized
-                                    sizes="240px"
-                                    className="object-contain object-left block drop-shadow-sm"
+                                    className="w-full h-auto block drop-shadow-sm"
                                 />
                             </Link>
 

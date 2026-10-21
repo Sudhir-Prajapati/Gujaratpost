@@ -87,9 +87,9 @@ export function invalidateHeroSettingsCache() {
   heroSettingsInFlightPromise = null;
   clearPublicRoutesCache();
   if (redisClient.isOpen) {
-    redisClient.del('cache:hero_settings').catch(() => {});
-    redisClient.del('cache:public:/api/public/tickers').catch(() => {});
-    redisClient.del('cache:public:/api/public/hero-settings').catch(() => {});
+    redisClient.del('cache:hero_settings').catch(() => { });
+    redisClient.del('cache:public:/api/public/tickers').catch(() => { });
+    redisClient.del('cache:public:/api/public/hero-settings').catch(() => { });
   }
 }
 
@@ -225,11 +225,11 @@ export class HeroController {
           // Query A: All target IDs in 1 query
           allTargetIds.length > 0
             ? withDbRetry(() =>
-                prisma.post.findMany({
-                  where: { id: { in: allTargetIds }, status: 'PUBLISHED' },
-                  select: heroPostSelect,
-                })
-              ).catch(() => [])
+              prisma.post.findMany({
+                where: { id: { in: allTargetIds }, status: 'PUBLISHED' },
+                select: heroPostSelect,
+              })
+            ).catch(() => [])
             : Promise.resolve([]),
 
           // Query B: Fallback for slots and heroGrid (latest posts first)
@@ -280,25 +280,25 @@ export class HeroController {
           // Query E: Popular fallback (only if needed)
           parsedPopularNewsIds.length === 0
             ? withDbRetry(() =>
-                prisma.post.findMany({
-                  where: { status: 'PUBLISHED' },
-                  orderBy: { createdAt: 'desc' },
-                  take: 12,
-                  select: heroPostSelect,
-                })
-              ).catch(() => [])
+              prisma.post.findMany({
+                where: { status: 'PUBLISHED' },
+                orderBy: { createdAt: 'desc' },
+                take: 12,
+                select: heroPostSelect,
+              })
+            ).catch(() => [])
             : Promise.resolve([]),
 
           // Query F: Most-read fallback (only if needed)
           parsedMostReadIds.length === 0
             ? withDbRetry(() =>
-                prisma.post.findMany({
-                  where: { status: 'PUBLISHED' },
-                  orderBy: [{ views: 'desc' }, { createdAt: 'desc' }],
-                  take: 10,
-                  select: heroPostSelect,
-                })
-              ).catch(() => [])
+              prisma.post.findMany({
+                where: { status: 'PUBLISHED' },
+                orderBy: [{ views: 'desc' }, { createdAt: 'desc' }],
+                take: 10,
+                select: heroPostSelect,
+              })
+            ).catch(() => [])
             : Promise.resolve([]),
         ]);
 
@@ -441,7 +441,7 @@ export class HeroController {
 
       heroSettingsMemCache = { timestamp: Date.now(), data: resultData };
       if (redisClient.isOpen) {
-        redisClient.setEx('cache:hero_settings', 10, JSON.stringify(resultData)).catch(() => {});
+        redisClient.setEx('cache:hero_settings', 10, JSON.stringify(resultData)).catch(() => { });
       }
 
       return sendSuccess(res, resultData, 'Hero section settings retrieved successfully.');
@@ -464,38 +464,38 @@ export class HeroController {
       const topicsStr = Array.isArray(trendingTopics)
         ? JSON.stringify(trendingTopics)
         : typeof trendingTopics === 'string'
-        ? trendingTopics
-        : null;
+          ? trendingTopics
+          : null;
 
       const newsIdsStr = Array.isArray(trendingNewsIds)
         ? JSON.stringify(trendingNewsIds)
         : typeof trendingNewsIds === 'string'
-        ? trendingNewsIds
-        : null;
+          ? trendingNewsIds
+          : null;
 
       const popularIdsStr = Array.isArray(popularNewsIds)
         ? JSON.stringify(popularNewsIds)
         : typeof popularNewsIds === 'string'
-        ? popularNewsIds
-        : null;
+          ? popularNewsIds
+          : null;
 
       const mostReadIdsStr = Array.isArray(mostReadIds)
         ? JSON.stringify(mostReadIds)
         : typeof mostReadIds === 'string'
-        ? mostReadIds
-        : null;
+          ? mostReadIds
+          : null;
 
       const heroGridIdsStr = Array.isArray(heroGridIds)
         ? JSON.stringify(heroGridIds)
         : typeof heroGridIds === 'string'
-        ? heroGridIds
-        : null;
+          ? heroGridIds
+          : null;
 
       const heroSliderIdsStr = Array.isArray(heroSliderIds)
         ? JSON.stringify(heroSliderIds)
         : typeof heroSliderIds === 'string'
-        ? heroSliderIds
-        : null;
+          ? heroSliderIds
+          : null;
 
       const updateData: any = {};
       if (slot1Id !== undefined) updateData.slot1Id = slot1Id || null;

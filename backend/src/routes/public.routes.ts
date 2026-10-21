@@ -84,7 +84,7 @@ function cacheResponse(ttlSeconds: number) {
           targetCache.set(key, { timestamp: now, payload: parsed });
           return res.status(200).json(parsed);
         }
-      } catch {}
+      } catch { }
     }
 
     const originalJson = res.json.bind(res);
@@ -97,7 +97,7 @@ function cacheResponse(ttlSeconds: number) {
         targetCache.set(key, { timestamp: Date.now(), payload: body });
 
         if (redisClient.isOpen) {
-          redisClient.setEx(redisKey, ttlSeconds, JSON.stringify(body)).catch(() => {});
+          redisClient.setEx(redisKey, ttlSeconds, JSON.stringify(body)).catch(() => { });
         }
       }
       return originalJson(body);
@@ -1294,7 +1294,7 @@ router.get('/live-center', cacheResponse(120), async (req, res) => {
   if (liveCenterCache) {
     const isStale = NOW - liveCenterCache.timestamp >= 2 * 60 * 1000;
     if (isStale) {
-      fetchFreshLiveCenterData().catch(() => {});
+      fetchFreshLiveCenterData().catch(() => { });
     }
     return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
   }
@@ -1344,7 +1344,7 @@ router.get('/tickers', async (req, res, next) => {
             tickerHidden = true;
           }
         }
-      } catch {}
+      } catch { }
     }
 
     if (tickerHidden) {
