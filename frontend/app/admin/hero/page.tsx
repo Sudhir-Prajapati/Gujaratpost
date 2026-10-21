@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  Search, RefreshCw, Eye, CheckCircle2, XCircle,
+  Search, RefreshCw, Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle,
   LayoutTemplate, ArrowUpRight, Trash2, Save,
   Calendar, User, Tag, X, ImageIcon, GripVertical, ChevronLeft, ChevronRight,
   Layers, MoveHorizontal, ArrowUp, ArrowDown, Clock, Sparkles, Check,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache, getHeroSettings, updateHeroSettings } from '@/lib/api';
+import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache, clearApiCacheAndBroadcast, getHeroSettings, updateHeroSettings } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 
 
@@ -319,6 +319,8 @@ export default function HeroManagerPage() {
 
   // 3 bottom image slots, trending topics & trending news slider articles
   const [slots, setSlots] = useState<(Article | null)[]>([null, null, null]);
+  // 'auto' = latest articles from API automatically; 'manual' = admin picks specific articles
+  const [bottomSlotsMode, setBottomSlotsMode] = useState<'auto' | 'manual'>('auto');
   const [trendingTopics, setTrendingTopics] = useState<string[]>(DEFAULT_TOPICS);
   const [newTopicInput, setNewTopicInput] = useState('');
   const [trendingNewsArticles, setTrendingNewsArticles] = useState<Article[]>([]);
@@ -331,12 +333,15 @@ export default function HeroManagerPage() {
   const [savingMostRead, setSavingMostRead] = useState(false);
 
   const [heroGridArticles, setHeroGridArticles] = useState<Article[]>([]);
+  const [heroGridMode, setHeroGridMode] = useState<'auto' | 'manual'>('auto');
   const [savingHeroGrid, setSavingHeroGrid] = useState(false);
 
   // Breaking News ticker badge label, mode, speed and custom articles
   const [tickerBadgeText, setTickerBadgeText] = useState('બ્રેકિંગ ન્યૂઝ');
   const [tickerMode, setTickerMode] = useState<'scroll' | 'single'>('scroll');
   const [tickerSpeed, setTickerSpeed] = useState<number>(4500);
+  const [tickerHidden, setTickerHidden] = useState<boolean>(false);
+  const [showTickerSettingsWhileHidden, setShowTickerSettingsWhileHidden] = useState(false);
   const [selectedTickerArticles, setSelectedTickerArticles] = useState<Article[]>([]);
   const [savingTickerBadge, setSavingTickerBadge] = useState(false);
   const [previewTickerIndex, setPreviewTickerIndex] = useState(0);
@@ -347,7 +352,8 @@ export default function HeroManagerPage() {
   };
 
   const triggerOnDemandRevalidate = () => {
-    clearApiCache();
+    // Clear cache + broadcast to ALL open tabs (user homepage will re-fetch instantly)
+    clearApiCacheAndBroadcast();
     fetch('/api/revalidate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -381,6 +387,13 @@ export default function HeroManagerPage() {
               if (parsed.speed && typeof parsed.speed === 'number') {
                 setTickerSpeed(parsed.speed);
               }
+              if (typeof parsed.hidden === 'boolean') {
+                setTickerHidden(parsed.hidden);
+              } else if (parsed.hidden === 'true') {
+                setTickerHidden(true);
+              } else if (parsed.hidden === 'false') {
+                setTickerHidden(false);
+              }
               if (Array.isArray(parsed.articleIds) && parsed.articleIds.length > 0) {
                 const artMap = new Map<string, Article>();
                 arts.forEach((a) => artMap.set(a.id, a));
@@ -396,9 +409,16 @@ export default function HeroManagerPage() {
         }
       }
 
+      const serverGridMode = (heroRes as any)?.heroGridMode || heroRes?.setting?.heroGridMode || 'auto';
+      setHeroGridMode(serverGridMode);
+
       const serverGrid = Array.isArray((heroRes as any)?.heroGridArticles) ? (heroRes as any).heroGridArticles : [];
-      const combinedGrid = [...serverGrid, ...arts].filter((a, idx, arr) => a && arr.findIndex((x) => x?.id === a.id) === idx);
-      setHeroGridArticles(combinedGrid.slice(0, 16));
+      if (serverGridMode === 'manual') {
+        setHeroGridArticles(serverGrid.slice(0, 9));
+      } else {
+        const combinedGrid = [...serverGrid, ...arts].filter((a, idx, arr) => a && arr.findIndex((x) => x?.id === a.id) === idx);
+        setHeroGridArticles(combinedGrid.slice(0, 9));
+      }
 
       // Default slots: Articles 10, 11, 12 from published list (the bottom 3 cards)
       const defaultSlots = [
@@ -413,8 +433,12 @@ export default function HeroManagerPage() {
           heroRes.slots[1] ? (heroRes.slots[1] as unknown as Article) : (heroRes.setting?.slot2Id ? null : defaultSlots[1]),
           heroRes.slots[2] ? (heroRes.slots[2] as unknown as Article) : (heroRes.setting?.slot3Id ? null : defaultSlots[2]),
         ]);
+        // Detect mode: if all slot IDs are explicitly null in setting, it's auto mode
+        const hasManualSlots = heroRes.setting?.slot1Id || heroRes.setting?.slot2Id || heroRes.setting?.slot3Id;
+        setBottomSlotsMode(hasManualSlots ? 'manual' : 'auto');
       } else {
         setSlots(defaultSlots);
+        setBottomSlotsMode('auto');
       }
 
       if (heroRes && (heroRes as any).trendingTopics && Array.isArray((heroRes as any).trendingTopics)) {
@@ -484,8 +508,58 @@ export default function HeroManagerPage() {
     showToast(`Added "${getTitle(article).slice(0, 30)}..." to ticker`, true);
   };
 
+  /**
+   * Single-click instant toggle for showing or completely hiding the Breaking News Ticker.
+   * Immediately updates UI state, sets localStorage for 0ms cross-tab sync via 'storage' event,
+   * broadcasts to all open browser windows, and auto-saves to backend database.
+   */
+  const handleToggleTickerVisibility = async (hide: boolean) => {
+    // 1. Instantly update local state
+    setTickerHidden(hide);
+
+    // 2. Instantly update localStorage and cookies so any user-facing tab immediately hides or shows
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('gp_ticker_hidden', hide ? 'true' : 'false');
+      try {
+        document.cookie = `gp_ticker_hidden=${hide ? 'true' : 'false'}; path=/; max-age=31536000; SameSite=Lax`;
+      } catch {}
+    }
+
+    // 3. Instantly broadcast via BroadcastChannel to all open browser tabs
+    clearApiCacheAndBroadcast({ type: 'TICKER_SETTINGS_UPDATED', hidden: hide });
+
+    // 4. Instant user toast notification
+    showToast(
+      hide
+        ? '✅ Single click applied! Breaking News Ticker (both Continuous & Single) is now COMPLETELY HIDDEN on user side.'
+        : '✅ Single click applied! Breaking News Ticker is now LIVE on user side.',
+      true
+    );
+
+    // 5. Auto-save to backend database immediately
+    try {
+      const payloadObj = {
+        text: tickerBadgeText.trim() || 'બ્રેકિંગ ન્યૂઝ',
+        mode: tickerMode,
+        speed: tickerSpeed,
+        articleIds: tickerMode === 'single' ? selectedTickerArticles.map((a) => a.id) : [],
+        hidden: hide,
+      };
+      const payload = {
+        tickerLabel: JSON.stringify(payloadObj),
+      };
+      const res = await updateHeroSettings(payload);
+      if (res && res.success) {
+        clearApiCacheAndBroadcast({ type: 'TICKER_SETTINGS_UPDATED', hidden: hide });
+        triggerOnDemandRevalidate();
+      }
+    } catch (err) {
+      console.error('Failed to auto-save ticker visibility:', err);
+    }
+  };
+
   const handleSaveTickerBadge = async () => {
-    if (tickerMode === 'single' && selectedTickerArticles.length === 0) {
+    if (!tickerHidden && tickerMode === 'single' && selectedTickerArticles.length === 0) {
       showToast('⚠️ Please select at least 1 article for the Single Headline slider.', false);
       return;
     }
@@ -496,14 +570,27 @@ export default function HeroManagerPage() {
         mode: tickerMode,
         speed: tickerSpeed,
         articleIds: tickerMode === 'single' ? selectedTickerArticles.map((a) => a.id) : [],
+        hidden: tickerHidden,
       };
       const payload = {
         tickerLabel: JSON.stringify(payloadObj),
       };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('gp_ticker_hidden', tickerHidden ? 'true' : 'false');
+        try {
+          document.cookie = `gp_ticker_hidden=${tickerHidden ? 'true' : 'false'}; path=/; max-age=31536000; SameSite=Lax`;
+        } catch {}
+      }
       const res = await updateHeroSettings(payload);
       if (res && res.success) {
+        clearApiCacheAndBroadcast({ type: 'TICKER_SETTINGS_UPDATED', hidden: tickerHidden });
         triggerOnDemandRevalidate();
-        showToast('✅ Saved! Breaking News ticker settings updated live on user side.', true);
+        showToast(
+          tickerHidden
+            ? '✅ Saved! Breaking News ticker is now HIDDEN on the user side.'
+            : '✅ Saved! Breaking News ticker settings updated live on user side.',
+          true
+        );
       } else {
         showToast('Failed to save ticker settings. Please try again.', false);
       }
@@ -904,6 +991,10 @@ export default function HeroManagerPage() {
   };
 
   const handleAddHeroGridArticle = (art: Article) => {
+    if (heroGridArticles.length >= 9) {
+      showToast('⚠️ Limit reached (maximum 9 articles for Top Hero Grid). Please remove an article first.', false);
+      return;
+    }
     if (heroGridArticles.some((a) => a.id === art.id)) {
       showToast('Article is already in Hero Grid list', false);
       return;
@@ -922,15 +1013,19 @@ export default function HeroManagerPage() {
         trendingNewsIds: trendingNewsArticles.map((a) => a.id),
         popularNewsIds: popularNewsArticles.map((a) => a.id),
         heroGridIds: heroGridArticles.map((a) => a.id),
+        heroGridMode,
       };
 
       const res = await updateHeroSettings(payload);
 
       if (res && res.success) {
         triggerOnDemandRevalidate();
-        showToast('✅ Saved! Top Main Hero Grid positions updated live on user side.', true);
+        showToast('✅ Saved! Top Main Hero Grid settings updated live on user side.', true);
         if (res.data?.heroGridArticles && Array.isArray(res.data.heroGridArticles)) {
           setHeroGridArticles(res.data.heroGridArticles as unknown as Article[]);
+        }
+        if (res.data?.heroGridMode) {
+          setHeroGridMode(res.data.heroGridMode);
         }
       } else {
         showToast('Failed to save Hero Grid positions. Please try again.', false);
@@ -947,11 +1042,14 @@ export default function HeroManagerPage() {
   const handleSaveBottomSlots = async () => {
     setSavingBottomSlots(true);
     try {
-      const payload = {
-        slot1Id: slots[0]?.id || null,
-        slot2Id: slots[1]?.id || null,
-        slot3Id: slots[2]?.id || null,
-      };
+      // In auto mode, clear all slot IDs so frontend uses latest articles automatically
+      const payload = bottomSlotsMode === 'auto'
+        ? { slot1Id: null, slot2Id: null, slot3Id: null }
+        : {
+            slot1Id: slots[0]?.id || null,
+            slot2Id: slots[1]?.id || null,
+            slot3Id: slots[2]?.id || null,
+          };
 
       const res = await updateHeroSettings(payload);
 
@@ -961,13 +1059,17 @@ export default function HeroManagerPage() {
           window.dispatchEvent(new CustomEvent('gp-hero-updated'));
           window.dispatchEvent(new CustomEvent('gp-articles-updated'));
         }
-        showToast('✅ Saved! Bottom Row 3 Image Cards updated live on user side.', true);
-        if (res.data?.slots) {
-          setSlots([
-            res.data.slots[0] ? (res.data.slots[0] as unknown as Article) : null,
-            res.data.slots[1] ? (res.data.slots[1] as unknown as Article) : null,
-            res.data.slots[2] ? (res.data.slots[2] as unknown as Article) : null,
-          ]);
+        if (bottomSlotsMode === 'auto') {
+          showToast('✅ Saved! Auto Mode enabled — bottom cards now update automatically from API.', true);
+        } else {
+          showToast('✅ Saved! Manual Mode — Bottom Row 3 Image Cards updated live on user side.', true);
+          if (res.data?.slots) {
+            setSlots([
+              res.data.slots[0] ? (res.data.slots[0] as unknown as Article) : null,
+              res.data.slots[1] ? (res.data.slots[1] as unknown as Article) : null,
+              res.data.slots[2] ? (res.data.slots[2] as unknown as Article) : null,
+            ]);
+          }
         }
       } else {
         showToast('Failed to save Bottom Cards. Please try again.', false);
@@ -1055,18 +1157,26 @@ export default function HeroManagerPage() {
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap">
                   <span className="flex h-3.5 w-3.5 relative">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600"></span>
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${tickerHidden ? 'bg-amber-500' : 'bg-red-500'} opacity-75`}></span>
+                    <span className={`relative inline-flex rounded-full h-3.5 w-3.5 ${tickerHidden ? 'bg-amber-600' : 'bg-red-600'}`}></span>
                   </span>
                   <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
                     Breaking News Ticker Settings
                   </h3>
-                  <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full border bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900">
-                    Live Header Bar
-                  </span>
+                  {tickerHidden ? (
+                    <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full border bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800 flex items-center gap-1.5 shadow-2xs">
+                      <EyeOff className="h-3.5 w-3.5 text-amber-600" />
+                      Hidden on Website (વેબસાઇટ પર છુપાયેલ છે)
+                    </span>
+                  ) : (
+                    <span className="text-xs sm:text-sm font-bold px-3 py-1 rounded-full border bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shadow-2xs">
+                      <Eye className="h-3.5 w-3.5 text-emerald-600" />
+                      Live Header Bar (વેબસાઇટ પર લાઈવ)
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Choose display style (Continuous Marquee vs Single One-by-One), customize badge label, and select specific articles to feature.
+                  Choose display style (Continuous Marquee vs Single One-by-One), customize badge label, show/hide section, and select specific articles to feature.
                 </p>
               </div>
 
@@ -1081,358 +1191,522 @@ export default function HeroManagerPage() {
               </button>
             </div>
 
-            {/* 1. Mode Selection (Option 1 vs Option 2) */}
-            <div className="mb-6">
-              <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-2.5">
-                1. Choose Display Mode (ડિસ્પ્લે પદ્ધતિ પસંદ કરો)
-              </label>
+            {/* ── Section Display Status (Show vs Hide Fully) ── */}
+            <div className="mb-6 p-4 sm:p-5 rounded-2xl border-2 border-zinc-200 dark:border-zinc-700 bg-zinc-50/70 dark:bg-zinc-800/40">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <div>
+                  <label className="block text-sm sm:text-base font-black text-zinc-900 dark:text-white">
+                    Section Display Status (આ સેક્શન વેબસાઇટ પર દેખાડવું કે સંપૂર્ણ છુપાવવું?)
+                  </label>
+                  <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
+                    Choose whether the top Breaking News Ticker is visible to visitors or completely hidden.
+                  </p>
+                </div>
+                <span className={`text-xs font-black px-3 py-1 rounded-full border shrink-0 ${
+                  tickerHidden
+                    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                }`}>
+                  {tickerHidden ? '● હાલમાં છુપાયેલ છે (Currently Hidden)' : '● લાઈવ ચાલુ છે (Currently Visible)'}
+                </span>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Option 1: Continuous Marquee Scroll */}
+                {/* Option A: Show Section (Visible) */}
                 <div
-                  onClick={() => setTickerMode('scroll')}
-                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'scroll'
-                      ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
-                      : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
-                    }`}
+                  onClick={() => handleToggleTickerVisibility(false)}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    !tickerHidden
+                      ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/20 shadow-sm ring-2 ring-emerald-500/20'
+                      : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 hover:border-zinc-400'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${tickerMode === 'scroll' ? 'bg-[#B3121B] text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
-                        <MoveHorizontal className="h-5 w-5" />
+                      <div className={`p-2.5 rounded-xl ${!tickerHidden ? 'bg-emerald-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
+                        <Eye className="h-5 w-5" />
                       </div>
                       <div>
                         <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
-                          Continuous Marquee Scroll
+                          Show Section (વેબસાઇટ પર દેખાડો)
+                          {!tickerHidden && (
+                            <span className="text-xs bg-emerald-600 text-white px-2 py-0.5 rounded-full font-bold">Active</span>
+                          )}
                         </h4>
                         <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-                          સતત સ્ક્રોલિંગ (Left to Left continuous stream)
+                          User-side Live & Visible (Single-click)
                         </p>
                       </div>
                     </div>
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerMode === 'scroll' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400'
-                      }`}>
-                      {tickerMode === 'scroll' && <div className="h-2 w-2 rounded-full bg-white" />}
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
+                      !tickerHidden ? 'border-emerald-600 bg-emerald-600' : 'border-zinc-400'
+                    }`}>
+                      {!tickerHidden && <div className="h-2 w-2 rounded-full bg-white" />}
                     </div>
                   </div>
                   <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
-                    બધી હેડલાઇન્સ જમણેથી ડાબે એકધારા પ્રવાહમાં સતત સ્ક્રોલ થશે. યુઝર માઉસ રાખે ત્યારે પોઝ થશે.
+                    ક્લિક કરતાં જ આ બ્રેકિંગ ન્યૂઝ ટિકર વેબસાઇટની સૌથી ટોચ પર લાઈવ દેખાવા લાગશે.
                   </p>
                 </div>
 
-                {/* Option 2: Single Headline One-by-One */}
+                {/* Option B: Hide Section (Hidden) */}
                 <div
-                  onClick={() => setTickerMode('single')}
-                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'single'
-                      ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
-                      : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
-                    }`}
+                  onClick={() => handleToggleTickerVisibility(true)}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
+                    tickerHidden
+                      ? 'border-red-600 bg-red-50/60 dark:bg-red-950/20 shadow-sm ring-2 ring-red-500/20'
+                      : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 hover:border-zinc-400'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className={`p-2.5 rounded-xl ${tickerMode === 'single' ? 'bg-[#B3121B] text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
-                        <Layers className="h-5 w-5" />
+                      <div className={`p-2.5 rounded-xl ${tickerHidden ? 'bg-red-600 text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
+                        <EyeOff className="h-5 w-5" />
                       </div>
                       <div>
                         <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
-                          Single Headline One-by-One
-                          <span className="text-xs bg-[#B3121B] text-white px-2 py-0.5 rounded-full font-bold">New</span>
+                          Hide This Section Fully (સંપૂર્ણ છુપાવો)
+                          {tickerHidden && (
+                            <span className="text-xs bg-red-600 text-white px-2 py-0.5 rounded-full font-bold">Hidden</span>
+                          )}
                         </h4>
                         <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-                          એક પછી એક હેડલાઇન સ્લાઇડર (Single article transition)
+                          Continuous & Single both 100% hidden (Single-click)
                         </p>
                       </div>
                     </div>
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerMode === 'single' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400'
-                      }`}>
-                      {tickerMode === 'single' && <div className="h-2 w-2 rounded-full bg-white" />}
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
+                      tickerHidden ? 'border-red-600 bg-red-600' : 'border-zinc-400'
+                    }`}>
+                      {tickerHidden && <div className="h-2 w-2 rounded-full bg-white" />}
                     </div>
                   </div>
                   <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
-                    સ્ક્રીન પર એક જ આર્ટિકલ દેખાશે. થોડી સેકન્ડ પછી સ્મૂધ એનિમેશન સાથે આપમેળે બીજો આર્ટિકલ આવશે.
+                    સિંગલ ક્લિક પર જ Continuous Marquee અને Single Headline બંને યુઝર સાઇટ પરથી સંપૂર્ણ બંધ થઈ જશે.
                   </p>
                 </div>
               </div>
 
-              {/* Speed Selector (Active when Single mode is selected) */}
-              {tickerMode === 'single' && (
-                <div className="mt-4 p-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-[#B3121B]" />
-                    <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
-                      સ્લાઇડ બદલાવવાનો સમય (Slide Duration per Article):
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {[
-                      { ms: 3000, label: '3s (ઝડપી)' },
-                      { ms: 4500, label: '4.5s (ડિફોલ્ટ)' },
-                      { ms: 6000, label: '6s (સામાન્ય)' },
-                      { ms: 8000, label: '8s (શાંતિથી)' },
-                    ].map((opt) => (
+              {tickerHidden && (
+                <div className="mt-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-red-50 via-amber-50 to-red-50 dark:from-red-950/40 dark:via-zinc-900 dark:to-red-950/40 border-2 border-red-300 dark:border-red-800 shadow-xs">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="h-11 w-11 rounded-xl bg-red-600 text-white flex items-center justify-center shrink-0 shadow-md">
+                        <EyeOff className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-base sm:text-lg font-black text-red-950 dark:text-red-200">
+                          બંને મોડ્સ (Continuous Marquee & Single Headline) સંપૂર્ણપણે બંધ છે
+                        </h4>
+                        <p className="text-xs sm:text-sm text-red-800 dark:text-red-300 font-medium mt-0.5">
+                          Both Continuous Marquee Scroll and Single Headline Slider are 100% hidden on the user website. Instant single-click sync active.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                       <button
-                        key={opt.ms}
                         type="button"
-                        onClick={() => setTickerSpeed(opt.ms)}
-                        className={`text-xs sm:text-sm px-3.5 py-1.5 rounded-lg font-bold transition cursor-pointer ${tickerSpeed === opt.ms
-                            ? 'bg-[#B3121B] text-white shadow-xs'
-                            : 'bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400'
-                          }`}
+                        onClick={() => handleToggleTickerVisibility(false)}
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700 transition shadow-sm cursor-pointer"
                       >
-                        {opt.label}
+                        <Eye className="h-4 w-4" />
+                        Turn ON (ચાલુ કરો)
                       </button>
-                    ))}
+                      <button
+                        type="button"
+                        onClick={() => setShowTickerSettingsWhileHidden((prev) => !prev)}
+                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2.5 text-xs sm:text-sm font-semibold text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 transition cursor-pointer"
+                      >
+                        {showTickerSettingsWhileHidden ? 'Hide Details' : 'Configure Settings'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 2. Badge Text Input */}
-            <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-2 space-y-2">
-                <label className="text-sm sm:text-base font-bold text-zinc-800 dark:text-zinc-200 flex items-center justify-between">
-                  <span>2. Badge Text / Label (હેડર બેજ લખાણ)</span>
-                  <span className="text-xs sm:text-sm text-zinc-500 font-medium">Type any text in any language</span>
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={tickerBadgeText}
-                    onChange={(e) => setTickerBadgeText(e.target.value)}
-                    placeholder="Enter badge text (e.g. બ્રેકિંગ ન્યૂઝ, BREAKING NEWS, લાઈવ સમાચાર...)"
-                    className="w-full rounded-xl border border-zinc-400 bg-white px-4 py-3 text-base font-semibold text-zinc-900 focus:border-[#B3121B] focus:ring-2 focus:ring-[#B3121B]/20 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 placeholder:text-base placeholder:font-normal placeholder:text-zinc-400 shadow-xs"
-                  />
-                  {tickerBadgeText && (
-                    <button
-                      type="button"
-                      onClick={() => setTickerBadgeText('')}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-                      title="Clear text"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-xs sm:text-sm text-zinc-500 font-semibold">Quick suggestions:</span>
-                  {['બ્રેકિંગ ન્યૂઝ', 'BREAKING NEWS', 'લાઈવ સમાચાર', 'LIVE UPDATES', 'ખાસ અહેવાલ'].map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      onClick={() => setTickerBadgeText(preset)}
-                      className={`text-xs sm:text-sm px-3.5 py-1 rounded-full border font-semibold transition cursor-pointer ${tickerBadgeText === preset
-                          ? 'bg-[#B3121B] text-white border-[#B3121B]'
-                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
+            {/* When Section is NOT hidden, or when admin explicitly clicks "Configure Settings" while hidden */}
+            {(!tickerHidden || showTickerSettingsWhileHidden) && (
+              <>
+                {/* 1. Mode Selection (Option 1 vs Option 2) */}
+                <div className="mb-6">
+                  <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white mb-2.5">
+                    1. Choose Display Mode (ડિસ્પ્લે પદ્ધતિ પસંદ કરો)
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Option 1: Continuous Marquee Scroll */}
+                    <div
+                      onClick={() => setTickerMode('scroll')}
+                      className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'scroll'
+                          ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                          : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
                         }`}
                     >
-                      {preset}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Live Preview Card */}
-              <div className="rounded-xl border border-gray-400 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/40 p-4 flex flex-col justify-center">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Live Bar Preview</span>
-                  <span className="text-xs font-bold text-[#B3121B]">
-                    {tickerMode === 'single' ? 'Single One-by-One' : 'Continuous Scroll'}
-                  </span>
-                </div>
-                <div className="overflow-hidden rounded-lg border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900">
-                  <div className="flex items-center gap-2 p-1.5 min-h-[44px]">
-                    <div className="flex shrink-0 items-center gap-1.5 bg-black px-3 py-1.5 text-xs sm:text-sm font-black tracking-wide text-white border-r-2 border-[#B3121B] rounded-xs select-none">
-                      <span className="relative flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
-                      </span>
-                      <span>{tickerBadgeText || 'બ્રેકિંગ ન્યૂઝ'}</span>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2.5 rounded-xl ${tickerMode === 'scroll' ? 'bg-[#B3121B] text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
+                            <MoveHorizontal className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+                              Continuous Marquee Scroll
+                            </h4>
+                            <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                              સતત સ્ક્રોલિંગ (Left to Left continuous stream)
+                            </p>
+                          </div>
+                        </div>
+                        <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerMode === 'scroll' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400'
+                          }`}>
+                          {tickerMode === 'scroll' && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
+                        બધી હેડલાઇન્સ જમણેથી ડાબે એકધારા પ્રવાહમાં સતત સ્ક્રોલ થશે. યુઝર માઉસ રાખે ત્યારે પોઝ થશે.
+                      </p>
                     </div>
 
-                    {tickerMode === 'single' ? (
-                      <div className="flex-1 flex items-center justify-between gap-2 overflow-hidden px-2 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                        <div className="flex items-center gap-2 truncate">
-                          <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0"></span>
-                          <span className="truncate">
-                            {selectedTickerArticles.length > 0
-                              ? getTitle(selectedTickerArticles[previewTickerIndex % selectedTickerArticles.length])
-                              : 'નીચેથી આર્ટિકલ્સ પસંદ કરો (Select articles below)...'}
-                          </span>
+                    {/* Option 2: Single Headline One-by-One */}
+                    <div
+                      onClick={() => setTickerMode('single')}
+                      className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'single'
+                          ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                          : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
+                        }`}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2.5 rounded-xl ${tickerMode === 'single' ? 'bg-[#B3121B] text-white' : 'bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'}`}>
+                            <Layers className="h-5 w-5" />
+                          </div>
+                          <div>
+                            <h4 className="text-base sm:text-lg font-black text-zinc-900 dark:text-white flex items-center gap-2">
+                              Single Headline One-by-One
+                              <span className="text-xs bg-[#B3121B] text-white px-2 py-0.5 rounded-full font-bold">New</span>
+                            </h4>
+                            <p className="text-xs sm:text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                              એક પછી એક હેડલાઇન સ્લાઇડર (Single article transition)
+                            </p>
+                          </div>
                         </div>
-                        {selectedTickerArticles.length > 0 && (
-                          <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-400 font-bold">
-                            <span>
-                              {(previewTickerIndex % selectedTickerArticles.length) + 1} / {selectedTickerArticles.length}
-                            </span>
+                        <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerMode === 'single' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400'
+                          }`}>
+                          {tickerMode === 'single' && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-3 leading-relaxed">
+                        સ્ક્રીન પર એક જ આર્ટિકલ દેખાશે. થોડી સેકન્ડ પછી સ્મૂધ એનિમેશન સાથે આપમેળે બીજો આર્ટિકલ આવશે.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Speed Selector (Active when Single mode is selected) */}
+                  {tickerMode === 'single' && (
+                    <div className="mt-4 p-4 rounded-xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-[#B3121B]" />
+                        <span className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                          સ્લાઇડ બદલાવવાનો સમય (Slide Duration per Article):
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {[
+                          { ms: 3000, label: '3s (ઝડપી)' },
+                          { ms: 4500, label: '4.5s (ડિફોલ્ટ)' },
+                          { ms: 6000, label: '6s (સામાન્ય)' },
+                          { ms: 8000, label: '8s (શાંતિથી)' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.ms}
+                            type="button"
+                            onClick={() => setTickerSpeed(opt.ms)}
+                            className={`text-xs sm:text-sm px-3.5 py-1.5 rounded-lg font-bold transition cursor-pointer ${tickerSpeed === opt.ms
+                                ? 'bg-[#B3121B] text-white shadow-xs'
+                                : 'bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400'
+                              }`}
+                          >
+                            {opt.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Badge Text Input */}
+                <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-5">
+                  <div className="lg:col-span-2 space-y-2">
+                    <label className="text-sm sm:text-base font-bold text-zinc-800 dark:text-zinc-200 flex items-center justify-between">
+                      <span>2. Badge Text / Label (હેડર બેજ લખાણ)</span>
+                      <span className="text-xs sm:text-sm text-zinc-500 font-medium">Type any text in any language</span>
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={tickerBadgeText}
+                        onChange={(e) => setTickerBadgeText(e.target.value)}
+                        placeholder="Enter badge text (e.g. બ્રેકિંગ ન્યૂઝ, BREAKING NEWS, લાઈવ સમાચાર...)"
+                        className="w-full rounded-xl border border-zinc-400 bg-white px-4 py-3 text-base font-semibold text-zinc-900 focus:border-[#B3121B] focus:ring-2 focus:ring-[#B3121B]/20 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-100 placeholder:text-base placeholder:font-normal placeholder:text-zinc-400 shadow-xs"
+                      />
+                      {tickerBadgeText && (
+                        <button
+                          type="button"
+                          onClick={() => setTickerBadgeText('')}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                          title="Clear text"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className="text-xs sm:text-sm text-zinc-500 font-semibold">Quick suggestions:</span>
+                      {['બ્રેકિંગ ન્યૂઝ', 'BREAKING NEWS', 'લાઈવ સમાચાર', 'LIVE UPDATES', 'ખાસ અહેવાલ'].map((preset) => (
+                        <button
+                          key={preset}
+                          type="button"
+                          onClick={() => setTickerBadgeText(preset)}
+                          className={`text-xs sm:text-sm px-3.5 py-1 rounded-full border font-semibold transition cursor-pointer ${tickerBadgeText === preset
+                              ? 'bg-[#B3121B] text-white border-[#B3121B]'
+                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
+                            }`}
+                        >
+                          {preset}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Live Preview Card */}
+                  <div className={`rounded-xl border p-4 flex flex-col justify-center transition-all ${
+                    tickerHidden
+                      ? 'border-amber-300 dark:border-amber-800/80 bg-amber-50/40 dark:bg-amber-950/20'
+                      : 'border-gray-400 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/40'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Live Bar Preview</span>
+                      <div className="flex items-center gap-2">
+                        {tickerHidden ? (
+                          <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300 dark:border-amber-700 flex items-center gap-1">
+                            <EyeOff className="h-3 w-3" /> Hidden on Website
+                          </span>
+                        ) : (
+                          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
+                            <Eye className="h-3 w-3" /> Visible Live
+                          </span>
+                        )}
+                        <span className="text-xs font-bold text-[#B3121B]">
+                          {tickerMode === 'single' ? 'Single One-by-One' : 'Continuous Scroll'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className={`overflow-hidden rounded-lg border border-gray-400 dark:border-zinc-700 bg-white dark:bg-zinc-900 transition-opacity ${tickerHidden ? 'opacity-50' : 'opacity-100'}`}>
+                      <div className="flex items-center gap-2 p-1.5 min-h-[44px]">
+                        <div className="flex shrink-0 items-center gap-1.5 bg-black px-3 py-1.5 text-xs sm:text-sm font-black tracking-wide text-white border-r-2 border-[#B3121B] rounded-xs select-none">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+                          </span>
+                          <span>{tickerBadgeText || 'બ્રેકિંગ ન્યૂઝ'}</span>
+                        </div>
+
+                        {tickerMode === 'single' ? (
+                          <div className="flex-1 flex items-center justify-between gap-2 overflow-hidden px-2 text-xs sm:text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                            <div className="flex items-center gap-2 truncate">
+                              <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0"></span>
+                              <span className="truncate">
+                                {selectedTickerArticles.length > 0
+                                  ? getTitle(selectedTickerArticles[previewTickerIndex % selectedTickerArticles.length])
+                                  : 'નીચેથી આર્ટિકલ્સ પસંદ કરો (Select articles below)...'}
+                              </span>
+                            </div>
+                            {selectedTickerArticles.length > 0 && (
+                              <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-400 font-bold">
+                                <span>
+                                  {(previewTickerIndex % selectedTickerArticles.length) + 1} / {selectedTickerArticles.length}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="flex-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 font-medium italic truncate pl-1.5">
+                            {allArticles.filter((a) => a.isBreaking).length > 0
+                              ? allArticles.filter((a) => a.isBreaking).map((a) => getTitle(a)).slice(0, 5).join('  ●  ')
+                              : allArticles.slice(0, 4).map((a) => getTitle(a)).join('  ●  ')}
                           </div>
                         )}
                       </div>
-                    ) : (
-                      <div className="flex-1 text-xs sm:text-sm text-zinc-600 dark:text-zinc-300 font-medium italic truncate pl-1.5">
-                        {allArticles.filter((a) => a.isBreaking).length > 0
-                          ? allArticles.filter((a) => a.isBreaking).map((a) => getTitle(a)).slice(0, 5).join('  ●  ')
-                          : allArticles.slice(0, 4).map((a) => getTitle(a)).join('  ●  ')}
-                      </div>
+                    </div>
+                    {tickerHidden && (
+                      <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300 mt-2 flex items-center gap-1">
+                        <EyeOff className="h-3 w-3" /> Note: Ticker is hidden. When saved, this bar will not show on the website.
+                      </p>
                     )}
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* 3. Articles Selection (ONLY FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
-            {tickerMode === 'single' ? (
-              <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <div>
-                    <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
-                      3. Select Articles for Single Headline Slider (એક પછી એક સ્લાઇડર માટે આર્ટિકલ્સ પસંદ કરો)
-                    </label>
-                    <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
-                      Search and select the specific articles you want to rotate one-by-one in this single headline slider.
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
-                    {selectedTickerArticles.length} articles selected
-                  </span>
-                </div>
-
-                <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
-                  {/* Search box to add articles */}
-                  <ArticleSearchBox
-                    allArticles={allArticles}
-                    excluded={selectedTickerArticles.map((a) => a.id)}
-                    placeholder="Search news by title, category or article # to add to slider..."
-                    onSelect={handleAddTickerArticle}
-                  />
-
-                  {/* List of currently selected ticker articles */}
-                  {selectedTickerArticles.length === 0 ? (
-                    <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
-                      <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
-                        No articles selected yet for Single Headline Slider.
-                      </p>
-                      <p className="text-xs mt-1 text-zinc-500">
-                        Please search in the box above to select at least 1 or more articles to rotate one-by-one.
-                      </p>
+                {/* 3. Articles Selection (ONLY FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
+                {tickerMode === 'single' ? (
+                  <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                      <div>
+                        <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
+                          3. Select Articles for Single Headline Slider (એક પછી એક સ્લાઇડર માટે આર્ટિકલ્સ પસંદ કરો)
+                        </label>
+                        <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
+                          Search and select the specific articles you want to rotate one-by-one in this single headline slider.
+                        </p>
+                      </div>
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
+                        {selectedTickerArticles.length} articles selected
+                      </span>
                     </div>
-                  ) : (
-                    <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
-                      {selectedTickerArticles.map((art, idx) => (
-                        <div
-                          key={art.id}
-                          className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
-                        >
-                          <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
-                            #{idx + 1}
-                          </span>
 
-                          <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
-                            <ArticleMedia
-                              src={getArticleImage(art)}
-                              alt={getTitle(art)}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
+                    <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
+                      {/* Search box to add articles */}
+                      <ArticleSearchBox
+                        allArticles={allArticles}
+                        excluded={selectedTickerArticles.map((a) => a.id)}
+                        placeholder="Search news by title, category or article # to add to slider..."
+                        onSelect={handleAddTickerArticle}
+                      />
 
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                              {getTitle(art)}
-                            </p>
-                            <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
-                              {catName(art.category) && <span>{catName(art.category)}</span>}
-                              {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
-                            </div>
-                          </div>
-
-                          {/* Reorder and Delete buttons */}
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => handleMoveTickerArticle(idx, 'up')}
-                              disabled={idx === 0}
-                              title="Move up"
-                              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                            >
-                              <ArrowUp className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveTickerArticle(idx, 'down')}
-                              disabled={idx === selectedTickerArticles.length - 1}
-                              title="Move down"
-                              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                            >
-                              <ArrowDown className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveTickerArticle(idx)}
-                              title="Remove from slider"
-                              className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
+                      {/* List of currently selected ticker articles */}
+                      {selectedTickerArticles.length === 0 ? (
+                        <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
+                          <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                            No articles selected yet for Single Headline Slider.
+                          </p>
+                          <p className="text-xs mt-1 text-zinc-500">
+                            Please search in the box above to select at least 1 or more articles to rotate one-by-one.
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            ) : (
-              /* Informative Banner for Option 1: Continuous Marquee Scroll */
-              <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
-                <div className="p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
-                      Continuous Marquee Scroll uses Automatic Breaking News (ઓટોમેટિક બ્રેકિંગ ન્યૂઝ)
-                    </p>
-                    <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                      આ મોડમાં અલગથી આર્ટિકલ સિલેક્ટ કરવાનો કોઈ ઓપ્શન નથી. જ્યારે પણ તમે નવી ન્યૂઝ બનાવો અથવા એડિટ કરો અને તેમાં <strong>&quot;Breaking News&quot;</strong> ઓપ્શન પસંદ કરો, ત્યારે તે આપમેળે આ સ્ક્રોલિંગ પટ્ટીમાં લાઈવ સ્ટ્રીમ થશે.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
+                      ) : (
+                        <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
+                          {selectedTickerArticles.map((art, idx) => (
+                            <div
+                              key={art.id}
+                              className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
+                            >
+                              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
+                                #{idx + 1}
+                              </span>
 
-            {/* Bottom Save Action Bar */}
-            <div className="mt-6 pt-4 border-t border-gray-300 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <span className="text-xs sm:text-sm text-zinc-500 font-semibold text-center sm:text-left">
-                All changes will apply immediately to the user-side top Breaking News ticker.
-              </span>
-              <button
-                type="button"
-                onClick={handleSaveTickerBadge}
-                disabled={savingTickerBadge}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-8 py-3 text-sm sm:text-base font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer"
-              >
-                {savingTickerBadge ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {savingTickerBadge ? 'Saving Settings...' : 'Save Ticker Settings'}
-              </button>
-            </div>
+                              <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
+                                <ArticleMedia
+                                  src={getArticleImage(art)}
+                                  alt={getTitle(art)}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
+
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                  {getTitle(art)}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
+                                  {catName(art.category) && <span>{catName(art.category)}</span>}
+                                  {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
+                                </div>
+                              </div>
+
+                              {/* Reorder and Delete buttons */}
+                              <div className="flex items-center gap-1 shrink-0">
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveTickerArticle(idx, 'up')}
+                                  disabled={idx === 0}
+                                  title="Move up"
+                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                                >
+                                  <ArrowUp className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveTickerArticle(idx, 'down')}
+                                  disabled={idx === selectedTickerArticles.length - 1}
+                                  title="Move down"
+                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                                >
+                                  <ArrowDown className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveTickerArticle(idx)}
+                                  title="Remove from slider"
+                                  className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  /* Informative Banner for Option 1: Continuous Marquee Scroll */
+                  <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
+                    <div className="p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
+                          Continuous Marquee Scroll uses Automatic Breaking News (ઓટોમેટિક બ્રેકિંગ ન્યૂઝ)
+                        </p>
+                        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
+                          આ મોડમાં અલગથી આર્ટિકલ સિલેક્ટ કરવાનો કોઈ ઓપ્શન નથી. જ્યારે પણ તમે નવી ન્યૂઝ બનાવો અથવા એડિટ કરો અને તેમાં <strong>&quot;Breaking News&quot;</strong> ઓપ્શન પસંદ કરો, ત્યારે તે આપમેળે આ સ્ક્રોલિંગ પટ્ટીમાં લાઈવ સ્ટ્રીમ થશે.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bottom Save Action Bar */}
+                <div className="mt-6 pt-4 border-t border-gray-300 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <span className="text-xs sm:text-sm text-zinc-500 font-semibold text-center sm:text-left">
+                    All changes will apply immediately to the user-side top Breaking News ticker.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSaveTickerBadge}
+                    disabled={savingTickerBadge}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-8 py-3 text-sm sm:text-base font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingTickerBadge ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {savingTickerBadge ? 'Saving Settings...' : 'Save Ticker Settings'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
 
           {/* ════════════════════════════════════════════════════════════════
-             MAIN HERO GRID (13 POSITIONS MANAGEMENT)
+             MAIN HERO GRID (9 POSITIONS MANAGEMENT - AUTO VS MANUAL)
              ════════════════════════════════════════════════════════════════ */}
           <div className="mb-8 rounded-2xl border border-gray-400 bg-white p-4 sm:p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+            {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-4 dark:border-zinc-700 mb-6 gap-4">
               <div>
                 <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
                   <span className="text-2xl">🏆</span>
                   <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
-                    Top Main Hero Grid (13 Article Positions)
+                    Top Main Hero Grid (9 Article Positions) (મુખ્ય હેરો ગ્રીડ - માત્ર 9 આર્ટિકલ્સ)
                   </h3>
-                  <span className="text-sm font-bold px-3 py-1 rounded-full border bg-red-50 text-[#B3121B] border-red-400 dark:bg-red-950/40 dark:border-red-800 shrink-0">
-                    {heroGridArticles.length} / 13 Positions
-                  </span>
+                  {heroGridMode === 'manual' ? (
+                    <span className="text-sm font-bold px-3 py-1 rounded-full border bg-amber-50 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:border-amber-700 dark:text-amber-300 shrink-0">
+                      🖊️ MANUAL ({heroGridArticles.length} / 9 Article{heroGridArticles.length === 1 ? '' : 's'})
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-400 shrink-0">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      🔄 AUTO LIVE (9 Latest News)
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Manage the exact positions of articles displayed in the top homepage Hero Grid:
-                  <strong> Position #1 = Spotlight Banner</strong>,
-                  <strong> Positions #2 & #3 = Top Middle Image Cards</strong>,
-                  <strong> Positions #4 to #13 = Middle Headline List</strong>.
+                  Manage the top homepage Hero Grid (strictly 9 articles: 3 in Spotlight Slider on the left + 6 in Middle Column on the right). The 3 bottom cards below are a completely separate section. Choose between <strong>Automatic Mode</strong> (all 9 positions filled automatically with latest published news) or <strong>Manual Mode</strong> (manually choose and order exact articles: add 1 article to show ONLY 1 spotlight card; 2 articles to show ONLY 2; 3 articles to show ONLY 3; or configure up to 9 articles).
                 </p>
               </div>
 
@@ -1444,121 +1718,333 @@ export default function HeroManagerPage() {
                   className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer"
                 >
                   {savingHeroGrid ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {savingHeroGrid ? 'Saving Hero Grid...' : 'Save Hero Grid Positions'}
+                  {savingHeroGrid ? 'Saving Hero Grid...' : 'Save Hero Grid Settings'}
                 </button>
               </div>
             </div>
 
-            {/* Quick Article Search to Add Position */}
-            <div className="mb-6 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3.5 border border-gray-400 dark:border-zinc-700">
-              <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2">
-                ➕ Add Article to Hero Grid Positions
+            {/* Mode Switcher */}
+            <div className="mb-6 p-4 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+              <p className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
+                Hero Grid Display Mode (હેરો ગ્રીડ મોડ પસંદ કરો)
               </p>
-              <ArticleSearchBox
-                allArticles={allArticles}
-                excluded={heroGridArticles.map((a) => a.id)}
-                maxLimit={100}
-                placeholder="Search latest 100 articles by title or #articleNumber to add to Hero Grid..."
-                onSelect={(art) => handleAddHeroGridArticle(art)}
-              />
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Auto Mode Option */}
+                <button
+                  type="button"
+                  onClick={() => setHeroGridMode('auto')}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    heroGridMode === 'auto'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
+                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                  }`}
+                >
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
+                    heroGridMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
+                  }`}>
+                    {heroGridMode === 'auto' && (
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-black flex items-center gap-2 ${
+                      heroGridMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
+                    }`}>
+                      🔄 Automatic Mode (સ્વયંસંચાલિત)
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">DEFAULT</span>
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                      Automatically fills ONLY the 9 hero grid positions from latest news in database (3 rotating in Spotlight Slider + 6 in Middle Column). When a new article is posted, it automatically shifts in at Position #1.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Manual Mode Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHeroGridMode('manual');
+                    if (heroGridArticles.length === 0) {
+                      setHeroGridArticles(allArticles.slice(0, 9));
+                    }
+                  }}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    heroGridMode === 'manual'
+                      ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
+                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
+                  }`}
+                >
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
+                    heroGridMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
+                  }`}>
+                    {heroGridMode === 'manual' && (
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-black ${
+                      heroGridMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
+                    }`}>
+                      🖊️ Manual Mode (મેન્યુઅલ સિલેક્શન - મહત્તમ 9 આર્ટિકલ્સ)
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                      Automatic articles are completely hidden. Pick exactly which articles to show (up to 9): 1 article shows only 1 static spotlight card, 2 articles shows 2, 3 articles shows 3, up to 9 articles.
+                    </p>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            {/* Grid List of Positions */}
-            <div className="space-y-3">
-              {heroGridArticles.map((art, index) => {
-                const isSpotlight = index === 0;
-                const isTopCard = index === 1 || index === 2;
-                const slotTitle = isSpotlight
-                  ? '🌟 Main Hero Spotlight Banner (#1 Big Card)'
-                  : isTopCard
-                    ? `🖼️ Middle Column - Top Image Card #${index}`
-                    : `📰 Middle Column - Text Headline #${index - 2}`;
-
-                const isDragging = draggedHeroIndex === index;
-
-                return (
-                  <div
-                    key={art.id}
-                    draggable
-                    onDragStart={(e) => handleHeroDragStart(e, index)}
-                    onDragOver={(e) => handleHeroDragOver(e, index)}
-                    onDragEnd={handleHeroDragEnd}
-                    className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
-                      } ${isSpotlight
-                        ? 'border-[#B3121B]/40 bg-red-50/40 dark:bg-red-950/10'
-                        : isTopCard
-                          ? 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
-                          : 'border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80'
-                      } hover:shadow-md`}
-                  >
-                    {/* Left Info */}
-                    <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
-                      <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder position">
-                        <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
-                        <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${isSpotlight ? 'bg-[#B3121B]' : isTopCard ? 'bg-blue-600' : 'bg-zinc-700'
-                          }`}>
-                          #{index + 1}
-                        </span>
-                      </div>
-
-                      <div className="relative h-12 w-16 sm:h-14 sm:w-20 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-gray-400 dark:border-zinc-700 shadow-2xs">
-                        <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${isSpotlight ? 'bg-red-100 text-[#B3121B]' : isTopCard ? 'bg-blue-100 text-blue-700' : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
-                            }`}>
-                            {slotTitle}
+            {/* ── Auto Mode Live Preview ── */}
+            {heroGridMode === 'auto' && (
+              <div className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-sm font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+                    Live Auto-Feed Active (ટોપ 9 ઓટોમેટિક આર્ટિકલ્સ)
+                  </p>
+                  <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 ml-auto bg-emerald-100 dark:bg-emerald-900/60 px-2 py-0.5 rounded">
+                    9 Articles Auto-Managed from DB
+                  </span>
+                </div>
+                <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80 mb-4 font-medium">
+                  The homepage hero section automatically displays the latest 9 published articles in real-time. Positions #1, #8, #9 are in the Spotlight Slider (rotating with 1/3 badge), and positions #2 to #7 are the 6 image cards in the middle column.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  {allArticles.slice(0, 3).map((art, idx) => (
+                    <div key={art.id || idx} className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
+                      <div className="relative w-full aspect-[16/10] bg-zinc-100 dark:bg-zinc-800">
+                        <ArticleMedia src={getArticleImage(art)} alt={getTitle(art)} className="object-cover" />
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <span className="inline-flex items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-black uppercase text-white shadow-xs">
+                            {idx === 0 ? 'SPOTLIGHT #1' : `MIDDLE CARD #${idx}`}
                           </span>
-                          {art.articleNumber && (
-                            <span className="text-[10px] sm:text-xs font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-400 dark:border-red-800">
-                              #{art.articleNumber}
-                            </span>
-                          )}
                         </div>
-                        <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mt-1">
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug">
                           {getTitle(art)}
                         </p>
-                        <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-semibold mt-1 truncate">
-                          {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">
+                          {catName(art.category)} · {fmtDate(art.publishedAt ?? art.createdAt)}
                         </p>
                       </div>
                     </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHeroGridMode('manual');
+                    setHeroGridArticles(allArticles.slice(0, 9));
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg border border-emerald-400 bg-white dark:bg-zinc-900 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                >
+                  🖊️ Switch to Manual Mode using current 9 articles
+                </button>
+              </div>
+            )}
 
-                    {/* Right Controls */}
-                    <div className="flex items-center gap-2 mt-3 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-gray-400 dark:border-zinc-800/80 pt-2.5 sm:pt-0">
+            {/* ── Manual Mode Configuration ── */}
+            {heroGridMode === 'manual' && (
+              <div className="space-y-4">
+                {/* Dynamic Status / Behavior Hint */}
+                <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+                  heroGridArticles.length === 1
+                    ? 'border-blue-300 bg-blue-50/80 dark:border-blue-800 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
+                    : heroGridArticles.length === 2
+                    ? 'border-indigo-300 bg-indigo-50/80 dark:border-indigo-800 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200'
+                    : heroGridArticles.length === 3
+                    ? 'border-purple-300 bg-purple-50/80 dark:border-purple-800 dark:bg-purple-950/30 text-purple-900 dark:text-purple-200'
+                    : heroGridArticles.length >= 4 && heroGridArticles.length <= 7
+                    ? 'border-teal-300 bg-teal-50/80 dark:border-teal-800 dark:bg-teal-950/30 text-teal-900 dark:text-teal-200'
+                    : heroGridArticles.length === 8
+                    ? 'border-cyan-300 bg-cyan-50/80 dark:border-cyan-800 dark:bg-cyan-950/30 text-cyan-900 dark:text-cyan-200'
+                    : heroGridArticles.length === 9
+                    ? 'border-emerald-300 bg-emerald-50/80 dark:border-emerald-800 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
+                    : 'border-amber-300 bg-amber-50/80 dark:border-amber-800 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200'
+                }`}>
+                  <span className="text-xl">
+                    {heroGridArticles.length === 1 ? '🎯' : heroGridArticles.length === 2 ? '👥' : heroGridArticles.length === 3 ? '🎠' : heroGridArticles.length >= 4 ? '📌' : '⚠️'}
+                  </span>
+                  <div>
+                    <p className="text-sm font-black">
+                      {heroGridArticles.length === 0 && 'No Articles Added Yet (કૃપા કરીને નીચેથી આર્ટિકલ ઉમેરો)'}
+                      {heroGridArticles.length === 1 && 'Single Article Mode (માત્ર 1 આર્ટિકલ મોડ - સંપૂર્ણ હેરોમાં માત્ર 1 આર્ટિકલ દેખાશે)'}
+                      {heroGridArticles.length === 2 && '2 Articles Mode (2 આર્ટિકલ્સ મોડ - સ્પોટલાઇટ + 1 મિડલ કાર્ડ)'}
+                      {heroGridArticles.length === 3 && '3 Articles Mode (3 આર્ટિકલ્સ મોડ - સ્પોટલાઇટ + 2 મિડલ કાર્ડ્સ)'}
+                      {heroGridArticles.length >= 4 && heroGridArticles.length <= 7 && `${heroGridArticles.length} Articles Mode (${heroGridArticles.length} આર્ટિકલ્સ મોડ - સ્પોટલાઇટ + ${heroGridArticles.length - 1} મિડલ કાર્ડ્સ)`}
+                      {heroGridArticles.length === 8 && '8 Articles Mode (8 આર્ટિકલ્સ મોડ - 2 સ્પોટલાઇટ સ્લાઇડ્સ + 6 મિડલ કાર્ડ્સ)'}
+                      {heroGridArticles.length === 9 && 'Full 9 Articles Mode (સંપૂર્ણ 9 આર્ટિકલ્સ મોડ - 3 સ્પોટલાઇટ સ્લાઇડ્સ + 6 મિડલ કાર્ડ્સ)'}
+                    </p>
+                    <p className="text-xs mt-1 font-medium leading-relaxed">
+                      {heroGridArticles.length === 0 && 'Automatic articles are hidden. Add 1, 2, 3, or more articles below (maximum 9). If saved with 0 articles, it safely falls back to latest news.'}
+                      {heroGridArticles.length === 1 && 'Automatic articles are completely hidden. The homepage hero section will display ONLY this 1 article in its standard spotlight card (preserving the clean 9-story height and layout, not blowing up into full width/space). Middle column is hidden.'}
+                      {heroGridArticles.length === 2 && 'Automatic articles are completely hidden. The homepage hero section will display Position #1 (Spotlight Banner) and Position #2 (Middle Column Card #1). Positions #3 to #9 are hidden.'}
+                      {heroGridArticles.length === 3 && 'Automatic articles are completely hidden. The homepage hero section will display Position #1 (Spotlight Banner) and Positions #2 & #3 (Middle Column Cards #1 & #2). Positions #4 to #9 are hidden.'}
+                      {heroGridArticles.length >= 4 && heroGridArticles.length <= 7 && `Automatic articles are completely hidden. The homepage hero section displays Position #1 in the Spotlight Banner and Positions #2 to #${heroGridArticles.length} in the Middle Column.`}
+                      {heroGridArticles.length === 8 && 'Automatic articles are completely hidden. Displays Position #1 and #8 as 2 rotating slides in the Spotlight Slider, and Positions #2 to #7 as all 6 Middle Column image cards.'}
+                      {heroGridArticles.length === 9 && 'Automatic articles are completely hidden. Displays Positions #1, #8, #9 as 3 rotating slides in the Spotlight Slider (with 1/3 badge), and Positions #2 to #7 as all 6 Middle Column image cards.'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Toolbar: Search + Quick Populate + Clear */}
+                <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3.5 border border-gray-400 dark:border-zinc-700">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                    <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                      ➕ Add Article to Hero Grid (આર્ટિકલ સર્ચ કરો અને ઉમેરો - મહત્તમ 9)
+                    </p>
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
-                        onClick={() => moveHeroGridArticle(index, -1)}
-                        disabled={index === 0}
-                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
-                        title="Move Up 1 Position"
+                        onClick={() => setHeroGridArticles(allArticles.slice(0, 9))}
+                        className="text-xs font-bold px-2.5 py-1 rounded bg-zinc-200 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-600 transition cursor-pointer"
                       >
-                        ⬆️ Move Up
+                        📋 Fill Latest 9
                       </button>
                       <button
                         type="button"
-                        onClick={() => moveHeroGridArticle(index, 1)}
-                        disabled={index === heroGridArticles.length - 1}
-                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
-                        title="Move Down 1 Position"
+                        onClick={() => setHeroGridArticles([])}
+                        className="text-xs font-bold px-2.5 py-1 rounded bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/60 transition cursor-pointer"
                       >
-                        ⬇️ Move Down
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveHeroGridArticle(art.id)}
-                        className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-red-600 rounded-lg border border-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
-                        title="Remove from Hero Grid"
-                      >
-                        ✕ Remove
+                        🗑️ Clear All
                       </button>
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                  {heroGridArticles.length >= 9 ? (
+                    <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700 text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center justify-between">
+                      <span>🔒 Maximum 9 articles reached for this section.</span>
+                      <span className="text-[11px] font-normal">To replace an article, remove one below first.</span>
+                    </div>
+                  ) : (
+                    <ArticleSearchBox
+                      allArticles={allArticles}
+                      excluded={heroGridArticles.map((a) => a.id)}
+                      maxLimit={100}
+                      placeholder={`Search latest 100 articles by title or #articleNumber to add (${9 - heroGridArticles.length} slot${9 - heroGridArticles.length === 1 ? '' : 's'} remaining)...`}
+                      onSelect={(art) => handleAddHeroGridArticle(art)}
+                    />
+                  )}
+                </div>
+
+                {/* Grid List of Positions */}
+                {heroGridArticles.length === 0 ? (
+                  <div className="text-center py-8 rounded-xl border border-dashed border-gray-400 dark:border-zinc-700 text-zinc-400">
+                    <p className="text-sm font-bold">No manual articles selected yet.</p>
+                    <p className="text-xs text-zinc-500 mt-1">Search above to add 1, 2, 3, or up to 9 articles for the hero section.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {heroGridArticles.map((art, index) => {
+                      const isSpotlightMain = index === 0;
+                      const isMiddleCard = index >= 1 && index <= 6;
+                      const isSpotlightExtra = index === 7 || index === 8;
+
+                      const slotTitle = isSpotlightMain
+                        ? '🌟 Main Hero Spotlight (#1 Big Card / Slide #1)'
+                        : isMiddleCard
+                          ? `🖼️ Middle Column - Card #${index} of 6`
+                          : isSpotlightExtra
+                            ? `🌟 Spotlight Slider (Slide #${index === 7 ? '2' : '3'} of 3)`
+                            : `📰 Position #${index + 1}`;
+
+                      const isDragging = draggedHeroIndex === index;
+
+                      return (
+                        <div
+                          key={art.id}
+                          draggable
+                          onDragStart={(e) => handleHeroDragStart(e, index)}
+                          onDragOver={(e) => handleHeroDragOver(e, index)}
+                          onDragEnd={handleHeroDragEnd}
+                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${
+                            isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
+                          } ${
+                            isSpotlightMain
+                              ? 'border-[#B3121B]/40 bg-red-50/40 dark:bg-red-950/10'
+                              : isMiddleCard
+                                ? 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
+                                : 'border-purple-400 bg-purple-50/20 dark:border-purple-900/40 dark:bg-purple-950/10'
+                          } hover:shadow-md`}
+                        >
+                          {/* Left Info */}
+                          <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
+                            <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder position">
+                              <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
+                              <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${
+                                isSpotlightMain ? 'bg-[#B3121B]' : isMiddleCard ? 'bg-blue-600' : 'bg-purple-600'
+                              }`}>
+                                #{index + 1}
+                              </span>
+                            </div>
+
+                            <div className="relative h-12 w-16 sm:h-14 sm:w-20 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-gray-400 dark:border-zinc-700 shadow-2xs">
+                              <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
+                                  isSpotlightMain
+                                    ? 'bg-red-100 text-[#B3121B]'
+                                    : isMiddleCard
+                                      ? 'bg-blue-100 text-blue-700'
+                                      : 'bg-purple-100 text-purple-700'
+                                }`}>
+                                  {slotTitle}
+                                </span>
+                                {art.articleNumber && (
+                                  <span className="text-[10px] sm:text-xs font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-400 dark:border-red-800">
+                                    #{art.articleNumber}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mt-1">
+                                {getTitle(art)}
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-semibold mt-1 truncate">
+                                {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Right Controls */}
+                          <div className="flex items-center gap-2 mt-3 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-gray-400 dark:border-zinc-800/80 pt-2.5 sm:pt-0">
+                            <button
+                              type="button"
+                              onClick={() => moveHeroGridArticle(index, -1)}
+                              disabled={index === 0}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                              title="Move Up 1 Position"
+                            >
+                              ⬆️ Move Up
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveHeroGridArticle(index, 1)}
+                              disabled={index === heroGridArticles.length - 1}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                              title="Move Down 1 Position"
+                            >
+                              ⬇️ Move Down
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveHeroGridArticle(art.id)}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-red-600 rounded-lg border border-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                              title="Remove from Hero Grid"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           {/* ════════════════════════════════════════════════════════════════
              BOTTOM ROW 3 IMAGE CARDS MANAGEMENT
@@ -1569,14 +2055,24 @@ export default function HeroManagerPage() {
                 <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
                   <span className="text-2xl">📌</span>
                   <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
-                    Bottom Row 3 Image Cards (હરોળના 3 ઈમેજ કાર્ડ્સ)
+                    Bottom Row 3 Image Cards (હરોળના 3 ઈમેજ કાર્ડ્સ - અલગ સેક્શન)
                   </h3>
-                  <span className="text-sm font-bold px-3 py-1 rounded-full border bg-zinc-100 text-zinc-700 border-gray-400 dark:bg-zinc-800 dark:text-zinc-300 shrink-0">
-                    {usedIds.length} / 3 Cards Selected
-                  </span>
+                  {bottomSlotsMode === 'manual' && (
+                    <span className="text-sm font-bold px-3 py-1 rounded-full border bg-zinc-100 text-zinc-700 border-gray-400 dark:bg-zinc-800 dark:text-zinc-300 shrink-0">
+                      {usedIds.length} / 3 Cards Selected
+                    </span>
+                  )}
+                  {bottomSlotsMode === 'auto' && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-400 shrink-0">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      AUTO LIVE
+                    </span>
+                  )}
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Pick the 3 image cards displayed in the bottom row of the homepage hero section.
+                  {bottomSlotsMode === 'auto'
+                    ? '🔄 Auto Mode: These 3 bottom cards appear directly below the 9-article hero grid. They automatically show the next latest articles from the API and update instantly when new articles are published.'
+                    : '🖊️ Manual Mode: Pick specific articles for each of the 3 bottom image cards that appear directly below the 9-article hero grid.'}
                 </p>
               </div>
 
@@ -1587,23 +2083,132 @@ export default function HeroManagerPage() {
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/20 disabled:opacity-50 cursor-pointer shrink-0"
               >
                 {savingBottomSlots ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {savingBottomSlots ? 'Saving Bottom Cards...' : 'Save Bottom 3 Cards'}
+                {savingBottomSlots ? 'Saving...' : bottomSlotsMode === 'auto' ? 'Save Auto Mode' : 'Save Manual Cards'}
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-              {[0, 1, 2].map((idx) => (
-                <SlotCard
-                  key={idx}
-                  slotNum={idx + 1}
-                  article={slots[idx]}
-                  onSelect={(a) => setSlot(idx, a)}
-                  onRemove={() => removeSlot(idx)}
-                  allArticles={allArticles}
-                  excluded={usedIds.filter((id) => id !== slots[idx]?.id)}
-                />
-              ))}
+            {/* ── Mode Toggle ── */}
+            <div className="mb-6 p-4 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+              <p className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">Display Mode</p>
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Auto Mode Option */}
+                <button
+                  type="button"
+                  onClick={() => setBottomSlotsMode('auto')}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    bottomSlotsMode === 'auto'
+                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
+                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                  }`}
+                >
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
+                    bottomSlotsMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
+                  }`}>
+                    {bottomSlotsMode === 'auto' && (
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-black flex items-center gap-2 ${
+                      bottomSlotsMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
+                    }`}>
+                      🔄 Auto Mode
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">RECOMMENDED</span>
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
+                      Articles update automatically — the 3 latest published articles from the API are shown. No manual selection needed.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Manual Mode Option */}
+                <button
+                  type="button"
+                  onClick={() => setBottomSlotsMode('manual')}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    bottomSlotsMode === 'manual'
+                      ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
+                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
+                  }`}
+                >
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
+                    bottomSlotsMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
+                  }`}>
+                    {bottomSlotsMode === 'manual' && (
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-black ${
+                      bottomSlotsMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
+                    }`}>
+                      🖊️ Manual Mode
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
+                      Hand-pick exactly which articles appear in each card position. Articles stay fixed until you change them manually.
+                    </p>
+                  </div>
+                </button>
+              </div>
             </div>
+
+            {/* ── Auto Mode Preview ── */}
+            {bottomSlotsMode === 'auto' && (
+              <div className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-5">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                  <p className="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Live Auto-Feed Preview</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-500 font-medium ml-auto">Showing latest 3 articles from API</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {[allArticles[9] || allArticles[0], allArticles[10] || allArticles[1], allArticles[11] || allArticles[2]].map((art, idx) => art ? (
+                    <div key={art.id} className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-white dark:bg-zinc-900 overflow-hidden shadow-sm">
+                      <div className="relative w-full aspect-[16/9] bg-zinc-100 dark:bg-zinc-800">
+                        <ArticleMedia src={getArticleImage(art)} alt={getTitle(art)} className="object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                        <div className="absolute top-2 left-2 flex items-center gap-1.5">
+                          <span className="inline-flex items-center rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-black uppercase text-white">
+                            AUTO #{idx + 1}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug">
+                          {getTitle(art)}
+                        </p>
+                        <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-semibold">
+                          {catName(art.category)} · {fmtDate(art.publishedAt ?? art.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={idx} className="rounded-xl border border-dashed border-emerald-300 dark:border-emerald-800 p-6 flex items-center justify-center">
+                      <p className="text-xs text-emerald-600 dark:text-emerald-500 font-semibold">Article #{idx + 10} loading...</p>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-4 text-xs text-emerald-600 dark:text-emerald-500 font-medium text-center">
+                  ✅ These articles update automatically whenever new content is published. No action required.
+                </p>
+              </div>
+            )}
+
+            {/* ── Manual Mode Card Slots ── */}
+            {bottomSlotsMode === 'manual' && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                {[0, 1, 2].map((idx) => (
+                  <SlotCard
+                    key={idx}
+                    slotNum={idx + 1}
+                    article={slots[idx]}
+                    onSelect={(a) => setSlot(idx, a)}
+                    onRemove={() => removeSlot(idx)}
+                    allArticles={allArticles}
+                    excluded={usedIds.filter((id) => id !== slots[idx]?.id)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* ════════════════════════════════════════════════════════════════
@@ -2084,7 +2689,7 @@ export default function HeroManagerPage() {
           {/* Info note */}
           <div className="mt-6 rounded-xl border border-blue-400 dark:border-blue-800/40 bg-blue-50 dark:bg-blue-950/20 px-4 py-3 text-sm text-blue-700 dark:text-blue-300 flex items-start gap-2">
             <span className="mt-0.5 shrink-0 inline-flex h-4 w-4 items-center justify-center rounded-full border border-blue-400 text-[10px] font-black">i</span>
-            <span><strong>Note:</strong> Top Main Hero Grid, Bottom row image cards, Most Read 5 Positions, Trending Topics, and Fact Check News slider articles can all be saved independently using their dedicated <strong>Save</strong> buttons.</span>
+            <span><strong>Note:</strong> Main Hero Spotlight Slider, Top Main Hero Grid, Bottom row image cards, Most Read 5 Positions, Trending Topics, and Fact Check News slider articles can all be saved independently using their dedicated <strong>Save</strong> buttons.</span>
           </div>
         </>
       )}

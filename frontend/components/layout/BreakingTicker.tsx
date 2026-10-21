@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Pause, Play } from 'lucide-react';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { getLocalized } from '@/data';
 import { getPublicTickers } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
@@ -30,21 +30,54 @@ export default function BreakingTicker() {
     return null;
   }
 
+  const [mounted, setMounted] = useState(false);
   const [paused, setPaused] = useState(false);
   const { language } = useApp();
   const [breaking, setBreaking] = useState<any[]>([]);
   const [tickerLabel, setTickerLabel] = useState<any>(null);
   const [tickerMode, setTickerMode] = useState<'scroll' | 'single'>('scroll');
   const [tickerSpeed, setTickerSpeed] = useState<number>(4500);
+  const [tickerHidden, setTickerHidden] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('gp_ticker_hidden');
+      if (stored !== null) return stored === 'true';
+      const match = document.cookie.match(/(?:^|;\s*)gp_ticker_hidden=([^;]*)/);
+      if (match) return match[1] === 'true';
+    }
+    return false;
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   const firstSetRef = useRef<HTMLDivElement>(null);
   const [duration, setDuration] = useState(70);
 
-  useEffect(() => {
+  const fetchTickers = useCallback(() => {
     getPublicTickers()
       .then((res) => {
+        const serverHidden = (res as any)?.tickerHidden;
+        if (serverHidden === true) {
+          setTickerHidden(true);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('gp_ticker_hidden', 'true');
+            try {
+              document.cookie = 'gp_ticker_hidden=true; path=/; max-age=31536000; SameSite=Lax';
+            } catch {}
+          }
+          setBreaking([]);
+          return;
+        }
+
+        if (serverHidden === false) {
+          setTickerHidden(false);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('gp_ticker_hidden', 'false');
+            try {
+              document.cookie = 'gp_ticker_hidden=false; path=/; max-age=31536000; SameSite=Lax';
+            } catch {}
+          }
+        }
+
         setBreaking(res || []);
         if ((res as any)?.tickerLabel) setTickerLabel((res as any).tickerLabel);
         if ((res as any)?.tickerBadge) setTickerLabel((res as any).tickerBadge);
@@ -59,6 +92,75 @@ export default function BreakingTicker() {
         setBreaking([]);
       });
   }, []);
+
+  useEffect(() => {
+    setMounted(true);
+    fetchTickers();
+
+    const handleSync = () => {
+      fetchTickers();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'gp_ticker_hidden') {
+        const isHidden = e.newValue === 'true';
+        setTickerHidden(isHidden);
+        if (isHidden) {
+          setBreaking([]);
+        } else {
+          fetchTickers();
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('gp-admin-updates');
+        bc.onmessage = (event) => {
+          if (
+            event?.data?.type === 'API_CACHE_CLEARED' ||
+            event?.data?.type === 'HERO_UPDATED' ||
+            event?.data?.type === 'ARTICLES_UPDATED' ||
+            event?.data?.type === 'TICKER_SETTINGS_UPDATED'
+          ) {
+            if (typeof event.data?.hidden === 'boolean') {
+              const isHidden = event.data.hidden;
+              setTickerHidden(isHidden);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('gp_ticker_hidden', isHidden ? 'true' : 'false');
+                try {
+                  document.cookie = `gp_ticker_hidden=${isHidden ? 'true' : 'false'}; path=/; max-age=31536000; SameSite=Lax`;
+                } catch {}
+              }
+              if (isHidden) {
+                setBreaking([]);
+                return;
+              }
+            }
+            fetchTickers();
+          }
+        };
+      }
+    } catch {
+      // BroadcastChannel graceful fallback
+    }
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      window.removeEventListener('storage', handleStorage);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {}
+      }
+    };
+  }, [fetchTickers]);
 
   const itemsToRender = useMemo(() => {
     return breaking.map((art: any) => ({
@@ -89,7 +191,10 @@ export default function BreakingTicker() {
     return getLocalized(language, { en: 'BREAKING NEWS', gu: 'બ્રેકિંગ ન્યૂઝ', hi: 'ब्रेकिंग न्यूज़' });
   }, [tickerLabel, language]);
 
-  const activeItems = itemsToRender.length > 0 ? itemsToRender : FALLBACK_TICKERS;
+  const activeItems = useMemo(() => {
+    if (tickerHidden) return [];
+    return itemsToRender;
+  }, [tickerHidden, itemsToRender]);
 
   // Single mode auto-advancing interval with smooth exit and enter animation
   useEffect(() => {
@@ -169,6 +274,10 @@ export default function BreakingTicker() {
       </span>
     );
   };
+
+  if (!mounted || tickerHidden || activeItems.length === 0) {
+    return <div className="h-3.5 sm:h-4.5 md:h-5" aria-hidden="true" />;
+  }
 
   const currentSingleItem = activeItems[currentIndex] || activeItems[0];
 

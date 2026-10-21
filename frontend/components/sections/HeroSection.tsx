@@ -368,6 +368,12 @@ function HeroStorySlider({
   const total = articles.length;
 
   useEffect(() => {
+    if (slideIndex >= total && total > 0) {
+      setSlideIndex(0);
+    }
+  }, [total, slideIndex]);
+
+  useEffect(() => {
     if (total <= 1 || isHovered) return;
     const interval = setInterval(() => {
       setSlideIndex((prev) => (prev + 1) % total);
@@ -874,12 +880,31 @@ export default function HeroSection({
     window.addEventListener('focus', handleSyncArticles);
     window.addEventListener('gp-articles-updated', handleSyncArticles);
     window.addEventListener('gp-hero-updated', handleSyncArticles);
+
+    // BroadcastChannel: listen for admin saves from any tab — triggers instant re-fetch
+    let adminBroadcastChannel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        adminBroadcastChannel = new BroadcastChannel('gp-admin-updates');
+        adminBroadcastChannel.onmessage = (event) => {
+          if (event.data?.type === 'HERO_UPDATED') {
+            handleSyncArticles();
+          }
+        };
+      } catch {
+        // BroadcastChannel not supported
+      }
+    }
+
     return () => {
       window.removeEventListener('focus', handleSyncCategories);
       window.removeEventListener('gp-categories-updated', handleSyncCategories);
       window.removeEventListener('focus', handleSyncArticles);
       window.removeEventListener('gp-articles-updated', handleSyncArticles);
       window.removeEventListener('gp-hero-updated', handleSyncArticles);
+      if (adminBroadcastChannel) {
+        adminBroadcastChannel.close();
+      }
     };
   }, []);
 
@@ -1462,50 +1487,85 @@ export default function HeroSection({
 
             {/* Top Row: Hero Story & Middle Column */}
             {(() => {
-              const top3Ids = new Set(uniqueTopStories.slice(0, 3).map((a) => a.id).filter(Boolean));
-              const customSlotIds = new Set(
-                [
-                  heroSettingsState?.setting?.slot1Id,
-                  heroSettingsState?.setting?.slot2Id,
-                  heroSettingsState?.setting?.slot3Id,
-                  heroSettingsState?.slots?.[0]?.id,
-                  heroSettingsState?.slots?.[1]?.id,
-                  heroSettingsState?.slots?.[2]?.id,
-                  initialHeroSettings?.setting?.slot1Id,
-                  initialHeroSettings?.setting?.slot2Id,
-                  initialHeroSettings?.setting?.slot3Id,
-                  initialHeroSettings?.slots?.[0]?.id,
-                  initialHeroSettings?.slots?.[1]?.id,
-                  initialHeroSettings?.slots?.[2]?.id,
-                ].filter(Boolean)
-              );
+              const gridMode = heroSettingsState?.heroGridMode || heroSettingsState?.setting?.heroGridMode || initialHeroSettings?.heroGridMode || initialHeroSettings?.setting?.heroGridMode || 'auto';
 
-              // Upper side 6 articles: strictly latest articles after top 3 slider, skipping custom bottom slot selections to avoid duplication
-              const afterTop3News: Article[] = [];
-              for (const art of uniqueTopStories.slice(3)) {
-                if (afterTop3News.length >= 6) break;
-                if (art && art.id && !top3Ids.has(art.id) && !customSlotIds.has(art.id)) {
-                  afterTop3News.push(art);
+              const manualGridArts: Article[] = (
+                heroSettingsState?.heroGridArticles ||
+                initialHeroSettings?.heroGridArticles ||
+                []
+              ).filter(isPublicArticle).slice(0, 9);
+
+              let heroSliderArticlesToDisplay: Article[] = [];
+              let afterTop3News: Article[] = [];
+
+              if (gridMode === 'manual' && manualGridArts.length > 0) {
+                // MANUAL MODE: Strictly 9 articles for this section
+                // 1 article => ONLY 1 spotlight card (standard 9-story column space, not full space), middle column hidden
+                // 2 to 7 articles => Position #1 in Spotlight, positions #2 to #7 in Middle Column (up to 6 cards)
+                // 8 articles => 2 slides in Spotlight (#1 and #8), 6 cards in Middle Column (#2 to #7)
+                // 9 articles => 3 slides in Spotlight (#1, #8, #9), 6 cards in Middle Column (#2 to #7)
+                if (manualGridArts.length === 1) {
+                  heroSliderArticlesToDisplay = [manualGridArts[0]];
+                  afterTop3News = [];
+                } else if (manualGridArts.length >= 2 && manualGridArts.length <= 7) {
+                  heroSliderArticlesToDisplay = [manualGridArts[0]];
+                  afterTop3News = manualGridArts.slice(1, manualGridArts.length);
+                } else if (manualGridArts.length === 8) {
+                  heroSliderArticlesToDisplay = [manualGridArts[0], manualGridArts[7]];
+                  afterTop3News = manualGridArts.slice(1, 7);
+                } else {
+                  heroSliderArticlesToDisplay = [manualGridArts[0], manualGridArts[7], manualGridArts[8]];
+                  afterTop3News = manualGridArts.slice(1, 7);
                 }
-              }
+              } else {
+                // AUTOMATIC MODE: Strictly 9 articles for this section
+                // Top 3 latest articles in Spotlight Slider
+                heroSliderArticlesToDisplay = uniqueTopStories.slice(0, 3);
 
-              if (afterTop3News.length < 6) {
-                for (const art of articlesList) {
+                const activeSliderIds = new Set(heroSliderArticlesToDisplay.map((a) => a.id).filter(Boolean));
+                const customSlotIds = new Set(
+                  [
+                    heroSettingsState?.setting?.slot1Id,
+                    heroSettingsState?.setting?.slot2Id,
+                    heroSettingsState?.setting?.slot3Id,
+                    heroSettingsState?.slots?.[0]?.id,
+                    heroSettingsState?.slots?.[1]?.id,
+                    heroSettingsState?.slots?.[2]?.id,
+                    initialHeroSettings?.setting?.slot1Id,
+                    initialHeroSettings?.setting?.slot2Id,
+                    initialHeroSettings?.setting?.slot3Id,
+                    initialHeroSettings?.slots?.[0]?.id,
+                    initialHeroSettings?.slots?.[1]?.id,
+                    initialHeroSettings?.slots?.[2]?.id,
+                  ].filter(Boolean)
+                );
+
+                // Next 6 articles in Middle Column
+                for (const art of uniqueTopStories) {
                   if (afterTop3News.length >= 6) break;
-                  if (art && art.id && !top3Ids.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                  if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id)) {
                     afterTop3News.push(art);
                   }
                 }
+
+                if (afterTop3News.length < 6) {
+                  for (const art of articlesList) {
+                    if (afterTop3News.length >= 6) break;
+                    if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                      afterTop3News.push(art);
+                    }
+                  }
+                }
               }
+
+              // AND AFTER THAT 3: Bottom Row 3 Image Cards are completely separate & different
+              const desktopCards = getBottomCards(uniqueTopStories, heroSettingsState || initialHeroSettings);
 
               const heroThreeArticles = afterTop3News.slice(3, 6).length >= 3
                 ? afterTop3News.slice(3, 6)
                 : (uniqueTopStories.slice(6, 9).length >= 3 ? uniqueTopStories.slice(6, 9) : afterTop3News.slice(3, 6));
 
-              // Bottom 3 Cards: Admin custom slots if configured, otherwise automatic Articles 10, 11, 12
-              const desktopCards = getBottomCards(uniqueTopStories, heroSettingsState || initialHeroSettings);
-
-              // Total 6 articles in mobile horizontal scroll (3 from upper hero + 3 other bottom cards):
+              // Total articles in mobile horizontal scroll (upper hero + bottom cards):
               const mobileHorizontalCards = [
                 ...heroThreeArticles,
                 ...desktopCards.slice(0, 3),
@@ -1513,119 +1573,124 @@ export default function HeroSection({
 
               return (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-3.5 items-stretch">
-                    {/* Hero Story Column -- Top 3 News Slider */}
-                    <HeroStorySlider
-                      articles={uniqueTopStories.slice(0, 3)}
-                      language={language}
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-3.5 items-start">
+                    {/* Hero Story Column -- Top News Slider */}
+                    <div className="w-full">
+                      <HeroStorySlider
+                        articles={heroSliderArticlesToDisplay}
+                        language={language}
+                      />
+                    </div>
 
                     {/* ═══ MIDDLE COLUMN — 6 Image Article Boxes on Desktop / Top 3 List on Mobile ════════════════ */}
-                    <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0 h-full">
-                      {/* ─── DESKTOP VIEW (md: and up): 6 Image Article Boxes (3 Rows x 2 Columns, 100% UNTOUCHED) ─── */}
-                      <div className="hidden md:grid md:grid-cols-2 md:gap-x-2.5 md:gap-y-2.5 items-start">
-                        {afterTop3News.map((art, idx) => (
-                          <Link
-                            key={art.id || art.slug || idx}
-                            href={`/news/${art.slug}`}
-                            className="group flex flex-col gap-1 min-w-0"
-                          >
-                            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
-                              <ArticleMedia
-                                src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                                alt={art.title || ''}
-                                className="transition-transform duration-300 group-hover:scale-[1.03]"
-                              />
-                            </div>
-                            <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                              <AutoArticleTitle article={art} language={language} />
-                            </h3>
-                          </Link>
-                        ))}
-                      </div>
-
-                      {/* ─── MOBILE VIEW (< md): Divya Bhaskar / Gujarat Samachar style list (First 3 Articles) ─── */}
-                      <div className="flex flex-col divide-y divide-border/60 md:hidden">
-                        {afterTop3News.slice(0, 3).map((story, idx) => {
-                          const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
-                          const colonIdx = rawTitle.indexOf(':');
-                          const hasPrefix = colonIdx > 3 && colonIdx <= 48;
-                          const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
-                          const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
-
-                          return (
-                            <div
-                              key={story.id || story.slug || idx}
-                              className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0"
+                    {afterTop3News.length > 0 && (
+                      <div className="flex flex-col gap-2 md:border-l md:border-border/40 md:pl-3 md:pr-0 px-0 min-w-0 h-full">
+                        {/* ─── DESKTOP VIEW (md: and up): Image Article Boxes ─── */}
+                        <div className={`hidden md:grid ${afterTop3News.length === 1 ? 'md:grid-cols-1' : 'md:grid-cols-2'} md:gap-x-2.5 md:gap-y-2.5 items-start`}>
+                          {afterTop3News.map((art, idx) => (
+                            <Link
+                              key={art.id || art.slug || idx}
+                              href={`/news/${art.slug}`}
+                              className="group flex flex-col gap-1 min-w-0"
                             >
-                              {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
-                              <Link
-                                href={`/news/${story.slug}`}
-                                className="flex flex-row items-start justify-between gap-3 min-w-0"
+                              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                                <ArticleMedia
+                                  src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                                  alt={art.title || ''}
+                                  className="transition-transform duration-300 group-hover:scale-[1.03]"
+                                />
+                              </div>
+                              <h3 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                                <AutoArticleTitle article={art} language={language} />
+                              </h3>
+                            </Link>
+                          ))}
+                        </div>
+
+                        {/* ─── MOBILE VIEW (< md): Divya Bhaskar / Gujarat Samachar style list (First 3 Articles) ─── */}
+                        <div className="flex flex-col divide-y divide-border/60 md:hidden">
+                          {afterTop3News.slice(0, 3).map((story, idx) => {
+                            const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
+                            const colonIdx = rawTitle.indexOf(':');
+                            const hasPrefix = colonIdx > 3 && colonIdx <= 48;
+                            const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
+                            const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
+
+                            return (
+                              <div
+                                key={story.id || story.slug || idx}
+                                className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0"
                               >
-                                <div className="flex-1 min-w-0 pr-1">
-                                  <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                                    {hasPrefix ? (
-                                      <>
-                                        <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
-                                          {prefixText}
-                                        </span>
-                                        <span>{restText}</span>
-                                      </>
-                                    ) : (
-                                      <AutoArticleTitle article={story} language={language} />
-                                    )}
-                                  </h3>
-                                </div>
-
-                                <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                                  <ArticleMedia
-                                    src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                                    alt={story.title || ''}
-                                    className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                                  />
-                                </div>
-                              </Link>
-
-                              {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-                              <div className="flex items-center justify-between mt-3.5 pt-0.5">
+                                {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
                                 <Link
-                                  href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
-                                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
+                                  href={`/news/${story.slug}`}
+                                  className="flex flex-row items-start justify-between gap-3 min-w-0"
                                 >
-                                  <span>{getCategoryLabel(story, language)}</span>
-                                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                  <div className="flex-1 min-w-0 pr-1">
+                                    <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                                      {hasPrefix ? (
+                                        <>
+                                          <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
+                                            {prefixText}
+                                          </span>
+                                          <span>{restText}</span>
+                                        </>
+                                      ) : (
+                                        <AutoArticleTitle article={story} language={language} />
+                                      )}
+                                    </h3>
+                                  </div>
+
+                                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                                    <ArticleMedia
+                                      src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                                      alt={story.title || ''}
+                                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                    />
+                                  </div>
                                 </Link>
 
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    const title = getArticleTitle(story, language);
-                                    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
-                                    const text = `${title}\n\n${url}`;
-                                    if (typeof navigator !== 'undefined' && navigator.share) {
-                                      navigator.share({ title, url, text }).catch(() => {
+                                {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
+                                <div className="flex items-center justify-between mt-3.5 pt-0.5">
+                                  <Link
+                                    href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
+                                  >
+                                    <span>{getCategoryLabel(story, language)}</span>
+                                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                  </Link>
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const title = getArticleTitle(story, language);
+                                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
+                                      const text = `${title}\n\n${url}`;
+                                      if (typeof navigator !== 'undefined' && navigator.share) {
+                                        navigator.share({ title, url, text }).catch(() => {
+                                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                        });
+                                      } else {
                                         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                      });
-                                    } else {
-                                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                    }
-                                  }}
-                                  className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
-                                  aria-label="Share"
-                                >
-                                  <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-                                  <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
-                                </button>
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
+                                    aria-label="Share"
+                                  >
+                                    <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
+                                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                                  </button>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
+
 
                   {/* Bottom Row: Three image cards */}
                   {(desktopCards.length > 0 || mobileHorizontalCards.length > 0) && (

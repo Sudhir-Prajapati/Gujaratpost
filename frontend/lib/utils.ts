@@ -182,8 +182,8 @@ export function getTrendingTopicHref(tag: string): string {
     'વેબસ્ટોરી': '/web-stories',
     'webstory': '/web-stories',
     'webstories': '/web-stories',
-    'ઇન્સ્ટાગ્રામ': '/category/instagram',
-    'instagram': '/category/instagram',
+    'ઇન્સ્ટાગ્રામ': '/videos',
+    'instagram': '/videos',
 
     // Cities
     'અમદાવાદ': '/category/gujarat?city=ahmedabad',

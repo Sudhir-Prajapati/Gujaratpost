@@ -116,12 +116,12 @@ export const CORE_WEBSITE_SECTIONS = [
     bg: 'bg-blue-50 dark:bg-blue-950/40 border-blue-200 dark:border-blue-800/60',
     items: [
       { nameGu: 'વીડિયો ડેસ્ક', nameEn: 'Videos', slug: 'videos', href: '/videos' },
-      { nameGu: 'શોર્ટ્સ & રીલ્સ', nameEn: 'Shorts & Reels', slug: 'shorts', href: '/shorts' },
+      { nameGu: 'શોર્ટ્સ & રીલ્સ', nameEn: 'Shorts & Reels', slug: 'shorts', href: '/videos' },
       { nameGu: 'પોડકાસ્ટ સીરિઝ', nameEn: 'Podcasts', slug: 'podcasts', href: '/videos?tab=podcast' },
       { nameGu: 'ફોટો ગેલેરી', nameEn: 'Photo Gallery', slug: 'photos', href: '/photos' },
       { nameGu: 'ઈ-પેપર એડિશન', nameEn: 'E-Paper', slug: 'epaper', href: '/epaper' },
       { nameGu: 'વેબસ્ટોરી', nameEn: 'Web Stories', slug: 'webstory', href: '/category/webstory' },
-      { nameGu: 'ઇન્સ્ટાગ્રામ હબ', nameEn: 'Instagram Desk', slug: 'instagram', href: '/category/instagram' },
+      { nameGu: 'ઇન્સ્ટાગ્રામ હબ', nameEn: 'Instagram Desk', slug: 'instagram', href: '/videos' },
     ],
   },
   {

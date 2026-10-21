@@ -1311,7 +1311,7 @@ router.get('/live-center', cacheResponse(120), async (req, res) => {
  * GET /api/public/tickers
  * Fetch breaking ticker items
  */
-router.get('/tickers', cacheResponse(15), async (req, res, next) => {
+router.get('/tickers', async (req, res, next) => {
   try {
     const [customTickers, heroSettingRow]: any[] = await Promise.all([
       prisma.breakingTickerItem.findMany({
@@ -1328,6 +1328,7 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
     let tickerMode = 'scroll';
     let tickerSpeed = 5000;
     let selectedArticleIds: string[] = [];
+    let tickerHidden = false;
 
     if (rawLabel && typeof rawLabel === 'string' && rawLabel.trim().startsWith('{')) {
       try {
@@ -1339,8 +1340,23 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
           if (Array.isArray(parsed.articleIds)) {
             selectedArticleIds = parsed.articleIds.filter((id: any) => typeof id === 'string' && id.trim());
           }
+          if (parsed.hidden === true || parsed.hidden === 'true' || parsed.visible === false || parsed.isVisible === false) {
+            tickerHidden = true;
+          }
         }
       } catch {}
+    }
+
+    if (tickerHidden) {
+      return sendSuccess(res, {
+        tickers: [],
+        tickerLabel: rawLabel,
+        tickerBadge: tickerLabel,
+        tickerMode,
+        tickerSpeed,
+        selectedArticleIds,
+        tickerHidden: true,
+      }, 'Breaking tickers retrieved (hidden)');
     }
 
     let articleTickers: any[] = [];
@@ -1439,7 +1455,8 @@ router.get('/tickers', cacheResponse(15), async (req, res, next) => {
       tickerBadge: tickerLabel,
       tickerMode,
       tickerSpeed,
-      selectedArticleIds
+      selectedArticleIds,
+      tickerHidden: false,
     }, 'Breaking tickers retrieved');
   } catch (error) {
     next(error);

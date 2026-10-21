@@ -80,7 +80,7 @@ function formatPost(p: any) {
 
 let heroSettingsMemCache: { timestamp: number; data: any } | null = null;
 let heroSettingsInFlightPromise: Promise<any> | null = null;
-const HERO_CACHE_TTL_MS = 60 * 1000; // 60s in-memory TTL
+const HERO_CACHE_TTL_MS = 10 * 1000; // 10s in-memory TTL — fast enough for near-instant admin updates
 
 export function invalidateHeroSettingsCache() {
   heroSettingsMemCache = null;
@@ -88,6 +88,8 @@ export function invalidateHeroSettingsCache() {
   clearPublicRoutesCache();
   if (redisClient.isOpen) {
     redisClient.del('cache:hero_settings').catch(() => {});
+    redisClient.del('cache:public:/api/public/tickers').catch(() => {});
+    redisClient.del('cache:public:/api/public/hero-settings').catch(() => {});
   }
 }
 
@@ -184,6 +186,16 @@ export class HeroController {
           }
         }
 
+        const heroSliderMode = (heroSetting as any)?.heroSliderMode || 'auto';
+        let parsedHeroSliderIds: string[] = [];
+        if ((heroSetting as any)?.heroSliderIds) {
+          try {
+            parsedHeroSliderIds = JSON.parse((heroSetting as any).heroSliderIds);
+          } catch {
+            parsedHeroSliderIds = [];
+          }
+        }
+
         // 2. Collect all target IDs into a single Set for 1 batch query
         const rawSlotIds = [slot1Id, slot2Id, slot3Id].filter((id): id is string => Boolean(id));
         const allTargetIds = Array.from(new Set([
@@ -192,6 +204,7 @@ export class HeroController {
           ...parsedPopularNewsIds,
           ...parsedHeroGridIds,
           ...parsedMostReadIds,
+          ...parsedHeroSliderIds,
         ]));
 
         // 3. Parallel Stage: Execute all queries concurrently via Promise.all
@@ -352,24 +365,20 @@ export class HeroController {
           parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
         }
 
-        // Resolve Hero Grid (preserving order, active featured top merge, and fallback)
+        // Resolve Hero Grid (strictly 9 articles for top hero section)
+        const heroGridMode = (heroSetting as any)?.heroGridMode || 'auto';
         let heroGridArticles: any[] = [];
-        if (parsedHeroGridIds.length > 0) {
-          heroGridArticles = parsedHeroGridIds
-            .map((id) => postsMap.get(id))
-            .filter(Boolean);
-        }
-
-        if (heroGridArticles.length === 0 || (fallbackFormatted.length > 0 && fallbackFormatted[0]?.articleNumber > (heroGridArticles[0]?.articleNumber || 0))) {
-          heroGridArticles = fallbackFormatted.slice(0, 16);
+        if (heroGridMode === 'manual') {
+          if (parsedHeroGridIds.length > 0) {
+            heroGridArticles = parsedHeroGridIds
+              .map((id) => postsMap.get(id))
+              .filter(Boolean)
+              .slice(0, 9);
+          }
+        } else {
+          heroGridArticles = fallbackFormatted.slice(0, 9);
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }
-
-        const formattedFeatured = activeFeaturedRes.map(formatPost);
-        const combinedHeroGrid = [...heroGridArticles, ...formattedFeatured];
-        heroGridArticles = combinedHeroGrid
-          .filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx)
-          .slice(0, 16);
 
         // Resolve Most Read (preserving order and fallback)
         let mostReadArticles: any[] = [];
@@ -384,6 +393,14 @@ export class HeroController {
           parsedMostReadIds = mostReadArticles.map((a: any) => a.id);
         }
 
+        // Resolve Hero Slider Articles (preserving order)
+        let heroSliderArticles: any[] = [];
+        if (parsedHeroSliderIds.length > 0) {
+          heroSliderArticles = parsedHeroSliderIds
+            .map((id) => postsMap.get(id))
+            .filter(Boolean);
+        }
+
         return {
           setting: {
             ...(heroSetting || { id: 'default', slot1Id, slot2Id, slot3Id }),
@@ -393,6 +410,9 @@ export class HeroController {
             popularNewsIds: parsedPopularNewsIds,
             mostReadIds: parsedMostReadIds,
             heroGridIds: parsedHeroGridIds,
+            heroGridMode,
+            heroSliderMode,
+            heroSliderIds: parsedHeroSliderIds,
           },
           slots,
           tickerLabel: (heroSetting as any)?.tickerLabel || null,
@@ -405,6 +425,10 @@ export class HeroController {
           mostReadArticles,
           heroGridIds: parsedHeroGridIds,
           heroGridArticles,
+          heroGridMode,
+          heroSliderMode,
+          heroSliderIds: parsedHeroSliderIds,
+          heroSliderArticles,
         };
       })();
 
@@ -417,7 +441,7 @@ export class HeroController {
 
       heroSettingsMemCache = { timestamp: Date.now(), data: resultData };
       if (redisClient.isOpen) {
-        redisClient.setEx('cache:hero_settings', 60, JSON.stringify(resultData)).catch(() => {});
+        redisClient.setEx('cache:hero_settings', 10, JSON.stringify(resultData)).catch(() => {});
       }
 
       return sendSuccess(res, resultData, 'Hero section settings retrieved successfully.');
@@ -431,7 +455,7 @@ export class HeroController {
    */
   static async updateHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
-      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, heroGridIds, tickerLabel } = req.body;
+      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds } = req.body;
 
       const tickerLabelStr = tickerLabel !== undefined
         ? (typeof tickerLabel === 'object' ? JSON.stringify(tickerLabel) : String(tickerLabel))
@@ -467,6 +491,12 @@ export class HeroController {
         ? heroGridIds
         : null;
 
+      const heroSliderIdsStr = Array.isArray(heroSliderIds)
+        ? JSON.stringify(heroSliderIds)
+        : typeof heroSliderIds === 'string'
+        ? heroSliderIds
+        : null;
+
       const updateData: any = {};
       if (slot1Id !== undefined) updateData.slot1Id = slot1Id || null;
       if (slot2Id !== undefined) updateData.slot2Id = slot2Id || null;
@@ -477,6 +507,8 @@ export class HeroController {
       if (mostReadIds !== undefined) updateData.mostReadIds = mostReadIdsStr;
       if (heroGridIds !== undefined) updateData.heroGridIds = heroGridIdsStr;
       if (tickerLabelStr !== undefined) updateData.tickerLabel = tickerLabelStr;
+      if (heroSliderMode !== undefined) updateData.heroSliderMode = heroSliderMode || 'auto';
+      if (heroSliderIds !== undefined) updateData.heroSliderIds = heroSliderIdsStr;
 
       const updatedSetting = await prisma.heroSetting.upsert({
         where: { id: 'default' },
@@ -492,8 +524,22 @@ export class HeroController {
           mostReadIds: mostReadIdsStr,
           heroGridIds: heroGridIdsStr,
           tickerLabel: tickerLabelStr || null,
+          heroSliderMode: heroSliderMode || 'auto',
+          heroSliderIds: heroSliderIdsStr,
         } as any,
       });
+
+      if (heroGridMode !== undefined) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `UPDATE hero_settings SET heroGridMode = ? WHERE id = 'default'`,
+            heroGridMode || 'auto'
+          );
+          (updatedSetting as any).heroGridMode = heroGridMode || 'auto';
+        } catch (rawErr) {
+          console.warn('Could not update heroGridMode via raw SQL:', rawErr);
+        }
+      }
 
       // Do NOT set isFeatured: true on slot articles.
       // Slot articles are explicitly assigned to slot1Id, slot2Id, slot3Id in heroSettings
@@ -543,6 +589,7 @@ export class HeroController {
         }
       }
 
+      const featuredIds = [slot1Id, slot2Id, slot3Id].filter((id): id is string => Boolean(id));
       const postsMap = new Map<string, any>();
       if (featuredIds.length > 0) {
         const posts = await prisma.post.findMany({
@@ -597,6 +644,7 @@ export class HeroController {
           .filter(Boolean);
       }
 
+      const finalHeroGridMode = (updatedSetting as any)?.heroGridMode || 'auto';
       let parsedHeroGridIds: string[] = [];
       if ((updatedSetting as any)?.heroGridIds) {
         try {
@@ -607,14 +655,49 @@ export class HeroController {
       }
 
       let heroGridArticles: any[] = [];
-      if (parsedHeroGridIds.length > 0) {
+      if (finalHeroGridMode === 'manual') {
+        if (parsedHeroGridIds.length > 0) {
+          const posts = await prisma.post.findMany({
+            where: { id: { in: parsedHeroGridIds }, status: 'PUBLISHED' },
+            select: heroPostSelect,
+          });
+          const map = new Map<string, any>();
+          posts.forEach((p) => map.set(p.id, formatPost(p)));
+          heroGridArticles = parsedHeroGridIds
+            .map((id) => map.get(id))
+            .filter(Boolean)
+            .slice(0, 9);
+        }
+      } else {
         const posts = await prisma.post.findMany({
-          where: { id: { in: parsedHeroGridIds }, status: 'PUBLISHED' },
+          where: { status: 'PUBLISHED' },
+          orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
+          take: 9,
+          select: heroPostSelect,
+        });
+        heroGridArticles = posts.map(formatPost);
+        parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
+      }
+
+      const finalHeroSliderMode = (updatedSetting as any)?.heroSliderMode || 'auto';
+      let parsedHeroSliderIds: string[] = [];
+      if ((updatedSetting as any)?.heroSliderIds) {
+        try {
+          parsedHeroSliderIds = JSON.parse((updatedSetting as any).heroSliderIds);
+        } catch {
+          parsedHeroSliderIds = [];
+        }
+      }
+
+      let heroSliderArticles: any[] = [];
+      if (parsedHeroSliderIds.length > 0) {
+        const posts = await prisma.post.findMany({
+          where: { id: { in: parsedHeroSliderIds }, status: 'PUBLISHED' },
           select: heroPostSelect,
         });
         const map = new Map<string, any>();
         posts.forEach((p) => map.set(p.id, formatPost(p)));
-        heroGridArticles = parsedHeroGridIds
+        heroSliderArticles = parsedHeroSliderIds
           .map((id) => map.get(id))
           .filter(Boolean);
       }
@@ -630,6 +713,9 @@ export class HeroController {
           popularNewsIds: parsedPopularNewsIds,
           mostReadIds: parsedMostReadIds,
           heroGridIds: parsedHeroGridIds,
+          heroGridMode: finalHeroGridMode,
+          heroSliderMode: finalHeroSliderMode,
+          heroSliderIds: parsedHeroSliderIds,
         },
         slots,
         tickerLabel: (updatedSetting as any)?.tickerLabel || null,
@@ -642,6 +728,10 @@ export class HeroController {
         mostReadArticles,
         heroGridIds: parsedHeroGridIds,
         heroGridArticles,
+        heroGridMode: finalHeroGridMode,
+        heroSliderMode: finalHeroSliderMode,
+        heroSliderIds: parsedHeroSliderIds,
+        heroSliderArticles,
       }, 'Hero section settings updated successfully.');
     } catch (error) {
       next(error);

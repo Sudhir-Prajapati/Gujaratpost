@@ -102,10 +102,33 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 // Memory cache & In-flight request deduplication map
 const apiCache = new Map<string, { timestamp: number; data: any }>();
 const inFlightRequests = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = process.env.NODE_ENV === 'development' ? 5000 : 180000; // 5s in dev for instant reactivity, 3 mins in prod
+const CACHE_TTL_MS = process.env.NODE_ENV === 'development' ? 5000 : 15000; // 5s dev, 15s prod
 
 export function clearApiCache(): void {
   apiCache.clear();
+}
+
+/**
+ * Clears the local API cache AND broadcasts a refresh signal to ALL open
+ * browser tabs/windows (including the public-facing homepage) via BroadcastChannel.
+ * Call this after any admin save action.
+ */
+export function clearApiCacheAndBroadcast(extraData?: Record<string, any>): void {
+  apiCache.clear();
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('gp-articles-updated'));
+    } catch {}
+    if ('BroadcastChannel' in window) {
+      try {
+        const ch = new BroadcastChannel('gp-admin-updates');
+        ch.postMessage({ type: 'HERO_UPDATED', timestamp: Date.now(), ...(extraData || {}) });
+        ch.close();
+      } catch {
+        // BroadcastChannel not supported — graceful degradation
+      }
+    }
+  }
 }
 
 /**
@@ -660,15 +683,25 @@ export async function getLiveCenterData(): Promise<any> {
  */
 export async function getPublicTickers(): Promise<any[]> {
   try {
-    const url = `${API_BASE_URL}/tickers`;
-    const json = await fetchCachedJson<any>(url, 5000);
-    if (json?.success && json.data?.tickers) {
-      const arr = json.data.tickers;
+    const url = `${API_BASE_URL}/tickers?_t=${Date.now()}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (json?.success && json.data) {
+      const isHidden = Boolean(json.data.tickerHidden);
+      const arr = json.data.tickers || [];
       (arr as any).tickerLabel = json.data.tickerLabel;
       (arr as any).tickerBadge = json.data.tickerBadge;
       (arr as any).tickerMode = json.data.tickerMode || 'scroll';
       (arr as any).tickerSpeed = json.data.tickerSpeed || 5000;
       (arr as any).selectedArticleIds = json.data.selectedArticleIds || [];
+      (arr as any).tickerHidden = isHidden;
       return arr;
     }
   } catch (error: any) {
@@ -715,12 +748,14 @@ export async function updateAdminAstrologySign(slug: string, payload: any): Prom
 
 
 /**
- * Fetch Hero section settings and slot articles from Express Backend API
+ * Fetch Hero section settings and slot articles from Express Backend API.
+ * TTL = 0 so the user-facing homepage always gets fresh hero data with no delay.
  */
 export async function getHeroSettings(): Promise<{ slots: (Article | null)[]; setting: any }> {
   try {
     const url = `${API_BASE_URL}/hero-settings`;
-    const json = await fetchCachedJson<any>(url);
+    // Use 0 TTL — hero settings must reflect admin changes instantly
+    const json = await fetchCachedJson<any>(url, 0);
     if (json?.success && json.data?.slots) {
       return json.data;
     }
@@ -744,6 +779,9 @@ export async function updateHeroSettings(payload: {
   popularNewsIds?: string[] | string;
   mostReadIds?: string[] | string;
   heroGridIds?: string[] | string;
+  heroGridMode?: 'auto' | 'manual';
+  heroSliderMode?: 'auto' | 'manual';
+  heroSliderIds?: string[];
   tickerLabel?: string | Record<string, string> | null;
 }): Promise<any> {
   const res = await authFetch('/api/admin/hero-settings', {
@@ -754,7 +792,8 @@ export async function updateHeroSettings(payload: {
   if (!res.ok) {
     throw new Error('Failed to update hero settings');
   }
-  clearApiCache();
+  // Clear local cache AND broadcast to all open tabs (user-facing pages) to re-fetch immediately
+  clearApiCacheAndBroadcast();
   return res.json();
 }
 

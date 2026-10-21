@@ -176,7 +176,7 @@ export const NAV_ITEMS: NavItem[] = [
   ['Trending', 'ટ્રેન્ડિંગ', 'ટ્રેન્ડિંગ', '/category/trending'],
   ['Election 2027', 'ચૂંટણી 2027', 'ચૂંટણી 2027', '/category/election-2027'],
   ['Podcast', 'પોડકાસ્ટ', 'પોડકાસ્ટ', '/videos?tab=podcast'],
-  ['Instagram', 'ઇન્સ્ટાગ્રામ', 'ઇન્સ્ટાગ્રામ', '/category/instagram'],
+  ['Instagram', 'ઇન્સ્ટાગ્રામ', 'ઇન્સ્ટાગ્રામ', '/videos'],
   ['Webstory', 'વેબસ્ટોરી', 'વેબસ્ટોરી', '/category/webstory'],
   ['Weather', 'હવામાન', 'હવામાન', '/category/weather'],
   ['Gold-Silver', 'સોનું-ચાંદી', 'સોનું-ચાંદી', '/category/gold-silver'],
@@ -189,7 +189,7 @@ export const NAV_ITEMS: NavItem[] = [
   ['Sports', 'રમતગમત', 'રમતગમત', '/category/sports'],
   ['Education', 'શિક્ષણ', 'શિક્ષણ', '/category/education'],
   ['Watch Never Ends', 'વીડિયો સેક્શન', 'વીડિયો સેક્શન', '/watch'],
-  ['Shorts', 'શોર્ટ્સ', 'શોર્ટ્સ', '/shorts'],
+  ['Shorts', 'શોર્ટ્સ', 'શોર્ટ્સ', '/videos'],
   ['E-paper', 'ઈ-પેપર', 'ઈ-પેપર', '/epaper'],
 ].map(([label, labelGu, labelHi, href]) => ({ label, labelGu, labelHi, href }));
 

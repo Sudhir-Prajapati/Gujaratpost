@@ -289,6 +289,9 @@ model HeroSetting {
   popularNewsIds  String?  @db.Text
   mostReadIds     String?  @db.Text
   heroGridIds     String?  @db.Text
+  heroGridMode    String?  @default("auto") @db.VarChar(50)
+  heroSliderMode  String?  @default("auto") @db.VarChar(50)
+  heroSliderIds   String?  @db.Text
   updatedAt       DateTime @updatedAt
 
   @@map("hero_settings")

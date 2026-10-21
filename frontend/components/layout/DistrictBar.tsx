@@ -359,11 +359,11 @@ export default function DistrictBar({
               </div>
 
               {/* 3. All remaining categories (India, World, Politics, Crime, Health, etc.) */}
-              {mobileOtherCategories.map((link) => {
+              {mobileOtherCategories.map((link, idx) => {
                 const active = isActive(link.href);
                 return (
                   <Link
-                    key={`mob-${link.href}-${language}`}
+                    key={`mob-${link.href}-${link.label || ''}-${idx}-${language}`}
                     href={link.href}
                     className={`relative flex shrink-0 h-10 items-center whitespace-nowrap text-[15.5px] font-extrabold tracking-tight transition-colors duration-150 ${
                       active ? 'text-accent font-black' : 'text-foreground hover:text-accent'

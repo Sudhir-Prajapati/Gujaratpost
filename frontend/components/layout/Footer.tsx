@@ -89,7 +89,7 @@ const topics3Links = [
     { label: 'Entertainment', href: '/category/entertainment' },
     { label: 'Technology', href: '/category/technology' },
     { label: 'Photo Gallery', href: '/photos' },
-    { label: 'Instagram', href: '/category/instagram' },
+    { label: 'Instagram', href: '/videos' },
     { label: 'Web Stories', href: '/category/webstory' },
     { label: 'Weather', href: '/category/weather' },
     { label: 'Gold-Silver', href: '/category/gold-silver' },

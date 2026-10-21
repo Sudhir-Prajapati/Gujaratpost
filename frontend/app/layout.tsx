@@ -7,6 +7,7 @@ import { CookieConsentBanner } from "@/components/consent/CookieConsentBanner";
 import { CookieSettingsModal } from "@/components/consent/CookieSettingsModal";
 import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 const notoSansGujarati = Noto_Sans_Gujarati({
   subsets: ["gujarati", "latin"],
@@ -30,7 +31,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gujaratpost.example.com"),
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL && process.env.NEXT_PUBLIC_SITE_URL.startsWith("http")
+      ? process.env.NEXT_PUBLIC_SITE_URL
+      : "https://gujaratpost.in"
+  ),
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -89,6 +94,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://img.youtube.com" />
       </head>
       <body className="antialiased" suppressHydrationWarning>
+        <GoogleAnalytics />
         <AppProvider>
           <CookieConsentProvider>
             <MainLayoutWrapper>{children}</MainLayoutWrapper>

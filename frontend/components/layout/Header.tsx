@@ -393,7 +393,9 @@ export default function Header() {
       else if (slugLower === 'videos') href = '/videos';
       else if (slugLower === 'photos' || slugLower === 'photo-gallery' || slugLower === 'gallery') href = '/photos';
       else if (slugLower === 'podcasts') href = '/videos?tab=podcast';
-      else if (slugLower === 'shorts' || slugLower === 'reels') href = '/shorts';
+      // Shorts and Instagram both navigate to the Videos section (central multimedia hub)
+      else if (slugLower === 'shorts' || slugLower === 'reels') href = '/videos';
+      else if (slugLower === 'instagram' || slugLower === 'instagram-reels' || slugLower === 'insta' || slugLower === 'insta-reels') href = '/videos';
       else if (slugLower === 'epaper') href = '/epaper';
       else if (slugLower === 'web-stories' || slugLower === 'webstory') href = '/web-stories';
 
@@ -988,11 +990,11 @@ export default function Header() {
 
               {/* Flat Link Grid */}
               <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                {[...navLinks, ...otherLinks].map((link) => {
+                {[...navLinks, ...otherLinks].map((link, idx) => {
                   const active = isActive(link.href);
                   return (
                     <a
-                      key={link.href}
+                      key={`${link.href}-${link.label || ''}-${idx}`}
                       href={link.href}
                       onClick={() => setMenuOpen(false)}
                       className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
@@ -1047,10 +1049,10 @@ export default function Header() {
                 ref={navScrollRef}
                 className={`flex items-center gap-0 overflow-x-auto scrollbar-none scroll-smooth ${isGujarati ? '' : 'w-full'}`}
               >
-                {navLinks.map((link) => {
+                {navLinks.map((link, idx) => {
                   const active = isActive(link.href);
                   return (
-                    <li key={`${link.href}-${language}`} className="shrink-0">
+                    <li key={`${link.href}-${link.label || ''}-${idx}-${language}`} className="shrink-0">
                       <a
                         href={link.href}
                         className={`relative flex h-11 items-center justify-center whitespace-nowrap ${link.href === '/' ? 'px-2.5 sm:px-3' : 'px-2 sm:px-2.5 xl:px-3 2xl:px-3.5'
@@ -1171,11 +1173,11 @@ export default function Header() {
                 onMouseEnter={() => setOtherMenuOpen(true)}
                 onMouseLeave={() => setOtherMenuOpen(false)}
               >
-                {otherLinks.map((link) => {
+                {otherLinks.map((link, idx) => {
                   const active = isActive(link.href);
                   return (
                     <a
-                      key={`${link.href}-${language}`}
+                      key={`${link.href}-${link.label || ''}-${idx}-${language}`}
                       href={link.href}
                       onClick={() => setOtherMenuOpen(false)}
                       className={`block rounded-md px-3.5 py-2 text-left text-[14px] font-bold transition-colors duration-150 ${active

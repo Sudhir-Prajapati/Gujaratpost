@@ -28,10 +28,11 @@ const runBuild = (extraArgs = []) => {
 };
 
 console.log('🚀 [Build] Starting Next.js frontend build...');
-let result = runBuild();
+const defaultArgs = process.argv.includes('--webpack') ? [] : ['--turbo'];
+let result = runBuild(defaultArgs);
 
-if (result.status !== 0 && !process.argv.includes('--webpack')) {
-  console.log('\n⚠️  Turbopack encountered a build issue on this environment. Retrying with --webpack...\n');
+if (result.status !== 0 && !process.argv.includes('--webpack') && !process.argv.includes('--turbo')) {
+  console.log('\n⚠️  Retrying with --webpack...\n');
   result = runBuild(['--webpack']);
 }
 
