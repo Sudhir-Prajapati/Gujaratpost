@@ -563,6 +563,9 @@ export default function AdminAboutPage() {
                     <p className="text-[11px] text-gray-500">
                       કમ્પ્યુટરમાંથી સીધો ફોટો અપલોડ કરો. ક્લાઉડિનરીમાં સુરક્ષિત રીતે સંગ્રહ થશે.
                     </p>
+                    <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
+                      <span className="text-red-500">*</span>&nbsp;Mandatory &bull; JPG / PNG / WEBP &bull; Max 5 MB &bull; Min 1200&times;400 px (Landscape)
+                    </span>
                   </div>
                 </div>
 
@@ -1095,6 +1098,9 @@ export default function AdminAboutPage() {
                           </>
                         )}
                       </label>
+                      <span className="block mt-0.5 text-[10px] font-black text-amber-600 dark:text-amber-400">
+                        <span className="text-red-500">*</span> JPG/PNG &bull; Max 1 MB &bull; Square (200&times;200 px)
+                      </span>
 
                       {memberUploadSuccessIdx === idx && (
                         <span className="block text-[10px] text-emerald-600 font-bold">

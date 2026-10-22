@@ -699,9 +699,14 @@ export default function AdminTributesPage() {
 
                 {/* 3. Photo Upload / URL */}
                 <div>
-                  <label className="block text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-1">
-                    Photo (ફોટો અપલોડ કરો અથવા URL)
-                  </label>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-zinc-600 dark:text-zinc-400">
+                      Photo (ફોટો અપલોડ કરો અથવા URL)
+                    </label>
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
+                      <span className="text-red-500">*</span>&nbsp;Mandatory &bull; JPG / PNG &bull; Max 2 MB &bull; Square (400&times;400 px)
+                    </span>
+                  </div>
                   <div className="flex gap-2">
                     <input
                       type="text"

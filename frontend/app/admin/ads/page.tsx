@@ -24,7 +24,7 @@ import {
   Sliders,
   PanelTop,
 } from 'lucide-react';
-import { getBackendApiUrl, authFetch, clearApiCache } from '@/lib/api';
+import { getBackendApiUrl, authFetch, clearApiCache, clearApiCacheAndBroadcast } from '@/lib/api';
 
 const HEADER_SLOTS = [
   {
@@ -336,7 +336,7 @@ export default function AdminAdsPage() {
 
       const json = await res.json();
       if (json.success) {
-        clearApiCache();
+        clearApiCacheAndBroadcast({ type: 'ADS_UPDATED', section: payload.section });
         setSuccessMessage('Advertisement saved successfully!');
         resetForm();
         fetchAds();
@@ -360,6 +360,7 @@ export default function AdminAdsPage() {
       const json = await res.json();
       if (json.success) {
         setAds(ads.map((a) => (a.id === id ? { ...a, isActive: !currentStatus } : a)));
+        clearApiCacheAndBroadcast({ type: 'ADS_UPDATED', id, isActive: !currentStatus });
       }
     } catch (err) {
       console.error('Failed to toggle status:', err);
@@ -376,6 +377,7 @@ export default function AdminAdsPage() {
       const json = await res.json();
       if (json.success) {
         setAds(ads.map((a) => (a.id === id ? { ...a, includeInRandom: !currentStatus } : a)));
+        clearApiCacheAndBroadcast({ type: 'ADS_UPDATED', id, includeInRandom: !currentStatus });
         setSuccessMessage('Random pool status updated successfully!');
       }
     } catch (err) {
@@ -393,7 +395,7 @@ export default function AdminAdsPage() {
       const json = await res.json();
       if (json.success) {
         setAds((prev) => prev.filter((a) => a.id !== deleteTargetAd.id));
-        clearApiCache();
+        clearApiCacheAndBroadcast({ type: 'ADS_UPDATED', id: deleteTargetAd.id, deleted: true });
         setSuccessMessage('જાહેરાત સફળતાપૂર્વક ડિલીટ થઈ ગઈ છે!');
         setDeleteTargetAd(null);
       } else {
@@ -879,6 +881,9 @@ export default function AdminAdsPage() {
                           : 'Image File (Upload) or Image URL'}{' '}
                         <span className="text-red-500">*</span>
                       </label>
+                      <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
+                        <span className="text-red-500">*</span>&nbsp;Mandatory &bull; JPG / PNG / WEBP &bull; Max 5 MB &bull; Min 728&times;90 px (landscape banner)
+                      </span>
                       <div className="flex flex-col sm:flex-row gap-3">
                         <input
                           type="text"

@@ -1,76 +1,120 @@
 import { Request, Response, NextFunction } from 'express';
 import { sendSuccess, sendError } from '../utils/response.js';
 
-// Helper to generate clean SEO metadata fallback if AI keys fail or timeout
-function generateFallbackSeo(title: string, categoryName: string, location: string) {
+// Helper to convert arrays or strings into clean comma-separated string
+function toCommaSeparated(val: any): string {
+  if (Array.isArray(val)) {
+    return val
+      .map((v) => String(v).trim())
+      .filter(Boolean)
+      .join(', ');
+  }
+  return typeof val === 'string' ? val.trim() : '';
+}
+
+// Helper to generate clean bilingual SEO metadata fallback if AI keys fail or timeout
+function generateFallbackSeo(
+  title: string,
+  titleGu: string,
+  categoryName: string,
+  categoryNameGu: string,
+  location: string
+) {
   const promptTitle = title.trim();
+  const promptTitleGu = (titleGu || '').trim();
   const promptCat = categoryName ? categoryName.trim() : 'News';
+  const promptCatGu = categoryNameGu ? categoryNameGu.trim() : 'સમાચાર';
   const promptLoc = location ? location.trim() : 'Gujarat';
   const brandSuffix = 'gujaratpost news';
 
-  let seoTitle = promptTitle;
-  if (promptLoc && !seoTitle.toLowerCase().includes(promptLoc.toLowerCase())) {
-    seoTitle += ` in ${promptLoc}`;
-  }
-  if (!seoTitle.toLowerCase().includes(brandSuffix)) {
-    seoTitle += ` ${brandSuffix}`;
+  // Symmetrical bilingual Title
+  let seoTitle = '';
+  if (promptTitleGu && promptTitle && promptTitleGu !== promptTitle) {
+    seoTitle = `${promptTitleGu} | ${promptTitle} | ${brandSuffix}`;
+  } else {
+    seoTitle = `${promptTitleGu || promptTitle} | ${brandSuffix}`;
   }
 
-  let seoDescription = promptTitle;
-  if (promptLoc && !seoDescription.toLowerCase().includes(promptLoc.toLowerCase())) {
-    seoDescription += ` in ${promptLoc}`;
-  }
-  if (!seoDescription.toLowerCase().includes(brandSuffix)) {
-    seoDescription += ` ${brandSuffix}`;
+  // Bilingual Description
+  let seoDescription = '';
+  if (promptTitleGu && promptTitle && promptTitleGu !== promptTitle) {
+    seoDescription = `${promptTitleGu}. ${promptTitle} in ${promptLoc}. Latest updates on ${brandSuffix}.`;
+  } else {
+    seoDescription = `${promptTitleGu || promptTitle} in ${promptLoc}. Latest updates on ${brandSuffix}.`;
   }
 
   const keywords = [
     `${promptLoc.toLowerCase()} news`,
     `${promptCat.toLowerCase()} news`,
-    `${promptTitle.slice(0, 45)}`,
     'gujarat news',
     'gujaratpost news',
-    'gujarat post'
+    'ગુજરાત સમાચાર',
+    `${promptLoc} સમાચાર`,
+    `${promptCatGu}`,
   ];
+  if (promptTitleGu) keywords.unshift(promptTitleGu.slice(0, 45));
+  if (promptTitle) keywords.unshift(promptTitle.slice(0, 45));
 
   const tags = [
     promptCat.toLowerCase(),
     promptLoc.toLowerCase(),
     'gujarat',
-    'gujaratpost'
+    'gujaratpost',
+    'ગુજરાત',
+    'સમાચાર',
   ];
+  if (promptCatGu && promptCatGu !== promptCat) tags.push(promptCatGu);
+  if (promptLoc) tags.push(promptLoc);
 
   return {
     seoTitle,
     seoDescription,
     seoKeywords: Array.from(new Set(keywords)).join(', '),
-    tags: Array.from(new Set(tags)).join(', ')
+    tags: Array.from(new Set(tags)).join(', '),
   };
 }
 
 // Call Google Gemini API with Timeout & Markdown Cleanup
-async function callGeminiApi(apiKey: string, promptTitle: string, promptCat: string, promptLoc: string, promptSnippet: string) {
-  const models = ['gemini-3.6-flash', 'gemini-2.0-flash', 'gemini-2.5-flash'];
-  const promptText = `You are a professional SEO expert for Gujarat Post (gujaratpost.in), a top news media portal in Gujarat, India.
-Generate high-ranking bilingual (English & Gujarati) SEO metadata for the following article:
+async function callGeminiApi(
+  apiKey: string,
+  promptTitle: string,
+  promptTitleGu: string,
+  promptCat: string,
+  promptCatGu: string,
+  promptLoc: string,
+  promptSnippet: string
+) {
+  const models = ['gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
 
-Article Title: "${promptTitle}"
-Category: "${promptCat}"
+  const promptText = `You are a professional Bilingual SEO Expert for Gujarat Post (gujaratpost.in), the top Gujarati news portal in India.
+Your mission is to generate high-ranking, high-CTR BILINGUAL (both Gujarati and English) SEO metadata for this news story.
+
+Article Title (Gujarati): "${promptTitleGu || promptTitle}"
+Article Title (English): "${promptTitle || promptTitleGu}"
+Category: "${promptCatGu ? `${promptCat} / ${promptCatGu}` : promptCat}"
 Location: "${promptLoc}"
-Snippet: "${promptSnippet}"
+Story Summary: "${promptSnippet}"
 
-You must return a JSON object with exact 4 keys:
-1. "seoTitle": High CTR headline ending with "gujaratpost news"
-2. "seoDescription": Meta description (120-160 chars) summarizing key story ending with "gujaratpost news"
-3. "seoKeywords": Comma-separated list of 8-12 high-volume search phrases in English and Gujarati (e.g., ahmedabad murder news, ahmedabad police, crime news, gujarat news, gujaratpost news)
-4. "tags": Comma-separated list of 6-10 clean single-word or short tags in English and Gujarati (e.g. murder, crime, police, ahmedabad, gujarat, મર્ડર, ક્રાઇમ, અમદાવાદ) - DO NOT include stop words like "જેટલા" or "એક".`;
+CRITICAL INSTRUCTIONS - EVERY FIELD MUST HAVE BOTH GUJARATI AND ENGLISH:
+1. "seoTitle": High-CTR headline combining Gujarati keywords and English keywords separated by " | ", ending with "gujaratpost news" (under 90 characters).
+   Example: "ગુજરાતમાં પૂરથી 30નાં મોત | Gujarat Flood Rain Havoc | gujaratpost news"
+2. "seoDescription": Meta description (130-160 chars) summarizing key story with sentences in BOTH Gujarati and English.
+   Example: "ગુજરાતમાં ભારે વરસાદ અને પૂરથી 30નાં મોત. Severe Gujarat flood claims 30 lives following continuous heavy rainfall. Latest updates on Gujarat Post."
+3. "seoKeywords": Comma-separated list containing 10-15 keywords with BALANCED Gujarati and English search terms.
+   Example: "ગુજરાત પૂર, અમદાવાદ વરસાદ, ભારે વરસાદ, ગુજરાત સમાચાર, Gujarat flood news, Ahmedabad rainfall, Gujarat rain update, Gujarat flood deaths, Gujarat Post news"
+4. "tags": Comma-separated list of 8-12 clean tags in BOTH Gujarati and English.
+   Example: "Gujarat, Ahmedabad, Flood, Rain, Monsoon, ગુજરાત, અમદાવાદ, પૂર, વરસાદ, ગુજરાત સમાચાર"
+5. "slug": Meaningful, accurate English News Name / slug translating the headline with words joined by hyphens (under 90 characters).
+   Example for "ડ્રગ્સને લઇને મોટું ઓપરેશન, અમદાવાદ અને સુરત ક્રાઇમ બ્રાન્ચે 25 કરોડ રૂપિયાનું ડ્રગ્સ ઝડપી પાડ્યું": "Major-operation-regarding-drugs:-Ahmedabad-and-Surat-Crime-Branches-seize-drugs-worth-Rs-25-crore"
+
+Return ONLY a valid JSON object with the exact 5 keys: "seoTitle", "seoDescription", "seoKeywords", "tags", "slug".`;
 
   let lastError: any = null;
 
   for (const model of models) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 12000);
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
@@ -81,7 +125,8 @@ You must return a JSON object with exact 4 keys:
           contents: [{ parts: [{ text: promptText }] }],
           generationConfig: {
             responseMimeType: 'application/json',
-            temperature: 0.3,
+            temperature: 0.2,
+            thinkingConfig: { thinkingBudget: 0 },
           },
         }),
       });
@@ -95,11 +140,21 @@ You must return a JSON object with exact 4 keys:
       }
 
       const json: any = await res.json();
-      const textStr = json.candidates?.[0]?.content?.parts?.[0]?.text;
+      const parts = json.candidates?.[0]?.content?.parts || [];
+      const finalPart = parts.find((p: any) => !p.thought && p.text) || parts[parts.length - 1];
+      const textStr = finalPart?.text;
       if (!textStr) continue;
 
       const cleanText = textStr.replace(/^```json\s*/gi, '').replace(/\s*```$/gi, '').trim();
-      return JSON.parse(cleanText);
+      const parsed = JSON.parse(cleanText);
+
+      return {
+        seoTitle: typeof parsed.seoTitle === 'string' ? parsed.seoTitle.trim() : '',
+        seoDescription: typeof parsed.seoDescription === 'string' ? parsed.seoDescription.trim() : '',
+        seoKeywords: toCommaSeparated(parsed.seoKeywords),
+        tags: toCommaSeparated(parsed.tags),
+        slug: typeof parsed.slug === 'string' ? parsed.slug.trim().replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-+|-+$/g, '') : '',
+      };
     } catch (err: any) {
       lastError = err;
     }
@@ -115,46 +170,59 @@ export class AiController {
    */
   static async generateSeo(req: Request, res: Response, next: NextFunction) {
     try {
-      const { title, categoryName, location, content } = req.body || {};
+      const { title, titleGu, titleHi, categoryName, categoryNameGu, location, content, contentGu } = req.body || {};
 
-      if (!title || typeof title !== 'string' || !title.trim()) {
+      const promptTitle = (title || titleGu || '').trim();
+      const promptTitleGu = (titleGu || '').trim();
+      const promptCat = categoryName ? String(categoryName).trim() : 'News';
+      const promptCatGu = categoryNameGu ? String(categoryNameGu).trim() : '';
+      const promptLoc = location ? String(location).trim() : 'Gujarat';
+      const promptSnippet = (contentGu || content || '').slice(0, 300).trim();
+
+      if (!promptTitle && !promptTitleGu) {
         return sendError(res, 'Article title is required to generate SEO metadata.', 400);
       }
 
       const geminiApiKey = process.env.GEMINI_API_KEY || '';
-      const promptTitle = title.trim();
-      const promptCat = categoryName ? String(categoryName).trim() : 'News';
-      const promptLoc = location ? String(location).trim() : 'Gujarat';
-      const promptSnippet = content ? String(content).slice(0, 300).trim() : '';
 
       if (!geminiApiKey) {
-        const fallbackData = generateFallbackSeo(promptTitle, promptCat, promptLoc);
+        const fallbackData = generateFallbackSeo(promptTitle, promptTitleGu, promptCat, promptCatGu, promptLoc);
         return sendSuccess(res, fallbackData, 'SEO details generated successfully.');
       }
 
       try {
-        const parsed = await callGeminiApi(geminiApiKey, promptTitle, promptCat, promptLoc, promptSnippet);
+        const parsed = await callGeminiApi(
+          geminiApiKey,
+          promptTitle,
+          promptTitleGu,
+          promptCat,
+          promptCatGu,
+          promptLoc,
+          promptSnippet
+        );
         return sendSuccess(
           res,
           {
-            seoTitle: parsed.seoTitle || `${promptTitle} gujaratpost news`,
-            seoDescription: parsed.seoDescription || `${promptTitle} in ${promptLoc} gujaratpost news`,
-            seoKeywords: parsed.seoKeywords || `${promptTitle}, ${promptLoc} news, gujaratpost news`,
-            tags: parsed.tags || `${promptCat}, ${promptLoc}, gujaratpost`,
+            seoTitle: parsed.seoTitle || generateFallbackSeo(promptTitle, promptTitleGu, promptCat, promptCatGu, promptLoc).seoTitle,
+            seoDescription: parsed.seoDescription || generateFallbackSeo(promptTitle, promptTitleGu, promptCat, promptCatGu, promptLoc).seoDescription,
+            seoKeywords: parsed.seoKeywords || generateFallbackSeo(promptTitle, promptTitleGu, promptCat, promptCatGu, promptLoc).seoKeywords,
+            tags: parsed.tags || generateFallbackSeo(promptTitle, promptTitleGu, promptCat, promptCatGu, promptLoc).tags,
+            slug: parsed.slug || '',
             provider: 'Google Gemini AI',
           },
           'AI SEO details generated successfully with Google Gemini AI.'
         );
       } catch (geminiErr: any) {
         console.warn('[Gemini AI Auto-Recovered Notice]:', geminiErr?.message || geminiErr);
-        const fallbackData = generateFallbackSeo(promptTitle, promptCat, promptLoc);
+        const fallbackData = generateFallbackSeo(promptTitle, promptTitleGu, promptCat, promptCatGu, promptLoc);
         return sendSuccess(res, fallbackData, 'SEO details generated successfully.');
       }
     } catch (error: any) {
       console.warn('[AiController.generateSeo Emergency Catch]:', error?.message || error);
-      const { title, categoryName, location } = req.body || {};
-      const fallbackData = generateFallbackSeo(title || 'News', categoryName || 'News', location || 'Gujarat');
+      const { title, titleGu, categoryName, categoryNameGu, location } = req.body || {};
+      const fallbackData = generateFallbackSeo(title || 'News', titleGu || '', categoryName || 'News', categoryNameGu || '', location || 'Gujarat');
       return sendSuccess(res, fallbackData, 'SEO details generated successfully.');
     }
   }
 }
+

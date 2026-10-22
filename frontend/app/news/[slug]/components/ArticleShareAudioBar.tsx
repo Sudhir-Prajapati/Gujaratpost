@@ -51,9 +51,37 @@ export default function ArticleShareAudioBar({
         </svg>
       </a>
 
+      {/* Facebook */}
+      <a
+        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
+        target="_blank"
+        rel="noreferrer"
+        title="Facebook"
+        aria-label="Share on Facebook"
+        className="group relative flex items-center justify-center w-[34px] h-[34px] xs:w-[36px] xs:h-[36px] sm:w-[38px] sm:h-[38px] md:w-11 md:h-11 shrink-0 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(24,119,242,0.3)] hover:border-[#1877F2]"
+      >
+        <svg viewBox="0 0 24 24" className="w-4 h-4 xs:w-[17px] xs:h-[17px] md:w-[20px] md:h-[20px] text-[#1877F2] transition-transform duration-300 group-hover:scale-110" fill="currentColor" aria-hidden="true">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+      </a>
+
+      {/* X */}
+      <a
+        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(articleUrl)}`}
+        target="_blank"
+        rel="noreferrer"
+        title="Share on X"
+        aria-label="Share on X"
+        className="group relative flex items-center justify-center w-[34px] h-[34px] xs:w-[36px] xs:h-[36px] sm:w-[38px] sm:h-[38px] md:w-11 md:h-11 shrink-0 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(0,0,0,0.2)] hover:border-black dark:hover:border-white"
+      >
+        <svg viewBox="0 0 24 24" className="w-4 h-4 xs:w-[17px] xs:h-[17px] md:w-[20px] md:h-[20px] text-black dark:text-white transition-transform duration-300 group-hover:scale-110" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      </a>
+
       {/* Dailyhunt */}
       <a
-        href="https://profile.dailyhunt.in/gujaratpost"
+        href="https://m.dailyhunt.in/news/india/gujarati/gujarat-post-epaper-gujpost"
         target="_blank"
         rel="noreferrer"
         title={uiLabel(language, { en: 'Dailyhunt', gu: 'ડેઈલીહન્ટ', hi: 'डेलीहंट' })}
@@ -67,21 +95,6 @@ export default function ArticleShareAudioBar({
         </svg>
       </a>
 
-      {/* Google News */}
-      <a
-        href="https://news.google.com/search?q=Gujarat+Post"
-        target="_blank"
-        rel="noreferrer"
-        title={uiLabel(language, { en: 'Google News', gu: 'ગૂગલ ન્યૂઝ', hi: 'गूगल न्यूज़' })}
-        className="group relative flex items-center justify-center w-[34px] h-[34px] xs:w-[36px] xs:h-[36px] sm:w-[38px] sm:h-[38px] md:w-11 md:h-11 shrink-0 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(66,133,244,0.35)] hover:border-[#4285F4]"
-      >
-        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 xs:w-4 xs:h-4 md:w-[19px] md:h-[19px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-          <rect x="2" y="2" width="8" height="20" rx="1.5" fill="#4285F4" />
-          <rect x="12" y="3" width="10" height="3.5" rx="1" fill="#EA4335" />
-          <rect x="12" y="9" width="10" height="3.5" rx="1" fill="#FBBC05" />
-          <rect x="12" y="15" width="10" height="6" rx="1" fill="#34A853" />
-        </svg>
-      </a>
 
       {/* Print */}
       <button

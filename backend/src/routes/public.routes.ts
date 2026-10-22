@@ -108,8 +108,12 @@ function cacheResponse(ttlSeconds: number) {
 
 function sanitizeUrlInContent(text?: string | null): string {
   if (!text) return '';
-  return text.replace(/(https:\/\/res\.cloudinary\.com\/[^\s"'<>]+?\.(?:jpg|jpeg|png|webp|gif|svg))/gi, (imgUrl) => {
-    return imgUrl.replace('/raw/upload/', '/image/upload/');
+  return text.replace(/(https:\/\/res\.cloudinary\.com\/[^\s"'<>]+?\.(?:jpg|jpeg|png|webp|gif|svg|avif))/gi, (imgUrl) => {
+    let clean = imgUrl.replace('/raw/upload/', '/image/upload/');
+    if (!clean.includes('/video/upload/') && !clean.toLowerCase().endsWith('.pdf') && !clean.toLowerCase().includes('.pdf?')) {
+      clean = clean.replace(/\.(?:jpg|jpeg|png|webp|gif)(?:\?.*)?$/i, '.avif');
+    }
+    return clean;
   });
 }
 
@@ -118,6 +122,9 @@ function sanitizeSingleUrl(url?: string | null): string {
   let clean = url.trim();
   if (clean.includes('res.cloudinary.com') && clean.includes('/raw/upload/') && !clean.toLowerCase().endsWith('.pdf') && !clean.toLowerCase().includes('.pdf?')) {
     clean = clean.replace('/raw/upload/', '/image/upload/');
+  }
+  if (clean.includes('res.cloudinary.com') && clean.includes('/image/upload/') && !clean.toLowerCase().endsWith('.pdf') && !clean.toLowerCase().includes('.pdf?') && !clean.includes('/video/upload/')) {
+    clean = clean.replace(/\.(?:jpg|jpeg|png|webp|gif)(?:\?.*)?$/i, '.avif');
   }
   return clean;
 }
@@ -184,7 +191,7 @@ function generateRichGujaratiNewsBody(title?: string, excerpt?: string, category
 }
 
 // Public Support Details route
-router.get('/support', cacheResponse(60), SupportController.getSupportSettings);
+router.get('/support', SupportController.getSupportSettings);
 
 // Public About Us route
 router.get('/about', cacheResponse(60), AboutController.getAboutSettings);
@@ -1324,70 +1331,96 @@ router.get('/tickers', async (req, res, next) => {
     ]);
 
     let rawLabel = heroSettingRow?.tickerLabel || null;
-    let tickerLabel = rawLabel;
+    let cleanBadgeLabel = 'બ્રેકિંગ ન્યૂઝ';
     let tickerMode = 'scroll';
     let tickerSpeed = 5000;
     let selectedArticleIds: string[] = [];
     let tickerHidden = false;
+    let parsedConfig: any = null;
 
-    if (rawLabel && typeof rawLabel === 'string' && rawLabel.trim().startsWith('{')) {
-      try {
-        const parsed = JSON.parse(rawLabel);
-        if (parsed && typeof parsed === 'object') {
-          tickerLabel = parsed.text || parsed.gu || parsed.en || rawLabel;
-          tickerMode = parsed.mode === 'single' ? 'single' : 'scroll';
-          if (parsed.speed) tickerSpeed = Number(parsed.speed) || 5000;
-          if (Array.isArray(parsed.articleIds)) {
-            selectedArticleIds = parsed.articleIds.filter((id: any) => typeof id === 'string' && id.trim());
+    if (rawLabel) {
+      if (typeof rawLabel === 'string' && rawLabel.trim().startsWith('{')) {
+        try {
+          parsedConfig = JSON.parse(rawLabel);
+          if (parsedConfig && typeof parsedConfig === 'object') {
+            cleanBadgeLabel = parsedConfig.text || parsedConfig.gu || parsedConfig.en || parsedConfig.hi || 'બ્રેકિંગ ન્યૂઝ';
+            tickerMode = parsedConfig.mode === 'single' ? 'single' : 'scroll';
+            if (parsedConfig.speed) tickerSpeed = Number(parsedConfig.speed) || 5000;
+            if (Array.isArray(parsedConfig.articleIds)) {
+              selectedArticleIds = parsedConfig.articleIds.filter((id: any) => typeof id === 'string' && id.trim());
+            }
+            if (parsedConfig.hidden === true || parsedConfig.hidden === 'true' || parsedConfig.visible === false || parsedConfig.isVisible === false) {
+              tickerHidden = true;
+            }
           }
-          if (parsed.hidden === true || parsed.hidden === 'true' || parsed.visible === false || parsed.isVisible === false) {
-            tickerHidden = true;
-          }
-        }
-      } catch { }
+        } catch { }
+      } else if (typeof rawLabel === 'string' && rawLabel.trim() && !rawLabel.trim().startsWith('{')) {
+        cleanBadgeLabel = rawLabel.trim();
+      }
     }
 
     if (tickerHidden) {
       return sendSuccess(res, {
         tickers: [],
-        tickerLabel: rawLabel,
-        tickerBadge: tickerLabel,
+        tickerLabel: cleanBadgeLabel,
+        tickerBadge: cleanBadgeLabel,
         tickerMode,
         tickerSpeed,
         selectedArticleIds,
+        customHeadlines: Array.isArray(parsedConfig?.customHeadlines) ? parsedConfig.customHeadlines : [],
+        sourceType: parsedConfig?.sourceType || 'articles',
         tickerHidden: true,
       }, 'Breaking tickers retrieved (hidden)');
     }
 
     let articleTickers: any[] = [];
 
-    // 1. If Option 2 (Single Headline One-by-One) is chosen and custom articles are selected in CMS, use them!
-    if (tickerMode === 'single' && selectedArticleIds.length > 0) {
-      const selectedPosts = await prisma.post.findMany({
-        where: { id: { in: selectedArticleIds }, status: 'PUBLISHED' },
-        select: {
-          id: true,
-          title: true,
-          titleGu: true,
-          titleHi: true,
-          slug: true,
-        },
-      });
-      const postMap = new Map<string, any>();
-      selectedPosts.forEach((p) => postMap.set(p.id, p));
-      articleTickers = selectedArticleIds
-        .map((id) => postMap.get(id))
-        .filter(Boolean)
-        .map((a) => ({
-          id: a.id,
-          en: a.title,
-          gu: a.titleGu || a.title,
-          hi: a.titleHi || a.title,
-          title: a.title,
-          titleGu: a.titleGu,
-          titleHi: a.titleHi,
-          slug: a.slug,
-        }));
+    // 1. If Option 2 (Single Headline One-by-One) is chosen
+    if (tickerMode === 'single') {
+      const isCustomMode = parsedConfig?.sourceType === 'custom' && Array.isArray(parsedConfig?.customHeadlines) && parsedConfig.customHeadlines.length > 0;
+
+      if (isCustomMode) {
+        articleTickers = parsedConfig.customHeadlines
+          .filter((h: any) => h && (h.heading || h.title))
+          .map((h: any, idx: number) => ({
+            id: h.id || `custom-${idx}`,
+            en: h.heading || h.title,
+            gu: h.heading || h.title,
+            hi: h.heading || h.title,
+            title: h.heading || h.title,
+            titleGu: h.heading || h.title,
+            titleHi: h.heading || h.title,
+            slug: (h.link || h.url || '').trim(),
+            link: (h.link || h.url || '').trim(),
+            isCustom: true,
+          }));
+      } else if (selectedArticleIds.length > 0) {
+        const selectedPosts = await prisma.post.findMany({
+          where: { id: { in: selectedArticleIds }, status: 'PUBLISHED' },
+          select: {
+            id: true,
+            title: true,
+            titleGu: true,
+            titleHi: true,
+            slug: true,
+          },
+        });
+        const postMap = new Map<string, any>();
+        selectedPosts.forEach((p) => postMap.set(p.id, p));
+        articleTickers = selectedArticleIds
+          .map((id) => postMap.get(id))
+          .filter(Boolean)
+          .map((a) => ({
+            id: a.id,
+            en: a.title,
+            gu: a.titleGu || a.title,
+            hi: a.titleHi || a.title,
+            title: a.title,
+            titleGu: a.titleGu,
+            titleHi: a.titleHi,
+            slug: a.slug,
+          }));
+      }
     }
 
     // 2. If no custom articles selected, auto-fetch breaking news articles
@@ -1451,11 +1484,13 @@ router.get('/tickers', async (req, res, next) => {
 
     return sendSuccess(res, {
       tickers: combinedTickers,
-      tickerLabel: rawLabel,
-      tickerBadge: tickerLabel,
+      tickerLabel: cleanBadgeLabel,
+      tickerBadge: cleanBadgeLabel,
       tickerMode,
       tickerSpeed,
       selectedArticleIds,
+      customHeadlines: Array.isArray(parsedConfig?.customHeadlines) ? parsedConfig.customHeadlines : [],
+      sourceType: parsedConfig?.sourceType || 'articles',
       tickerHidden: false,
     }, 'Breaking tickers retrieved');
   } catch (error) {
@@ -1617,6 +1652,48 @@ router.get('/download-pdf', async (req: any, res: any) => {
     return res.status(404).json({ error: 'PDF File not found' });
   } catch (err: any) {
     console.error('PDF proxy download error:', err);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
+
+router.get('/download-image', async (req, res, next) => {
+  try {
+    const rawUrl = req.query.url as string;
+    const customName = req.query.name as string;
+    if (!rawUrl || !rawUrl.trim()) {
+      return res.status(400).json({ error: 'URL parameter required' });
+    }
+
+    let cleanUrl = rawUrl.trim();
+    const baseName = (customName || path.basename(cleanUrl.split('?')[0]) || 'image').replace(/\.[a-zA-Z0-9]+$/, '');
+    const safeFilename = `${baseName}.avif`;
+
+    // 1. Cloudinary URL: redirect with fl_attachment and .avif extension
+    if (cleanUrl.includes('res.cloudinary.com') && cleanUrl.includes('/image/upload/')) {
+      let avifUrl = cleanUrl.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
+      if (!avifUrl.includes('/fl_attachment')) {
+        avifUrl = avifUrl.replace(
+          /\/image\/upload\/(?:v\d+\/)?/,
+          (match) => match.replace('/image/upload/', `/image/upload/fl_attachment:${encodeURIComponent(baseName)}/`)
+        );
+      }
+      return res.redirect(avifUrl);
+    }
+
+    // 2. Fetch external image and stream with AVIF content headers
+    const response = await fetch(cleanUrl);
+    if (!response.ok) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const arrayBuf = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuf);
+
+    res.setHeader('Content-Type', 'image/avif');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    return res.send(buffer);
+  } catch (err: any) {
+    console.error('Image proxy download error:', err);
     res.status(500).json({ error: 'Download failed' });
   }
 });

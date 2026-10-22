@@ -52,8 +52,9 @@ router.delete('/categories/:id', requireAuth, requireRole(categoryRoles), Catego
 // ==========================================
 // 3. Authors (SUPER_ADMIN, EDITOR)
 // ==========================================
-const authorRoles = [Role.SUPER_ADMIN, Role.EDITOR];
+const authorRoles = [Role.SUPER_ADMIN, Role.EDITOR, Role.REPORTER];
 router.get('/authors', requireAuth, requireRole(authorRoles), AuthorController.getAllAuthors);
+router.post('/authors', requireAuth, requireRole(authorRoles), AuthorController.createAuthor);
 
 // ==========================================
 // 4. Articles / Posts (SUPER_ADMIN, EDITOR, REPORTER, SEO, ADVERTISEMENT)

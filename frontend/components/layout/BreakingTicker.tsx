@@ -79,8 +79,19 @@ export default function BreakingTicker() {
         }
 
         setBreaking(res || []);
-        if ((res as any)?.tickerLabel) setTickerLabel((res as any).tickerLabel);
-        if ((res as any)?.tickerBadge) setTickerLabel((res as any).tickerBadge);
+        const rawBadge = (res as any)?.tickerBadge || (res as any)?.tickerLabel;
+        if (rawBadge) {
+          if (typeof rawBadge === 'string' && rawBadge.trim().startsWith('{')) {
+            try {
+              const parsed = JSON.parse(rawBadge);
+              setTickerLabel(parsed?.text || parsed?.gu || parsed?.en || parsed?.hi || 'બ્રેકિંગ ન્યૂઝ');
+            } catch {
+              setTickerLabel('બ્રેકિંગ ન્યૂઝ');
+            }
+          } else {
+            setTickerLabel(rawBadge);
+          }
+        }
         if ((res as any)?.tickerMode === 'single' || (res as any)?.tickerMode === 'scroll') {
           setTickerMode((res as any).tickerMode);
         }
@@ -164,12 +175,25 @@ export default function BreakingTicker() {
 
   const itemsToRender = useMemo(() => {
     return breaking.map((art: any) => ({
+      id: art.id,
+      title: art.title || art.heading || art.gu || art.en,
       en: art.en || art.title,
       gu: art.gu || art.titleGu,
       hi: art.hi || art.titleHi,
       slug: art.slug || (art.articleNumber ? `${art.articleNumber}` : ''),
+      link: art.link || (art.slug && (art.slug.startsWith('/') || art.slug.startsWith('http')) ? art.slug : ''),
+      isCustom: Boolean(art.isCustom),
     }));
   }, [breaking]);
+
+  const getTargetUrl = (item: any): string => {
+    const target = (item?.link || item?.slug || '').trim();
+    if (!target) return '';
+    if (target.startsWith('/') || target.startsWith('http://') || target.startsWith('https://')) {
+      return target;
+    }
+    return `/news/${target}`;
+  };
 
   const badgeText = useMemo(() => {
     if (tickerLabel) {
@@ -178,11 +202,16 @@ export default function BreakingTicker() {
           if (tickerLabel.trim().startsWith('{')) {
             const parsed = JSON.parse(tickerLabel);
             if (parsed && typeof parsed === 'object') {
-              return getLocalized(language, parsed) || parsed.text || parsed.gu || parsed.en || parsed.hi || tickerLabel;
+              const clean = parsed.text || parsed.gu || parsed.en || parsed.hi;
+              if (clean && typeof clean === 'string' && !clean.trim().startsWith('{')) {
+                return clean.trim();
+              }
             }
           }
         } catch {}
-        return tickerLabel.trim();
+        if (!tickerLabel.trim().startsWith('{')) {
+          return tickerLabel.trim();
+        }
       }
       if (typeof tickerLabel === 'object') {
         return getLocalized(language, tickerLabel) || tickerLabel.text || tickerLabel.gu || tickerLabel.en || tickerLabel.hi;
@@ -251,23 +280,48 @@ export default function BreakingTicker() {
 
 
   const renderScrollItem = (item: any, keyPrefix: string, index: number) => {
-    const label = getLocalized(language, { en: item.en, gu: item.gu, hi: item.hi });
+    const isCustom = Boolean(item.isCustom);
+    const customText = item.title || item.en || item.gu;
+    const label = isCustom ? customText : getLocalized(language, { en: item.en, gu: item.gu, hi: item.hi });
     if (!label) return null;
-    const isLink = Boolean(item.slug);
+    const targetUrl = getTargetUrl(item);
 
     return (
-      <span key={`${keyPrefix}-${item.slug || index}`} className="inline-flex items-center shrink-0">
-        {isLink ? (
-          <Link
-            prefetch={false}
-            href={`/news/${item.slug}`}
-            className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16px] md:text-[16.5px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
-          >
-            <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
-          </Link>
+      <span key={`${keyPrefix}-${item.link || item.slug || index}`} className="inline-flex items-center shrink-0">
+        {targetUrl ? (
+          targetUrl.startsWith('http://') || targetUrl.startsWith('https://') ? (
+            <a
+              href={targetUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16px] md:text-[16.5px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
+            >
+              {isCustom ? (
+                <span>{customText}</span>
+              ) : (
+                <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
+              )}
+            </a>
+          ) : (
+            <Link
+              prefetch={false}
+              href={targetUrl}
+              className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16px] md:text-[16.5px] font-bold text-white/95 hover:text-white hover:underline transition-colors focus:outline-none tracking-normal leading-normal"
+            >
+              {isCustom ? (
+                <span>{customText}</span>
+              ) : (
+                <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
+              )}
+            </Link>
+          )
         ) : (
           <span className="px-2 sm:px-2.5 text-[12.5px] sm:text-[16px] md:text-[16.5px] font-bold text-white/95 tracking-normal leading-normal">
-            <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
+            {isCustom ? (
+              <span>{customText}</span>
+            ) : (
+              <AutoTranslatedText values={{ en: item.en, gu: item.gu, hi: item.hi }} language={language} />
+            )}
           </span>
         )}
         <span className="mx-2.5 sm:mx-4 inline-block h-1 w-1 sm:h-1.5 sm:w-1.5 rounded-full bg-white/70 shrink-0" aria-hidden="true" />
@@ -347,33 +401,70 @@ export default function BreakingTicker() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-300 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-yellow-400"></span>
                 </span>
-                {currentSingleItem.slug ? (
-                  <Link
-                    prefetch={false}
-                    href={`/news/${currentSingleItem.slug}`}
-                    className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white hover:underline focus:outline-none tracking-normal leading-normal"
-                  >
-                    <AutoTranslatedText
-                      values={{
-                        en: currentSingleItem.en,
-                        gu: currentSingleItem.gu,
-                        hi: currentSingleItem.hi,
-                      }}
-                      language={language}
-                    />
-                  </Link>
-                ) : (
-                  <span className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white tracking-normal leading-normal">
-                    <AutoTranslatedText
-                      values={{
-                        en: currentSingleItem.en,
-                        gu: currentSingleItem.gu,
-                        hi: currentSingleItem.hi,
-                      }}
-                      language={language}
-                    />
-                  </span>
-                )}
+                {(() => {
+                  const targetUrl = getTargetUrl(currentSingleItem);
+                  const isCustom = Boolean(currentSingleItem.isCustom);
+                  const displayText = isCustom ? (currentSingleItem.title || currentSingleItem.en || currentSingleItem.gu) : null;
+
+                  if (targetUrl) {
+                    return targetUrl.startsWith('http://') || targetUrl.startsWith('https://') ? (
+                      <a
+                        href={targetUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white hover:underline focus:outline-none tracking-normal leading-normal"
+                      >
+                        {isCustom ? (
+                          <span>{displayText}</span>
+                        ) : (
+                          <AutoTranslatedText
+                            values={{
+                              en: currentSingleItem.en,
+                              gu: currentSingleItem.gu,
+                              hi: currentSingleItem.hi,
+                            }}
+                            language={language}
+                          />
+                        )}
+                      </a>
+                    ) : (
+                      <Link
+                        prefetch={false}
+                        href={targetUrl}
+                        className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white hover:underline focus:outline-none tracking-normal leading-normal"
+                      >
+                        {isCustom ? (
+                          <span>{displayText}</span>
+                        ) : (
+                          <AutoTranslatedText
+                            values={{
+                              en: currentSingleItem.en,
+                              gu: currentSingleItem.gu,
+                              hi: currentSingleItem.hi,
+                            }}
+                            language={language}
+                          />
+                        )}
+                      </Link>
+                    );
+                  }
+                  return (
+                    <span className="truncate text-[12.5px] sm:text-[15.5px] md:text-[16.5px] font-bold text-white tracking-normal leading-normal">
+                      {isCustom ? (
+                        <span>{displayText}</span>
+                      ) : (
+                        <AutoTranslatedText
+                          values={{
+                            en: currentSingleItem.en,
+                            gu: currentSingleItem.gu,
+                            hi: currentSingleItem.hi,
+                          }}
+                          language={language}
+                        />
+                      )}
+                    </span>
+                  );
+                })()}
               </div>
 
               {/* Counter Pill e.g. 1 / 3 */}

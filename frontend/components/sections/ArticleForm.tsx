@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink, Search, Filter, Check, Layers, ChevronDown, ChevronUp, RotateCcw, BookOpen, FileText } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink, Search, Filter, Check, Layers, ChevronDown, ChevronUp, RotateCcw, BookOpen, FileText, PenLine, Users } from 'lucide-react';
 import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache } from '@/lib/api';
 import { sanitizeImageUrl } from '@/lib/media';
 import { translateOnFly } from '@/lib/translate';
@@ -155,14 +155,46 @@ const NATIONAL_CATEGORY_NAMES = ['national', 'india', 'politics', 'crime', 'educ
 const INTERNATIONAL_CATEGORY_NAMES = ['world', 'international', 'global', 'foreign'];
 const GUJARAT_CATEGORY_NAMES = ['gujarat', 'ahmedabad', 'surat', 'vadodara', 'rajkot', 'gandhinagar', 'bhavnagar', 'jamnagar', 'kutch', 'junagadh', 'morbi', 'mehsana', 'anand'];
 
-// Helper to transliterate Gujarati, Hindi, and English title into a clean URL-friendly English slug
+// Clean formatting for English News Name / Slug
+export function formatEnglishTitleToSlug(text: string): string {
+  if (!text || !text.trim()) return '';
+  return text
+    .trim()
+    .replace(/['’"]/g, '')
+    .replace(/[,\/|]/g, '-')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-zA-Z0-9-:]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Helper to convert English title, or fallback for Indic title, into a clean English slug
 function generateEnglishSlug(text: string): string {
-  if (!text) return '';
+  if (!text || !text.trim()) return '';
+  const trimmed = text.trim();
 
-  let str = text;
+  // If already English / Latin characters
+  if (!/[\u0900-\u0D7F]/.test(trimmed)) {
+    return formatEnglishTitleToSlug(trimmed);
+  }
 
-  // Dictionary for common Gujarati & Hindi locations/terms to standard English
+  // Common vocabulary replacement for instant synchronous slug preview
+  let str = trimmed;
   const wordMap: Record<string, string> = {
+    'ડ્રગ્સને': 'drugs',
+    'ડ્રગ્સ': 'drugs',
+    'ઓપરેશન': 'operation',
+    'મોટું': 'major',
+    'લઇને': 'regarding',
+    'ક્રાઇમ': 'crime',
+    'બ્રાન્ચે': 'branches',
+    'બ્રાન્ચ': 'branch',
+    'કરોડ': 'crore',
+    'રૂપિયાનું': 'worth-rs',
+    'રૂપિયા': 'rupees',
+    'ઝડપી પાડ્યું': 'seize',
+    'ઝડપાયા': 'arrested',
+    'ધરપકડ': 'arrest',
     'ગુજરાતમાં': 'gujarat',
     'ગુજરાત': 'gujarat',
     'અમદાવાદમાં': 'ahmedabad',
@@ -195,53 +227,22 @@ function generateEnglishSlug(text: string): string {
     'મુંબઈ': 'mumbai',
     'ભારતમાં': 'india',
     'ભારત': 'india',
+    'અને': 'and',
+    'સાથે': 'with',
+    'પોલીસ': 'police',
+    'હત્યા': 'murder',
+    'અકસ્માત': 'accident',
+    'મોત': 'deaths',
+    'વરસાદ': 'rain',
+    'પૂર': 'flood',
   };
 
   for (const [key, val] of Object.entries(wordMap)) {
-    str = str.replace(new RegExp(key, 'g'), ` ${val} `);
+    str = str.replace(new RegExp(key, 'gi'), ` ${val} `);
   }
 
-  // Indic character transliteration mapping (Gujarati & Hindi)
-  const charMap: Record<string, string> = {
-    // Vowels
-    'અ': 'a', 'આ': 'a', 'ઇ': 'i', 'ઈ': 'i', 'ઉ': 'u', 'ઊ': 'u', 'ઋ': 'ri', 'એ': 'e', 'ઐ': 'ai', 'ઓ': 'o', 'ઔ': 'au',
-    'अ': 'a', 'आ': 'a', 'इ': 'i', 'ई': 'i', 'उ': 'u', 'ऊ': 'u', 'ऋ': 'ri', 'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au',
-
-    // Matras (Vowel signs)
-    'ા': 'a', 'િ': 'i', 'ી': 'i', 'ુ': 'u', 'ૂ': 'u', 'ૃ': 'ri', 'ે': 'e', 'ૈ': 'ai', 'ો': 'o', 'ૌ': 'au', 'ં': 'n', 'ઁ': 'n', 'ઃ': 'h',
-    'ा': 'a', 'ि': 'i', 'ी': 'i', 'ु': 'u', 'ू': 'u', 'ृ': 'ri', 'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au', 'ं': 'n', 'ँ': 'n', 'ः': 'h',
-
-    // Gujarati Consonants
-    'ક': 'k', 'ખ': 'kh', 'ગ': 'g', 'ઘ': 'gh', 'ઙ': 'n',
-    'ચ': 'ch', 'છ': 'chh', 'જ': 'j', 'ઝ': 'z', 'ઞ': 'n',
-    'ટ': 't', 'ઠ': 'th', 'ડ': 'd', 'ઢ': 'dh', 'ણ': 'n',
-    'ત': 't', 'થ': 'th', 'દ': 'd', 'ધ': 'dh', 'ન': 'n',
-    'પ': 'p', 'ફ': 'f', 'બ': 'b', 'ભ': 'bh', 'મ': 'm',
-    'ય': 'y', 'ર': 'r', 'લ': 'l', 'વ': 'v', 'શ': 'sh', 'ષ': 'sh', 'સ': 's', 'હ': 'h', 'ળ': 'l',
-
-    // Hindi Consonants
-    'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'n',
-    'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'z', 'ञ': 'n',
-    'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
-    'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
-    'प': 'p', 'फ': 'f', 'ब': 'b', 'भ': 'bh', 'म': 'm',
-    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v', 'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
-
-    // Digits
-    '૦': '0', '૧': '1', '૨': '2', '૩': '3', '૪': '4', '૫': '5', '૬': '6', '૭': '7', '૮': '8', '૯': '9',
-    '०': '0', '१': '1', '२': '2', '३': '3', '४': '4', '५': '5', '६': '6', '७': '7', '८': '8', '९': '9',
-  };
-
-  let transliterated = '';
-  for (const char of str) {
-    transliterated += charMap[char] !== undefined ? charMap[char] : char;
-  }
-
-  return transliterated
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
+  // Strip remaining non-latin characters so broken phonetic transliteration NEVER happens
+  return formatEnglishTitleToSlug(str);
 }
 
 export default function ArticleForm({ articleId }: ArticleFormProps) {
@@ -265,6 +266,29 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   // Form Fields State
   const [slug, setSlug] = useState('');
   const [articleNumber, setArticleNumber] = useState<number | ''>('');
+  const slugTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasManuallyEditedSlug = useRef<boolean>(false);
+
+  // Real-time asynchronous translation to produce fluent, accurate English slug
+  const autoGenerateEnglishSlug = useCallback(async (rawText: string) => {
+    if (!rawText || !rawText.trim()) return;
+    const trimmed = rawText.trim();
+
+    // If pure English / Latin characters, convert words to hyphens directly
+    if (!/[\u0900-\u0D7F]/.test(trimmed)) {
+      setSlug(formatEnglishTitleToSlug(trimmed));
+      return;
+    }
+
+    try {
+      const englishTranslation = await translateOnFly(trimmed, 'en');
+      if (englishTranslation && !/[\u0900-\u0D7F]/.test(englishTranslation)) {
+        setSlug(formatEnglishTitleToSlug(englishTranslation));
+      }
+    } catch (err) {
+      console.warn('Real-time slug translation error:', err);
+    }
+  }, []);
 
   // Article Primary Language ('gu' | 'en' | 'hi')
   const [articleLanguage, setArticleLanguage] = useState<'gu' | 'en' | 'hi'>('gu');
@@ -297,74 +321,84 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [fieldErrors, setFieldErrors] = useState<{ slug?: boolean; title?: boolean; category?: boolean; author?: boolean; scheduledAt?: boolean }>({});
   const [scheduledAtError, setScheduledAtError] = useState<string | null>(null);
 
-  interface ExtraImageSlot {
-  id: string;
-  url: string;
-  mode: 'upload' | 'url';
-  uploading: boolean;
-}
+  interface StorySectionSlot {
+    id: string;
+    descEn: string;
+    descGu: string;
+    descHi: string;
+    imageUrl: string;
+    imageMode: 'upload' | 'url';
+    imageUploading: boolean;
+  }
 
-  // Dynamic additional gallery photos (Photos 2 to 10 - Total max 10 photos including Featured Photo)
-  const [extraImages, setExtraImages] = useState<ExtraImageSlot[]>([
-    { id: 'slot-1', url: '', mode: 'upload', uploading: false },
-    { id: 'slot-2', url: '', mode: 'upload', uploading: false },
+  // Paired story continuation sections (Section 2 to Section 10: Description N & Image N together)
+  // Index 0 represents Section 2 (Description 2 & Image 2).
+  const [storySections, setStorySections] = useState<StorySectionSlot[]>([
+    { id: 'section-2', descEn: '', descGu: '', descHi: '', imageUrl: '', imageMode: 'upload', imageUploading: false },
   ]);
 
-  const handleAddImageSlot = () => {
-    if (extraImages.length >= 9) return; // 1 featured + 9 extra = max 10 total
-    setExtraImages((prev) => [
+  const handleAddStorySection = () => {
+    if (storySections.length >= 9) return; // Up to 9 continuation sections = Section 2 to 10
+    const nextNum = storySections.length + 2;
+    setStorySections((prev) => [
       ...prev,
-      { id: Date.now().toString() + Math.random(), url: '', mode: 'upload', uploading: false },
+      {
+        id: `section-${nextNum}-${Date.now()}`,
+        descEn: '',
+        descGu: '',
+        descHi: '',
+        imageUrl: '',
+        imageMode: 'upload',
+        imageUploading: false,
+      },
     ]);
   };
 
-  const handleRemoveImageSlot = (index: number) => {
-    setExtraImages((prev) => prev.filter((_, i) => i !== index));
+  const handleRemoveStorySection = (index: number) => {
+    if (index === 0) return; // Section 2 is always retained
+    setStorySections((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const updateExtraImage = (index: number, updates: Partial<ExtraImageSlot>) => {
-    if (updates.url) {
-      updates.url = sanitizeImageUrl(updates.url);
+  const updateStorySection = (index: number, updates: Partial<StorySectionSlot>) => {
+    if (updates.imageUrl) {
+      updates.imageUrl = sanitizeImageUrl(updates.imageUrl);
     }
-    setExtraImages((prev) => {
+    setStorySections((prev) => {
       const updated = [...prev];
+      if (!updated[index]) {
+        updated[index] = {
+          id: `section-${index + 2}`,
+          descEn: '',
+          descGu: '',
+          descHi: '',
+          imageUrl: '',
+          imageMode: 'upload',
+          imageUploading: false,
+        };
+      }
       updated[index] = { ...updated[index], ...updates };
       return updated;
     });
   };
 
-
-interface ExtraDescriptionSlot {
-  id: string;
-  en: string;
-  gu: string;
-  hi: string;
-}
-
-  // Dynamic additional description/story sections (Description 2, Description 3, etc.)
-  const [extraDescriptions, setExtraDescriptions] = useState<ExtraDescriptionSlot[]>([
-    { id: 'desc-1', en: '', gu: '', hi: '' },
-  ]);
-
-  const handleAddDescriptionSlot = () => {
-    if (extraDescriptions.length >= 4) return; // 1 main + 4 extra = 5 max descriptions
-    setExtraDescriptions((prev) => [
-      ...prev,
-      { id: Date.now().toString() + Math.random(), en: '', gu: '', hi: '' },
-    ]);
-  };
-
-  const handleRemoveDescriptionSlot = (index: number) => {
-    setExtraDescriptions((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateExtraDescription = (index: number, val: string) => {
-    setExtraDescriptions((prev) => {
+  const updateStorySectionDesc = (index: number, val: string) => {
+    setStorySections((prev) => {
       const updated = [...prev];
+      if (!updated[index]) {
+        updated[index] = {
+          id: `section-${index + 2}`,
+          descEn: '',
+          descGu: '',
+          descHi: '',
+          imageUrl: '',
+          imageMode: 'upload',
+          imageUploading: false,
+        };
+      }
       const slot = { ...updated[index] };
-      if (contentLang === 'en') slot.en = val;
-      else if (contentLang === 'gu') slot.gu = val;
-      else if (contentLang === 'hi') slot.hi = val;
+      if (contentLang === 'en') slot.descEn = val;
+      else if (contentLang === 'gu') slot.descGu = val;
+      else if (contentLang === 'hi') slot.descHi = val;
       updated[index] = slot;
       return updated;
     });
@@ -375,10 +409,47 @@ interface ExtraDescriptionSlot {
   const [contentGu, setContentGu] = useState('');
   const [contentHi, setContentHi] = useState('');
 
-  // Settings
+  // Settings (Primary Media & Categories)
   const [featuredImage, setFeaturedImage] = useState('');
+  const [primaryMediaList, setPrimaryMediaList] = useState<string[]>([]);
+  const [primaryUrlInput, setPrimaryUrlInput] = useState('');
   const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  const addPrimaryMediaUrl = (inputVal: string) => {
+    if (!inputVal.trim()) return;
+    const splitUrls = inputVal
+      .split(/[\n,]+/)
+      .map((u) => sanitizeImageUrl(u.trim()))
+      .filter(Boolean);
+    if (splitUrls.length === 0) return;
+
+    setPrimaryMediaList((prev) => {
+      const updated = Array.from(new Set([...prev, ...splitUrls]));
+      if (updated[0]) setFeaturedImage(updated[0]);
+      return updated;
+    });
+    setPrimaryUrlInput('');
+  };
+
+  const removePrimaryMedia = (index: number) => {
+    setPrimaryMediaList((prev) => {
+      const updated = prev.filter((_, i) => i !== index);
+      setFeaturedImage(updated[0] || '');
+      return updated;
+    });
+  };
+
+  const setPrimaryAsMain = (index: number) => {
+    setPrimaryMediaList((prev) => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const target = prev[index];
+      const remaining = prev.filter((_, i) => i !== index);
+      const updated = [target, ...remaining];
+      setFeaturedImage(updated[0] || '');
+      return updated;
+    });
+  };
   const [categoryId, setCategoryId] = useState('');
   const [additionalCategoryIds, setAdditionalCategoryIds] = useState<string[]>([]);
   const [categorySearch, setCategorySearch] = useState('');
@@ -390,6 +461,8 @@ interface ExtraDescriptionSlot {
   });
   const [location, setLocation] = useState('');
   const [authorId, setAuthorId] = useState('');
+  const [authorInputMode, setAuthorInputMode] = useState<'select' | 'custom'>('select');
+  const [customAuthorName, setCustomAuthorName] = useState('');
   const [status, setStatus] = useState<'DRAFT' | 'PUBLISHED' | 'ARCHIVED' | 'SCHEDULED'>('DRAFT');
   const [scheduledAt, setScheduledAt] = useState('');
   const [priority, setPriority] = useState(0);
@@ -555,14 +628,28 @@ interface ExtraDescriptionSlot {
     else if (contentLang === 'hi') setContentHi((prev) => prev + snippet);
   };
 
-  // Helper to thoroughly purge any lingering PDF HTML markup from description text
+  // Helper to thoroughly purge any lingering PDF HTML markup and artifacts from description text
   const purgePdfFromText = (text: string) => {
     if (!text) return '';
     return text
-      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][\s\S]*?<\/div>(?:\s*<\/div>)?/gi, '')
+      // 1. Remove complete or nested gp-pdf-card blocks ending in </a></div>
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
+      // 2. Remove gp-pdf-pages-viewer
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-pages-viewer)[^"']*["'][\s\S]*?<\/div>/gi, '')
+      // 3. Remove data-pdf-url containers
       .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
       .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
-      .replace(/<div class="gp-pdf-pages-viewer"[^>]*><\/div>/gi, '')
+      // 4. Remove lingering sub-components of gp-pdf-card (e.g. inner, text, icon-wrap, btn)
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-inner|gp-pdf-text|gp-pdf-icon-wrap)[^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<a[^>]*class=["'][^"']*gp-pdf-btn[^"']*["'][\s\S]*?<\/a>/gi, '')
+      // 5. Remove any residual text blocks resembling the PDF card
+      .replace(/(?:<div[^>]*>\s*)*(?:<span[^>]*>\s*)*(?:સંદર્ભિત\s+(?:સત્તાવાર|સમાચાર)\s+PDF\s+દસ્તાવેજ|Attached Official Document \(PDF\)|संलग्न आधिकारिक पीडीएफ दस्तावेज़)[\s\S]*?(?:ડાઉનલોડ PDF|Download PDF|डाउनलोड पीडीएफ)(?:\s*<\/span>)*(?:\s*<\/a>)*(?:\s*<\/div>)*/gi, '')
+      // 6. Remove any remaining lines with 'ડાઉનલોડ PDF' or 'Download PDF'
+      .replace(/<p[^>]*>\s*<a[^>]*download[^>]*>[\s\S]*?<\/a>\s*<\/p>/gi, '')
+      // 7. Clean dangling empty tags leftover from stripped wrappers
+      .replace(/^[\s\r\n]*(?:<\/(?:div|p|span)>\s*)+/gi, '')
+      .replace(/(?:<\/(?:div|p|span)>\s*)+$/gi, '')
+      .replace(/<div[^>]*>\s*<\/div>/gi, '')
       .trim();
   };
 
@@ -572,8 +659,7 @@ interface ExtraDescriptionSlot {
     d1Str: string,
     qT: string,
     qC: string,
-    extraDescList: string[],
-    galleryImages: string[],
+    pairedSections: { desc: string; imageUrl: string }[],
     lang: 'en' | 'gu' | 'hi'
   ) => {
     const parts: string[] = [];
@@ -581,26 +667,36 @@ interface ExtraDescriptionSlot {
       const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 एक नजर में (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
       parts.push(`${header}\n--------------------------------------------------\n${hl.trim()}\n--------------------------------------------------`);
     }
-    const cleanD1 = purgePdfFromText(d1Str);
+    const cleanD1 = purgePdfFromText(d1Str)
+      .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
+      .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
+      .trim();
     if (cleanD1) {
       parts.push(cleanD1);
     }
-    // Save all gallery photos (Images 2..10) in structured content
-    galleryImages.forEach((img, idx) => {
-      if (img && img.trim()) {
-        parts.push(`![Gallery Image ${idx + 2}](${img.trim()})`);
+
+    // Story continuation sections: Description N then Image N
+    pairedSections.forEach((sec, idx) => {
+      const sectionNum = idx + 2;
+      const cleanDesc = purgePdfFromText(sec.desc)
+        .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
+        .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
+        .trim();
+      if (cleanDesc || (sec.imageUrl && sec.imageUrl.trim())) {
+        parts.push(`<!-- gp-section-${sectionNum} -->`);
+      }
+      if (cleanDesc) {
+        parts.push(cleanDesc);
+      }
+      if (sec.imageUrl && sec.imageUrl.trim()) {
+        parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
       }
     });
+
     if (qT.trim()) {
       const citeStr = qC.trim() ? `\n> — ${qC.trim()}` : '';
       parts.push(`> "${qT.trim()}"${citeStr}`);
     }
-    extraDescList.forEach((desc) => {
-      const cleanDesc = purgePdfFromText(desc);
-      if (cleanDesc) {
-        parts.push(cleanDesc);
-      }
-    });
 
     if (youtubeUrl && youtubeUrl.trim()) {
       const embed = getYouTubeEmbedUrl(youtubeUrl);
@@ -662,11 +758,11 @@ interface ExtraDescriptionSlot {
     if (!quoteCiteGu.trim()) setQuoteCiteGu(quoteCite);
     if (!quoteCiteHi.trim()) setQuoteCiteHi(quoteCite);
 
-    setExtraDescriptions((prev) =>
+    setStorySections((prev) =>
       prev.map((slot) => ({
         ...slot,
-        gu: slot.gu.trim() ? slot.gu : slot.en,
-        hi: slot.hi.trim() ? slot.hi : slot.en,
+        descGu: slot.descGu.trim() ? slot.descGu : slot.descEn,
+        descHi: slot.descHi.trim() ? slot.descHi : slot.descEn,
       }))
     );
 
@@ -732,12 +828,14 @@ interface ExtraDescriptionSlot {
         translateField(sourceContent),
       ]);
 
-      const translatedExtraDescriptions = await Promise.all(
-        extraDescriptions.map(async (slot) => {
-          const source = pickSourceForTranslation(target, slot);
+      const translatedStorySections = await Promise.all(
+        storySections.map(async (slot) => {
+          const source = pickSourceForTranslation(target, { en: slot.descEn, gu: slot.descGu, hi: slot.descHi });
           if (!source) return slot;
           const translated = await translateOnFly(source, target);
-          return { ...slot, [target]: translated };
+          if (target === 'hi') return { ...slot, descHi: translated };
+          if (target === 'gu') return { ...slot, descGu: translated };
+          return { ...slot, descEn: translated };
         })
       );
 
@@ -767,7 +865,7 @@ interface ExtraDescriptionSlot {
         if (translatedContent) setContent(translatedContent);
       }
 
-      setExtraDescriptions(translatedExtraDescriptions);
+      setStorySections(translatedStorySections);
       setContentLang(target);
     } catch (err: any) {
       console.error('Language translation failed:', err);
@@ -830,20 +928,20 @@ interface ExtraDescriptionSlot {
     loadSelectors();
   }, []);
 
-  // Parse body string into distinct sections (Highlights, Desc1, Images, Quote, Desc2)
+  // Parse body string into distinct sections (Highlights, Desc1, Story Sections, Quote, Embeds)
   const parseBodyToSections = (raw: string) => {
     let hl = '';
     let d1Str = '';
     let qT = '';
     let qC = '';
-    let d2Str = '';
     let extractedYt = '';
     let extractedTw = '';
     let extractedPdfUrl = '';
     let hasPdfPages = false;
-    const extractedImgs: string[] = [];
+    const extractedImgs: { index: number; url: string }[] = [];
+    const extractedDescsMap: { index: number; text: string }[] = [];
 
-    if (!raw) return { hl, d1Str, qT, qC, d2Str, extractedImgs, extractedYt, extractedTw, extractedPdfUrl, hasPdfPages };
+    if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedPdfUrl, hasPdfPages };
 
     // Extract embed URLs before parsing paragraphs
     const ytMatch =
@@ -867,99 +965,215 @@ interface ExtraDescriptionSlot {
       hasPdfPages = true;
     }
 
-    const galleryMatches = [...raw.matchAll(/!\[Gallery Image \d+\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi)];
+    // Extract all gallery images with their numbers (e.g. ![Gallery Image 2](...))
+    const galleryMatches = [...raw.matchAll(/!\[Gallery Image (\d+)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi)];
     for (const match of galleryMatches) {
-      if (match[1]) {
-        extractedImgs.push(match[1]);
-        raw = raw.replace(match[0], '');
+      if (match[2]) {
+        const num = parseInt(match[1], 10) || 2;
+        extractedImgs.push({ index: num, url: match[2] });
       }
     }
 
-    // Strip embed blocks from raw so they NEVER contaminate description paragraphs
-    raw = raw
-      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][\s\S]*?<\/div>(?:\s*<\/div>)?/gi, '')
-      .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
-      .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
-      .replace(/<div class="gp-pdf-pages-viewer"[^>]*><\/div>/gi, '')
+    // Strip embed blocks and all PDF markup from working string
+    let workingRaw = purgePdfFromText(raw)
       .replace(/<div[^>]*class=["'][^"']*gp-x-card[^"']*["'][\s\S]*?<\/div>/gi, '')
       .replace(/<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>/gi, '');
 
-    const paragraphs = raw.split(/\n\n+/);
-    const d1Paras: string[] = [];
-    const d2Paras: string[] = [];
-    let pastQuote = false;
+    // Extract quote block
+    const quoteRegex = /(?:^|\n)(>[^\n]*(?:\n>[^\n]*)*)/;
+    const qMatch = workingRaw.match(quoteRegex);
+    if (qMatch) {
+      const qBlock = qMatch[1];
+      const lines = qBlock.split('\n');
+      const quoteLines = lines.filter((l) => l.startsWith('> "') || l.startsWith('>"') || (l.startsWith('> ') && !l.startsWith('> —') && !l.startsWith('> -')));
+      const citeLine = lines.find((l) => l.includes('> —') || l.includes('> -'));
+      qT = quoteLines.map((l) => l.replace(/^>\s*"?/, '').replace(/"?$/, '')).join('\n');
+      if (citeLine) {
+        qC = citeLine.replace(/^>\s*—\s*/, '').replace(/^>\s*-\s*/, '').trim();
+      }
+      workingRaw = workingRaw.replace(qBlock, '');
+    }
 
-    for (const p of paragraphs) {
-      const trimmed = p.trim();
-      if (!trimmed) continue;
+    // Extract highlights block: handles ## header, dashed block, HTML wrappers, and plain text highlights
+    const hlHeaderRegex = /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?/i;
+    const hlMatch = workingRaw.match(hlHeaderRegex);
 
-      if (
-        trimmed.includes('📌') ||
-        trimmed.includes('એક નજરમાં') ||
-        trimmed.includes('एक नजर में') ||
-        trimmed.includes('AT A GLANCE') ||
-        trimmed.includes('KEY HIGHLIGHTS') ||
-        trimmed.includes('HIGHLIGHTS')
-      ) {
-        const lines = trimmed
-          .split('\n')
-          .map((l) => l.trim())
-          .filter(
-            (l) =>
-              l &&
-              !l.startsWith('#') &&
-              !l.startsWith('---') &&
-              !l.startsWith('***') &&
-              !l.includes('KEY HIGHLIGHTS') &&
-              !l.includes('એક નજરમાં') &&
-              !l.includes('एक नजर में') &&
-              !l.includes('AT A GLANCE')
-          );
-        if (lines.length > 0) {
-          hl = lines.join('\n');
-        }
-      } else if (trimmed.startsWith('> ')) {
-        const lines = trimmed.split('\n');
-        const quoteLines = lines.filter((l) => l.startsWith('> "') || l.startsWith('>"') || (l.startsWith('> ') && !l.startsWith('> —') && !l.startsWith('> -')));
-        const citeLine = lines.find((l) => l.includes('> —') || l.includes('> -'));
-        qT = quoteLines.map((l) => l.replace(/^>\s*"?/, '').replace(/"?$/, '')).join('\n');
-        if (citeLine) {
-          qC = citeLine.replace(/^>\s*—\s*/, '').replace(/^>\s*-\s*/, '').trim();
-        }
-        pastQuote = true;
-      } else if (!trimmed.startsWith('---') && !trimmed.startsWith('***')) {
-        const isEmbedBlock =
-          trimmed.includes('<iframe') ||
-          trimmed.includes('gp-pdf-card') ||
-          trimmed.includes('gp-pdf-pages-viewer') ||
-          trimmed.includes('data-pdf-url') ||
-          trimmed.includes('data-show-pages') ||
-          trimmed.includes('gp-x-card') ||
-          trimmed.includes('Attached Official Document') ||
-          trimmed.includes('View Post on X') ||
-          trimmed.includes('youtube.com/embed') ||
-          trimmed.includes('Download PDF');
+    if (hlMatch && hlMatch.index !== undefined) {
+      const startIndex = hlMatch.index;
+      const matchLen = hlMatch[0].length;
+      const afterHeader = workingRaw.slice(startIndex + matchLen);
+      const lines = afterHeader.split('\n');
+      const collectedLines: string[] = [];
+      let consumedLineCount = 0;
+      let seenOpeningDashes = false;
 
-        if (!isEmbedBlock) {
-          const cleanP = purgePdfFromText(trimmed);
-          if (cleanP) {
-            if (!pastQuote) {
-              d1Paras.push(cleanP);
-            } else {
-              d2Paras.push(cleanP);
-            }
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+
+        // Check dashed divider (e.g. ---------------------- or <p>----</p>)
+        const isDashes = /^[-*—_]{3,}$/.test(trimmed) || /^(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?$/i.test(trimmed);
+        if (isDashes) {
+          if (!seenOpeningDashes && collectedLines.length === 0) {
+            seenOpeningDashes = true;
+            consumedLineCount = i + 1;
+            continue;
+          } else {
+            // Closing dashes reached
+            consumedLineCount = i + 1;
+            break;
           }
+        }
+
+        // Check if we reached another section or media block
+        if (
+          trimmed.startsWith('<!-- gp-section') ||
+          trimmed.startsWith('## ') ||
+          trimmed.startsWith('![Gallery Image') ||
+          trimmed.startsWith('> "') ||
+          trimmed.startsWith('>"')
+        ) {
+          break;
+        }
+
+        // If seen opening dashes and we hit a standard HTML tag that is NOT a bullet point or paragraph
+        if (seenOpeningDashes && (trimmed.startsWith('<div') || trimmed.startsWith('<figure') || (trimmed.startsWith('<span') && !trimmed.includes('•')))) {
+          break;
+        }
+
+        // If no dashes were used, an empty line marks end of header highlights block
+        if (!seenOpeningDashes && !trimmed && collectedLines.length > 0) {
+          consumedLineCount = i + 1;
+          break;
+        }
+
+        if (trimmed) {
+          const cleanText = trimmed
+            .replace(/<[^>]*>/g, '')
+            .replace(/^[•*\-#\s]+/, '')
+            .trim();
+          if (
+            cleanText &&
+            !/^[-*—_]{3,}$/.test(cleanText) &&
+            !cleanText.includes('HIGHLIGHTS') &&
+            !cleanText.includes('એક નજરમાં') &&
+            !cleanText.includes('एक नजर में') &&
+            !cleanText.includes('AT A GLANCE')
+          ) {
+            collectedLines.push(`• ${cleanText}`);
+          }
+          consumedLineCount = i + 1;
+        } else {
+          if (collectedLines.length > 0) {
+            consumedLineCount = i + 1;
+          }
+        }
+      }
+
+      if (collectedLines.length > 0) {
+        hl = collectedLines.join('\n').trim();
+        const consumedChars = lines.slice(0, consumedLineCount).join('\n').length;
+        workingRaw = workingRaw.slice(0, startIndex) + workingRaw.slice(startIndex + matchLen + consumedChars);
+      }
+    } else {
+      // 2. Dashed line block at the beginning without header: ----- text -----
+      const dashedRegex = /^[\s\r\n]*[-*—_]{3,}[\s\r\n]+([\s\S]*?)[\s\r\n]+[-*—_]{3,}[\s\r\n]*/;
+      const dashedMatch = workingRaw.match(dashedRegex);
+      if (dashedMatch) {
+        const lines = dashedMatch[1]
+          .split('\n')
+          .map((l) => l.replace(/<[^>]*>/g, '').replace(/^[•*\-#\s]+/, '').trim())
+          .filter((l) => l && !l.startsWith('#') && !/^[-*—_]{3,}$/.test(l));
+        if (lines.length > 0) {
+          hl = lines.map(l => `• ${l}`).join('\n');
+          workingRaw = workingRaw.replace(dashedMatch[0], '');
+        }
+      } else {
+        // 3. Plain text / HTML heading fallback
+        const plainHlRegex = /^(?:<p[^>]*>)?\s*(?:📌|##)?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^<\n]*\s*(?:<\/p>)?[\s\r\n]*[-*—_]*[\s\r\n]*([\s\S]*?)(?:[-*—_]{3,}|(?=<h[1-6]|<p|<div|<!-- gp-section)|$)/i;
+        const plainHlMatch = workingRaw.match(plainHlRegex);
+        if (plainHlMatch) {
+          const cleanLines = plainHlMatch[1]
+            .replace(/<[^>]*>/g, '\n')
+            .split('\n')
+            .map((l) => l.replace(/^[•*\-#\s]+/, '').trim())
+            .filter((l) => l && !/^[-*—_]{3,}$/.test(l) && !l.includes('HIGHLIGHTS') && !l.includes('એક નજરમાં') && !l.includes('एक नजर में') && !l.includes('AT A GLANCE'));
+          if (cleanLines.length > 0) {
+            hl = cleanLines.map((l) => `• ${l}`).join('\n');
+          }
+          workingRaw = workingRaw.replace(plainHlMatch[0], '');
         }
       }
     }
 
-    d1Str = d1Paras.join('\n\n');
+    // Check if new structured section delimiters <!-- gp-section-N --> exist
+    if (/<!--\s*gp-section-\d+\s*-->/.test(workingRaw)) {
+      const parts = workingRaw.split(/<!--\s*gp-section-(\d+)\s*-->/);
+      d1Str = purgePdfFromText(parts[0].replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').trim())
+        .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
+        .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
+        .trim();
+      for (let i = 1; i < parts.length; i += 2) {
+        const secNum = parseInt(parts[i], 10);
+        const secContent = parts[i + 1] || '';
+        const cleanSecText = purgePdfFromText(secContent.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').trim())
+          .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
+          .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
+          .trim();
+        extractedDescsMap.push({ index: secNum, text: cleanSecText });
+      }
+    } else {
+      // Backward compatibility: parse legacy markdown body
+      workingRaw = workingRaw.replace(/!\[Gallery Image 2\]\([^\s)]+\)/gi, '\n\n__GP_DELIM_IMG2__\n\n');
+      workingRaw = workingRaw.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '\n\n');
+      const paragraphs = workingRaw.split(/\n\n+/);
+      const d1Paras: string[] = [];
+      const d2Paras: string[] = [];
+      let pastImg2 = false;
 
-    if (!d1Str && !hl && !qT && d2Paras.length === 0) {
-      d1Str = purgePdfFromText(raw.trim());
+      for (const p of paragraphs) {
+        const trimmed = p.trim();
+        if (!trimmed) continue;
+        if (trimmed === '__GP_DELIM_IMG2__' || trimmed.includes('__GP_DELIM_IMG2__')) {
+          pastImg2 = true;
+          continue;
+        }
+        if (!trimmed.startsWith('---') && !trimmed.startsWith('***')) {
+          const cleanP = purgePdfFromText(trimmed.replace(/__GP_DELIM_IMG2__/g, ''))
+            .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
+            .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
+            .trim();
+          if (cleanP) {
+            if (!pastImg2) d1Paras.push(cleanP);
+            else d2Paras.push(cleanP);
+          }
+        }
+      }
+      d1Str = d1Paras.join('\n\n').trim();
+      if (d2Paras.length > 0) {
+        extractedDescsMap.push({ index: 2, text: d2Paras.join('\n\n').trim() });
+      }
     }
 
-    return { hl, d1Str, qT, qC, extractedDescs: d2Paras, extractedImgs, extractedYt, extractedTw, extractedPdfUrl, hasPdfPages };
+    if (!d1Str && !hl && !qT && extractedDescsMap.length === 0) {
+      d1Str = purgePdfFromText(raw.trim())
+        .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
+        .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
+        .trim();
+    }
+
+    return {
+      hl,
+      d1Str,
+      qT,
+      qC,
+      extractedDescsMap,
+      extractedImgs,
+      extractedYt,
+      extractedTw,
+      extractedPdfUrl,
+      hasPdfPages,
+    };
   };
 
   // Load article values if in edit mode
@@ -1027,78 +1241,153 @@ interface ExtraDescriptionSlot {
 
         // Parse content into distinct section fields
         const parsedEn = parseBodyToSections(art.content || primaryContent);
-        setHighlights(art.highlights || parsedEn.hl || '');
+        const parsedGu = parseBodyToSections(art.contentGu || primaryContent);
+        const parsedHi = parseBodyToSections(art.contentHi || primaryContent);
+
+        // Helper to format highlights into clean bullet points
+        const formatHlBullets = (rawHl: string) => {
+          if (!rawHl) return '';
+          return rawHl
+            .split('\n')
+            .map((l) => l.trim())
+            .filter(Boolean)
+            .map((l) => (l.startsWith('•') ? l : `• ${l}`))
+            .join('\n');
+        };
+
+        // Fallback extraction matching NewsDetailClient (if no explicit header in content)
+        const cleanGistText = (s: string) => {
+          return (s || '')
+            .replace(/<[^>]*>/g, '')
+            .replace(/^[•*\-#\d\.\s📌]+/, '')
+            .replace(/[📌]/gi, '')
+            .replace(/#+/g, '')
+            .replace(/\(KEY HIGHLIGHTS\)/gi, '')
+            .replace(/એક નજરમાં/gi, '')
+            .replace(/एक नजर में/gi, '')
+            .replace(/AT A GLANCE/gi, '')
+            .trim();
+        };
+
+        const excerptGuGist = cleanGistText(art.excerptGu || art.excerpt || '');
+        const fallbackGu = excerptGuGist && excerptGuGist.length > 8 ? `• ${excerptGuGist}` : '';
+
+        const excerptEnGist = cleanGistText(art.excerpt || art.excerptGu || '');
+        const fallbackEn = excerptEnGist && excerptEnGist.length > 8 ? `• ${excerptEnGist}` : '';
+
+        const excerptHiGist = cleanGistText(art.excerptHi || art.excerpt || '');
+        const fallbackHi = excerptHiGist && excerptHiGist.length > 8 ? `• ${excerptHiGist}` : '';
+
+        const hlGu = formatHlBullets(art.highlightsGu || parsedGu.hl || art.highlights || parsedEn.hl || fallbackGu);
+        const hlEn = formatHlBullets(art.highlights || parsedEn.hl || (parsedGu.hl && lang === 'en' ? parsedGu.hl : '') || fallbackEn);
+        const hlHi = formatHlBullets(art.highlightsHi || parsedHi.hl || (parsedGu.hl && lang === 'hi' ? parsedGu.hl : '') || fallbackHi);
+
+        setHighlights(hlEn);
         setDesc1(parsedEn.d1Str || '');
         setQuoteText(parsedEn.qT || '');
         setQuoteCite(parsedEn.qC || '');
 
-        const parsedGu = parseBodyToSections(art.contentGu || primaryContent);
-        setHighlightsGu(art.highlightsGu || parsedGu.hl || art.highlights || parsedEn.hl || '');
+        setHighlightsGu(hlGu);
         setDesc1Gu(parsedGu.d1Str || parsedEn.d1Str || '');
         setQuoteTextGu(parsedGu.qT || parsedEn.qT || '');
         setQuoteCiteGu(parsedGu.qC || parsedEn.qC || '');
 
-        const parsedHi = parseBodyToSections(art.contentHi || primaryContent);
-        setHighlightsHi(art.highlightsHi || parsedHi.hl || art.highlights || parsedEn.hl || '');
+        setHighlightsHi(hlHi);
         setDesc1Hi(parsedHi.d1Str || parsedEn.d1Str || '');
         setQuoteTextHi(parsedHi.qT || parsedEn.qT || '');
         setQuoteCiteHi(parsedHi.qC || parsedEn.qC || '');
 
-        // Populate dynamic extra descriptions
-        const enDescs = (parsedEn.extractedDescs && parsedEn.extractedDescs.length > 0) ? parsedEn.extractedDescs : (art.desc2 ? [art.desc2] : []);
-        const guDescs = (parsedGu.extractedDescs && parsedGu.extractedDescs.length > 0) ? parsedGu.extractedDescs : (art.desc2Gu ? [art.desc2Gu] : []);
-        const hiDescs = (parsedHi.extractedDescs && parsedHi.extractedDescs.length > 0) ? parsedHi.extractedDescs : (art.desc2Hi ? [art.desc2Hi] : []);
+        // Assemble paired story continuation sections (Section 2 to Section 10)
+        const artImages: { index: number; url: string }[] = [
+          { index: 2, url: art.image2 || art.galleryImage2 || art.secondaryImage || '' },
+          { index: 3, url: art.image3 || '' },
+          { index: 4, url: art.image4 || '' },
+          { index: 5, url: art.image5 || '' },
+          { index: 6, url: art.image6 || '' },
+          { index: 7, url: art.image7 || '' },
+          { index: 8, url: art.image8 || '' },
+          { index: 9, url: art.image9 || '' },
+          { index: 10, url: art.image10 || '' },
+        ].filter((item) => item.url && item.url !== art.featuredImage);
 
-        const maxDescLength = Math.max(enDescs.length, guDescs.length, hiDescs.length, 1);
-        const loadedDescs: ExtraDescriptionSlot[] = [];
-
-        for (let i = 0; i < maxDescLength; i++) {
-          loadedDescs.push({
-            id: `desc-${i}`,
-            en: enDescs[i] || '',
-            gu: guDescs[i] || enDescs[i] || '',
-            hi: hiDescs[i] || enDescs[i] || '',
+        if (Array.isArray(art.galleryImages)) {
+          art.galleryImages.forEach((url: string, i: number) => {
+            const secIdx = i + 2;
+            if (secIdx <= 10 && url && !artImages.some((x) => x.index === secIdx)) {
+              artImages.push({ index: secIdx, url });
+            }
           });
         }
-        setExtraDescriptions(loadedDescs);
 
-        // Populate optional gallery photos (Images 2..10) from article property or parsed markdown
-        const allExtractedImgs = [
-          art.image2 || art.galleryImage2 || art.secondaryImage,
-          art.image3,
-          art.image4,
-          art.image5,
-          art.image6,
-          art.image7,
-          art.image8,
-          art.image9,
-          art.image10,
+        const allParsedImgs = [
           ...(parsedEn.extractedImgs || []),
           ...(parsedGu.extractedImgs || []),
           ...(parsedHi.extractedImgs || []),
-        ].filter(Boolean) as string[];
+        ];
 
-        const uniqueExtraUrls = Array.from(new Set(allExtractedImgs)).filter((u) => u !== art.featuredImage);
+        const allParsedDescsEn = parsedEn.extractedDescsMap || [];
+        const allParsedDescsGu = parsedGu.extractedDescsMap || [];
+        const allParsedDescsHi = parsedHi.extractedDescsMap || [];
 
-        const loadedExtra: ExtraImageSlot[] = uniqueExtraUrls.slice(0, 9).map((url, idx) => ({
-          id: `loaded-${idx}`,
-          url: sanitizeImageUrl(url),
-          mode: url.startsWith('http://') || url.startsWith('https://') ? 'url' : 'upload',
-          uploading: false,
-        }));
+        const indices = [
+          2,
+          ...artImages.map((x) => x.index),
+          ...allParsedImgs.map((x) => x.index),
+          ...allParsedDescsEn.map((x) => x.index),
+          ...allParsedDescsGu.map((x) => x.index),
+          ...allParsedDescsHi.map((x) => x.index),
+        ];
+        const maxSectionNum = Math.min(Math.max(...indices), 10);
 
-        while (loadedExtra.length < 2) {
-          loadedExtra.push({
-            id: `default-${loadedExtra.length}`,
-            url: '',
-            mode: 'upload',
-            uploading: false,
+        const loadedStorySections: StorySectionSlot[] = [];
+        for (let num = 2; num <= maxSectionNum; num++) {
+          const descEn = allParsedDescsEn.find((d) => d.index === num)?.text || (num === 2 ? art.desc2 || '' : '');
+          const descGu = allParsedDescsGu.find((d) => d.index === num)?.text || (num === 2 ? art.desc2Gu || descEn : descEn);
+          const descHi = allParsedDescsHi.find((d) => d.index === num)?.text || (num === 2 ? art.desc2Hi || descEn : descEn);
+
+          const foundImg =
+            artImages.find((img) => img.index === num)?.url ||
+            allParsedImgs.find((img) => img.index === num)?.url ||
+            '';
+          const sanitizedImg = sanitizeImageUrl(foundImg);
+
+          loadedStorySections.push({
+            id: `section-${num}`,
+            descEn,
+            descGu,
+            descHi,
+            imageUrl: sanitizedImg,
+            imageMode: sanitizedImg.startsWith('http://') || sanitizedImg.startsWith('https://') ? 'url' : 'upload',
+            imageUploading: false,
           });
         }
-        setExtraImages(loadedExtra);
 
-        setFeaturedImage(sanitizeImageUrl(art.featuredImage || ''));
-        if (art.featuredImage && (art.featuredImage.startsWith('http://') || art.featuredImage.startsWith('https://'))) {
+        if (loadedStorySections.length === 0) {
+          loadedStorySections.push({
+            id: 'section-2',
+            descEn: art.desc2 || '',
+            descGu: art.desc2Gu || art.desc2 || '',
+            descHi: art.desc2Hi || art.desc2 || '',
+            imageUrl: sanitizeImageUrl(art.image2 || ''),
+            imageMode: 'upload',
+            imageUploading: false,
+          });
+        }
+        setStorySections(loadedStorySections);
+
+        const cleanFeat = sanitizeImageUrl(art.featuredImage || '');
+        setFeaturedImage(cleanFeat);
+        const initialPrimary = cleanFeat ? [cleanFeat] : [];
+        if (Array.isArray(art.galleryImages)) {
+          art.galleryImages.forEach((img: string) => {
+            if (img && typeof img === 'string' && img.trim()) {
+              const clean = sanitizeImageUrl(img);
+              if (!initialPrimary.includes(clean)) initialPrimary.push(clean);
+            }
+          });
+        }
+        setPrimaryMediaList(initialPrimary);
+        if (cleanFeat && (cleanFeat.startsWith('http://') || cleanFeat.startsWith('https://'))) {
           setImageMode('url');
         } else {
           setImageMode('upload');
@@ -1116,7 +1405,15 @@ interface ExtraDescriptionSlot {
         );
         setCategoryId(art.categoryId || art.category?.id || '');
         setLocation(art.location || '');
-        setAuthorId(art.authorId || art.author?.id || '');
+        const loadedAuthorId = art.authorId || art.author?.id || '';
+        setAuthorId(loadedAuthorId);
+        if (art.author?.name) {
+          setCustomAuthorName(art.author.name);
+          const authorExistsInList = authors.some((a) => a.id === loadedAuthorId || a.name === art.author.name);
+          if (!authorExistsInList && loadedAuthorId) {
+            setAuthorInputMode('custom');
+          }
+        }
         setStatus(art.status || 'PUBLISHED');
         const rawSched = art.scheduledAt || (art.status === 'SCHEDULED' ? art.publishedAt : null);
         if (rawSched) {
@@ -1186,33 +1483,77 @@ interface ExtraDescriptionSlot {
   }, [isEditMode]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
     setError(null);
     setUploadingImage(true);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const uploadedUrls: string[] = [];
 
-      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
-        method: 'POST',
-        body: formData,
-      });
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
 
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || json.message || 'Failed to upload media file.');
+        const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+          method: 'POST',
+          body: formData,
+        });
 
-      const mediaUrl = json.url || json.data?.url || (json.file ? json.file.url : '');
-      if (mediaUrl) {
-        setFeaturedImage(mediaUrl);
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || json.message || `Failed to upload ${file.name}.`);
+
+        const mediaUrl = json.url || json.data?.url || (json.file ? json.file.url : '');
+        if (mediaUrl) {
+          uploadedUrls.push(sanitizeImageUrl(mediaUrl));
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
+        setPrimaryMediaList((prev) => {
+          const updated = Array.from(new Set([...prev, ...uploadedUrls]));
+          if (updated[0]) setFeaturedImage(updated[0]);
+          return updated;
+        });
+        if (!featuredImage && uploadedUrls[0]) {
+          setFeaturedImage(uploadedUrls[0]);
+        }
+
+        // If multiple images were selected, also populate Story Continuation Sections (Section 2, 3...)
+        if (uploadedUrls.length > 1) {
+          setStorySections((prevSections) => {
+            const nextSections = [...prevSections];
+            for (let i = 1; i < uploadedUrls.length; i++) {
+              const secIdx = i - 1; // index 0 is Section 2
+              if (secIdx < 9) {
+                if (!nextSections[secIdx]) {
+                  nextSections[secIdx] = {
+                    id: `section-${secIdx + 2}-${Date.now()}-${i}`,
+                    descEn: '',
+                    descGu: '',
+                    descHi: '',
+                    imageUrl: uploadedUrls[i],
+                    imageMode: 'upload',
+                    imageUploading: false,
+                  };
+                } else if (!nextSections[secIdx].imageUrl) {
+                  nextSections[secIdx] = {
+                    ...nextSections[secIdx],
+                    imageUrl: uploadedUrls[i],
+                  };
+                }
+              }
+            }
+            return nextSections;
+          });
+        }
       } else {
         throw new Error('No media URL returned by server.');
       }
     } catch (err: any) {
       console.error('Media upload error:', err);
-      setError(err.message || 'Failed to upload image/video from your computer.');
+      setError(err.message || 'Failed to upload media file(s) from your computer.');
     } finally {
       setUploadingImage(false);
       e.target.value = '';
@@ -1231,6 +1572,8 @@ interface ExtraDescriptionSlot {
     const safeSlug = (slug || '').trim();
     const safeCategory = (categoryId || '').trim();
     const safeAuthor = (authorId || '').trim();
+    const safeCustomAuthor = (customAuthorName || '').trim();
+    const hasAuthor = authorInputMode === 'select' ? Boolean(safeAuthor) : Boolean(safeCustomAuthor);
     const safeFeaturedImage = (featuredImage || '').trim();
 
     const effectiveTitle = safeTitle || safeTitleGu || safeTitleHi;
@@ -1241,7 +1584,7 @@ interface ExtraDescriptionSlot {
     const effectiveD1 = (desc1 || desc1Gu || desc1Hi || content || '').trim();
     const effectiveQuoteText = (quoteText || quoteTextGu || quoteTextHi || '').trim();
     const effectiveQuoteCite = (quoteCite || quoteCiteGu || quoteCiteHi || '').trim();
-    const effectiveD2 = extraDescriptions.length > 0 ? (extraDescriptions[0].en || extraDescriptions[0].gu || extraDescriptions[0].hi || '').trim() : '';
+    const effectiveD2 = storySections.length > 0 ? (storySections[0].descEn || storySections[0].descGu || storySections[0].descHi || '').trim() : '';
 
     // Granular Validation with explicit field names and red border highlighting
     const missingFields: string[] = [];
@@ -1259,7 +1602,7 @@ interface ExtraDescriptionSlot {
       missingFields.push('Category (Topic)');
       errors.category = true;
     }
-    if (!safeAuthor && userRole !== 'REPORTER') {
+    if (!hasAuthor && userRole !== 'REPORTER') {
       missingFields.push('Publish By (Author)');
       errors.author = true;
     }
@@ -1305,14 +1648,17 @@ interface ExtraDescriptionSlot {
     }
 
     // Compile distinct input sections into complete article content strings
-    const galleryPayload = extraImages.map((slot) => slot.url.trim()).filter(Boolean);
-    const extraDescEn = extraDescriptions.map((item) => item.en.trim()).filter(Boolean);
-    const extraDescGu = extraDescriptions.map((item) => item.gu.trim() || item.en.trim()).filter(Boolean);
-    const extraDescHi = extraDescriptions.map((item) => item.hi.trim() || item.en.trim()).filter(Boolean);
+    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl }));
+    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl }));
+    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl }));
 
-    const compiledEn = compileStructuredContent(highlights.trim() || effectiveHighlights, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, extraDescEn, galleryPayload, 'en');
-    const compiledGu = compileStructuredContent(highlightsGu.trim() || effectiveHighlights, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, extraDescGu, galleryPayload, 'gu');
-    const compiledHi = compileStructuredContent(highlightsHi.trim() || effectiveHighlights, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, extraDescHi, galleryPayload, 'hi');
+    const compiledEn = compileStructuredContent(highlights.trim() || effectiveHighlights, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, 'en');
+    const compiledGu = compileStructuredContent(highlightsGu.trim() || effectiveHighlights, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, 'gu');
+    const compiledHi = compileStructuredContent(highlightsHi.trim() || effectiveHighlights, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, 'hi');
+
+    const extraPrimary = primaryMediaList.slice(1).map((u) => u.trim()).filter(Boolean);
+    const storySectionImgs = storySections.map((slot) => slot.imageUrl.trim()).filter(Boolean);
+    const galleryPayload = Array.from(new Set([...extraPrimary, ...storySectionImgs]));
 
 
     // Combine explicit tagsString tags and additional category names as tags
@@ -1329,11 +1675,26 @@ interface ExtraDescriptionSlot {
 
     const tags = combinedTagNames.map((name) => ({ name }));
 
+    const finalPrimaryImage = (primaryMediaList[0] || featuredImage || safeFeaturedImage || '').trim() || '/assets/demo/1.jpg';
+
+    let finalTitleEn = safeTitle;
+    if (!finalTitleEn || /[\u0900-\u0D7F]/.test(finalTitleEn)) {
+      try {
+        const autoEn = await translateOnFly(effectiveTitle, 'en');
+        if (autoEn && !/[\u0900-\u0D7F]/.test(autoEn)) {
+          finalTitleEn = autoEn;
+        }
+      } catch (err) {
+        console.warn('Auto translate titleEn error:', err);
+      }
+    }
+    if (!finalTitleEn) finalTitleEn = effectiveTitle;
+
     const payload = {
       language: articleLanguage,
       slug: safeSlug,
       articleNumber: isEditMode && articleNumber !== '' ? Number(articleNumber) : undefined,
-      title: safeTitle || effectiveTitle,
+      title: finalTitleEn,
       titleGu: safeTitleGu || effectiveTitle,
       titleHi: safeTitleHi || effectiveTitle,
       excerpt: (excerpt || '').trim() || effectiveExcerpt,
@@ -1342,17 +1703,20 @@ interface ExtraDescriptionSlot {
       content: compiledEn,
       contentGu: compiledGu,
       contentHi: compiledHi,
-      featuredImage: finalFeaturedImage,
-      thumbnail: finalFeaturedImage,
-      image2: galleryPayload[0] || '',
-      image3: galleryPayload[1] || '',
-      image4: galleryPayload[2] || '',
-      image5: galleryPayload[3] || '',
-      image6: galleryPayload[4] || '',
-      image7: galleryPayload[5] || '',
-      image8: galleryPayload[6] || '',
-      image9: galleryPayload[7] || '',
-      image10: galleryPayload[8] || '',
+      featuredImage: finalPrimaryImage,
+      thumbnail: finalPrimaryImage,
+      image2: storySections[0]?.imageUrl?.trim() || extraPrimary[0] || '',
+      image3: storySections[1]?.imageUrl?.trim() || extraPrimary[1] || '',
+      image4: storySections[2]?.imageUrl?.trim() || extraPrimary[2] || '',
+      image5: storySections[3]?.imageUrl?.trim() || extraPrimary[3] || '',
+      image6: storySections[4]?.imageUrl?.trim() || extraPrimary[4] || '',
+      image7: storySections[5]?.imageUrl?.trim() || extraPrimary[5] || '',
+      image8: storySections[6]?.imageUrl?.trim() || extraPrimary[6] || '',
+      image9: storySections[7]?.imageUrl?.trim() || extraPrimary[7] || '',
+      image10: storySections[8]?.imageUrl?.trim() || extraPrimary[8] || '',
+      desc2: storySections[0]?.descEn?.trim() || undefined,
+      desc2Gu: storySections[0]?.descGu?.trim() || undefined,
+      desc2Hi: storySections[0]?.descHi?.trim() || undefined,
       galleryImages: galleryPayload,
       categoryId,
       youtubeUrl: youtubeUrl.trim() || undefined,
@@ -1360,7 +1724,8 @@ interface ExtraDescriptionSlot {
       pdfUrl: pdfUrl.trim() || undefined,
       showPdfPages: Boolean(pdfUrl.trim() && showPdfPages),
       location: location || null,
-      authorId,
+      authorId: authorInputMode === 'select' ? safeAuthor : (authors.find(a => a.name.toLowerCase() === safeCustomAuthor.toLowerCase())?.id || authors[0]?.id || safeAuthor || ''),
+      authorName: authorInputMode === 'custom' ? safeCustomAuthor : (authors.find(a => a.id === safeAuthor)?.name || safeCustomAuthor || undefined),
       status,
       scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null,
       priority: Number(priority),
@@ -1490,40 +1855,52 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
     forceOverwrite = false
   ) => {
     const activeTitle = (overrideTitle !== undefined ? overrideTitle : (title || titleGu || titleHi)).trim();
+    const activeTitleGu = (titleGu || '').trim();
     const activeCatId = overrideCatId !== undefined ? overrideCatId : categoryId;
     const activeLoc = overrideLoc !== undefined ? overrideLoc : location;
 
-    if (!activeTitle) return;
+    if (!activeTitle && !activeTitleGu) return;
 
     const selectedCat = categories.find((c) => c.id === activeCatId);
     const catName = selectedCat?.name || '';
+    const catNameGu = selectedCat?.nameGu || '';
     const brandSuffix = 'gujaratpost news';
 
-    // 1. SEO Title
-    let genTitle = activeTitle;
-    if (activeLoc && !genTitle.toLowerCase().includes(activeLoc.toLowerCase())) {
-      genTitle += ` in ${activeLoc}`;
-    }
-    if (!genTitle.toLowerCase().includes(brandSuffix)) {
-      genTitle += ` ${brandSuffix}`;
+    // 1. SEO Title (Bilingual: Gujarati | English | gujaratpost news)
+    let genTitle = '';
+    if (activeTitleGu && activeTitle && activeTitleGu !== activeTitle) {
+      genTitle = `${activeTitleGu} | ${activeTitle} | ${brandSuffix}`;
+    } else {
+      genTitle = `${activeTitleGu || activeTitle} | ${brandSuffix}`;
     }
 
-    // 2. SEO Description
-    let genDesc = activeTitle;
-    if (activeLoc && !genDesc.toLowerCase().includes(activeLoc.toLowerCase())) {
-      genDesc += ` in ${activeLoc}`;
-    }
-    if (!genDesc.toLowerCase().includes(brandSuffix)) {
-      genDesc += ` ${brandSuffix}`;
+    // 2. SEO Description (Bilingual: Gujarati summary. English summary)
+    let genDesc = '';
+    if (activeTitleGu && activeTitle && activeTitleGu !== activeTitle) {
+      genDesc = `${activeTitleGu}. ${activeTitle} in ${activeLoc || 'Gujarat'}. Latest news on ${brandSuffix}.`;
+    } else {
+      genDesc = `${activeTitleGu || activeTitle} in ${activeLoc || 'Gujarat'}. Latest news on ${brandSuffix}.`;
     }
 
     // 3. Dynamic Keyword & Tag Extraction with Topic Dictionary & Stop Words Removal
     const keywordSet = new Set<string>();
     const tagSet = new Set<string>();
 
+    // Add bilingual core keywords
+    keywordSet.add('gujarat news');
+    keywordSet.add('gujaratpost news');
+    keywordSet.add('gujarat post');
+    keywordSet.add('ગુજરાત સમાચાર');
+    keywordSet.add('ગુજરાત ન્યૂઝ');
+
+    tagSet.add('gujarat');
+    tagSet.add('gujaratpost');
+    tagSet.add('ગુજરાત');
+    tagSet.add('સમાચાર');
+
     // Analyze Title against Topic Dictionary
     SEO_TOPIC_DICTIONARY.forEach((topic) => {
-      const match = topic.patterns.some((pattern) => pattern.test(activeTitle));
+      const match = topic.patterns.some((pattern) => pattern.test(activeTitle) || pattern.test(activeTitleGu));
       if (match) {
         topic.tags.forEach((t) => tagSet.add(t));
         topic.keywords.forEach((k) => {
@@ -1533,8 +1910,8 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
       }
     });
 
-    // Process Words & Exclude Gujarati/English Stop Words
-    const rawWords = activeTitle
+    // Process English & Gujarati Words
+    const rawWords = `${activeTitle} ${activeTitleGu}`
       .replace(/[^\w\s\u0A80-\u0AFF\u0900-\u097F]/gi, ' ')
       .split(/\s+/)
       .map((w) => w.trim())
@@ -1544,7 +1921,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
       const mainKeywordsPhrase = rawWords.slice(0, 5).join(' ');
       if (mainKeywordsPhrase) keywordSet.add(mainKeywordsPhrase);
 
-      rawWords.slice(0, 4).forEach((w) => {
+      rawWords.slice(0, 5).forEach((w) => {
         tagSet.add(w);
       });
     }
@@ -1553,8 +1930,8 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
     if (activeLoc) {
       const locLower = activeLoc.toLowerCase();
       keywordSet.add(`${locLower} news`);
-      keywordSet.add(`${locLower} crime news`);
       keywordSet.add(activeLoc);
+      keywordSet.add(`${activeLoc} સમાચાર`);
       tagSet.add(locLower);
       tagSet.add(activeLoc);
     }
@@ -1565,13 +1942,10 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
       keywordSet.add(catName);
       tagSet.add(catLower);
     }
-
-    keywordSet.add('gujarat news');
-    keywordSet.add('gujaratpost news');
-    keywordSet.add('gujarat post');
-
-    tagSet.add('gujarat');
-    tagSet.add('gujaratpost');
+    if (catNameGu) {
+      keywordSet.add(catNameGu);
+      tagSet.add(catNameGu);
+    }
 
     const genKeywords = Array.from(keywordSet).join(', ');
     const genTags = Array.from(tagSet).join(', ');
@@ -1601,7 +1975,9 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
     isAutoTrigger = false
   ) => {
     const activeTitle = (overrideTitle !== undefined ? overrideTitle : (title || titleGu || titleHi)).trim();
-    if (!activeTitle) {
+    const activeTitleGu = (titleGu || '').trim();
+    const activeTitleHi = (titleHi || '').trim();
+    if (!activeTitle && !activeTitleGu) {
       if (!isAutoTrigger) {
         alert('Please enter an article title first before generating SEO details with Gemini AI.');
       }
@@ -1620,9 +1996,13 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: activeTitle,
+          titleGu: activeTitleGu,
+          titleHi: activeTitleHi,
           categoryName: selectedCat?.name || '',
+          categoryNameGu: selectedCat?.nameGu || '',
           location: activeLoc || '',
-          content: desc1 || desc1Gu || desc1Hi || excerpt || '',
+          content: desc1 || excerpt || '',
+          contentGu: desc1Gu || excerptGu || '',
         }),
       });
 
@@ -1641,6 +2021,9 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
         if (json.data.seoDescription) setSeoDescription(json.data.seoDescription);
         if (json.data.seoKeywords) setSeoKeywords(json.data.seoKeywords);
         if (json.data.tags) setTagsString(json.data.tags);
+        if (json.data.slug && (!slug || !hasManuallyEditedSlug.current || slug.startsWith('d-rg'))) {
+          setSlug(json.data.slug);
+        }
         setSeoSource('gemini');
       }
     } catch (err: any) {
@@ -1858,17 +2241,35 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
         {/* LINE 1: News Name (In English / Slug) */}
         <div id="field-slug">
-          <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.slug ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
-            News Name (In English) <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className={`block text-sm font-semibold ${fieldErrors.slug ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
+              News Name (In English) <span className="text-red-500">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                const currentTitle = (contentLang === 'gu' ? titleGu : contentLang === 'hi' ? titleHi : title) || titleGu || titleHi || title;
+                if (currentTitle) {
+                  autoGenerateEnglishSlug(currentTitle);
+                  generateSeoWithGeminiAI(currentTitle, categoryId, location, false);
+                }
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#B3121B] hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors cursor-pointer select-none py-0.5 px-2 rounded-md hover:bg-red-50 dark:hover:bg-red-950/40"
+              title="Auto-translate Gujarati/Hindi title into English slug"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Auto-Translate English Slug</span>
+            </button>
+          </div>
           <input
             type="text"
             value={slug || ''}
             onChange={(e) => {
-              setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, ''));
+              hasManuallyEditedSlug.current = true;
+              setSlug(e.target.value.replace(/[^a-zA-Z0-9-:]/g, '-').replace(/-+/g, '-'));
               if (fieldErrors.slug) setFieldErrors((prev) => ({ ...prev, slug: false }));
             }}
-            placeholder="e.g. flood-havoc-gujarat-30-deaths"
+            placeholder="e.g. Major-operation-regarding-drugs:-Ahmedabad-and-Surat-Crime-Branches-seize-drugs-worth-Rs-25-crore"
             className={`w-full rounded-xl border px-4 py-3 text-base font-mono placeholder:text-gray-500 focus:outline-none transition-all ${
               fieldErrors.slug
                 ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
@@ -1879,7 +2280,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           {fieldErrors.slug ? (
             <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> News Name (Slug) is required.</p>
           ) : (
-            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Enter a short URL-friendly slug in English (e.g. flood-havoc-gujarat)</p>
+            <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Enter a short URL-friendly slug in English (e.g. Major-operation-regarding-drugs:-Ahmedabad-and-Surat-Crime-Branches-seize-drugs-worth-Rs-25-crore)</p>
           )}
         </div>
 
@@ -1896,12 +2297,30 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               if (contentLang === 'en') setTitle(val);
               else if (contentLang === 'gu') setTitleGu(val);
               else if (contentLang === 'hi') setTitleHi(val);
-              setSlug(generateEnglishSlug(val));
+
+              // Quick dictionary preview
+              const quickSlug = generateEnglishSlug(val);
+              if (quickSlug && !hasManuallyEditedSlug.current) {
+                setSlug(quickSlug);
+              }
+
+              // Real-time asynchronous translation to fluent, accurate English slug
+              if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
+              slugTimerRef.current = setTimeout(() => {
+                if (!hasManuallyEditedSlug.current) {
+                  autoGenerateEnglishSlug(val);
+                }
+              }, 300);
+
               if (fieldErrors.title) setFieldErrors((prev) => ({ ...prev, title: false }));
               generateSeoWithGeminiAI(val, categoryId, location, true);
             }}
             onBlur={(e) => {
-              generateSeoWithGeminiAI(e.target.value, categoryId, location, true);
+              const val = e.target.value;
+              if (!hasManuallyEditedSlug.current) {
+                autoGenerateEnglishSlug(val);
+              }
+              generateSeoWithGeminiAI(val, categoryId, location, true);
             }}
             placeholder={
               contentLang === 'gu'
@@ -1922,12 +2341,16 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           )}
         </div>
 
-        {/* LINE 3: Category (Topic) (*), City / Location, & Publish By (Author) (*) */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <div id="field-category">
-            <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.category ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
-              Category (Topic) (*) <span className="text-red-500">*</span>
-            </label>
+        {/* LINE 3: Category (Topic), City / Location, & Publish By (Author) */}
+        <div className="grid gap-4 md:grid-cols-3 items-start">
+          {/* Column 1: Category */}
+          <div id="field-category" className="flex flex-col justify-start">
+            <div className="flex items-center justify-between min-h-[28px] mb-1.5">
+              <label className={`text-sm font-semibold truncate ${fieldErrors.category ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
+                Category (Topic) <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium shrink-0">Primary</span>
+            </div>
             <CustomSelect
               value={categoryId || ''}
               onChange={(val) => {
@@ -1940,27 +2363,36 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               required
               searchable
             />
-            {fieldErrors.category && (
-              <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> Please select a Category.</p>
-            )}
+            <div className="mt-1 min-h-[18px]">
+              {fieldErrors.category ? (
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Please select a Category.
+                </p>
+              ) : (
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Main section topic for this story</p>
+              )}
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center justify-between">
-              <span>City / Location</span>
+          {/* Column 2: City / Location */}
+          <div className="flex flex-col justify-start">
+            <div className="flex items-center justify-between min-h-[28px] mb-1.5">
+              <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 truncate mr-1.5">
+                City / Location
+              </label>
               {(() => {
                 const selectedCat = categories.find((c) => c.id === categoryId);
                 const catNameLower = selectedCat?.name?.trim().toLowerCase() || '';
                 if (INTERNATIONAL_CATEGORY_NAMES.some((n) => catNameLower.includes(n))) {
-                  return <span className="text-[10px] text-blue-500 font-semibold bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full">🌍 International</span>;
+                  return <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 shrink-0">🌍 International</span>;
                 } else if (NATIONAL_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
-                  return <span className="text-[10px] text-orange-500 font-semibold bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">🇮🇳 National</span>;
+                  return <span className="text-[10px] text-orange-600 dark:text-orange-400 font-semibold bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800 shrink-0">🇮🇳 National</span>;
                 } else if (GUJARAT_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
-                  return <span className="text-[10px] text-green-600 font-semibold bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full">🏙️ Gujarat</span>;
+                  return <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 shrink-0">🏙️ Gujarat</span>;
                 }
-                return <span className="text-xs text-gray-500 font-normal">Optional</span>;
+                return <span className="text-[11px] text-zinc-400 dark:text-zinc-500 font-normal shrink-0">Optional</span>;
               })()}
-            </label>
+            </div>
             <CustomSelect
               value={location || ''}
               onChange={(val) => {
@@ -1972,35 +2404,124 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               placeholder="[Select City / Region]"
               searchable
             />
+            <div className="mt-1 min-h-[18px]">
+              <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Target city or regional coverage</p>
+            </div>
           </div>
 
-          <div id="field-author">
-            <label className={`block text-sm font-semibold mb-1.5 ${fieldErrors.author ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
-              Publish By (Author) (*) <span className="text-red-500">*</span>
-            </label>
-            {userRole === 'REPORTER' ? (
-              <div className="w-full rounded-xl border border-gray-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-950/40 px-4 py-3 text-base font-semibold text-gray-900 dark:text-zinc-200">
-                {userAuthorName || 'Your Author Profile'}
-              </div>
-            ) : (
-              <>
-                <CustomSelect
-                  value={authorId || ''}
-                  onChange={(val) => {
-                    setAuthorId(val);
+          {/* Column 3: Publish By (Author) */}
+          <div id="field-author" className="flex flex-col justify-start">
+            <div className="flex items-center justify-between min-h-[28px] mb-1.5">
+              <label className={`text-sm font-semibold truncate mr-2 ${fieldErrors.author ? 'text-red-600 dark:text-red-400' : 'text-gray-900 dark:text-zinc-100'}`}>
+                Publish By (Author) <span className="text-red-500">*</span>
+              </label>
+              {userRole !== 'REPORTER' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthorInputMode(authorInputMode === 'select' ? 'custom' : 'select');
                     if (fieldErrors.author) setFieldErrors((prev) => ({ ...prev, author: false }));
                   }}
-                  options={authors.map((aut) => ({ value: aut.id, label: aut.name }))}
-                  placeholder="Select Author / Reporter"
-                  error={Boolean(fieldErrors.author)}
-                  required
-                  searchable
+                  className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${
+                    authorInputMode === 'select'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
+                      : 'bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700'
+                  }`}
+                  title={authorInputMode === 'select' ? 'Switch to manual author name entry' : 'Switch to select from existing author list'}
+                >
+                  {authorInputMode === 'select' ? (
+                    <>
+                      <PenLine className="h-3 w-3" />
+                      <span>+ Enter Name</span>
+                    </>
+                  ) : (
+                    <>
+                      <Users className="h-3 w-3" />
+                      <span>Select List</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {userRole === 'REPORTER' ? (
+              <div className="w-full rounded-xl border border-gray-400 bg-zinc-100 dark:border-zinc-600 dark:bg-zinc-950/40 px-4 py-3 text-base font-semibold text-gray-900 dark:text-zinc-200 shadow-sm">
+                {userAuthorName || 'Your Author Profile'}
+              </div>
+            ) : authorInputMode === 'custom' ? (
+              <div className="relative w-full">
+                <input
+                  type="text"
+                  value={customAuthorName}
+                  onChange={(e) => {
+                    setCustomAuthorName(e.target.value);
+                    if (fieldErrors.author) setFieldErrors((prev) => ({ ...prev, author: false }));
+                  }}
+                  placeholder="Type Author / Reporter Name (e.g. Ramesh Patel)..."
+                  className={`w-full rounded-xl border px-4 py-3 pr-10 text-base font-semibold shadow-sm transition-all duration-200 outline-none ${
+                    fieldErrors.author
+                      ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
+                      : 'border-gray-400 bg-white text-gray-900 placeholder:text-gray-400 hover:border-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-100 dark:hover:bg-zinc-900/60'
+                  }`}
+                  autoFocus
                 />
-                {fieldErrors.author && (
-                  <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-1 flex items-center gap-1"><AlertCircle className="h-3.5 w-3.5" /> Please select an Author / Reporter.</p>
-                )}
-              </>
+                {customAuthorName ? (
+                  <button
+                    type="button"
+                    onClick={() => setCustomAuthorName('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 p-1 cursor-pointer"
+                    title="Clear"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
+            ) : (
+              <CustomSelect
+                value={authorId || ''}
+                onChange={(val) => {
+                  setAuthorId(val);
+                  const found = authors.find((a) => a.id === val);
+                  if (found) setCustomAuthorName(found.name);
+                  if (fieldErrors.author) setFieldErrors((prev) => ({ ...prev, author: false }));
+                }}
+                options={authors.map((aut) => ({ value: aut.id, label: aut.name }))}
+                placeholder="Select Author / Reporter"
+                error={Boolean(fieldErrors.author)}
+                required
+                searchable
+              />
             )}
+
+            <div className="mt-1 min-h-[18px]">
+              {fieldErrors.author ? (
+                <p className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" /> Please {authorInputMode === 'custom' ? 'enter author name' : 'select an author'}.
+                </p>
+              ) : authorInputMode === 'custom' ? (
+                <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span className="truncate">✍️ Custom author name saved</span>
+                  <button
+                    type="button"
+                    onClick={() => setAuthorInputMode('select')}
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer shrink-0 ml-1.5"
+                  >
+                    Switch to list
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400">
+                  <span className="truncate">Verified author profile</span>
+                  <button
+                    type="button"
+                    onClick={() => setAuthorInputMode('custom')}
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer shrink-0 ml-1.5"
+                  >
+                    + Type custom name
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -2366,9 +2887,9 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
 
                     {/* Category Name & Badges */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-1.5">
+                      <div className="flex min-w-0 items-start justify-between gap-1.5">
                         <span
-                          className={`text-[13.5px] font-bold leading-snug break-words ${
+                          className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
                             isPrimary
                               ? 'text-emerald-900 dark:text-emerald-200'
                               : isChecked
@@ -2385,28 +2906,33 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                             <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
                               ★ Primary
                             </span>
-                          ) : isChecked ? (
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (categoryId && categoryId !== cat.id) {
-                                  setAdditionalCategoryIds((prev) => Array.from(new Set([...prev.filter((id) => id !== cat.id), categoryId])));
-                                }
-                                setCategoryId(cat.id);
-                              }}
-                              className="text-[9px] font-bold uppercase tracking-wider bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-1.5 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-colors cursor-pointer"
-                              title="Set as the Primary Canonical Category"
-                            >
-                              Set Main
-                            </button>
-                          ) : isSpecialGujaratState ? (
+                          ) : isChecked ? null : isSpecialGujaratState ? (
                             <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded shadow-2xs">
                               State
                             </span>
                           ) : null}
                         </div>
                       </div>
+
+                      {/* Secondary selected categories can become the primary category */}
+                      {isChecked && !isPrimary && (
+                        <div className="mt-1 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (categoryId && categoryId !== cat.id) {
+                                setAdditionalCategoryIds((prev) => Array.from(new Set([...prev.filter((id) => id !== cat.id), categoryId])));
+                              }
+                              setCategoryId(cat.id);
+                            }}
+                            className="text-[9px] font-bold uppercase tracking-wider bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-1.5 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-colors cursor-pointer"
+                            title="Set as the Primary Canonical Category"
+                          >
+                            Set Main
+                          </button>
+                        </div>
+                      )}
 
                       {/* Gujarati Script Subtitle */}
                       {cat.nameGu && cat.nameGu !== cat.name && (
@@ -2687,43 +3213,52 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
           />
         </div>
 
-        {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video) [Size: 1100px X 541px] */}
+        {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video - Multiple Allowed) [Size: 1100px X 541px] */}
         <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
                 <Video className="h-4 w-4 text-red-600 shrink-0" />
                 <span>Upload Primary Media (Featured Photo or Video)</span>
-                <span className="text-xs text-gray-600 dark:text-zinc-400 font-medium normal-case">[Size: 1100px X 541px]</span>
+                <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 shadow-2xs">
+                  PNG / JPG / WEBP • Max 10 MB • Size: 1100 × 541 px
+                </span>
                 <span className="text-red-500 font-bold">*</span>
               </label>
               <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
-                Upload an Image or Video directly from your device (.jpg, .png, .webp, .mp4, .webm, .mov), or paste a direct media URL.
+                Upload multiple Photos or Videos directly from your device, or paste direct media URLs. (Select multiple images at once)
               </p>
             </div>
-            <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800 shrink-0 w-fit">
-              <button
-                type="button"
-                onClick={() => setImageMode('upload')}
-                className={`text-xs font-extrabold px-3 py-1.5 rounded-md transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${imageMode === 'upload'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                  }`}
-              >
-                <UploadCloud className="h-3.5 w-3.5" />
-                <span>Upload from Device</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setImageMode('url')}
-                className={`text-xs font-extrabold px-3 py-1.5 rounded-md transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${imageMode === 'url'
-                  ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                  }`}
-              >
-                <LinkIcon className="h-3.5 w-3.5" />
-                <span>Media URL</span>
-              </button>
+            <div className="flex items-center gap-2 shrink-0">
+              {primaryMediaList.length > 0 && (
+                <span className="text-xs font-black text-red-600 bg-red-50 dark:bg-red-950/40 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/50">
+                  {primaryMediaList.length} Media Selected
+                </span>
+              )}
+              <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-1 dark:bg-zinc-800 shrink-0 w-fit">
+                <button
+                  type="button"
+                  onClick={() => setImageMode('upload')}
+                  className={`text-xs font-extrabold px-3 py-1.5 rounded-md transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${imageMode === 'upload'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                    }`}
+                >
+                  <UploadCloud className="h-3.5 w-3.5" />
+                  <span>Upload from Device</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setImageMode('url')}
+                  className={`text-xs font-extrabold px-3 py-1.5 rounded-md transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${imageMode === 'url'
+                    ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                    : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                    }`}
+                >
+                  <LinkIcon className="h-3.5 w-3.5" />
+                  <span>Media URL</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -2733,6 +3268,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 <input
                   type="file"
                   id="primary-media-file-input"
+                  multiple
                   accept="image/*,video/*,.mp4,.webm,.mov,.m4v,.avi,.jpg,.jpeg,.png,.webp,.gif"
                   onChange={handleImageUpload}
                   disabled={uploadingImage}
@@ -2742,7 +3278,7 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                   {uploadingImage ? (
                     <div className="flex flex-col items-center gap-2 py-2">
                       <Loader2 className="h-8 w-8 animate-spin text-red-600" />
-                      <span className="text-xs font-bold text-red-600">Uploading media from device to server...</span>
+                      <span className="text-xs font-bold text-red-600">Uploading multiple media from device to server...</span>
                     </div>
                   ) : (
                     <>
@@ -2751,15 +3287,15 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
-                          Click to browse or drag & drop Image or Video from your computer
+                          Click to browse or drag & drop multiple Images or Videos from your computer
                         </p>
                         <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5 font-medium">
-                          Supports Photos (JPG, PNG, WebP) & Videos (MP4, WebM, MOV) up to 200MB
+                          Supports Photos (JPG, PNG, WebP) & Videos (MP4, WebM, MOV) up to 200MB • Multiple Selection Allowed
                         </p>
                       </div>
                       <span className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-xs">
                         <UploadCloud className="h-4 w-4" />
-                        <span>Choose Photo or Video from Device</span>
+                        <span>Choose Multiple Photos or Videos from Device</span>
                       </span>
                     </>
                   )}
@@ -2767,56 +3303,116 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               </div>
             </div>
           ) : (
-            <div className="space-y-2">
-              <input
-                type="url"
-                value={featuredImage || ''}
-                onChange={(e) => setFeaturedImage(e.target.value)}
-                placeholder="Paste direct Image URL (https://images.unsplash.com/...) or Video URL (https://domain.com/video.mp4)"
-                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-red-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-              />
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="url"
+                  value={primaryUrlInput}
+                  onChange={(e) => setPrimaryUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addPrimaryMediaUrl(primaryUrlInput);
+                    }
+                  }}
+                  placeholder="Paste direct Image URL (https://...) or multiple URLs separated by commas"
+                  className="w-full rounded-xl border border-gray-400 bg-white px-4 py-3 text-base placeholder:text-gray-500 text-gray-900 focus:border-red-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+                <button
+                  type="button"
+                  onClick={() => addPrimaryMediaUrl(primaryUrlInput)}
+                  className="rounded-xl bg-red-600 px-5 py-3 text-sm font-bold text-white hover:bg-red-700 shrink-0 cursor-pointer shadow-xs transition-colors"
+                >
+                  + Add URL
+                </button>
+              </div>
               <p className="text-xs text-gray-600 dark:text-zinc-400">
-                You can paste direct web links to photos or MP4/WebM videos.
+                You can paste direct web links to photos or MP4/WebM videos (separate multiple URLs with commas or newlines).
               </p>
             </div>
           )}
 
-          {featuredImage && (
-            <div className="space-y-2 pt-2 border-t border-gray-400 dark:border-zinc-700">
+          {primaryMediaList.length > 0 && (
+            <div className="space-y-3 pt-3 border-t border-gray-400 dark:border-zinc-700">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-black uppercase tracking-wider text-gray-700 dark:text-zinc-300 flex items-center gap-1.5">
-                  {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || featuredImage.includes('/video/upload/') ? (
-                    <>
-                      <Video className="h-3.5 w-3.5 text-red-600" />
-                      <span>📹 Attached Video Preview</span>
-                    </>
-                  ) : (
-                    <>
-                      <ImageIcon className="h-3.5 w-3.5 text-red-600" />
-                      <span>🖼️ Attached Photo Preview</span>
-                    </>
-                  )}
+                  <ImageIcon className="h-3.5 w-3.5 text-red-600" />
+                  <span>📸 Primary Gallery Media ({primaryMediaList.length} {primaryMediaList.length === 1 ? 'item' : 'items'})</span>
                 </span>
                 <button
                   type="button"
-                  onClick={() => setFeaturedImage('')}
+                  onClick={() => {
+                    setPrimaryMediaList([]);
+                    setFeaturedImage('');
+                  }}
                   className="text-xs font-bold text-red-600 hover:text-red-800 hover:underline flex items-center gap-1 cursor-pointer"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  <span>Remove Media</span>
+                  <span>Clear All Primary Media</span>
                 </button>
               </div>
 
-              <div className="relative aspect-[16/9] max-w-lg overflow-hidden rounded-xl border border-gray-400 dark:border-zinc-700 bg-black shadow-sm">
-                {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || featuredImage.includes('/video/upload/') ? (
-                  <video src={featuredImage} controls autoPlay muted loop className="h-full w-full object-contain" />
-                ) : (
-                  <img src={sanitizeImageUrl(featuredImage)} alt="Featured preview" className="h-full w-full object-cover" />
-                )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {primaryMediaList.map((mediaUrl, idx) => (
+                  <div
+                    key={`${mediaUrl}-${idx}`}
+                    className={`relative rounded-xl border p-2 bg-white dark:bg-zinc-900 space-y-2 shadow-2xs transition-all ${
+                      idx === 0
+                        ? 'border-red-500 ring-2 ring-red-500/20'
+                        : 'border-gray-300 dark:border-zinc-700'
+                    }`}
+                  >
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg bg-black">
+                      {mediaUrl.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || mediaUrl.includes('/video/upload/') ? (
+                        <video src={mediaUrl} controls className="h-full w-full object-contain" />
+                      ) : (
+                        <img
+                          src={sanitizeImageUrl(mediaUrl)}
+                          alt={`Primary media ${idx + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
+                      <div className="absolute top-2 left-2 z-10">
+                        {idx === 0 ? (
+                          <span className="rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-black text-white shadow-xs">
+                            ⭐ #1 Main Featured
+                          </span>
+                        ) : (
+                          <span className="rounded-md bg-black/75 backdrop-blur-xs px-2 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                            #{idx + 1} Slide
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+                      <span className="font-mono text-[11px] text-gray-500 dark:text-zinc-400 truncate max-w-[140px]">
+                        {mediaUrl}
+                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setPrimaryAsMain(idx)}
+                            className="text-[11px] font-bold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline cursor-pointer"
+                            title="Set as Main Headline Photo"
+                          >
+                            Set Main
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => removePrimaryMedia(idx)}
+                          className="text-red-500 hover:text-red-700 p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                          title="Remove media"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <p className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-lg">
-                {featuredImage}
-              </p>
             </div>
           )}
         </div>
@@ -2835,6 +3431,200 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
             placeholder="Write main story lead paragraphs..."
             rows={8}
           />
+        </div>
+
+        {/* 📖 STORY CONTINUATION SECTIONS (Description N & Image N Paired Together) */}
+        <div className="space-y-6">
+          {storySections.map((slot, idx) => {
+            const sectionNum = idx + 2; // Section 2 to Section 10
+            const currentDesc = contentLang === 'gu' ? slot.descGu : contentLang === 'hi' ? slot.descHi : slot.descEn;
+            const photoNum = sectionNum;
+            const labelSuffix = photoNum === 2 ? '2nd' : photoNum === 3 ? '3rd' : `${photoNum}th`;
+            const guSectionTitle = sectionNum === 2 ? 'દ્વિતીય વર્ણન (Second Description)' : `વિભાગ ${sectionNum} વર્ણન (Section ${sectionNum})`;
+
+            return (
+              <div
+                key={slot.id || idx}
+                className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20 shadow-xs"
+              >
+                {/* Section Header */}
+                <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
+                  <div className="flex items-center gap-2.5">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-xs font-black text-blue-700 dark:bg-blue-950/80 dark:text-blue-300">
+                      {sectionNum}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Type className="h-4 w-4 text-blue-600" />
+                        <h4 className="text-sm font-bold text-gray-900 dark:text-zinc-100">
+                          Description {sectionNum} & Image {sectionNum} ({labelSuffix} Story Block)
+                        </h4>
+                      </div>
+                      <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
+                        Write story continuation and attach corresponding story image for block #{sectionNum}.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 dark:bg-blue-950/50 dark:text-blue-300 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-900/50">
+                      {guSectionTitle}
+                    </span>
+                    {idx > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveStorySection(idx)}
+                        className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 px-2.5 py-1 rounded-lg border border-red-200 dark:border-red-900/50 transition-colors cursor-pointer"
+                        title={`Remove Section ${sectionNum}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        <span>Remove Section {sectionNum}</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Part 1: Description N */}
+                <div>
+                  <RichTextArea
+                    label={`Description ${sectionNum} (Optional Additional Story Paragraphs & Details)`}
+                    value={currentDesc || ''}
+                    onChange={(val) => updateStorySectionDesc(idx, val)}
+                    placeholder={
+                      sectionNum === 2
+                        ? 'Write second story paragraphs, continuing analysis, or subheadings...'
+                        : `Write section ${sectionNum} story paragraphs, continuing analysis, or subheadings...`
+                    }
+                    rows={5}
+                  />
+                </div>
+
+                {/* Part 2: Image N */}
+                <div className="rounded-xl border border-gray-400 bg-white p-4 dark:border-zinc-600 dark:bg-zinc-900 space-y-3 shadow-2xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-300 dark:border-zinc-700/60 pb-2.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                        <ImageIcon className="h-4 w-4 text-red-600" />
+                        <span>Image {sectionNum} ({labelSuffix} Story Media)</span>
+                      </span>
+                      <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 shadow-2xs">
+                        PNG / JPG / WEBP • Max 10 MB • Size: 1100 × 541 px
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
+                      <button
+                        type="button"
+                        onClick={() => updateStorySection(idx, { imageMode: 'upload' })}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all ${
+                          slot.imageMode === 'upload'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Upload File
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => updateStorySection(idx, { imageMode: 'url' })}
+                        className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all ${
+                          slot.imageMode === 'url'
+                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Image URL
+                      </button>
+                    </div>
+                  </div>
+
+                  {slot.imageMode === 'upload' ? (
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="file"
+                        accept="image/*,video/*,.mp4,.webm,.mov,.m4v,.avi,.jpg,.jpeg,.png,.webp,.gif"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          updateStorySection(idx, { imageUploading: true });
+                          try {
+                            const formData = new FormData();
+                            formData.append('file', file);
+                            const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+                              method: 'POST',
+                              body: formData,
+                            });
+                            const json = await res.json();
+                            const mediaUrl = json.url || json.data?.url || (json.file ? json.file.url : '');
+                            if (res.ok && mediaUrl) updateStorySection(idx, { imageUrl: mediaUrl });
+                          } catch (err) {
+                            console.error(err);
+                          } finally {
+                            updateStorySection(idx, { imageUploading: false });
+                            e.target.value = '';
+                          }
+                        }}
+                        disabled={slot.imageUploading}
+                        className="block w-full text-xs text-zinc-500 file:mr-4 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-200 cursor-pointer"
+                      />
+                      {slot.imageUploading && <Loader2 className="h-4 w-4 animate-spin text-zinc-600" />}
+                    </div>
+                  ) : (
+                    <input
+                      type="url"
+                      value={slot.imageUrl || ''}
+                      onChange={(e) => updateStorySection(idx, { imageUrl: e.target.value })}
+                      placeholder={`Paste direct Image URL for Image ${sectionNum} (https://...)`}
+                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
+                    />
+                  )}
+
+                  {slot.imageUrl && (
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-zinc-700/60">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
+                          {slot.imageUrl.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ||
+                          slot.imageUrl.includes('/video/upload/') ? (
+                            <video src={slot.imageUrl} controls className="h-full w-full object-cover" />
+                          ) : (
+                            <img
+                              src={sanitizeImageUrl(slot.imageUrl)}
+                              alt={`Media ${photoNum} preview`}
+                              className="h-full w-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-xs">
+                          {slot.imageUrl}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => updateStorySection(idx, { imageUrl: '' })}
+                        className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                      >
+                        Clear Image {sectionNum}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+
+          {/* Add Paired Story Section Button */}
+          {storySections.length < 9 && (
+            <button
+              type="button"
+              onClick={handleAddStorySection}
+              className="w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-gray-400 py-4 text-sm font-bold text-gray-800 transition-all hover:border-blue-500 hover:bg-blue-50/50 hover:text-blue-600 dark:border-zinc-600 dark:text-zinc-200 dark:hover:border-blue-400 dark:hover:bg-blue-950/20"
+            >
+              <Plus className="h-5 w-5" />
+              <span>
+                + Add Section (Description {storySections.length + 2} & Image {storySections.length + 2})
+              </span>
+            </button>
+          )}
         </div>
 
         {/* 💬 DISTINCT SECTION 4: Quote Callout Box (Optional) */}
@@ -2871,215 +3661,6 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
               />
             </div>
           </div>
-        </div>
-
-        {/* 🖼️ DISTINCT SECTION 5: Upload Additional Gallery Photos (Dynamic - Up to 9 optional photos | Max 10 Photos Total) */}
-        <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
-          <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
-                <ImageIcon className="h-4 w-4 text-red-600" />
-                <span>Upload Additional Gallery Photos (Dynamic - Up to 9 photos | Max 10 Photos Total)</span>
-              </label>
-              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
-                Upload or paste URLs for up to 9 additional images for this article [Recommended size: 1100px x 541px].
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-extrabold text-red-600 bg-red-50 dark:bg-red-950/40 px-3 py-1 rounded-lg border border-red-300 dark:border-red-900/50">
-                {(featuredImage ? 1 : 0) + extraImages.filter((s) => s.url.trim()).length} / 10 Photos Selected
-              </span>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {extraImages.map((slot, idx) => {
-              const photoNum = idx + 2; // Image 2 to Image 10
-              const labelSuffix = photoNum === 2 ? '2nd' : photoNum === 3 ? '3rd' : `${photoNum}th`;
-              return (
-                <div key={slot.id || idx} className="p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-600 dark:bg-zinc-900 space-y-3 shadow-xs transition-all hover:border-gray-500">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-100 text-[10px] font-black text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                        {photoNum}
-                      </span>
-                      <span>Image {photoNum} ({labelSuffix} Optional Gallery Photo)</span>
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 rounded-lg bg-zinc-100 p-0.5 dark:bg-zinc-800">
-                        <button
-                          type="button"
-                          onClick={() => updateExtraImage(idx, { mode: 'upload' })}
-                          className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all ${slot.mode === 'upload'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                            }`}
-                        >
-                          Upload File
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateExtraImage(idx, { mode: 'url' })}
-                          className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all ${slot.mode === 'url'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
-                            }`}
-                        >
-                          Image URL
-                        </button>
-                      </div>
-                      {extraImages.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveImageSlot(idx)}
-                          className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 transition-colors"
-                          title="Remove Image Slot"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {slot.mode === 'upload' ? (
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="file"
-                        accept="image/*,video/*,.mp4,.webm,.mov,.m4v,.avi,.jpg,.jpeg,.png,.webp,.gif"
-                        onChange={async (e) => {
-                          const file = e.target.files?.[0];
-                          if (!file) return;
-                          updateExtraImage(idx, { uploading: true });
-                          try {
-                            const formData = new FormData();
-                            formData.append('file', file);
-                            const res = await authFetch(getBackendApiUrl('/api/admin/upload'), { method: 'POST', body: formData });
-                            const json = await res.json();
-                            const mediaUrl = json.url || json.data?.url || (json.file ? json.file.url : '');
-                            if (res.ok && mediaUrl) updateExtraImage(idx, { url: mediaUrl });
-                          } catch (err) {
-                            console.error(err);
-                          } finally {
-                            updateExtraImage(idx, { uploading: false });
-                            e.target.value = '';
-                          }
-                        }}
-                        disabled={slot.uploading}
-                        className="block w-full text-xs text-zinc-500 file:mr-4 file:py-2 file:px-3.5 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-zinc-100 file:text-zinc-800 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-200 cursor-pointer"
-                      />
-                      {slot.uploading && <Loader2 className="h-4 w-4 animate-spin text-zinc-600" />}
-                    </div>
-                  ) : (
-                    <input
-                      type="url"
-                      value={slot.url || ''}
-                      onChange={(e) => updateExtraImage(idx, { url: e.target.value })}
-                      placeholder="Paste Image URL (https://...) or Video URL (https://.../video.mp4)"
-                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-base placeholder:text-gray-500 text-gray-900 focus:border-primary focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-                    />
-                  )}
-
-                  {slot.url && (
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-400 dark:border-zinc-700/60">
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
-                          {slot.url.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) || slot.url.includes('/video/upload/') ? (
-                            <video src={slot.url} controls className="h-full w-full object-cover" />
-                          ) : (
-                            <img src={sanitizeImageUrl(slot.url)} alt={`Media ${photoNum} preview`} className="h-full w-full object-cover" />
-                          )}
-                        </div>
-                        <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-xs">{slot.url}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => updateExtraImage(idx, { url: '' })}
-                        className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
-                      >
-                        Clear Slot {photoNum}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {extraImages.length < 9 && (
-            <button
-              type="button"
-              onClick={handleAddImageSlot}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-400 py-3 text-sm font-semibold text-gray-800 transition-all hover:border-red-500 hover:bg-red-50/50 hover:text-red-600 dark:border-zinc-600 dark:text-zinc-200"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Image Slot ({extraImages.length + 1} of 9 Additional Photos | Max 10 Total)</span>
-            </button>
-          )}
-        </div>
-
-
-        {/* 📑 DISTINCT SECTION 6: Dynamic Additional Description / Story Sections (Max 5 Descriptions Total) */}
-        <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
-          <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
-                <Type className="h-4 w-4 text-blue-600" />
-                <span>Additional Description Sections (Dynamic - Max 5 Descriptions Total)</span>
-              </label>
-              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5">
-                Add optional additional story description blocks (Description 2 to 5 | Max 5 total).
-              </p>
-            </div>
-            <span className="text-xs font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/40 px-3 py-1 rounded-lg border border-blue-300 dark:border-blue-900/50">
-              {1 + extraDescriptions.length} / 5 Descriptions Total
-            </span>
-          </div>
-
-          <div className="space-y-4">
-            {extraDescriptions.map((descSlot, idx) => {
-              const descNum = idx + 2; // Description 2 to Description 5
-              const currentVal = contentLang === 'gu' ? descSlot.gu : contentLang === 'hi' ? descSlot.hi : descSlot.en;
-              return (
-                <div key={descSlot.id || idx} className="p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-600 dark:bg-zinc-900 space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-2">
-                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-[10px] font-black text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
-                        {descNum}
-                      </span>
-                      <span>Description {descNum} (Optional Additional Story Paragraphs)</span>
-                    </label>
-                    {extraDescriptions.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveDescriptionSlot(idx)}
-                        className="flex h-7 w-7 items-center justify-center rounded-lg text-zinc-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-950/40 transition-colors"
-                        title="Remove Description Section"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                  <RichTextArea
-                    value={currentVal || ''}
-                    onChange={(val) => updateExtraDescription(idx, val)}
-                    placeholder="Write additional story paragraphs, subheadings, or detailed analysis..."
-                    rows={4}
-                  />
-                </div>
-              );
-            })}
-          </div>
-
-          {extraDescriptions.length < 4 && (
-            <button
-              type="button"
-              onClick={handleAddDescriptionSlot}
-              className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-gray-400 py-3 text-sm font-semibold text-gray-800 transition-all hover:border-blue-500 hover:bg-blue-50/50 hover:text-blue-600 dark:border-zinc-600 dark:text-zinc-200"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Description Section (Description {extraDescriptions.length + 2} of 5 Max)</span>
-            </button>
-          )}
         </div>
 
         {/* 🎥 SOCIAL MEDIA, VIDEO & DOCUMENT EMBEDS (YouTube, Twitter / X, PDF) */}
@@ -3175,12 +3756,12 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                         setDesc1((p) => purgePdfFromText(p));
                         setDesc1Gu((p) => purgePdfFromText(p));
                         setDesc1Hi((p) => purgePdfFromText(p));
-                        setExtraDescriptions((prev) =>
+                        setStorySections((prev) =>
                           prev.map((item) => ({
                             ...item,
-                            en: purgePdfFromText(item.en),
-                            gu: purgePdfFromText(item.gu),
-                            hi: purgePdfFromText(item.hi),
+                            descEn: purgePdfFromText(item.descEn),
+                            descGu: purgePdfFromText(item.descGu),
+                            descHi: purgePdfFromText(item.descHi),
                           }))
                         );
                       }}
@@ -3618,8 +4199,33 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 </div>
               )}
 
-              {/* Featured Media */}
-              {featuredImage && (
+              {/* Featured Media / Primary Media Gallery Preview */}
+              {primaryMediaList.length > 0 ? (
+                <div className="space-y-2">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
+                    {primaryMediaList[0].match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ? (
+                      <video src={primaryMediaList[0]} controls className="h-full w-full object-cover" />
+                    ) : (
+                      <img src={sanitizeImageUrl(primaryMediaList[0])} alt="Featured Media" className="h-full w-full object-cover" />
+                    )}
+                    {primaryMediaList.length > 1 && (
+                      <div className="absolute top-3 left-3 bg-black/75 backdrop-blur-xs text-white text-xs font-bold px-2.5 py-1 rounded shadow">
+                        1 / {primaryMediaList.length} Photos
+                      </div>
+                    )}
+                  </div>
+                  {primaryMediaList.length > 1 && (
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
+                      {primaryMediaList.map((url, i) => (
+                        <div key={i} className="relative aspect-[16/9] overflow-hidden rounded-lg border border-gray-300 dark:border-zinc-700 bg-black">
+                          <img src={sanitizeImageUrl(url)} alt={`Slide ${i + 1}`} className="h-full w-full object-cover" />
+                          <span className="absolute bottom-1 right-1 bg-black/80 text-[10px] text-white font-bold px-1 rounded">#{i + 1}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : featuredImage && (
                 <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
                   {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ? (
                     <video src={featuredImage} controls className="h-full w-full object-cover" />
@@ -3661,29 +4267,29 @@ const SEO_TOPIC_DICTIONARY: Array<{ patterns: RegExp[]; tags: string[]; keywords
                 </blockquote>
               )}
 
-              {/* Photo Gallery Grid */}
-              {extraImages.filter((s) => s.url.trim()).length > 0 && (
-                <div className="space-y-3 pt-2">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
-                    📸 Photo Gallery ({extraImages.filter((s) => s.url.trim()).length} Photos)
-                  </h4>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {extraImages.filter((s) => s.url.trim()).map((slot, idx) => (
-                      <div key={idx} className="relative aspect-[4/3] overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-xs">
-                        <img src={sanitizeImageUrl(slot.url)} alt={`Gallery photo ${idx + 2}`} className="h-full w-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Story Continuation Sections Preview (Sequential Description N & Image N) */}
+              {storySections.map((sec, idx) => {
+                const descVal = (contentLang === 'gu' ? sec.descGu : contentLang === 'hi' ? sec.descHi : sec.descEn) || '';
+                const hasDesc = Boolean(descVal.trim());
+                const hasImg = Boolean(sec.imageUrl && sec.imageUrl.trim());
+                if (!hasDesc && !hasImg) return null;
 
-              {/* Dynamic Additional Description Sections */}
-              {extraDescriptions.map((descSlot, idx) => {
-                const val = (contentLang === 'gu' ? descSlot.gu : contentLang === 'hi' ? descSlot.hi : descSlot.en) || '';
-                if (!val.trim()) return null;
                 return (
-                  <div key={idx} className="border-t border-gray-400 pt-4 dark:border-zinc-700">
-                    {renderFormattedPreviewContent(val)}
+                  <div key={sec.id || idx} className="space-y-4 pt-2">
+                    {hasDesc && (
+                      <div className="border-t border-gray-300 pt-4 dark:border-zinc-700">
+                        {renderFormattedPreviewContent(descVal)}
+                      </div>
+                    )}
+                    {hasImg && (
+                      <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
+                        <img
+                          src={sanitizeImageUrl(sec.imageUrl)}
+                          alt={`Story section ${idx + 2} preview`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    )}
                   </div>
                 );
               })}

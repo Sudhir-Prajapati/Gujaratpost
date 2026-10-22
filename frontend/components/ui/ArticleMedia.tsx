@@ -51,10 +51,19 @@ export default function ArticleMedia({
     }
   }, [isVideo, autoPlay, src]);
 
-  // Clean / sanitize Cloudinary or raw URLs
-  const cleanSrc = src && typeof src === 'string'
+  // Clean / sanitize Cloudinary or raw URLs and convert images to AVIF format
+  let cleanSrc = src && typeof src === 'string'
     ? src.replace('/raw/upload/', '/image/upload/').trim()
     : null;
+  if (
+    cleanSrc &&
+    cleanSrc.includes('res.cloudinary.com') &&
+    cleanSrc.includes('/image/upload/') &&
+    !isVideo &&
+    !cleanSrc.toLowerCase().endsWith('.pdf')
+  ) {
+    cleanSrc = cleanSrc.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
+  }
 
   const isAbsolute = className.includes('absolute');
   const posClass = isAbsolute ? 'absolute inset-0' : 'relative';

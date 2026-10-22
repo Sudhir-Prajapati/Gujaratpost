@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
-import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 interface ArticleInfiniteStreamProps {
@@ -28,6 +28,109 @@ interface ArticleInfiniteStreamProps {
   TranslatedInlineText: React.ComponentType<{ text: string; language: Language }>;
   TranslatedParagraph: React.ComponentType<{ rawHtml: string; language: Language }>;
   sidebarRecommendedPool: Article[];
+}
+
+function ArticleStreamShareBar({
+  article,
+  language,
+  uiLabel,
+}: {
+  article: Article;
+  language: Language;
+  uiLabel: ArticleInfiniteStreamProps['uiLabel'];
+}) {
+  const [copied, setCopied] = React.useState(false);
+  const title = getArticleTitle(article, language) || article.title || '';
+  const articleUrl = `${SITE_URL.replace(/\/$/, '')}/news/${article.slug}`;
+  const buttonClass = 'inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800';
+
+  const copyArticleLink = async () => {
+    try {
+      await navigator.clipboard.writeText(articleUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } catch {
+      window.prompt('Copy article link:', articleUrl);
+    }
+  };
+
+  return (
+    <div className="mb-3 flex items-center gap-2 rounded-xl border border-neutral-200/80 bg-neutral-50/80 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-900/60">
+      <span className="mr-1 text-sm font-black text-neutral-900 dark:text-neutral-100">
+        {uiLabel(language, { en: 'Share:', gu: 'શેર કરો:', hi: 'शेयर करें:' })}
+      </span>
+      <a
+        href={`https://wa.me/?text=${encodeURIComponent(`${title} ${articleUrl}`)}`}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Share on WhatsApp"
+        title="WhatsApp"
+        className={`${buttonClass} hover:border-[#25D366]`}
+      >
+        <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
+          <path fill="#25D366" d="M12.01 0a12 12 0 0 0-10.4 18l-1.6 5.8 6-1.6a12 12 0 1 0 6-22.2z" />
+          <path fill="#FFF" d="M16.9 14.1c-.3-.1-1.6-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.5 0-.2-.1-.4-.2-.6-.2-.4-.7-1.7-1-2.3-.3-.6-.6-.5-.8-.5H8c-.2 0-.6.1-.9.4C6.8 7.3 6 8.1 6 9.8c0 1.7 1.2 3.4 1.4 3.6.2.2 2.4 3.7 5.9 5.2.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.5-.3z" />
+        </svg>
+      </a>
+      <a
+        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Share on Facebook"
+        title="Facebook"
+        className={`${buttonClass} text-[#1877F2] hover:border-[#1877F2]`}
+      >
+        <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="currentColor" aria-hidden="true">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+        </svg>
+      </a>
+      <a
+        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(articleUrl)}`}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Share on X"
+        title="X"
+        className={`${buttonClass} text-black hover:border-black dark:text-white dark:hover:border-white`}
+      >
+        <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        </svg>
+      </a>
+      <a
+        href="https://m.dailyhunt.in/news/india/gujarati/gujarat-post-epaper-gujpost"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Gujarat Post on Dailyhunt"
+        title="Dailyhunt"
+        className={`${buttonClass} hover:border-[#FBBC05]`}
+      >
+        <svg viewBox="0 0 48 48" className="h-[22px] w-[22px]" aria-hidden="true">
+          <path fill="#093492" d="M20.99 12.49 C21.62 14.48 21.86 21.86 21.86 21.86 C21.86 21.86 14.15 21.83 12.51 21.18 C8.59 19.61 5.5 17.07 5.5 13.08 C5.5 9.13 8.64 5.64 12.94 5.64 C17.17 5.64 19.77 8.69 20.99 12.49 Z" />
+          <path fill="#FBBC05" d="M35.51 20.99 C33.52 21.62 26.14 21.86 26.14 21.86 C26.14 21.86 26.17 14.15 26.82 12.51 C28.39 8.59 30.93 5.5 34.92 5.5 C38.87 5.5 42.36 8.64 42.36 12.94 C42.36 17.17 39.31 19.77 35.51 20.99 Z" />
+          <path fill="#ED1C24" d="M27.01 35.51 C26.38 33.52 26.14 26.14 26.14 26.14 C26.14 26.14 33.85 26.17 35.49 26.82 C39.41 28.39 42.5 30.93 42.5 34.92 C42.5 38.87 39.36 42.36 35.06 42.36 C30.83 42.36 28.23 39.31 27.01 35.51 Z" />
+          <path fill="#47B609" d="M12.49 27.01 C14.48 26.38 21.86 26.14 21.86 26.14 C21.86 26.14 21.83 33.85 21.18 35.49 C19.61 39.41 17.07 42.5 13.08 42.5 C9.13 42.5 5.64 39.36 5.64 35.06 C5.64 30.83 8.69 28.23 12.49 27.01 Z" />
+        </svg>
+      </a>
+      <button
+        type="button"
+        onClick={copyArticleLink}
+        aria-label={copied ? 'Article link copied' : 'Copy article link'}
+        title={copied ? 'Copied' : 'Copy link'}
+        className={`${buttonClass} ${copied ? 'border-[#B3121B] text-[#B3121B]' : 'hover:border-[#B3121B] hover:text-[#B3121B]'}`}
+      >
+        {copied ? (
+          <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="m5 12 4 4L19 6" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
 }
 
 export default function ArticleInfiniteStream({
@@ -152,9 +255,9 @@ export default function ArticleInfiniteStream({
                     </Link>
                     <span>/</span>
                     <span>{streamCity}</span>
-                    <span className="mx-0.5">:</span>
-                    <span className="text-red-700 dark:text-red-400 font-bold">
-                      <AutoArticleTitle article={streamArticle} language={language} />
+                    <span>/</span>
+                    <span className="text-neutral-700 dark:text-neutral-300 font-normal">
+                      <AutoArticleBreadcrumbTitle article={streamArticle} />
                     </span>
                   </nav>
 
@@ -214,6 +317,8 @@ export default function ArticleInfiniteStream({
                   </div>
 
                   {readAlsoArticles.length > 0 && (
+                    <>
+                    <ArticleStreamShareBar article={streamArticle} language={language} uiLabel={uiLabel} />
                     <div className="w-full mt-2.5 mb-4">
                       {/* Section header */}
                       <div className="flex items-center gap-3 mb-3">
@@ -276,6 +381,7 @@ export default function ArticleInfiniteStream({
                         })}
                       </div>
                     </div>
+                    </>
                   )}
 
                   <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
@@ -296,86 +402,6 @@ export default function ArticleInfiniteStream({
               );
             });
           })()}
-        </div>
-
-
-        {/* Read Also Section for Primary Article */}
-        {related.length > 0 && (
-          <div className="w-full mt-2.5 mb-4">
-            {/* Section header */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex items-center gap-2">
-                <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
-                <span className="block w-[3px] h-3.5 rounded-full bg-[#B3121B]/40"></span>
-              </div>
-              <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
-                {uiLabel(language, { en: 'Read Also', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
-              </h4>
-              <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
-            </div>
-
-            {/* Mobile View (< md): Hero Section style list */}
-            <div className="flex flex-col divide-y divide-border/60 md:hidden">
-              {related.slice(0, 4).map((raArt, index) => (
-                <MobileHeroArticleCard
-                  key={`mobile-bottom-ra-${raArt.id}-${index}`}
-                  article={raArt}
-                  language={language}
-                  index={index}
-                />
-              ))}
-            </div>
-
-            {/* Desktop View (>= md): existing 2-column card grid */}
-            <div className="hidden md:grid md:grid-cols-2 gap-3">
-              {related.slice(0, 4).map((raArt, index) => {
-                const raCat = normalizeDisplayText(getCategoryLabel(raArt, language));
-                return (
-                  <Link
-                    key={`bottom-ra-${raArt.id}-${index}`}
-                    href={`/news/${raArt.slug}`}
-                    className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl border border-neutral-200/90 dark:border-neutral-800 shadow-xs bg-white dark:bg-neutral-900 hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
-                  >
-                    <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
-                      <Image
-                        src={getCardThumbnail(raArt, index)}
-                        alt={getArticleTitle(raArt, language)}
-                        fill
-                        sizes="90px"
-                        className="object-cover transition-transform duration-500 group-hover:scale-110"
-                        onError={(e) => { (e.target as HTMLImageElement).src = 'https://placehold.co/90x70/e2e8f0/94a3b8?text=GP'; }}
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    </div>
-                    <div className="min-w-0 flex-1 flex flex-col gap-1">
-                      <span className="text-[10.5px] font-bold uppercase tracking-wider text-[#B3121B] opacity-80">{raCat}</span>
-                      <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
-                        <AutoArticleTitle article={raArt} language={language} />
-                      </p>
-                    </div>
-                    {/* Arrow indicator */}
-                    <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Topics Tags for Primary Article */}
-        <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
-          <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-            {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
-          </span>
-          {(language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)).map((tag, tIdx) => (
-            <Link
-              key={tIdx}
-              href={getTopicHref(tag)}
-              className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-            >
-              {normalizeDisplayText(tag)}
-            </Link>
-          ))}
         </div>
       </article>
 

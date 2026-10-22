@@ -22,19 +22,51 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
   const [adData, setAdData] = useState<any>(initialAd || null);
   const [loading, setLoading] = useState<boolean>(!initialAd);
 
+  const fetchAd = () => {
+    if (section) {
+      getPublicAdBySection(section).then((data) => {
+        setAdData(data);
+        setLoading(false);
+      }).catch(() => {
+        setAdData(null);
+        setLoading(false);
+      });
+    }
+  };
+
   useEffect(() => {
     if (!initialAd && section) {
-      let isMounted = true;
-      getPublicAdBySection(section).then((data) => {
-        if (isMounted) {
-          setAdData(data);
-          setLoading(false);
-        }
-      });
-      return () => {
-        isMounted = false;
-      };
+      fetchAd();
+    } else {
+      setLoading(false);
     }
+
+    const handleSync = () => {
+      fetchAd();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('gp-admin-updates');
+        bc.onmessage = () => {
+          fetchAd();
+        };
+      }
+    } catch {}
+
+    return () => {
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {}
+      }
+    };
   }, [section, initialAd]);
 
   // Still loading — render nothing (null matches on both SSR and client first render)

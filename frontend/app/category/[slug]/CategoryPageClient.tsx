@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight, ChevronLeft, Rss } from 'lucide-react';
+import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import {
@@ -691,16 +691,6 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </h1>
           </div>
 
-          <Link
-            href={`/rss/${resolvedSlug || slug}.xml`}
-            target="_blank"
-            rel="noopener noreferrer"
-            title={`${categoryName} RSS Feed`}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-600 dark:text-orange-400 border border-orange-500/20 hover:border-orange-500/40 transition-all shadow-xs"
-          >
-            <Rss className="w-3.5 h-3.5 text-orange-500" />
-            <span className="hidden sm:inline">RSS ફીડ</span>
-          </Link>
         </div>
 
         {/* ── FILTER TABS (3 Options: Badhu, Taja Samachar, Video) ────── */}
@@ -779,14 +769,14 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     </Link>
                   )}
 
-                  <div className="mt-3">
+                  <Link href={heroArticle.slug ? `/news/${heroArticle.slug}` : '#'} className="group block mt-3">
                     <span className="text-xs font-black uppercase tracking-wide text-accent">
                       {getArticleLocation(heroArticle)}
                     </span>
-                    <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                    <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
                       <AutoArticleTitle article={heroArticle} language={language} />
                     </h2>
-                  </div>
+                  </Link>
                 </div>
               )}
             </div>
@@ -815,8 +805,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               </div>
 
               {/* Desktop (>= md): UNTOUCHED */}
-              <div className="hidden md:flex flex-1 flex-col justify-between divide-y divide-border">
-                {topStoriesFirstThree.map((art: any) => (
+              <div className="hidden md:flex flex-1 flex-col justify-start divide-y divide-border">
+                {topStories.slice(0, 4).map((art: any) => (
                   <Link key={art.id} href={art.slug ? `/news/${art.slug}` : '#'} className="group flex items-start gap-4 py-2.5 first:pt-0">
                     <div className="min-w-0 flex-1">
                       <span className="text-[10px] font-black uppercase tracking-wide text-accent">
@@ -839,7 +829,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </div>
 
             {/* Row 2, Col 1: Small Sub-Hero Article below Hero Article */}
-            <div className={`order-2 md:col-start-1 md:row-start-2 ${subHeroArticle ? 'border-t border-border/60 md:border-border md:pt-3.5 md:pb-2' : ''}`}>
+            <div className={`order-2 md:col-start-1 md:row-start-2 md:-mt-36 ${subHeroArticle ? 'border-t border-border/60 md:border-border md:pt-3.5 md:pb-2' : ''}`}>
               {subHeroArticle && (
                 <>
                   {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
@@ -876,7 +866,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </div>
 
             {/* Row 2, Col 2: Fourth Top Story (Aligned perfectly with Sub-Hero Article) */}
-            <div className={`order-4 md:col-start-2 md:row-start-2 ${fourthStory ? 'border-t border-border/60 md:border-border md:pt-3.5 md:pb-2' : ''}`}>
+            <div className={`order-4 md:col-start-2 md:row-start-2 ${fourthStory ? 'border-t border-border/60 pt-3.5 pb-2 md:border-0 md:p-0' : ''}`}>
               {fourthStory && (
                 <>
                   {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
@@ -890,24 +880,6 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     />
                   </div>
 
-                  {/* Desktop view (>= md): UNTOUCHED */}
-                  <Link href={fourthStory.slug ? `/news/${fourthStory.slug}` : '#'} className="hidden md:flex group items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-wide text-accent">
-                        {getArticleLocation(fourthStory)}
-                      </span>
-                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                        <AutoArticleTitle article={fourthStory} language={language} />
-                      </h3>
-                    </div>
-                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                      <ArticleMedia
-                        src={fourthStory.image || (fourthStory as any).featuredImage || (fourthStory as any).thumbnail}
-                        alt={getArticleTitle(fourthStory, language)}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  </Link>
                 </>
               )}
             </div>
@@ -922,7 +894,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               </span>
             </div>
             <div className="flex flex-col divide-y divide-border">
-              {trending.slice(0, 7).map((art: any, i: number) => (
+              {trending.slice(0, 5).map((art: any, i: number) => (
                 <Link key={art.id} href={`/news/${art.slug}`} className="group flex items-start gap-3 py-3 first:pt-1.5 last:pb-1.5">
                   <span
                     className="text-[28px] font-extrabold leading-none select-none w-8 shrink-0 text-center"
@@ -934,7 +906,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   >
                     {language === 'gu' ? toGu(i + 1) : i + 1}
                   </span>
-                  <p className="text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
+                  <p className="min-h-[4.125em] text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
                     {language === 'gu' ? art.titleGu : language === 'hi' ? art.titleHi : art.title}
                   </p>
                 </Link>

@@ -369,6 +369,7 @@ model EPaperCity {
 
 model SupportSetting {
   id            String   @id @default("default")
+  supportEnabled Boolean  @default(true)
   qrCodeImage   String?  @db.Text
   upiId         String?
   accountName   String?

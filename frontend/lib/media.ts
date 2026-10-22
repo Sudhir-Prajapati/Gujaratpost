@@ -55,6 +55,16 @@ export function sanitizeImageUrl(url?: string | null): string {
   ) {
     clean = clean.replace('/raw/upload/', '/image/upload/');
   }
+  // Convert all Cloudinary images to .avif format for optimal web performance
+  if (
+    clean.includes('res.cloudinary.com') &&
+    clean.includes('/image/upload/') &&
+    !isMediaVideo(clean) &&
+    !clean.toLowerCase().endsWith('.pdf') &&
+    !clean.toLowerCase().includes('.pdf?')
+  ) {
+    clean = clean.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
+  }
   return clean;
 }
 
@@ -99,21 +109,17 @@ export function formatEpaperPdfUrl(url?: string | null, page: number = 1): strin
   if (!url || typeof url !== 'string') return '';
   const clean = url.trim();
 
-  const backendOrigin = typeof window !== 'undefined'
-    ? ''
-    : getBackendOrigin();
-
   if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) {
     const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
-    return `${backendOrigin}/uploads/${filename}#page=${page}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
+    return `/uploads/${filename}#page=${page}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
   }
 
   if (clean.startsWith('http://') || clean.startsWith('https://')) {
     if (clean.includes('/uploads/')) {
       const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
-      return `${backendOrigin}/uploads/${filename}#page=${page}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
+      return `/uploads/${filename}#page=${page}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
     }
-    const proxyUrl = `${backendOrigin}/api/public/download-pdf?url=${encodeURIComponent(clean)}`;
+    const proxyUrl = `/api/public/download-pdf?url=${encodeURIComponent(clean)}`;
     return `${proxyUrl}#page=${page}&view=FitH&toolbar=0&navpanes=0&scrollbar=0`;
   }
 
@@ -124,22 +130,45 @@ export function formatEpaperDownloadUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return '#';
   const clean = url.trim();
 
-  const backendOrigin = typeof window !== 'undefined'
-    ? ''
-    : getBackendOrigin();
-
   if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) {
     const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
-    return `${backendOrigin}/uploads/${filename}`;
+    return `/uploads/${filename}`;
   }
 
   if (clean.startsWith('http://') || clean.startsWith('https://')) {
     if (clean.includes('/uploads/')) {
       const filename = clean.split('/uploads/').pop()?.split('?')[0] || '';
-      return `${backendOrigin}/uploads/${filename}`;
+      return `/uploads/${filename}`;
     }
-    return `${backendOrigin}/api/public/download-pdf?url=${encodeURIComponent(clean)}&download=true`;
+    return `/api/public/download-pdf?url=${encodeURIComponent(clean)}&download=true`;
   }
 
   return clean;
+}
+
+/**
+ * Format image URL for immediate download in AVIF format (.avif)
+ */
+export function formatImageDownloadUrl(url?: string | null, customFilename?: string): string {
+  if (!url || typeof url !== 'string') return '#';
+  const clean = sanitizeImageUrl(url);
+  if (!clean || clean === '#') return '#';
+
+  const baseName = (customFilename || clean.split('/').pop()?.split('?')[0] || 'gujarat-post-image')
+    .replace(/\.[a-zA-Z0-9]+$/, '');
+
+  // 1. Cloudinary URL: use native fl_attachment to force download as .avif
+  if (clean.includes('res.cloudinary.com') && clean.includes('/image/upload/')) {
+    let cloudUrl = clean.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
+    if (!cloudUrl.includes('/fl_attachment')) {
+      cloudUrl = cloudUrl.replace(
+        /\/image\/upload\/(?:v\d+\/)?/,
+        (match) => match.replace('/image/upload/', `/image/upload/fl_attachment:${encodeURIComponent(baseName)}/`)
+      );
+    }
+    return cloudUrl;
+  }
+
+  // 2. Fallback through backend proxy (relative URL consistent across SSR and client to prevent hydration mismatch)
+  return `/api/public/download-image?url=${encodeURIComponent(clean)}&name=${encodeURIComponent(baseName)}`;
 }

@@ -4,6 +4,7 @@ import { sendSuccess, sendError } from '../utils/response.js';
 
 const DEFAULT_SUPPORT_SETTING = {
   id: 'default',
+  supportEnabled: true,
   qrCodeImage: '',
   upiId: 'gujaratpost@upi',
   accountName: 'Gujarat Post Media Pvt Ltd',
@@ -59,6 +60,7 @@ export class SupportController {
   static async updateSupportSettings(req: Request, res: Response) {
     try {
       const {
+        supportEnabled,
         qrCodeImage,
         upiId,
         accountName,
@@ -74,6 +76,7 @@ export class SupportController {
       const updated = await (prisma as any).supportSetting.upsert({
         where: { id: 'default' },
         update: {
+          supportEnabled: supportEnabled ?? true,
           qrCodeImage: qrCodeImage ?? '',
           upiId: upiId ?? '',
           accountName: accountName ?? '',
@@ -87,6 +90,7 @@ export class SupportController {
         },
         create: {
           id: 'default',
+          supportEnabled: supportEnabled ?? true,
           qrCodeImage: qrCodeImage ?? '',
           upiId: upiId ?? 'gujaratpost@upi',
           accountName: accountName ?? 'Gujarat Post Media Pvt Ltd',

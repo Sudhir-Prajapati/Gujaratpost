@@ -14,6 +14,7 @@ export default function AdminSupportPage() {
   const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState({
+    supportEnabled: true,
     qrCodeImage: '',
     upiId: '',
     accountName: '',
@@ -53,6 +54,7 @@ export default function AdminSupportPage() {
       const json = await res.json();
       if (json?.success && json.data) {
         setForm({
+          supportEnabled: json.data.supportEnabled !== false,
           qrCodeImage: json.data.qrCodeImage || '',
           upiId: json.data.upiId || '',
           accountName: json.data.accountName || '',
@@ -192,6 +194,22 @@ export default function AdminSupportPage() {
       )}
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-12 flex items-center justify-between gap-4 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+          <div>
+            <h2 className="font-black text-zinc-900 dark:text-zinc-100">Reader Support Button</h2>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Show or hide the Support button across the public website.</p>
+          </div>
+          <label className="inline-flex shrink-0 cursor-pointer items-center gap-3">
+            <span className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{form.supportEnabled ? 'Enabled' : 'Disabled'}</span>
+            <input
+              type="checkbox"
+              checked={form.supportEnabled}
+              onChange={(event) => setForm((prev) => ({ ...prev, supportEnabled: event.target.checked }))}
+              className="peer sr-only"
+            />
+            <span className="relative h-6 w-11 rounded-full bg-zinc-300 transition peer-checked:bg-emerald-600 after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-5" />
+          </label>
+        </div>
         {/* Left Column: QR Code & UPI (5 cols) */}
         <div className="lg:col-span-5 space-y-6">
           {/* QR Code Upload Box */}
@@ -218,6 +236,9 @@ export default function AdminSupportPage() {
                   <p className="text-xs font-bold text-zinc-500">No QR Code Image Uploaded</p>
                 </div>
               )}
+              <span className="inline-flex items-center gap-0.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
+                <span className="text-red-500">*</span>&nbsp;Mandatory &bull; PNG / JPG &bull; Max 2 MB &bull; Square (400&times;400 px)
+              </span>
 
               <input
                 ref={fileInputRef}

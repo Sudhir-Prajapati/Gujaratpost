@@ -206,7 +206,7 @@ function NavColumn({
 
 /* ─── Footer Component ─────────────────────────────────────────────────── */
 export default function Footer({ isInline = false }: { isInline?: boolean }) {
-    const { language, openSupportModal } = useApp();
+    const { language, openSupportModal, supportEnabled } = useApp();
     const pathname = usePathname();
 
 
@@ -295,7 +295,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             </Link>
 
                         {/* Support Us Button in Footer */}
-                        <button
+                        {supportEnabled && <button
                             type="button"
                             onClick={openSupportModal}
                             className="w-full mt-5 flex items-center justify-center gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3.5 text-white shadow-lg shadow-[#CF0907]/30 active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
@@ -304,7 +304,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             <span className="text-[15.5px] sm:text-[16.5px] font-black tracking-wide drop-shadow-sm">
                                 {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
                             </span>
-                        </button>
+                        </button>}
                         </div>
 
                         {/* Social Icons */}
@@ -414,7 +414,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             </Link>
 
                             {/* Support Us Button in Footer */}
-                            <button
+                            {supportEnabled && <button
                                 type="button"
                                 onClick={openSupportModal}
                                 className="mt-5 sm:mt-6 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3 sm:py-3.5 text-white shadow-lg shadow-[#CF0907]/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
@@ -423,7 +423,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 <span className="text-[15px] sm:text-[16px] font-black tracking-wide whitespace-nowrap drop-shadow-sm">
                                     {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
                                 </span>
-                            </button>
+                            </button>}
                             {/* Social Icons — same width as button, spread end to end */}
                             <div className="w-full flex justify-center mt-5 sm:mt-6">
                                 <div className="grid grid-cols-3 gap-x-6.5 sm:gap-x-7 gap-y-4 sm:gap-y-4.5 place-items-center">

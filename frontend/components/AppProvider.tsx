@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import SupportModal from '@/components/ui/SupportModal';
 import { useIsApk } from '@/lib/useIsApk';
+import { getPublicSupportDetails } from '@/lib/api';
 
 type Theme = 'light' | 'dark';
 type Language = 'gu' | 'en' | 'hi';
@@ -18,6 +19,7 @@ interface AppContextType {
   incFs: () => void;
   decFs: () => void;
   supportModalOpen: boolean;
+  supportEnabled: boolean;
   openSupportModal: () => void;
   closeSupportModal: () => void;
 }
@@ -33,6 +35,7 @@ const AppContext = createContext<AppContextType>({
   incFs: () => {},
   decFs: () => {},
   supportModalOpen: false,
+  supportEnabled: true,
   openSupportModal: () => {},
   closeSupportModal: () => {},
 });
@@ -66,16 +69,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('gu');
   const [fsLevel, setFsLevel] = useState<number>(1);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
+  const [supportEnabled, setSupportEnabled] = useState(true);
   const hydrated = useRef(false);
 
-  const openSupportModal = () => setSupportModalOpen(true);
+  const openSupportModal = () => {
+    if (supportEnabled) setSupportModalOpen(true);
+  };
   const closeSupportModal = () => setSupportModalOpen(false);
 
   useEffect(() => {
-    const handleGlobalSupportOpen = () => setSupportModalOpen(true);
+    let active = true;
+    const refreshSupportVisibility = async () => {
+      const details = await getPublicSupportDetails();
+      if (!active || !details) return;
+      const enabled = details.supportEnabled !== false;
+      setSupportEnabled(enabled);
+      if (!enabled) setSupportModalOpen(false);
+    };
+
+    refreshSupportVisibility();
+    const interval = window.setInterval(refreshSupportVisibility, 30000);
+    window.addEventListener('focus', refreshSupportVisibility);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener('focus', refreshSupportVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleGlobalSupportOpen = () => {
+      if (supportEnabled) setSupportModalOpen(true);
+    };
     window.addEventListener('gp-open-support', handleGlobalSupportOpen);
     return () => window.removeEventListener('gp-open-support', handleGlobalSupportOpen);
-  }, []);
+  }, [supportEnabled]);
 
   useEffect(() => {
     let savedTheme: string | null = null;
@@ -185,16 +213,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       incFs,
       decFs,
       supportModalOpen,
+      supportEnabled,
       openSupportModal,
       closeSupportModal,
     }),
-    [theme, apkTheme, language, fsLevel, supportModalOpen, isApk],
+    [theme, apkTheme, language, fsLevel, supportModalOpen, supportEnabled, isApk],
   );
 
   return (
     <AppContext.Provider value={value}>
       {children}
-      <SupportModal isOpen={supportModalOpen} onClose={closeSupportModal} />
+      {supportEnabled && <SupportModal isOpen={supportModalOpen} onClose={closeSupportModal} />}
     </AppContext.Provider>
   );
 }

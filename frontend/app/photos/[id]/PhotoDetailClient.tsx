@@ -407,9 +407,9 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
               <Link href="/photos" className="hover:text-[var(--red)] transition-colors">
                 {getLocalized(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
               </Link>
-              <span>:</span>
-              <span className="text-red-700 dark:text-red-400 font-bold truncate max-w-[280px] sm:max-w-md">
-                {title}
+              <span>/</span>
+              <span className="text-neutral-700 dark:text-neutral-300 font-normal truncate max-w-[280px] sm:max-w-md">
+                {photo?.caption || photo?.alt || title}
               </span>
             </nav>
 

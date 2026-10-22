@@ -55,18 +55,44 @@ export default function Advertisement({ position, section, className = '', showF
   const [adData, setAdData] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    let isMounted = true;
+  const fetchAd = () => {
     getPublicAdBySection(targetSection).then((data) => {
-      if (isMounted) {
-        setAdData(data);
-        setLoaded(true);
-      }
+      setAdData(data);
+      setLoaded(true);
     }).catch(() => {
-      if (isMounted) setLoaded(true);
+      setAdData(null);
+      setLoaded(true);
     });
+  };
+
+  useEffect(() => {
+    fetchAd();
+
+    const handleSync = () => {
+      fetchAd();
+    };
+
+    window.addEventListener('focus', handleSync);
+    window.addEventListener('gp-articles-updated', handleSync);
+
+    let bc: BroadcastChannel | null = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        bc = new BroadcastChannel('gp-admin-updates');
+        bc.onmessage = () => {
+          fetchAd();
+        };
+      }
+    } catch {}
+
     return () => {
-      isMounted = false;
+      window.removeEventListener('focus', handleSync);
+      window.removeEventListener('gp-articles-updated', handleSync);
+      if (bc) {
+        try {
+          bc.close();
+        } catch {}
+      }
     };
   }, [targetSection]);
 

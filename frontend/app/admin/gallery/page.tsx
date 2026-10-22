@@ -715,9 +715,14 @@ export default function GalleryPage() {
             <form onSubmit={handleUploadSubmit} className="space-y-4">
               {/* File Upload selector / Live Preview */}
               <div>
-                <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                  ૧. કમ્પ્યુટરથી ઈમેજ પસંદ કરો (Select Image File from PC)
-                </label>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                  <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                    ૧. કમ્પ્યુટરથી ઈમેજ પસંદ કરો (Select Image File from PC)
+                  </label>
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-black">
+                    <span className="text-red-500">*</span> ફરજિયાત (Mandatory)&nbsp;•&nbsp;PNG / JPG / WEBP&nbsp;•&nbsp;Max 5 MB&nbsp;•&nbsp;Min 800×600 px
+                  </span>
+                </div>
                 
                 {src ? (
                   <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-2 border-red-500/40 bg-zinc-950 shadow-md group">
@@ -747,7 +752,7 @@ export default function GalleryPage() {
                           {uploading ? 'અપલોડ થઈ રહ્યું છે...' : 'અહીં ક્લિક કરીને ફાઈલ પસંદ કરો'}
                         </p>
                         <p className="text-xs font-bold text-zinc-400">
-                          PNG, JPG, WEBP (Max 10MB)
+                          PNG · JPG · WEBP · Max 5 MB · Min 800×600 px
                         </p>
                       </div>
                     </div>
@@ -844,6 +849,9 @@ export default function GalleryPage() {
                     <p className="text-[11px] text-zinc-400 font-medium">
                       જો આ સ્ટોરીમાં ૨ કે વધુ ફોટા હોય તો અહીં ઉમેરો (Image + Caption)
                     </p>
+                    <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
+                      PNG / JPG / WEBP &bull; Max 5 MB &bull; Min 800&times;600 px per image
+                    </span>
                   </div>
                   <button
                     type="button"

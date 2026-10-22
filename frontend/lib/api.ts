@@ -961,7 +961,7 @@ export async function getPublicAdBySection(section: string): Promise<any | null>
 export async function getPublicSupportDetails(): Promise<any | null> {
   try {
     const url = `${API_BASE_URL}/support`;
-    const json = await fetchCachedJson<any>(url, 60 * 1000);
+    const json = await fetchCachedJson<any>(url, 5 * 1000);
     if (json && json.success && json.data) {
       return json.data;
     }

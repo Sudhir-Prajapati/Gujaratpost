@@ -345,6 +345,7 @@ export class ArticleController {
         slug,
         location,
         scheduledAt,
+        authorName,
       } = req.body;
 
       // Validate language: must be 'gu', 'en', or 'hi'. Default to 'gu'.
@@ -353,8 +354,56 @@ export class ArticleController {
         safeLanguage = rawLanguage.trim().toLowerCase();
       }
 
-      if (!title || !content || !categoryId || !authorId) {
-        throw new BadRequestError('Title, content, categoryId, and authorId are required.');
+      let finalAuthorId = authorId;
+
+      // If a custom author name is provided, resolve existing or auto-create author profile
+      if (authorName && typeof authorName === 'string' && authorName.trim() !== '') {
+        const trimmedAuthorName = authorName.trim();
+        const matchedAuthor = await prisma.author.findFirst({
+          where: {
+            OR: [
+              { name: trimmedAuthorName },
+              { nameGu: trimmedAuthorName },
+              { nameHi: trimmedAuthorName },
+            ],
+          },
+        });
+
+        if (matchedAuthor) {
+          finalAuthorId = matchedAuthor.id;
+        } else {
+          const randomSuffix = Math.random().toString(36).substring(2, 8);
+          const safeAuthorSlug = (trimmedAuthorName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'reporter');
+          const shadowUser = await prisma.user.create({
+            data: {
+              email: `${safeAuthorSlug}-${randomSuffix}@gujaratpost.in`,
+              passwordHash: 'CUSTOM_AUTHOR_NO_LOGIN',
+              role: 'REPORTER',
+              status: 'ACTIVE',
+            },
+          });
+
+          const newAuthor = await prisma.author.create({
+            data: {
+              userId: shadowUser.id,
+              name: trimmedAuthorName,
+              nameGu: trimmedAuthorName,
+              nameHi: trimmedAuthorName,
+              image: '/assets/demo/1.jpg',
+              designation: 'Reporter',
+              designationGu: 'રિપોર્ટર',
+              designationHi: 'रिपोर्टर',
+              bio: `Reporter at Gujarat Post`,
+              bioGu: `ગુજરાત પોસ્ટ રિપોર્ટર`,
+              bioHi: `गुजरात पोस्ट रिपोर्टर`,
+            },
+          });
+          finalAuthorId = newAuthor.id;
+        }
+      }
+
+      if (!title || !content || !categoryId || !finalAuthorId) {
+        throw new BadRequestError('Title, content, categoryId, and author are required.');
       }
 
       if (status === 'SCHEDULED' || scheduledAt) {
@@ -453,7 +502,7 @@ export class ArticleController {
           featuredImage: (featuredImage || '').trim(),
           status: status || 'DRAFT',
           scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-          authorId,
+          authorId: finalAuthorId,
           categoryId,
           location: location ? String(location).trim() : null,
           priority: priority ? Number(priority) : 0,
@@ -530,6 +579,7 @@ export class ArticleController {
         slug,
         location,
         scheduledAt,
+        authorName,
       } = req.body;
 
       const existingPost = await prisma.post.findUnique({
@@ -572,7 +622,53 @@ export class ArticleController {
         }
       }
       if (categoryId !== undefined) updateData.categoryId = categoryId;
-      if (authorId !== undefined) updateData.authorId = authorId;
+
+      if (authorName && typeof authorName === 'string' && authorName.trim() !== '') {
+        const trimmedAuthorName = authorName.trim();
+        const matchedAuthor = await prisma.author.findFirst({
+          where: {
+            OR: [
+              { name: trimmedAuthorName },
+              { nameGu: trimmedAuthorName },
+              { nameHi: trimmedAuthorName },
+            ],
+          },
+        });
+
+        if (matchedAuthor) {
+          updateData.authorId = matchedAuthor.id;
+        } else {
+          const randomSuffix = Math.random().toString(36).substring(2, 8);
+          const safeAuthorSlug = (trimmedAuthorName.toLowerCase().replace(/[^a-z0-9]+/g, '-') || 'reporter');
+          const shadowUser = await prisma.user.create({
+            data: {
+              email: `${safeAuthorSlug}-${randomSuffix}@gujaratpost.in`,
+              passwordHash: 'CUSTOM_AUTHOR_NO_LOGIN',
+              role: 'REPORTER',
+              status: 'ACTIVE',
+            },
+          });
+
+          const newAuthor = await prisma.author.create({
+            data: {
+              userId: shadowUser.id,
+              name: trimmedAuthorName,
+              nameGu: trimmedAuthorName,
+              nameHi: trimmedAuthorName,
+              image: '/assets/demo/1.jpg',
+              designation: 'Reporter',
+              designationGu: 'રિપોર્ટર',
+              designationHi: 'रिपोर्टर',
+              bio: `Reporter at Gujarat Post`,
+              bioGu: `ગુજરાત પોસ્ટ રિપોર્ટર`,
+              bioHi: `गुजरात पोस्ट रिपोर्टर`,
+            },
+          });
+          updateData.authorId = newAuthor.id;
+        }
+      } else if (authorId !== undefined) {
+        updateData.authorId = authorId;
+      }
       if (priority !== undefined) updateData.priority = Number(priority);
       if (readingTime !== undefined) updateData.readingTime = Number(readingTime);
       if (isTrending !== undefined) updateData.isTrending = !!isTrending;

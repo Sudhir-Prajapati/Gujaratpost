@@ -237,7 +237,10 @@ export default function WebStoriesPage() {
             ) : (
               <>
                 <ImageIcon size={24} className="text-gray-400 mb-2" />
-                <span className="text-xs text-gray-500 mb-2">Image {index} {index === 1 ? '*' : ''}</span>
+                <span className="text-xs text-gray-500 mb-1">Image {index} {index === 1 ? '*' : ''}</span>
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black mb-2">
+                  <span className="text-red-500">*</span>&nbsp;Mandatory &bull; 9:16 ratio &bull; Max 5 MB
+                </span>
                 <label className="cursor-pointer bg-primary/10 text-primary px-3 py-1.5 rounded text-sm hover:bg-primary/20 transition-colors">
                   Select
                   <input
@@ -522,10 +525,15 @@ export default function WebStoriesPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Story Images (Up to 5)
-                  </label>
-                  <p className="text-xs text-gray-500 mb-3">Upload portrait images (9:16 ratio recommended).</p>
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                      Story Images (Up to 5)
+                    </label>
+                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
+                      <span className="text-red-500">*</span>&nbsp;Mandatory (Image 1) &bull; 9:16 portrait &bull; Min 1080&times;1920 px &bull; Max 5 MB
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">Upload portrait images (9:16 ratio recommended). Image 1 is required.</p>
                   
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 h-[250px] overflow-y-auto pr-2">
                     <ImageUploaderBlock index={1} value={image1} setValue={setImage1} />

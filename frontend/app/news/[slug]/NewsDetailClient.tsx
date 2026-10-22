@@ -5,13 +5,14 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useIsApk } from '@/lib/useIsApk';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight, Download } from 'lucide-react';
 import { SocialIcon } from '@/components/ui/SocialLinks';
-import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
+import { isMediaVideo, sanitizeImageUrl, formatImageDownloadUrl } from '@/lib/media';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
 
 import RelatedStoriesSection from './components/RelatedStoriesSection';
+import AlsoPanVacho from './components/AlsoPanVacho';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
@@ -41,7 +42,11 @@ const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: st
       .replace(/\\r\\n/g, '\n')
       .replace(/\\r/g, '')
       .replace(/\\n/g, '\n')
-      .replace(/\\t/g, ' ');
+      .replace(/\\t/g, ' ')
+      .replace(
+        /(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/[^"'\s)]+?\.)(?:jpg|jpeg|png|webp|gif)/gi,
+        '$1avif'
+      );
   }, [html]);
 
   useEffect(() => {
@@ -112,7 +117,7 @@ import Advertisement from '@/components/ads/Advertisement';
 import { toGu } from '@/lib/utils';
 import { getBackendApiUrl, getHeroSettings } from '@/lib/api';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
-import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 const CATEGORY_SLUG_MAP: Record<string, string> = {
   'trending': 'trending',
@@ -212,7 +217,7 @@ function formatPdfDownloadUrl(url: string): string {
     return cleanUrl;
   }
 
-  return getBackendApiUrl(`/api/public/download-pdf?url=${encodeURIComponent(cleanUrl)}`);
+  return `/api/public/download-pdf?url=${encodeURIComponent(cleanUrl)}`;
 }
 
 function buildTwitterCardHtml(url: string, language?: string): string {
@@ -223,8 +228,8 @@ function buildTwitterCardHtml(url: string, language?: string): string {
   const sub = isGu
     ? 'સત્તાવાર ટ્વીટ જોવા માટે અહીં ક્લિક કરો'
     : isHi
-    ? 'आधिकारिक ट्वीट देखने के लिए यहाँ क्लिक करें'
-    : 'Click to view official post on X';
+      ? 'आधिकारिक ट्वीट देखने के लिए यहाँ क्लिक करें'
+      : 'Click to view official post on X';
   const btn = isGu ? 'ટ્વીટ જુઓ ↗' : isHi ? 'ट्वीट देखें ↗' : 'View Post ↗';
 
   return `<div class="gp-x-card my-6">
@@ -250,13 +255,13 @@ function buildPdfCardHtml(url: string, language?: string): string {
   const title = isGu
     ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ'
     : isHi
-    ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़'
-    : 'Attached Official Document (PDF)';
+      ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़'
+      : 'Attached Official Document (PDF)';
   const sub = isGu
     ? 'ચકાસાયેલ સત્તાવાર સરકારી / પ્રેસ દસ્તાવેજ'
     : isHi
-    ? 'सत्यापित आधिकारिक दस्तावेज़'
-    : 'Verified Official Document';
+      ? 'सत्यापित आधिकारिक दस्तावेज़'
+      : 'Verified Official Document';
   const btn = isGu ? 'ડાઉનલોડ PDF' : isHi ? 'डाउनलोड पीडीएफ' : 'Download PDF';
 
   return `<div class="gp-pdf-card my-6" data-pdf-url="${url.trim()}">
@@ -471,7 +476,7 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
     const isGalleryImg = trimmed.match(/!\[Gallery Image \d+\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/i);
     if (isGalleryImg) {
       galleryImageCount++;
-      if (galleryImageCount > 1) {
+      if (galleryImageCount > 10) {
         continue;
       }
     }
@@ -856,6 +861,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const category = normalizeDisplayText(getCategoryLabel(article, language));
   const authorName = getLocalized(language, { en: article.author.name, gu: article.author.nameGu, hi: article.author.nameHi });
   const authorAvatarImage = article.author?.image || (article.author as any)?.imageUrl || (article.author as any)?.avatar || '';
+  const hasAuthorPhoto = Boolean(authorAvatarImage) && !/^(editor|સંપાદક|संपादक)$/i.test(authorName.trim());
   const authorDesignation = getLocalized(language, {
     en: article.author.designation,
     gu: article.author.designationGu,
@@ -863,6 +869,22 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   });
   const authorBio = getLocalized(language, { en: article.author.bio, gu: article.author.bioGu, hi: article.author.bioHi });
   const tags = (language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)) || article.tags || [];
+
+  const readAlsoPool = useMemo(() => {
+    const seen = new Set<string>([String(article?.id || '')]);
+    const list: Article[] = [];
+    const pool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
+    for (const item of pool) {
+      if (!item) continue;
+      const id = String(item.id || '');
+      if (id && !seen.has(id)) {
+        seen.add(id);
+        list.push(item);
+      }
+    }
+    return list.slice(0, 4);
+  }, [article?.id, related, trending, mostReadArticles]);
+
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
 
   const paragraphs = useMemo(() => body.split(/\n\n+/), [body]);
@@ -902,7 +924,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     if (!body) return '';
 
     let cleaned = normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages))
-    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
+      .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
       .replace(/\s*data-end="[^"]*"/gi, '')
@@ -1212,6 +1234,34 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     return finalTags.slice(0, 20).map((tag) => normalizeDisplayText(tag));
   };
 
+  const getLocationDisplay = (loc: string | null | undefined, lang: Language) => {
+    const cleanLoc = (loc || '').trim();
+    const map: Record<string, { en: string; gu: string; hi: string }> = {
+      'ahmedabad': { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
+      'gandhinagar': { en: 'Gandhinagar', gu: 'ગાંધીનગર', hi: 'ગાંધીનગર' },
+      'surat': { en: 'Surat', gu: 'સુરત', hi: 'સુરત' },
+      'vadodara': { en: 'Vadodara', gu: 'વડોદરા', hi: 'વડોદરા' },
+      'rajkot': { en: 'Rajkot', gu: 'રાજકોટ', hi: 'રાજકોટ' },
+      'bhavnagar': { en: 'Bhavnagar', gu: 'ભાવનગર', hi: 'ભાવનગર' },
+      'jamnagar': { en: 'Jamnagar', gu: 'જામનગર', hi: 'જામનગર' },
+      'junagadh': { en: 'Junagadh', gu: 'જૂનાગઢ', hi: 'જૂનાગઢ' },
+      'kutch': { en: 'Kutch', gu: 'કચ્છ', hi: 'કચ્છ' },
+      'anand': { en: 'Anand', gu: 'આણંદ', hi: 'આણંદ' },
+      'gujarat': { en: 'Gujarat', gu: 'ગુજરાત', hi: 'ગુજરાત' },
+      'national': { en: 'National', gu: 'દેશ', hi: 'દેશ' },
+    };
+    const key = cleanLoc.toLowerCase();
+    if (map[key]) {
+      return uiLabel(lang, map[key]);
+    }
+    return cleanLoc || uiLabel(lang, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' });
+  };
+
+  const rawLocationDisplay = getLocationDisplay(article.location, language);
+  const cityLocationLabel = (rawLocationDisplay.toLowerCase() === category.toLowerCase())
+    ? uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' })
+    : rawLocationDisplay;
+
   return (
     <>
       <ReadingProgressBar />
@@ -1227,19 +1277,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 {category}
               </Link>
               <span>/</span>
-              <span>
-                {uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' })}
-              </span>
-              <span className="mx-0.5">:</span>
-              <span className="text-red-700 dark:text-red-400 font-bold">
-                {title}
+              <span>{cityLocationLabel}</span>
+              <span>/</span>
+              <span className="text-neutral-700 dark:text-neutral-300 font-normal">
+                <AutoArticleBreadcrumbTitle article={article} />
               </span>
             </nav>
 
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <div className="art-kick">
                 <span className="bar"></span>
-                <span>{category} · {uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' })}</span>
+                <span>{category} · {cityLocationLabel}</span>
               </div>
               {article.isBreaking && <span className="live-badge rounded bg-accent px-2 py-1 text-xs font-black text-white ml-2">BREAKING</span>}
             </div>
@@ -1254,10 +1302,10 @@ export default function NewsDetailClient({ article, related, trending, articleUr
             <div className="byline select-none">
               <div className="flex items-center gap-[11px]">
                 <Link href={`/author/${article.author.id}`} className="shrink-0 w-[38px] h-[38px] rounded-full bg-[var(--red)] text-white flex items-center justify-center font-bold text-sm hover:opacity-90 transition-opacity overflow-hidden border border-[#B3121B]/20 shadow-xs">
-                  {authorAvatarImage ? (
+                  {hasAuthorPhoto ? (
                     <img src={authorAvatarImage} alt={authorName} className="w-full h-full object-cover" />
                   ) : (
-                    <span>{authorName.substring(0, 2)}</span>
+                    <span>GP</span>
                   )}
                 </Link>
                 <div>
@@ -1276,7 +1324,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </span>
                 {/* Google News Follow Badge */}
                 <a
-                  href="https://news.google.com/publications/CAAqBwgKMJq4lgswrOalAw"
+                  href="https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu"
                   target="_blank"
                   rel="noreferrer"
                   title="Follow Gujarat Post on Google News"
@@ -1386,6 +1434,22 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                     </div>
                   );
                 })}
+
+                {/* Download AVIF Image Button */}
+                {slideImages[activeImageIndex] && !isMediaVideo(slideImages[activeImageIndex]) && (
+                  <a
+                    href={formatImageDownloadUrl(slideImages[activeImageIndex], `${article.slug || 'gujarat-post'}-${activeImageIndex + 1}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    download={`${article.slug || 'gujarat-post'}-${activeImageIndex + 1}.avif`}
+                    title="Download image in AVIF format (.avif)"
+                    className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/75 hover:bg-black text-white text-xs font-bold backdrop-blur-sm border border-white/20 transition-all opacity-90 hover:opacity-100 shadow-md active:scale-95 group/dl"
+                    suppressHydrationWarning
+                  >
+                    <Download className="w-3.5 h-3.5 text-white/90 group-hover/dl:text-white" />
+                    <span>{language === 'gu' ? 'AVIF ડાઉનલોડ' : language === 'hi' ? 'AVIF डाउनलोड' : 'Download AVIF'}</span>
+                  </a>
+                )}
               </div>
               <figcaption>
                 <span>
@@ -1393,11 +1457,11 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                     ? 'અમદાવાદના SG હાઇવે પર નવી ટ્રાફિક સિગ્નલ પ્રણાલી.'
                     : isTrafficArticle && language === 'hi'
                       ? 'अहमदाबाद के एसजी हाईवे पर नई ट्रैफिक संकेत प्रणाली।'
-                    : isTrafficArticle && language === 'hi'
-                      ? 'अहमदाबाद के एसजी हाईवे पर नई ट्रैफिक संकेत प्रणाली।'
-                      : isTrafficArticle
-                        ? 'New traffic signal system on SG Highway in Ahmedabad.'
-                        : title}
+                      : isTrafficArticle && language === 'hi'
+                        ? 'अहमदाबाद के एसजी हाईवे पर नई ट्रैफिक संकेत प्रणाली।'
+                        : isTrafficArticle
+                          ? 'New traffic signal system on SG Highway in Ahmedabad.'
+                          : title}
                 </span>
                 <span style={{ whiteSpace: 'nowrap' }}>
                   {uiLabel(language, { en: 'Photo: Gujarat Post', gu: 'તસવીર: ગુજરાત પોસ્ટ', hi: 'तस्वीर: ગુજરાત પોસ્ટ' })}
@@ -1419,7 +1483,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               uiLabel={uiLabel}
             />
 
-              {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
+            {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
             {(() => {
               const SPLIT_AT = 2;
               const splitHtml = (html: string, atPara: number): [string, string] => {
@@ -1455,6 +1519,35 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
                     {/* Horizontal Ad Banner placed directly after article description */}
                     <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
+
+                    {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
+                    {readAlsoPool.length > 0 && (
+                      <AlsoPanVacho
+                        articles={readAlsoPool}
+                        language={language}
+                        getCardThumbnail={getCardThumbnail}
+                        DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+                        uiLabel={uiLabel}
+                      />
+                    )}
+
+                    {/* Topics Tags directly inside article after Aa Pan Vacho */}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
+                        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
+                          {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
+                        </span>
+                        {tags.map((tag, tIdx) => (
+                          <Link
+                            key={tIdx}
+                            href={getTopicHref(tag)}
+                            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
+                          >
+                            {normalizeDisplayText(tag)}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 );
               }
@@ -1503,6 +1596,35 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
                       {/* Horizontal Ad Banner placed directly after full article description */}
                       <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
+
+                      {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
+                      {readAlsoPool.length > 0 && (
+                        <AlsoPanVacho
+                          articles={readAlsoPool}
+                          language={language}
+                          getCardThumbnail={getCardThumbnail}
+                          DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+                          uiLabel={uiLabel}
+                        />
+                      )}
+
+                      {/* Topics Tags directly inside article after Aa Pan Vacho */}
+                      {tags.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
+                          <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
+                            {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
+                          </span>
+                          {tags.map((tag, tIdx) => (
+                            <Link
+                              key={tIdx}
+                              href={getTopicHref(tag)}
+                              className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
+                            >
+                              {normalizeDisplayText(tag)}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Collapse / Read Less Button */}
                       <div className="flex justify-center pt-6 pb-2">
@@ -1606,15 +1728,15 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </div>
 
                 {!isRecommendedExpanded && sidebarRecommendedPool.length > 2 && (
-                    <button
-                      type="button"
-                      onClick={() => setSidebarMoreRecommended(true)}
-                      className="mt-3 w-full py-2 px-3 text-center text-[12.5px] font-bold text-[#B3121B] hover:text-white hover:bg-[#B3121B] rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none shadow-xs active:scale-95"
-                    >
-                      <span>{uiLabel(language, { en: 'View More Stories', gu: 'વધુ સમાચાર જુઓ', hi: 'और खबरें देखें' })}</span>
-                      <ChevronDown className="w-4 h-4 stroke-[2.5]" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => setSidebarMoreRecommended(true)}
+                    className="mt-3 w-full py-2 px-3 text-center text-[12.5px] font-bold text-[#B3121B] hover:text-white hover:bg-[#B3121B] rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none shadow-xs active:scale-95"
+                  >
+                    <span>{uiLabel(language, { en: 'View More Stories', gu: 'વધુ સમાચાર જુઓ', hi: 'और खबरें देखें' })}</span>
+                    <ChevronDown className="w-4 h-4 stroke-[2.5]" />
+                  </button>
+                )}
               </div>
 
               {/* WhatsApp Channel widget */}

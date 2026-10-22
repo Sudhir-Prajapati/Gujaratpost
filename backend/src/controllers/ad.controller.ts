@@ -77,7 +77,12 @@ export class AdController {
   // Get all advertisements (admin & public)
   static async getAllAds(req: Request, res: Response, next: NextFunction) {
     try {
-      const cacheKey = 'ALL_ADS';
+      const isAdmin = Boolean(
+        req.baseUrl?.includes('/admin') ||
+        req.originalUrl?.includes('/admin') ||
+        (req as any).user
+      );
+      const cacheKey = isAdmin ? 'ALL_ADMIN_ADS' : 'ALL_PUBLIC_ADS';
       const cached = adsCache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < ADS_CACHE_TTL_MS) {
         return sendSuccess(res, { ads: cached.data }, 'Advertisements retrieved successfully');
@@ -89,20 +94,35 @@ export class AdController {
 
       if (delegate && typeof delegate.findMany === 'function') {
         try {
-          ads = await delegate.findMany({ orderBy: { createdAt: 'desc' } });
+          const whereClause = isAdmin ? {} : { isActive: true };
+          ads = await delegate.findMany({ where: whereClause, orderBy: { createdAt: 'desc' } });
         } catch (_) {}
       }
 
       if (!ads || ads.length === 0) {
         try {
-          ads = await prisma.$queryRawUnsafe(`SELECT * FROM \`advertisements\` ORDER BY \`createdAt\` DESC`);
+          if (isAdmin) {
+            ads = await prisma.$queryRawUnsafe(`SELECT * FROM \`advertisements\` ORDER BY \`createdAt\` DESC`);
+          } else {
+            ads = await prisma.$queryRawUnsafe(`SELECT * FROM \`advertisements\` WHERE \`isActive\` = 1 ORDER BY \`createdAt\` DESC`);
+          }
         } catch (_) {
           ads = [];
         }
       }
 
-      adsCache.set(cacheKey, { timestamp: Date.now(), data: ads });
-      return sendSuccess(res, { ads }, 'Advertisements retrieved successfully');
+      // Normalize boolean flags for consistent client handling
+      const normalizedAds = (ads || []).map((ad: any) => ({
+        ...ad,
+        isActive: Boolean(ad.isActive === true || ad.isActive === 1 || ad.isActive === '1'),
+        includeInRandom: Boolean(ad.includeInRandom === true || ad.includeInRandom === 1 || ad.includeInRandom === '1'),
+      }));
+
+      // Extra safety for public: strictly reject any disabled ads
+      const finalAds = isAdmin ? normalizedAds : normalizedAds.filter((a: any) => a.isActive);
+
+      adsCache.set(cacheKey, { timestamp: Date.now(), data: finalAds });
+      return sendSuccess(res, { ads: finalAds }, 'Advertisements retrieved successfully');
     } catch (error: any) {
       return sendSuccess(res, { ads: [] }, 'Advertisements retrieved fallback');
     }
@@ -140,6 +160,19 @@ export class AdController {
           );
           if (rows && rows.length > 0) ad = rows[0];
         } catch (_) {}
+      }
+
+      if (ad) {
+        const isActuallyActive = Boolean(ad.isActive === true || ad.isActive === 1 || ad.isActive === '1');
+        if (!isActuallyActive) {
+          ad = null;
+        } else {
+          ad = {
+            ...ad,
+            isActive: true,
+            includeInRandom: Boolean(ad.includeInRandom === true || ad.includeInRandom === 1 || ad.includeInRandom === '1'),
+          };
+        }
       }
 
       adsCache.set(cacheKey, { timestamp: Date.now(), data: ad });

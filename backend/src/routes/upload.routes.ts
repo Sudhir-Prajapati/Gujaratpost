@@ -120,12 +120,19 @@ const handleUpload = (req: any, res: any) => {
 
       let result: any;
       try {
-        result = await cloudinary.uploader.upload(filePath, {
+        const uploadOptions: any = {
           folder: 'gujarat-post',
           resource_type: resourceType,
           use_filename: true,
           unique_filename: true,
-        });
+        };
+
+        // When uploading any image type (JPG, PNG, WebP, etc.), convert directly to AVIF format in Cloudinary
+        if (resourceType === 'image') {
+          uploadOptions.format = 'avif';
+        }
+
+        result = await cloudinary.uploader.upload(filePath, uploadOptions);
       } catch (uploadErr) {
         if (isPdf) {
           console.warn('⚠️ Cloudinary raw upload retry for PDF:', uploadErr);
@@ -144,6 +151,9 @@ const handleUpload = (req: any, res: any) => {
         fileUrl = `/uploads/${localFilename}`;
       } else if (fileUrl && fileUrl.includes('res.cloudinary.com')) {
         fileUrl = fileUrl.replace('/raw/upload/', '/image/upload/');
+        if (resourceType === 'image' && !fileUrl.toLowerCase().endsWith('.avif')) {
+          fileUrl = fileUrl.replace(/\.[a-zA-Z0-9]+$/, '.avif');
+        }
       }
       console.log(`✅ Upload Success: ${fileUrl}`);
 
@@ -253,6 +263,48 @@ router.get('/download-pdf', async (req: any, res: any) => {
     return res.status(404).json({ error: 'File not found' });
   } catch (err: any) {
     console.error('PDF proxy download error:', err);
+    res.status(500).json({ error: 'Download failed' });
+  }
+});
+
+router.get('/download-image', async (req: any, res: any) => {
+  try {
+    const rawUrl = req.query.url as string;
+    const customName = req.query.name as string;
+    if (!rawUrl || !rawUrl.trim()) {
+      return res.status(400).json({ error: 'URL parameter required' });
+    }
+
+    let cleanUrl = rawUrl.trim();
+    const baseName = (customName || path.basename(cleanUrl.split('?')[0]) || 'image').replace(/\.[a-zA-Z0-9]+$/, '');
+    const safeFilename = `${baseName}.avif`;
+
+    // 1. Cloudinary URL: redirect with fl_attachment and .avif extension
+    if (cleanUrl.includes('res.cloudinary.com') && cleanUrl.includes('/image/upload/')) {
+      let avifUrl = cleanUrl.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
+      if (!avifUrl.includes('/fl_attachment')) {
+        avifUrl = avifUrl.replace(
+          /\/image\/upload\/(?:v\d+\/)?/,
+          (match) => match.replace('/image/upload/', `/image/upload/fl_attachment:${encodeURIComponent(baseName)}/`)
+        );
+      }
+      return res.redirect(avifUrl);
+    }
+
+    // 2. Fetch external image and stream with AVIF content headers
+    const response = await fetch(cleanUrl);
+    if (!response.ok) {
+      return res.status(404).json({ error: 'Image not found' });
+    }
+
+    const arrayBuf = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuf);
+
+    res.setHeader('Content-Type', 'image/avif');
+    res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    return res.send(buffer);
+  } catch (err: any) {
+    console.error('Image proxy download error:', err);
     res.status(500).json({ error: 'Download failed' });
   }
 });

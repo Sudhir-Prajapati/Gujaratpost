@@ -199,7 +199,7 @@ export default function Header() {
   }
 
   const router = useRouter();
-  const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal } = useApp();
+  const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal, supportEnabled } = useApp();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -908,7 +908,7 @@ export default function Header() {
                 </button>
               </div>
               {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
-              <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5">
+              <div className={`grid ${supportEnabled ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 sm:gap-2.5`}>
                 <Link
                   href="/news-brief"
                   onClick={() => setMenuOpen(false)}
@@ -950,7 +950,7 @@ export default function Header() {
                     {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
                   </span>
                 </a>
-                <button
+                {supportEnabled && <button
                   type="button"
                   onClick={() => {
                     setMenuOpen(false);
@@ -963,7 +963,7 @@ export default function Header() {
                   <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
                     {language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}
                   </span>
-                </button>
+                </button>}
               </div>
               
               {/* App downloads CTA (Matches Footer Image 1 Style) */}
@@ -1135,7 +1135,7 @@ export default function Header() {
             {/* Non-scrollable controls pinned to the right (Support Us & E-Paper CTAs) */}
             <div className="ml-auto flex items-center gap-1.5 xl:gap-2 shrink-0 pl-2 xl:pl-3 border-l border-border/40 h-11 relative">
               {/* Support Us CTA */}
-              <button
+              {supportEnabled && <button
                 type="button"
                 onClick={openSupportModal}
                 onMouseEnter={prefetchSupportDetails}
@@ -1144,7 +1144,7 @@ export default function Header() {
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
                 <Heart className="h-4 w-4 shrink-0 fill-current text-white animate-pulse" />
                 <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'સપોર્ટ કરો' : language === 'hi' ? 'सपोर्ट करें' : 'Support Us'}</span>
-              </button>
+              </button>}
 
               {/* E-Paper CTA */}
               <a

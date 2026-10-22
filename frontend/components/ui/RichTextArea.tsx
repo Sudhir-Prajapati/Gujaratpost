@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   Scissors,
   Copy,
@@ -36,7 +36,14 @@ import {
   Eye,
   HelpCircle,
   X,
+  UploadCloud,
+  Upload,
+  Trash2,
+  Loader2,
+  Check,
+  AlertCircle,
 } from 'lucide-react';
+import { getBackendApiUrl, authFetch } from '@/lib/api';
 
 interface RichTextAreaProps {
   value: string;
@@ -64,8 +71,24 @@ export default function RichTextArea({
   const [activeModal, setActiveModal] = useState<'anchor' | 'link' | 'image' | 'specialChar' | 'help' | null>(null);
   const [modalInputVal, setModalInputVal] = useState('');
 
+  // Image insertion & management states
+  const [imageTab, setImageTab] = useState<'device' | 'url' | 'manage'>('device');
+  const [selectedDeviceFile, setSelectedDeviceFile] = useState<File | null>(null);
+  const [deviceFilePreview, setDeviceFilePreview] = useState<string | null>(null);
+  const [imageAltText, setImageAltText] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [currentImages, setCurrentImages] = useState<Array<{ id: string; src: string; alt: string }>>([]);
+
+  // In-editor image selection & floating toolbar
+  const [selectedImgEl, setSelectedImgEl] = useState<HTMLImageElement | null>(null);
+  const [selectedImgRect, setSelectedImgRect] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
+  const [isUploadingInline, setIsUploadingInline] = useState(false);
+
   const editorRef = useRef<HTMLDivElement>(null);
   const savedRangeRef = useRef<Range | null>(null);
+  const deviceFileInputRef = useRef<HTMLInputElement>(null);
 
   // Save active cursor/text selection inside contentEditable div
   const saveSelection = () => {
@@ -161,14 +184,388 @@ export default function RichTextArea({
     setActiveModal('link');
   };
 
+  // Scan current content for all embedded images (HTML <img> and Markdown ![...](...))
+  const refreshCurrentImages = useCallback(() => {
+    const list: Array<{ id: string; src: string; alt: string }> = [];
+    if (editorRef.current) {
+      const imgs = editorRef.current.querySelectorAll('img');
+      imgs.forEach((img, i) => {
+        list.push({
+          id: `img-${i}-${img.src}`,
+          src: img.getAttribute('src') || img.src,
+          alt: img.getAttribute('alt') || `Story Image #${i + 1}`,
+        });
+      });
+    } else if (value) {
+      const htmlMatches = [...value.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*alt=["']?([^"'>]*)["']?[^>]*>/gi)];
+      htmlMatches.forEach((m, i) => {
+        list.push({
+          id: `html-img-${i}`,
+          src: m[1],
+          alt: m[2] || `Story Image #${i + 1}`,
+        });
+      });
+      const mdMatches = [...value.matchAll(/!\[(.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi)];
+      mdMatches.forEach((m, i) => {
+        list.push({
+          id: `md-img-${i}`,
+          src: m[2],
+          alt: m[1] || `Story Image #${i + 1}`,
+        });
+      });
+    }
+    setCurrentImages(list);
+    return list;
+  }, [value]);
+
+  // Insert HTML at cursor position or append to editor
+  const insertHtmlAtCursor = (html: string) => {
+    if (showSource) {
+      const newVal = (value || '') + '\n' + html;
+      onChange(newVal);
+      return;
+    }
+
+    if (editorRef.current) {
+      editorRef.current.focus();
+      if (savedRangeRef.current) {
+        restoreSelection();
+      }
+    }
+
+    try {
+      const success = document.execCommand('insertHTML', false, html);
+      if (!success && editorRef.current) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        while (tempDiv.firstChild) {
+          editorRef.current.appendChild(tempDiv.firstChild);
+        }
+      }
+    } catch (err) {
+      console.error('execCommand error:', err);
+      if (editorRef.current) {
+        editorRef.current.innerHTML += html;
+      }
+    }
+
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+    setTimeout(refreshCurrentImages, 30);
+  };
+
   // Open Image Dialog
   const openImageModal = () => {
     saveSelection();
+    setImageTab('device');
     setModalInputVal('https://');
+    setImageAltText('');
+    setSelectedDeviceFile(null);
+    if (deviceFilePreview) URL.revokeObjectURL(deviceFilePreview);
+    setDeviceFilePreview(null);
+    setUploadError(null);
+    refreshCurrentImages();
     setActiveModal('image');
   };
 
-  // Submit Modal Action
+  // Process Device File Selection
+  const processSelectedDeviceFile = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      setUploadError('Selected file is not an image. Please choose JPG, PNG, WEBP, or GIF.');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      setUploadError('File size exceeds 25MB limit.');
+      return;
+    }
+    setSelectedDeviceFile(file);
+    setUploadError(null);
+    if (!imageAltText) {
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      setImageAltText(cleanName);
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setDeviceFilePreview(previewUrl);
+  };
+
+  const handleDeviceFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      processSelectedDeviceFile(e.target.files[0]);
+    }
+  };
+
+  // Upload image from device and insert into description
+  const handleDeviceUploadAndInsert = async () => {
+    if (!selectedDeviceFile) {
+      setUploadError('Please choose an image file from your device first.');
+      return;
+    }
+    setIsUploading(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedDeviceFile);
+
+      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+        method: 'POST',
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || json.message || 'Image upload failed.');
+      }
+
+      const uploadedUrl = json.url || json.data?.url;
+      if (!uploadedUrl) {
+        throw new Error('Server did not return a valid image URL.');
+      }
+
+      const alt = imageAltText.trim() || selectedDeviceFile.name.replace(/\.[^/.]+$/, '');
+      const imgHTML = `<figure class="my-4 text-center"><img src="${uploadedUrl}" alt="${alt}" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure><p></p>`;
+
+      insertHtmlAtCursor(imgHTML);
+
+      if (deviceFilePreview) {
+        URL.revokeObjectURL(deviceFilePreview);
+      }
+      setSelectedDeviceFile(null);
+      setDeviceFilePreview(null);
+      setImageAltText('');
+      setActiveModal(null);
+    } catch (err: any) {
+      console.error('Device upload error:', err);
+      setUploadError(err.message || 'Failed to upload image from device.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Insert image via URL link
+  const handleUrlInsert = () => {
+    const url = modalInputVal.trim();
+    if (!url || url === 'https://') {
+      setUploadError('Please enter a valid image URL.');
+      return;
+    }
+    const alt = imageAltText.trim() || 'Article Image';
+    const imgHTML = `<figure class="my-4 text-center"><img src="${url}" alt="${alt}" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure><p></p>`;
+    insertHtmlAtCursor(imgHTML);
+    setModalInputVal('https://');
+    setImageAltText('');
+    setActiveModal(null);
+  };
+
+  // Remove specific image by URL
+  const handleRemoveImageFromList = (srcToRemove: string) => {
+    if (editorRef.current) {
+      const imgs = editorRef.current.querySelectorAll('img');
+      imgs.forEach((img) => {
+        const imgSrc = img.getAttribute('src') || img.src;
+        if (imgSrc === srcToRemove || img.src === srcToRemove) {
+          const parent = img.parentElement;
+          if (parent && parent.tagName === 'FIGURE') {
+            parent.remove();
+          } else {
+            img.remove();
+          }
+        }
+      });
+      onChange(editorRef.current.innerHTML);
+    } else if (value) {
+      const escaped = srcToRemove.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      let newVal = value.replace(new RegExp(`<figure[^>]*>\\s*<img[^>]+src=["']${escaped}["'][^>]*>\\s*<\\/figure>`, 'gi'), '');
+      newVal = newVal.replace(new RegExp(`<img[^>]+src=["']${escaped}["'][^>]*>`, 'gi'), '');
+      newVal = newVal.replace(new RegExp(`!\\[[^\\]]*\\]\\(${escaped}\\)`, 'gi'), '');
+      onChange(newVal);
+    }
+
+    if (selectedImgEl && (selectedImgEl.getAttribute('src') === srcToRemove || selectedImgEl.src === srcToRemove)) {
+      setSelectedImgEl(null);
+      setSelectedImgRect(null);
+    }
+    setTimeout(refreshCurrentImages, 20);
+  };
+
+  // Remove all images from description
+  const handleRemoveAllImages = () => {
+    if (!confirm('Are you sure you want to remove all images from this description?')) return;
+    if (editorRef.current) {
+      const imgs = editorRef.current.querySelectorAll('img');
+      imgs.forEach((img) => {
+        const parent = img.parentElement;
+        if (parent && parent.tagName === 'FIGURE') {
+          parent.remove();
+        } else {
+          img.remove();
+        }
+      });
+      onChange(editorRef.current.innerHTML);
+    } else if (value) {
+      let newVal = value.replace(/<figure[^>]*>[\s\S]*?<\/figure>/gi, '');
+      newVal = newVal.replace(/<img[^>]+>/gi, '');
+      newVal = newVal.replace(/!\[(.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '');
+      onChange(newVal);
+    }
+    setSelectedImgEl(null);
+    setSelectedImgRect(null);
+    setTimeout(refreshCurrentImages, 20);
+  };
+
+  // Click on image in editor to reveal action overlay
+  const handleEditorClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target && target.tagName === 'IMG') {
+      const imgEl = target as HTMLImageElement;
+      setSelectedImgEl(imgEl);
+      const rect = imgEl.getBoundingClientRect();
+      setSelectedImgRect({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      });
+    } else {
+      if (selectedImgEl) {
+        setSelectedImgEl(null);
+        setSelectedImgRect(null);
+      }
+    }
+  };
+
+  // Remove currently selected image
+  const handleRemoveSelectedImg = () => {
+    if (!selectedImgEl) return;
+    const parent = selectedImgEl.parentElement;
+    if (parent && parent.tagName === 'FIGURE') {
+      parent.remove();
+    } else {
+      selectedImgEl.remove();
+    }
+    setSelectedImgEl(null);
+    setSelectedImgRect(null);
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+    refreshCurrentImages();
+  };
+
+  // Align currently selected image
+  const handleAlignSelectedImg = (alignment: 'left' | 'center' | 'right') => {
+    if (!selectedImgEl) return;
+    const parent = selectedImgEl.parentElement;
+    const targetEl = parent && parent.tagName === 'FIGURE' ? parent : selectedImgEl;
+
+    targetEl.className =
+      alignment === 'center'
+        ? 'my-4 text-center clear-both'
+        : alignment === 'left'
+        ? 'my-4 float-left mr-4 max-w-[50%]'
+        : 'my-4 float-right ml-4 max-w-[50%]';
+
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+      const rect = selectedImgEl.getBoundingClientRect();
+      setSelectedImgRect({
+        top: rect.top,
+        left: rect.left,
+        width: rect.width,
+        height: rect.height,
+      });
+    }
+  };
+
+  // Inline upload for drag-and-drop & paste
+  const uploadAndInsertFile = async (file: File) => {
+    setIsUploadingInline(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+        method: 'POST',
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || json.message || 'Image upload failed');
+      }
+      const uploadedUrl = json.url || json.data?.url;
+      if (!uploadedUrl) {
+        throw new Error('No image URL returned from server');
+      }
+      const alt = file.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ');
+      const imgHTML = `<figure class="my-4 text-center"><img src="${uploadedUrl}" alt="${alt}" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure><p></p>`;
+      insertHtmlAtCursor(imgHTML);
+    } catch (err: any) {
+      console.error('Failed to upload image:', err);
+      alert(err.message || 'Failed to upload image from device.');
+    } finally {
+      setIsUploadingInline(false);
+    }
+  };
+
+  // Highlight selected image in editor DOM
+  useEffect(() => {
+    if (selectedImgEl) {
+      selectedImgEl.style.outline = '3px solid #ef4444';
+      selectedImgEl.style.outlineOffset = '3px';
+      selectedImgEl.style.borderRadius = '12px';
+    }
+    return () => {
+      if (selectedImgEl) {
+        selectedImgEl.style.outline = '';
+        selectedImgEl.style.outlineOffset = '';
+      }
+    };
+  }, [selectedImgEl]);
+
+  // Keep floating action overlay positioned correctly on scroll/resize
+  useEffect(() => {
+    const updateRect = () => {
+      if (selectedImgEl) {
+        const rect = selectedImgEl.getBoundingClientRect();
+        if (rect.bottom < 50 || rect.top > window.innerHeight - 50) {
+          setSelectedImgEl(null);
+          setSelectedImgRect(null);
+        } else {
+          setSelectedImgRect({
+            top: rect.top,
+            left: rect.left,
+            width: rect.width,
+            height: rect.height,
+          });
+        }
+      }
+    };
+
+    if (selectedImgEl) {
+      window.addEventListener('scroll', updateRect, true);
+      window.addEventListener('resize', updateRect);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', updateRect);
+    };
+  }, [selectedImgEl]);
+
+  // Deselect image when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('.floating-img-toolbar') || (selectedImgEl && selectedImgEl.contains(target))) {
+        return;
+      }
+      setSelectedImgEl(null);
+      setSelectedImgRect(null);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [selectedImgEl]);
+
+  // Submit Modal Action (for Anchor & Link)
   const handleModalSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     const val = modalInputVal.trim();
@@ -188,11 +585,6 @@ export default function RichTextArea({
           const linkHTML = `<a href="${val}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 font-bold underline hover:underline break-all">${val}</a>&nbsp;`;
           execCmd('insertHTML', linkHTML);
         }
-      }
-    } else if (activeModal === 'image') {
-      if (val) {
-        const imgHTML = `<figure class="my-4 text-center"><img src="${val}" alt="Article Image" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure><p></p>`;
-        execCmd('insertHTML', imgHTML);
       }
     }
     setActiveModal(null);
@@ -291,7 +683,7 @@ export default function RichTextArea({
         </div>
       )}
 
-      <div className={`rounded-2xl border border-gray-400 bg-white overflow-hidden shadow-xs dark:border-zinc-600 dark:bg-zinc-900 transition-all focus-within:border-primary ${isFullscreen ? 'flex-1 flex flex-col' : ''}`}>
+      <div className={`relative rounded-2xl border border-gray-400 bg-white overflow-hidden shadow-xs dark:border-zinc-600 dark:bg-zinc-900 transition-all focus-within:border-primary ${isFullscreen ? 'flex-1 flex flex-col' : ''}`}>
 
         {/* FULL CKEDITOR STYLE TOOLBAR (2 ROWS) */}
         <div className="border-b border-gray-400 bg-zinc-50/80 p-2.5 dark:border-zinc-700 dark:bg-zinc-950/60 select-none space-y-2">
@@ -675,22 +1067,80 @@ export default function RichTextArea({
             className={`w-full bg-white px-4 py-3 text-base font-mono text-gray-900 placeholder:text-gray-500 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 leading-relaxed ${isFullscreen ? 'flex-1 min-h-[400px]' : ''}`}
           />
         ) : (
-          <div
-            ref={editorRef}
-            contentEditable
-            onInput={handleInput}
-            onBlur={() => {
-              saveSelection();
-              handleInput();
-            }}
-            onKeyUp={saveSelection}
-            onMouseUp={saveSelection}
-            onSelect={saveSelection}
-            onClick={saveSelection}
-            style={{ minHeight: isFullscreen ? 'calc(100vh - 200px)' : `${rows * 28}px` }}
-            className={`w-full bg-white px-4 py-3 text-base text-gray-900 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 font-sans leading-relaxed prose dark:prose-invert max-w-none break-words overflow-x-auto [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:my-3 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:text-gray-900 dark:[&_blockquote]:text-white [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_li]:list-item [&_li]:my-1 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500 empty:before:italic ${isFullscreen ? 'flex-1 overflow-y-auto' : ''}`}
-            data-placeholder={placeholder}
-          />
+          <div className="relative">
+            <div
+              ref={editorRef}
+              contentEditable
+              onInput={handleInput}
+              onBlur={() => {
+                saveSelection();
+                handleInput();
+              }}
+              onKeyUp={saveSelection}
+              onMouseUp={saveSelection}
+              onSelect={saveSelection}
+              onClick={(e) => {
+                saveSelection();
+                handleEditorClick(e);
+              }}
+              onKeyDown={(e) => {
+                if (selectedImgEl && (e.key === 'Backspace' || e.key === 'Delete')) {
+                  e.preventDefault();
+                  handleRemoveSelectedImg();
+                }
+              }}
+              onDragOver={(e) => {
+                if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+                  e.preventDefault();
+                  setIsDraggingFile(true);
+                }
+              }}
+              onDragLeave={() => setIsDraggingFile(false)}
+              onDrop={async (e) => {
+                setIsDraggingFile(false);
+                if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  const file = e.dataTransfer.files[0];
+                  if (file.type.startsWith('image/')) {
+                    e.preventDefault();
+                    await uploadAndInsertFile(file);
+                  }
+                }
+              }}
+              onPaste={async (e) => {
+                if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length > 0) {
+                  const file = e.clipboardData.files[0];
+                  if (file.type.startsWith('image/')) {
+                    e.preventDefault();
+                    await uploadAndInsertFile(file);
+                  }
+                }
+              }}
+              style={{ minHeight: isFullscreen ? 'calc(100vh - 200px)' : `${rows * 28}px` }}
+              className={`w-full bg-white px-4 py-3 text-base text-gray-900 focus:outline-none dark:bg-zinc-900 dark:text-zinc-100 font-sans leading-relaxed prose dark:prose-invert max-w-none break-words overflow-x-auto [&_img]:cursor-pointer [&_img]:transition-all [&_img:hover]:opacity-90 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:my-3 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:text-gray-900 dark:[&_blockquote]:text-white [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_li]:list-item [&_li]:my-1 empty:before:content-[attr(data-placeholder)] empty:before:text-gray-500 empty:before:italic ${isFullscreen ? 'flex-1 overflow-y-auto' : ''}`}
+              data-placeholder={placeholder}
+            />
+
+            {/* Drag File Hover Indicator */}
+            {isDraggingFile && (
+              <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-blue-50/90 dark:bg-blue-950/90 border-2 border-dashed border-blue-500 rounded-2xl backdrop-blur-xs pointer-events-none">
+                <UploadCloud className="h-10 w-10 text-blue-600 animate-bounce" />
+                <span className="text-sm font-extrabold text-blue-900 dark:text-blue-100 mt-2">
+                  Drop Image Here to Upload & Insert into Description
+                </span>
+                <span className="text-xs text-blue-700 dark:text-blue-300">
+                  Supports JPG, PNG, WEBP, GIF
+                </span>
+              </div>
+            )}
+
+            {/* Inline Uploading Indicator */}
+            {isUploadingInline && (
+              <div className="absolute bottom-3 right-3 z-30 flex items-center gap-2 bg-zinc-900/95 text-white px-3 py-1.5 rounded-xl shadow-lg border border-zinc-700 text-xs font-bold animate-pulse">
+                <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
+                <span>Uploading image from device...</span>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -793,14 +1243,322 @@ export default function RichTextArea({
                   </button>
                 ))}
               </div>
+            ) : activeModal === 'image' ? (
+              /* DEDICATED IMAGE MODAL (From Device, Image URL, Manage/Remove) */
+              <div className="space-y-4">
+                {/* Navigation Tabs */}
+                <div className="flex border-b border-gray-200 dark:border-zinc-700 -mt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageTab('device');
+                      setUploadError(null);
+                    }}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                      imageTab === 'device'
+                        ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    <UploadCloud className="h-4 w-4" />
+                    <span>From Device</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageTab('url');
+                      setUploadError(null);
+                    }}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                      imageTab === 'url'
+                        ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    <span>Image URL</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setImageTab('manage');
+                      refreshCurrentImages();
+                      setUploadError(null);
+                    }}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+                      imageTab === 'manage'
+                        ? 'border-red-600 text-red-600 dark:border-red-400 dark:text-red-400'
+                        : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span>Manage / Remove ({currentImages.length})</span>
+                  </button>
+                </div>
+
+                {/* TAB 1: FROM DEVICE */}
+                {imageTab === 'device' ? (
+                  <div className="space-y-4">
+                    <input
+                      ref={deviceFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleDeviceFileSelect}
+                    />
+
+                    {!selectedDeviceFile ? (
+                      <div
+                        onClick={() => deviceFileInputRef.current?.click()}
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            processSelectedDeviceFile(e.dataTransfer.files[0]);
+                          }
+                        }}
+                        className="border-2 border-dashed border-gray-300 dark:border-zinc-700 hover:border-purple-500 dark:hover:border-purple-500 rounded-2xl p-6 text-center cursor-pointer bg-zinc-50/60 hover:bg-purple-50/20 dark:bg-zinc-800/40 dark:hover:bg-purple-950/20 transition-all space-y-2 group"
+                      >
+                        <div className="mx-auto w-12 h-12 rounded-full bg-purple-100 dark:bg-purple-950/60 flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-105 transition-transform">
+                          <UploadCloud className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                            Click to browse device or drag & drop image here
+                          </p>
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                            Upload photos from your computer, phone, or tablet (JPG, PNG, WebP, GIF)
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="relative rounded-2xl border border-gray-300 dark:border-zinc-700 overflow-hidden bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center max-h-56 p-2">
+                          {deviceFilePreview ? (
+                            <img src={deviceFilePreview} alt="Selected Preview" className="max-h-52 w-auto object-contain rounded-xl shadow-xs" />
+                          ) : (
+                            <ImageIcon className="h-12 w-12 text-zinc-400" />
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedDeviceFile(null);
+                              if (deviceFilePreview) URL.revokeObjectURL(deviceFilePreview);
+                              setDeviceFilePreview(null);
+                            }}
+                            className="absolute top-3 right-3 p-1.5 bg-black/70 hover:bg-black text-white rounded-full transition-colors cursor-pointer shadow-md"
+                            title="Change image"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400 px-1">
+                          <span className="font-semibold truncate max-w-[240px]">{selectedDeviceFile.name}</span>
+                          <span className="font-mono bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded">{(selectedDeviceFile.size / 1024).toFixed(1)} KB</span>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                            Image Caption / Alt Description (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={imageAltText}
+                            onChange={(e) => setImageAltText(e.target.value)}
+                            placeholder="e.g. Gujarat Post event coverage"
+                            className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-purple-500 focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {uploadError && (
+                      <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <span>{uploadError}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-300 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal(null)}
+                        className="rounded-xl border border-gray-300 bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!selectedDeviceFile || isUploading}
+                        onClick={handleDeviceUploadAndInsert}
+                        className="flex items-center gap-2 rounded-xl bg-purple-600 hover:bg-purple-700 disabled:opacity-50 px-5 py-2 text-xs font-extrabold text-white shadow-sm transition-all cursor-pointer"
+                      >
+                        {isUploading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Uploading Image...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            <span>Upload & Insert Image</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                ) : imageTab === 'url' ? (
+                  /* TAB 2: IMAGE URL */
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Image URL Address *
+                      </label>
+                      <input
+                        type="text"
+                        value={modalInputVal}
+                        onChange={(e) => setModalInputVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleUrlInsert();
+                          }
+                        }}
+                        placeholder="https://... or /uploads/..."
+                        className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-purple-500 focus:outline-none"
+                        autoFocus
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                        Image Caption / Alt Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={imageAltText}
+                        onChange={(e) => setImageAltText(e.target.value)}
+                        placeholder="e.g. Press conference in Ahmedabad"
+                        className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3.5 py-2.5 text-sm text-zinc-900 dark:text-white focus:border-purple-500 focus:outline-none"
+                      />
+                    </div>
+
+                    {uploadError && (
+                      <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-xs font-semibold flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 shrink-0" />
+                        <span>{uploadError}</span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-300 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal(null)}
+                        className="rounded-xl border border-gray-300 bg-zinc-100 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleUrlInsert}
+                        className="flex items-center gap-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 px-5 py-2 text-xs font-extrabold text-white shadow-sm transition-all cursor-pointer"
+                      >
+                        <Check className="h-4 w-4" />
+                        <span>Insert Image</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* TAB 3: MANAGE / REMOVE IMAGES */
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-extrabold text-zinc-700 dark:text-zinc-300">
+                        {currentImages.length} {currentImages.length === 1 ? 'Image' : 'Images'} currently inside this description
+                      </span>
+                      {currentImages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={handleRemoveAllImages}
+                          className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:underline cursor-pointer"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Remove All Images</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {currentImages.length === 0 ? (
+                      <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 space-y-2 bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-dashed border-gray-300 dark:border-zinc-700">
+                        <ImageIcon className="h-10 w-10 mx-auto text-zinc-400 opacity-60" />
+                        <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
+                          No images in this description yet
+                        </p>
+                        <p className="text-xs text-zinc-500">
+                          Use "From Device" or "Image URL" tab to insert an image into your story.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                        {currentImages.map((img, i) => (
+                          <div
+                            key={img.id || i}
+                            className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-gray-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/60 hover:border-red-300 dark:hover:border-red-900/60 transition-all"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <img
+                                src={img.src}
+                                alt={img.alt || 'Story Image'}
+                                className="w-14 h-14 rounded-lg object-cover border border-gray-300 dark:border-zinc-700 bg-white shrink-0"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = '/assets/demo/1.jpg';
+                                }}
+                              />
+                              <div className="min-w-0 text-left">
+                                <p className="text-xs font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                  {img.alt || `Story Image #${i + 1}`}
+                                </p>
+                                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 truncate font-mono">
+                                  {img.src}
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImageFromList(img.src)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/40 dark:hover:bg-red-900/60 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-xs font-bold shrink-0 transition-colors cursor-pointer"
+                              title="Remove image from description"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              <span>Remove</span>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end pt-2 border-t border-gray-300 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal(null)}
+                        className="rounded-xl border border-gray-300 bg-zinc-100 px-5 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              /* Input Form */
+              /* Input Form (Anchor & Link) */
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
                     {activeModal === 'anchor' && 'Anchor Name'}
                     {activeModal === 'link' && 'Link URL Address'}
-                    {activeModal === 'image' && 'Image URL Address'}
                   </label>
                   <input
                     type="text"
@@ -843,6 +1601,74 @@ export default function RichTextArea({
             )}
 
           </div>
+        </div>
+      )}
+
+      {/* FLOATING ACTION TOOLBAR OVER SELECTED IMAGE IN EDITOR */}
+      {selectedImgRect && selectedImgEl && (
+        <div
+          style={{
+            top: Math.max(10, selectedImgRect.top - 46),
+            left: Math.max(10, selectedImgRect.left),
+          }}
+          className="floating-img-toolbar fixed z-[999999] flex items-center gap-1.5 bg-zinc-900/95 dark:bg-black/95 text-white px-3 py-1.5 rounded-xl shadow-2xl border border-zinc-700/80 backdrop-blur-md animate-in fade-in zoom-in-95 select-none"
+        >
+          <div className="flex items-center gap-1 text-xs text-zinc-300 pr-1.5 border-r border-zinc-700 max-w-[130px] truncate">
+            <ImageIcon className="h-3.5 w-3.5 text-purple-400 shrink-0" />
+            <span className="truncate">{selectedImgEl.alt || 'Story Image'}</span>
+          </div>
+
+          {/* Remove Image Button */}
+          <button
+            type="button"
+            onClick={handleRemoveSelectedImg}
+            className="flex items-center gap-1 text-xs font-bold bg-red-600 hover:bg-red-700 text-white px-2.5 py-1 rounded-lg transition-colors cursor-pointer shadow-xs"
+            title="Delete this image from description"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Remove Image</span>
+          </button>
+
+          {/* Alignment presets */}
+          <div className="flex items-center gap-0.5 border-l border-zinc-700 pl-1">
+            <button
+              type="button"
+              onClick={() => handleAlignSelectedImg('left')}
+              title="Float Left (Wrap Text)"
+              className="p-1 hover:bg-zinc-800 rounded text-zinc-300 hover:text-white cursor-pointer"
+            >
+              <AlignLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAlignSelectedImg('center')}
+              title="Center Image"
+              className="p-1 hover:bg-zinc-800 rounded text-zinc-300 hover:text-white cursor-pointer"
+            >
+              <AlignCenter className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => handleAlignSelectedImg('right')}
+              title="Float Right (Wrap Text)"
+              className="p-1 hover:bg-zinc-800 rounded text-zinc-300 hover:text-white cursor-pointer"
+            >
+              <AlignRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          {/* Close */}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectedImgEl(null);
+              setSelectedImgRect(null);
+            }}
+            className="p-1 text-zinc-400 hover:text-white ml-0.5 cursor-pointer"
+            title="Close"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
       )}
 

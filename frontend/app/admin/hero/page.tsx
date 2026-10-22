@@ -6,6 +6,7 @@ import {
   LayoutTemplate, ArrowUpRight, Trash2, Save,
   Calendar, User, Tag, X, ImageIcon, GripVertical, ChevronLeft, ChevronRight,
   Layers, MoveHorizontal, ArrowUp, ArrowDown, Clock, Sparkles, Check,
+  Plus, PenLine, Pencil, FileText, Link as LinkIcon,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -336,13 +337,27 @@ export default function HeroManagerPage() {
   const [heroGridMode, setHeroGridMode] = useState<'auto' | 'manual'>('auto');
   const [savingHeroGrid, setSavingHeroGrid] = useState(false);
 
-  // Breaking News ticker badge label, mode, speed and custom articles
+  // Custom headline & link item type
+  interface CustomHeadlineItem {
+    id: string;
+    heading: string;
+    link: string;
+  }
+
+  // Breaking News ticker badge label, mode, speed and custom articles / custom headlines
   const [tickerBadgeText, setTickerBadgeText] = useState('બ્રેકિંગ ન્યૂઝ');
   const [tickerMode, setTickerMode] = useState<'scroll' | 'single'>('scroll');
   const [tickerSpeed, setTickerSpeed] = useState<number>(4500);
   const [tickerHidden, setTickerHidden] = useState<boolean>(false);
   const [showTickerSettingsWhileHidden, setShowTickerSettingsWhileHidden] = useState(false);
+  const [tickerSourceType, setTickerSourceType] = useState<'articles' | 'custom'>('articles');
   const [selectedTickerArticles, setSelectedTickerArticles] = useState<Article[]>([]);
+  const [customTickerHeadlines, setCustomTickerHeadlines] = useState<CustomHeadlineItem[]>([]);
+  const [newCustomHeading, setNewCustomHeading] = useState('');
+  const [newCustomLink, setNewCustomLink] = useState('');
+  const [editingHeadlineId, setEditingHeadlineId] = useState<string | null>(null);
+  const [editingHeadingText, setEditingHeadingText] = useState('');
+  const [editingLinkText, setEditingLinkText] = useState('');
   const [savingTickerBadge, setSavingTickerBadge] = useState(false);
   const [previewTickerIndex, setPreviewTickerIndex] = useState(0);
 
@@ -393,6 +408,20 @@ export default function HeroManagerPage() {
                 setTickerHidden(true);
               } else if (parsed.hidden === 'false') {
                 setTickerHidden(false);
+              }
+              if (parsed.sourceType === 'custom' || parsed.sourceType === 'articles') {
+                setTickerSourceType(parsed.sourceType);
+              }
+              if (Array.isArray(parsed.customHeadlines)) {
+                setCustomTickerHeadlines(
+                  parsed.customHeadlines
+                    .filter((h: any) => h && (h.heading || h.title))
+                    .map((h: any, i: number) => ({
+                      id: h.id || `custom-${i}`,
+                      heading: h.heading || h.title || '',
+                      link: h.link || h.url || '',
+                    }))
+                );
               }
               if (Array.isArray(parsed.articleIds) && parsed.articleIds.length > 0) {
                 const artMap = new Map<string, Article>();
@@ -475,15 +504,19 @@ export default function HeroManagerPage() {
   // Preview cycling in Single mode
   useEffect(() => {
     if (tickerMode !== 'single') return;
-    const count = selectedTickerArticles.length > 0
-      ? selectedTickerArticles.length
-      : 1;
-    if (count <= 1) return;
+    const count =
+      tickerSourceType === 'custom'
+        ? customTickerHeadlines.length
+        : selectedTickerArticles.length;
+    if (count <= 1) {
+      setPreviewTickerIndex(0);
+      return;
+    }
     const interval = setInterval(() => {
       setPreviewTickerIndex((prev) => (prev + 1) % count);
     }, tickerSpeed);
     return () => clearInterval(interval);
-  }, [tickerMode, tickerSpeed, selectedTickerArticles.length]);
+  }, [tickerMode, tickerSpeed, tickerSourceType, selectedTickerArticles.length, customTickerHeadlines.length]);
 
   const handleMoveTickerArticle = (index: number, direction: 'up' | 'down') => {
     const target = direction === 'up' ? index - 1 : index + 1;
@@ -506,6 +539,68 @@ export default function HeroManagerPage() {
     }
     setSelectedTickerArticles((prev) => [...prev, article]);
     showToast(`Added "${getTitle(article).slice(0, 30)}..." to ticker`, true);
+  };
+
+  const handleAddCustomHeadline = () => {
+    if (!newCustomHeading.trim()) return;
+    const newItem: CustomHeadlineItem = {
+      id: `custom-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+      heading: newCustomHeading.trim(),
+      link: newCustomLink.trim(),
+    };
+    setCustomTickerHeadlines((prev) => [...prev, newItem]);
+    setNewCustomHeading('');
+    setNewCustomLink('');
+    showToast('Added custom headline to ticker', true);
+  };
+
+  const handleMoveCustomHeadline = (index: number, direction: 'up' | 'down') => {
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= customTickerHeadlines.length) return;
+    const copy = [...customTickerHeadlines];
+    const item = copy[index];
+    copy[index] = copy[target];
+    copy[target] = item;
+    setCustomTickerHeadlines(copy);
+  };
+
+  const handleRemoveCustomHeadline = (index: number) => {
+    setCustomTickerHeadlines((prev) => prev.filter((_, i) => i !== index));
+    if (editingHeadlineId && customTickerHeadlines[index]?.id === editingHeadlineId) {
+      setEditingHeadlineId(null);
+      setEditingHeadingText('');
+      setEditingLinkText('');
+    }
+  };
+
+  const handleStartEditCustomHeadline = (item: CustomHeadlineItem) => {
+    setEditingHeadlineId(item.id);
+    setEditingHeadingText(item.heading);
+    setEditingLinkText(item.link || '');
+  };
+
+  const handleCancelEditCustomHeadline = () => {
+    setEditingHeadlineId(null);
+    setEditingHeadingText('');
+    setEditingLinkText('');
+  };
+
+  const handleSaveEditCustomHeadline = (id: string) => {
+    if (!editingHeadingText.trim()) {
+      showToast('Headline cannot be empty', false);
+      return;
+    }
+    setCustomTickerHeadlines((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, heading: editingHeadingText.trim(), link: editingLinkText.trim() }
+          : item
+      )
+    );
+    setEditingHeadlineId(null);
+    setEditingHeadingText('');
+    setEditingLinkText('');
+    showToast('Headline updated successfully', true);
   };
 
   /**
@@ -542,7 +637,9 @@ export default function HeroManagerPage() {
         text: tickerBadgeText.trim() || 'બ્રેકિંગ ન્યૂઝ',
         mode: tickerMode,
         speed: tickerSpeed,
-        articleIds: tickerMode === 'single' ? selectedTickerArticles.map((a) => a.id) : [],
+        sourceType: tickerSourceType,
+        articleIds: tickerMode === 'single' && tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
+        customHeadlines: tickerMode === 'single' && tickerSourceType === 'custom' ? customTickerHeadlines : [],
         hidden: hide,
       };
       const payload = {
@@ -559,9 +656,15 @@ export default function HeroManagerPage() {
   };
 
   const handleSaveTickerBadge = async () => {
-    if (!tickerHidden && tickerMode === 'single' && selectedTickerArticles.length === 0) {
-      showToast('⚠️ Please select at least 1 article for the Single Headline slider.', false);
-      return;
+    if (!tickerHidden && tickerMode === 'single') {
+      if (tickerSourceType === 'articles' && selectedTickerArticles.length === 0) {
+        showToast('⚠️ Please select at least 1 article for the Single Headline slider.', false);
+        return;
+      }
+      if (tickerSourceType === 'custom' && customTickerHeadlines.length === 0) {
+        showToast('⚠️ Please enter at least 1 headline with link for the Single Headline slider.', false);
+        return;
+      }
     }
     setSavingTickerBadge(true);
     try {
@@ -569,7 +672,9 @@ export default function HeroManagerPage() {
         text: tickerBadgeText.trim() || 'બ્રેકિંગ ન્યૂઝ',
         mode: tickerMode,
         speed: tickerSpeed,
-        articleIds: tickerMode === 'single' ? selectedTickerArticles.map((a) => a.id) : [],
+        sourceType: tickerSourceType,
+        articleIds: tickerMode === 'single' && tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
+        customHeadlines: tickerMode === 'single' && tickerSourceType === 'custom' ? customTickerHeadlines : [],
         hidden: tickerHidden,
       };
       const payload = {
@@ -1515,17 +1620,31 @@ export default function HeroManagerPage() {
                             <div className="flex items-center gap-2 truncate">
                               <span className="inline-block h-2 w-2 rounded-full bg-amber-500 shrink-0"></span>
                               <span className="truncate">
-                                {selectedTickerArticles.length > 0
+                                {tickerSourceType === 'custom'
+                                  ? customTickerHeadlines.length > 0
+                                    ? customTickerHeadlines[previewTickerIndex % customTickerHeadlines.length]?.heading
+                                    : 'કસ્ટમ હેડિંગ દાખલ કરો (Enter custom headline below)...'
+                                  : selectedTickerArticles.length > 0
                                   ? getTitle(selectedTickerArticles[previewTickerIndex % selectedTickerArticles.length])
                                   : 'નીચેથી આર્ટિકલ્સ પસંદ કરો (Select articles below)...'}
                               </span>
                             </div>
-                            {selectedTickerArticles.length > 0 && (
-                              <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-400 font-bold">
-                                <span>
-                                  {(previewTickerIndex % selectedTickerArticles.length) + 1} / {selectedTickerArticles.length}
-                                </span>
-                              </div>
+                            {tickerSourceType === 'custom' ? (
+                              customTickerHeadlines.length > 0 && (
+                                <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-400 font-bold">
+                                  <span>
+                                    {(previewTickerIndex % customTickerHeadlines.length) + 1} / {customTickerHeadlines.length}
+                                  </span>
+                                </div>
+                              )
+                            ) : (
+                              selectedTickerArticles.length > 0 && (
+                                <div className="flex items-center gap-1.5 shrink-0 text-xs text-zinc-400 font-bold">
+                                  <span>
+                                    {(previewTickerIndex % selectedTickerArticles.length) + 1} / {selectedTickerArticles.length}
+                                  </span>
+                                </div>
+                              )
                             )}
                           </div>
                         ) : (
@@ -1545,106 +1664,383 @@ export default function HeroManagerPage() {
                   </div>
                 </div>
 
-                {/* 3. Articles Selection (ONLY FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
+                {/* 3. Slider Content Source (FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
                 {tickerMode === 'single' ? (
                   <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
                       <div>
                         <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
-                          3. Select Articles for Single Headline Slider (એક પછી એક સ્લાઇડર માટે આર્ટિકલ્સ પસંદ કરો)
+                          3. Content for Single Headline Slider (સ્લાઇડર માટે લખાણ અને લિંક પસંદ કરો)
                         </label>
                         <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
-                          Search and select the specific articles you want to rotate one-by-one in this single headline slider.
+                          Choose whether to select existing news articles or manually type custom breaking headlines with links.
                         </p>
                       </div>
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
-                        {selectedTickerArticles.length} articles selected
+                        {tickerSourceType === 'custom'
+                          ? `${customTickerHeadlines.length} headlines added`
+                          : `${selectedTickerArticles.length} articles selected`}
                       </span>
                     </div>
 
-                    <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
-                      {/* Search box to add articles */}
-                      <ArticleSearchBox
-                        allArticles={allArticles}
-                        excluded={selectedTickerArticles.map((a) => a.id)}
-                        placeholder="Search news by title, category or article # to add to slider..."
-                        onSelect={handleAddTickerArticle}
-                      />
+                    {/* Mode Selector Tabs: [ 📰 Select from Articles ] vs [ ✍️ Enter Heading & Link ] */}
+                    <div className="flex items-center gap-2 p-1.5 bg-zinc-200/80 dark:bg-zinc-800/90 rounded-2xl border border-zinc-300 dark:border-zinc-700 w-full sm:w-fit mb-4 shadow-2xs">
+                      <button
+                        type="button"
+                        onClick={() => setTickerSourceType('articles')}
+                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                          tickerSourceType === 'articles'
+                            ? 'bg-white dark:bg-zinc-900 text-[#B3121B] shadow-sm'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                        }`}
+                      >
+                        <FileText className="h-4 w-4" />
+                        <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles)</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTickerSourceType('custom')}
+                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                          tickerSourceType === 'custom'
+                            ? 'bg-white dark:bg-zinc-900 text-[#B3121B] shadow-sm'
+                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                        }`}
+                      >
+                        <PenLine className="h-4 w-4" />
+                        <span>હેડિંગ અને લિંક જાતે લખો (Custom Heading & Link)</span>
+                      </button>
+                    </div>
 
-                      {/* List of currently selected ticker articles */}
-                      {selectedTickerArticles.length === 0 ? (
-                        <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
-                          <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
-                            No articles selected yet for Single Headline Slider.
-                          </p>
-                          <p className="text-xs mt-1 text-zinc-500">
-                            Please search in the box above to select at least 1 or more articles to rotate one-by-one.
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
-                          {selectedTickerArticles.map((art, idx) => (
-                            <div
-                              key={art.id}
-                              className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
-                            >
-                              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
-                                #{idx + 1}
-                              </span>
+                    {/* SUB-SECTION A: SELECT ARTICLES FROM DATABASE */}
+                    {tickerSourceType === 'articles' ? (
+                      <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
+                        {/* Search box to add articles */}
+                        <ArticleSearchBox
+                          allArticles={allArticles}
+                          excluded={selectedTickerArticles.map((a) => a.id)}
+                          placeholder="Search news by title, category or article # to add to slider..."
+                          onSelect={handleAddTickerArticle}
+                        />
 
-                              <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
-                                <ArticleMedia
-                                  src={getArticleImage(art)}
-                                  alt={getTitle(art)}
-                                  fill
-                                  className="object-cover"
-                                />
-                              </div>
+                        {/* List of currently selected ticker articles */}
+                        {selectedTickerArticles.length === 0 ? (
+                          <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
+                            <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                              No articles selected yet for Single Headline Slider.
+                            </p>
+                            <p className="text-xs mt-1 text-zinc-500">
+                              Please search in the box above to select at least 1 or more articles to rotate one-by-one.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
+                            {selectedTickerArticles.map((art, idx) => (
+                              <div
+                                key={art.id}
+                                className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
+                              >
+                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
+                                  #{idx + 1}
+                                </span>
 
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                                  {getTitle(art)}
-                                </p>
-                                <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
-                                  {catName(art.category) && <span>{catName(art.category)}</span>}
-                                  {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
+                                <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
+                                  <ArticleMedia
+                                    src={getArticleImage(art)}
+                                    alt={getTitle(art)}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                    {getTitle(art)}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
+                                    {catName(art.category) && <span>{catName(art.category)}</span>}
+                                    {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
+                                  </div>
+                                </div>
+
+                                {/* Reorder and Delete buttons */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveTickerArticle(idx, 'up')}
+                                    disabled={idx === 0}
+                                    title="Move up"
+                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                                  >
+                                    <ArrowUp className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveTickerArticle(idx, 'down')}
+                                    disabled={idx === selectedTickerArticles.length - 1}
+                                    title="Move down"
+                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                                  >
+                                    <ArrowDown className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveTickerArticle(idx)}
+                                    title="Remove from slider"
+                                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
                                 </div>
                               </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      /* SUB-SECTION B: ENTER CUSTOM HEADING AND LINK */
+                      <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
+                        {/* Input form to add a custom heading & link */}
+                        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm space-y-3">
+                          <div className="flex items-center gap-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                            <PenLine className="h-4 w-4 text-[#B3121B]" />
+                            <span>નવું હેડિંગ અને લિંક ઉમેરો (Add New Headline & Link)</span>
+                          </div>
 
-                              {/* Reorder and Delete buttons */}
-                              <div className="flex items-center gap-1 shrink-0">
+                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                            <div className="md:col-span-7">
+                              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                Headline / Heading (મુખ્ય હેડિંગ લખાણ) <span className="text-red-500">*</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={newCustomHeading}
+                                onChange={(e) => setNewCustomHeading(e.target.value)}
+                                placeholder="દા.ત. બ્રેકિંગ: ગુજરાતમાં ભારે વરસાદને પગલે શાળાઓમાં રજા જાહેર..."
+                                className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddCustomHeadline();
+                                  }
+                                }}
+                              />
+                            </div>
+
+                            <div className="md:col-span-5">
+                              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                Article Link / URL (આર્ટિકલ લિંક અથવા URL)
+                              </label>
+                              <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                                  <input
+                                    type="text"
+                                    value={newCustomLink}
+                                    onChange={(e) => setNewCustomLink(e.target.value)}
+                                    placeholder="દા.ત. /news/slug અથવા https://..."
+                                    className="w-full pl-9 pr-3 py-2.5 text-sm font-medium rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        handleAddCustomHeadline();
+                                      }
+                                    }}
+                                  />
+                                </div>
                                 <button
                                   type="button"
-                                  onClick={() => handleMoveTickerArticle(idx, 'up')}
-                                  disabled={idx === 0}
-                                  title="Move up"
-                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                                  onClick={handleAddCustomHeadline}
+                                  disabled={!newCustomHeading.trim()}
+                                  className="px-4 py-2.5 rounded-xl bg-[#B3121B] hover:bg-[#900e15] disabled:opacity-40 text-white text-xs font-bold shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
                                 >
-                                  <ArrowUp className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleMoveTickerArticle(idx, 'down')}
-                                  disabled={idx === selectedTickerArticles.length - 1}
-                                  title="Move down"
-                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                                >
-                                  <ArrowDown className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveTickerArticle(idx)}
-                                  title="Remove from slider"
-                                  className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
-                                >
-                                  <Trash2 className="h-4 w-4" />
+                                  <Plus className="h-4 w-4" />
+                                  <span>Add</span>
                                 </button>
                               </div>
                             </div>
-                          ))}
+                          </div>
+                          <p className="text-[11px] text-zinc-500 font-medium">
+                            💡 Tip: Enter the full breaking news sentence and optional link (e.g. website link, internal article page `/news/article-slug`, or external URL).
+                          </p>
                         </div>
-                      )}
-                    </div>
+
+                        {/* List of custom entered headlines */}
+                        {customTickerHeadlines.length === 0 ? (
+                          <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
+                            <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                              No custom headlines entered yet.
+                            </p>
+                            <p className="text-xs mt-1 text-zinc-500">
+                              Please enter a Headline and Link in the box above and click "Add" to rotate one-by-one in the slider.
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
+                            {customTickerHeadlines.map((h, idx) => {
+                              const isEditing = editingHeadlineId === h.id;
+
+                              if (isEditing) {
+                                return (
+                                  <div
+                                    key={h.id}
+                                    className="p-3.5 rounded-xl border-2 border-[#B3121B]/60 bg-red-50/30 dark:bg-zinc-900 shadow-sm space-y-3 transition-all"
+                                  >
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="flex items-center gap-2">
+                                        <span className="flex items-center justify-center h-5 w-5 rounded-full bg-[#B3121B] text-[11px] font-black text-white shrink-0">
+                                          #{idx + 1}
+                                        </span>
+                                        <span className="text-xs font-bold text-[#B3121B] dark:text-red-400 flex items-center gap-1">
+                                          <Pencil className="h-3.5 w-3.5" /> હેડિંગમાં ફેરફાર કરો (Edit Headline #{idx + 1})
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSaveEditCustomHeadline(h.id)}
+                                          disabled={!editingHeadingText.trim()}
+                                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#B3121B] hover:bg-[#900e15] disabled:opacity-40 text-white text-xs font-bold cursor-pointer transition shadow-2xs"
+                                        >
+                                          <Check className="h-3.5 w-3.5" />
+                                          <span>Save</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={handleCancelEditCustomHeadline}
+                                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold cursor-pointer transition"
+                                        >
+                                          <X className="h-3.5 w-3.5" />
+                                          <span>Cancel</span>
+                                        </button>
+                                      </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                                      <div className="md:col-span-7">
+                                        <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                          Headline / Heading (મુખ્ય હેડિંગ લખાણ) <span className="text-red-500">*</span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          value={editingHeadingText}
+                                          onChange={(e) => setEditingHeadingText(e.target.value)}
+                                          placeholder="Enter headline..."
+                                          className="w-full px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter') {
+                                              e.preventDefault();
+                                              handleSaveEditCustomHeadline(h.id);
+                                            } else if (e.key === 'Escape') {
+                                              e.preventDefault();
+                                              handleCancelEditCustomHeadline();
+                                            }
+                                          }}
+                                          autoFocus
+                                        />
+                                      </div>
+
+                                      <div className="md:col-span-5">
+                                        <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                          Article Link / URL (આર્ટિકલ લિંક અથવા URL)
+                                        </label>
+                                        <div className="relative">
+                                          <LinkIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                                          <input
+                                            type="text"
+                                            value={editingLinkText}
+                                            onChange={(e) => setEditingLinkText(e.target.value)}
+                                            placeholder="દા.ત. /news/slug અથવા https://..."
+                                            className="w-full pl-8 pr-3 py-2 text-xs sm:text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                            onKeyDown={(e) => {
+                                              if (e.key === 'Enter') {
+                                                e.preventDefault();
+                                                handleSaveEditCustomHeadline(h.id);
+                                              } else if (e.key === 'Escape') {
+                                                e.preventDefault();
+                                                handleCancelEditCustomHeadline();
+                                              }
+                                            }}
+                                          />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                );
+                              }
+
+                              return (
+                                <div
+                                  key={h.id}
+                                  className="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs hover:border-zinc-300 transition-all"
+                                >
+                                  <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
+                                    #{idx + 1}
+                                  </span>
+
+                                  <div className="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-950/40 text-[#B3121B] flex items-center justify-center shrink-0">
+                                    <PenLine className="h-4 w-4" />
+                                  </div>
+
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                      {h.heading}
+                                    </p>
+                                    <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
+                                      {h.link ? (
+                                        <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 truncate max-w-[320px]">
+                                          <LinkIcon className="h-3 w-3 shrink-0" />
+                                          <span className="truncate">{h.link}</span>
+                                        </span>
+                                      ) : (
+                                        <span className="text-zinc-400 italic">No link attached</span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Edit, Reorder and Delete buttons */}
+                                  <div className="flex items-center gap-1 shrink-0">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEditCustomHeadline(h)}
+                                      title="Edit headline & link (લખાણ કે લિંક સુધારો)"
+                                      className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/40 cursor-pointer transition"
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveCustomHeadline(idx, 'up')}
+                                      disabled={idx === 0}
+                                      title="Move up"
+                                      className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
+                                    >
+                                      <ArrowUp className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveCustomHeadline(idx, 'down')}
+                                      disabled={idx === customTickerHeadlines.length - 1}
+                                      title="Move down"
+                                      className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
+                                    >
+                                      <ArrowDown className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveCustomHeadline(idx)}
+                                      title="Remove from slider"
+                                      className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer transition"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   /* Informative Banner for Option 1: Continuous Marquee Scroll */

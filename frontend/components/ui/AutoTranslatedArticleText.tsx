@@ -82,3 +82,75 @@ export function AutoTranslateString({ text, language }: { text: string; language
 
   return <span suppressHydrationWarning>{translatedText || text}</span>;
 }
+
+/**
+ * Resolves the purest English title for news breadcrumbs,
+ * ensuring English headline formatting like:
+ * "Saudi Arabia Airport & Oil Facility Attack | Houthi Rebels Strike"
+ */
+export function getEnglishBreadcrumbTitle(article: Article, autoTranslatedEn?: string): string {
+  if (!article) return '';
+
+  const hasIndic = (s: string) => /[\u0900-\u0D7F]/.test(s || '');
+  const hasLatin = (s: string) => /[a-zA-Z]{3,}/.test(s || '');
+
+  // 1. If explicit title is already in English (Latin letters and no Indic script)
+  const rawTitle = (article.title || '').trim();
+  if (rawTitle && hasLatin(rawTitle) && !hasIndic(rawTitle)) {
+    return rawTitle;
+  }
+
+  // 2. If article.seoTitle has clean English title or bilingual segment
+  const seoTitle = ((article as any).seoTitle || '').trim();
+  if (seoTitle) {
+    if (seoTitle.includes('|')) {
+      const parts = seoTitle.split('|').map((p: string) => p.trim());
+      const enParts = parts.filter(
+        (p: string) => hasLatin(p) && !hasIndic(p) && !/^(gujaratpost|gujarat post|news|\s)*$/i.test(p)
+      );
+      if (enParts.length > 0) {
+        return enParts.join(' | ');
+      }
+    } else if (hasLatin(seoTitle) && !hasIndic(seoTitle)) {
+      const cleaned = seoTitle.replace(/[-|]?\s*(gujaratpost|gujarat post|news)\s*$/gi, '').trim();
+      if (cleaned.length > 3) return cleaned;
+    }
+  }
+
+  // 3. If dynamic English translation is resolved
+  if (autoTranslatedEn && typeof autoTranslatedEn === 'string') {
+    const cleanTr = autoTranslatedEn.trim().replace(/\.$/, '');
+    if (hasLatin(cleanTr) && !hasIndic(cleanTr)) {
+      return cleanTr;
+    }
+  }
+
+  // 4. Derive from clean English slug
+  const slug = (article.slug || '').trim();
+  if (slug && !slug.includes('-k-') && !slug.includes('-d-rg-') && !slug.includes('-z-')) {
+    const rawWords = slug.replace(/-\d+$/, '').split('-').filter(Boolean);
+    if (rawWords.length >= 2) {
+      return rawWords
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+    }
+  }
+
+  // Fallback to title
+  return rawTitle || (article as any).titleGu || '';
+}
+
+export function AutoArticleBreadcrumbTitle({
+  article,
+  fallback = '',
+}: {
+  article: Article;
+  fallback?: string;
+}) {
+  const sourceText = (article as any)?.titleGu || article?.title || fallback;
+  const autoTranslatedEn = useAutoTranslate(sourceText, 'en');
+
+  const englishTitle = getEnglishBreadcrumbTitle(article, autoTranslatedEn) || fallback || sourceText;
+
+  return <span suppressHydrationWarning>{englishTitle}</span>;
+}
