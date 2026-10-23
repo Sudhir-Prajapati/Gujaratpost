@@ -453,7 +453,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 
                 {/* Google News Follow Badge */}
                 <a
-                  href="https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en"
+                  href="https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu"
                   target="_blank"
                   rel="noreferrer"
                   title="Follow Gujarat Post on Google News"

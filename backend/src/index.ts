@@ -12,6 +12,7 @@ import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { autoPublishDueArticles } from './controllers/article.controller.js';
 
+
 // Extend globalThis so TypeScript knows about our stored HTTP server reference
 declare global {
   // eslint-disable-next-line no-var
@@ -19,8 +20,8 @@ declare global {
 }
 
 /**
- * On Windows: kill any process currently holding the given port.
- * This prevents EADDRINUSE errors when nodemon restarts the backend.
+ * On Windows: kill any stale process currently holding the given port.
+ * Safely ignores the current process and its parent process (e.g. nodemon).
  */
 function killPortIfBusy(port: number): void {
   if (process.platform !== 'win32') return;
@@ -30,11 +31,19 @@ function killPortIfBusy(port: number): void {
       { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }
     ).trim();
     if (result) {
-      // Last column is PID
-      const pid = result.trim().split(/\s+/).pop();
-      if (pid && /^\d+$/.test(pid)) {
-        execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
-        console.log(`🔧 Cleared stale process (PID ${pid}) from port ${port}.`);
+      const lines = result.split(/\r?\n/).filter(Boolean);
+      for (const line of lines) {
+        const parts = line.trim().split(/\s+/);
+        const pidStr = parts[parts.length - 1];
+        const pid = parseInt(pidStr, 10);
+        if (!isNaN(pid) && pid > 0 && pid !== process.pid && pid !== process.ppid) {
+          try {
+            execSync(`taskkill /F /PID ${pid}`, { stdio: 'ignore' });
+            console.log(`🔧 Cleared stale process (PID ${pid}) from port ${port}.`);
+          } catch {
+            // Process might have already exited
+          }
+        }
       }
     }
   } catch {
@@ -120,7 +129,6 @@ const bootstrap = async () => {
     killPortIfBusy(Number(PORT));
 
     // 2. Bind HTTP server IMMEDIATELY on 0.0.0.0:PORT
-    // This allows cloud platform port-scanners (Render, Railway, etc.) to detect the open port instantly without timing out.
     const listenWithRetry = (portNum: number, attempts = 0) => {
       const server = app.listen(portNum, '0.0.0.0', () => {
         console.log(`🚀 Gujarat Post backend running on http://0.0.0.0:${portNum}`);

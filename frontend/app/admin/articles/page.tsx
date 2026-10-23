@@ -48,9 +48,18 @@ interface ArticleData {
     name: string;
   };
   category: {
+    id?: string;
     name: string;
     slug: string;
   };
+  categories?: {
+    categoryId: string;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+  }[];
 }
 
 interface CategoryData {
@@ -690,8 +699,34 @@ export default function ArticleList() {
                     </td>
 
                     {/* Category */}
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center text-sm text-zinc-700 dark:text-zinc-300 font-medium border border-black dark:border-zinc-600">
-                      {art.category.name}
+                    <td className="px-4 py-3.5 text-center text-sm border border-black dark:border-zinc-600">
+                      <div className="flex flex-col items-center justify-center gap-1.5">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300 shadow-2xs">
+                          {art.category.name}
+                        </span>
+                        {(() => {
+                          const additional = (art.categories || [])
+                            .filter((c) => c.category?.name && c.category.name.toLowerCase() !== art.category.name.toLowerCase());
+                          if (additional.length === 0) return null;
+                          return (
+                            <div className="flex flex-wrap items-center justify-center gap-1 max-w-[200px]" title={additional.map((c) => c.category.name).join(', ')}>
+                              {additional.slice(0, 2).map((c) => (
+                                <span
+                                  key={c.categoryId || c.category?.id}
+                                  className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-medium bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/50 dark:text-blue-300"
+                                >
+                                  {c.category.name}
+                                </span>
+                              ))}
+                              {additional.length > 2 && (
+                                <span className="inline-flex items-center px-1 py-0.5 rounded text-[9.5px] font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400">
+                                  +{additional.length - 2}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
                     </td>
 
                     {/* Author */}
@@ -924,9 +959,33 @@ export default function ArticleList() {
                     <h1 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white leading-snug">
                       {reviewModal.fullData?.titleGu || reviewModal.article.titleGu || reviewModal.fullData?.title || reviewModal.article.title}
                     </h1>
-                    <p className="text-xs font-mono text-zinc-400">
-                      Category: <span className="font-bold text-zinc-700 dark:text-zinc-300">{reviewModal.article.category.name}</span> | Slug: <span className="font-bold">{reviewModal.article.slug}</span>
-                    </p>
+                    <div className="flex items-center gap-2 flex-wrap text-xs text-zinc-500 dark:text-zinc-400">
+                      <span>Category:</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        {reviewModal.article.category.name} (Main)
+                      </span>
+                      {(() => {
+                        const rawCats = reviewModal.fullData?.categories || reviewModal.article.categories || [];
+                        const additional = rawCats
+                          .map((c: any) => c.category?.name || c.name)
+                          .filter((name: string) => name && name.toLowerCase() !== reviewModal.article?.category?.name?.toLowerCase());
+                        if (additional.length === 0) return null;
+                        return (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-zinc-400 font-mono">| Additional:</span>
+                            {additional.map((catName: string, i: number) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                              >
+                                {catName}
+                              </span>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                      <span className="text-zinc-400 font-mono">| Slug: <span className="font-bold text-zinc-700 dark:text-zinc-300">{reviewModal.article.slug}</span></span>
+                    </div>
                   </div>
 
                   {/* Media Gallery (Shows ALL images and videos if 1, 2, 5 or more) */}

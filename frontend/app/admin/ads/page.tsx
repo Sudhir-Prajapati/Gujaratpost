@@ -23,6 +23,7 @@ import {
   Sidebar,
   Sliders,
   PanelTop,
+  Code2,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch, clearApiCache, clearApiCacheAndBroadcast } from '@/lib/api';
 
@@ -124,7 +125,8 @@ export default function AdminAdsPage() {
   const [adTitle, setAdTitle] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [imageCount, setImageCount] = useState<number>(1); // 1, 2, or 3 images for section
-  const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO'>('IMAGE');
+  const [mediaType, setMediaType] = useState<'IMAGE' | 'VIDEO' | 'THIRD_PARTY'>('IMAGE');
+  const [thirdPartyCode, setThirdPartyCode] = useState('');
 
   // Image/Video & Link fields
   const [image1, setImage1] = useState('');
@@ -179,6 +181,7 @@ export default function AdminAdsPage() {
     setIsActive(true);
     setImageCount(1);
     setMediaType('IMAGE');
+    setThirdPartyCode('');
     setImage1('');
     setLink1('');
     setImage2('');
@@ -219,7 +222,8 @@ export default function AdminAdsPage() {
     setSelectedSection(ad.section);
     setAdTitle(ad.title || '');
     setIsActive(ad.isActive);
-    setMediaType(ad.mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE');
+    setMediaType(ad.mediaType === 'THIRD_PARTY' ? 'THIRD_PARTY' : ad.mediaType === 'VIDEO' ? 'VIDEO' : 'IMAGE');
+    setThirdPartyCode(ad.thirdPartyCode || '');
 
     setImage1(ad.image1 || '');
     setLink1(ad.link1 || '');
@@ -291,7 +295,12 @@ export default function AdminAdsPage() {
       return;
     }
 
-    if (!image1 || !isValidMediaUrl(image1)) {
+    if (mediaType === 'THIRD_PARTY' && !thirdPartyCode.trim()) {
+      setErrorMessage('Please paste the third-party ad code.');
+      return;
+    }
+
+    if (mediaType !== 'THIRD_PARTY' && (!image1 || !isValidMediaUrl(image1))) {
       setErrorMessage(
         activeTab === 'header'
           ? 'Please provide a valid Image or Video URL/file for the header ad banner'
@@ -302,12 +311,12 @@ export default function AdminAdsPage() {
       return;
     }
 
-    if (activeTab === 'section' && imageCount >= 2 && (!image2 || !isValidMediaUrl(image2))) {
+    if (mediaType !== 'THIRD_PARTY' && activeTab === 'section' && imageCount >= 2 && (!image2 || !isValidMediaUrl(image2))) {
       setErrorMessage('Please provide Image 2 or change image count to 1');
       return;
     }
 
-    if (activeTab === 'section' && imageCount >= 3 && (!image3 || !isValidMediaUrl(image3))) {
+    if (mediaType !== 'THIRD_PARTY' && activeTab === 'section' && imageCount >= 3 && (!image3 || !isValidMediaUrl(image3))) {
       setErrorMessage('Please provide Image 3 or change image count to 2');
       return;
     }
@@ -320,12 +329,13 @@ export default function AdminAdsPage() {
         title: adTitle || `Ad Banner for ${selectedSection}`,
         isActive,
         mediaType,
-        image1: image1 || null,
-        link1: link1 || null,
-        image2: activeTab === 'section' && imageCount >= 2 ? image2 || null : null,
-        link2: activeTab === 'section' && imageCount >= 2 ? link2 || null : null,
-        image3: activeTab === 'section' && imageCount >= 3 ? image3 || null : null,
-        link3: activeTab === 'section' && imageCount >= 3 ? link3 || null : null,
+        thirdPartyCode: mediaType === 'THIRD_PARTY' ? thirdPartyCode.trim() : null,
+        image1: mediaType === 'THIRD_PARTY' ? null : image1 || null,
+        link1: mediaType === 'THIRD_PARTY' ? null : link1 || null,
+        image2: mediaType !== 'THIRD_PARTY' && activeTab === 'section' && imageCount >= 2 ? image2 || null : null,
+        link2: mediaType !== 'THIRD_PARTY' && activeTab === 'section' && imageCount >= 2 ? link2 || null : null,
+        image3: mediaType !== 'THIRD_PARTY' && activeTab === 'section' && imageCount >= 3 ? image3 || null : null,
+        link3: mediaType !== 'THIRD_PARTY' && activeTab === 'section' && imageCount >= 3 ? link3 || null : null,
       };
 
       const res = await authFetch(getBackendApiUrl('/api/admin/ads'), {
@@ -710,7 +720,20 @@ export default function AdminAdsPage() {
               <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
                 1. Target Position / Slot <span className="text-red-500">*</span>
               </label>
-              {activeTab === 'header' ? (
+              {mediaType === 'THIRD_PARTY' ? (
+                thirdPartyCode.trim() ? (
+                  <iframe
+                    title="Third-party ad preview"
+                    srcDoc={thirdPartyCode}
+                    sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                    className="block h-[210px] w-full rounded-xl border border-gray-400 bg-white"
+                  />
+                ) : (
+                  <div className="flex h-[210px] items-center justify-center rounded-xl border border-dashed border-gray-400 bg-zinc-50 p-4 text-center text-sm font-medium text-zinc-500 dark:border-zinc-600 dark:bg-zinc-950">
+                    Paste third-party ad code to preview it here.
+                  </div>
+                )
+              ) : activeTab === 'header' ? (
                 <select
                   value={selectedSection}
                   onChange={(e) => setSelectedSection(e.target.value)}
@@ -770,13 +793,13 @@ export default function AdminAdsPage() {
               />
             </div>
 
-            {/* Media Type Selector (For Header & Fixed Sidebar Ads) */}
-            {(activeTab === 'header' || activeTab === 'sidebar') && (
+            {/* Advertisement source */}
+            {
               <div className="space-y-2">
                 <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
-                  2. Media Type (Image or Video) <span className="text-red-500">*</span>
+                  2. Advertisement Type <span className="text-red-500">*</span>
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <button
                     type="button"
                     onClick={() => setMediaType('IMAGE')}
@@ -802,12 +825,24 @@ export default function AdminAdsPage() {
                     <Video className="h-5 w-5" />
                     <span>Video Banner</span>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaType('THIRD_PARTY')}
+                    className={`flex items-center justify-center gap-2 p-3.5 rounded-xl border-2 text-base font-bold transition-all ${
+                      mediaType === 'THIRD_PARTY'
+                        ? 'border-red-600 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400'
+                        : 'border-gray-400 dark:border-zinc-600 bg-white dark:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300 hover:border-gray-500'
+                    }`}
+                  >
+                    <Code2 className="h-5 w-5" />
+                    <span>Third-Party Code</span>
+                  </button>
                 </div>
               </div>
-            )}
+            }
 
             {/* Image Count Selector (For In-Between Section Ads) */}
-            {activeTab === 'section' && (
+            {activeTab === 'section' && mediaType !== 'THIRD_PARTY' && (
               <div className="space-y-2">
                 <label className="block text-base font-bold text-zinc-900 dark:text-zinc-100">
                   2. Number of Ad Images <span className="text-red-500">*</span>
@@ -834,7 +869,25 @@ export default function AdminAdsPage() {
               </div>
             )}
 
-            {/* Media Upload & Link Input Fields */}
+            {mediaType === 'THIRD_PARTY' ? (
+              <div className="space-y-2 pt-2">
+                <label className="block text-sm sm:text-base font-bold text-zinc-800 dark:text-zinc-200">
+                  Third-Party Ad Code <span className="text-red-500">*</span>
+                </label>
+                <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                  Paste the code supplied by your ad network. It runs inside a sandboxed advertisement frame.
+                </p>
+                <textarea
+                  value={thirdPartyCode}
+                  onChange={(e) => setThirdPartyCode(e.target.value)}
+                  placeholder={'<script src="https://ad-network.example/script.js"></script>\n<div id="ad-slot"></div>'}
+                  rows={10}
+                  spellCheck={false}
+                  className="w-full rounded-xl border border-gray-400 bg-white px-3.5 py-3 font-mono text-xs text-zinc-900 placeholder:text-zinc-400 focus:border-red-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                />
+              </div>
+            ) : (
+            /* Media Upload & Link Input Fields */
             <div className="space-y-5 pt-2">
               {(activeTab === 'header' || activeTab === 'sidebar' ? [0] : [0, 1, 2].slice(0, imageCount)).map((idx) => {
                 const imgVal = idx === 0 ? image1 : idx === 1 ? image2 : image3;
@@ -981,6 +1034,7 @@ export default function AdminAdsPage() {
                 );
               })}
             </div>
+            )}
 
             {/* Submit Buttons */}
             <div className="pt-4 border-t border-gray-400 dark:border-zinc-600 flex items-center justify-end gap-3">

@@ -122,6 +122,7 @@ export default function VideosPageClient() {
   const [shortsList, setShortsList] = useState<any[]>([]);
   const [visibleShortsCount, setVisibleShortsCount] = useState(5);
   const [articlesList, setArticlesList] = useState<Article[]>([]);
+  const [visibleLatestNewsCount, setVisibleLatestNewsCount] = useState(8);
   const [galleryList, setGalleryList] = useState<any[]>([]);
   const { isApk } = useIsApk();
   const [apkModalVideoId, setApkModalVideoId] = useState<string | null>(null);
@@ -205,9 +206,9 @@ export default function VideosPageClient() {
 
   // Tab definitions
   const tabs = [
-    { key: 'video', gu: 'તાજા વીડિયો', hi: 'ताजा वीडियो', en: 'Latest Videos' },
+    { key: 'video', gu: 'લેટેસ્ટ વીડિયો', hi: 'लेटेस्ट वीडियो', en: 'Latest Videos' },
     { key: 'short', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स', en: 'Shorts' },
-    { key: 'latest', gu: 'તાજા સમાચાર', hi: 'ताज़ा समाचार', en: 'Latest News' },
+    { key: 'latest', gu: 'લેટેસ્ટ સમાચાર', hi: 'लेटेस्ट समाचार', en: 'Latest News' },
   ] as const;
 
   // Handle category smooth scroll navigation
@@ -314,7 +315,7 @@ export default function VideosPageClient() {
   // Latest news with thumbnail images for right sidebar
   const latestImageArticles = useMemo(() => {
     if (articlesList.length > 0) {
-      return articlesList.slice(0, 10);
+      return articlesList;
     }
     return [
       {
@@ -602,7 +603,7 @@ export default function VideosPageClient() {
           <div ref={leftColRef} className="min-w-0">
 
             {/* Featured Video Player Box */}
-            <div className="p-4 bg-card border border-border rounded-xl mb-8 shadow-sm">
+            <div className="p-4 bg-card border border-border rounded-xl mb-3 shadow-sm">
               <div className="flex flex-col md:flex-row gap-5">
                 <div className="relative aspect-video w-full md:w-3/5 shrink-0 rounded-lg overflow-hidden bg-black shadow-sm group">
                   {playingVideoId === featuredVideo.id ? (
@@ -634,12 +635,22 @@ export default function VideosPageClient() {
                   )}
                 </div>
 
-                <div className="flex flex-col justify-center min-w-0">
+                <div
+                  className="flex flex-col justify-center min-w-0 cursor-pointer"
+                  onClick={() => {
+                    if (isApk) {
+                      setApkModalVideoId(safeYouTubeId(featuredVideo.youtubeId));
+                      setApkSelectedVideo(featuredVideo);
+                    } else {
+                      window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(featuredVideo.youtubeId)}`, '_blank', 'noopener,noreferrer');
+                    }
+                  }}
+                >
                   <span className="inline-flex items-center gap-1 text-[11px] font-black text-accent uppercase tracking-wider">
                     <Radio className="h-3 w-3 fill-current animate-pulse text-accent" />
                     યુટ્યુબ પર હમણાં
                   </span>
-                  <h2 className="mt-1 text-base md:text-lg font-black leading-snug tracking-tight text-foreground line-clamp-3">
+                  <h2 className="mt-1 text-base md:text-lg font-black leading-snug tracking-tight text-foreground hover:text-accent transition-colors line-clamp-3">
                     {featuredVideo.titleGu}
                   </h2>
                   <p className="mt-2 text-xs font-semibold text-muted-foreground">
@@ -650,17 +661,28 @@ export default function VideosPageClient() {
             </div>
 
             {/* ── SECTION 1: LATEST VIDEOS ─────────────────────────────── */}
-            <section id="video" className="mb-2 pt-4">
+            <section id="video" className="mb-2 pt-0">
               <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
                 <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                  તાજા વીડિયો
+                  લેટેસ્ટ વીડિયો
                 </h3>
               </div>
 
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
                 {latestVideos.map((item) => (
-                  <div key={item.id} className="group flex flex-col">
+                  <div
+                    key={item.id}
+                    className="group flex flex-col cursor-pointer"
+                    onClick={() => {
+                      if (isApk) {
+                        setApkModalVideoId(safeYouTubeId(item.youtubeId));
+                        setApkSelectedVideo(item);
+                      } else {
+                        window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(item.youtubeId)}`, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >
                     <div className="relative aspect-video w-full rounded-md overflow-hidden bg-black shadow-sm group">
                       {playingVideoId === item.id ? (
                         <iframe
@@ -671,7 +693,7 @@ export default function VideosPageClient() {
                           allowFullScreen
                         />
                       ) : (
-                        <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(item.youtubeId)}`, '_blank', 'noopener,noreferrer'); } }}>
+                        <div className="relative w-full h-full cursor-pointer">
                           <Image
                             src={item.thumbnail}
                             alt={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
@@ -711,10 +733,6 @@ export default function VideosPageClient() {
           {/* ── RIGHT COLUMN: Sidebar (Flexible to match left column height) ── */}
           <div
             className="sticky top-4 self-start"
-            style={{
-              maxHeight: leftColHeight > 0 ? `${leftColHeight}px` : undefined,
-              overflow: 'hidden',
-            }}
           >
 
             <div className="group rounded-xl border border-red-100 dark:border-red-950/20 bg-gradient-to-br from-red-50/10 to-red-50/30 dark:from-red-950/5 dark:to-red-950/10 p-5 mb-6 text-center shadow-sm hover:shadow transition-all duration-300">
@@ -863,7 +881,7 @@ export default function VideosPageClient() {
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
                     <span className="text-sm font-black text-foreground">
-                      {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+                      {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'लेटेस्ट समाचार' : 'Latest News'}
                     </span>
                   </div>
                   <Link href="/category/latest" className="text-xs font-bold text-accent hover:underline">
@@ -906,10 +924,10 @@ export default function VideosPageClient() {
         </div> {/* CLOSE FIRST GRID */}
 
         {/* ── FULL WIDTH SECTIONS BELOW SIDEBAR ────────────────────────────── */}
-        <div className="mt-2 border-t border-border pt-2">
+        <div className="mt-2 flex flex-col border-t border-border pt-2">
 
           {/* ── SECTION 2: SHORTS ────────────────────────────────────── */}
-          <section id="short" className="mb-4 pt-0">
+          <section id="short" className="order-1 mb-4 pt-0">
             <div className="flex items-center justify-between gap-3 mb-3 pb-1.5 border-b-2 border-border">
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
@@ -963,18 +981,18 @@ export default function VideosPageClient() {
           </section>
 
           {/* ── SECTION 3: LATEST NEWS ──────────────────────────────── */}
-          <section id="latest" className="mb-5 pt-2">
+          <section id="latest" className="order-2 mb-5 pt-2">
             <div className="flex items-center justify-between gap-3 mb-5 pb-2 border-b-2 border-border">
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
                 <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                  {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+                  {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'लेटेस्ट समाचार' : 'Latest News'}
                 </h3>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {latestImageArticles.slice(0, 8).map((article: any) => {
+              {latestImageArticles.slice(0, visibleLatestNewsCount).map((article: any) => {
                 const title = language === 'gu'
                   ? (article.titleGu || article.title)
                   : language === 'hi'
@@ -1012,15 +1030,18 @@ export default function VideosPageClient() {
                 );
               })}
             </div>
-            <div className="mt-6 flex justify-center">
-              <Link
-                href="/category/latest"
-                className="inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-3 text-sm font-black text-accent transition-colors hover:bg-accent hover:text-white"
-              >
-                {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
-                <ChevronDown className="h-4 w-4" />
-              </Link>
-            </div>
+            {visibleLatestNewsCount < latestImageArticles.length && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleLatestNewsCount((count) => count + 8)}
+                  className="inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-3 text-sm font-black text-accent transition-colors hover:bg-accent hover:text-white"
+                >
+                  {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+            )}
           </section>
 
         </div>

@@ -109,9 +109,6 @@ export default function InstagramPageClient() {
                 <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
                   {language === 'gu' ? 'ઇન્સ્ટાગ્રામ રીલ્સ' : language === 'hi' ? 'इंस्टाग्राम रील्स' : 'Instagram Reels'}
                 </h1>
-                <span className="text-xs font-bold text-muted-foreground ml-1 hidden sm:inline">
-                  ({cleanReels.length} {language === 'gu' ? 'રીલ્સ' : 'reels'})
-                </span>
               </div>
 
               <a
@@ -209,7 +206,7 @@ export default function InstagramPageClient() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount((c) => c + 6)}
-                  className="px-6 py-2.5 rounded-full border border-border bg-card hover:bg-muted text-sm font-bold text-foreground transition-all shadow-xs cursor-pointer active:scale-95"
+                  className="px-6 py-2.5 rounded-full border-2 border-[#B3121B] bg-card text-sm font-medium text-[#B3121B] transition-all duration-200 shadow-xs hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#B3121B] hover:text-white hover:shadow-md cursor-pointer active:scale-95"
                 >
                   {language === 'gu' ? 'વધુ રીલ્સ જુઓ ↓' : 'Load More Reels ↓'}
                 </button>
@@ -236,7 +233,7 @@ export default function InstagramPageClient() {
         </div>
 
         {/* ── AE PAN VACHO (ALSO READ: CRIME & FACT CHECK NEWS) ── */}
-        <AePanVachoSection language={language} />
+        <AePanVachoSection language={language} spacingClassName="mt-5" />
       </div>
 
       {/* ── MODAL REEL PREVIEW IF NEEDED ── */}

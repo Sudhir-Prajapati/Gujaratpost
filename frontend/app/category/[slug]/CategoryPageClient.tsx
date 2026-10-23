@@ -12,7 +12,7 @@ import {
   getCategoryLabel,
   formatViews,
 } from '@/data';
-import { getCategoryColor, toGu } from '@/lib/utils';
+import { getCategoryColor, toGu, sortArticlesByLatest } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
 import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
@@ -123,6 +123,51 @@ export default function CategoryPageClient(props: Props) {
   return <WebCategoryPageClient {...props} />;
 }
 
+/* ── Helpers for Video Detection and YouTube URLs ── */
+function isVideoItem(item: any, isVideoTab = false): boolean {
+  if (!item) return false;
+  if (isVideoTab) return true;
+  if (item.isVideoItem || item.isYouTube || item.mediaType === 'video' || item.isVideo) return true;
+  if (item.videoId || item.youtubeId) return true;
+  if (typeof item.videoUrl === 'string' && item.videoUrl.trim().length > 0) return true;
+  if (typeof item.youtubeUrl === 'string' && item.youtubeUrl.trim().length > 0) return true;
+  return false;
+}
+
+function getArticleYouTubeUrl(item: any): string {
+  if (!item) return 'https://www.youtube.com/@Gujaratpostnews';
+
+  const rawCandidate = item.videoId || item.youtubeId || item.videoUrl || item.youtubeUrl || '';
+  if (rawCandidate) {
+    const ytId = safeYouTubeId(rawCandidate);
+    if (ytId && /^[a-zA-Z0-9_-]{11}$/.test(ytId)) {
+      return `https://www.youtube.com/watch?v=${ytId}`;
+    }
+  }
+
+  for (const urlProp of [item.videoUrl, item.youtubeUrl, item.url, item.embedUrl]) {
+    if (typeof urlProp === 'string') {
+      if (urlProp.includes('youtube.com/watch') || urlProp.includes('youtu.be/') || urlProp.includes('youtube.com/shorts/')) {
+        return urlProp;
+      }
+    }
+  }
+
+  if (item.slug) {
+    const slugId = safeYouTubeId(item.slug);
+    if (slugId && /^[a-zA-Z0-9_-]{11}$/.test(slugId)) {
+      return `https://www.youtube.com/watch?v=${slugId}`;
+    }
+  }
+
+  const title = (item.titleGu || item.title || item.titleHi || '').trim();
+  if (title) {
+    return `https://www.youtube.com/results?search_query=${encodeURIComponent('Gujarat Post ' + title)}`;
+  }
+
+  return 'https://www.youtube.com/@Gujaratpostnews';
+}
+
 /* ── Reusable Mobile Category Article Card (Identical to Hero Section Mobile Box) ── */
 function MobileCategoryArticleCard({
   article,
@@ -131,6 +176,7 @@ function MobileCategoryArticleCard({
   defaultCategorySlug,
   defaultCategoryLabel,
   index = 0,
+  isVideo = false,
 }: {
   article: any;
   language: any;
@@ -138,8 +184,12 @@ function MobileCategoryArticleCard({
   defaultCategorySlug?: string;
   defaultCategoryLabel?: string;
   index?: number;
+  isVideo?: boolean;
 }) {
   if (!article) return null;
+
+  const isVideoCard = isVideo || isVideoItem(article);
+  const ytUrl = isVideoCard ? getArticleYouTubeUrl(article) : '';
 
   const rawTitle =
     (language === 'hi'
@@ -156,9 +206,11 @@ function MobileCategoryArticleCard({
   const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
 
   const catLabel =
-    getCategoryLabel(article, language) ||
-    defaultCategoryLabel ||
-    (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
+    (isVideoCard && defaultCategoryLabel)
+      ? defaultCategoryLabel
+      : (getCategoryLabel(article, language) ||
+         defaultCategoryLabel ||
+         (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News'));
 
   const catSlug =
     article.category?.slug ||
@@ -176,13 +228,13 @@ function MobileCategoryArticleCard({
     fallbackImage ||
     '/assets/gujarat-post-logo.png';
 
-  const href = article.slug ? `/news/${article.slug}` : '#';
+  const href = isVideoCard ? ytUrl : (article.slug ? `/news/${article.slug}` : '#');
 
   const handleShare = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     const title = getArticleTitle(article, language);
-    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}${href}`;
+    const url = isVideoCard ? ytUrl : `${typeof window !== 'undefined' ? window.location.origin : ''}${href}`;
     const text = `${title}\n\n${url}`;
     if (typeof navigator !== 'undefined' && navigator.share) {
       navigator.share({ title, url, text }).catch(() => {
@@ -193,42 +245,72 @@ function MobileCategoryArticleCard({
     }
   };
 
+  const cardContent = (
+    <>
+      <div className="flex-1 min-w-0 pr-1">
+        {isVideoCard && (
+          <span className="text-[11px] font-black uppercase tracking-wide text-accent flex items-center gap-1 mb-1">
+            <Play className="w-2.5 h-2.5 fill-current text-red-600" />
+            {catLabel}
+          </span>
+        )}
+        <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+          {hasPrefix ? (
+            <>
+              <span
+                className={
+                  index % 2 === 0
+                    ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
+                    : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
+                }
+              >
+                {prefixText}
+              </span>
+              <span>{restText}</span>
+            </>
+          ) : (
+            <AutoArticleTitle article={article} language={language} />
+          )}
+        </h3>
+      </div>
+
+      <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+        <ArticleMedia
+          src={imgSrc}
+          alt={rawTitle || ''}
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        />
+        {isVideoCard && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
+              <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
+            </span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <div className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0">
       {/* Top: Headline (left) + Thumbnail (right) */}
-      <Link
-        href={href}
-        className="flex flex-row items-start justify-between gap-3 min-w-0"
-      >
-        <div className="flex-1 min-w-0 pr-1">
-          <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-            {hasPrefix ? (
-              <>
-                <span
-                  className={
-                    index % 2 === 0
-                      ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
-                      : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
-                  }
-                >
-                  {prefixText}
-                </span>
-                <span>{restText}</span>
-              </>
-            ) : (
-              <AutoArticleTitle article={article} language={language} />
-            )}
-          </h3>
-        </div>
-
-        <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-          <ArticleMedia
-            src={imgSrc}
-            alt={rawTitle || ''}
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        </div>
-      </Link>
+      {isVideoCard ? (
+        <a
+          href={ytUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex flex-row items-start justify-between gap-3 min-w-0"
+        >
+          {cardContent}
+        </a>
+      ) : (
+        <Link
+          href={href}
+          className="flex flex-row items-start justify-between gap-3 min-w-0"
+        >
+          {cardContent}
+        </Link>
+      )}
 
       {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
       <div className="flex items-center justify-between mt-3.5 pt-0.5">
@@ -315,11 +397,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     getPublicArticles({ categorySlug: pairedCategory.slug, page: 1, limit: 30 })
       .then((res) => {
         if (!isMounted) return;
-        const fetched = (res?.articles || []).sort((a: any, b: any) => {
-          const at = new Date(a.updatedAt || a.publishedAt || 0).getTime();
-          const bt = new Date(b.updatedAt || b.publishedAt || 0).getTime();
-          return bt - at;
-        });
+        const fetched = sortArticlesByLatest(res?.articles || []);
         setPairedArticles(fetched);
       })
       .catch(() => {})
@@ -460,6 +538,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   /* Get localized location */
   const getArticleLocation = (art: Article) => {
+    if (activeTab === 'video') {
+      return categoryName;
+    }
     if (language === 'gu') {
       return (art as any).categoryGu || art.tagsGu?.[0] || getCategoryLabel(art, language);
     }
@@ -487,7 +568,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   /* Filter & Sort logic based on activeTab specifically for Section (Hero + Sub-Hero + Top Stories) */
 
-  // 1. Articles with Video OR YouTube videos whose title/description explicitly contains the category name (e.g. Surat / સુરત)
+  // 1. Articles with Video OR YouTube videos
   const categoryVideoItems = useMemo(() => {
     const catNameLower = (category?.name || '').toLowerCase().trim();
     const catGuLower = (category?.nameGu || '').toLowerCase().trim();
@@ -503,23 +584,24 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         titleGu: a.titleGu,
         titleHi: a.titleHi,
         image: a.image || a.featuredImage,
-        category: a.category,
-        categoryGu: a.categoryGu,
-        categoryHi: a.categoryHi,
+        category: categoryName,
+        categoryGu: categoryName,
+        categoryHi: categoryName,
         publishedAt: a.publishedAt,
         relativeTimeGu: a.relativeTimeGu,
         relativeTime: a.relativeTime,
         videoUrl: a.videoUrl || a.youtubeUrl,
         videoId: safeYouTubeId(a.videoUrl || a.youtubeUrl),
+        youtubeId: safeYouTubeId(a.videoUrl || a.youtubeUrl),
         isVideoItem: true,
         isArticle: true,
       }));
 
-    // YouTube videos ONLY if title/description contains category title/slug (e.g. Surat / સુરત)
+    // YouTube videos ONLY if title/description contains category title/slug (e.g. Surat / સુરત, Bharat / ભારત, etc.)
     const categoryMatchingYouTubeVideos = (videos || [])
       .filter((v: any) => {
         if (!v) return false;
-        const textToSearch = `${v.title || ''} ${v.titleGu || ''} ${v.description || ''} ${v.category || ''}`.toLowerCase();
+        const textToSearch = `${v.title || ''} ${v.titleGu || ''} ${v.description || ''} ${v.categoryName || ''} ${v.category || ''}`.toLowerCase();
         return (
           (catNameLower && textToSearch.includes(catNameLower)) ||
           (catGuLower && textToSearch.includes(catGuLower)) ||
@@ -527,50 +609,81 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         );
       })
       .map((v: any) => ({
-        id: v.id || v.videoId,
-        slug: v.slug || `video-${v.id}`,
+        id: v.id || v.youtubeId || v.videoId,
+        slug: v.slug || `video-${v.youtubeId || v.id}`,
         title: v.title || v.titleGu,
         titleGu: v.titleGu || v.title,
         titleHi: v.titleHi || v.title,
         image: v.thumbnail || v.image,
-        category: v.category || categoryName,
-        categoryGu: v.categoryGu || categoryName,
-        categoryHi: v.categoryHi || categoryName,
+        category: categoryName,
+        categoryGu: categoryName,
+        categoryHi: categoryName,
         publishedAt: v.publishedAt || new Date().toISOString(),
         relativeTimeGu: v.relativeTimeGu || 'હમણાં જ',
         relativeTime: v.relativeTime || 'Just now',
-        videoUrl: v.youtubeUrl || (v.videoId ? `https://www.youtube.com/watch?v=${v.videoId}` : ''),
-        videoId: v.videoId || safeYouTubeId(v.youtubeUrl),
+        videoUrl: v.youtubeUrl || (v.youtubeId ? `https://www.youtube.com/watch?v=${v.youtubeId}` : ''),
+        videoId: v.youtubeId || v.videoId || safeYouTubeId(v.youtubeUrl || v.embedUrl),
+        youtubeId: v.youtubeId || v.videoId || safeYouTubeId(v.youtubeUrl || v.embedUrl),
         isVideoItem: true,
         isYouTube: true,
       }));
 
-    const combined: any[] = [...videoArticles, ...categoryMatchingYouTubeVideos];
+    // Other YouTube videos from the channel to ensure the top section has 6 REAL videos in EVERY category
+    const otherYouTubeVideos = (videos || [])
+      .filter((v: any) => !categoryMatchingYouTubeVideos.some((mv: any) => (mv.youtubeId || mv.id) === (v.youtubeId || v.id)))
+      .map((v: any) => ({
+        id: v.id || v.youtubeId || v.videoId,
+        slug: v.slug || `video-${v.youtubeId || v.id}`,
+        title: v.title || v.titleGu,
+        titleGu: v.titleGu || v.title,
+        titleHi: v.titleHi || v.title,
+        image: v.thumbnail || v.image,
+        category: categoryName,
+        categoryGu: categoryName,
+        categoryHi: categoryName,
+        publishedAt: v.publishedAt || new Date().toISOString(),
+        relativeTimeGu: v.relativeTimeGu || 'હમણાં જ',
+        relativeTime: v.relativeTime || 'Just now',
+        videoUrl: v.youtubeUrl || (v.youtubeId ? `https://www.youtube.com/watch?v=${v.youtubeId}` : ''),
+        videoId: v.youtubeId || v.videoId || safeYouTubeId(v.youtubeUrl || v.embedUrl),
+        youtubeId: v.youtubeId || v.videoId || safeYouTubeId(v.youtubeUrl || v.embedUrl),
+        isVideoItem: true,
+        isYouTube: true,
+      }));
 
-    // If fewer than 6 video items exist, fill remaining slots with standard category news articles
-    // so Top Stories and Sub-Hero slots are always 100% full with no empty space
-    const usedIds = new Set(combined.map((item) => item.id).filter(Boolean));
-    const fillArticles = (currentArticles || []).filter((art) => !usedIds.has(art.id));
+    // 1. Top Section (Image 1): Exactly 6 real videos
+    const allAvailableVideos = [...videoArticles, ...categoryMatchingYouTubeVideos, ...otherYouTubeVideos];
+    const top6Videos = allAvailableVideos.slice(0, 6);
+    const top6Ids = new Set(top6Videos.map((item) => item.id).filter(Boolean));
 
-    return [...combined, ...fillArticles];
+    // 2. Second Section (Image 2): That category's articles
+    const categoryArticles = (currentArticles || [])
+      .filter((art) => !top6Ids.has(art.id))
+      .map((art: any) => ({
+        ...art,
+        category: art.category || categoryName,
+        categoryGu: art.categoryGu || categoryName,
+        categoryHi: art.categoryHi || categoryName,
+        isVideoItem: true,
+      }));
+
+    return [...top6Videos, ...categoryArticles];
   }, [currentArticles, videos, category, slug, categoryName]);
 
   // Items for "બધું" (All) tab: Pure category news articles (no YouTube videos injected)
   const allSectionItems = useMemo(() => {
-    return [...(currentArticles || [])].sort((a, b) => {
-      return getArticleTimeMs(b) - getArticleTimeMs(a);
-    });
+    return sortArticlesByLatest(currentArticles || []);
   }, [currentArticles]);
 
   // Dynamic Section Items (Hero + Sub-Hero + Top Stories) driven by activeTab
   const currentSectionItems = useMemo(() => {
     if (activeTab === 'paired') {
-      return pairedArticles.length > 0 ? pairedArticles : currentArticles;
+      return pairedArticles.length > 0 ? pairedArticles : (currentArticles || []);
     }
 
     if (activeTab === 'latest') {
       // Strictly latest uploaded articles sorted by time descending
-      return [...(currentArticles || [])].sort((a, b) => getArticleTimeMs(b) - getArticleTimeMs(a));
+      return sortArticlesByLatest(currentArticles || []);
     }
 
     if (activeTab === 'video') {
@@ -607,9 +720,11 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   const popularArticles = useMemo(() => {
     const baseList = (activeTab === 'paired' && pairedArticles.length > 0)
       ? pairedArticles
-      : (currentArticles || []);
+      : (activeTab === 'video' && categoryVideoItems.length > 0)
+        ? categoryVideoItems
+        : currentSectionItems;
     return baseList.filter((art) => !topStoriesIds.has(art.id));
-  }, [activeTab, pairedArticles, currentArticles, topStoriesIds]);
+  }, [activeTab, pairedArticles, categoryVideoItems, currentSectionItems, topStoriesIds]);
 
   // Fast background prefetch of adjacent pages for instant 0ms clicking
   useEffect(() => {
@@ -620,9 +735,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           : { categorySlug: resolvedSlug, page: p, limit: 40 })
           .then((res) => {
             if (res?.articles?.length) {
-              const sorted = (res.articles as any[]).sort((a, b) => {
-                return getArticleTimeMs(b) - getArticleTimeMs(a);
-              });
+              const sorted = sortArticlesByLatest(res.articles as any[]);
               pageCacheRef.current[p] = sorted;
             }
           })
@@ -664,9 +777,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       const res = await getPublicArticles(resolvedSlug === 'trending'
         ? { isTrending: true, page, limit: 40 }
         : { categorySlug: resolvedSlug, page, limit: 40 });
-      const fetched = (res?.articles || []).sort((a: any, b: any) => {
-        return getArticleTimeMs(b) - getArticleTimeMs(a);
-      });
+      const fetched = sortArticlesByLatest(res?.articles || []);
       pageCacheRef.current[page] = fetched;
       setPagedArticles(fetched);
       setPagedPage(page);
@@ -778,36 +889,28 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             <div className="order-1 md:col-start-1 md:row-start-1 flex flex-col justify-start pb-4">
               {heroArticle && (
                 <div>
-                  {activeTab === 'video' && heroArticle.videoId ? (
+                  {activeTab === 'video' || isVideoItem(heroArticle) ? (
                     <div className="relative aspect-[16/10] md:aspect-video w-full overflow-hidden rounded-sm bg-black shadow-sm mb-3">
-                      {playingVideoId === (heroArticle.id || heroArticle.videoId) ? (
-                        <iframe
-                          src={youtubeEmbedUrl(heroArticle.videoId, 'autoplay=1')}
-                          title={getArticleTitle(heroArticle, language)}
-                          className="w-full h-full border-0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
+                      <a
+                        href={getArticleYouTubeUrl(heroArticle)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="relative block w-full h-full cursor-pointer group"
+                      >
+                        <ArticleMedia
+                          src={heroArticle.image || (heroArticle as any).thumbnail || (heroArticle.videoId ? `https://img.youtube.com/vi/${heroArticle.videoId}/hqdefault.jpg` : undefined)}
+                          alt={getArticleTitle(heroArticle, language)}
+                          className="transition-transform duration-500 group-hover:scale-105"
                         />
-                      ) : (
-                        <div
-                          onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(heroArticle.videoId)}`, '_blank', 'noopener,noreferrer')}
-                          className="relative w-full h-full cursor-pointer group"
-                        >
-                          <ArticleMedia
-                            src={heroArticle.image || (heroArticle as any).thumbnail || `https://img.youtube.com/vi/${heroArticle.videoId}/hqdefault.jpg`}
-                            alt={getArticleTitle(heroArticle, language)}
-                            className="transition-transform duration-500 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition">
-                            <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
-                              <Play className="w-7 h-7 fill-current ml-0.5" />
-                            </div>
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition">
+                          <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
+                            <Play className="w-7 h-7 fill-current ml-0.5" />
                           </div>
-                          <span className="absolute top-2.5 right-2.5 bg-black/80 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1">
-                            <VideoIcon className="w-3 h-3 text-red-500" /> VIDEO
-                          </span>
                         </div>
-                      )}
+                        <span className="absolute top-2.5 right-2.5 bg-black/80 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1">
+                          <VideoIcon className="w-3 h-3 text-red-500" /> VIDEO
+                        </span>
+                      </a>
                     </div>
                   ) : (
                     <Link href={heroArticle.slug ? `/news/${heroArticle.slug}` : '#'} className="group block">
@@ -821,14 +924,31 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     </Link>
                   )}
 
-                  <Link href={heroArticle.slug ? `/news/${heroArticle.slug}` : '#'} className="group block mt-3">
-                    <span className="text-xs font-black uppercase tracking-wide text-accent">
-                      {getArticleLocation(heroArticle)}
-                    </span>
-                    <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
-                      <AutoArticleTitle article={heroArticle} language={language} />
-                    </h2>
-                  </Link>
+                  {activeTab === 'video' || isVideoItem(heroArticle) ? (
+                    <a
+                      href={getArticleYouTubeUrl(heroArticle)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group block mt-3"
+                    >
+                      <span className="text-xs font-black uppercase tracking-wide text-accent flex items-center gap-1">
+                        <Play className="w-3 h-3 fill-current text-red-600" />
+                        {getArticleLocation(heroArticle)}
+                      </span>
+                      <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                        <AutoArticleTitle article={heroArticle} language={language} />
+                      </h2>
+                    </a>
+                  ) : (
+                    <Link href={heroArticle.slug ? `/news/${heroArticle.slug}` : '#'} className="group block mt-3">
+                      <span className="text-xs font-black uppercase tracking-wide text-accent">
+                        {getArticleLocation(heroArticle)}
+                      </span>
+                      <h2 className="mt-1 text-[21.5px] md:text-[23.5px] font-black leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-1">
+                        <AutoArticleTitle article={heroArticle} language={language} />
+                      </h2>
+                    </Link>
+                  )}
                 </div>
               )}
             </div>
@@ -845,31 +965,64 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     defaultCategorySlug={currentActiveCatSlug}
                     defaultCategoryLabel={currentActiveCatLabel}
                     index={idx}
+                    isVideo={activeTab === 'video' || isVideoItem(art)}
                   />
                 ))}
               </div>
 
               {/* Desktop (>= md): UNTOUCHED */}
               <div className="hidden md:flex flex-1 flex-col justify-start divide-y divide-border">
-                {topStories.slice(0, 3).map((art: any) => (
-                  <Link key={art.id} href={art.slug ? `/news/${art.slug}` : '#'} className="group flex items-start gap-4 py-2.5 first:pt-0">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-wide text-accent">
-                        {getArticleLocation(art)}
-                      </span>
-                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                        <AutoArticleTitle article={art} language={language} />
-                      </h3>
-                    </div>
-                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                      <ArticleMedia
-                        src={art.image || art.featuredImage || art.thumbnail}
-                        alt={getArticleTitle(art, language)}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  </Link>
-                ))}
+                {topStories.slice(0, 3).map((art: any) => {
+                  const isVid = activeTab === 'video' || isVideoItem(art);
+                  const ytUrl = isVid ? getArticleYouTubeUrl(art) : '';
+                  const cardBody = (
+                    <>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
+                          {isVid && <Play className="w-2.5 h-2.5 fill-current text-red-600" />}
+                          {getArticleLocation(art)}
+                        </span>
+                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                          <AutoArticleTitle article={art} language={language} />
+                        </h3>
+                      </div>
+                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                        <ArticleMedia
+                          src={art.image || art.featuredImage || art.thumbnail}
+                          alt={getArticleTitle(art, language)}
+                          className="transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {isVid && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
+                              <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+
+                  return isVid ? (
+                    <a
+                      key={art.id}
+                      href={ytUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-start gap-4 py-2.5 first:pt-0"
+                    >
+                      {cardBody}
+                    </a>
+                  ) : (
+                    <Link
+                      key={art.id}
+                      href={art.slug ? `/news/${art.slug}` : '#'}
+                      className="group flex items-start gap-4 py-2.5 first:pt-0"
+                    >
+                      {cardBody}
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -885,27 +1038,59 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                       defaultCategorySlug={currentActiveCatSlug}
                       defaultCategoryLabel={currentActiveCatLabel}
                       index={0}
+                      isVideo={activeTab === 'video' || isVideoItem(subHeroArticle)}
                     />
                   </div>
 
-                  {/* Desktop view (>= md): UNTOUCHED */}
-                  <Link href={subHeroArticle.slug ? `/news/${subHeroArticle.slug}` : '#'} className="hidden md:flex group items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-wide text-accent">
-                        {getArticleLocation(subHeroArticle)}
-                      </span>
-                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                        <AutoArticleTitle article={subHeroArticle} language={language} />
-                      </h3>
-                    </div>
-                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                      <ArticleMedia
-                        src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
-                        alt={getArticleTitle(subHeroArticle, language)}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  </Link>
+                  {/* Desktop view (>= md) */}
+                  {activeTab === 'video' || isVideoItem(subHeroArticle) ? (
+                    <a
+                      href={getArticleYouTubeUrl(subHeroArticle)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hidden md:flex group items-start gap-4"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
+                          <Play className="w-2.5 h-2.5 fill-current text-red-600" />
+                          {getArticleLocation(subHeroArticle)}
+                        </span>
+                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                          <AutoArticleTitle article={subHeroArticle} language={language} />
+                        </h3>
+                      </div>
+                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                        <ArticleMedia
+                          src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
+                          alt={getArticleTitle(subHeroArticle, language)}
+                          className="transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
+                            <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </a>
+                  ) : (
+                    <Link href={subHeroArticle.slug ? `/news/${subHeroArticle.slug}` : '#'} className="hidden md:flex group items-start gap-4">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-accent">
+                          {getArticleLocation(subHeroArticle)}
+                        </span>
+                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                          <AutoArticleTitle article={subHeroArticle} language={language} />
+                        </h3>
+                      </div>
+                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                        <ArticleMedia
+                          src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
+                          alt={getArticleTitle(subHeroArticle, language)}
+                          className="transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    </Link>
+                  )}
                 </>
               )}
             </div>
@@ -922,25 +1107,57 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                       defaultCategorySlug={currentActiveCatSlug}
                       defaultCategoryLabel={currentActiveCatLabel}
                       index={3}
+                      isVideo={activeTab === 'video' || isVideoItem(fourthStory)}
                     />
                   </div>
-                  <Link href={fourthStory.slug ? `/news/${fourthStory.slug}` : '#'} className="hidden md:flex group items-start gap-4">
-                    <div className="min-w-0 flex-1">
-                      <span className="text-[10px] font-black uppercase tracking-wide text-accent">
-                        {getArticleLocation(fourthStory)}
-                      </span>
-                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                        <AutoArticleTitle article={fourthStory} language={language} />
-                      </h3>
-                    </div>
-                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                      <ArticleMedia
-                        src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
-                        alt={getArticleTitle(fourthStory, language)}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  </Link>
+                  {activeTab === 'video' || isVideoItem(fourthStory) ? (
+                    <a
+                      href={getArticleYouTubeUrl(fourthStory)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hidden md:flex group items-start gap-4"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
+                          <Play className="w-2.5 h-2.5 fill-current text-red-600" />
+                          {getArticleLocation(fourthStory)}
+                        </span>
+                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                          <AutoArticleTitle article={fourthStory} language={language} />
+                        </h3>
+                      </div>
+                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                        <ArticleMedia
+                          src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
+                          alt={getArticleTitle(fourthStory, language)}
+                          className="transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
+                            <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
+                          </span>
+                        </div>
+                      </div>
+                    </a>
+                  ) : (
+                    <Link href={fourthStory.slug ? `/news/${fourthStory.slug}` : '#'} className="hidden md:flex group items-start gap-4">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] font-black uppercase tracking-wide text-accent">
+                          {getArticleLocation(fourthStory)}
+                        </span>
+                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                          <AutoArticleTitle article={fourthStory} language={language} />
+                        </h3>
+                      </div>
+                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                        <ArticleMedia
+                          src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
+                          alt={getArticleTitle(fourthStory, language)}
+                          className="transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                    </Link>
+                  )}
                 </>
               )}
             </div>
@@ -1004,15 +1221,54 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     defaultCategorySlug={currentActiveCatSlug}
                     defaultCategoryLabel={currentActiveCatLabel}
                     index={idx}
+                    isVideo={activeTab === 'video' || isVideoItem(art)}
                   />
                 ))}
               </div>
 
               {/* Desktop view (>= md): 3-column grid */}
               <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-8">
-                {displayArticles.slice(0, visibleCount).map((article) => (
-                  <NewsCard key={article.id} article={article} variant="flat" />
-                ))}
+                {displayArticles.slice(0, visibleCount).map((article) => {
+                  const isVid = activeTab === 'video' || isVideoItem(article);
+                  if (isVid) {
+                    const ytUrl = getArticleYouTubeUrl(article);
+                    return (
+                      <a
+                        key={article.id}
+                        href={ytUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group flex flex-col cursor-pointer"
+                      >
+                        <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted shadow-sm">
+                          <ArticleMedia
+                            src={article.image || (article as any).featuredImage || (article as any).thumbnail}
+                            alt={getArticleTitle(article, language)}
+                            className="transition-transform duration-300 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600/90 text-white shadow group-hover:scale-110 transition-transform">
+                              <Play className="h-5 w-5 fill-current ml-0.5" />
+                            </span>
+                          </div>
+                          <span className="absolute top-2 right-2 bg-black/80 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1">
+                            <VideoIcon className="w-3 h-3 text-red-500" /> VIDEO
+                          </span>
+                        </div>
+                        <div className="mt-2.5 flex-1 min-w-0">
+                          <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
+                            <Play className="w-2.5 h-2.5 fill-current text-red-600" />
+                            {getArticleLocation(article)}
+                          </span>
+                          <h3 className="mt-1 text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                            <AutoArticleTitle article={article} language={language} />
+                          </h3>
+                        </div>
+                      </a>
+                    );
+                  }
+                  return <NewsCard key={article.id} article={article} variant="flat" />;
+                })}
               </div>
 
               {/* View More — page 1 only, before pagination appears */}

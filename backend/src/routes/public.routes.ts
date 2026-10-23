@@ -337,7 +337,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const skip = (page - 1) * limit;
 
     const query = (req.query.query as string) || '';
-    const categorySlug = (req.query.categorySlug as string) || '';
+    const categorySlug = (req.query.categorySlug as string) || (req.query.category as string) || '';
     const isTrending = req.query.isTrending === 'true';
     const isBreaking = req.query.isBreaking === 'true';
     const isFeatured = req.query.isFeatured === 'true';
@@ -447,7 +447,10 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
             expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
           });
         }
-        where.categoryId = { in: allCityCatIds };
+        where.OR = [
+          { categoryId: { in: allCityCatIds } },
+          { categories: { some: { categoryId: { in: allCityCatIds } } } },
+        ];
       } else if (slugLower === 'other-cities' || slugLower === 'othercities') {
         const cacheEntry = categoryLookupCache.get('__other_cities__');
         let otherCityCatIds: string[];
@@ -466,7 +469,10 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
             expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
           });
         }
-        where.categoryId = { in: otherCityCatIds };
+        where.OR = [
+          { categoryId: { in: otherCityCatIds } },
+          { categories: { some: { categoryId: { in: otherCityCatIds } } } },
+        ];
       } else {
         const cacheKey = `cat:${slugLower}`;
         const cachedCat = categoryLookupCache.get(cacheKey);
@@ -533,7 +539,10 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         }
 
         if (categoryIds && categoryIds.length > 0) {
-          where.categoryId = { in: categoryIds };
+          where.OR = [
+            { categoryId: { in: categoryIds } },
+            { categories: { some: { categoryId: { in: categoryIds } } } },
+          ];
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
           const tag = await withDbRetry(() =>
@@ -578,7 +587,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       ? [{ createdAt: 'desc' }, { articleNumber: 'desc' }]
       : (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
       ? [{ views: 'desc' }, { articleNumber: 'desc' }]
-      : { articleNumber: 'desc' };
+      : [{ createdAt: 'desc' }, { articleNumber: 'desc' }];
 
     // Optimisation: content fields (content, contentGu, contentHi) are NOT
     // included in list responses — they are large @db.Text columns that article cards
@@ -617,6 +626,19 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           name: true,
           nameGu: true,
           nameHi: true,
+        },
+      },
+      categories: {
+        select: {
+          category: {
+            select: {
+              id: true,
+              slug: true,
+              name: true,
+              nameGu: true,
+              nameHi: true,
+            },
+          },
         },
       },
       author: {
@@ -734,6 +756,17 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         category: p.category?.name || '',
         categoryGu: p.category?.nameGu || p.category?.name || '',
         categoryHi: p.category?.nameHi || p.category?.name || '',
+        categories: Array.isArray((p as any).categories)
+          ? (p as any).categories
+              .map((pc: any) => ({
+                id: pc.category?.id || '',
+                slug: pc.category?.slug || '',
+                name: pc.category?.name || '',
+                nameGu: pc.category?.nameGu || pc.category?.name || '',
+                nameHi: pc.category?.nameHi || pc.category?.name || '',
+              }))
+              .filter((c: any) => c.id)
+          : [],
         location: p.location || null,
         tags: Array.isArray(p.tags) ? (p.tags as any[]).map((t: any) => t.name || t.tag?.name || '').filter(Boolean) : [],
         tagsGu: Array.isArray(p.tags) ? (p.tags as any[]).map((t: any) => t.nameGu || t.tag?.nameGu || '').filter(Boolean) : [],
@@ -806,6 +839,11 @@ router.get('/articles/:slug', cacheResponse(60), async (req, res, next) => {
         },
         include: {
           category: true,
+          categories: {
+            include: {
+              category: true,
+            },
+          },
           author: true,
           tags: { include: { tag: true } },
         },
@@ -847,6 +885,17 @@ router.get('/articles/:slug', cacheResponse(60), async (req, res, next) => {
       category: p.category?.name || '',
       categoryGu: p.category?.nameGu || p.category?.name || '',
       categoryHi: p.category?.nameHi || p.category?.name || '',
+      categories: Array.isArray((p as any).categories)
+        ? (p as any).categories
+            .map((pc: any) => ({
+              id: pc.category?.id || '',
+              slug: pc.category?.slug || '',
+              name: pc.category?.name || '',
+              nameGu: pc.category?.nameGu || pc.category?.name || '',
+              nameHi: pc.category?.nameHi || pc.category?.name || '',
+            }))
+            .filter((c: any) => c.id)
+        : [],
       location: p.location || null,
       tags: Array.isArray(p.tags) ? (p.tags as any[]).map((t: any) => t.name || t.tag?.name || '').filter(Boolean) : [],
       tagsGu: Array.isArray(p.tags) ? (p.tags as any[]).map((t: any) => t.nameGu || t.tag?.nameGu || '').filter(Boolean) : [],

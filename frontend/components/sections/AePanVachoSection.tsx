@@ -18,9 +18,10 @@ interface ArticleItem {
 
 interface AePanVachoSectionProps {
   language?: string;
+  spacingClassName?: string;
 }
 
-export default function AePanVachoSection({ language = 'gu' }: AePanVachoSectionProps) {
+export default function AePanVachoSection({ language = 'gu', spacingClassName = 'mt-12' }: AePanVachoSectionProps) {
   const [articles, setArticles] = useState<ArticleItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -69,7 +70,7 @@ export default function AePanVachoSection({ language = 'gu' }: AePanVachoSection
   }, [language]);
 
   return (
-    <section className="mt-12 pt-6 border-t border-border select-none">
+    <section className={`${spacingClassName} pt-6 border-t border-border select-none`}>
       {/* ── HEADER MATCHING IMAGE 4: RED BADGE [આ પણ વાંચો] ── */}
       <div className="mb-5 sm:mb-6">
         <span className="bg-[#B3121B] text-white text-xs sm:text-sm font-black px-3.5 sm:px-4 py-1.5 rounded-md uppercase tracking-wider inline-block shadow-xs">

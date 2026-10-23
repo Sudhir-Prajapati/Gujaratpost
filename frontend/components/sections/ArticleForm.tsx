@@ -1439,21 +1439,32 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         setCanonicalUrl(art.canonicalUrl || '');
         setMetaRobots(art.metaRobots || 'index, follow');
 
+        const primaryCatId = art.categoryId || art.category?.id || '';
+        let loadedAddCats: string[] = [];
+
+        if (art.categories && Array.isArray(art.categories) && art.categories.length > 0) {
+          loadedAddCats = art.categories
+            .map((pc: any) => pc.categoryId || pc.category?.id || pc.id)
+            .filter((id: string) => id && id !== primaryCatId);
+        }
+
         if (art.tags && art.tags.length > 0) {
           const names = art.tags
             .map((t: any) => (t.tag?.name || t.name || '').trim())
             .filter((name: string) => name.length > 0);
           setTagsString(names.join(', '));
 
-          // Match tag names to category IDs for additional categories selection
-          const loadedAddCats = categories
-            .filter((c) => names.some((n: string) => n.toLowerCase() === c.name.toLowerCase()))
-            .map((c) => c.id);
-          setAdditionalCategoryIds(loadedAddCats);
+          if (loadedAddCats.length === 0) {
+            // Match tag names to category IDs for additional categories selection
+            loadedAddCats = categories
+              .filter((c) => names.some((n: string) => n.toLowerCase() === c.name.toLowerCase()))
+              .map((c) => c.id)
+              .filter((id) => id !== primaryCatId);
+          }
         } else {
           setTagsString('');
-          setAdditionalCategoryIds([]);
         }
+        setAdditionalCategoryIds(Array.from(new Set(loadedAddCats)));
       } catch (err: any) {
         console.error('Error loading article in edit mode:', err);
         setError(err.message);
@@ -1719,6 +1730,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       desc2Hi: storySections[0]?.descHi?.trim() || undefined,
       galleryImages: galleryPayload,
       categoryId,
+      additionalCategoryIds,
+      categoryIds: Array.from(new Set([categoryId, ...additionalCategoryIds])).filter(Boolean),
       youtubeUrl: youtubeUrl.trim() || undefined,
       twitterUrl: twitterUrl.trim() || undefined,
       pdfUrl: pdfUrl.trim() || undefined,

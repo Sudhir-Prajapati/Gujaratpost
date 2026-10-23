@@ -1172,7 +1172,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     },
     {
       label: 'Google News',
-      href: 'https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en',
+      href: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu',
       icon: (className: string) => <svg viewBox="0 0 24 24" className={className} fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 10h-4v-2h4v2zm0-4h-4V6h4v2zm-5 8H5v-2h8v2zm5 0h-4v-2h4v2zM12 6H5v6h7V6z" /></svg>,
       style: 'bg-[#4285f4]/8 text-[#4285f4] border border-[#4285f4]/10 hover:bg-[#4285f4]/15'
     },
@@ -1318,7 +1318,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </span>
                 {/* Google News Follow Badge */}
                 <a
-                  href="https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en"
+                  href="https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu"
                   target="_blank"
                   rel="noreferrer"
                   title="Follow Gujarat Post on Google News"
@@ -1750,7 +1750,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </p>
 
                 <a
-                  href="https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0"
+                  href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[13.5px] py-3 md:py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"

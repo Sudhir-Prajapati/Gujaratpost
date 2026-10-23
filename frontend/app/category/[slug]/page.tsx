@@ -1,5 +1,6 @@
 import { CATEGORY_META, categorySlugMapping } from "@/data";
 import { getPublicArticles, getPublicCategories } from "@/lib/api";
+import { sortArticlesByLatest } from "@/lib/utils";
 import CategoryPageClient from "./CategoryPageClient";
 import { notFound, redirect } from "next/navigation";
 
@@ -113,12 +114,8 @@ export default async function CategoryPage({
     totalPages = fallbackRes.totalPages || 1;
   }
 
-  const usePublishDate = ['entertainment', 'entertainment-life-style', 'manoranjan'].includes(resolvedSlug.toLowerCase());
-  const articles = [...rawArticles].sort((a, b) => {
-    const aTime = new Date(usePublishDate ? (a.publishedAt || (a as any).createdAt || 0) : ((a as any).updatedAt || a.publishedAt || 0)).getTime();
-    const bTime = new Date(usePublishDate ? (b.publishedAt || (b as any).createdAt || 0) : ((b as any).updatedAt || b.publishedAt || 0)).getTime();
-    return bTime - aTime;
-  });
+  const articles = sortArticlesByLatest(rawArticles);
+  
 
   return (
     <CategoryPageClient

@@ -7,7 +7,7 @@ import { Share2, Flame, Sparkles, MapPin, Eye, Check } from 'lucide-react';
 import type { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import { getLocalized, formatDate, formatViews } from '@/data';
-import { toGu } from '@/lib/utils';
+import { toGu, sortArticlesByLatest } from '@/lib/utils';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 import ApkAdBanner from './ApkAdBanner';
 
@@ -107,13 +107,9 @@ export default function ApkCategoryFeed({
       return [...articles].sort((a, b) => (b.views || 0) - (a.views || 0));
     }
     if (activeTab === 'latest') {
-      return [...articles].sort((a, b) => {
-        const aT = new Date((a as any).updatedAt || a.publishedAt || 0).getTime();
-        const bT = new Date((b as any).updatedAt || b.publishedAt || 0).getTime();
-        return bT - aT;
-      });
+      return sortArticlesByLatest(articles);
     }
-    return articles;
+    return sortArticlesByLatest(articles);
   }, [articles, trending, activeTab]);
 
   const heroArticle = filteredArticles[0];

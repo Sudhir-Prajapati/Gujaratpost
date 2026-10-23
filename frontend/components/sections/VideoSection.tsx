@@ -191,8 +191,11 @@ export default function VideoSection({ initialVideos }: Props) {
               )}
             </div>
 
-            <div className="mt-2.5">
-              <h3 className="text-sm sm:text-base md:text-xl font-black leading-snug text-white line-clamp-2">
+            <div
+              className="mt-2.5 cursor-pointer group/title"
+              onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(activeMain.youtubeId || activeMain.id)}`, '_blank', 'noopener,noreferrer')}
+            >
+              <h3 className="text-sm sm:text-base md:text-xl font-black leading-snug text-white line-clamp-2 group-hover/title:text-red-400 group-hover/title:underline transition-colors">
                 {getTitle(activeMain)}
               </h3>
               <div className="mt-1 flex items-center gap-2.5 text-[11px] sm:text-xs font-bold text-white/80">

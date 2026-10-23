@@ -206,3 +206,21 @@ export function getTrendingTopicHref(tag: string): string {
   return `/search?q=${encodeURIComponent(clean)}`;
 }
 
+/**
+ * Sort articles strictly latest first: by articleNumber desc, fallback to publishedAt/createdAt desc.
+ * Avoids sorting by updatedAt which can misplace older edited/updated articles.
+ */
+export function sortArticlesByLatest<T extends any>(list: T[]): T[] {
+  return [...(list || [])].sort((a: any, b: any) => {
+    const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);
+    const bNum = typeof b?.articleNumber === 'number' ? b.articleNumber : (parseInt(b?.articleNumber, 10) || 0);
+    if (bNum > 0 && aNum > 0 && bNum !== aNum) return bNum - aNum;
+    if (bNum > 0 && aNum === 0) return -1;
+    if (aNum > 0 && bNum === 0) return 1;
+    const aTime = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+    const bTime = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+    return bTime - aTime;
+  });
+}
+
+

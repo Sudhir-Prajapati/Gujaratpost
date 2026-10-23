@@ -558,7 +558,7 @@ export default function Header() {
             <div className="flex items-center gap-3.5 shrink-0 max-md:hidden">
               <div className="flex items-center gap-2.5">
                 <a
-                  href="https://apps.apple.com"
+                  href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 rounded-lg border border-zinc-600 bg-zinc-900 px-3.5 py-1.5 text-[13px] font-black text-white hover:border-zinc-400 hover:bg-zinc-800 transition-all hover:scale-[1.03] active:scale-95 shadow-sm select-none cursor-pointer"
@@ -567,7 +567,7 @@ export default function Header() {
                   <span translate="no">App Store</span>
                 </a>
                 <a
-                  href="https://play.google.com"
+                  href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center gap-2 rounded-lg border border-zinc-600 bg-zinc-900 px-3.5 py-1.5 text-[13px] font-black text-white hover:border-zinc-400 hover:bg-zinc-800 transition-all hover:scale-[1.03] active:scale-95 shadow-sm select-none cursor-pointer"
@@ -1001,7 +1001,7 @@ export default function Header() {
               {/* App downloads CTA (Matches Footer Image 1 Style) */}
               <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                 <a
-                  href="https://apps.apple.com"
+                  href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
@@ -1010,7 +1010,7 @@ export default function Header() {
                   <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">App Store</span>
                 </a>
                 <a
-                  href="https://play.google.com"
+                  href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
                   target="_blank"
                   rel="noreferrer"
                   className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
@@ -1188,7 +1188,7 @@ export default function Header() {
                 {/* shimmer sweep on hover */}
                 <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
                 <BookOpen className="h-4 w-4 shrink-0" />
-                <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ઈ-પેપર' : 'E-Paper'}</span>
+                <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}</span>
                 {/* live pulse dot */}
                 <span className="relative flex h-1.5 w-1.5 shrink-0">
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" />

@@ -98,10 +98,34 @@ export default function Advertisement({ position, section, className = '', showF
 
   // Check if dynamic custom ad exists for section and has a valid media URL
   const mediaUrl = adData?.image1 ? adData.image1.trim() : '';
+  const thirdPartyCode = adData?.thirdPartyCode?.trim() || '';
+  const isThirdPartyAd =
+    adData &&
+    adData.isActive !== false &&
+    (adData.mediaType || '').toUpperCase() === 'THIRD_PARTY' &&
+    Boolean(thirdPartyCode);
   const hasCustomAd =
     adData &&
     adData.isActive !== false &&
     isValidMediaUrl(mediaUrl);
+
+  if (isThirdPartyAd) {
+    return (
+      <aside
+        aria-label="Advertisement"
+        className={`flex-1 overflow-hidden rounded-xl border border-slate-300/80 dark:border-slate-800 bg-white dark:bg-black shadow-sm ${className}`}
+        style={{ minHeight: h }}
+      >
+        <iframe
+          title={adData.title || 'Third-party advertisement'}
+          srcDoc={thirdPartyCode}
+          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+          className="block h-full w-full border-0"
+          style={{ minHeight: h }}
+        />
+      </aside>
+    );
+  }
 
   if (hasCustomAd) {
     const redirectLink = adData.link1 ? adData.link1.trim() : '#';

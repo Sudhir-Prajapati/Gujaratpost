@@ -32,6 +32,7 @@ async function ensureAdsTableExists() {
           \`isActive\` TINYINT(1) NOT NULL DEFAULT 1,
           \`includeInRandom\` TINYINT(1) NOT NULL DEFAULT 0,
           \`mediaType\` VARCHAR(50) NOT NULL DEFAULT 'IMAGE',
+          \`thirdPartyCode\` LONGTEXT NULL,
           \`image1\` TEXT NULL,
           \`link1\` TEXT NULL,
           \`image2\` TEXT NULL,
@@ -51,6 +52,15 @@ async function ensureAdsTableExists() {
       if (!cols || cols.length === 0) {
         await prisma.$executeRawUnsafe(
           `ALTER TABLE \`advertisements\` ADD COLUMN \`mediaType\` VARCHAR(50) NOT NULL DEFAULT 'IMAGE'`
+        ).catch(() => null);
+      }
+
+      const thirdPartyCodeCols: any[] = (await prisma.$queryRawUnsafe(
+        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'advertisements' AND COLUMN_NAME = 'thirdPartyCode'`
+      ).catch(() => [])) as any[];
+      if (!thirdPartyCodeCols || thirdPartyCodeCols.length === 0) {
+        await prisma.$executeRawUnsafe(
+          `ALTER TABLE \`advertisements\` ADD COLUMN \`thirdPartyCode\` LONGTEXT NULL`
         ).catch(() => null);
       }
 
@@ -186,7 +196,7 @@ export class AdController {
   static async createOrUpdateAd(req: Request, res: Response, next: NextFunction) {
     try {
       await ensureAdsTableExists();
-      const { section, title, isActive, mediaType, image1, link1, image2, link2, image3, link3 } = req.body;
+      const { section, title, isActive, mediaType, thirdPartyCode, image1, link1, image2, link2, image3, link3 } = req.body;
 
       if (!section) {
         return res.status(400).json({ success: false, error: 'Section is required' });
@@ -198,11 +208,11 @@ export class AdController {
       const activeVal = isActive !== false ? 1 : 0;
 
       await prisma.$executeRawUnsafe(
-        `INSERT INTO \`advertisements\` (\`id\`, \`section\`, \`title\`, \`isActive\`, \`mediaType\`, \`image1\`, \`link1\`, \`image2\`, \`link2\`, \`image3\`, \`link3\`, \`createdAt\`, \`updatedAt\`)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-         ON DUPLICATE KEY UPDATE \`title\`=?, \`isActive\`=?, \`mediaType\`=?, \`image1\`=?, \`link1\`=?, \`image2\`=?, \`link2\`=?, \`image3\`=?, \`link3\`=?, \`updatedAt\`=NOW()`,
-        randomUUID(), formattedSection, adTitle, activeVal, parsedMediaType, image1 || null, link1 || null, image2 || null, link2 || null, image3 || null, link3 || null,
-        adTitle, activeVal, parsedMediaType, image1 || null, link1 || null, image2 || null, link2 || null, image3 || null, link3 || null
+        `INSERT INTO \`advertisements\` (\`id\`, \`section\`, \`title\`, \`isActive\`, \`mediaType\`, \`thirdPartyCode\`, \`image1\`, \`link1\`, \`image2\`, \`link2\`, \`image3\`, \`link3\`, \`createdAt\`, \`updatedAt\`)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+         ON DUPLICATE KEY UPDATE \`title\`=?, \`isActive\`=?, \`mediaType\`=?, \`thirdPartyCode\`=?, \`image1\`=?, \`link1\`=?, \`image2\`=?, \`link2\`=?, \`image3\`=?, \`link3\`=?, \`updatedAt\`=NOW()`,
+        randomUUID(), formattedSection, adTitle, activeVal, parsedMediaType, thirdPartyCode || null, image1 || null, link1 || null, image2 || null, link2 || null, image3 || null, link3 || null,
+        adTitle, activeVal, parsedMediaType, thirdPartyCode || null, image1 || null, link1 || null, image2 || null, link2 || null, image3 || null, link3 || null
       );
 
       const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM \`advertisements\` WHERE \`section\` = ? LIMIT 1`, formattedSection);

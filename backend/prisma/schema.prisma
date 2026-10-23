@@ -78,6 +78,7 @@ model Category {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   posts         Post[]
+  postCategories PostCategory[]
   videos        Video[]
   rssSources    RssSource[]
   rssItems      RssItem[]
@@ -119,6 +120,7 @@ model Post {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
   tags           PostTag[]
+  categories     PostCategory[]
   author         Author     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   category       Category   @relation(fields: [categoryId], references: [id])
 
@@ -159,6 +161,21 @@ model PostTag {
   @@unique([postId, tagId])
   @@index([tagId], map: "post_tags_tagId_fkey")
   @@map("post_tags")
+}
+
+model PostCategory {
+  id         String   @id @default(uuid())
+  postId     String
+  categoryId String
+  createdAt  DateTime @default(now())
+
+  post     Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, categoryId])
+  @@index([categoryId], map: "post_categories_categoryId_fkey")
+  @@index([postId], map: "post_categories_postId_fkey")
+  @@map("post_categories")
 }
 
 model Video {
@@ -322,6 +339,7 @@ model Advertisement {
   isActive        Boolean  @default(true)
   includeInRandom Boolean  @default(false)
   mediaType       String   @default("IMAGE")
+  thirdPartyCode  String?  @db.LongText
   image1          String?  @db.Text
   link1           String?  @db.Text
   image2          String?  @db.Text

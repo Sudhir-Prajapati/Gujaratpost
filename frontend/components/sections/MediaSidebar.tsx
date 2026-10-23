@@ -368,7 +368,7 @@ export default function MediaSidebar({
           <div className="pt-2">
             <Link
               href="/photos"
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-full border border-border bg-card hover:bg-muted text-xs sm:text-sm font-bold text-foreground transition-all shadow-xs text-center cursor-pointer active:scale-95"
+              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-full border-2 border-[#B3121B] bg-card text-xs sm:text-sm font-extrabold text-[#B3121B] transition-all duration-200 shadow-xs hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#B3121B] hover:text-white hover:shadow-md text-center cursor-pointer active:scale-95"
             >
               <span>{language === 'gu' ? 'બધા ફોટો જુઓ' : language === 'hi' ? 'सभी फोटो देखें' : 'View All Photos'}</span>
               <ChevronRight className="h-3.5 w-3.5" />

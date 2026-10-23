@@ -102,9 +102,6 @@ export default function ShortsPageClient() {
                 <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
                   {language === 'gu' ? 'શોર્ટ્સ વીડિયો' : language === 'hi' ? 'शॉर्ट्स वीडियो' : 'Shorts Videos'}
                 </h1>
-                <span className="text-xs font-bold text-muted-foreground ml-1 hidden sm:inline">
-                  ({cleanShorts.length} {language === 'gu' ? 'વીડિયો' : 'videos'})
-                </span>
               </div>
             </div>
 
@@ -175,7 +172,7 @@ export default function ShortsPageClient() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount((c) => c + 15)}
-                  className="px-6 py-2.5 rounded-full border border-border bg-card hover:bg-muted text-sm font-bold text-foreground transition-all shadow-xs cursor-pointer active:scale-95"
+                  className="px-6 py-2.5 rounded-full border-2 border-[#B3121B] bg-card text-sm font-black text-[#B3121B] transition-all shadow-xs hover:bg-[#B3121B] hover:text-white hover:shadow-md cursor-pointer active:scale-95"
                 >
                   {language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ ↓' : 'Load More Shorts ↓'}
                 </button>
@@ -202,7 +199,7 @@ export default function ShortsPageClient() {
         </div>
 
         {/* ── AE PAN VACHO (ALSO READ: CRIME & FACT CHECK NEWS) ── */}
-        <AePanVachoSection language={language} />
+        <AePanVachoSection language={language} spacingClassName="mt-5" />
       </div>
 
       {/* ── MODAL VIDEO PLAYER ── */}

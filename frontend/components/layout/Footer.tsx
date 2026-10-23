@@ -324,7 +324,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     <div className="pt-4 border-t border-slate-800/80 flex flex-col items-center">
                         <div className="grid grid-cols-2 gap-2.5 w-full max-w-xs">
                             <a
-                                href="https://apps.apple.com"
+                                href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
@@ -334,7 +334,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             </a>
 
                             <a
-                                href="https://play.google.com"
+                                href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
                                 target="_blank"
                                 rel="noreferrer"
                                 className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
@@ -502,7 +502,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                     <div className="flex items-center justify-center md:justify-end gap-3 select-none">
                         {/* App Store Badge */}
                         <a
-                            href="https://apps.apple.com"
+                            href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
                             target="_blank"
                             rel="noreferrer"
                             className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
@@ -513,7 +513,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
                         {/* Google Play Badge */}
                         <a
-                            href="https://play.google.com"
+                            href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
                             target="_blank"
                             rel="noreferrer"
                             className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"

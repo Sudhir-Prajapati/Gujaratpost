@@ -77,6 +77,26 @@ export default function AdSectionBanner({ section, initialAd, className = '', sh
   // Extract non-empty image items (up to 3)
   const items: AdItemData[] = [];
   const isAdActive = adData && adData.isActive !== false && adData.isActive !== 0 && adData.isActive !== '0';
+  const thirdPartyCode = adData?.thirdPartyCode?.trim() || '';
+  const isThirdPartyAd = isAdActive && (adData?.mediaType || '').toUpperCase() === 'THIRD_PARTY' && Boolean(thirdPartyCode);
+
+  if (isThirdPartyAd) {
+    return (
+      <aside aria-label={`Advertisement section ${section}`} className={`my-2.5 w-full ${className}`}>
+        <div className="mx-auto max-w-screen-xl px-4">
+          <div className="min-h-[145px] overflow-hidden rounded-2xl border border-slate-300/80 bg-white shadow-sm dark:border-slate-800 dark:bg-black">
+            <iframe
+              title={adData.title || 'Third-party advertisement'}
+              srcDoc={thirdPartyCode}
+              sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+              className="block min-h-[145px] w-full border-0"
+            />
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
   if (isAdActive) {
     if (adData.image1 && adData.image1.trim() !== '') {
       items.push({ image: adData.image1, link: adData.link1 || '#' });

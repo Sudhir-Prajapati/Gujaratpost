@@ -130,6 +130,36 @@ const sortByPublishDate = (list: Article[]) =>
     new Date(b?.publishedAt || b?.createdAt || 0).getTime() - new Date(a?.publishedAt || a?.createdAt || 0).getTime()
   );
 
+const articleMatchesCategory = (article: Article, categorySlug: string) => {
+  const articleCategory = (article as any).category;
+  const categoryValues = [
+    articleCategory?.slug,
+    articleCategory?.name,
+    articleCategory?.nameGu,
+    (article as any).categorySlug,
+    (article as any).categoryName,
+    typeof articleCategory === 'string' ? articleCategory : '',
+  ].map((value) => String(value || '').trim().toLowerCase());
+
+  const hasCategory = (...values: string[]) =>
+    values.some((value) => categoryValues.includes(value));
+
+  if (categorySlug === 'manoranjan') {
+    return hasCategory('manoranjan', 'entertainment', 'entertainment-life-style', 'મનોરંજન');
+  }
+
+  if (categorySlug === 'technology') {
+    const title = String((article as any).titleGu || article.title || '').toLowerCase();
+    return hasCategory('technology', 'tech', 'ટેકનોલોજી') && !title.includes('gst');
+  }
+
+  if (categorySlug === 'health') {
+    return hasCategory('health', 'helth', 'હેલ્થ', 'આરોગ્ય');
+  }
+
+  return hasCategory(categorySlug);
+};
+
 /* ─── Entertainment · Tech · Health 3-Column Section ─────────────────── */
 export default function EntertainTechLifeSection({
   language,
@@ -142,10 +172,10 @@ export default function EntertainTechLifeSection({
 }) {
   const buildInitialMap = (): Record<string, Article[]> => {
     const map: Record<string, Article[]> = {};
-    if (initialCategoryArticles['health']?.length) map['health'] = sortLatest(initialCategoryArticles['health']).slice(0, 4);
+    if (initialCategoryArticles['health']?.length) map['health'] = sortLatest(initialCategoryArticles['health'].filter((article) => articleMatchesCategory(article, 'health'))).slice(0, 4);
     const entertainmentKey = initialCategoryArticles['manoranjan']?.length ? 'manoranjan' : 'entertainment';
-    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = sortByPublishDate(initialCategoryArticles[entertainmentKey]).slice(0, 4);
-    if (initialCategoryArticles['technology']?.length) map['technology'] = sortLatest(initialCategoryArticles['technology']).slice(0, 4);
+    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = sortByPublishDate(initialCategoryArticles[entertainmentKey].filter((article) => articleMatchesCategory(article, 'manoranjan'))).slice(0, 4);
+    if (initialCategoryArticles['technology']?.length) map['technology'] = sortLatest(initialCategoryArticles['technology'].filter((article) => articleMatchesCategory(article, 'technology'))).slice(0, 4);
     return map;
   };
 
@@ -210,15 +240,13 @@ export default function EntertainTechLifeSection({
               : sortLatest(list);
 
           if (initialArticles?.length) {
-            const matched = initialArticles.filter((a: any) => {
-              const cSlug = (a.category?.slug || a.categorySlug || a.category || '').toLowerCase();
-              return cSlug === targetSlug || (targetSlug === 'manoranjan' && (cSlug === 'entertainment' || cSlug === 'manoranjan' || cSlug === 'entertainment-life-style'));
-            });
+            const matched = initialArticles.filter((article) => articleMatchesCategory(article, targetSlug));
             if (matched.length >= 2) return { slug: targetSlug, articles: sortCategoryArticles(matched).slice(0, 4) };
           }
           try {
             const res = await getPublicArticles({ categorySlug: cat.slug, limit: 4, sort: 'latest' });
-            return { slug: cat.slug, articles: sortCategoryArticles(res.articles || []) };
+            const matchingArticles = (res.articles || []).filter((article: Article) => articleMatchesCategory(article, targetSlug));
+            return { slug: cat.slug, articles: sortCategoryArticles(matchingArticles) };
           } catch {
             return { slug: cat.slug, articles: [] };
           }

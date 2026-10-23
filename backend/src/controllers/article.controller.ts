@@ -143,57 +143,87 @@ export class ArticleController {
       const limit = Math.max(1, parseInt(req.query.limit as string) || 10);
       const skip = (page - 1) * limit;
 
-      const query = req.query.query as string || '';
-      const categorySlug = req.query.categorySlug as string || '';
-      const status = req.query.status as string || '';
-      const location = req.query.location as string || '';
+      const query = (req.query.query as string || '').trim();
+      const categorySlug = (req.query.categorySlug as string || req.query.category as string || '').trim();
+      const status = (req.query.status as string || '').trim();
+      const location = (req.query.location as string || '').trim();
 
       const where: any = {};
+      const andConditions: any[] = [];
 
       if (location) {
-        where.location = { contains: location };
+        andConditions.push({ location: { contains: location } });
       }
 
       if (query) {
         const cleanQuery = query.replace(/^#/, '').trim();
         const numQuery = parseInt(cleanQuery, 10);
-        where.OR = [
-          { title: { contains: query } },
-          { titleGu: { contains: query } },
-          { titleHi: { contains: query } },
-          { content: { contains: query } },
-          { slug: { contains: query } },
-          ...(!isNaN(numQuery) && numQuery > 0 ? [{ articleNumber: numQuery }] : []),
-        ];
+        andConditions.push({
+          OR: [
+            { title: { contains: query } },
+            { titleGu: { contains: query } },
+            { titleHi: { contains: query } },
+            { content: { contains: query } },
+            { slug: { contains: query } },
+            ...(!isNaN(numQuery) && numQuery > 0 ? [{ articleNumber: numQuery }] : []),
+          ],
+        });
       }
 
       if (categorySlug) {
         const catSlugLower = categorySlug.toLowerCase().trim();
+        let catSlugsToMatch = [catSlugLower];
+
         if (catSlugLower === 'other-cities' || catSlugLower === 'othercities') {
-          where.OR = [
-            { category: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } } },
-            { location: { notIn: ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'] } },
-          ];
+          catSlugsToMatch = ['other-cities', 'othercities', 'gujarat', 'state'];
         } else if (catSlugLower === 'world' || catSlugLower === 'international' || catSlugLower === 'videsh') {
-          where.OR = [
-            { category: { slug: { in: ['world', 'international'] } } },
-            { location: { contains: 'international' } },
-          ];
-        } else if (catSlugLower === 'entertainment' || catSlugLower === 'entertainment-life-style') {
-          where.OR = [
-            { category: { slug: { in: ['entertainment', 'entertainment-life-style'] } } },
-          ];
-        } else {
-          where.OR = [
-            { category: { slug: catSlugLower } },
+          catSlugsToMatch = ['world', 'international'];
+        } else if (catSlugLower === 'national' || catSlugLower === 'india' || catSlugLower === 'bharat' || catSlugLower === 'desh') {
+          catSlugsToMatch = ['national', 'india'];
+        } else if (catSlugLower === 'politics' || catSlugLower === 'rajkaran' || catSlugLower === 'rajneeti') {
+          catSlugsToMatch = ['politics'];
+        } else if (catSlugLower === 'entertainment' || catSlugLower === 'entertainment-life-style' || catSlugLower === 'manoranjan') {
+          catSlugsToMatch = ['entertainment', 'entertainment-life-style'];
+        } else if (catSlugLower === 'fact-check' || catSlugLower === 'factcheck') {
+          catSlugsToMatch = ['fact-check', 'factcheck'];
+        }
+
+        // Find all categories matching the slug, name, or ID
+        const matchedCategories = await prisma.category.findMany({
+          where: {
+            OR: [
+              { slug: { in: catSlugsToMatch } },
+              { id: categorySlug },
+              { name: categorySlug },
+              { nameGu: categorySlug },
+            ],
+          },
+          select: { id: true, slug: true },
+        });
+
+        const matchedCatIds = matchedCategories.map((c) => c.id);
+
+        andConditions.push({
+          OR: [
+            ...(matchedCatIds.length > 0
+              ? [
+                  // Match if category is primary canonical category
+                  { categoryId: { in: matchedCatIds } },
+                  // OR if category is assigned in post_categories (whether primary or additional!)
+                  { categories: { some: { categoryId: { in: matchedCatIds } } } },
+                ]
+              : [
+                  { category: { slug: { in: catSlugsToMatch } } },
+                  { categories: { some: { category: { slug: { in: catSlugsToMatch } } } } },
+                ]),
             { location: { contains: catSlugLower } },
             { location: { contains: categorySlug } },
-          ];
-        }
+          ],
+        });
       }
 
       if (status) {
-        where.status = status;
+        andConditions.push({ status });
       }
 
       const dateStr = (req.query.date as string || '').trim();
@@ -204,15 +234,22 @@ export class ArticleController {
         const startOfDay = new Date(`${dateStr}T00:00:00.000Z`);
         const endOfDay = new Date(`${dateStr}T23:59:59.999Z`);
         if (!isNaN(startOfDay.getTime()) && !isNaN(endOfDay.getTime())) {
-          where.createdAt = {
-            gte: startOfDay,
-            lte: endOfDay,
-          };
+          andConditions.push({
+            createdAt: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
+          });
         }
       } else if (startDateStr || endDateStr) {
-        where.createdAt = {};
-        if (startDateStr) where.createdAt.gte = new Date(`${startDateStr}T00:00:00.000Z`);
-        if (endDateStr) where.createdAt.lte = new Date(`${endDateStr}T23:59:59.999Z`);
+        const dateCond: any = {};
+        if (startDateStr) dateCond.gte = new Date(`${startDateStr}T00:00:00.000Z`);
+        if (endDateStr) dateCond.lte = new Date(`${endDateStr}T23:59:59.999Z`);
+        andConditions.push({ createdAt: dateCond });
+      }
+
+      if (andConditions.length > 0) {
+        where.AND = andConditions;
       }
 
       const [articles, total] = await Promise.all([
@@ -248,6 +285,18 @@ export class ArticleController {
                 id: true,
                 name: true,
                 slug: true,
+              },
+            },
+            categories: {
+              select: {
+                categoryId: true,
+                category: {
+                  select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                  },
+                },
               },
             },
             author: {
@@ -291,6 +340,11 @@ export class ArticleController {
         where: { id },
         include: {
           category: true,
+          categories: {
+            include: {
+              category: true,
+            },
+          },
           author: true,
           tags: {
             include: {
@@ -329,6 +383,8 @@ export class ArticleController {
         featuredImage,
         status,
         categoryId,
+        categoryIds,
+        additionalCategoryIds,
         authorId,
         priority,
         readingTime,
@@ -515,6 +571,15 @@ export class ArticleController {
           seoKeywords: (seoKeywords || '').trim(),
           canonicalUrl: (canonicalUrl || '').trim(),
           metaRobots: (metaRobots || '').trim(),
+          categories: {
+            create: Array.from(
+              new Set([
+                categoryId,
+                ...(Array.isArray(categoryIds) ? categoryIds : []),
+                ...(Array.isArray(additionalCategoryIds) ? additionalCategoryIds : []),
+              ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
+            ).map((cId) => ({ categoryId: cId })),
+          },
           tags: {
             create: tagConnectOrCreate.map((t: any) => ({
               tag: {
@@ -525,6 +590,7 @@ export class ArticleController {
         },
         include: {
           category: true,
+          categories: { include: { category: true } },
           author: true,
           tags: { include: { tag: true } },
         },
@@ -622,6 +688,24 @@ export class ArticleController {
         }
       }
       if (categoryId !== undefined) updateData.categoryId = categoryId;
+
+      if (categoryId !== undefined || req.body.categoryIds !== undefined || req.body.additionalCategoryIds !== undefined) {
+        const finalPrimaryCatId = categoryId !== undefined ? categoryId : existingPost.categoryId;
+        const allSelectedCatIds = Array.from(
+          new Set([
+            finalPrimaryCatId,
+            ...(Array.isArray(req.body.categoryIds) ? req.body.categoryIds : []),
+            ...(Array.isArray(req.body.additionalCategoryIds) ? req.body.additionalCategoryIds : []),
+          ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
+        );
+
+        updateData.categories = {
+          deleteMany: {},
+          create: allSelectedCatIds.map((cId) => ({
+            categoryId: cId,
+          })),
+        };
+      }
 
       if (authorName && typeof authorName === 'string' && authorName.trim() !== '') {
         const trimmedAuthorName = authorName.trim();
@@ -741,6 +825,7 @@ export class ArticleController {
         data: updateData,
         include: {
           category: true,
+          categories: { include: { category: true } },
           author: true,
           tags: { include: { tag: true } },
         },
