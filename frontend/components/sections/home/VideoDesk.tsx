@@ -91,12 +91,8 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     });
   };
 
-  const handleSidebarClick = (youtubeId: string, id: string) => {
-    setPlayId(youtubeId);
-    const originalIndex = (videos || []).findIndex(vid => vid.id === id);
-    if (originalIndex !== -1) {
-      setFeaturedIndex(originalIndex);
-    }
+  const handleSidebarClick = (youtubeId: string) => {
+    window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(youtubeId)}`, '_blank', 'noopener,noreferrer');
   };
 
   // Prioritize featured videos first, but include ALL videos from database
@@ -288,7 +284,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                   <div
                     key={`${card.id}-${index}`}
                     className="group relative flex-shrink-0 w-[145px] sm:w-[165px] md:w-[175px] cursor-pointer"
-                    onClick={() => setPlayId(card.youtubeId)}
+                    onClick={() => window.open(`https://www.youtube.com/shorts/${safeYouTubeId(card.youtubeId)}`, '_blank', 'noopener,noreferrer')}
                   >
                     {/* Vertical Card 9/16 matching Image 1 */}
                     <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/15 shadow-md flex flex-col justify-between p-3 select-none">
@@ -453,7 +449,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
           {/* Left: Featured Video */}
           <div
             className="group flex flex-col cursor-pointer"
-            onClick={() => setPlayId(featuredVideo.youtubeId)}
+            onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(featuredVideo.youtubeId)}`, '_blank', 'noopener,noreferrer')}
             onMouseEnter={() => setFeaturedHovered(true)}
             onMouseLeave={() => setFeaturedHovered(false)}
           >
@@ -510,7 +506,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 <div
                   key={v.id}
                   className="group flex gap-3 py-2.5 sm:py-3 cursor-pointer first:pt-0"
-                  onClick={() => handleSidebarClick(v.youtubeId, v.id)}
+                  onClick={() => handleSidebarClick(v.youtubeId)}
                 >
                   {/* Thumbnail */}
                   <div className="relative h-[68px] w-[108px] shrink-0 overflow-hidden rounded-sm bg-black/30 border border-white/10">

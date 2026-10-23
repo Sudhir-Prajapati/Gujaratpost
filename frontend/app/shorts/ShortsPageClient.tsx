@@ -1,547 +1,258 @@
 'use client';
 
-import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
-import {
-  ThumbsUp,
-  ThumbsDown,
-  MessageSquare,
-  Share2,
-  Volume2,
-  VolumeX,
-  Play,
-  Pause,
-  Check,
-  Music2,
-  Zap,
-} from 'lucide-react';
-import { formatViews } from '@/data';
+import { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
+import { Play, X, ExternalLink } from 'lucide-react';
+import { getPublicVideos, getPublicGallery, getPublicArticles } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
-import { getPublicVideos } from '@/lib/api';
+import { formatViews } from '@/data';
+import { toGu } from '@/lib/utils';
 import { useApp } from '@/components/AppProvider';
-import Footer from '@/components/layout/Footer';
-import { useIsApk } from '@/lib/useIsApk';
-import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import MediaSidebar from '@/components/sections/MediaSidebar';
+import AePanVachoSection from '@/components/sections/AePanVachoSection';
 
 export default function ShortsPageClient() {
   const { language } = useApp();
-  const { isApk } = useIsApk();
-  const [videosList, setVideosList] = useState<any[]>([]);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [playingIndex, setPlayingIndex] = useState<number | null>(0);
-  const [isMuted, setIsMuted] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [liked, setLiked] = useState<Record<string, boolean>>({});
-  const [disliked, setDisliked] = useState<Record<string, boolean>>({});
-  const [subscribed, setSubscribed] = useState(false);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [shortsList, setShortsList] = useState<any[]>([]);
+  const [allVideos, setAllVideos] = useState<any[]>([]);
+  const [galleryList, setGalleryList] = useState<any[]>([]);
+  const [articlesList, setArticlesList] = useState<any[]>([]);
+  const [selectedShort, setSelectedShort] = useState<any | null>(null);
+  const [visibleCount, setVisibleCount] = useState(18);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const iframeRefs = useRef<Map<number, HTMLIFrameElement>>(new Map());
-  const articlesRef = useRef<Map<number, HTMLElement>>(new Map());
-
-  // Fetch shorts
   useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+
+    // Fetch shorts
     getPublicVideos('short').then((res) => {
-      setVideosList(res || []);
+      setShortsList(res || []);
+    });
+
+    // Fetch popular/trending videos for sidebar
+    getPublicVideos('video').then((res) => {
+      setAllVideos(res || []);
+    });
+
+    // Fetch photos for sidebar
+    getPublicGallery({ limit: 20 }).then((res) => {
+      if (res && res.length > 0) {
+        setGalleryList(res);
+      }
+    });
+
+    // Fetch articles as fallback
+    getPublicArticles({ limit: 20, sort: 'views' }).then((res) => {
+      if (res?.articles?.length > 0) {
+        setArticlesList(res.articles);
+      }
     });
   }, []);
 
-  const shorts = useMemo(() => {
-    if (!videosList.length) return [];
-    return videosList.map((item, index) => ({
-      ...item,
-      key: `${item.id}-short-${index}`,
-      likes: item.likes || (1400 + (index * 320) % 5000),
-      comments: item.comments || (45 + (index * 17) % 300),
-    }));
-  }, [videosList]);
-
-  // Send postMessage to active YouTube iframe
-  const sendIframeCommand = useCallback((func: string, args: any = '') => {
-    const iframe = iframeRefs.current.get(activeIndex);
-    if (!iframe || !iframe.contentWindow) return;
-    try {
-      iframe.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func, args }),
-        '*'
-      );
-    } catch {}
-  }, [activeIndex]);
-
-  // Auto-play active short and pause others smoothly
-  useEffect(() => {
-    iframeRefs.current.forEach((iframe, idx) => {
-      if (!iframe || !iframe.contentWindow) return;
-      try {
-        if (idx === activeIndex) {
-          iframe.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'playVideo', args: '' }),
-            '*'
-          );
-          if (!isMuted) {
-            iframe.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'unMute', args: '' }),
-              '*'
-            );
-            iframe.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }),
-              '*'
-            );
-          } else {
-            iframe.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'mute', args: '' }),
-              '*'
-            );
-          }
-        } else {
-          iframe.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'pauseVideo', args: '' }),
-            '*'
-          );
-        }
-      } catch {}
-    });
-  }, [activeIndex, isMuted]);
-
-  // Toggle Mute / Unmute
-  const toggleMute = () => {
-    setIsMuted((prev) => {
-      const next = !prev;
-      sendIframeCommand(next ? 'mute' : 'unMute');
-      if (!next) sendIframeCommand('setVolume', [100]);
-      return next;
-    });
-  };
-
-  // Toggle Play / Pause on click
-  const togglePlay = () => {
-    setIsPlaying((prev) => {
-      const next = !prev;
-      sendIframeCommand(next ? 'playVideo' : 'pauseVideo');
-      return next;
-    });
-  };
-
-  // Share handler
-  const handleShare = async (item: any) => {
-    const ytId = item.youtubeId ? safeYouTubeId(item.youtubeId) : '';
-    const shareUrl = ytId
-      ? `https://www.youtube.com/shorts/${ytId}`
-      : typeof window !== 'undefined' ? window.location.href : '';
-
-    if (typeof navigator !== 'undefined' && navigator.share) {
-      try {
-        await navigator.share({
-          title: item.title || 'Gujarat Post Short',
-          text: item.title || 'Check out this Short on Gujarat Post',
-          url: shareUrl,
+  // Deduplicated shorts
+  const cleanShorts = useMemo(() => {
+    if (!shortsList.length) return [];
+    const seen = new Set<string>();
+    const list: any[] = [];
+    for (const item of shortsList) {
+      const key = item.youtubeId?.trim() || item.id;
+      if (key && !seen.has(key)) {
+        seen.add(key);
+        list.push({
+          id: item.id,
+          youtubeId: safeYouTubeId(item.youtubeId || item.id),
+          title: item.titleGu || item.title,
+          titleGu: item.titleGu || item.title,
+          thumbnail: item.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(item.youtubeId || item.id)}/hqdefault.jpg`,
+          duration: item.duration || '0:50',
+          views: item.views || 1200,
         });
-        return;
-      } catch {}
+      }
     }
+    return list;
+  }, [shortsList]);
 
-    if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      try {
-        await navigator.clipboard.writeText(shareUrl);
-        setCopiedKey(item.key);
-        setTimeout(() => setCopiedKey(null), 2500);
-      } catch {}
+  // Sidebar trending items
+  const sidebarTrending = useMemo(() => {
+    if (allVideos.length > 0) {
+      return allVideos.slice(0, 6).map((v) => ({
+        id: v.id,
+        youtubeId: safeYouTubeId(v.youtubeId),
+        title: v.titleGu || v.title,
+        titleGu: v.titleGu || v.title,
+        thumbnail: v.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(v.youtubeId)}/hqdefault.jpg`,
+        duration: v.duration || '3:30',
+        views: `${formatViews(v.views || 450)} views`,
+      }));
     }
-  };
-
-  // Instant scroll snap listener for fast zero-delay switching
-  const handleContainerScroll = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const itemHeight = container.clientHeight;
-    if (!itemHeight) return;
-
-    const newIdx = Math.round(container.scrollTop / itemHeight);
-    if (newIdx !== activeIndex && newIdx >= 0 && newIdx < shorts.length) {
-      setActiveIndex(newIdx);
-      setPlayingIndex(newIdx);
-      setIsPlaying(true);
-    }
-  }, [activeIndex, shorts.length]);
-
-  // IntersectionObserver backup for edge cases
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !shorts.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
-            const indexStr = entry.target.getAttribute('data-index');
-            if (indexStr !== null) {
-              const idx = parseInt(indexStr, 10);
-              if (idx !== activeIndex) {
-                setActiveIndex(idx);
-                setPlayingIndex(idx);
-                setIsPlaying(true);
-              }
-            }
-          }
-        });
-      },
-      { root: container, threshold: 0.5 }
-    );
-
-    articlesRef.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [shorts.length, activeIndex]);
-
-  // Height calculations:
-  // In APK: 56px top header + 58px bottom nav = 114px chrome
-  // In Web: 92px top header
-  const containerHeightClass = isApk
-    ? 'h-[calc(100svh-114px)] max-h-[calc(100svh-114px)]'
-    : 'h-[calc(100svh-92px)] min-h-[620px]';
-
-  const likeLabel = language === 'hi' ? 'लाइक' : language === 'en' ? 'Like' : 'લાઈક';
-  const dislikeLabel = language === 'hi' ? 'नापसंद' : language === 'en' ? 'Dislike' : 'નાપસંદ';
-  const shareLabel = language === 'hi' ? 'शेयर' : language === 'en' ? 'Share' : 'શેર';
-  const soundOnLabel = language === 'hi' ? 'आवाज़ चालू' : language === 'en' ? 'Sound' : 'અવાજ ચાલુ';
-  const mutedLabel = language === 'hi' ? 'म्यूट' : language === 'en' ? 'Muted' : 'અવાજ બંધ';
-  const subscribeLabel = language === 'hi' ? 'सब्सक्राइब' : language === 'en' ? 'Subscribe' : 'સબસ્ક્રાઇબ';
-  const subscribedLabel = language === 'hi' ? 'सब्सक्राइब किया' : language === 'en' ? 'Subscribed' : 'સબસ્ક્રાઇબ કરેલ';
+    return [];
+  }, [allVideos]);
 
   return (
-    <main className="bg-black text-white select-none">
-      <section className="mx-auto grid max-w-screen-xl grid-cols-1 gap-0 lg:gap-5 px-0 lg:px-4 py-0 lg:py-5 lg:grid-cols-[240px_1fr_240px]">
-        {/* Left Desktop Sidebar */}
-        <aside className="hidden lg:block">
-          <div className="sticky top-44 rounded-2xl border border-white/10 bg-white/5 p-4">
-            <p className="text-xs font-black uppercase text-[#B3121B]">Gujarat Post</p>
-            <h1 className="mt-1 text-3xl font-black leading-tight">Shorts</h1>
-            <p className="mt-3 text-sm font-semibold text-white/60">
-              {language === 'hi'
-                ? 'स्वाइप-शैली के त्वरित समाचार वीडियो.'
-                : language === 'en'
-                ? 'Swipe-style news updates built for fast watching.'
-                : 'એક ક્લિકમાં ઝડપી સમાચાર વિડિયો.'}
-            </p>
-            <Link
-              href="/watch"
-              className="mt-4 inline-flex rounded-full bg-[#B3121B] px-4 py-2 text-sm font-black text-white"
-            >
-              Watch
-            </Link>
-          </div>
-        </aside>
+    <div className="min-h-screen bg-background pb-14 pt-4 sm:pt-6">
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6">
+        {/* ── MAIN 2-COLUMN PORTAL LAYOUT ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
 
-        {/* Center Shorts Feed Container */}
-        <div
-          ref={containerRef}
-          onScroll={handleContainerScroll}
-          className={`mx-auto ${containerHeightClass} w-full max-w-[430px] snap-y snap-mandatory overflow-y-auto overscroll-contain bg-black scrollbar-hide sm:rounded-[2rem] sm:border sm:border-white/10 sm:shadow-2xl`}
-          style={{
-            WebkitOverflowScrolling: 'touch',
-            scrollSnapType: 'y mandatory',
-          }}
-        >
-          {shorts.map((item, index) => {
-            const isLiked = Boolean(liked[item.key]);
-            const isDisliked = Boolean(disliked[item.key]);
-            const ytId = item.youtubeId || '';
-            const isActive = activeIndex === index;
-            // Preload sliding window: active, next (+1) and previous (-1)
-            const shouldMountIframe = Boolean(ytId && Math.abs(index - activeIndex) <= 1);
-
-            const thumbSrc =
-              item.thumbnail &&
-              item.thumbnail.startsWith('http') &&
-              !item.thumbnail.includes('frame0.jpg')
-                ? item.thumbnail
-                : ytId
-                ? `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`
-                : '';
-
-            return (
-              <article
-                key={item.key}
-                data-index={index}
-                ref={(el) => {
-                  if (el) articlesRef.current.set(index, el);
-                  else articlesRef.current.delete(index);
-                }}
-                className={`relative ${containerHeightClass} snap-start overflow-hidden bg-black flex items-center justify-center`}
-                style={{
-                  scrollSnapAlign: 'start',
-                  scrollSnapStop: 'always',
-                }}
-              >
-                {/* ── VIDEO PLAYER / POSTER BACKGROUND ──────────────── */}
-                <div className="absolute inset-0 bg-black flex items-center justify-center overflow-hidden">
-                  {/* Poster Image (Only shown when not active, so it never bleeds above or behind the video) */}
-                  {!isActive && thumbSrc && (
-                    <img
-                      src={thumbSrc}
-                      alt={item.title || 'Short Video'}
-                      className="absolute inset-0 h-full w-full object-cover pointer-events-none"
-                      onError={(e) => {
-                        const img = e.target as HTMLImageElement;
-                        if (img.src.includes('maxresdefault')) {
-                          img.src = `https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`;
-                        }
-                      }}
-                      loading={index < 3 ? 'eager' : 'lazy'}
-                    />
-                  )}
-
-                  {/* YouTube Embed Iframe (Preloaded for current + next + prev, top cropped in APK to remove duplicate upper title) */}
-                  {shouldMountIframe && (
-                    <iframe
-                      ref={(el) => {
-                        if (el) iframeRefs.current.set(index, el);
-                        else iframeRefs.current.delete(index);
-                      }}
-                      src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(
-                        ytId
-                      )}?enablejsapi=1&autoplay=${isActive ? 1 : 0}&mute=${
-                        isMuted ? 1 : (isActive ? 0 : 1)
-                      }&controls=0&rel=0&playsinline=1&modestbranding=1&showinfo=0&iv_load_policy=3&fs=0&loop=1&playlist=${safeYouTubeId(
-                        ytId
-                      )}`}
-                      className={`absolute left-0 w-full border-0 pointer-events-auto bg-black ${
-                        isApk
-                          ? '-top-[65px] h-[calc(100%+65px)]'
-                          : 'inset-0 w-full h-full'
-                      }`}
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      referrerPolicy="strict-origin-when-cross-origin"
-                      allowFullScreen
-                      loading={index <= activeIndex + 1 ? 'eager' : 'lazy'}
-                    />
-                  )}
-
-                  {/* Top gradient mask to cleanly hide any YouTube upper chrome in APK mode */}
-                  {isApk && (
-                    <div className="absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-black/90 via-black/40 to-transparent pointer-events-none z-20" />
-                  )}
-
-                  {/* Transparent Click-to-Play/Pause Overlay */}
-                  <div
-                    className="absolute inset-0 z-10 cursor-pointer"
-                    onClick={togglePlay}
-                  />
-
-                  {/* Pause Overlay indicator only if user explicitly paused */}
-                  {isActive && !isPlaying && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-20 pointer-events-none animate-in fade-in zoom-in-75 duration-150">
-                      <span className="w-16 h-16 rounded-full bg-black/60 backdrop-blur-md flex items-center justify-center text-white border border-white/20 shadow-2xl">
-                        <Play className="w-8 h-8 fill-white ml-1" />
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* ── TOP BAR OVERLAY: Badge + Single Sound Button ──── */}
-                <div className="absolute left-3 right-3 top-3 z-30 flex items-center justify-between pointer-events-none">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1 text-xs font-black uppercase backdrop-blur-md border border-white/15 shadow-md">
-                    <Zap className="w-3.5 h-3.5 text-[#B3121B] fill-[#B3121B]" />
-                    <span>Shorts</span>
-                  </span>
-
-                  {/* Single Sound Button (Top Right) */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleMute();
-                    }}
-                    className="pointer-events-auto flex items-center gap-1.5 rounded-full bg-black/60 hover:bg-black/80 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md border border-white/20 shadow-lg active:scale-95 transition cursor-pointer"
-                    title={isMuted ? soundOnLabel : mutedLabel}
-                  >
-                    {isMuted ? (
-                      <>
-                        <VolumeX className="w-3.5 h-3.5 text-red-400" />
-                        <span className="text-[11px] text-red-200">{mutedLabel}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="w-3.5 h-3.5 text-green-400" />
-                        <span className="text-[11px] text-white">{soundOnLabel}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                {/* ── RIGHT ACTION BUTTONS (Real YouTube Shorts Style) ── */}
-                <div className="absolute bottom-4 right-2.5 z-30 flex flex-col items-center gap-4 select-none">
-                  {/* Like Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLiked((v) => ({ ...v, [item.key]: !isLiked }));
-                      if (!isLiked && isDisliked) {
-                        setDisliked((v) => ({ ...v, [item.key]: false }));
-                      }
-                    }}
-                    className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition group"
-                  >
-                    <span
-                      className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-md border shadow-lg transition ${
-                        isLiked
-                          ? 'bg-[#B3121B] border-[#B3121B] text-white'
-                          : 'bg-black/50 border-white/20 text-white group-hover:bg-black/70'
-                      }`}
-                    >
-                      <ThumbsUp
-                        className={`h-5 w-5 ${isLiked ? 'fill-white' : ''}`}
-                      />
-                    </span>
-                    <span className="text-[11px] font-bold text-white drop-shadow-sm">
-                      {formatViews(item.likes + (isLiked ? 1 : 0))}
-                    </span>
-                  </button>
-
-                  {/* Dislike Button (Hidden in APK mode) */}
-                  {!isApk && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDisliked((v) => ({ ...v, [item.key]: !isDisliked }));
-                        if (!isDisliked && isLiked) {
-                          setLiked((v) => ({ ...v, [item.key]: false }));
-                        }
-                      }}
-                      className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition group"
-                    >
-                      <span
-                        className={`flex h-11 w-11 items-center justify-center rounded-full backdrop-blur-md border shadow-lg transition ${
-                          isDisliked
-                            ? 'bg-black/80 border-red-500 text-red-400'
-                            : 'bg-black/50 border-white/20 text-white group-hover:bg-black/70'
-                        }`}
-                      >
-                        <ThumbsDown
-                          className={`h-5 w-5 ${isDisliked ? 'fill-red-400' : ''}`}
-                        />
-                      </span>
-                      <span className="text-[11px] font-bold text-white drop-shadow-sm">
-                        {dislikeLabel}
-                      </span>
-                    </button>
-                  )}
-
-                  {/* Comments Button (Hidden in APK mode) */}
-                  {!isApk && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleShare(item);
-                      }}
-                      className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition group"
-                    >
-                      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg group-hover:bg-black/70">
-                        <MessageSquare className="h-5 w-5" />
-                      </span>
-                      <span className="text-[11px] font-bold text-white drop-shadow-sm">
-                        {item.comments}
-                      </span>
-                    </button>
-                  )}
-
-                  {/* Share Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleShare(item);
-                    }}
-                    className="flex flex-col items-center gap-1 cursor-pointer active:scale-90 transition group"
-                  >
-                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-black/50 backdrop-blur-md border border-white/20 text-white shadow-lg group-hover:bg-black/70">
-                      {copiedKey === item.key ? (
-                        <Check className="h-5 w-5 text-green-400" />
-                      ) : (
-                        <Share2 className="h-5 w-5" />
-                      )}
-                    </span>
-                    <span className="text-[11px] font-bold text-white drop-shadow-sm">
-                      {copiedKey === item.key ? 'Copied' : shareLabel}
-                    </span>
-                  </button>
-
-                  {/* Spinning Music Disc */}
-                  <div className="pt-1">
-                    <div className="w-10 h-10 rounded-full border-2 border-white/40 overflow-hidden shadow-2xl animate-spin [animation-duration:4.5s] bg-slate-900 flex items-center justify-center">
-                      <span className="w-4 h-4 rounded-full bg-[#B3121B] flex items-center justify-center text-[8px] font-black text-white">
-                        GP
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── BOTTOM INFO OVERLAY (Real YouTube Shorts Style) ── */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/55 to-transparent pt-20 pb-3 px-3.5 pr-16 z-20 pointer-events-none">
-                  {/* Channel Header + Subscribe Pill */}
-                  <div className="flex items-center gap-2 mb-2 pointer-events-auto">
-                    <div className="relative w-8 h-8 rounded-full bg-[#B3121B] flex items-center justify-center text-white font-black text-[10px] shadow-md border border-white/30 shrink-0">
-                      GP
-                    </div>
-                    <span className="font-extrabold text-[13.5px] text-white drop-shadow-md">
-                      @GujaratPost
-                    </span>
-
-                    {/* Real YouTube Shorts Subscribe Button */}
-                    <button
-                      type="button"
-                      onClick={() => setSubscribed(!subscribed)}
-                      className={`ml-1 text-[11px] font-black px-3 py-1 rounded-full active:scale-95 transition shadow-md cursor-pointer ${
-                        subscribed
-                          ? 'bg-white/25 text-white border border-white/30 backdrop-blur-xs'
-                          : 'bg-white hover:bg-gray-100 text-black'
-                      }`}
-                    >
-                      {subscribed ? subscribedLabel : subscribeLabel}
-                    </button>
-                  </div>
-
-                  {/* Title & Hashtags */}
-                  <div className="pointer-events-auto">
-                    <h2 className="line-clamp-2 text-[13.5px] sm:text-[15px] font-bold leading-snug text-white drop-shadow-md">
-                      <AutoTranslateString
-                        text={item.titleGu || item.title || ''}
-                        language={language}
-                      />
-                    </h2>
-                  </div>
-
-                  {/* Audio Track marquee row */}
-                  <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-white/85 pointer-events-auto">
-                    <Music2 className="w-3.5 h-3.5 text-white/90 animate-pulse shrink-0" />
-                    <span className="truncate max-w-[220px]">
-                      Original Sound - Gujarat Post News
-                    </span>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-
-          {/* Last Slide: Footer (Only on Web, hidden in APK) */}
-          {!isApk && (
-            <div className="relative h-[calc(100svh-92px)] min-h-[620px] snap-start overflow-y-auto bg-primary">
-              <div className="p-4 sm:p-8">
-                <Footer />
+          {/* ════ LEFT COLUMN: SHORTS GRID (3 CARDS PER ROW MATCHING SCREENSHOT) ════ */}
+          <div className="min-w-0">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3 mb-5 pb-2.5 border-b-2 border-border">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-6 bg-[#B3121B] rounded-xs inline-block shrink-0" />
+                <h1 className="text-xl sm:text-2xl font-black text-foreground tracking-tight">
+                  {language === 'gu' ? 'શોર્ટ્સ વીડિયો' : language === 'hi' ? 'शॉर्ट्स वीडियो' : 'Shorts Videos'}
+                </h1>
+                <span className="text-xs font-bold text-muted-foreground ml-1 hidden sm:inline">
+                  ({cleanShorts.length} {language === 'gu' ? 'વીડિયો' : 'videos'})
+                </span>
               </div>
             </div>
-          )}
+
+            {/* 3-Column Video Cards Grid matching screenshot */}
+            {cleanShorts.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
+                {cleanShorts.slice(0, visibleCount).map((item) => {
+                  const ytId = item.youtubeId;
+                  return (
+                    <div
+                      key={item.id}
+                      className="group flex flex-col cursor-pointer"
+                      onClick={() => window.open(`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`, '_blank', 'noopener,noreferrer')}
+                    >
+                      {/* Thumbnail Container */}
+                      <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow-xs border border-border/20 group">
+                        <Image
+                          src={item.thumbnail}
+                          alt={item.titleGu}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+
+                        {/* Centered Circular Play Button */}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-all">
+                          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#B3121B] shadow-md transition-transform group-hover:scale-110">
+                            <Play className="h-5 w-5 fill-current ml-0.5" />
+                          </span>
+                        </div>
+
+                        {/* Duration Pill at bottom right */}
+                        <span className="absolute bottom-1.5 right-1.5 rounded bg-black/85 px-1.5 py-0.5 text-[10px] font-bold text-white tracking-wider">
+                          {item.duration}
+                        </span>
+                      </div>
+
+                      {/* Video Title */}
+                      <div className="mt-2.5 min-w-0">
+                        <h3 className="text-[13px] sm:text-[13.5px] font-bold leading-snug tracking-tight text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                          {item.titleGu}
+                        </h3>
+
+                        {/* Meta: ▶ Gujarat Post · views */}
+                        <div className="mt-1 flex items-center gap-1.5 text-[10.5px] font-bold text-muted-foreground">
+                          <span className="text-[#B3121B]">▶</span>
+                          <span>Gujarat Post</span>
+                          <span>·</span>
+                          <span>{toGu(formatViews(item.views))} views</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center p-12 text-center text-muted-foreground rounded-2xl border border-dashed border-border">
+                <Play className="h-10 w-10 mb-2 text-muted-foreground/50" />
+                <p className="font-bold text-sm">
+                  {language === 'gu' ? 'શોર્ટ્સ લોડ થઈ રહ્યા છે...' : 'Loading shorts...'}
+                </p>
+              </div>
+            )}
+
+            {/* Load More Button */}
+            {visibleCount < cleanShorts.length && (
+              <div className="mt-8 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((c) => c + 15)}
+                  className="px-6 py-2.5 rounded-full border border-border bg-card hover:bg-muted text-sm font-bold text-foreground transition-all shadow-xs cursor-pointer active:scale-95"
+                >
+                  {language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ ↓' : 'Load More Shorts ↓'}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* ════ RIGHT COLUMN: SIDEBAR (TRENDING NEWS + PHOTO GALLERY) ════ */}
+          <div className="w-full">
+            <MediaSidebar
+              type="shorts"
+              language={language}
+              trendingVideos={sidebarTrending}
+              trendingArticles={articlesList}
+              photos={galleryList}
+              onVideoClick={(v) => {
+                if (v.youtubeId) {
+                  setSelectedShort(v);
+                }
+              }}
+            />
+          </div>
+
         </div>
 
-        {/* Right Desktop Spacer */}
-        <aside className="hidden lg:block" />
-      </section>
-    </main>
+        {/* ── AE PAN VACHO (ALSO READ: CRIME & FACT CHECK NEWS) ── */}
+        <AePanVachoSection language={language} />
+      </div>
+
+      {/* ── MODAL VIDEO PLAYER ── */}
+      {selectedShort && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4 sm:p-6"
+          onClick={() => setSelectedShort(null)}
+        >
+          <div
+            className="relative w-full max-w-2xl bg-zinc-950 rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-3.5 bg-zinc-900 border-b border-white/10 text-white">
+              <h3 className="text-sm font-bold truncate pr-4">
+                {selectedShort.titleGu || selectedShort.title}
+              </h3>
+              <div className="flex items-center gap-2">
+                <a
+                  href={`https://www.youtube.com/shorts/${selectedShort.youtubeId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-300 hover:text-white transition"
+                  title="Open in YouTube Shorts"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setSelectedShort(null)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-300 hover:text-white transition cursor-pointer"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Video Player */}
+            <div className="relative aspect-video w-full bg-black">
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${selectedShort.youtubeId}?autoplay=1&rel=0&modestbranding=1`}
+                title={selectedShort.titleGu || selectedShort.title}
+                className="absolute inset-0 h-full w-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

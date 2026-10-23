@@ -199,7 +199,7 @@ export default function AdminContactPage() {
     grievanceAddress: 'ગુજરાત પોસ્ટ મુખ્ય કાર્યાલય, અમદાવાદ, ગુજરાત - 380015',
     socialLinks: {
       whatsapp: 'https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0',
-      facebook: 'https://www.facebook.com/Gujarat-Post-165183530766504',
+      facebook: 'https://www.facebook.com/gujpost.in',
       twitter: 'https://x.com/maheshrpat59606',
       instagram: 'https://instagram.com/gujaratpost',
       youtube: 'https://youtube.com/@gujaratpost',

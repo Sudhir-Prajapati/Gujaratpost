@@ -69,7 +69,6 @@ const topics1Links = [
     { label: 'Vadodara', href: '/category/vadodara' },
     { label: 'Gandhinagar', href: '/category/gandhinagar' },
     { label: 'Other Cities', href: '/category/gujarat' },
-    { label: 'Gujarat Election 2027', href: '/category/election-2027' },
 ];
 
 const topics2Links = [
@@ -79,7 +78,6 @@ const topics2Links = [
     { label: 'Crime', href: '/category/crime' },
     { label: 'Fact Check', href: '/category/fact-check' },
     { label: 'Trending News', href: '/category/trending' },
-    { label: 'Podcast', href: '/videos?tab=podcast' },
     { label: 'E-Paper', href: '/epaper' },
 ];
 
@@ -89,8 +87,7 @@ const topics3Links = [
     { label: 'Entertainment', href: '/category/entertainment' },
     { label: 'Technology', href: '/category/technology' },
     { label: 'Photo Gallery', href: '/photos' },
-    { label: 'Instagram', href: '/videos' },
-    { label: 'Web Stories', href: '/category/webstory' },
+    { label: 'Instagram', href: '/instagram' },
     { label: 'Weather', href: '/category/weather' },
     { label: 'Gold-Silver', href: '/category/gold-silver' },
     { label: 'News Brief', href: '/category/news-brief' }
@@ -214,8 +211,8 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
         return null;
     }
 
-    // Hide global footer on feed pages — it's rendered inline there
-    const isFeedPage = pathname === '/watch' || pathname === '/shorts';
+    // Hide global footer on watch feed page — it's rendered inline there
+    const isFeedPage = pathname === '/watch';
     if (isFeedPage && !isInline) return null;
 
     const wrap = isInline ? 'pt-2 pb-1.5' : 'pt-4 pb-3';

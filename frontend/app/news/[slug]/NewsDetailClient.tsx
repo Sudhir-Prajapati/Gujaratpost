@@ -5,9 +5,9 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useIsApk } from '@/lib/useIsApk';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight, Download } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight } from 'lucide-react';
 import { SocialIcon } from '@/components/ui/SocialLinks';
-import { isMediaVideo, sanitizeImageUrl, formatImageDownloadUrl } from '@/lib/media';
+import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
 
@@ -654,7 +654,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [sidebarMoreRecommended, setSidebarMoreRecommended] = useState(false);
   const isRecommendedExpanded = isContentExpanded || sidebarMoreRecommended;
 
-  const [mostReadArticles, setMostReadArticles] = useState<typeof trending>(trending.slice(0, 5));
+  const [mostReadArticles, setMostReadArticles] = useState<typeof trending>(trending.slice(0, 10));
 
   // Mounted guard: prevents language-dependent SSR/client HTML mismatch
   useEffect(() => { setMounted(true); }, []);
@@ -664,12 +664,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     getHeroSettings().then((heroRes: any) => {
       const customMostRead: typeof trending = (heroRes?.mostReadArticles || []).filter(Boolean);
       if (customMostRead.length > 0) {
-        setMostReadArticles(customMostRead);
+        setMostReadArticles(customMostRead.slice(0, 10));
       } else {
-        setMostReadArticles(trending.slice(0, 5));
+        setMostReadArticles(trending.slice(0, 10));
       }
     }).catch(() => {
-      setMostReadArticles(trending.slice(0, 5));
+      setMostReadArticles(trending.slice(0, 10));
     });
   }, []);
 
@@ -860,8 +860,6 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const body = useAutoTranslateHtml(rawBody, language);
   const category = normalizeDisplayText(getCategoryLabel(article, language));
   const authorName = getLocalized(language, { en: article.author.name, gu: article.author.nameGu, hi: article.author.nameHi });
-  const authorAvatarImage = article.author?.image || (article.author as any)?.imageUrl || (article.author as any)?.avatar || '';
-  const hasAuthorPhoto = Boolean(authorAvatarImage) && !/^(editor|સંપાદક|संपादक)$/i.test(authorName.trim());
   const authorDesignation = getLocalized(language, {
     en: article.author.designation,
     gu: article.author.designationGu,
@@ -1174,7 +1172,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     },
     {
       label: 'Google News',
-      href: `https://news.google.com/search?q=Gujarat+Post`,
+      href: 'https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en',
       icon: (className: string) => <svg viewBox="0 0 24 24" className={className} fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-1 10h-4v-2h4v2zm0-4h-4V6h4v2zm-5 8H5v-2h8v2zm5 0h-4v-2h4v2zM12 6H5v6h7V6z" /></svg>,
       style: 'bg-[#4285f4]/8 text-[#4285f4] border border-[#4285f4]/10 hover:bg-[#4285f4]/15'
     },
@@ -1237,29 +1235,29 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const getLocationDisplay = (loc: string | null | undefined, lang: Language) => {
     const cleanLoc = (loc || '').trim();
     const map: Record<string, { en: string; gu: string; hi: string }> = {
-      'ahmedabad': { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
-      'gandhinagar': { en: 'Gandhinagar', gu: 'ગાંધીનગર', hi: 'ગાંધીનગર' },
-      'surat': { en: 'Surat', gu: 'સુરત', hi: 'સુરત' },
-      'vadodara': { en: 'Vadodara', gu: 'વડોદરા', hi: 'વડોદરા' },
-      'rajkot': { en: 'Rajkot', gu: 'રાજકોટ', hi: 'રાજકોટ' },
-      'bhavnagar': { en: 'Bhavnagar', gu: 'ભાવનગર', hi: 'ભાવનગર' },
-      'jamnagar': { en: 'Jamnagar', gu: 'જામનગર', hi: 'જામનગર' },
-      'junagadh': { en: 'Junagadh', gu: 'જૂનાગઢ', hi: 'જૂનાગઢ' },
-      'kutch': { en: 'Kutch', gu: 'કચ્છ', hi: 'કચ્છ' },
-      'anand': { en: 'Anand', gu: 'આણંદ', hi: 'આણંદ' },
-      'gujarat': { en: 'Gujarat', gu: 'ગુજરાત', hi: 'ગુજરાત' },
-      'national': { en: 'National', gu: 'દેશ', hi: 'દેશ' },
+      'ahmedabad': { en: 'Ahmedabad', gu: '\u0a85\u0aae\u0aa6\u0abe\u0ab5\u0abe\u0aa6', hi: '\u0905\u0939\u092e\u0926\u093e\u092c\u093e\u0926' },
+      'gandhinagar': { en: 'Gandhinagar', gu: '\u0a97\u0abe\u0a82\u0aa7\u0ac0\u0aa8\u0a97\u0ab0', hi: '\u0917\u093e\u0902\u0927\u0940\u0928\u0917\u0930' },
+      'surat': { en: 'Surat', gu: '\u0ab8\u0ac1\u0ab0\u0aa4', hi: '\u0938\u0942\u0930\u0924' },
+      'vadodara': { en: 'Vadodara', gu: '\u0ab5\u0aa1\u0acb\u0aa6\u0ab0\u0abe', hi: '\u0935\u0921\u094b\u0926\u0930\u093e' },
+      'rajkot': { en: 'Rajkot', gu: '\u0ab0\u0abe\u0a9c\u0a95\u0acb\u0a9f', hi: '\u0930\u093e\u091c\u0915\u094b\u091f' },
+      'bhavnagar': { en: 'Bhavnagar', gu: '\u0aad\u0abe\u0ab5\u0aa8\u0a97\u0ab0', hi: '\u092d\u093e\u0935\u0928\u0917\u0930' },
+      'jamnagar': { en: 'Jamnagar', gu: '\u0a9c\u0abe\u0aae\u0aa8\u0a97\u0ab0', hi: '\u091c\u093e\u092e\u0928\u0917\u0930' },
+      'junagadh': { en: 'Junagadh', gu: '\u0a9c\u0ac2\u0aa8\u0abe\u0a97\u0aa2', hi: '\u091c\u0942\u0928\u093e\u0917\u0922' },
+      'kutch': { en: 'Kutch', gu: '\u0a95\u0a9a\u0acd\u0a9b', hi: '\u0915\u091a\u094d\u091b' },
+      'anand': { en: 'Anand', gu: '\u0a86\u0aa3\u0a82\u0aa6', hi: '\u0906\u0923\u0902\u0926' },
+      'gujarat': { en: 'Gujarat', gu: '\u0a97\u0ac1\u0a9c\u0ab0\u0abe\u0aa4', hi: '\u0917\u0941\u091c\u0930\u093e\u0924' },
+      'national': { en: 'National', gu: '\u0aa6\u0ac7\u0ab6', hi: '\u0930\u093e\u0937\u094d\u091f\u094d\u0930\u0940\u092f' }
     };
     const key = cleanLoc.toLowerCase();
     if (map[key]) {
       return uiLabel(lang, map[key]);
     }
-    return cleanLoc || uiLabel(lang, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' });
+    return cleanLoc || uiLabel(lang, map['ahmedabad']);
   };
 
   const rawLocationDisplay = getLocationDisplay(article.location, language);
   const cityLocationLabel = (rawLocationDisplay.toLowerCase() === category.toLowerCase())
-    ? uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'અહમદાબાદ' })
+    ? uiLabel(language, { en: 'Ahmedabad', gu: '\u0a85\u0aae\u0aa6\u0abe\u0ab5\u0abe\u0aa6', hi: '\u0905\u0939\u092e\u0926\u093e\u092c\u093e\u0926' })
     : rawLocationDisplay;
 
   return (
@@ -1301,12 +1299,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             <div className="byline select-none">
               <div className="flex items-center gap-[11px]">
-                <Link href={`/author/${article.author.id}`} className="shrink-0 w-[38px] h-[38px] rounded-full bg-[var(--red)] text-white flex items-center justify-center font-bold text-sm hover:opacity-90 transition-opacity overflow-hidden border border-[#B3121B]/20 shadow-xs">
-                  {hasAuthorPhoto ? (
-                    <img src={authorAvatarImage} alt={authorName} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>GP</span>
-                  )}
+                <Link href={`/author/${article.author.id}`} aria-label="Gujarat Post" className="shrink-0 w-[38px] h-[38px] rounded-full bg-white flex items-center justify-center hover:opacity-90 transition-opacity overflow-hidden border border-[#B3121B]/20 shadow-xs">
+                  <Image src="/logo.png" alt="Gujarat Post" width={38} height={38} className="h-full w-full object-contain p-0.5" />
                 </Link>
                 <div>
                   <div className="text-[13.5px]">
@@ -1324,7 +1318,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 </span>
                 {/* Google News Follow Badge */}
                 <a
-                  href="https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu"
+                  href="https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en"
                   target="_blank"
                   rel="noreferrer"
                   title="Follow Gujarat Post on Google News"
@@ -1435,21 +1429,6 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   );
                 })}
 
-                {/* Download AVIF Image Button */}
-                {slideImages[activeImageIndex] && !isMediaVideo(slideImages[activeImageIndex]) && (
-                  <a
-                    href={formatImageDownloadUrl(slideImages[activeImageIndex], `${article.slug || 'gujarat-post'}-${activeImageIndex + 1}`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={`${article.slug || 'gujarat-post'}-${activeImageIndex + 1}.avif`}
-                    title="Download image in AVIF format (.avif)"
-                    className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/75 hover:bg-black text-white text-xs font-bold backdrop-blur-sm border border-white/20 transition-all opacity-90 hover:opacity-100 shadow-md active:scale-95 group/dl"
-                    suppressHydrationWarning
-                  >
-                    <Download className="w-3.5 h-3.5 text-white/90 group-hover/dl:text-white" />
-                    <span>{language === 'gu' ? 'AVIF ડાઉનલોડ' : language === 'hi' ? 'AVIF डाउनलोड' : 'Download AVIF'}</span>
-                  </a>
-                )}
               </div>
               <figcaption>
                 <span>

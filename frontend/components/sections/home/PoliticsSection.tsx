@@ -9,7 +9,17 @@ import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTrans
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { DEMO_IMAGES } from './homeHelpers';
 
-const POLITICS_SLUGS = ['politics', 'rajkaran'];
+const POLITICS_SLUGS = [
+  'politics',
+  'rajkaran',
+  '2019-election-bjp-ram-mandir',
+  'election-five-states-results',
+  'loksabha-election',
+  'gujarat-election-2017',
+  'jasadan-by-election',
+  'election-2019-modi-loss-five-states',
+  'gujarat-election-2022',
+];
 
 const POLITICS_CATEGORY_ID = '33c842e2-4efa-4b25-a12d-ac1a1fe1f561';
 
@@ -171,7 +181,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
       {/* Section Header */}
       <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
-          {language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics'}
+          {language === 'gu' ? 'રાજનીતિ' : language === 'hi' ? 'राजनीति' : 'Politics'}
         </span>
         <Link
           href="/category/politics"

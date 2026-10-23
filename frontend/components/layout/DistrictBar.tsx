@@ -9,9 +9,9 @@ import { useApp } from '@/components/AppProvider';
 const DISTRICTS = [
   { gu: 'અમદાવાદ', hi: 'अहमदाबाद', en: 'Ahmedabad', slug: 'ahmedabad' },
   { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar', slug: 'gandhinagar' },
-  { gu: 'સુરત', hi: 'સૂરત', en: 'Surat', slug: 'surat' },
+  { gu: '\u0ab8\u0ac1\u0ab0\u0aa4', hi: '\u0938\u0942\u0930\u0924', en: 'Surat', slug: 'surat' },
   { gu: 'વડોદરા', hi: 'वडोदरा', en: 'Vadodara', slug: 'vadodara' },
-  { gu: 'રાજકોટ', hi: 'રાજકોટ', en: 'Rajkot', slug: 'rajkot' },
+  { gu: '\u0ab0\u0abe\u0a9c\u0a95\u0acb\u0a9f', hi: '\u0930\u093e\u091c\u0915\u094b\u091f', en: 'Rajkot', slug: 'rajkot' },
   { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities', slug: 'other-cities' }
 ];
 
@@ -198,13 +198,13 @@ export default function DistrictBar({
   const displayList = useMemo(() => {
     const rawList = gujaratCategories && gujaratCategories.length > 0
       ? gujaratCategories.map((cat: any) => {
-        const slug = (cat.slug || '').toLowerCase();
-        const distMatch = DISTRICTS.find((d) => d.slug === slug);
+        const slug = (cat.slug || '').trim().toLowerCase();
+        const distMatch = DISTRICTS.find((d) => d.slug === slug) || DISTRICTS.find((d) => [cat.name, cat.nameGu, cat.nameHi].includes(d.gu));
         let label = cat.name;
         if (distMatch) {
           label = language === 'hi' ? distMatch.hi : language === 'gu' ? distMatch.gu : distMatch.en;
         } else {
-          label = language === 'hi' ? (cat.nameHi || cat.name) : language === 'gu' ? (cat.nameGu || cat.name) : (cat.nameGu || cat.name);
+          label = language === 'hi' ? (cat.nameHi || cat.name) : language === 'gu' ? (cat.nameGu || cat.name) : cat.name;
         }
         return { slug: cat.slug, label };
       })

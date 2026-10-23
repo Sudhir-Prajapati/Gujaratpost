@@ -93,8 +93,8 @@ export default function VideoSection({ initialVideos }: Props) {
   const [videos, setVideos] = useState<VideoItem[]>(
     initialVideos && initialVideos.length > 0 ? initialVideos : FALLBACK_VIDEOS
   );
-  const [selectedVideo, setSelectedVideo] = useState<VideoItem | null>(null);
-  const [isPlayingMain, setIsPlayingMain] = useState(false);
+  const [selectedVideo] = useState<VideoItem | null>(null);
+  const [isPlayingMain] = useState(false);
 
   useEffect(() => {
     getPublicVideos('video')
@@ -166,7 +166,7 @@ export default function VideoSection({ initialVideos }: Props) {
               ) : (
                 <div
                   className="relative h-full w-full cursor-pointer"
-                  onClick={() => setIsPlayingMain(true)}
+                  onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(activeMain.youtubeId || activeMain.id)}`, '_blank', 'noopener,noreferrer')}
                 >
                   <Image
                     src={activeMain.thumbnail}
@@ -213,10 +213,7 @@ export default function VideoSection({ initialVideos }: Props) {
             {sidebarList.map((item) => (
               <div
                 key={item.id}
-                onClick={() => {
-                  setSelectedVideo(item);
-                  setIsPlayingMain(true);
-                }}
+                onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(item.youtubeId || item.id)}`, '_blank', 'noopener,noreferrer')}
                 className={`group flex items-center gap-3 rounded-xl p-2 transition-all cursor-pointer border ${
                   activeMain.id === item.id
                     ? 'bg-black/40 border-white/30 shadow-md'

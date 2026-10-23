@@ -75,7 +75,7 @@ export default function RelatedStoriesSection({
           <span className="block w-[4px] h-6 rounded-full bg-[#B3121B]"></span>
         </div>
         <h2 className="text-xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
-          {uiLabel(language, { en: 'Related Stories', gu: 'સંબંધિત સમાચાર', hi: 'સંબંધીત ખબરેં' })}
+          {uiLabel(language, { en: 'Related Stories', gu: 'સંબંધિત સમાચાર', hi: '\u0938\u0902\u092c\u0902\u0927\u093f\u0924 \u0916\u092c\u0930\u0947\u0902' })}
         </h2>
         <div className="flex-1 h-px bg-gradient-to-r from-neutral-200 dark:from-neutral-700 to-transparent"></div>
       </div>

@@ -29,16 +29,21 @@ interface CityData {
 }
 
 const POPULAR_CITIES: CityData[] = [
-  { nameEn: 'Ahmedabad', nameGu: 'અમદાવાદ', nameHi: 'અહમદાબાદ', lat: 23.0225, lon: 72.5714, icon: 'Ahmedabad' },
-  { nameEn: 'Mumbai', nameGu: 'મુંબઈ', nameHi: 'मुंबई', lat: 19.0760, lon: 72.8777, icon: 'Mumbai' },
   { nameEn: 'Delhi', nameGu: 'દિલ્હી', nameHi: 'दिल्ली', lat: 28.6139, lon: 77.2090, icon: 'Delhi' },
+  { nameEn: 'Mumbai', nameGu: 'મુંબઈ', nameHi: 'मुंबई', lat: 19.0760, lon: 72.8777, icon: 'Mumbai' },
+  { nameEn: 'Bengaluru', nameGu: 'બેંગલુરુ', nameHi: 'बेंगलुरु', lat: 12.9716, lon: 77.5946, icon: 'Bengaluru' },
+  { nameEn: 'Kolkata', nameGu: 'કોલકાતા', nameHi: 'कोलकाता', lat: 22.5726, lon: 88.3639, icon: 'Kolkata' },
+  { nameEn: 'Hyderabad', nameGu: 'હૈદરાબાદ', nameHi: 'हैदराबाद', lat: 17.3850, lon: 78.4867, icon: 'Hyderabad' },
+  { nameEn: 'Pune', nameGu: 'પુણે', nameHi: 'पुणे', lat: 18.5204, lon: 73.8567, icon: 'Pune' },
+  { nameEn: 'Lucknow', nameGu: 'લખનૌ', nameHi: 'लखनऊ', lat: 26.8467, lon: 80.9462, icon: 'Lucknow' },
+  { nameEn: 'Indore', nameGu: 'ઇન્દોર', nameHi: 'इंदौर', lat: 22.7196, lon: 75.8577, icon: 'Indore' },
+  { nameEn: 'Ahmedabad', nameGu: 'અમદાવાદ', nameHi: 'અહમદાબાદ', lat: 23.0225, lon: 72.5714, icon: 'Ahmedabad' },
+  { nameEn: 'Surat', nameGu: 'સુરત', nameHi: 'सूरत', lat: 21.1702, lon: 72.8311, icon: 'Surat' },
   { nameEn: 'Rajkot', nameGu: 'રાજકોટ', nameHi: 'રાજકોટ', lat: 22.3039, lon: 70.8022, icon: 'Rajkot' },
   { nameEn: 'Vadodara', nameGu: 'વડોદરા', nameHi: 'वडोदरा', lat: 22.3072, lon: 73.1812, icon: 'Vadodara' },
-  { nameEn: 'Surat', nameGu: 'સુરત', nameHi: 'सूरत', lat: 21.1702, lon: 72.8311, icon: 'Surat' },
+  { nameEn: 'Gandhinagar', nameGu: 'ગાંધીનગર', nameHi: 'गांधीनगर', lat: 23.2156, lon: 72.6369, icon: 'Gandhinagar' },
   { nameEn: 'Jamnagar', nameGu: 'જામનગર', nameHi: 'जामनगर', lat: 22.4707, lon: 70.0577, icon: 'Jamnagar' },
   { nameEn: 'Bhavnagar', nameGu: 'ભાવનગર', nameHi: 'भाવનગર', lat: 21.7645, lon: 72.1519, icon: 'Bhavnagar' },
-  { nameEn: 'Gandhinagar', nameGu: 'ગાંધીનગર', nameHi: 'गांधीनगर', lat: 23.2156, lon: 72.6369, icon: 'Gandhinagar' },
-  { nameEn: 'Kolkata', nameGu: 'કોલકાતા', nameHi: 'कोलकाता', lat: 22.5726, lon: 88.3639, icon: 'Kolkata' },
 ];
 
 const MOST_POLLUTED_CITIES_DEF = [
@@ -221,6 +226,12 @@ function CityReferenceIcon({ cityKey }: { cityKey: string }) {
           <path fill="none" stroke="#1E293B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" d="M4 40h40M10 40V14l14 8 14-8v26M10 22c14 8 14 8 28 0" />
         </svg>
       )}
+      {['Bengaluru', 'Hyderabad', 'Pune', 'Lucknow', 'Indore'].includes(cityKey) && (
+        <svg viewBox="0 0 48 48" className="w-10 h-10" aria-hidden="true">
+          <path fill="#38BDF8" d="M19 25h10v15H19z" />
+          <path fill="none" stroke="#1E293B" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" d="M7 40h34M12 40V18h24v22M18 18V12h12v6M18 24h3M27 24h3M18 30h3M27 30h3M19 40V27h10v13" />
+        </svg>
+      )}
     </div>
   );
 }
@@ -292,6 +303,9 @@ function AqiPageContent() {
   const [cityAqiMap, setCityAqiMap] = useState<Record<string, number>>({});
   const [newsArticles, setNewsArticles] = useState<any[]>(FALLBACK_NEWS_ARTICLES);
   const [visibleNewsCount, setVisibleNewsCount] = useState(8);
+  const [newsPage, setNewsPage] = useState(1);
+  const [newsTotalPages, setNewsTotalPages] = useState(1);
+  const [loadingMoreNews, setLoadingMoreNews] = useState(false);
 
   // Live API State for Most & Least Polluted Cities Rankings
   const [mostPollutedList, setMostPollutedList] = useState(
@@ -393,26 +407,45 @@ function AqiPageContent() {
     });
   }, []);
 
-  // Fetch weather, rain & AQI related news
+  // Fetch the latest published news for the card grid.
   useEffect(() => {
-    getPublicArticles({ limit: 20 })
-      .then(res => {
-        if (res?.articles && res.articles.length > 0) {
-          const filtered = res.articles.filter((art: any) =>
-            art.category?.name?.toUpperCase().includes('WEATHER') ||
-            art.category?.name?.toUpperCase().includes('ENVIRONMENT') ||
-            art.title?.includes('વરસાદ') ||
-            art.title?.includes('હવામાન') ||
-            art.title?.includes('AQI')
-          );
-          if (filtered.length > 0) {
-            setNewsArticles(filtered);
-          }
+    getPublicArticles({ page: 1, limit: 20 })
+      .then((res) => {
+        if (res?.articles?.length) {
+          setNewsArticles(res.articles);
+          setNewsPage(1);
+          setNewsTotalPages(Math.max(1, res.totalPages || Math.ceil(res.total / 20)));
         }
       })
       .catch(() => {});
   }, []);
 
+  const loadMoreNews = async () => {
+    if (loadingMoreNews) return;
+    if (visibleNewsCount < newsArticles.length) {
+      setVisibleNewsCount((count) => count + 4);
+      return;
+    }
+    if (newsPage >= newsTotalPages) return;
+
+    setLoadingMoreNews(true);
+    try {
+      const nextPage = newsPage + 1;
+      const res = await getPublicArticles({ page: nextPage, limit: 20 });
+      if (res?.articles?.length) {
+        setNewsArticles((articles) => [...articles, ...res.articles]);
+        setNewsPage(nextPage);
+        setNewsTotalPages(Math.max(newsTotalPages, res.totalPages || Math.ceil(res.total / 20)));
+        setVisibleNewsCount((count) => count + 4);
+      } else {
+        setNewsTotalPages(newsPage);
+      }
+    } catch {
+      // Keep the button available so a failed request can be retried.
+    } finally {
+      setLoadingMoreNews(false);
+    }
+  };
   const meta = useMemo(() => {
     const score = liveAqi?.aqi || 103;
     return getAqiMeta(score, language);
@@ -884,14 +917,14 @@ function AqiPageContent() {
       {/* ── Related Weather & Rain News Section ── */}
       <section className="space-y-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-center text-zinc-900 dark:text-zinc-100">
-          {language === 'gu' ? 'સંબંધિત સમાચાર' : language === 'hi' ? 'संबंधित समाचार' : 'Related News'}
+          {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा खबरें' : 'Latest News'}
         </h2>
 
         {/* 4-Column News Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {newsArticles.slice(0, visibleNewsCount).map((art) => {
             const title = language === 'gu' ? (art.titleGu || art.title) : language === 'hi' ? (art.titleHi || art.title) : art.title;
-            const image = art.featuredImage || 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=600&q=80';
+            const image = art.featuredImage || art.image || 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=600&q=80';
 
             return (
               <Link
@@ -919,15 +952,16 @@ function AqiPageContent() {
         </div>
 
         {/* "વધુ જુઓ ˅" Button */}
-        {visibleNewsCount < newsArticles.length && (
+        {(visibleNewsCount < newsArticles.length || newsPage < newsTotalPages) && (
           <div className="flex justify-center pt-6">
             <button
               type="button"
-              onClick={() => setVisibleNewsCount((prev) => prev + 4)}
+              onClick={loadMoreNews}
+              disabled={loadingMoreNews}
               className="px-10 py-3.5 rounded-full border-2 border-red-600 bg-white dark:bg-zinc-900 text-red-600 hover:bg-red-600 hover:text-white font-black text-sm sm:text-base transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer tracking-wider flex items-center gap-2"
             >
-              <span>{language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'Read More'}</span>
-              <ChevronDown className="w-5 h-5" />
+              <span>{loadingMoreNews ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...') : language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}</span>
+              {!loadingMoreNews && <ChevronDown className="w-5 h-5" />}
             </button>
           </div>
         )}

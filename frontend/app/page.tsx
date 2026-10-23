@@ -64,6 +64,10 @@ export default async function HomePage() {
       return bTime - aTime;
     });
   };
+  const sortByDate = <T extends any>(list: T[]): T[] =>
+    [...(list || [])].sort((a: any, b: any) =>
+      new Date(b?.publishedAt || b?.createdAt || 0).getTime() - new Date(a?.publishedAt || a?.createdAt || 0).getTime()
+    );
 
   const articles = (articlesRes && Array.isArray(articlesRes.articles)) ? sortByLatest(articlesRes.articles) : [];
   const videos = Array.isArray(videosRes) ? videosRes : [];
@@ -74,8 +78,8 @@ export default async function HomePage() {
     crime: sortByLatest(crimeRes.articles || []),
     national: sortByLatest(nationalRes.articles || []),
     world: sortByLatest(worldRes.articles || []),
-    manoranjan: sortByLatest(entertainRes.articles || []),
-    entertainment: sortByLatest(entertainRes.articles || []),
+    manoranjan: sortByDate(entertainRes.articles || []),
+    entertainment: sortByDate(entertainRes.articles || []),
     health: sortByLatest(healthRes.articles || []),
     technology: sortByLatest(techRes.articles || []),
     factcheck: sortByLatest(factcheckRes.articles || []),

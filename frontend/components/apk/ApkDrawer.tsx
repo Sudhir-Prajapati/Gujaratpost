@@ -58,7 +58,7 @@ const ALL_APP_CATEGORIES: CategoryItem[] = [
 const APK_SOCIAL_LINKS = [
   {
     label: 'Facebook',
-    href: 'https://www.facebook.com/Gujarat-Post-165183530766504',
+    href: 'https://www.facebook.com/gujpost.in',
     bg: 'bg-[#1877F2] text-white hover:bg-[#166fe5]',
     icon: (
       <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white" aria-hidden="true">
@@ -111,7 +111,7 @@ const APK_SOCIAL_LINKS = [
   },
   {
     label: 'Google News',
-    href: 'https://news.google.com/publications/CAAqBwgKMMT_nwsw5-axAw',
+    href: 'https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en',
     bg: 'bg-[#4285F4] text-white hover:bg-[#3367d6]',
     icon: (
       <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-white" aria-hidden="true">

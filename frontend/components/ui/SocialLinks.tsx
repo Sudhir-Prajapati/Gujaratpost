@@ -1,12 +1,12 @@
 import { Newspaper } from 'lucide-react';
 
 export const SOCIAL_LINKS = [
-  { label: 'Facebook', platform: 'facebook', href: 'https://www.facebook.com/Gujarat-Post-165183530766504', hover: 'hover:bg-[#1877f2]', hoverBg: '#1877f2' },
+  { label: 'Facebook', platform: 'facebook', href: 'https://www.facebook.com/gujpost.in', hover: 'hover:bg-[#1877f2]', hoverBg: '#1877f2' },
   { label: 'Instagram', platform: 'instagram', href: 'https://www.instagram.com/gujaratpost.in/', hover: 'hover:bg-gradient-to-br hover:from-[#833ab4] hover:via-[#fd1d1d] hover:to-[#fcb045]', hoverBg: '#c13584' },
   { label: 'YouTube', platform: 'youtube', href: 'https://www.youtube.com/@Gujaratpostnews', hover: 'hover:bg-[#ff0000]', hoverBg: '#ff0000' },
   { label: 'WhatsApp', platform: 'whatsapp', href: 'https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0', hover: 'hover:bg-[#25d366]', hoverBg: '#25d366' },
   { label: 'X', platform: 'x', href: 'https://x.com/maheshrpat59606', hover: 'hover:bg-black', hoverBg: '#000000' },
-  { label: 'Google News', platform: 'news', href: 'https://news.google.com/publications/CAAqBwgKMMT_nwsw5-axAw', hover: 'hover:bg-[#4285f4]', hoverBg: '#4285f4' },
+  { label: 'Google News', platform: 'news', href: 'https://news.google.com/home?hl=en-IN&gl=IN&ceid=IN:en', hover: 'hover:bg-[#4285f4]', hoverBg: '#4285f4' },
 ] as const;
 
 export type SocialPlatform = (typeof SOCIAL_LINKS)[number]['platform'];
@@ -30,7 +30,15 @@ export function SocialIcon({ platform, className = 'h-4 w-4' }: { platform: Soci
   return <svg viewBox="0 0 24 24" className={className} aria-hidden="true"><path fill="currentColor" d="M18.9 2H22l-6.8 7.8L23.2 22H17l-4.8-6.3L6.7 22H3.5l7.2-8.3L3 2h6.3l4.4 5.8L18.9 2Zm-1.1 17.9h1.7L8.4 4H6.6l11.2 15.9Z" /></svg>;
 }
 
-export function SocialLinks({ size = 'md', className = '' }: { size?: 'sm' | 'md' | 'lg'; className?: string }) {
+export function SocialLinks({
+  size = 'md',
+  className = '',
+  hrefOverrides = {},
+}: {
+  size?: 'sm' | 'md' | 'lg';
+  className?: string;
+  hrefOverrides?: Partial<Record<SocialPlatform, string>>;
+}) {
   const dimensions = size === 'sm' ? 'h-7 w-7' : size === 'lg' ? 'h-11 w-11' : 'h-9 w-9';
   const iconSize = size === 'sm' ? 'h-3.5 w-3.5' : size === 'lg' ? 'h-5 w-5' : 'h-4 w-4';
   return (
@@ -38,7 +46,7 @@ export function SocialLinks({ size = 'md', className = '' }: { size?: 'sm' | 'md
       {SOCIAL_LINKS.map((item) => (
         <a
           key={item.label}
-          href={item.href}
+          href={hrefOverrides[item.platform] || item.href}
           target="_blank"
           rel="noopener noreferrer"
           aria-label={item.label}

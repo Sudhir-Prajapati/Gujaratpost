@@ -11,6 +11,7 @@ import { ConsentGate } from '@/components/consent/ConsentGate';
 
 interface ShortItem {
   id: string;
+  youtubeId?: string;
   title: string;
   titleGu?: string;
   publishedAt?: string;
@@ -323,7 +324,7 @@ export default function YouTubeShorts() {
               displayList.map((short, index) => (
                 <article
                   key={`${short.id}-${index}`}
-                  onClick={() => setSelectedVideoId(short.id)}
+                  onClick={() => window.open(`https://www.youtube.com/shorts/${safeYouTubeId(short.youtubeId || short.id)}`, '_blank', 'noopener,noreferrer')}
                   className="group relative flex-shrink-0 w-[185px] sm:w-[205px] cursor-pointer select-none"
                 >
                   <div

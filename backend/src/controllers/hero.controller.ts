@@ -186,6 +186,17 @@ export class HeroController {
           }
         }
 
+        let mostReadMode = (heroSetting as any)?.mostReadMode;
+        if (!mostReadMode) {
+          try {
+            const rawRows: any = await prisma.$queryRawUnsafe(`SELECT mostReadMode FROM hero_settings WHERE id = 'default' LIMIT 1`);
+            if (rawRows && rawRows[0]?.mostReadMode) {
+              mostReadMode = rawRows[0].mostReadMode;
+            }
+          } catch { }
+        }
+        mostReadMode = mostReadMode || 'auto';
+
         const heroSliderMode = (heroSetting as any)?.heroSliderMode || 'auto';
         let parsedHeroSliderIds: string[] = [];
         if ((heroSetting as any)?.heroSliderIds) {
@@ -289,17 +300,23 @@ export class HeroController {
             ).catch(() => [])
             : Promise.resolve([]),
 
-          // Query F: Most-read fallback (only if needed)
-          parsedMostReadIds.length === 0
-            ? withDbRetry(() =>
-              prisma.post.findMany({
-                where: { status: 'PUBLISHED' },
-                orderBy: [{ views: 'desc' }, { createdAt: 'desc' }],
-                take: 10,
-                select: heroPostSelect,
-              })
-            ).catch(() => [])
-            : Promise.resolve([]),
+          // Query F: Top-read posts from past 7 days (last week) for auto mode & fallback
+          withDbRetry(() => {
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            return prisma.post.findMany({
+              where: {
+                status: 'PUBLISHED',
+                createdAt: { gte: sevenDaysAgo },
+              },
+              orderBy: [
+                { views: 'desc' },
+                { articleNumber: 'desc' },
+              ],
+              take: 10,
+              select: heroPostSelect,
+            });
+          }).catch(() => []),
         ]);
 
         // 4. Assemble lookups in memory
@@ -380,16 +397,45 @@ export class HeroController {
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }
 
-        // Resolve Most Read (preserving order and fallback)
-        let mostReadArticles: any[] = [];
-        if (parsedMostReadIds.length > 0) {
-          mostReadArticles = parsedMostReadIds
-            .map((id) => postsMap.get(id))
-            .filter(Boolean);
+        // Resolve Most Read (Automatic 30-day top read articles vs Manual Top 10)
+        let autoMostReadPosts = [...mostReadFallbackRes];
+        if (autoMostReadPosts.length < 10) {
+          const seenIds = new Set(autoMostReadPosts.map((p: any) => p?.id).filter(Boolean));
+          for (const p of featuredFallbackRes) {
+            if (autoMostReadPosts.length >= 10) break;
+            if (p?.id && !seenIds.has(p.id)) {
+              seenIds.add(p.id);
+              autoMostReadPosts.push(p);
+            }
+          }
         }
+        const formattedAutoMostRead = autoMostReadPosts
+          .slice(0, 10)
+          .map(formatPost)
+          .filter((a): a is NonNullable<typeof a> => Boolean(a && a.id));
 
-        if (mostReadArticles.length === 0) {
-          mostReadArticles = (mostReadFallbackRes.length > 0 ? mostReadFallbackRes : fallbackFormatted.slice(0, 10)).map(formatPost);
+        let mostReadArticles: any[] = [];
+        if (mostReadMode === 'manual') {
+          if (parsedMostReadIds.length > 0) {
+            mostReadArticles = parsedMostReadIds
+              .map((id) => postsMap.get(id))
+              .filter((a): a is NonNullable<typeof a> => Boolean(a && a.id))
+              .slice(0, 10);
+          }
+          // If admin selected fewer than 10, fill remaining from auto top read
+          if (mostReadArticles.length < 10) {
+            const existingIds = new Set(mostReadArticles.map((a: any) => a.id));
+            for (const autoArt of formattedAutoMostRead) {
+              if (mostReadArticles.length >= 10) break;
+              if (autoArt && autoArt.id && !existingIds.has(autoArt.id)) {
+                existingIds.add(autoArt.id);
+                mostReadArticles.push(autoArt);
+              }
+            }
+          }
+        } else {
+          // Automatic mode: strictly past 7 days top read articles
+          mostReadArticles = formattedAutoMostRead;
           parsedMostReadIds = mostReadArticles.map((a: any) => a.id);
         }
 
@@ -409,6 +455,7 @@ export class HeroController {
             trendingNewsIds: parsedTrendingNewsIds,
             popularNewsIds: parsedPopularNewsIds,
             mostReadIds: parsedMostReadIds,
+            mostReadMode,
             heroGridIds: parsedHeroGridIds,
             heroGridMode,
             heroSliderMode,
@@ -422,7 +469,9 @@ export class HeroController {
           popularNewsIds: parsedPopularNewsIds,
           popularNewsArticles,
           mostReadIds: parsedMostReadIds,
+          mostReadMode,
           mostReadArticles,
+          autoMostReadArticles: formattedAutoMostRead,
           heroGridIds: parsedHeroGridIds,
           heroGridArticles,
           heroGridMode,
@@ -455,7 +504,7 @@ export class HeroController {
    */
   static async updateHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
-      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds } = req.body;
+      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds } = req.body;
 
       const tickerLabelStr = tickerLabel !== undefined
         ? (typeof tickerLabel === 'object' ? JSON.stringify(tickerLabel) : String(tickerLabel))
@@ -538,6 +587,18 @@ export class HeroController {
           (updatedSetting as any).heroGridMode = heroGridMode || 'auto';
         } catch (rawErr) {
           console.warn('Could not update heroGridMode via raw SQL:', rawErr);
+        }
+      }
+
+      if (mostReadMode !== undefined) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `UPDATE hero_settings SET mostReadMode = ? WHERE id = 'default'`,
+            mostReadMode || 'auto'
+          );
+          (updatedSetting as any).mostReadMode = mostReadMode || 'auto';
+        } catch (rawErr) {
+          console.warn('Could not update mostReadMode via raw SQL:', rawErr);
         }
       }
 
@@ -631,17 +692,84 @@ export class HeroController {
           .filter(Boolean);
       }
 
-      let mostReadArticles: any[] = [];
-      if (parsedMostReadIds.length > 0) {
-        const posts = await prisma.post.findMany({
-          where: { id: { in: parsedMostReadIds }, status: 'PUBLISHED' },
+      let finalMostReadMode = (updatedSetting as any)?.mostReadMode || mostReadMode;
+      if (!finalMostReadMode) {
+        try {
+          const rawRows: any = await prisma.$queryRawUnsafe(`SELECT mostReadMode FROM hero_settings WHERE id = 'default' LIMIT 1`);
+          if (rawRows && rawRows[0]?.mostReadMode) {
+            finalMostReadMode = rawRows[0].mostReadMode;
+          }
+        } catch { }
+      }
+      finalMostReadMode = finalMostReadMode || 'auto';
+
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const autoTopPosts = await prisma.post.findMany({
+        where: {
+          status: 'PUBLISHED',
+          createdAt: { gte: sevenDaysAgo },
+        },
+        orderBy: [
+          { views: 'desc' },
+          { articleNumber: 'desc' },
+        ],
+        take: 10,
+        select: heroPostSelect,
+      });
+
+      let autoPool = [...autoTopPosts];
+      if (autoPool.length < 10) {
+        const extraPosts = await prisma.post.findMany({
+          where: { status: 'PUBLISHED' },
+          orderBy: [
+            { views: 'desc' },
+            { articleNumber: 'desc' },
+          ],
+          take: 10,
           select: heroPostSelect,
         });
-        const map = new Map<string, any>();
-        posts.forEach((p) => map.set(p.id, formatPost(p)));
-        mostReadArticles = parsedMostReadIds
-          .map((id) => map.get(id))
-          .filter(Boolean);
+        const seenIds = new Set(autoPool.map((p) => p.id));
+        for (const ep of extraPosts) {
+          if (autoPool.length >= 10) break;
+          if (!seenIds.has(ep.id)) {
+            seenIds.add(ep.id);
+            autoPool.push(ep);
+          }
+        }
+      }
+      const formattedAutoMostRead = autoPool
+        .slice(0, 10)
+        .map(formatPost)
+        .filter((a): a is NonNullable<typeof a> => Boolean(a && a.id));
+
+      let mostReadArticles: any[] = [];
+      if (finalMostReadMode === 'manual') {
+        if (parsedMostReadIds.length > 0) {
+          const posts = await prisma.post.findMany({
+            where: { id: { in: parsedMostReadIds }, status: 'PUBLISHED' },
+            select: heroPostSelect,
+          });
+          const map = new Map<string, any>();
+          posts.forEach((p) => map.set(p.id, formatPost(p)));
+          mostReadArticles = parsedMostReadIds
+            .map((id) => map.get(id))
+            .filter((a): a is NonNullable<typeof a> => Boolean(a && a.id))
+            .slice(0, 10);
+        }
+        if (mostReadArticles.length < 10) {
+          const existingIds = new Set(mostReadArticles.map((a: any) => a.id));
+          for (const autoArt of formattedAutoMostRead) {
+            if (mostReadArticles.length >= 10) break;
+            if (autoArt && autoArt.id && !existingIds.has(autoArt.id)) {
+              existingIds.add(autoArt.id);
+              mostReadArticles.push(autoArt);
+            }
+          }
+        }
+      } else {
+        mostReadArticles = formattedAutoMostRead;
+        parsedMostReadIds = mostReadArticles.map((a: any) => a.id);
       }
 
       const finalHeroGridMode = (updatedSetting as any)?.heroGridMode || 'auto';
@@ -712,6 +840,7 @@ export class HeroController {
           trendingNewsIds: parsedTrendingNewsIds,
           popularNewsIds: parsedPopularNewsIds,
           mostReadIds: parsedMostReadIds,
+          mostReadMode: finalMostReadMode,
           heroGridIds: parsedHeroGridIds,
           heroGridMode: finalHeroGridMode,
           heroSliderMode: finalHeroSliderMode,
@@ -725,7 +854,9 @@ export class HeroController {
         popularNewsIds: parsedPopularNewsIds,
         popularNewsArticles,
         mostReadIds: parsedMostReadIds,
+        mostReadMode: finalMostReadMode,
         mostReadArticles,
+        autoMostReadArticles: formattedAutoMostRead,
         heroGridIds: parsedHeroGridIds,
         heroGridArticles,
         heroGridMode: finalHeroGridMode,

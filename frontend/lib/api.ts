@@ -497,7 +497,9 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
 
   try {
     // 1. Fetch backend database videos (already ordered by isFeatured desc, publishedAt desc)
-    const url = type ? `${API_BASE_URL}/videos?type=${type}` : `${API_BASE_URL}/videos`;
+    const url = type
+      ? `${API_BASE_URL}/videos?type=${type}${type === 'short' ? '&limit=100' : ''}`
+      : `${API_BASE_URL}/videos`;
     const json = await fetchCachedJson<any>(url, 60 * 1000);
     const dbVideos: Video[] = (json?.success && Array.isArray(json.data?.videos)) ? json.data.videos : [];
 
@@ -778,6 +780,7 @@ export async function updateHeroSettings(payload: {
   trendingNewsIds?: string[] | string;
   popularNewsIds?: string[] | string;
   mostReadIds?: string[] | string;
+  mostReadMode?: 'auto' | 'manual';
   heroGridIds?: string[] | string;
   heroGridMode?: 'auto' | 'manual';
   heroSliderMode?: 'auto' | 'manual';

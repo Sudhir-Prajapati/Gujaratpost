@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Camera } from 'lucide-react';
-import { PHOTOS, getLocalized } from '@/data';
+import { ChevronRight } from 'lucide-react';
+import { PHOTOS, getLocalized, getCategoryLabel } from '@/data';
 import { useApp } from '@/components/AppProvider';
+import AePanVachoSection from '@/components/sections/AePanVachoSection';
+import { getPublicArticles } from '@/lib/api';
 
 const FALLBACK_NEWS_IMAGES = [
   'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
@@ -31,8 +33,8 @@ function PhotoCardImage({ src: rawSrc, alt, index }: { src?: string; alt: string
       src={src} 
       alt={alt} 
       fill 
-      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw" 
-      className="object-cover transition-all duration-700 ease-out group-hover:scale-[1.08] group-hover:rotate-1" 
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" 
+      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" 
       onError={() => setSrc(fallback)}
     />
   );
@@ -44,6 +46,10 @@ interface PhotosClientProps {
 
 export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
   const { language } = useApp();
+  const [latestArticles, setLatestArticles] = useState<any[]>([]);
+  const [latestPage, setLatestPage] = useState(1);
+  const [latestTotalPages, setLatestTotalPages] = useState(1);
+  const [loadingMoreLatest, setLoadingMoreLatest] = useState(false);
   let photoList = [...(initialPhotos || [])];
   if (photoList.length < 5) {
     const existingIds = new Set(photoList.map(p => p.id || p.src));
@@ -60,17 +66,32 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
   }, []);
 
-  const getGridClasses = (index: number) => {
-    const mod = index % 9;
-    switch (mod) {
-      case 0:
-        return 'md:col-span-2 md:h-[240px]';
-      case 4:
-        return 'md:col-span-2 md:h-[240px]';
-      case 8:
-        return 'md:col-span-2 md:h-[240px]';
-      default:
-        return 'md:col-span-1 md:h-[240px]';
+  useEffect(() => {
+    getPublicArticles({ page: 1, limit: 8, sort: 'latest' })
+      .then((res) => {
+        setLatestArticles(res?.articles?.slice(0, 8) || []);
+        setLatestTotalPages(res?.totalPages || 1);
+      })
+      .catch(() => {});
+  }, []);
+
+  const loadMoreLatest = async () => {
+    if (loadingMoreLatest || latestPage >= latestTotalPages) return;
+    setLoadingMoreLatest(true);
+    try {
+      const nextPage = latestPage + 1;
+      const res = await getPublicArticles({ page: nextPage, limit: 8, sort: 'latest' });
+      const newArticles = res?.articles || [];
+      setLatestArticles((current) => {
+        const existingIds = new Set(current.map((article) => article.id || article.slug));
+        return [...current, ...newArticles.filter((article) => !existingIds.has(article.id || article.slug))];
+      });
+      setLatestPage(nextPage);
+      setLatestTotalPages(res?.totalPages || nextPage);
+    } catch {
+      // Keep the existing news visible if another page cannot be loaded.
+    } finally {
+      setLoadingMoreLatest(false);
     }
   };
 
@@ -89,40 +110,129 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
         </p>
       </header>
 
-      {/* Modern Bento Asymmetrical Grid matching Homepage style */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-5">
+      {/* 4-Column Uniform Grid matching Image 2 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
         {gallery.map((photo, index) => {
-          const mockCount = ((index * 7 + 12) % 35) + 8;
+          const categoryText = photo.category || photo.categoryGu || getLocalized(language, { en: 'News', gu: 'સમાચાર', hi: 'समाचार' });
+          const title = getLocalized(language, {
+            en: photo.caption || photo.alt || '',
+            gu: photo.captionGu || photo.caption || photo.alt || '',
+            hi: photo.captionHi || photo.caption || photo.alt || '',
+          });
+
           return (
             <Link 
               key={`${photo.id}-${index}`} 
               href={`/photos/${photo.id}`} 
-              className={`group relative block w-full overflow-hidden rounded-2xl shadow-md border border-border/10 bg-card aspect-[16/10.5] md:aspect-auto transition-all duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-[#B3121B]/12 hover:border-[#B3121B]/35 ${getGridClasses(index)}`}
+              className="group relative block w-full overflow-hidden rounded-2xl shadow-md border border-border/20 bg-card aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:border-[#B3121B]/40 select-none"
             >
               <PhotoCardImage 
                 src={photo.src} 
-                alt={photo.alt || 'Gallery Photo'} 
+                alt={title || 'Gallery Photo'} 
                 index={index}
               />
-              {/* Soft dark gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/5" />
 
-              {/* Photo Count Badge */}
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-1 rounded-full bg-red-600/90 text-white backdrop-blur-md px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider shadow-md">
-                <Camera className="h-3 w-3" />
-                <span>{mockCount} {getLocalized(language, { en: 'Photos', gu: 'ફોટા', hi: 'तस्वीरें' })}</span>
+              {/* Subtle top shadow for category badge readability */}
+              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none" />
+
+              {/* Deep dark gradient overlay at bottom for title and CTA readability */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none" />
+
+              {/* Category Badge matching Image 2 */}
+              <div className="absolute top-3.5 left-3.5 z-10">
+                <span className="inline-block rounded-md bg-[#B3121B] px-2.5 py-0.5 text-[11px] font-black text-white uppercase tracking-wide shadow-md">
+                  {categoryText}
+                </span>
               </div>
 
-              {/* Title overlay */}
-              <div className="absolute bottom-0 inset-x-0 p-4 pt-8 bg-gradient-to-t from-black/95 via-black/50 to-transparent">
-                <h2 className="text-white text-[14px] md:text-[15px] font-black leading-snug line-clamp-2 drop-shadow select-none transition-transform duration-300 ease-out group-hover:-translate-y-0.5">
-                  {getLocalized(language, { en: photo.caption, gu: photo.captionGu, hi: photo.captionHi })}
+              {/* Title & Call-to-action overlay matching Image 2 */}
+              <div className="absolute bottom-0 inset-x-0 p-4 pt-8 z-10 pointer-events-none">
+                <h2 className="text-white text-[14px] sm:text-[15px] font-black leading-snug line-clamp-2 drop-shadow-md select-none transition-transform duration-300 group-hover:-translate-y-0.5">
+                  {title}
                 </h2>
+
+                {/* "— ફોટો જુઓ >" Link matching Image 2 */}
+                <div className="flex items-center gap-1.5 mt-2">
+                  <div className="h-[2px] w-5 rounded-full bg-[#B3121B] shrink-0" />
+                  <span className="text-white text-[12px] sm:text-[13px] font-bold tracking-wide">
+                    {getLocalized(language, { en: 'View Photos', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-[#B3121B] stroke-[3] transition-transform duration-200 group-hover:translate-x-1" />
+                </div>
               </div>
             </Link>
           );
         })}
       </div>
+
+      {latestArticles.length > 0 && (
+        <section className="mt-10 border-t border-border pt-6">
+          <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
+            <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
+            <h2 className="text-base md:text-lg font-black text-foreground">
+              {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {latestArticles.map((article) => {
+              const title = language === 'gu'
+                ? (article.titleGu || article.title)
+                : language === 'hi'
+                  ? (article.titleHi || article.title)
+                  : article.title;
+              const image = article.featuredImage || article.image || article.thumbnail || '/assets/gujarat-post-logo.png';
+              const publishedAt = article.publishedAt || article.createdAt;
+              const dateLabel = publishedAt
+                ? new Intl.DateTimeFormat(language === 'gu' ? 'gu-IN' : language === 'hi' ? 'hi-IN' : 'en-IN', { dateStyle: 'medium' }).format(new Date(publishedAt))
+                : '';
+
+              return (
+                <Link
+                  key={article.id || article.slug}
+                  href={`/news/${article.slug}`}
+                  className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div className="relative aspect-video overflow-hidden bg-muted">
+                    <Image
+                      src={image}
+                      alt={title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-3">
+                    <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
+                      {getCategoryLabel(article, language)}
+                    </span>
+                    <h3 className="mt-1 text-[12.5px] md:text-sm font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                      {title}
+                    </h3>
+                    {dateLabel && <span className="mt-2 block text-[10px] font-semibold text-muted-foreground">{dateLabel}</span>}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          {latestPage < latestTotalPages && (
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={loadMoreLatest}
+                disabled={loadingMoreLatest}
+                className="inline-flex items-center gap-2 rounded-full border border-accent px-6 py-2 text-sm font-bold text-accent transition-colors hover:bg-accent hover:text-white disabled:cursor-wait disabled:opacity-60"
+              >
+                {loadingMoreLatest
+                  ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...')
+                  : (language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read more')}
+                {!loadingMoreLatest && <ChevronRight className="h-4 w-4" />}
+              </button>
+            </div>
+          )}
+        </section>
+      )}
+
+      <AePanVachoSection language={language} />
     </div>
   );
 }

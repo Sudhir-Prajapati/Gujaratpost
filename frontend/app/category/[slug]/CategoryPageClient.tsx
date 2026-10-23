@@ -53,7 +53,46 @@ interface Props {
   resolvedSlug: string;
 }
 
-type FilterTab = 'all' | 'latest' | 'video';
+interface PairedCategoryConfig {
+  slug: string;
+  name: string;
+  gu: string;
+  hi: string;
+}
+
+export const CATEGORY_PAIRS: Record<string, PairedCategoryConfig> = {
+  // in the gujarat show the world
+  gujarat: { slug: 'world', name: 'World', gu: 'વિશ્વ', hi: 'विश्व' },
+  state: { slug: 'world', name: 'World', gu: 'વિશ્વ', hi: 'विश्व' },
+
+  // and in the bharat show the crime
+  national: { slug: 'crime', name: 'Crime', gu: 'ક્રાઇમ', hi: 'क्राइम' },
+  india: { slug: 'crime', name: 'Crime', gu: 'ક્રાઇમ', hi: 'क्राइम' },
+
+  // and in the world show the gujarat
+  world: { slug: 'gujarat', name: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
+  international: { slug: 'gujarat', name: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
+
+  // and in the rajaniti show the fact check
+
+  // and in the crime show the bharat
+  crime: { slug: 'national', name: 'Bharat', gu: 'ભારત', hi: 'भारत' },
+
+  // adn in the helth tech
+  health: { slug: 'technology', name: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
+
+  // adn in the manoranjan show the fact check
+
+  // in the factcheck add the rajniti
+  'fact-check': { slug: 'politics', name: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' },
+  factcheck: { slug: 'politics', name: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' },
+
+  // and in the tranding ad the fact check
+  trending: { slug: 'fact-check', name: 'Fact Check', gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक' },
+  tranding: { slug: 'fact-check', name: 'Fact Check', gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक' },
+};
+
+type FilterTab = 'all' | 'paired' | 'latest' | 'video';
 
 const GUJARAT_MOCK_TAGS = {
   gu: ['ચૂંટણી 2027', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડાયમંડ ઉદ્યોગ', 'ટ્રાફિક'],
@@ -249,9 +288,54 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   // Also Read: Crime & Fact Check articles
   const [crimeArticles, setCrimeArticles] = useState<any[]>([]);
   const [factCheckArticles, setFactCheckArticles] = useState<any[]>([]);
+  const [trendingStories, setTrendingStories] = useState<Article[]>(trending || []);
 
   // Photo Gallery
   const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
+  const [galleryPage, setGalleryPage] = useState(3);
+  const [hasMoreGalleryPhotos, setHasMoreGalleryPhotos] = useState(true);
+  const [loadingMoreGalleryPhotos, setLoadingMoreGalleryPhotos] = useState(false);
+
+  // Paired category configuration based on current category slug
+  const normSlug = (resolvedSlug || slug || '').toLowerCase().trim();
+  const usePublishDate = ['entertainment', 'entertainment-life-style', 'manoranjan'].includes(normSlug);
+  const pairedCategory = CATEGORY_PAIRS[normSlug];
+
+  // Articles for the paired category tab (e.g. World on Gujarat, Crime on Bharat)
+  const [pairedArticles, setPairedArticles] = useState<Article[]>([]);
+  const [pairedLoading, setPairedLoading] = useState(false);
+
+  useEffect(() => {
+    if (!pairedCategory?.slug) {
+      setPairedArticles([]);
+      return;
+    }
+    let isMounted = true;
+    setPairedLoading(true);
+    getPublicArticles({ categorySlug: pairedCategory.slug, page: 1, limit: 30 })
+      .then((res) => {
+        if (!isMounted) return;
+        const fetched = (res?.articles || []).sort((a: any, b: any) => {
+          const at = new Date(a.updatedAt || a.publishedAt || 0).getTime();
+          const bt = new Date(b.updatedAt || b.publishedAt || 0).getTime();
+          return bt - at;
+        });
+        setPairedArticles(fetched);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setPairedLoading(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [pairedCategory?.slug]);
+
+  // Reset active tab to 'all' whenever category changes
+  useEffect(() => {
+    setActiveTab('all');
+    setPlayingVideoId(null);
+  }, [slug, resolvedSlug]);
 
   // Scroll page to top instantly whenever category page mounts or slug changes
   useEffect(() => {
@@ -282,12 +366,53 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       .catch(() => {});
   }, []);
 
+  // Load the sidebar after the main category feed has rendered.
+  useEffect(() => {
+    if (trendingStories.length > 0) return;
+    let active = true;
+    getPublicArticles({ isTrending: true, limit: 10 })
+      .then((res) => {
+        if (active && res?.articles) setTrendingStories(res.articles);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [trendingStories.length]);
+
   // Fetch Photo Gallery
   useEffect(() => {
-    getPublicGallery({ limit: 8 })
-      .then((res) => { if (Array.isArray(res)) setGalleryPhotos(res.slice(0, 8)); })
+    getPublicGallery({ page: 1, limit: 8 })
+      .then((res) => {
+        if (Array.isArray(res)) {
+          setGalleryPhotos(res.slice(0, 8));
+          setHasMoreGalleryPhotos(res.length >= 8);
+        }
+      })
       .catch(() => {});
   }, []);
+
+  const loadMoreGalleryPhotos = async () => {
+    if (loadingMoreGalleryPhotos || !hasMoreGalleryPhotos) return;
+    setLoadingMoreGalleryPhotos(true);
+    try {
+      const nextPhotos = await getPublicGallery({ page: galleryPage, limit: 4 });
+      const knownIds = new Set(galleryPhotos.map((photo: any) => photo.id || photo.src || photo.url));
+      const newPhotos = nextPhotos.filter((photo: any) => {
+        const id = photo.id || photo.src || photo.url;
+        if (!id || knownIds.has(id)) return false;
+        knownIds.add(id);
+        return true;
+      });
+      if (newPhotos.length) {
+        setGalleryPhotos((photos) => [...photos, ...newPhotos]);
+        setGalleryPage((page) => page + 1);
+      }
+      setHasMoreGalleryPhotos(newPhotos.length === 4);
+    } catch {
+      // Keep the control available so a failed request can be retried.
+    } finally {
+      setLoadingMoreGalleryPhotos(false);
+    }
+  };
 
   // Interleave Crime & Fact-Check articles for "Also Read" (24 articles total: 12 Crime + 12 Fact-Check)
   const alsoReadArticles = useMemo(() => {
@@ -328,6 +453,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   };
 
   const categoryName = getCategoryTitleLocalized();
+  const currentActiveCatSlug = activeTab === 'paired' && pairedCategory ? pairedCategory.slug : slug;
+  const currentActiveCatLabel = activeTab === 'paired' && pairedCategory
+    ? getLocalized(language, { en: pairedCategory.name, gu: pairedCategory.gu, hi: pairedCategory.hi })
+    : categoryName;
 
   /* Get localized location */
   const getArticleLocation = (art: Article) => {
@@ -352,7 +481,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     const publishedVal = art.publishedAt || (art as any).createdAt;
     const updatedMs = updatedVal ? new Date(updatedVal).getTime() : 0;
     const publishedMs = publishedVal ? new Date(publishedVal).getTime() : 0;
-    const t = !isNaN(updatedMs) && updatedMs > 0 ? updatedMs : publishedMs;
+    const t = !usePublishDate && !isNaN(updatedMs) && updatedMs > 0 ? updatedMs : publishedMs;
     return isNaN(t) ? 0 : t;
   };
 
@@ -426,113 +555,19 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     return [...combined, ...fillArticles];
   }, [currentArticles, videos, category, slug, categoryName]);
 
-  // Items for "બધું" (All) tab: Mix of standard news articles, video articles, and 1-2 YouTube videos
+  // Items for "બધું" (All) tab: Pure category news articles (no YouTube videos injected)
   const allSectionItems = useMemo(() => {
-    const catNameLower = (category?.name || '').toLowerCase().trim();
-    const catGuLower = (category?.nameGu || '').toLowerCase().trim();
-    const slugLower = (slug || '').toLowerCase().trim();
-
-    // Matching YouTube videos for this category (up to 2)
-    const matchingYouTubeVideos = (videos || [])
-      .filter((v: any) => {
-        if (!v) return false;
-        const textToSearch = `${v.title || ''} ${v.titleGu || ''} ${v.description || ''} ${v.category || ''}`.toLowerCase();
-        return (
-          (catNameLower && textToSearch.includes(catNameLower)) ||
-          (catGuLower && textToSearch.includes(catGuLower)) ||
-          (slugLower && textToSearch.includes(slugLower))
-        );
-      })
-      .map((v: any) => ({
-        id: v.id || v.videoId,
-        slug: v.slug || `video-${v.id}`,
-        title: v.title || v.titleGu,
-        titleGu: v.titleGu || v.title,
-        titleHi: v.titleHi || v.title,
-        image: v.thumbnail || v.image,
-        category: v.category || categoryName,
-        categoryGu: v.categoryGu || categoryName,
-        categoryHi: v.categoryHi || categoryName,
-        publishedAt: v.publishedAt || new Date().toISOString(),
-        relativeTimeGu: v.relativeTimeGu || 'હમણાં જ',
-        relativeTime: v.relativeTime || 'Just now',
-        videoUrl: v.youtubeUrl || (v.videoId ? `https://www.youtube.com/watch?v=${v.videoId}` : ''),
-        videoId: v.videoId || safeYouTubeId(v.youtubeUrl),
-        isVideoItem: true,
-        isYouTube: true,
-      }));
-
-    const selectedVideos = matchingYouTubeVideos.length > 0
-      ? matchingYouTubeVideos.slice(0, 2)
-      : (videos || []).slice(0, 2).map((v: any) => ({
-          id: v.id || v.videoId,
-          slug: v.slug || `video-${v.id}`,
-          title: v.title || v.titleGu,
-          titleGu: v.titleGu || v.title,
-          titleHi: v.titleHi || v.title,
-          image: v.thumbnail || v.image,
-          category: v.category || categoryName,
-          categoryGu: v.categoryGu || categoryName,
-          categoryHi: v.categoryHi || categoryName,
-          publishedAt: v.publishedAt || new Date().toISOString(),
-          relativeTimeGu: v.relativeTimeGu || 'હમણાં જ',
-          relativeTime: v.relativeTime || 'Just now',
-          videoUrl: v.youtubeUrl || (v.videoId ? `https://www.youtube.com/watch?v=${v.videoId}` : ''),
-          videoId: v.videoId || safeYouTubeId(v.youtubeUrl),
-          isVideoItem: true,
-          isYouTube: true,
-        }));
-
-    // Sort all articles by date descending (latest first)
-    const sortedArticles = [...(currentArticles || [])].sort((a, b) => {
-      const aTime = new Date((a as any).updatedAt || a.publishedAt || (a as any).createdAt || 0).getTime();
-      const bTime = new Date((b as any).updatedAt || b.publishedAt || (b as any).createdAt || 0).getTime();
-      return bTime - aTime;
+    return [...(currentArticles || [])].sort((a, b) => {
+      return getArticleTimeMs(b) - getArticleTimeMs(a);
     });
-
-    const result: any[] = [];
-    const usedIds = new Set();
-
-    // 1. Latest article as hero
-    const firstArticle = sortedArticles[0];
-    if (firstArticle) {
-      result.push(firstArticle);
-      usedIds.add(firstArticle.id);
-    }
-
-    // 2. Interleave 1-2 YouTube videos and video articles
-    selectedVideos.forEach((v) => {
-      if (!usedIds.has(v.id)) {
-        result.push(v);
-        usedIds.add(v.id);
-      }
-    });
-
-    // 3. Articles in this category with video
-    sortedArticles.forEach((a: any) => {
-      if ((a.videoUrl || a.youtubeUrl || a.mediaType === 'video' || a.isVideo) && !usedIds.has(a.id)) {
-        result.push({
-          ...a,
-          videoId: safeYouTubeId(a.videoUrl || a.youtubeUrl),
-          isVideoItem: true,
-        });
-        usedIds.add(a.id);
-      }
-    });
-
-    // 4. Fill remaining slots with standard category articles (latest first)
-    sortedArticles.forEach((a: any) => {
-      if (!usedIds.has(a.id)) {
-        result.push(a);
-        usedIds.add(a.id);
-      }
-    });
-
-    return result;
-  }, [currentArticles, videos, category, slug, categoryName]);
+  }, [currentArticles]);
 
   // Dynamic Section Items (Hero + Sub-Hero + Top Stories) driven by activeTab
   const currentSectionItems = useMemo(() => {
+    if (activeTab === 'paired') {
+      return pairedArticles.length > 0 ? pairedArticles : currentArticles;
+    }
+
     if (activeTab === 'latest') {
       // Strictly latest uploaded articles sorted by time descending
       return [...(currentArticles || [])].sort((a, b) => getArticleTimeMs(b) - getArticleTimeMs(a));
@@ -542,9 +577,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       return categoryVideoItems;
     }
 
-    // Default 'all' (બધું): Mixed feed of standard news articles, 1-2 YouTube videos, and video articles
+    // Default 'all' (બધું): Pure category news articles
     return allSectionItems;
-  }, [activeTab, currentArticles, categoryVideoItems, allSectionItems]);
+  }, [activeTab, pairedArticles, currentArticles, categoryVideoItems, allSectionItems]);
 
   // Section Hero Article / Item
   const heroArticle = currentSectionItems[0] || currentArticles[0];
@@ -570,20 +605,23 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   // Remaining articles for Popular News grid (steady view)
   const popularArticles = useMemo(() => {
-    return (currentArticles || []).filter((art) => !topStoriesIds.has(art.id));
-  }, [currentArticles, topStoriesIds]);
+    const baseList = (activeTab === 'paired' && pairedArticles.length > 0)
+      ? pairedArticles
+      : (currentArticles || []);
+    return baseList.filter((art) => !topStoriesIds.has(art.id));
+  }, [activeTab, pairedArticles, currentArticles, topStoriesIds]);
 
   // Fast background prefetch of adjacent pages for instant 0ms clicking
   useEffect(() => {
     const prefetch = (p: number) => {
       if (p >= 1 && p <= pagedTotalPages && !pageCacheRef.current[p]) {
-        getPublicArticles({ categorySlug: resolvedSlug, page: p, limit: 40 })
+        getPublicArticles(resolvedSlug === 'trending'
+          ? { isTrending: true, page: p, limit: 40 }
+          : { categorySlug: resolvedSlug, page: p, limit: 40 })
           .then((res) => {
             if (res?.articles?.length) {
               const sorted = (res.articles as any[]).sort((a, b) => {
-                const at = new Date(a.updatedAt || a.publishedAt || 0).getTime();
-                const bt = new Date(b.updatedAt || b.publishedAt || 0).getTime();
-                return bt - at;
+                return getArticleTimeMs(b) - getArticleTimeMs(a);
               });
               pageCacheRef.current[p] = sorted;
             }
@@ -623,11 +661,11 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     // 3. Otherwise fetch from API with fast loading indicator
     setPageLoading(true);
     try {
-      const res = await getPublicArticles({ categorySlug: resolvedSlug, page, limit: 40 });
+      const res = await getPublicArticles(resolvedSlug === 'trending'
+        ? { isTrending: true, page, limit: 40 }
+        : { categorySlug: resolvedSlug, page, limit: 40 });
       const fetched = (res?.articles || []).sort((a: any, b: any) => {
-        const at = new Date((a as any).updatedAt || a.publishedAt || 0).getTime();
-        const bt = new Date((b as any).updatedAt || b.publishedAt || 0).getTime();
-        return bt - at;
+        return getArticleTimeMs(b) - getArticleTimeMs(a);
       });
       pageCacheRef.current[page] = fetched;
       setPagedArticles(fetched);
@@ -661,12 +699,31 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     return popularArticles;
   }, [popularArticles]);
 
-  /* 3 Filter tabs */
-  const tabs: { id: FilterTab; gu: string; hi: string; en: string }[] = [
-    { id: 'all', gu: 'બધું', hi: 'सभी', en: 'All' },
-    { id: 'latest', gu: 'તાજા સમાચાર', hi: 'તાઝા સમાચાર', en: 'Latest' },
-    { id: 'video', gu: 'વીડિયો', hi: 'वीडियो', en: 'Video' },
-  ];
+  /* 3 Filter tabs: Badhu, Paired Category (or Latest fallback), Video */
+  const tabs = useMemo(() => {
+    const list: { id: FilterTab; gu: string; hi: string; en: string }[] = [
+      { id: 'all', gu: 'બધું', hi: 'सभी', en: 'All' },
+    ];
+
+    if (pairedCategory) {
+      list.push({
+        id: 'paired',
+        gu: pairedCategory.gu,
+        hi: pairedCategory.hi,
+        en: pairedCategory.name,
+      });
+    } else {
+      list.push({
+        id: 'latest',
+        gu: 'તાજા સમાચાર',
+        hi: 'તાઝા સમાચાર',
+        en: 'Latest',
+      });
+    }
+
+    list.push({ id: 'video', gu: 'વીડિયો', hi: 'वीडियो', en: 'Video' });
+    return list;
+  }, [pairedCategory]);
 
   if (!heroArticle && videos.length === 0) {
     return (
@@ -716,13 +773,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
 
           {/* ── LEFT: Hero + Top Stories (Controlled by activeTab) ── */}
-          <div className={`grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-x-8 gap-y-0 min-w-0 transition-opacity duration-200 ${pageLoading ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+          <div className={`grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-x-8 gap-y-0 min-w-0 transition-opacity duration-200 ${pageLoading || (activeTab === 'paired' && pairedLoading && pairedArticles.length === 0) ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
             {/* Row 1, Col 1: Main Big Hero Article / Video Card */}
             <div className="order-1 md:col-start-1 md:row-start-1 flex flex-col justify-start pb-4">
               {heroArticle && (
                 <div>
-                  {heroArticle.videoId ? (
-                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-black shadow-sm mb-3">
+                  {activeTab === 'video' && heroArticle.videoId ? (
+                    <div className="relative aspect-[16/10] md:aspect-video w-full overflow-hidden rounded-sm bg-black shadow-sm mb-3">
                       {playingVideoId === (heroArticle.id || heroArticle.videoId) ? (
                         <iframe
                           src={youtubeEmbedUrl(heroArticle.videoId, 'autoplay=1')}
@@ -733,7 +790,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         />
                       ) : (
                         <div
-                          onClick={() => setPlayingVideoId(heroArticle.id || heroArticle.videoId)}
+                          onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(heroArticle.videoId)}`, '_blank', 'noopener,noreferrer')}
                           className="relative w-full h-full cursor-pointer group"
                         >
                           <ArticleMedia
@@ -754,17 +811,12 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     </div>
                   ) : (
                     <Link href={heroArticle.slug ? `/news/${heroArticle.slug}` : '#'} className="group block">
-                      <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-muted shadow-sm">
+                      <div className="relative aspect-[16/10] md:aspect-video w-full overflow-hidden rounded-sm bg-muted shadow-sm">
                         <ArticleMedia
                           src={heroArticle.image || (heroArticle as any).featuredImage}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500 group-hover:scale-105"
                         />
-                        {heroArticle.videoId && (
-                          <span className="absolute top-2.5 right-2.5 bg-black/80 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1">
-                            <VideoIcon className="w-3 h-3 text-red-500" /> VIDEO
-                          </span>
-                        )}
                       </div>
                     </Link>
                   )}
@@ -783,13 +835,6 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
             {/* Row 1, Col 2: Top Stories (Items 1-3) */}
             <div className="order-3 md:col-start-2 md:row-start-1 flex flex-col justify-start pb-0 md:pb-4 mt-4 md:mt-0">
-              <div className="flex items-center gap-2.5 mb-2.5 pb-2 border-b-2 border-accent/25">
-                <span className="w-1 h-4 bg-accent inline-block shrink-0 rounded-sm" />
-                <span className="text-sm font-black text-foreground">
-                  {getLocalized(language, { en: 'Top Stories', gu: 'ટોપ સ્ટોરીઝ', hi: 'टॉप स्टोरीज' })}
-                </span>
-              </div>
-
               {/* Mobile (< md): Divya Bhaskar / Hero section style list with divide-y */}
               <div className="flex flex-col divide-y divide-border/60 md:hidden">
                 {topStoriesFirstThree.map((art: any, idx: number) => (
@@ -797,8 +842,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     key={art.id || idx}
                     article={art}
                     language={language}
-                    defaultCategorySlug={slug}
-                    defaultCategoryLabel={categoryName}
+                    defaultCategorySlug={currentActiveCatSlug}
+                    defaultCategoryLabel={currentActiveCatLabel}
                     index={idx}
                   />
                 ))}
@@ -806,7 +851,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
               {/* Desktop (>= md): UNTOUCHED */}
               <div className="hidden md:flex flex-1 flex-col justify-start divide-y divide-border">
-                {topStories.slice(0, 4).map((art: any) => (
+                {topStories.slice(0, 3).map((art: any) => (
                   <Link key={art.id} href={art.slug ? `/news/${art.slug}` : '#'} className="group flex items-start gap-4 py-2.5 first:pt-0">
                     <div className="min-w-0 flex-1">
                       <span className="text-[10px] font-black uppercase tracking-wide text-accent">
@@ -829,7 +874,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </div>
 
             {/* Row 2, Col 1: Small Sub-Hero Article below Hero Article */}
-            <div className={`order-2 md:col-start-1 md:row-start-2 md:-mt-36 ${subHeroArticle ? 'border-t border-border/60 md:border-border md:pt-3.5 md:pb-2' : ''}`}>
+            <div className={`order-2 md:col-start-1 md:row-start-2 md:-mt-12 ${subHeroArticle ? 'border-t border-border/60 md:border-0 md:pt-3.5 md:pb-2' : ''}`}>
               {subHeroArticle && (
                 <>
                   {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
@@ -837,8 +882,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     <MobileCategoryArticleCard
                       article={subHeroArticle}
                       language={language}
-                      defaultCategorySlug={slug}
-                      defaultCategoryLabel={categoryName}
+                      defaultCategorySlug={currentActiveCatSlug}
+                      defaultCategoryLabel={currentActiveCatLabel}
                       index={0}
                     />
                   </div>
@@ -866,7 +911,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </div>
 
             {/* Row 2, Col 2: Fourth Top Story (Aligned perfectly with Sub-Hero Article) */}
-            <div className={`order-4 md:col-start-2 md:row-start-2 ${fourthStory ? 'border-t border-border/60 pt-3.5 pb-2 md:border-0 md:p-0' : ''}`}>
+            <div className={`order-4 md:col-start-2 md:row-start-2 md:-mt-12 ${fourthStory ? 'border-t border-border/60 pt-3.5 pb-2 md:border-t md:border-border md:pt-3.5 md:pb-2' : ''}`}>
               {fourthStory && (
                 <>
                   {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
@@ -874,12 +919,28 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     <MobileCategoryArticleCard
                       article={fourthStory}
                       language={language}
-                      defaultCategorySlug={slug}
-                      defaultCategoryLabel={categoryName}
+                      defaultCategorySlug={currentActiveCatSlug}
+                      defaultCategoryLabel={currentActiveCatLabel}
                       index={3}
                     />
                   </div>
-
+                  <Link href={fourthStory.slug ? `/news/${fourthStory.slug}` : '#'} className="hidden md:flex group items-start gap-4">
+                    <div className="min-w-0 flex-1">
+                      <span className="text-[10px] font-black uppercase tracking-wide text-accent">
+                        {getArticleLocation(fourthStory)}
+                      </span>
+                      <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
+                        <AutoArticleTitle article={fourthStory} language={language} />
+                      </h3>
+                    </div>
+                    <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
+                      <ArticleMedia
+                        src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
+                        alt={getArticleTitle(fourthStory, language)}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                  </Link>
                 </>
               )}
             </div>
@@ -890,11 +951,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             <div className="flex items-center gap-2.5 mb-3 pb-2 border-b border-border">
               <span className="w-2 h-2 bg-accent rotate-45 shrink-0 inline-block" />
               <span className="text-sm font-black text-foreground">
-                {getLocalized(language, { en: 'Trending Stories', gu: 'ટ્રેન્ડિંગ સ્ટોરીઝ', hi: 'ट्रेंडिंग स्टोरीज़' })}
+                {normSlug === 'trending'
+                  ? getLocalized(language, { en: 'Story', gu: 'સ્ટોરી', hi: 'स्टोरी' })
+                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडिंग स्टोरी' })}
               </span>
             </div>
             <div className="flex flex-col divide-y divide-border">
-              {trending.slice(0, 5).map((art: any, i: number) => (
+              {trendingStories.slice(0, 5).map((art: any, i: number) => (
                 <Link key={art.id} href={`/news/${art.slug}`} className="group flex items-start gap-3 py-3 first:pt-1.5 last:pb-1.5">
                   <span
                     className="text-[28px] font-extrabold leading-none select-none w-8 shrink-0 text-center"
@@ -918,7 +981,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         {/* POPULAR ARTICLES GRID */}
         <div className="mt-6" ref={articlesGridRef}>
           {/* Loading spinner during page fetch */}
-          {pageLoading && (
+          {(pageLoading || (activeTab === 'paired' && pairedLoading && pairedArticles.length === 0)) && (
             <div className="flex justify-center items-center py-16">
               <div className="flex flex-col items-center gap-3">
                 <div className="w-8 h-8 rounded-full border-[3px] border-accent border-t-transparent animate-spin" />
@@ -929,7 +992,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </div>
           )}
 
-          {!pageLoading && (
+          {!(pageLoading || (activeTab === 'paired' && pairedLoading && pairedArticles.length === 0)) && (
             <>
               {/* Mobile view (< md) */}
               <div className="md:hidden flex flex-col divide-y divide-border/60">
@@ -938,8 +1001,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     key={art.id || idx}
                     article={art}
                     language={language}
-                    defaultCategorySlug={slug}
-                    defaultCategoryLabel={categoryName}
+                    defaultCategorySlug={currentActiveCatSlug}
+                    defaultCategoryLabel={currentActiveCatLabel}
                     index={idx}
                   />
                 ))}
@@ -1121,9 +1184,19 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   {getLocalized(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
                 </span>
               </div>
-              <Link href="/gallery" className="text-xs font-bold text-accent hover:underline">
-                {getLocalized(language, { en: 'View All', gu: 'બધાં જુઓ', hi: 'सभी देखें' })} →
-              </Link>
+              {hasMoreGalleryPhotos && (
+                <button
+                  type="button"
+                  onClick={loadMoreGalleryPhotos}
+                  disabled={loadingMoreGalleryPhotos}
+                  className="inline-flex items-center gap-1 text-base md:text-lg font-black tracking-wide leading-none text-accent hover:underline disabled:opacity-60"
+                >
+                  {loadingMoreGalleryPhotos
+                    ? getLocalized(language, { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...' })
+                    : getLocalized(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'और देखें' })}
+                  {!loadingMoreGalleryPhotos && <ChevronRight className="h-4 w-4" />}
+                </button>
+              )}
             </div>
 
             {/* Mobile view (< md): Full-width and full-height single cards like user reference image */}

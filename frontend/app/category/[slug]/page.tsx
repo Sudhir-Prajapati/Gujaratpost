@@ -69,22 +69,21 @@ export default async function CategoryPage({
     redirect('/epaper');
   }
 
-  // 1. Fetch category metadata, category articles, and trending articles concurrently in parallel
-  const [dbCategories, catRes, trendingRes] = await Promise.all([
-    getPublicCategories().catch(() => []),
+  const fallbackCat = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
+
+  // Known categories have local metadata, so only fetch their article feed before rendering.
+  // Custom database categories still need the category list for validation and labels.
+  const [dbCategories, catRes] = await Promise.all([
+    fallbackCat ? Promise.resolve([]) : getPublicCategories().catch(() => []),
     getPublicArticles({
-      categorySlug: resolvedSlug,
+      categorySlug: resolvedSlug === 'trending' ? undefined : resolvedSlug,
+      isTrending: resolvedSlug === 'trending' ? true : undefined,
       page,
       limit,
-    }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({
-      isTrending: true,
-      limit: 10,
     }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);
-  const fallbackCat = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
 
   if (!dbCat && !fallbackCat) {
     notFound();
@@ -114,20 +113,18 @@ export default async function CategoryPage({
     totalPages = fallbackRes.totalPages || 1;
   }
 
-  // Sort latest first by updatedAt (most recently edited/published article comes first)
+  const usePublishDate = ['entertainment', 'entertainment-life-style', 'manoranjan'].includes(resolvedSlug.toLowerCase());
   const articles = [...rawArticles].sort((a, b) => {
-    const aTime = new Date((a as any).updatedAt || a.publishedAt || 0).getTime();
-    const bTime = new Date((b as any).updatedAt || b.publishedAt || 0).getTime();
+    const aTime = new Date(usePublishDate ? (a.publishedAt || (a as any).createdAt || 0) : ((a as any).updatedAt || a.publishedAt || 0)).getTime();
+    const bTime = new Date(usePublishDate ? (b.publishedAt || (b as any).createdAt || 0) : ((b as any).updatedAt || b.publishedAt || 0)).getTime();
     return bTime - aTime;
   });
-
-  const trending = trendingRes?.articles || [];
 
   return (
     <CategoryPageClient
       articles={articles}
       category={categoryData}
-      trending={trending}
+      trending={[]}
       currentPage={page}
       totalPages={totalPages || Math.ceil(total / limit)}
       slug={slug}

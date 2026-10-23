@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye } from 'lucide-react';
+import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getArticleTitle, getCategoryLabel, formatViews, getLocalized, formatDate } from '@/data';
 import { getPublicArticles, getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
@@ -66,6 +66,8 @@ export default function LatestUpdatesSection({
     initialPopularNews || []
   );
   const [currentPopularIdx, setCurrentPopularIdx] = useState(0);
+  const [mobilePopularIdx, setMobilePopularIdx] = useState(0);
+  const touchStartXRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (initialArticles && initialArticles.length > 0) {
@@ -107,7 +109,7 @@ export default function LatestUpdatesSection({
 
       const latestIdSet = new Set(currentLatest.map((a) => a.id));
 
-      // Guarantee Top 5 Most Read articles in Latest Updates sidebar widget
+      // Guarantee Top 10 Most Read articles in Latest Updates sidebar widget
       const heroMostRead: Article[] = (heroRes && Array.isArray(heroRes.mostReadArticles)) ? heroRes.mostReadArticles : [];
       const viewedArticles: Article[] = (mostViewedRes && Array.isArray(mostViewedRes.articles)) ? mostViewedRes.articles : [];
 
@@ -139,7 +141,7 @@ export default function LatestUpdatesSection({
     });
   }, [initialArticles, initialMostRead, initialPopularNews]);
 
-  // Auto-rotate popular news slides every 5 seconds
+  // Auto-rotate popular news slides on desktop every 5 seconds (3 cards per slide)
   useEffect(() => {
     if (popularArticles.length <= 3) return;
     const maxPages = Math.ceil(popularArticles.length / 3);
@@ -149,10 +151,48 @@ export default function LatestUpdatesSection({
     return () => clearInterval(interval);
   }, [popularArticles.length]);
 
-  // Paginate 3 cards at a time for Popular News slider
+  // Pool of all popular news articles
+  const popularPool = popularArticles.length > 0
+    ? popularArticles
+    : latestNews.slice(0, 3);
+
+  // Auto-rotate popular news on mobile every 4.5 seconds (1 card at a time)
+  useEffect(() => {
+    if (popularPool.length <= 1) return;
+    const interval = setInterval(() => {
+      setMobilePopularIdx((prev) => (prev + 1) % popularPool.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, [popularPool.length]);
+
+  // Touch swipe handlers for mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartXRef.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const deltaX = touchStartXRef.current - touchEndX;
+    if (Math.abs(deltaX) > 40 && popularPool.length > 1) {
+      if (deltaX > 0) {
+        // Swiped left -> next article
+        setMobilePopularIdx((prev) => (prev + 1) % popularPool.length);
+      } else {
+        // Swiped right -> prev article
+        setMobilePopularIdx((prev) => (prev - 1 + popularPool.length) % popularPool.length);
+      }
+    }
+    touchStartXRef.current = null;
+  };
+
+  // Paginate 3 cards at a time for Desktop Popular News slider
   const displayPopularCards = popularArticles.length > 0
     ? popularArticles.slice(currentPopularIdx * 3, currentPopularIdx * 3 + 3)
     : latestNews.slice(0, 3);
+
+  const currentMobileCard = popularPool[mobilePopularIdx % popularPool.length] || popularPool[0];
+  const mobileCardRank = (mobilePopularIdx % popularPool.length) + 1;
 
   if (!latestNews.length) return null;
 
@@ -296,51 +336,134 @@ export default function LatestUpdatesSection({
           </Link>
         </div>
 
-        {/* 3-Card Grid — 1 big + 2 small on mobile, 3 equal on md+ */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5 [&>*:first-child]:col-span-2 md:[&>*:first-child]:col-span-1">
-          {displayPopularCards.map((art, idx) => {
-            const cardRank = currentPopularIdx * 3 + idx + 1;
-            return (
+        {/* ── MOBILE VIEW: 1 Article at a time (Slides one by one) ── */}
+        <div className="md:hidden">
+          {currentMobileCard && (
+            <div
+              className="relative select-none"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               <Link
-                key={art.id || idx}
-                href={`/news/${art.slug}`}
+                key={`mob-${currentMobileCard.id || mobilePopularIdx}`}
+                href={`/news/${currentMobileCard.slug}`}
                 className="group flex flex-col min-w-0"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2">
-                  <span className="absolute top-1.5 left-1.5 z-10 bg-black/80 text-white font-extrabold text-[12px] md:text-[11px] px-2 py-0.5 md:px-1.5 md:py-0.5 rounded-sm select-none shadow">
-                    {language === 'gu' ? toGuDigits(cardRank) : cardRank}
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border border-border/10 bg-muted mb-2 shadow-xs">
+                  <span className="absolute top-2 left-2 z-10 bg-black/85 text-white font-black text-[13px] px-2.5 py-0.5 rounded-sm select-none shadow">
+                    {language === 'gu' ? toGuDigits(mobileCardRank) : mobileCardRank}
                   </span>
+
+                  {/* Left & Right chevron navigation arrows */}
+                  {popularPool.length > 1 && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMobilePopularIdx((prev) => (prev - 1 + popularPool.length) % popularPool.length);
+                        }}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer backdrop-blur-xs"
+                        aria-label="Previous article"
+                      >
+                        <ChevronLeft className="w-5 h-5 text-white" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMobilePopularIdx((prev) => (prev + 1) % popularPool.length);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-black/60 hover:bg-black/85 text-white flex items-center justify-center shadow-md active:scale-90 transition-all cursor-pointer backdrop-blur-xs"
+                        aria-label="Next article"
+                      >
+                        <ChevronRight className="w-5 h-5 text-white" />
+                      </button>
+                    </>
+                  )}
+
                   <ArticleMedia
-                    src={art.image || (art as any).featuredImage}
-                    alt={getArticleTitle(art, language)}
+                    src={currentMobileCard.image || (currentMobileCard as any).featuredImage}
+                    alt={getArticleTitle(currentMobileCard, language)}
                     className="transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <h3 className={`font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 ${idx === 0 ? 'text-[16px] sm:text-[17px] md:text-[14.5px]' : 'text-[14.5px] md:text-[14.5px]'}`}>
-                  <AutoArticleTitle article={art} language={language} />
-                </h3>
 
+                <h3 className="font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 text-[16.5px] sm:text-[18px]">
+                  <AutoArticleTitle article={currentMobileCard} language={language} />
+                </h3>
               </Link>
-            );
-          })}
+            </div>
+          )}
+
+          {/* Dot Pagination for Mobile (1 dot per article) */}
+          {popularPool.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-3.5">
+              {popularPool.slice(0, 12).map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  onClick={() => setMobilePopularIdx(dotIdx)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    (mobilePopularIdx % popularPool.length) === dotIdx
+                      ? 'bg-[#B3121B] w-5'
+                      : 'bg-zinc-300 dark:bg-zinc-700 w-2 hover:bg-zinc-400'
+                  }`}
+                  aria-label={`Go to article ${dotIdx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Dot Pagination Indicators */}
-        {popularArticles.length > 3 && (
-          <div className="flex items-center justify-center gap-1.5 mt-5">
-            {Array.from({ length: Math.ceil(popularArticles.length / 3) }).map((_, dotIdx) => (
-              <button
-                key={dotIdx}
-                type="button"
-                onClick={() => setCurrentPopularIdx(dotIdx)}
-                className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                  currentPopularIdx === dotIdx ? 'bg-[#B3121B] w-6' : 'bg-zinc-300 dark:bg-zinc-700 w-2.5'
-                }`}
-                aria-label={`Go to slide ${dotIdx + 1}`}
-              />
-            ))}
+        {/* ── DESKTOP VIEW: 100% Preserved Unchanged 3-Card Grid ── */}
+        <div className="hidden md:block">
+          <div className="grid grid-cols-3 gap-5">
+            {displayPopularCards.map((art, idx) => {
+              const cardRank = currentPopularIdx * 3 + idx + 1;
+              return (
+                <Link
+                  key={art.id || idx}
+                  href={`/news/${art.slug}`}
+                  className="group flex flex-col min-w-0"
+                >
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2">
+                    <span className="absolute top-1.5 left-1.5 z-10 bg-black/80 text-white font-extrabold text-[11px] px-1.5 py-0.5 rounded-sm select-none shadow">
+                      {language === 'gu' ? toGuDigits(cardRank) : cardRank}
+                    </span>
+                    <ArticleMedia
+                      src={art.image || (art as any).featuredImage}
+                      alt={getArticleTitle(art, language)}
+                      className="transition-transform duration-300 group-hover:scale-105"
+                    />
+                  </div>
+                  <h3 className="font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 text-[14.5px]">
+                    <AutoArticleTitle article={art} language={language} />
+                  </h3>
+                </Link>
+              );
+            })}
           </div>
-        )}
+
+          {/* Dot Pagination Indicators */}
+          {popularArticles.length > 3 && (
+            <div className="flex items-center justify-center gap-1.5 mt-5">
+              {Array.from({ length: Math.ceil(popularArticles.length / 3) }).map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  onClick={() => setCurrentPopularIdx(dotIdx)}
+                  className={`h-2.5 rounded-full transition-all cursor-pointer ${
+                    currentPopularIdx === dotIdx ? 'bg-[#B3121B] w-6' : 'bg-zinc-300 dark:bg-zinc-700 w-2.5'
+                  }`}
+                  aria-label={`Go to slide ${dotIdx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

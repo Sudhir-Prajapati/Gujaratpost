@@ -164,7 +164,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
 
   const hasDb = factCheckArticles.length > 0;
   const featArt = hasDb ? factCheckArticles[0] : null;
-  const gridDbList = hasDb ? factCheckArticles.slice(1, 9) : [];
+  const gridDbList = hasDb ? factCheckArticles.slice(1, 7) : [];
 
   const featStatus = featArt ? getStatusInfo(featArt) : { labelGu: 'ખોટો દાવો', labelEn: 'FAKE CLAIM', color: 'text-red-600' };
   const featTitle = featArt ? getLocalized(language, { en: featArt.title, gu: featArt.titleGu || featArt.title, hi: (featArt as any).titleHi || featArt.title }) : (
@@ -172,7 +172,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
       ? 'શું સરકારે ખરેખર બધા વિદ્યાર્થીઓને મફત લેપટોપ આપવાની જાહેરાત કરી? જાણો સત્ય'
       : 'Did government really announce free laptops for all students? Know truth'
   );
-  const featExcerpt = featArt ? stripHtmlTags(getLocalized(language, { en: featArt.excerpt, gu: featArt.excerptGu || featArt.excerpt, hi: (featArt as any).excerptHi || featArt.excerpt })) : (
+  const featExcerpt = featArt ? stripHtmlTags(getLocalized(language, {
+    en: featArt.excerpt || (featArt as any).content || '',
+    gu: featArt.excerptGu || featArt.excerpt || (featArt as any).contentGu || (featArt as any).content || '',
+    hi: (featArt as any).excerptHi || featArt.excerpt || (featArt as any).contentHi || (featArt as any).content || '',
+  })) : (
     language === 'gu'
       ? 'ગુજરાત પોસ્ટની તપાસમાં જાણવા મળ્યું કે વાયરલ પરિપત્ર બનાવટી છે – શિક્ષણ વિભાગે આવી કોઈ જાહેરાત કરી નથી.'
       : 'Gujarat Post investigation revealed that the viral circular is fake – the education department has made no such announcement.'
@@ -220,17 +224,19 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             <h3 className="text-[16px] md:text-[17.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
               {featTitle}
             </h3>
-            <p className="text-muted-foreground text-[13.5px] leading-relaxed mt-2.5 line-clamp-3 select-none">
-              {featExcerpt}
-            </p>
+            {featExcerpt && (
+              <p className="text-muted-foreground text-[13.5px] leading-relaxed mt-2.5 line-clamp-3 select-none">
+                {featExcerpt}
+              </p>
+            )}
           </Link>
 
         </div>
 
-        {/* Right Column: Grid of 8 Fact Check items (Spans 2 columns on desktop) */}
+        {/* Right Column: Grid of 6 Fact Check items (Spans 2 columns on desktop) */}
         <div className="lg:col-span-2 pt-1 lg:pt-0">
-          {/* Mobile View (< md): List with Content on LEFT, Thumbnail on RIGHT (Like Image 2) */}
-          <div className="md:hidden flex flex-col divide-y divide-border/40">
+          {/* Mobile View (< md): Boxed Cards with Card Background & Border (matches Image 2) */}
+          <div className="md:hidden flex flex-col gap-2.5">
             {hasDb && gridDbList.length > 0 ? (
               gridDbList.map((item) => {
                 const st = getStatusInfo(item);
@@ -239,7 +245,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   <Link
                     key={`mob-${item.id}`}
                     href={`/news/${item.slug}`}
-                    className="group flex flex-row items-center justify-between gap-3.5 py-2 px-1 hover:bg-muted/20 transition-all min-w-0"
+                    className="group flex flex-row items-center justify-between gap-3.5 p-2.5 sm:p-3 rounded-xl bg-card/75 dark:bg-card/60 hover:bg-card border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
                   >
                     {/* Content on Left */}
                     <div className="flex flex-col justify-center min-w-0 flex-1">
@@ -256,12 +262,12 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     </div>
 
                     {/* Image on Right */}
-                    <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                    <div className="relative aspect-[16/10] w-[130px] h-[88px] sm:w-[140px] sm:h-[94px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                       <Image
                         src={item.image || '/assets/demo/2.jpg'}
                         alt={title}
                         fill
-                        sizes="138px"
+                        sizes="(max-width: 640px) 130px, 140px"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
@@ -269,11 +275,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                 );
               })
             ) : (
-              mockFactCheckList.map((item) => (
+              mockFactCheckList.slice(0, 6).map((item) => (
                 <Link
                   key={`mob-mock-${item.id}`}
                   href={`/news/${item.slug}`}
-                  className="group flex flex-row items-center justify-between gap-3.5 py-2 px-1 hover:bg-muted/20 transition-all min-w-0"
+                  className="group flex flex-row items-center justify-between gap-3.5 p-2.5 sm:p-3 rounded-xl bg-card/75 dark:bg-card/60 hover:bg-card border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
                 >
                   {/* Content on Left */}
                   <div className="flex flex-col justify-center min-w-0 flex-1">
@@ -295,12 +301,12 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   </div>
 
                   {/* Image on Right */}
-                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                  <div className="relative aspect-[16/10] w-[130px] h-[88px] sm:w-[140px] sm:h-[94px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                     <Image
                       src={item.image}
                       alt={item.titleGu}
                       fill
-                      sizes="138px"
+                      sizes="(max-width: 640px) 130px, 140px"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
@@ -309,8 +315,8 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             )}
           </div>
 
-          {/* Desktop View (>= md): Exactly preserved 2-column grid with Image on LEFT and Content on RIGHT */}
-          <div className="hidden md:grid md:grid-cols-2 gap-x-6 gap-y-4">
+          {/* Desktop View (>= md): 2-column grid with Image on LEFT and Content on RIGHT */}
+          <div className="hidden md:grid md:grid-cols-2 gap-x-5 lg:gap-x-6 gap-y-4 lg:gap-y-5">
             {hasDb && gridDbList.length > 0 ? (
               gridDbList.map((item) => {
                 const st = getStatusInfo(item);
@@ -319,15 +325,15 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   <Link
                     key={item.id}
                     href={`/news/${item.slug}`}
-                    className="group flex gap-4 hover:bg-muted/10 transition-colors p-1"
+                    className="group flex gap-3.5 hover:bg-muted/10 transition-colors p-1 rounded-md"
                   >
                     {/* Image Left */}
-                    <div className="relative h-[68px] w-[100px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                    <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
                       <Image
                         src={item.image || '/assets/demo/2.jpg'}
                         alt={title}
                         fill
-                        sizes="100px"
+                        sizes="(max-width: 1024px) 155px, 170px"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
@@ -341,7 +347,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                           {language === 'gu' ? st.labelGu : st.labelEn}
                         </span>
                       </div>
-                      <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                      <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                         {title}
                       </h4>
                     </div>
@@ -349,19 +355,19 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                 );
               })
             ) : (
-              mockFactCheckList.map((item) => (
+              mockFactCheckList.slice(0, 6).map((item) => (
                 <Link
                   key={item.id}
                   href={`/news/${item.slug}`}
-                  className="group flex gap-4 hover:bg-muted/10 transition-colors p-1"
+                  className="group flex gap-3.5 hover:bg-muted/10 transition-colors p-1 rounded-md"
                 >
                   {/* Image Left */}
-                  <div className="relative h-[68px] w-[100px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                  <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
                     <Image
                       src={item.image}
                       alt={item.titleGu}
                       fill
-                      sizes="100px"
+                      sizes="(max-width: 1024px) 155px, 170px"
                       className="object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
@@ -380,7 +386,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                         {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
                       </span>
                     </div>
-                    <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                    <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                       {getMockTitle(item, language)}
                     </h4>
                   </div>

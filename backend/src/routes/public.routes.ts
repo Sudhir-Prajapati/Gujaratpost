@@ -399,6 +399,23 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       where.location = { contains: locationParam };
     }
 
+    // Archived Entertainment/Lifestyle and Popular Stories content should remain
+    // available in their dedicated feeds without being mixed into general Latest.
+    if (!categorySlug && !query && !isTrending) {
+      where.NOT = {
+        OR: [
+          { AND: [
+            { category: { slug: 'entertainment' } },
+            { createdAt: { lt: new Date('2026-10-05T00:00:00.000Z') } },
+          ] },
+          { AND: [
+            { category: { slug: 'trending' } },
+            { createdAt: { lt: new Date('2026-09-17T00:00:00.000Z') } },
+          ] },
+        ],
+      };
+    }
+
     if (categorySlug) {
       let slugLower = categorySlug.toLowerCase().trim();
       if (CATEGORY_ALIASES[slugLower]) {
@@ -473,7 +490,23 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
                     ? [{ slug: 'world' }, { slug: 'international' }, { name: 'World' }, { name: 'International' }, { nameGu: 'વિશ્વ' }]
                     : []),
                   ...(slugLower === 'politics' || slugLower === 'rajkaran'
-                    ? [{ slug: 'politics' }, { slug: 'rajkaran' }, { name: 'Politics' }, { nameGu: 'રાજનીતિ' }, { nameGu: 'રાજકારણ' }]
+                    ? [
+                        { slug: 'politics' },
+                        { slug: 'rajkaran' },
+                        { name: 'Politics' },
+                        { nameGu: 'રાજનીતિ' },
+                        { nameGu: 'રાજકારણ' },
+                        // Surface archived election coverage under Politics without changing its stored category.
+                        { slug: { in: [
+                          '2019-election-bjp-ram-mandir',
+                          'election-five-states-results',
+                          'loksabha-election',
+                          'gujarat-election-2017',
+                          'jasadan-by-election',
+                          'election-2019-modi-loss-five-states',
+                          'gujarat-election-2022',
+                        ] } },
+                      ]
                     : []),
                   ...(slugLower === 'crime' || slugLower === 'gunho'
                     ? [{ slug: 'crime' }, { name: 'Crime' }, { nameGu: 'ક્રાઇમ' }]
@@ -540,7 +573,10 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
     // Use single-column { articleNumber: 'desc' } to match @@index([categoryId, status, articleNumber]) perfectly
-    const orderByClause: any = (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
+    const isEntertainmentCategory = ['manoranjan', 'entertainment', 'entertainment-life-style'].includes(categorySlug.toLowerCase().trim());
+    const orderByClause: any = isEntertainmentCategory
+      ? [{ createdAt: 'desc' }, { articleNumber: 'desc' }]
+      : (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')
       ? [{ views: 'desc' }, { articleNumber: 'desc' }]
       : { articleNumber: 'desc' };
 
@@ -640,6 +676,18 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     if (posts.length === 0 && !categorySlug && !query) {
       const fallbackWhere: any = {
         status: 'PUBLISHED',
+        NOT: {
+          OR: [
+            { AND: [
+              { category: { slug: 'entertainment' } },
+              { createdAt: { lt: new Date('2026-10-05T00:00:00.000Z') } },
+            ] },
+            { AND: [
+              { category: { slug: 'trending' } },
+              { createdAt: { lt: new Date('2026-09-17T00:00:00.000Z') } },
+            ] },
+          ],
+        },
       };
       posts = await withDbRetry(() =>
         prisma.post.findMany({

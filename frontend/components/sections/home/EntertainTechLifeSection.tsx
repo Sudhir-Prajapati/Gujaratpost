@@ -125,6 +125,11 @@ const sortLatest = (list: Article[]) =>
     return new Date(b?.publishedAt || b?.createdAt || 0).getTime() - new Date(a?.publishedAt || a?.createdAt || 0).getTime();
   });
 
+const sortByPublishDate = (list: Article[]) =>
+  [...(list || [])].sort((a: any, b: any) =>
+    new Date(b?.publishedAt || b?.createdAt || 0).getTime() - new Date(a?.publishedAt || a?.createdAt || 0).getTime()
+  );
+
 /* ─── Entertainment · Tech · Health 3-Column Section ─────────────────── */
 export default function EntertainTechLifeSection({
   language,
@@ -139,7 +144,7 @@ export default function EntertainTechLifeSection({
     const map: Record<string, Article[]> = {};
     if (initialCategoryArticles['health']?.length) map['health'] = sortLatest(initialCategoryArticles['health']).slice(0, 4);
     const entertainmentKey = initialCategoryArticles['manoranjan']?.length ? 'manoranjan' : 'entertainment';
-    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = sortLatest(initialCategoryArticles[entertainmentKey]).slice(0, 4);
+    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = sortByPublishDate(initialCategoryArticles[entertainmentKey]).slice(0, 4);
     if (initialCategoryArticles['technology']?.length) map['technology'] = sortLatest(initialCategoryArticles['technology']).slice(0, 4);
     return map;
   };
@@ -199,17 +204,21 @@ export default function EntertainTechLifeSection({
               if (bNum !== aNum) return bNum - aNum;
               return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
             });
+          const sortCategoryArticles = (list: Article[]) =>
+            targetSlug === 'manoranjan' || targetSlug === 'entertainment'
+              ? sortByPublishDate(list)
+              : sortLatest(list);
 
           if (initialArticles?.length) {
             const matched = initialArticles.filter((a: any) => {
               const cSlug = (a.category?.slug || a.categorySlug || a.category || '').toLowerCase();
               return cSlug === targetSlug || (targetSlug === 'manoranjan' && (cSlug === 'entertainment' || cSlug === 'manoranjan' || cSlug === 'entertainment-life-style'));
             });
-            if (matched.length >= 2) return { slug: targetSlug, articles: sortLatest(matched).slice(0, 4) };
+            if (matched.length >= 2) return { slug: targetSlug, articles: sortCategoryArticles(matched).slice(0, 4) };
           }
           try {
             const res = await getPublicArticles({ categorySlug: cat.slug, limit: 4, sort: 'latest' });
-            return { slug: cat.slug, articles: sortLatest(res.articles || []) };
+            return { slug: cat.slug, articles: sortCategoryArticles(res.articles || []) };
           } catch {
             return { slug: cat.slug, articles: [] };
           }

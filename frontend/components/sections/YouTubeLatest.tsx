@@ -339,7 +339,7 @@ export default function YouTubeLatest() {
                 return (
                   <article
                     key={video.id}
-                    onClick={() => setSelectedVideoId(video.id)}
+                    onClick={() => window.open(`https://www.youtube.com/watch?v=${video.id}`, '_blank', 'noopener,noreferrer')}
                     className="group flex-none w-[280px] sm:w-[320px] snap-start flex flex-col rounded-2xl border border-border bg-card overflow-hidden shadow-sm hover:shadow-md transition hover:border-[#ff0000]/30 cursor-pointer"
                   >
                     {/* Thumbnail container */}

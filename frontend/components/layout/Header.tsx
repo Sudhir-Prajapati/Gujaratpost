@@ -40,6 +40,16 @@ const cityTranslations: Record<string, { gu: string; hi: string; en: string }> =
   'રાજકોટ': { gu: 'રાજકોટ', hi: 'राजकोट', en: 'Rajkot' },
   'ગાંધીનગર': { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar' },
   'અન્ય': { gu: 'અન્ય', hi: 'अन्य', en: 'Other' },
+  'અન્ય શહેરો': { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities' },
+};
+
+const cityCategoryPaths: Record<string, string> = {
+  'અમદાવાદ': '/category/ahmedabad',
+  'વડોદરા': '/category/vadodara',
+  'સુરત': '/category/surat',
+  'ગાંધીનગર': '/category/gandhinagar',
+  'રાજકોટ': '/category/rajkot',
+  'અન્ય શહેરો': '/category/other-cities',
 };
 
 function AppleIcon({ className = 'h-4 w-4' }: { className?: string }) {
@@ -68,7 +78,7 @@ const NAV_LINKS = [
   { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'गुजरात', href: '/category/gujarat' },
   { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national' },
   { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world' },
-  { label: 'Politics', labelGu: 'રાજનીતિ', labelHi: 'राजनीति', href: '/category/politics' },
+  { label: 'Politics', labelGu: 'રાજકારણ', labelHi: 'राजनीति', href: '/category/politics' },
   { label: 'Crime', labelGu: 'ક્રાઇમ', labelHi: 'क्राइम', href: '/category/crime' },
   { label: 'Health', labelGu: 'હેલ્થ', labelHi: 'स्वास्थ्य', href: '/category/health' },
   { label: 'Entertainment', labelGu: 'મનોરંજન', labelHi: 'मनोरंजन', href: '/category/entertainment' },
@@ -178,6 +188,27 @@ const formatDateShort = (lang: string) => {
 };
 
 const CATEGORY_TRANSLATIONS: Record<string, { en: string; hi: string; gu: string }> = {
+  videos: { en: 'Videos', hi: 'वीडियो', gu: 'વીડિયો' },
+  gujarat: { en: 'Gujarat', hi: 'गुजरात', gu: 'ગુજરાત' },
+  national: { en: 'National', hi: 'भारत', gu: 'ભારત' },
+  india: { en: 'India', hi: 'भारत', gu: 'ભારત' },
+  world: { en: 'World', hi: 'विश्व', gu: 'વિશ્વ' },
+  politics: { en: 'Politics', hi: 'राजनीति', gu: 'રાજનીતિ' },
+  rajaniti: { en: 'Politics', hi: 'राजनीति', gu: 'રાજનીતિ' },
+  crime: { en: 'Crime', hi: 'अपराध', gu: 'ક્રાઇમ' },
+  health: { en: 'Health', hi: 'स्वास्थ्य', gu: 'હેલ્થ' },
+  entertainment: { en: 'Entertainment', hi: 'मनोरंजन', gu: 'મનોરંજન' },
+  manoranjan: { en: 'Entertainment', hi: 'मनोरंजन', gu: 'મનોરંજન' },
+  technology: { en: 'Technology', hi: 'तकनीक', gu: 'ટેકનોલોજી' },
+  photos: { en: 'Photo Gallery', hi: 'फोटो गैलरी', gu: 'ફોટો ગેલેરી' },
+  'photo-gallery': { en: 'Photo Gallery', hi: 'फोटो गैलरी', gu: 'ફોટો ગેલેરી' },
+  'fact-check': { en: 'Fact Check', hi: 'फैक्ट चेक', gu: 'ફેક્ટ ચેક' },
+  factcheck: { en: 'Fact Check', hi: 'फैक्ट चेक', gu: 'ફેક્ટ ચેક' },
+  trending: { en: 'Trending', hi: 'ट्रेंडिंग', gu: 'ટ્રેન્ડિંગ' },
+  tranding: { en: 'Trending', hi: 'ट्रेंडिंग', gu: 'ટ્રેન્ડિંગ' },
+  instagram: { en: 'Instagram', hi: 'इंस्टाग्राम', gu: 'ઇન્સ્ટાગ્રામ' },
+  shorts: { en: 'Shorts', hi: 'शॉर्ट्स', gu: 'શોર્ટ્સ' },
+  'web-stories': { en: 'Web Stories', hi: 'वेब स्टोरीज़', gu: 'વેબસ્ટોરી' },
   'varsad': { en: 'Rainfall', hi: 'वर्षा', gu: 'વરસાદ' },
   'rain': { en: 'Rainfall', hi: 'वर्षा', gu: 'વરસાદ' },
   'weather': { en: 'Weather', hi: 'मौसम', gu: 'હવામાન' },
@@ -303,6 +334,8 @@ export default function Header() {
     } catch (e) {
       console.warn(e);
     }
+    const cityPath = cityCategoryPaths[city];
+    if (cityPath) router.push(cityPath);
   };
 
   useEffect(() => {
@@ -393,9 +426,8 @@ export default function Header() {
       else if (slugLower === 'videos') href = '/videos';
       else if (slugLower === 'photos' || slugLower === 'photo-gallery' || slugLower === 'gallery') href = '/photos';
       else if (slugLower === 'podcasts') href = '/videos?tab=podcast';
-      // Shorts and Instagram both navigate to the Videos section (central multimedia hub)
-      else if (slugLower === 'shorts' || slugLower === 'reels') href = '/videos';
-      else if (slugLower === 'instagram' || slugLower === 'instagram-reels' || slugLower === 'insta' || slugLower === 'insta-reels') href = '/videos';
+      else if (slugLower === 'shorts') href = '/shorts';
+      else if (slugLower === 'reels' || slugLower === 'instagram' || slugLower === 'instagram-reels' || slugLower === 'insta' || slugLower === 'insta-reels') href = '/instagram';
       else if (slugLower === 'epaper') href = '/epaper';
       else if (slugLower === 'web-stories' || slugLower === 'webstory') href = '/web-stories';
 
@@ -545,7 +577,7 @@ export default function Header() {
                 </a>
               </div>
               <span className="opacity-20 select-none text-current">|</span>
-              <SocialLinks size="sm" />
+              <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu' }} />
             </div>
 
             {/* Right: Mobile quick access badges (News Brief & AQI) */}
@@ -603,7 +635,7 @@ export default function Header() {
                 style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
                 translate="no"
               >
-                Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
+                <span className="hidden sm:inline">Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span></span>
               </p>
             </div>
 
@@ -1015,7 +1047,7 @@ export default function Header() {
               {/* Social links at bottom of drawer */}
               <div className="pt-3 border-t border-border flex items-center gap-2.5">
                 <span className="text-xs font-bold text-muted-foreground shrink-0">Follow Us:</span>
-                <SocialLinks size="sm" />
+                <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu' }} />
               </div>
             </div>
         </div>
@@ -1098,6 +1130,7 @@ export default function Header() {
             </div>
 
             {/* Other / અન્ય Dropdown Trigger — sits right after the last nav link (Podcast) */}
+            {otherLinks.length > 0 && (
             <div
               ref={triggerRef}
               className="relative shrink-0"
@@ -1131,6 +1164,7 @@ export default function Header() {
                 <ChevronDown strokeWidth={2.5} className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
               </button>
             </div>
+            )}
 
             {/* Non-scrollable controls pinned to the right (Support Us & E-Paper CTAs) */}
             <div className="ml-auto flex items-center gap-1.5 xl:gap-2 shrink-0 pl-2 xl:pl-3 border-l border-border/40 h-11 relative">
@@ -1163,7 +1197,7 @@ export default function Header() {
               </a>
             </div>
 
-            {otherMenuOpen && (
+            {otherMenuOpen && otherLinks.length > 0 && (
               <div
                 className="absolute z-50 min-w-48 max-w-64 max-h-[min(480px,75vh)] overflow-y-auto overscroll-contain rounded-xl border border-border/80 bg-card/95 backdrop-blur-md p-1.5 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-150 [scrollbar-width:thin] [scrollbar-color:rgba(160,160,160,0.4)_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-zinc-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-700 [&::-webkit-scrollbar-track]:bg-transparent"
                 style={{

@@ -352,6 +352,122 @@ function makeHomeImagesUnique<T extends Article>(sections: T[][]): T[][] {
 }
 
 /* ===========================================================================
+   MobileHorizontalCardStrip -- Auto-scrolling horizontal cards strip on Mobile
+=========================================================================== */
+function MobileHorizontalCardStrip({
+  cards,
+  language,
+}: {
+  cards: Article[];
+  language: Language;
+}) {
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const isInteractingRef = useRef<boolean>(false);
+  const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (!cards || cards.length <= 1) return;
+
+    const interval = setInterval(() => {
+      if (isInteractingRef.current) return;
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      const cardElements = container.querySelectorAll<HTMLElement>('a');
+      if (cardElements.length <= 1) return;
+
+      const currentScroll = container.scrollLeft;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+
+      // If we are at or near the end, loop smoothly back to start
+      if (currentScroll >= maxScroll - 25) {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+        return;
+      }
+
+      // Find the first card whose left edge is noticeably past the current scroll position
+      let nextCard: HTMLElement | null = null;
+      for (let i = 0; i < cardElements.length; i++) {
+        const card = cardElements[i];
+        if (card.offsetLeft > currentScroll + 25) {
+          nextCard = card;
+          break;
+        }
+      }
+
+      if (nextCard) {
+        const targetLeft = Math.max(0, nextCard.offsetLeft - 20);
+        container.scrollTo({
+          left: targetLeft,
+          behavior: 'smooth',
+        });
+      } else {
+        container.scrollTo({ left: 0, behavior: 'smooth' });
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [cards.length]);
+
+  const handleTouchStart = () => {
+    isInteractingRef.current = true;
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+  };
+
+  const handleTouchEnd = () => {
+    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
+    resumeTimeoutRef.current = setTimeout(() => {
+      isInteractingRef.current = false;
+    }, 3500);
+  };
+
+  return (
+    <div
+      ref={scrollContainerRef}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onMouseEnter={handleTouchStart}
+      onMouseLeave={handleTouchEnd}
+      className="md:hidden -mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain scroll-pl-5 sm:scroll-pl-6"
+    >
+      <div className="flex gap-3.5 pl-5 pr-5 sm:pl-6 sm:pr-6 pb-3 pt-0.5 items-stretch">
+        {cards.map((art, idx) => (
+          <Link
+            key={art.id || idx}
+            href={`/news/${art.slug}`}
+                              className="group relative shrink-0 snap-start w-[280px] sm:w-[300px] h-[360px] sm:h-[380px] rounded-[20px] overflow-hidden bg-muted border border-border/20 shadow-[0_8px_20px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] flex flex-col justify-end select-none active:scale-[0.98] transition-transform duration-200"
+          >
+            {/* Full-bleed background media */}
+            <ArticleMedia
+              src={art.image || (art as any).featuredImage || getArticleImage(art)}
+              alt={art.title || ''}
+              showPlayBadge={false}
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+
+            {/* Gradient overlay: smooth dark fade from bottom */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/75 via-55% to-transparent pointer-events-none" />
+
+            {/* Category badge top-right */}
+            <span className="absolute top-3 right-3 bg-[#B3121B] text-white text-[10.5px] font-black px-2.5 py-0.5 rounded shadow-sm uppercase tracking-wider select-none z-10">
+              {getCategoryLabel(art, language)}
+            </span>
+
+            {/* Bottom content overlay */}
+            <div className="absolute inset-x-0 bottom-0 p-3.5 flex flex-col justify-end text-left z-10">
+              <h4 className="text-[18.5px] sm:text-[19.5px] font-black leading-[1.3] text-white line-clamp-3 drop-shadow-md">
+                <AutoArticleTitle article={art} language={language} />
+              </h4>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ===========================================================================
    HeroStorySlider -- Slides through the Top 3 News articles with auto-play,
    manual controls, pill indicators, and pause-on-hover
 =========================================================================== */
@@ -742,7 +858,7 @@ export default function HeroSection({
   const initialCustomPopularArts: Article[] = (initialHeroSettings?.popularNewsArticles || []).filter(isPublicArticle);
   const initialCustomMostReadArts: Article[] = (initialHeroSettings?.mostReadArticles || []).filter(isPublicArticle);
   const initialPopularPool = fillPool([...initialCustomTrendingArts, ...initTrending, ...initialCustomPopularArts], publishedInitialArticles, 10);
-  const initialMostReadPool = initialCustomMostReadArts.length > 0 ? initialCustomMostReadArts : publishedInitialArticles.slice(0, 5);
+  const initialMostReadPool = initialCustomMostReadArts.length > 0 ? initialCustomMostReadArts.slice(0, 10) : publishedInitialArticles.slice(0, 10);
 
   const initialCategoriesDB = Array.isArray(initialCategories)
     ? initialCategories.filter((c) => c.showInHome !== false && c.isActive !== false).sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0))
@@ -1000,7 +1116,7 @@ export default function HeroSection({
         const trendingArts = sortedArts.filter((a: Article) => a.isTrending);
         const popularPool = fillPool([...customTrendingArts, ...trendingArts, ...customPopularArts], sortedArts, 10);
         setTrendingArtDB(popularPool);
-        const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : sortedArts).slice(0, 3);
+        const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : sortedArts).slice(0, 10);
         setMostReadArtDB(mostReadPool);
         setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
         setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
@@ -1072,8 +1188,8 @@ export default function HeroSection({
       'politics',
       'crime',
       'instagram',
-      'webstory',
       'entertainment',
+      'webstory',
       'photos',
       'fact-check',
       'shorts',
@@ -1090,7 +1206,20 @@ export default function HeroSection({
     const homeCats = [...allCategoriesDB].filter(c => c.isActive !== false && c.showInHome !== false);
     homeCats.sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0));
 
-    return homeCats;
+    // The horizontal Fact Check strip is rendered by `trending`. It must be
+    // shown after Gujarat even if that category is hidden in the database.
+    const withoutTrending: (typeof homeCats[number] | string)[] = homeCats.filter(
+      (category) => (category.slug || '').toLowerCase().trim() !== 'trending',
+    );
+    const gujaratIndex = withoutTrending.findIndex(
+      (category) => typeof category !== 'string' && (category.slug || '').toLowerCase().trim() === 'gujarat',
+    );
+
+    if (gujaratIndex !== -1) {
+      withoutTrending.splice(gujaratIndex + 1, 0, 'trending');
+    }
+
+    return withoutTrending;
   }, [allCategoriesDB]);
 
   const sectionMap: Record<string, React.ReactNode> = {
@@ -1170,7 +1299,7 @@ export default function HeroSection({
     ),
     crime: (
       <Fragment key="crime-frag">
-        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-2.5 md:mt-4">
+        <section key="crime" className="mx-auto max-w-screen-xl px-4 mt-7 md:mt-9">
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-4 lg:gap-8 items-start">
             <div className="flex flex-col gap-4 md:gap-8 min-w-0">
               <CrimeSection language={language} view="content" initialArticles={(crimeArtDB && crimeArtDB.length > 0) ? crimeArtDB : ((initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime'))} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
@@ -1607,8 +1736,8 @@ export default function HeroSection({
                           ))}
                         </div>
 
-                        {/* ─── MOBILE VIEW (< md): Divya Bhaskar / Gujarat Samachar style list (First 3 Articles) ─── */}
-                        <div className="flex flex-col divide-y divide-border/60 md:hidden">
+                        {/* ─── MOBILE VIEW (< md): Boxed Cards with Card Background & Border (matches Image 2) ─── */}
+                        <div className="flex flex-col gap-2.5 md:hidden">
                           {afterTop3News.slice(0, 3).map((story, idx) => {
                             const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
                             const colonIdx = rawTitle.indexOf(':');
@@ -1619,7 +1748,7 @@ export default function HeroSection({
                             return (
                               <div
                                 key={story.id || story.slug || idx}
-                                className="group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0"
+                                className="group flex flex-col p-3 sm:p-3.5 rounded-2xl bg-card/75 dark:bg-card/60 hover:bg-card/90 border border-border/60 hover:border-border transition-all min-w-0 shadow-2xs"
                               >
                                 {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
                                 <Link
@@ -1627,7 +1756,7 @@ export default function HeroSection({
                                   className="flex flex-row items-start justify-between gap-3 min-w-0"
                                 >
                                   <div className="flex-1 min-w-0 pr-1">
-                                    <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                                    <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                                       {hasPrefix ? (
                                         <>
                                           <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
@@ -1651,7 +1780,7 @@ export default function HeroSection({
                                 </Link>
 
                                 {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-                                <div className="flex items-center justify-between mt-3.5 pt-0.5">
+                                <div className="flex items-center justify-between mt-2.5 pt-0.5">
                                   <Link
                                     href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
                                     className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
@@ -1695,42 +1824,11 @@ export default function HeroSection({
                   {/* Bottom Row: Three image cards */}
                   {(desktopCards.length > 0 || mobileHorizontalCards.length > 0) && (
                     <div className="border-t border-border/80 pt-4 md:pt-4">
-                      {/* ─── MOBILE VIEW (< md): Premium Verts-style horizontal card strip (Matching Image 2) ─── */}
-                      <div className="md:hidden -mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain scroll-pl-5 sm:scroll-pl-6">
-                        <div className="flex gap-3.5 pl-5 pr-5 sm:pl-6 sm:pr-6 pb-3 pt-0.5 items-stretch">
-                          {mobileHorizontalCards.slice(0, 6).map((art, idx) => (
-                            <Link
-                              key={art.id || idx}
-                              href={`/news/${art.slug}`}
-                              className="group relative shrink-0 snap-start w-[220px] sm:w-[245px] h-[320px] sm:h-[340px] rounded-[20px] overflow-hidden bg-muted border border-border/20 shadow-[0_8px_20px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] flex flex-col justify-end select-none active:scale-[0.98] transition-transform duration-200"
-                            >
-                              {/* Full-bleed background media */}
-                              <ArticleMedia
-                                src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                                alt={art.title || ''}
-                                showPlayBadge={false}
-                                className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                              />
-
-                              {/* Gradient overlay: smooth dark fade from bottom */}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/75 via-55% to-transparent pointer-events-none" />
-
-                              {/* Category badge top-right */}
-                              <span className="absolute top-3 right-3 bg-[#B3121B] text-white text-[10.5px] font-black px-2.5 py-0.5 rounded shadow-sm uppercase tracking-wider select-none z-10">
-                                {getCategoryLabel(art, language)}
-                              </span>
-
-                              {/* Bottom content overlay */}
-                              <div className="absolute inset-x-0 bottom-0 p-3.5 flex flex-col justify-end text-left z-10">
-                                <h4 className="text-[18.5px] sm:text-[19.5px] font-black leading-[1.3] text-white line-clamp-3 drop-shadow-md">
-                                  <AutoArticleTitle article={art} language={language} />
-                                </h4>
-                              </div>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
+                      {/* ─── MOBILE VIEW (< md): Premium Verts-style horizontal card strip with Auto-scroll (Matching Image 2) ─── */}
+                      <MobileHorizontalCardStrip
+                        cards={mobileHorizontalCards.slice(0, 6)}
+                        language={language}
+                      />
 
                       {/* ─── DESKTOP VIEW (>= md): 3-Column Image Cards Grid (100% UNTOUCHED) ─── */}
                       <div className="hidden md:grid md:grid-cols-3 gap-6">
@@ -1880,12 +1978,12 @@ export default function HeroSection({
                   <Link
                     key={art.id}
                     href={`/news/${art.slug}`}
-                    className="group flex items-start gap-3 py-3.5 hover:bg-muted/10 rounded-md transition-all px-2.5 first:pt-1 last:pb-1"
+                    className="group flex items-start gap-2.5 py-2.5 hover:bg-muted/10 rounded-md transition-all px-2 first:pt-1 last:pb-1"
                   >
-                    <span className="text-[18px] font-black text-[#B3121B]/85 group-hover:text-[#B3121B] font-serif w-5 shrink-0 mt-0.5 transition-colors select-none text-center">
+                    <span className="text-[17px] font-black text-[#B3121B]/85 group-hover:text-[#B3121B] font-serif w-5 shrink-0 mt-0.5 transition-colors select-none text-center">
                       {idx + 1}
                     </span>
-                    <h4 className="text-[13.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors flex-1 line-clamp-2">
+                    <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors flex-1 line-clamp-2">
                       <AutoArticleTitle article={art} language={language} />
                     </h4>
                   </Link>

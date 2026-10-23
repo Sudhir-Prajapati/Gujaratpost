@@ -292,6 +292,7 @@ model HeroSetting {
   heroGridMode    String?  @default("auto") @db.VarChar(50)
   heroSliderMode  String?  @default("auto") @db.VarChar(50)
   heroSliderIds   String?  @db.Text
+  mostReadMode    String?  @default("auto") @db.VarChar(50)
   updatedAt       DateTime @updatedAt
 
   @@map("hero_settings")

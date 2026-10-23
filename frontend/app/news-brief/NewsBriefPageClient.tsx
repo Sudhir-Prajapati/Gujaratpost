@@ -293,17 +293,18 @@ export default function NewsBriefPageClient() {
       onWheel={handleWheel}
     >
       {/* ── COMPACT NAVBAR ── */}
-      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-neutral-100 shadow-sm z-10" style={{ height: 56 }}>
-        <Link href="/" className="flex items-center h-full py-1 shrink-0">
+      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-neutral-100 shadow-sm z-10" style={{ height: 64 }}>
+        <Link href="/" className="group relative flex shrink-0 items-center">
+          <div className="relative block h-8 sm:h-10 md:h-12 lg:h-14 w-32 sm:w-44 md:w-54 lg:w-60 overflow-hidden">
           <Image
             src="/GujaratpostFinalLogo.png"
             alt="Gujarat Post"
-            width={160}
-            height={42}
-            className="object-contain"
-            style={{ height: 40, width: 'auto' }}
+            fill
+            sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 216px, 240px"
+            className="object-contain object-left"
             priority
           />
+          </div>
         </Link>
 
         {/* Article counter */}

@@ -307,24 +307,43 @@ export default function CrimeSection({
         title: 'Strict notice from High Court! State Government asked for response on recruitment process',
         category: 'Legal'
       },
-      subs: [
-        {
-          id: 'ps3_1',
-          slug: 'union-minister-visit-gujarat-industrial-corridor-302',
-          image: '/assets/demo/8.jpg',
-          titleGu: 'કેન્દ્રીય મંત્રીની ગુજરાત મુલાકાત! નવા ઔદ્યોગિક કોરિડોરની જાહેરાત શક્ય',
-          relativeTimeGu: '1 કલાક પહેલાં',
-          viewsGu: '62K'
-        },
-        {
-          id: 'ps3_2',
-          slug: 'voter-list-revision-campaign-starts-online-registration-appeal-311',
-          image: '/assets/demo/1.jpg',
-          titleGu: 'મતદાર યાદી સુધારણા ઝુંબેશ શરૂ! નાગરિકોને ઓનલાઈન નોંધણીની અપીલ',
-          relativeTimeGu: '2 કલાક પહેલાં',
-          viewsGu: '41K'
-        }
-      ]
+      subs: []
+    },
+    {
+      colId: 4,
+      featured: {
+        id: 'pf4',
+        slug: 'high-profile-cyber-crime-gang-arrested-ahmedabad-310',
+        image: '/assets/demo/5.jpg',
+        titleGu: 'મોટો પર્દાફાશ! અમદાવાદમાં કરોડોની છેતરપિંડી કરતી આંતરરાજ્ય ગેંગ ઝડપાઈ',
+        title: 'Major bust! Interstate gang committing fraud worth crores arrested in Ahmedabad',
+        category: 'Crime'
+      },
+      subs: []
+    },
+    {
+      colId: 5,
+      featured: {
+        id: 'pf5',
+        slug: 'illicit-liquor-den-raided-rajkot-police-action-311',
+        image: '/assets/demo/2.jpg',
+        titleGu: 'રાજકોટ પોલીસે ગેરકાયદે દારૂના અડ્ડા પર દરોડો પાડી લાખોનો મુદ્દામાલ જપ્ત કર્યો',
+        title: 'Rajkot police raided illegal liquor den, seized goods worth lakhs',
+        category: 'Crime'
+      },
+      subs: []
+    },
+    {
+      colId: 6,
+      featured: {
+        id: 'pf6',
+        slug: 'gold-smuggling-racket-busted-at-airport-312',
+        image: '/assets/demo/6.jpg',
+        titleGu: 'એરપોર્ટ પરથી સોનાની દાણચોરીનું મોટું કૌભાંડ ઝડપાયું, 3 આરોપીઓની ધરપકડ',
+        title: 'Major gold smuggling racket busted at airport, 3 accused arrested',
+        category: 'Crime'
+      },
+      subs: []
     }
   ];
 
@@ -393,7 +412,9 @@ export default function CrimeSection({
 
   const rightList = useMemo(() => {
     if (dbCrimeArticles.length > 3) {
-      return dbCrimeArticles.slice(3, 7).map((art, idx) => {
+      // Mobile shows six compact follow-up stories after the lead card.
+      // Desktop keeps its existing three-story sidebar via the render class below.
+      return dbCrimeArticles.slice(3, 9).map((art, idx) => {
         const locEn = getLocationLabel(art, 'en') || art.location || art.category || 'Crime';
         const locGu = getLocationLabel(art, 'gu') || (art as any).locationGu || art.categoryGu || art.category || 'કાઇમ';
         const locHi = getLocationLabel(art, 'hi') || (art as any).locationHi || art.categoryHi || art.category || 'क्राइम';
@@ -415,7 +436,7 @@ export default function CrimeSection({
         };
       });
     }
-    return mockList.slice(0, 4).map((item) => ({ ...item, article: null as Article | null, clockTime: getMockTime(item.id) }));
+    return mockList.slice(0, 3).map((item) => ({ ...item, article: null as Article | null, clockTime: getMockTime(item.id) }));
   }, [dbCrimeArticles, language]);
 
   const popularColumns = useMemo(() => {
@@ -423,37 +444,23 @@ export default function CrimeSection({
     const list = remainingCrime;
     if (list.length > 0) {
       const cols = [];
-      for (let c = 0; c < 3; c++) {
+      for (let c = 0; c < 6; c++) {
         const featArt = list[c] || list[c % list.length];
-        const subs = [];
-        for (let s = 0; s < 2; s++) {
-          const subIdx = 3 + c * 2 + s;
-          const subArt = list[subIdx] || list[(c * 2 + s) % list.length];
-          if (subArt) {
-            subs.push({
-              id: `${subArt.id}-c${c}-s${s}`,
-              slug: subArt.slug,
-              image: subArt.image || DEMO_IMAGES[s % DEMO_IMAGES.length],
-              title: getLocalized(language, { en: subArt.title, gu: subArt.titleGu || subArt.title, hi: (subArt as any).titleHi || subArt.title }),
-              time: formatTime(subArt.publishedAt),
-            });
-          }
-        }
         cols.push({
           colId: c + 1,
           featured: {
             id: featArt.id,
             slug: featArt.slug,
-            image: featArt.image || DEMO_IMAGES[c],
+            image: featArt.image || DEMO_IMAGES[c % DEMO_IMAGES.length],
             title: getLocalized(language, { en: featArt.title, gu: featArt.titleGu || featArt.title, hi: (featArt as any).titleHi || featArt.title }),
           },
-          subs,
+          subs: [],
         });
       }
       return cols;
     }
 
-    return mockPopularColumns.map((col) => ({
+    return mockPopularColumns.slice(0, 6).map((col) => ({
       colId: col.colId,
       featured: {
         id: col.featured.id,
@@ -461,13 +468,7 @@ export default function CrimeSection({
         image: col.featured.image,
         title: getMockTitle(col.featured, language),
       },
-      subs: col.subs.map((sub) => ({
-        id: sub.id,
-        slug: sub.slug,
-        image: sub.image,
-        title: getMockTitle(sub, language),
-        time: getMockRelativeTime(sub.relativeTimeGu, language),
-      })),
+      subs: [],
     }));
   }, [dbCrimeArticles, language]);
 
@@ -492,7 +493,7 @@ export default function CrimeSection({
       <div className="grid grid-cols-1 md:grid-cols-[1.12fr_1fr] gap-2.5 md:gap-3 items-stretch">
         {/* Slide Carousel */}
         {currentSlide && (
-          <div className="group relative flex flex-col justify-between min-w-0 h-full">
+          <div className="group relative flex flex-col min-w-0">
             <div>
               <div className="relative aspect-[16/9.5] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
                 <Image
@@ -547,7 +548,7 @@ export default function CrimeSection({
             <Link
               key={`${item.id}-${idx}`}
               href={`/news/${item.slug}`}
-              className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl md:rounded-none bg-card/70 md:bg-transparent border md:border-0 border-border/50 transition-all py-2 first:pt-0 last:pb-0"
+            className={`group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl md:rounded-none bg-card/70 md:bg-transparent border md:border-0 border-border/50 transition-all py-2 first:pt-0 last:pb-0 ${idx >= 3 ? 'md:hidden' : ''}`}
             >
               <div className="flex flex-col min-w-0 flex-1 pr-1">
                 <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
@@ -571,15 +572,15 @@ export default function CrimeSection({
         </div>
       </div>
 
-      {/* 3-Column Popular Stories Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border/40 pt-2 md:pt-2.5 mt-1.5 md:mt-2">
+      {/* 3-Column Popular Stories Grid (Big 6 Cards: 2 rows of 3) */}
+      <div className="hidden md:grid md:grid-cols-3 gap-6 border-t border-border/40 pt-2.5 mt-2">
         {popularColumns.map((col) => (
           <div key={col.colId} className="flex flex-col min-w-0">
             <Link
               href={`/news/${col.featured.slug}`}
               className="group flex flex-col mb-2.5"
             >
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+              <div className="relative aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
                 <ArticleMedia
                   src={col.featured.image}
                   alt={col.featured.title}
@@ -590,32 +591,6 @@ export default function CrimeSection({
                 {col.featured.title}
               </h3>
             </Link>
-
-            <div className="flex flex-col divide-y divide-border/40 border-t border-border/40 mt-1">
-              {col.subs.slice(0, 2).map((sub, sIdx) => (
-                <Link
-                  key={`${col.colId}-${sub.id}-${sIdx}`}
-                  href={`/news/${sub.slug}`}
-                  className="group py-2.5 flex items-center justify-between gap-3"
-                >
-                  {/* Title & Metadata on left */}
-                  <div className="flex flex-col min-w-0 flex-1 pr-1">
-                    <h4 className="text-[15.5px] md:text-[14px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3 md:line-clamp-2">
-                      {sub.title}
-                    </h4>
-                  </div>
-
-                  {/* Thumbnail photo on right */}
-                  <div className="relative h-[80px] w-[120px] shrink-0 rounded-lg overflow-hidden border border-border/20 bg-muted">
-                    <ArticleMedia
-                      src={sub.image}
-                      alt={sub.title}
-                      className="transition-transform duration-300 group-hover:scale-105"
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
           </div>
         ))}
       </div>
@@ -626,12 +601,20 @@ export default function CrimeSection({
   const sidebarContent = (
     <div className="flex flex-col gap-6 select-none">
 
-      {/* Weather Widget */}
-      <div className="rounded-sm bg-[#1A1A1A] text-white p-5 border border-border/10 shadow-md">
-        <div className="flex items-center gap-1.5 mb-4 select-none">
-          <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse" />
-          <span className="text-[12px] md:text-[13px] font-black uppercase tracking-wider text-white/90">
-            {language === 'gu' ? `હવામાન - ${weatherData.city || 'અમદાવાદ'}` : `Weather - ${weatherData.cityEn || 'Ahmedabad'}`}
+      {/* Weather Widget -> Click to open AQI page */}
+      <Link
+        href={weatherData.cityEn ? `/aqi?city=${encodeURIComponent(weatherData.cityEn)}` : '/aqi'}
+        className="block rounded-sm bg-[#1A1A1A] hover:bg-[#242424] text-white p-5 border border-border/10 shadow-md transition-all duration-200 cursor-pointer group hover:border-amber-400/40"
+      >
+        <div className="flex items-center justify-between gap-1.5 mb-4 select-none">
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse" />
+            <span className="text-[12px] md:text-[13px] font-black uppercase tracking-wider text-white/90 group-hover:text-white transition-colors">
+              {language === 'gu' ? `હવામાન - ${weatherData.city || 'અમદાવાદ'}` : `Weather - ${weatherData.cityEn || 'Ahmedabad'}`}
+            </span>
+          </div>
+          <span className="text-[11px] font-bold text-white/60 group-hover:text-amber-400 flex items-center gap-1 transition-colors">
+            AQI &rarr;
           </span>
         </div>
 
@@ -645,7 +628,7 @@ export default function CrimeSection({
             </p>
           </div>
 
-          <div className="relative h-12 w-12 text-yellow-400 select-none">
+          <div className="relative h-12 w-12 text-yellow-400 select-none group-hover:scale-105 transition-transform">
             <svg viewBox="0 0 24 24" className="h-full w-full fill-current">
               <path d="M19 12a7 7 0 1 0-7 7 7 7 0 0 0 7-7zm-7 5a5 5 0 1 1 5-5 5 5 0 0 1-5 5z" />
               <path d="M12 2a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0V3a1 1 0 0 0-1-1zm0 16a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1zm10-7h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2zM4 11H3a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2zm15.07-5.07a1 1 0 0 0-1.42 0l-.7.7a1 1 0 0 0 1.42 1.42l.7-.7a1 1 0 0 0 0-1.42zm-12.73 12.7a1 1 0 0 0-1.42 0l-.7.7a1 1 0 0 0 1.42 1.42l.7-.7a1 1 0 0 0 0-1.42zm12.73 0a1 1 0 0 0 0-1.42l-.7-.7a1 1 0 0 0-1.42 1.42l.7.7a1 1 0 0 0 1.42 0zm-12.73-12.7a1 1 0 0 0 0-1.42l-.7-.7a1 1 0 0 0-1.42 1.42l.7.7a1 1 0 0 0 1.42 0z" />
@@ -667,7 +650,7 @@ export default function CrimeSection({
             {language === 'gu' ? `પવન ${toGuLocal(weatherData.windSpeed ?? 14)} કિમી` : `Wind ${weatherData.windSpeed ?? 14} km/h`}
           </span>
         </div>
-      </div>
+      </Link>
 
 
       {/* Today's Horoscope Widget */}

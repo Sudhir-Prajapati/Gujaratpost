@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, SearchX, Loader2 } from 'lucide-react';
+import { Search, SearchX, Loader2, ChevronDown } from 'lucide-react';
 import { getPublicArticles } from '@/lib/api';
 import NewsCard from '@/components/ui/NewsCard';
 import { useApp } from '@/components/AppProvider';
@@ -23,9 +23,11 @@ const strings = {
     resultsFor: (q: string) => `"${q}" માટે પરિણામ`,
     articlesCount: (n: number) => `${n} સમાચાર`,
     foundCount: (n: number) => `${n} સમાચાર મળ્યા`,
-    noFoundNotice: (q: string) => `"${q}" માટે કોઈ ચોક્કસ સમાચાર મળ્યા નથી, તમારા માટે તાજા 20 સમાચાર:`,
+    noFoundNotice: (q: string) => `"${q}" માટે કોઈ ચોક્કસ સમાચાર મળ્યા નથી, તમારા માટે તાજા સમાચાર:`,
     noFound: 'કોઈ સમાચાર મળ્યા નહીં',
     tryFewer: 'ઓછા શબ્દો વાપરો અથવા શહેર, વર્ગ કે વ્યક્તિ દ્વારા શોધો.',
+    loadMore: 'વધુ જુઓ',
+    loadingMore: 'વધુ સમાચાર લોડ થઈ રહ્યા છે...',
   },
   hi: {
     label: 'गुजरात पोस्ट सर्च',
@@ -33,16 +35,18 @@ const strings = {
     placeholder: 'समाचार, शहर, श्रेणी या विषय खोजें...',
     searchBtn: 'खोजें',
     searchingBtn: 'खोज रहा...',
-    defaultSection: 'તાજા સમાચાર',
+    defaultSection: 'ताज़ा समाचार',
     searchingNotice: (q: string) => `"${q}" के लिए समाचार खोज रहे हैं...`,
     searchingNoticeDefault: 'ताज़ा समाचार लोड हो रहे हैं...',
     pleaseWait: 'कृपया प्रतीक्षा करें...',
     resultsFor: (q: string) => `"${q}" के लिए परिणाम`,
     articlesCount: (n: number) => `${n} लेख`,
     foundCount: (n: number) => `${n} लेख मिले`,
-    noFoundNotice: (q: string) => `"${q}" के लिए कोई सटीक समाचार नहीं मिले, आपके लिए 20 नवीनतम समाचार:`,
+    noFoundNotice: (q: string) => `"${q}" के लिए कोई सटीक समाचार नहीं मिले, आपके लिए नवीनतम समाचार:`,
     noFound: 'कोई समाचार नहीं मिला',
     tryFewer: 'कम शब्द आज़माएं या शहर, श्रेणी या व्यक्ति द्वारा खोजें।',
+    loadMore: 'और देखें',
+    loadingMore: 'और समाचार लोड हो रहे हैं...',
   },
   en: {
     label: 'Gujarat Post Search',
@@ -57,9 +61,11 @@ const strings = {
     resultsFor: (q: string) => `Results for "${q}"`,
     articlesCount: (n: number) => `${n} articles`,
     foundCount: (n: number) => `${n} ${n === 1 ? 'article' : 'articles'} found`,
-    noFoundNotice: (q: string) => `No exact stories found for "${q}". Here are 20 latest stories for you:`,
+    noFoundNotice: (q: string) => `No exact stories found for "${q}". Here are latest stories for you:`,
     noFound: 'No stories found',
     tryFewer: 'Try fewer words or search by city, category or person.',
+    loadMore: 'View More',
+    loadingMore: 'Loading more stories...',
   },
 };
 
@@ -98,39 +104,53 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
   const [results, setResults] = useState<Article[]>([]);
   const [latestFallback, setLatestFallback] = useState<Article[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [totalCount, setTotalCount] = useState(0);
   const searchAbortRef = useRef<number>(0);
 
   const performSearch = async (searchTerm: string) => {
     const currentRunId = ++searchAbortRef.current;
     setIsLoading(true);
     setSearchedQuery(searchTerm);
+    setPage(1);
+    setHasMore(false);
 
     try {
       const trimmed = searchTerm.trim();
       if (trimmed) {
         const [searchRes, latestRes] = await Promise.all([
-          getPublicArticles({ query: trimmed, limit: 20 }),
-          getPublicArticles({ limit: 20 }),
+          getPublicArticles({ query: trimmed, page: 1, limit: 20 }),
+          getPublicArticles({ page: 1, limit: 20 }),
         ]);
 
         if (currentRunId !== searchAbortRef.current) return;
 
-        if (searchRes && Array.isArray(searchRes.articles)) {
-          setResults(searchRes.articles);
-        } else {
-          setResults([]);
-        }
+        const searchArticles = (searchRes && Array.isArray(searchRes.articles)) ? searchRes.articles : [];
+        const fallbackArticles = (latestRes && Array.isArray(latestRes.articles)) ? latestRes.articles : [];
 
-        if (latestRes && Array.isArray(latestRes.articles)) {
-          setLatestFallback(latestRes.articles);
+        setResults(searchArticles);
+        setLatestFallback(fallbackArticles);
+
+        if (searchArticles.length > 0) {
+          const total = searchRes?.total ?? searchArticles.length;
+          setTotalCount(total);
+          setHasMore(searchArticles.length === 20 && searchArticles.length < total);
+        } else {
+          const total = latestRes?.total ?? fallbackArticles.length;
+          setTotalCount(total);
+          setHasMore(fallbackArticles.length === 20 && fallbackArticles.length < total);
         }
       } else {
-        const latestRes = await getPublicArticles({ limit: 20 });
+        const latestRes = await getPublicArticles({ page: 1, limit: 20 });
         if (currentRunId !== searchAbortRef.current) return;
         setResults([]);
-        if (latestRes && Array.isArray(latestRes.articles)) {
-          setLatestFallback(latestRes.articles);
-        }
+        const fallbackArticles = (latestRes && Array.isArray(latestRes.articles)) ? latestRes.articles : [];
+        setLatestFallback(fallbackArticles);
+        const total = latestRes?.total ?? fallbackArticles.length;
+        setTotalCount(total);
+        setHasMore(fallbackArticles.length === 20 && fallbackArticles.length < total);
       }
     } catch (err) {
       console.error('Failed to perform search:', err);
@@ -138,6 +158,71 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
       if (currentRunId === searchAbortRef.current) {
         setIsLoading(false);
       }
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+
+    const nextPage = page + 1;
+    const isSearchMode = searchedQuery.trim().length > 0 && results.length > 0;
+
+    try {
+      if (isSearchMode) {
+        const res = await getPublicArticles({
+          query: searchedQuery.trim(),
+          page: nextPage,
+          limit: 20,
+        });
+
+        const newArticles = (res && Array.isArray(res.articles)) ? res.articles : [];
+        if (newArticles.length === 0) {
+          setHasMore(false);
+        } else {
+          setResults((prev) => {
+            const existingIds = new Set(prev.map((a) => a.id));
+            const fresh = newArticles.filter((a) => !existingIds.has(a.id));
+            const updated = [...prev, ...fresh];
+            const total = res.total ?? totalCount;
+            if (fresh.length === 0 || newArticles.length < 20 || updated.length >= total) {
+              setHasMore(false);
+            } else {
+              setHasMore(true);
+            }
+            return updated;
+          });
+          setPage(nextPage);
+        }
+      } else {
+        const res = await getPublicArticles({
+          page: nextPage,
+          limit: 20,
+        });
+
+        const newArticles = (res && Array.isArray(res.articles)) ? res.articles : [];
+        if (newArticles.length === 0) {
+          setHasMore(false);
+        } else {
+          setLatestFallback((prev) => {
+            const existingIds = new Set(prev.map((a) => a.id));
+            const fresh = newArticles.filter((a) => !existingIds.has(a.id));
+            const updated = [...prev, ...fresh];
+            const total = res.total ?? totalCount;
+            if (fresh.length === 0 || newArticles.length < 20 || updated.length >= total) {
+              setHasMore(false);
+            } else {
+              setHasMore(true);
+            }
+            return updated;
+          });
+          setPage(nextPage);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load more articles:', err);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -220,9 +305,9 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
               <p className="mt-1 text-xs font-semibold text-muted-foreground">
                 {searchedQuery
                   ? results.length > 0
-                    ? t.foundCount(results.length)
+                    ? t.foundCount(totalCount > 0 ? totalCount : results.length)
                     : t.articlesCount(latestFallback.length)
-                  : t.articlesCount(results.length || latestFallback.length)}
+                  : t.articlesCount(totalCount > 0 ? totalCount : (results.length || latestFallback.length))}
               </p>
             </div>
           )}
@@ -236,11 +321,41 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
             ))}
           </div>
         ) : displayArticles.length > 0 ? (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-stretch">
-            {displayArticles.slice(0, 20).map((article) => (
-              <NewsCard key={article.id} article={article} />
-            ))}
-          </div>
+          <>
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-stretch">
+              {displayArticles.map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))}
+            </div>
+
+            {/* View More "વધુ જુઓ" Button */}
+            {hasMore && (
+              <div className="mt-10 flex justify-center pb-6">
+                <button
+                  type="button"
+                  onClick={handleLoadMore}
+                  disabled={isLoadingMore}
+                  className="group inline-flex items-center justify-center gap-2 rounded-full border-2 border-accent px-8 py-2.5 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-75 disabled:pointer-events-none"
+                >
+                  {isLoadingMore ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin text-current" />
+                      <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                        {t.loadingMore}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                        {t.loadMore}
+                      </span>
+                      <ChevronDown className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[2.5]" />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="grid place-items-center rounded-2xl border border-dashed border-border bg-card py-16 text-center">
             <SearchX className="h-10 w-10 text-muted-foreground/50" />

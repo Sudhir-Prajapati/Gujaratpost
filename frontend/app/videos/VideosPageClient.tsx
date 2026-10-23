@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Clock, Eye, Play, Bell, Radio, X, Volume2, VolumeX, Camera } from 'lucide-react';
+import { Clock, Eye, Play, Bell, Radio, X, Volume2, VolumeX, Camera, ChevronRight, ChevronDown } from 'lucide-react';
 import { formatViews, getLocalized, getCategoryLabel } from '@/data';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
@@ -15,7 +15,7 @@ import type { Article } from '@/types';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
-type TabType = 'video' | 'short' | 'exclusive' | 'bulletin';
+type TabType = 'video' | 'short' | 'latest';
 
 function timeAgo(dateStr?: string, language = 'gu'): string {
   if (!dateStr) return '';
@@ -117,9 +117,10 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
 export default function VideosPageClient() {
   const { language } = useApp();
   const [activeTab, setActiveTab] = useState<TabType>('video');
-  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
+  const [playingVideoId] = useState<string | null>(null);
   const [videoList, setVideoList] = useState<any[]>([]);
   const [shortsList, setShortsList] = useState<any[]>([]);
+  const [visibleShortsCount, setVisibleShortsCount] = useState(5);
   const [articlesList, setArticlesList] = useState<Article[]>([]);
   const [galleryList, setGalleryList] = useState<any[]>([]);
   const { isApk } = useIsApk();
@@ -206,8 +207,7 @@ export default function VideosPageClient() {
   const tabs = [
     { key: 'video', gu: 'તાજા વીડિયો', hi: 'ताजा वीडियो', en: 'Latest Videos' },
     { key: 'short', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स', en: 'Shorts' },
-    { key: 'exclusive', gu: 'એક્સક્લુઝિવ તપાસ', hi: 'एक्सक्लूसिव जांच', en: 'Exclusive investigation' },
-    { key: 'bulletin', gu: 'ન્યૂઝ બુલેટિન', hi: 'न्यूज़ बुलेटिन', en: 'News Bulletin' },
+    { key: 'latest', gu: 'તાજા સમાચાર', hi: 'ताज़ा समाचार', en: 'Latest News' },
   ] as const;
 
   // Handle category smooth scroll navigation
@@ -286,7 +286,7 @@ export default function VideosPageClient() {
           });
         }
       }
-      return list.slice(0, 5);
+      return list;
     }
     return [
       { id: 's1', youtubeId: 'sA6BrUmBXiA', titleGu: 'કઠલાલના ભાજપ નેતાના બખેડા', hash: '#kathlal', thumbnail: '/assets/demo/1.jpg' },
@@ -296,16 +296,6 @@ export default function VideosPageClient() {
       { id: 's5', youtubeId: '-iXZuFoHqiw', titleGu: 'ભયાનક પૂરની વિડિઓ', hash: '#flood', thumbnail: '/assets/demo/3.jpg' },
     ];
   }, [shortsList]);
-
-  // Distinct videos for exclusive investigation section without duplicating top 20
-  const exclusiveVideos = useMemo(() => {
-    if (cleanVideos.length > 21) {
-      return cleanVideos.slice(21, 29);
-    }
-    return cleanVideos.slice(8, 16);
-  }, [cleanVideos]);
-
-
 
   const popularSidebarVideos = useMemo(() => {
     if (cleanVideos.length >= 6) {
@@ -624,7 +614,7 @@ export default function VideosPageClient() {
                       allowFullScreen
                     />
                   ) : (
-                    <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(featuredVideo.youtubeId)); setApkSelectedVideo(featuredVideo); } else { setPlayingVideoId(featuredVideo.id); } }}>
+                    <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(featuredVideo.youtubeId)); setApkSelectedVideo(featuredVideo); } else { window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(featuredVideo.youtubeId)}`, '_blank', 'noopener,noreferrer'); } }}>
                       <Image
                         src={featuredVideo.thumbnail}
                         alt={featuredVideo.titleGu}
@@ -681,7 +671,7 @@ export default function VideosPageClient() {
                           allowFullScreen
                         />
                       ) : (
-                        <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { setPlayingVideoId(item.id); } }}>
+                        <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(item.youtubeId)}`, '_blank', 'noopener,noreferrer'); } }}>
                           <Image
                             src={item.thumbnail}
                             alt={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
@@ -779,7 +769,7 @@ export default function VideosPageClient() {
                           setApkModalVideoId(safeYouTubeId(item.youtubeId));
                           setApkSelectedVideo(item);
                         } else {
-                          setPlayingVideoId(item.id);
+                          window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(item.youtubeId)}`, '_blank', 'noopener,noreferrer');
                         }
                       }}
                     >
@@ -920,18 +910,31 @@ export default function VideosPageClient() {
 
           {/* ── SECTION 2: SHORTS ────────────────────────────────────── */}
           <section id="short" className="mb-4 pt-0">
-            <div className="flex items-center gap-2.5 mb-3 pb-1.5 border-b-2 border-border">
-              <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
-              <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                શોર્ટ્સ
-              </h3>
+            <div className="flex items-center justify-between gap-3 mb-3 pb-1.5 border-b-2 border-border">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
+                <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
+                  શોર્ટ્સ
+                </h3>
+              </div>
+              {visibleShortsCount < shortsVideos.length && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleShortsCount((count) => count + 5)}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-bold text-accent hover:bg-accent/10 transition-colors"
+                  aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : 'Show more shorts'}
+                >
+                  {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'More videos'}
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {shortsVideos.map((item) => (
+              {shortsVideos.slice(0, visibleShortsCount).map((item) => (
                 <a
                   key={item.id}
-                  href={`https://www.youtube.com/watch?v=${item.youtubeId}`}
+                  href={`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="group relative aspect-[9/16] w-full rounded-lg overflow-hidden bg-black shadow-sm cursor-pointer"
@@ -959,60 +962,64 @@ export default function VideosPageClient() {
             </div>
           </section>
 
-          {/* ── SECTION 3: EXCLUSIVE INVESTIGATIONS ─────────────────── */}
-          <section id="exclusive" className="mb-5 pt-2">
-            <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
-              <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
-              <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                એક્સક્લુઝિવ તપાસ
-              </h3>
+          {/* ── SECTION 3: LATEST NEWS ──────────────────────────────── */}
+          <section id="latest" className="mb-5 pt-2">
+            <div className="flex items-center justify-between gap-3 mb-5 pb-2 border-b-2 border-border">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
+                <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
+                  {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+                </h3>
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-6">
-              {exclusiveVideos.map((item: any) => (
-                <div key={item.id} className="group flex flex-col">
-                  <div className="relative aspect-video w-full rounded-md overflow-hidden bg-black shadow-sm group">
-                    {playingVideoId === item.id ? (
-                      <iframe
-                        className="absolute inset-0 h-full w-full"
-                        src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(item.youtubeId)}?enablejsapi=1&autoplay=1&controls=1&mute=0&rel=0&playsinline=1&modestbranding=1`}
-                        title={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin"
-                        allowFullScreen
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {latestImageArticles.slice(0, 8).map((article: any) => {
+                const title = language === 'gu'
+                  ? (article.titleGu || article.title)
+                  : language === 'hi'
+                    ? (article.titleHi || article.title)
+                    : article.title;
+                const image = article.featuredImage || article.image || article.thumbnail || '/assets/gujarat-post-logo.png';
+
+                return (
+                  <Link
+                    key={article.id}
+                    href={`/news/${article.slug}`}
+                    className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
+                  >
+                    <div className="relative aspect-video overflow-hidden bg-muted">
+                      <Image
+                        src={image}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
-                    ) : (
-                      <div className="relative w-full h-full cursor-pointer" onClick={() => { if (isApk) { setApkModalVideoId(safeYouTubeId(item.youtubeId)); setApkSelectedVideo(item); } else { setPlayingVideoId(item.id); } }}>
-                        <Image
-                          src={item.thumbnail}
-                          alt={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
-                          fill
-                          sizes="(max-width: 768px) 50vw, 25vw"
-                          className="object-cover transition-transform duration-300 group-hover:scale-103"
-                        />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-all">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-accent shadow-sm transition-transform group-hover:scale-110">
-                            <Play className="h-4.5 w-4.5 fill-current ml-0.5" />
-                          </span>
-                        </div>
-                        <span className="absolute bottom-1.5 right-1.5 rounded bg-black/85 px-1.5 py-0.5 text-[10px] font-bold text-white">
-                          {item.duration}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-2.5 min-w-0">
-                    <h4 className="text-[12.5px] md:text-[13px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                      {getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
-                    </h4>
-                    <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground">
-                      <span className="text-accent">▶</span>
-                      <span>Gujarat Post</span>
-                      <span>·</span>
-                      <span>{toGu(formatViews(item.views))} views</span>
                     </div>
-                  </div>
-                </div>
-              ))}
+                    <div className="p-3">
+                      <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
+                        {getCategoryLabel(article, language)}
+                      </span>
+                      <h4 className="mt-1 text-[12.5px] md:text-sm font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                        {title}
+                      </h4>
+                      <span className="mt-2 block text-[10px] font-semibold text-muted-foreground">
+                        {timeAgo(article.publishedAt || article.createdAt, language)}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="/category/latest"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-3 text-sm font-black text-accent transition-colors hover:bg-accent hover:text-white"
+              >
+                {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
+                <ChevronDown className="h-4 w-4" />
+              </Link>
             </div>
           </section>
 
