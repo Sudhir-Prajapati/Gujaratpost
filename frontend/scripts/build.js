@@ -27,6 +27,14 @@ const runBuild = (extraArgs = []) => {
   });
 };
 
+// Safely clear previous .next build artifacts with retry to prevent Windows file locking issues
+const nextDir = path.join(realCwd, '.next');
+try {
+  if (fs.existsSync(nextDir)) {
+    fs.rmSync(nextDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+  }
+} catch (_) {}
+
 console.log('🚀 [Build] Starting Next.js frontend build...');
 const defaultArgs = process.argv.includes('--webpack') ? [] : ['--turbo'];
 let result = runBuild(defaultArgs);
