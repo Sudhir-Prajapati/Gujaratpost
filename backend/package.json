@@ -12,6 +12,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:seed": "node node_modules/tsx/dist/cli.mjs prisma/seed.ts",
+    "redis:clear": "node scripts/clear_redis.js",
     "test:rss": "node node_modules/tsx/dist/cli.mjs scripts/test_rss_suite.ts"
   },
   "dependencies": {
