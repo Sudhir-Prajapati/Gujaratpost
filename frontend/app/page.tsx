@@ -11,8 +11,8 @@ const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, fallback: T): P
   ]);
 
 export default async function HomePage() {
-  // Fetch all data in parallel — main articles, hero settings, categories, videos,
-  // reels, AND category-specific articles — so every section loads data immediately on render.
+  // Fetch core home datasets in parallel using a single unified articles query.
+  // This eliminates 11 redundant database queries and prevents backend connection timeouts.
   const [
     articlesRes,
     heroSettings,
@@ -21,37 +21,14 @@ export default async function HomePage() {
     marketRatesRes,
     weatherRes,
     reelsRes,
-    gujaratRes,
-    crimeRes,
-    nationalRes,
-    worldRes,
-    entertainRes,
-    healthRes,
-    techRes,
-    factcheckRes,
-    sportsRes,
-    politicsRes,
-    businessRes,
   ] = await Promise.all([
-    getPublicArticles({ limit: 60, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ limit: 80, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     getHeroSettings().catch(() => null),
     getPublicCategories({ showInHome: true }).catch(() => []),
     getPublicVideos('video').catch(() => []),
     withTimeout(getMarketRates().catch(() => null), 150, null),
     withTimeout(getPublicWeather('ahmedabad').catch(() => null), 150, null),
     getPublicReels().catch(() => []),
-    // Category-specific articles for instant SSR rendering
-    getPublicArticles({ categorySlug: 'gujarat', limit: 25, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'crime', limit: 25, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'national', limit: 12, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'world', limit: 12, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'manoranjan', limit: 6, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'health', limit: 6, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'technology', limit: 6, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'fact-check', limit: 20, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'sports', limit: 8, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'politics', limit: 10, sort: 'latest' }).catch(() => ({ articles: [] })),
-    getPublicArticles({ categorySlug: 'business', limit: 8, sort: 'latest' }).catch(() => ({ articles: [] })),
   ]);
 
   const sortByLatest = <T extends any>(list: T[]): T[] => {
@@ -73,20 +50,36 @@ export default async function HomePage() {
   const videos = Array.isArray(videosRes) ? videosRes : [];
   const reels = Array.isArray(reelsRes) ? reelsRes : [];
 
+  const getCatSlug = (a: any): string =>
+    ((a?.category?.slug || a?.categorySlug || (typeof a?.category === 'string' ? a.category : '') || '')).toLowerCase().trim();
+
+  const getCatName = (a: any): string => {
+    const name = (a?.category?.name || a?.categoryName || '').toLowerCase().trim();
+    const nameGu = (a?.category?.nameGu || a?.categoryGu || '').toLowerCase().trim();
+    return `${name} ${nameGu}`;
+  };
+
+  const isCat = (a: any, ...slugs: string[]): boolean => {
+    const s = getCatSlug(a);
+    const n = getCatName(a);
+    return slugs.some((target) => s === target || s.includes(target) || n.includes(target));
+  };
+
+  // Efficiently partition articles by category from the unified query
   const initialCategoryArticles: Record<string, any[]> = {
-    gujarat: sortByLatest(gujaratRes.articles || []),
-    crime: sortByLatest(crimeRes.articles || []),
-    national: sortByLatest(nationalRes.articles || []),
-    world: sortByLatest(worldRes.articles || []),
-    manoranjan: sortByDate(entertainRes.articles || []),
-    entertainment: sortByDate(entertainRes.articles || []),
-    health: sortByLatest(healthRes.articles || []),
-    technology: sortByLatest(techRes.articles || []),
-    factcheck: sortByLatest(factcheckRes.articles || []),
-    'fact-check': sortByLatest(factcheckRes.articles || []),
-    sports: sortByLatest(sportsRes.articles || []),
-    politics: sortByLatest(politicsRes.articles || []),
-    business: sortByLatest(businessRes.articles || []),
+    gujarat: sortByLatest(articles.filter((a) => isCat(a, 'gujarat', 'state'))),
+    crime: sortByLatest(articles.filter((a) => isCat(a, 'crime', 'ક્રાઇમ'))),
+    national: sortByLatest(articles.filter((a) => isCat(a, 'national', 'india', 'ભારત'))),
+    world: sortByLatest(articles.filter((a) => isCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ'))),
+    manoranjan: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
+    entertainment: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
+    health: sortByLatest(articles.filter((a) => isCat(a, 'health', 'હેલ્થ', 'આરોગ્ય'))),
+    technology: sortByLatest(articles.filter((a) => isCat(a, 'technology', 'tech', 'ટેકનોલોજી'))),
+    factcheck: sortByLatest(articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'))),
+    'fact-check': sortByLatest(articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'))),
+    sports: sortByLatest(articles.filter((a) => isCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત'))),
+    politics: sortByLatest(articles.filter((a) => isCat(a, 'politics', 'rajkaran', 'રાજકારણ'))),
+    business: sortByLatest(articles.filter((a) => isCat(a, 'business', 'વેપાર', 'બિઝનેસ'))),
   };
 
   return (

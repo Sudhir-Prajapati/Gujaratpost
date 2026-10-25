@@ -85,6 +85,9 @@ export default function ElectionSection({
   );
 
   useEffect(() => {
+    if (initialArticles && initialArticles.length >= 3) {
+      return;
+    }
     let isMounted = true;
     getPublicArticles({ categorySlug: 'election-2027', limit: 10, sort: 'latest' })
       .then((res) => {
@@ -99,7 +102,7 @@ export default function ElectionSection({
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [initialArticles]);
 
   const badgeTitle = language === 'gu' ? 'ચૂંટણી 2027' : language === 'hi' ? 'चुनाव 2027' : 'Election 2027';
   const subtitle =

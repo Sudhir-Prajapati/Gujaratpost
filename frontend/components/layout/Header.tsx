@@ -577,7 +577,7 @@ export default function Header() {
                 </a>
               </div>
               <span className="opacity-20 select-none text-current">|</span>
-              <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu' }} />
+              <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', whatsapp: 'https://wa.me/919909907237' }} />
             </div>
 
             {/* Right: Mobile quick access badges (News Brief & AQI) */}
@@ -1047,7 +1047,7 @@ export default function Header() {
               {/* Social links at bottom of drawer */}
               <div className="pt-3 border-t border-border flex items-center gap-2.5">
                 <span className="text-xs font-bold text-muted-foreground shrink-0">Follow Us:</span>
-                <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu' }} />
+                <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', whatsapp: 'https://wa.me/919909907237' }} />
               </div>
             </div>
         </div>

@@ -22,9 +22,11 @@ function SocialIconButton({ item, className = 'h-9 w-9' }: { item: typeof SOCIAL
             : { backgroundColor: item.hoverBg, borderColor: item.hoverBg }
         : {};
 
+    const href = item.platform === 'whatsapp' ? 'https://wa.me/919909907237' : item.href;
+
     return (
         <a
-            href={item.href}
+            href={href}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={item.label}

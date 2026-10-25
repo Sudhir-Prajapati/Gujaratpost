@@ -1274,16 +1274,26 @@ export default function CityHyperlocalSection({
 
             <div className="relative z-10 flex items-center gap-2.5">
               {/* WhatsApp branded icon badge */}
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-sm shadow-emerald-500/25 ring-2 ring-[#25D366]/10">
+              <a
+                href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-sm shadow-emerald-500/25 ring-2 ring-[#25D366]/10 hover:opacity-90 transition-opacity"
+              >
                 <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white" />
-              </div>
+              </a>
               <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-1">
+                <a
+                  href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 hover:underline"
+                >
                   <h3 className="font-black text-[16px] md:text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
                     {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
                   </h3>
                   <CheckCircle2 className="h-4 w-4 md:h-3.5 md:w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
-                </div>
+                </a>
                 <span className="text-[13px] md:text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
                   {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'आधिकारिक समाचार अपडेट' : 'Official News Updates'}
                 </span>
@@ -1299,7 +1309,7 @@ export default function CityHyperlocalSection({
             </p>
 
             <a
-              href="https://api.whatsapp.com/send/?phone=919909907237&text&type=phone_number&app_absent=0"
+              href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
               target="_blank"
               rel="noopener noreferrer"
               className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[12.5px] py-3 md:py-2.5 px-4 md:px-3.5 rounded-lg shadow-sm shadow-emerald-500/20 hover:shadow-md hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"

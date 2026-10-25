@@ -104,24 +104,18 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
   }, [initialArticles]);
 
   useEffect(() => {
-    fetchFreshTrendingArticles();
+    // Only fetch from network if initial data was not provided via SSR
+    const valid = (initialArticles || []).filter(isFactCheckArticle);
+    if (valid.length === 0) {
+      fetchFreshTrendingArticles();
+    }
 
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        fetchFreshTrendingArticles();
-      }
-    };
-
-    window.addEventListener('focus', fetchFreshTrendingArticles);
     window.addEventListener('gp-articles-updated', fetchFreshTrendingArticles);
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      window.removeEventListener('focus', fetchFreshTrendingArticles);
       window.removeEventListener('gp-articles-updated', fetchFreshTrendingArticles);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchFreshTrendingArticles]);
+  }, [fetchFreshTrendingArticles, initialArticles]);
 
   useEffect(() => {
     if (initialArticles && initialArticles.length > 0) {

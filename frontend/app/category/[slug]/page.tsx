@@ -8,12 +8,6 @@ import { notFound, redirect } from "next/navigation";
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function generateStaticParams() {
-  const metaKeys = Object.keys(CATEGORY_META).filter((slug) => !["videos", "shorts", "podcasts"].includes(slug));
-  const mappingKeys = Object.keys(categorySlugMapping).filter((key) => !["videos", "shorts", "podcasts"].includes(key));
-  const allSlugs = Array.from(new Set([...metaKeys, ...mappingKeys]));
-  return allSlugs.map((slug) => ({ slug }));
-}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

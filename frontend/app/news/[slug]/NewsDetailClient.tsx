@@ -104,6 +104,7 @@ import { Article, Language } from '@/types';
 import {
   formatDate,
   formatViews,
+  formatArticleDateTime,
   getArticleContent,
   getArticleExcerptHtml,
   getArticleTitle,
@@ -1257,8 +1258,11 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   const rawLocationDisplay = getLocationDisplay(article.location, language);
   const cityLocationLabel = (rawLocationDisplay.toLowerCase() === category.toLowerCase())
-    ? uiLabel(language, { en: 'Ahmedabad', gu: '\u0a85\u0aae\u0aa6\u0abe\u0ab5\u0abe\u0aa6', hi: '\u0905\u0939\u092e\u0926\u093e\u092c\u093e\u0926' })
+    ? uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' })
     : rawLocationDisplay;
+
+  const publishedFormatted = formatArticleDateTime(article.publishedAt || (article as any).createdAt);
+  const updatedFormatted = formatArticleDateTime(article.updatedAt || article.publishedAt || (article as any).createdAt);
 
   return (
     <>
@@ -1303,18 +1307,39 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <Image src="/logo.png" alt="Gujarat Post" width={38} height={38} className="h-full w-full object-contain p-0.5" />
                 </Link>
                 <div>
-                  <div className="text-[13.5px]">
+                  <div className="text-[13.5px] leading-tight">
                     <span className="text-[var(--ink-2)]">{uiLabel(language, { en: 'Author:', gu: 'લેખક:', hi: 'लेखक:' })} </span>
                     <Link href={`/author/${article.author.id}`} className="font-bold text-[var(--red)] hover:underline">
                       {authorName}
                     </Link>
                   </div>
-
+                  {(updatedFormatted || publishedFormatted) && (
+                    <div className="text-[12px] text-neutral-500 dark:text-neutral-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1" suppressHydrationWarning>
+                      {publishedFormatted && updatedFormatted && publishedFormatted !== updatedFormatted ? (
+                        <>
+                          <span>
+                            <span className="font-medium text-neutral-600 dark:text-neutral-300">Published on:</span>{' '}
+                            {publishedFormatted}
+                          </span>
+                          <span className="text-neutral-300 dark:text-neutral-600 select-none">•</span>
+                          <span>
+                            <span className="font-medium text-neutral-600 dark:text-neutral-300">Updated on:</span>{' '}
+                            {updatedFormatted}
+                          </span>
+                        </>
+                      ) : (
+                        <span>
+                          <span className="font-medium text-neutral-600 dark:text-neutral-300">Updated on:</span>{' '}
+                          {updatedFormatted || publishedFormatted}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-[12.5px] text-[var(--ink-2)]">
-                  ⏱ {language === 'gu' ? `વાંચન સમય: ${article.readingTime} મિનિટ` : language === 'hi' ? `पठन समय: ${article.readingTime} मिनट` : `Read time: ${article.readingTime} mins`}
+                  ⏱ {language === 'gu' ? `વાંચન સમય: ${article.readingTime || 3} મિનિટ` : language === 'hi' ? `पठन समय: ${article.readingTime || 3} मिनट` : `Read time: ${article.readingTime || 3} mins`}
                 </span>
                 {/* Google News Follow Badge */}
                 <a

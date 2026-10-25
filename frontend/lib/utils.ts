@@ -79,6 +79,83 @@ export function formatTime(dateStr: string): string {
 }
 
 /**
+ * Checks if a date string has a specific time (hours/minutes) or is date-only / midnight.
+ */
+export function hasSpecificTime(dateStr?: string | null): boolean {
+  if (!dateStr || typeof dateStr !== 'string') return false;
+  const str = dateStr.trim();
+  if (!str) return false;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str) || /^\d{2}\/\d{2}\/\d{4}$/.test(str)) return false;
+  if (str.includes('T00:00:00') || str.endsWith(' 00:00:00') || str.endsWith(' 00:00')) return false;
+  const d = new Date(str);
+  if (isNaN(d.getTime())) return false;
+  return true;
+}
+
+/**
+ * Formats article release/update timestamp as:
+ * - "Oct 24, 2026 | 8:17 AM" (if time is present)
+ * - "Oct 24, 2026" (if date only / time not present)
+ */
+export function formatArticleDateTime(dateStr?: string | null): string {
+  if (!dateStr || typeof dateStr !== 'string') return '';
+  const str = dateStr.trim();
+  if (!str) return '';
+
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(str) || /^\d{2}\/\d{2}\/\d{4}$/.test(str);
+  const isMidnight = str.includes('T00:00:00') || str.endsWith(' 00:00:00') || str.endsWith(' 00:00');
+  const hasTime = !isDateOnly && !isMidnight;
+
+  let d: Date;
+  if (isDateOnly && /^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    const parts = str.split('-').map(Number);
+    d = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2], 12, 0, 0));
+  } else {
+    d = new Date(str);
+  }
+
+  if (isNaN(d.getTime())) return '';
+
+  let datePart = '';
+  try {
+    datePart = d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      timeZone: 'Asia/Kolkata',
+    });
+  } catch {
+    datePart = d.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  if (!hasTime) {
+    return datePart;
+  }
+
+  let timePart = '';
+  try {
+    timePart = d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: 'Asia/Kolkata',
+    });
+  } catch {
+    timePart = d.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    });
+  }
+
+  return timePart ? `${datePart} | ${timePart}` : datePart;
+}
+
+/**
  * Slugifies string for URL generation.
  */
 export function slugify(value: string): string {

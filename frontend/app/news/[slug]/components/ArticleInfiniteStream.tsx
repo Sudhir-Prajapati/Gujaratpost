@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Article, Language } from '@/types';
-import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
+import { normalizeDisplayText, formatDate, formatArticleDateTime, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
 import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
@@ -261,9 +261,16 @@ export default function ArticleInfiniteStream({
                     </span>
                   </nav>
 
-                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground tracking-tight mb-4 text-left w-full">
+                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground tracking-tight mb-2 text-left w-full">
                     <AutoArticleTitle article={streamArticle} language={language} />
                   </h2>
+
+                  {formatArticleDateTime(streamArticle.updatedAt || (streamArticle as any).createdAt || streamArticle.publishedAt) && (
+                    <div className="text-[12px] text-neutral-500 dark:text-neutral-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-3 select-none" suppressHydrationWarning>
+                      <span className="font-medium text-neutral-600 dark:text-neutral-300">Updated on:</span>{' '}
+                      {formatArticleDateTime(streamArticle.updatedAt || (streamArticle as any).createdAt || streamArticle.publishedAt)}
+                    </div>
+                  )}
 
                   <div className="relative aspect-[16/9] w-full overflow-hidden bg-black rounded-lg shadow-sm mb-6 mt-4">
                     <Image

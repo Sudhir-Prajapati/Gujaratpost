@@ -206,9 +206,17 @@ export default function InstagramPageClient() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount((c) => c + 6)}
-                  className="px-6 py-2.5 rounded-full border-2 border-[#B3121B] bg-card text-sm font-medium text-[#B3121B] transition-all duration-200 shadow-xs hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#B3121B] hover:text-white hover:shadow-md cursor-pointer active:scale-95"
+                  className="px-6 sm:px-8 py-2.5 rounded-full border-2 border-[#B3121B] bg-card text-sm sm:text-base font-extrabold text-[#B3121B] transition-all duration-200 shadow-xs hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#B3121B] hover:text-white hover:shadow-md cursor-pointer active:scale-95 text-center select-none"
                 >
-                  {language === 'gu' ? 'વધુ રીલ્સ જુઓ ↓' : 'Load More Reels ↓'}
+                  <span
+                    className="font-extrabold"
+                    style={{
+                      fontWeight: 800,
+                      fontFamily: 'var(--font-noto-sans-gujarati), var(--font-hind-vadodara), "Nirmala UI", sans-serif',
+                    }}
+                  >
+                    {language === 'gu' ? 'વધુ રીલ્સ જુઓ ↓' : language === 'hi' ? 'और रील्स देखें ↓' : 'Load More Reels ↓'}
+                  </span>
                 </button>
               </div>
             )}

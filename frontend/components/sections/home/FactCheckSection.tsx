@@ -131,25 +131,21 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   }, [initialArticles, sortFactCheckLatest]);
 
   useEffect(() => {
-    fetchFreshFactCheckArticles();
+    // Only fetch from network if initial data was not provided via SSR
+    if (!initialArticles || initialArticles.length === 0) {
+      fetchFreshFactCheckArticles();
+    }
 
     const handleSync = () => {
       fetchFreshFactCheckArticles();
     };
 
-    window.addEventListener('focus', handleSync);
     window.addEventListener('gp-articles-updated', handleSync);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') handleSync();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      window.removeEventListener('focus', handleSync);
       window.removeEventListener('gp-articles-updated', handleSync);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchFreshFactCheckArticles]);
+  }, [fetchFreshFactCheckArticles, initialArticles]);
 
   const getStatusInfo = (art: any) => {
     const tagStr = (art.tagsGu?.[0] || art.tags?.[0] || art.titleGu || art.title || '').toLowerCase();

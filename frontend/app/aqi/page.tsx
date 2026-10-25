@@ -958,10 +958,19 @@ function AqiPageContent() {
               type="button"
               onClick={loadMoreNews}
               disabled={loadingMoreNews}
-              className="px-10 py-3.5 rounded-full border-2 border-red-600 bg-white dark:bg-zinc-900 text-red-600 hover:bg-red-600 hover:text-white font-black text-sm sm:text-base transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer tracking-wider flex items-center gap-2"
+              className="px-10 py-3.5 rounded-full border-2 border-[#B3121B] bg-white dark:bg-zinc-900 text-[#B3121B] hover:bg-[#B3121B] hover:text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer tracking-wider flex items-center gap-2 select-none"
+              style={{ fontWeight: 800 }}
             >
-              <span>{loadingMoreNews ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...') : language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}</span>
-              {!loadingMoreNews && <ChevronDown className="w-5 h-5" />}
+              <span
+                className="font-extrabold"
+                style={{
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-noto-sans-gujarati), var(--font-hind-vadodara), "Nirmala UI", sans-serif',
+                }}
+              >
+                {loadingMoreNews ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...') : language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}
+              </span>
+              {!loadingMoreNews && <ChevronDown className="w-5 h-5 stroke-[2.5]" />}
             </button>
           </div>
         )}

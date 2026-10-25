@@ -247,7 +247,7 @@ export class HeroController {
           withDbRetry(() =>
             prisma.post.findMany({
               where: { status: 'PUBLISHED' },
-              orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
+              orderBy: { articleNumber: 'desc' },
               take: 16,
               select: heroPostSelect,
             })
@@ -282,7 +282,7 @@ export class HeroController {
                   { slug: { contains: 'fact-check' } },
                 ],
               },
-              orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
+              orderBy: { articleNumber: 'desc' },
               take: 10,
               select: heroPostSelect,
             })
@@ -799,7 +799,7 @@ export class HeroController {
       } else {
         const posts = await prisma.post.findMany({
           where: { status: 'PUBLISHED' },
-          orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
+          orderBy: { articleNumber: 'desc' },
           take: 9,
           select: heroPostSelect,
         });

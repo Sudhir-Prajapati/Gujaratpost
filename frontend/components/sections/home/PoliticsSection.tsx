@@ -126,31 +126,35 @@ export default function PoliticsSection({ language, initialArticles }: { languag
   }, [initialArticles]);
 
   useEffect(() => {
-    fetchFreshPoliticsArticles();
+    // Fetch from network if initial data has fewer than 9 articles to guarantee 3 top + 6 bottom
+    if (initialPolitics.length < 9) {
+      fetchFreshPoliticsArticles();
+    }
 
     const handleSync = () => {
       fetchFreshPoliticsArticles();
     };
 
-    window.addEventListener('focus', handleSync);
     window.addEventListener('gp-articles-updated', handleSync);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') handleSync();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      window.removeEventListener('focus', handleSync);
       window.removeEventListener('gp-articles-updated', handleSync);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchFreshPoliticsArticles]);
+  }, [fetchFreshPoliticsArticles, initialPolitics.length]);
 
-  // Combine politics + fallback to always fill 9 slots
+  // Combine politics + fallback to always fill all 9 slots (3 top + 6 bottom)
   const allCards = useMemo(() => {
-    const combined = [...dbPoliticsArticles, ...fallbackArticles];
-    return combined.slice(0, 9);
-  }, [dbPoliticsArticles, fallbackArticles]);
+    const list = [...dbPoliticsArticles];
+    if (list.length < 9 && initialArticles && initialArticles.length > 0) {
+      for (const art of initialArticles) {
+        if (list.length >= 9) break;
+        if (!list.some((existing) => existing.id === art.id)) {
+          list.push(art);
+        }
+      }
+    }
+    return list.slice(0, 9);
+  }, [dbPoliticsArticles, initialArticles]);
 
   const top3 = useMemo(() => allCards.slice(0, 3), [allCards]);
   const bottomGrid = useMemo(() => allCards.slice(3, 9), [allCards]);

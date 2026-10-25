@@ -85,7 +85,10 @@ export default function CrimeSection({
   }, [initialArticles, sortCrimeLatest]);
 
   useEffect(() => {
-    fetchFreshCrimeArticles();
+    // Only fetch from network if initial data was not provided via SSR
+    if (!initialArticles || initialArticles.length === 0) {
+      fetchFreshCrimeArticles();
+    }
 
     if (!initialWeather) {
       getPublicWeather('ahmedabad').then((wRes) => {
@@ -106,19 +109,12 @@ export default function CrimeSection({
       fetchFreshCrimeArticles();
     };
 
-    window.addEventListener('focus', handleSync);
     window.addEventListener('gp-articles-updated', handleSync);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') handleSync();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      window.removeEventListener('focus', handleSync);
       window.removeEventListener('gp-articles-updated', handleSync);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchFreshCrimeArticles, initialWeather, initialAstrology]);
+  }, [fetchFreshCrimeArticles, initialArticles, initialWeather, initialAstrology]);
 
   const mockSlides = [
     {

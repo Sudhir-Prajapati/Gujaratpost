@@ -35,7 +35,7 @@ const mockNationalColumns = [
       {
         id: 'nat-sub-1-2',
         slug: 'two-new-vande-bharat-trains-flagged-off-533',
-        image: '/assets/demo/8.jpg',
+        image: 'https://res.cloudinary.com/kohg6a5j/image/upload/v1792864921/gujarat-post/news/post_26786_vb-.jpg',
         titleGu: 'બે નવી વંદે ભારત ટ્રેનોને લીલી ઝંડી, જાણો રૂટ',
         relativeTimeGu: '3 કલાક પહેલાં',
         views: 81000
@@ -43,7 +43,7 @@ const mockNationalColumns = [
       {
         id: 'nat-sub-1-3',
         slug: 'central-government-announcement-millions-benefit-534',
-        image: '/assets/demo/4.jpg',
+        image: 'https://res.cloudinary.com/kohg6a5j/image/upload/v1792874026/gujarat-post/news/post_33962_permission-to-hold-protests-at-delh.avif',
         titleGu: 'કેન્દ્ર સરકારની મોટી જાહેરાત! નવી યોજનાથી કરોડો લોકોને લાભ',
         relativeTimeGu: '4 કલાક પહેલાં',
         views: 60000
@@ -64,7 +64,7 @@ const mockNationalColumns = [
       {
         id: 'nat-sub-2-1',
         slug: 'indian-army-indigenous-defense-equipment-536',
-        image: '/assets/demo/6.jpg',
+        image: 'https://res.cloudinary.com/kohg6a5j/image/upload/v1792874054/gujarat-post/news/post_34003_jio4.avif',
         titleGu: 'ભારતીય સેનાને મળી મોટી તાકાત! સ્વદેશી બનાવટનું નવું સંરક્ષણ સાધન સામેલ',
         relativeTimeGu: '6 કલાક પહેલાં',
         views: 120000
@@ -81,7 +81,7 @@ const mockNationalColumns = [
       {
         id: 'nat-sub-2-3',
         slug: 'new-health-insurance-scheme-announced-538',
-        image: '/assets/demo/8.jpg',
+        image: 'https://res.cloudinary.com/kohg6a5j/image/upload/v1792874027/gujarat-post/news/post_33963_indiscriminate-firing-at-ramlila-fa.avif',
         titleGu: 'કરોડો લોકોને ફાયદો! કેન્દ્રે જાહેર કરી નવી આરોગ્ય વીમા યોજના',
         relativeTimeGu: '8 કલાક પહેલાં',
         views: 160000
@@ -151,21 +151,21 @@ export default function NationalSection({ language, initialArticles }: { languag
         const map = new Map<string, Article>();
         prev.forEach((a) => { if (a?.id) map.set(a.id, a); });
         initialArticles.forEach((a) => { if (a?.id) map.set(a.id, a); });
-        return sortNationalLatest(Array.from(map.values())).slice(0, 12);
+        return sortNationalLatest(Array.from(map.values())).slice(0, 16);
       });
     }
   }, [initialArticles, sortNationalLatest]);
 
   const fetchFreshNationalArticles = useCallback(async () => {
     try {
-      const res = await getPublicArticles({ categorySlug: 'national', limit: 12, sort: 'latest' });
+      const res = await getPublicArticles({ categorySlug: 'national', limit: 16, sort: 'latest' });
       if (res && res.articles && res.articles.length > 0) {
         setDbNationalArticles((prev) => {
           const map = new Map<string, Article>();
           res.articles.forEach((a) => { if (a?.id) map.set(a.id, a); });
           prev.forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
           (initialArticles || []).forEach((a) => { if (a?.id && !map.has(a.id)) map.set(a.id, a); });
-          return sortNationalLatest(Array.from(map.values())).slice(0, 12);
+          return sortNationalLatest(Array.from(map.values())).slice(0, 16);
         });
       }
     } catch {
@@ -174,25 +174,21 @@ export default function NationalSection({ language, initialArticles }: { languag
   }, [initialArticles, sortNationalLatest]);
 
   useEffect(() => {
-    fetchFreshNationalArticles();
+    // Fetch from network if initial data has fewer than 12 articles
+    if (dbNationalArticles.length < 12) {
+      fetchFreshNationalArticles();
+    }
 
     const handleSync = () => {
       fetchFreshNationalArticles();
     };
 
-    window.addEventListener('focus', handleSync);
     window.addEventListener('gp-articles-updated', handleSync);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') handleSync();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      window.removeEventListener('focus', handleSync);
       window.removeEventListener('gp-articles-updated', handleSync);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchFreshNationalArticles]);
+  }, [fetchFreshNationalArticles, dbNationalArticles.length]);
 
   const top3 = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];
@@ -200,12 +196,27 @@ export default function NationalSection({ language, initialArticles }: { languag
       list.push({
         id: art.id,
         slug: art.slug,
-        image: art.image || DEMO_IMAGES[0],
+        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[0],
         article: art,
         titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
+    if (list.length < 3 && initialArticles && initialArticles.length > 0) {
+      for (const art of initialArticles) {
+        if (list.length >= 3) break;
+        if (!list.some((item) => item.id === art.id)) {
+          list.push({
+            id: art.id,
+            slug: art.slug,
+            image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[0],
+            article: art,
+            titleGu: art.titleGu || art.title,
+            time: formatTime(art.publishedAt),
+          });
+        }
+      }
+    }
     if (list.length < 3) {
       mockNationalColumns.forEach((col) => {
         if (list.length < 3 && !list.some((item) => item.id === col.featured.id)) {
@@ -214,7 +225,7 @@ export default function NationalSection({ language, initialArticles }: { languag
       });
     }
     return list;
-  }, [dbNationalArticles, language]);
+  }, [dbNationalArticles, initialArticles, language]);
 
   const bottomGrid = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; time: string }> = [];
@@ -222,12 +233,28 @@ export default function NationalSection({ language, initialArticles }: { languag
       list.push({
         id: art.id,
         slug: art.slug,
-        image: art.image || DEMO_IMAGES[1],
+        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[1],
         article: art,
         titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
       });
     });
+    // Fallback to real articles from initialArticles before any dummy mock data
+    if (list.length < 9 && initialArticles && initialArticles.length > 0) {
+      for (const art of initialArticles) {
+        if (list.length >= 9) break;
+        if (!list.some((item) => item.id === art.id) && !top3.some((t) => t.id === art.id)) {
+          list.push({
+            id: art.id,
+            slug: art.slug,
+            image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[1],
+            article: art,
+            titleGu: art.titleGu || art.title,
+            time: formatTime(art.publishedAt),
+          });
+        }
+      }
+    }
     if (list.length < 9) {
       mockNationalColumns.forEach((col) => {
         col.subs.forEach((sub) => {
@@ -241,7 +268,7 @@ export default function NationalSection({ language, initialArticles }: { languag
     const col2 = list.filter((_, i) => i % 3 === 1);
     const col3 = list.filter((_, i) => i % 3 === 2);
     return { col1, col2, col3, rawList: list, totalRows: Math.max(col1.length, col2.length, col3.length) };
-  }, [dbNationalArticles, language]);
+  }, [dbNationalArticles, initialArticles, top3, language]);
 
   const mobileList = useMemo(() => {
     return [...top3.slice(1), ...bottomGrid.rawList].slice(0, 6);

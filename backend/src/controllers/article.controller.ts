@@ -307,10 +307,7 @@ export class ArticleController {
             },
             tags: true,
           },
-          orderBy: [
-            { createdAt: 'desc' },
-            { articleNumber: 'desc' },
-          ],
+          orderBy: { articleNumber: 'desc' },
           skip,
           take: limit,
         }),

@@ -277,27 +277,21 @@ export default function WorldSection({ language, initialArticles }: { language: 
   }, [initialArticles]);
 
   useEffect(() => {
-    // 1. Fetch immediately on client mount to ensure latest world articles
-    fetchFreshWorldArticles();
+    // Only fetch from network if initial data was not provided via SSR
+    if (initialWorld.length === 0) {
+      fetchFreshWorldArticles();
+    }
 
-    // 2. Re-fetch on window focus and custom update events
     const handleSync = () => {
       fetchFreshWorldArticles();
     };
 
-    window.addEventListener('focus', handleSync);
     window.addEventListener('gp-articles-updated', handleSync);
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') handleSync();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
-      window.removeEventListener('focus', handleSync);
       window.removeEventListener('gp-articles-updated', handleSync);
-      document.removeEventListener('visibilitychange', handleVisibility);
     };
-  }, [fetchFreshWorldArticles]);
+  }, [fetchFreshWorldArticles, initialWorld.length]);
 
   const featured = useMemo(() => {
     if (dbWorldArticles.length > 0) {

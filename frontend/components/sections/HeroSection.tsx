@@ -887,17 +887,17 @@ export default function HeroSection({
   const [nationalArtDB, setNationalArtDB] = useState<Article[]>(
     (initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0)
       ? initialCategoryArticles['national']
-      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 8)
+      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16)
   );
   const [worldArtDB, setWorldArtDB] = useState<Article[]>(
     (initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0)
       ? initialCategoryArticles['world']
-      : publishedInitialArticles.filter((a) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4)
+      : publishedInitialArticles.filter((a) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 8)
   );
   const [politicsArtDB, setPoliticsArtDB] = useState<Article[]>(
     (initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0)
       ? initialCategoryArticles['politics']
-      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 10)
+      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16)
   );
   const [factCheckArtDB, setFactCheckArtDB] = useState<Article[]>(
     (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
@@ -981,9 +981,9 @@ export default function HeroSection({
           setBottomFeatured(getBottomCards(pool, heroRes || initialHeroSettings));
           setGujaratArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
           setCrimeArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
-          setNationalArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 8));
-          setWorldArtDB(sorted.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
-          setPoliticsArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 10));
+          setNationalArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16));
+          setWorldArtDB(sorted.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 8));
+          setPoliticsArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16));
           setFactCheckArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10));
           setBusinessArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
           setSportsArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
@@ -991,9 +991,7 @@ export default function HeroSection({
       }).catch(() => { });
     };
 
-    window.addEventListener('focus', handleSyncCategories);
     window.addEventListener('gp-categories-updated', handleSyncCategories);
-    window.addEventListener('focus', handleSyncArticles);
     window.addEventListener('gp-articles-updated', handleSyncArticles);
     window.addEventListener('gp-hero-updated', handleSyncArticles);
 
@@ -1013,9 +1011,7 @@ export default function HeroSection({
     }
 
     return () => {
-      window.removeEventListener('focus', handleSyncCategories);
       window.removeEventListener('gp-categories-updated', handleSyncCategories);
-      window.removeEventListener('focus', handleSyncArticles);
       window.removeEventListener('gp-articles-updated', handleSyncArticles);
       window.removeEventListener('gp-hero-updated', handleSyncArticles);
       if (adminBroadcastChannel) {
@@ -1120,9 +1116,9 @@ export default function HeroSection({
         setMostReadArtDB(mostReadPool);
         setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
         setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
-        setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 8));
+        setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16));
         setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
-        setPoliticsArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 10));
+        setPoliticsArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16));
         setFactCheckArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10));
         setBusinessArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
         setSportsArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));

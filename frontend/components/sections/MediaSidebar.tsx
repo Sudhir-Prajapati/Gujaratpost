@@ -243,7 +243,7 @@ export default function MediaSidebar({
         <div className="flex items-center gap-2 mb-3 pb-2 border-b-2 border-border">
           <span className="w-2.5 h-4.5 bg-[#B3121B] rounded-xs inline-block shrink-0" />
           <h3 className="text-sm font-black text-foreground uppercase tracking-wide">
-            {language === 'gu' ? 'ટ્રેન્ડિંગ સમાચાર' : language === 'hi' ? 'ट्रेंडिंग समाचार' : 'Trending News'}
+            {language === 'gu' ? 'લેટેસ્ટ વીડિયો' : language === 'hi' ? 'लेटेस्ट वीडियो' : 'Latest Videos'}
           </h3>
         </div>
 

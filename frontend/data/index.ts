@@ -1,7 +1,7 @@
 import { Article, Author, NavItem, Photo, Video, Language } from '@/types';
-import { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, slugify } from '@/lib/utils';
+import { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, hasSpecificTime, formatArticleDateTime, slugify } from '@/lib/utils';
 
-export { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, slugify };
+export { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, hasSpecificTime, formatArticleDateTime, slugify };
 export type { Article, Author, NavItem, Photo, Video, Language };
 
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || (process.env.NODE_ENV === 'production' ? 'https://guj-stg.gujaratpost.in' : 'http://localhost:3000');

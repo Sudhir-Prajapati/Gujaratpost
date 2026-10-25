@@ -10,10 +10,13 @@ export const SEARCH_CACHE_TTL_MS = 60 * 1000;
 export const categoryLookupCache = new Map<string, { ids: string[]; expiresAt: number }>();
 export const CATEGORY_LOOKUP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+export const postCountCache = new Map<string, { total: number; expiresAt: number }>();
+
 export function clearPublicRoutesCache() {
   publicCache.clear();
   searchCache.clear();
   categoryLookupCache.clear();
+  postCountCache.clear();
   invalidatePublicRssCache();
 }
 

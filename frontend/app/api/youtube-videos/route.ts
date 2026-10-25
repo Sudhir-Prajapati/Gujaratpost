@@ -154,7 +154,7 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
       try {
         const data = JSON.parse(match[1]);
 
-        function parseNode(node: any) {
+        const parseNode = (node: any) => {
           if (!node || typeof node !== 'object') return;
 
           // 1. YouTube Shorts lockupViewModel / shortsLockupViewModel structure
@@ -295,7 +295,7 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
 
         // Multi-batch continuation loop (up to 5 pages of older Shorts/Videos)
         let currentContinuation = '';
-        function findToken(node: any) {
+        const findToken = (node: any) => {
           if (!node || typeof node !== 'object') return;
           if (node.continuationCommand?.token) {
             currentContinuation = node.continuationCommand.token;

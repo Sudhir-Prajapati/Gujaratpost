@@ -102,7 +102,20 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
 // Memory cache & In-flight request deduplication map
 const apiCache = new Map<string, { timestamp: number; data: any }>();
 const inFlightRequests = new Map<string, Promise<any>>();
-const CACHE_TTL_MS = process.env.NODE_ENV === 'development' ? 5000 : 15000; // 5s dev, 15s prod
+const CACHE_TTL_MS = 60000; // 60s memory cache
+
+function normalizeApiUrl(url: string): string {
+  try {
+    const isRelative = url.startsWith('/');
+    const parsed = new URL(url, 'http://localhost');
+    const params = new URLSearchParams(parsed.search);
+    params.sort();
+    const cleanSearch = params.toString() ? `?${params.toString()}` : '';
+    return isRelative ? `${parsed.pathname}${cleanSearch}` : `${parsed.origin}${parsed.pathname}${cleanSearch}`;
+  } catch {
+    return url;
+  }
+}
 
 export function clearApiCache(): void {
   apiCache.clear();
@@ -135,14 +148,15 @@ export function clearApiCacheAndBroadcast(extraData?: Record<string, any>): void
  * Fetch wrapper with caching & in-flight request deduplication
  */
 async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_TTL_MS): Promise<T | null> {
-  const effectiveTtl = process.env.NODE_ENV === 'development' ? Math.min(cacheTtlMs, 5000) : cacheTtlMs;
+  const normalizedKey = normalizeApiUrl(url);
+  const effectiveTtl = cacheTtlMs;
   const now = Date.now();
-  const cached = apiCache.get(url);
+  const cached = apiCache.get(normalizedKey);
   if (cached && now - cached.timestamp < effectiveTtl) {
     return cached.data as T;
   }
 
-  const existing = inFlightRequests.get(url);
+  const existing = inFlightRequests.get(normalizedKey);
   if (existing) {
     return existing as Promise<T | null>;
   }
@@ -166,8 +180,8 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
         if (isServer && revalidateSeconds > 0) {
           // Safe Next.js Data Cache revalidation for public read requests during SSR
           (fetchOptions as any).next = { revalidate: revalidateSeconds };
-        } else if (revalidateSeconds === 0) {
-          // Explicitly bypass cache for dynamic/zero-TTL requests
+        } else if (isServer && revalidateSeconds === 0) {
+          // Explicitly bypass cache for dynamic/zero-TTL SSR requests
           fetchOptions.cache = 'no-store';
         }
 
@@ -200,7 +214,7 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
             return null;
           }
 
-          apiCache.set(url, { timestamp: Date.now(), data: json });
+          apiCache.set(normalizedKey, { timestamp: Date.now(), data: json });
           return json as T;
         } catch (error: any) {
           clearTimeout(timeoutId);
@@ -228,11 +242,11 @@ async function fetchCachedJson<T = any>(url: string, cacheTtlMs: number = CACHE_
       }
       return null;
     } finally {
-      inFlightRequests.delete(url);
+      inFlightRequests.delete(normalizedKey);
     }
   })();
 
-  inFlightRequests.set(url, fetchPromise);
+  inFlightRequests.set(normalizedKey, fetchPromise);
   return fetchPromise;
 }
 
@@ -756,8 +770,8 @@ export async function updateAdminAstrologySign(slug: string, payload: any): Prom
 export async function getHeroSettings(): Promise<{ slots: (Article | null)[]; setting: any }> {
   try {
     const url = `${API_BASE_URL}/hero-settings`;
-    // Use 0 TTL — hero settings must reflect admin changes instantly
-    const json = await fetchCachedJson<any>(url, 0);
+    // 15s cache TTL prevents concurrent SSR fetches from hammering the backend; admin saves immediately invalidate via clearApiCacheAndBroadcast()
+    const json = await fetchCachedJson<any>(url, 15 * 1000);
     if (json?.success && json.data?.slots) {
       return json.data;
     }

@@ -94,6 +94,11 @@ export default function LatestUpdatesSection({
       setPopularArticles(initialPopularNews);
     }
 
+    // Skip redundant network fetching if SSR already provided articles and hero data
+    if (initialArticles && initialArticles.length > 0 && initialPopularNews && initialPopularNews.length > 0) {
+      return;
+    }
+
     Promise.all([
       getPublicArticles({ limit: 30, sort: 'latest' }),
       getHeroSettings(),

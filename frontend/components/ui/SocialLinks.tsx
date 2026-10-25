@@ -4,7 +4,7 @@ export const SOCIAL_LINKS = [
   { label: 'Facebook', platform: 'facebook', href: 'https://www.facebook.com/gujpost.in', hover: 'hover:bg-[#1877f2]', hoverBg: '#1877f2' },
   { label: 'Instagram', platform: 'instagram', href: 'https://www.instagram.com/gujaratpost.in/', hover: 'hover:bg-gradient-to-br hover:from-[#833ab4] hover:via-[#fd1d1d] hover:to-[#fcb045]', hoverBg: '#c13584' },
   { label: 'YouTube', platform: 'youtube', href: 'https://www.youtube.com/@Gujaratpostnews', hover: 'hover:bg-[#ff0000]', hoverBg: '#ff0000' },
-  { label: 'WhatsApp', platform: 'whatsapp', href: 'https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N', hover: 'hover:bg-[#25d366]', hoverBg: '#25d366' },
+  { label: 'WhatsApp', platform: 'whatsapp', href: 'https://wa.me/919909907237', hover: 'hover:bg-[#25d366]', hoverBg: '#25d366' },
   { label: 'X', platform: 'x', href: 'https://x.com/maheshrpat59606', hover: 'hover:bg-black', hoverBg: '#000000' },
   { label: 'Google News', platform: 'news', href: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', hover: 'hover:bg-[#4285f4]', hoverBg: '#4285f4' },
 ] as const;
