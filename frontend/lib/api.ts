@@ -263,6 +263,7 @@ export async function getPublicArticles(options: {
   isFeatured?: boolean;
   sort?: string;
   orderBy?: string;
+  includeContent?: boolean;
 } = {}): Promise<{ articles: Article[]; total: number; totalPages: number }> {
   try {
     const params = new URLSearchParams();
@@ -273,6 +274,7 @@ export async function getPublicArticles(options: {
     if (options.isTrending) params.append('isTrending', 'true');
     if (options.isBreaking) params.append('isBreaking', 'true');
     if (options.isFeatured) params.append('isFeatured', 'true');
+    if (options.includeContent) params.append('includeContent', 'true');
     if ((options as any).sort) params.append('sort', (options as any).sort);
     if ((options as any).orderBy) params.append('orderBy', (options as any).orderBy);
 

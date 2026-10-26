@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Share2, Flame, Sparkles, MapPin, Eye, Check } from 'lucide-react';
@@ -9,6 +9,8 @@ import { useApp } from '@/components/AppProvider';
 import { getLocalized, formatDate, formatViews } from '@/data';
 import { toGu, sortArticlesByLatest } from '@/lib/utils';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { getPublicArticles } from '@/lib/api';
+import { CATEGORY_PAIRS } from '@/app/category/[slug]/CategoryPageClient';
 import ApkAdBanner from './ApkAdBanner';
 
 interface ApkCategoryFeedProps {
@@ -25,7 +27,7 @@ interface ApkCategoryFeedProps {
   slug: string;
 }
 
-type CategoryTab = 'all' | 'latest' | 'trending';
+type CategoryTab = 'all' | 'paired' | 'latest' | 'trending';
 
 export default function ApkCategoryFeed({
   articles = [],
@@ -37,6 +39,27 @@ export default function ApkCategoryFeed({
   const [activeTab, setActiveTab] = useState<CategoryTab>('all');
   const [visibleCount, setVisibleCount] = useState(15);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const normSlug = (slug || '').toLowerCase().trim();
+  const pairedCategory = CATEGORY_PAIRS[normSlug];
+  const [pairedArticles, setPairedArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    if (!pairedCategory?.slug) {
+      setPairedArticles([]);
+      return;
+    }
+    let isMounted = true;
+    getPublicArticles({ categorySlug: pairedCategory.slug, page: 1, limit: 30 })
+      .then((res) => {
+        if (!isMounted) return;
+        setPairedArticles(sortArticlesByLatest(res?.articles || []));
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, [pairedCategory?.slug]);
 
   // Localized Category Title
   const categoryTitle = useMemo(() => {
@@ -106,15 +129,40 @@ export default function ApkCategoryFeed({
       if (trending && trending.length > 0) return trending;
       return [...articles].sort((a, b) => (b.views || 0) - (a.views || 0));
     }
+    if (activeTab === 'paired') {
+      return pairedArticles.length > 0 ? pairedArticles : articles;
+    }
     if (activeTab === 'latest') {
       return sortArticlesByLatest(articles);
     }
     return sortArticlesByLatest(articles);
-  }, [articles, trending, activeTab]);
+  }, [articles, trending, activeTab, pairedArticles]);
 
   const heroArticle = filteredArticles[0];
   const streamArticles = filteredArticles.slice(1, visibleCount);
 
+  const tabs = useMemo(() => {
+    const list: { id: CategoryTab; gu: string; hi: string; en: string }[] = [
+      { id: 'all', gu: 'બધું', hi: 'सभी', en: 'All' },
+    ];
+    if (pairedCategory) {
+      list.push({
+        id: 'paired',
+        gu: pairedCategory.gu,
+        hi: pairedCategory.hi,
+        en: pairedCategory.name,
+      });
+    } else {
+      list.push({
+        id: 'latest',
+        gu: 'તાજા સમાચાર',
+        hi: 'ताज़ा समाचार',
+        en: 'Latest',
+      });
+    }
+    list.push({ id: 'trending', gu: 'ટ્રેન્ડિંગ', hi: 'ट्रेंडिंग', en: 'Trending' });
+    return list;
+  }, [pairedCategory]);
 
   return (
     <div className="pb-10 max-w-md mx-auto w-full select-none">
@@ -134,11 +182,7 @@ export default function ApkCategoryFeed({
 
         {/* ── 2. QUICK FILTER TABS (All / Latest / Trending) ──────────── */}
         <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
-          {[
-            { id: 'all', gu: 'બધું', hi: 'सभी', en: 'All' },
-            { id: 'latest', gu: 'તાજા સમાચાર', hi: 'ताज़ा समाचार', en: 'Latest' },
-            { id: 'trending', gu: 'ટ્રેન્ડિંગ', hi: 'ट्रेंडिंग', en: 'Trending' },
-          ].map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"

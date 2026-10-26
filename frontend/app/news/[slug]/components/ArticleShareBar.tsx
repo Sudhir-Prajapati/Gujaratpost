@@ -2,6 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import type { Language } from '@/types';
+import {
+  getFacebookShareHref,
+  getTwitterShareHref,
+  getWhatsAppShareHref,
+  getPublicShareUrl,
+} from '@/lib/facebookShare';
 
 interface ArticleShareBarProps {
   title: string;
@@ -29,9 +35,11 @@ export default function ArticleShareBar({
     }
   }, []);
 
+  const publicShareUrl = getPublicShareUrl(articleUrl);
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(articleUrl);
+      await navigator.clipboard.writeText(publicShareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -45,7 +53,7 @@ export default function ArticleShareBar({
         await navigator.share({
           title,
           text: title,
-          url: articleUrl,
+          url: publicShareUrl,
         });
       } catch (err: any) {
         if (err.name !== 'AbortError') {
@@ -56,9 +64,6 @@ export default function ArticleShareBar({
       handleCopy();
     }
   };
-
-  const encodedUrl = encodeURIComponent(articleUrl);
-  const encodedTitle = encodeURIComponent(title);
 
   return (
     <div
@@ -80,7 +85,7 @@ export default function ArticleShareBar({
       <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
         {/* WhatsApp */}
         <a
-          href={`https://wa.me/?text=${encodedTitle}%20${encodedUrl}`}
+          href={getWhatsAppShareHref(articleUrl, title)}
           target="_blank"
           rel="noopener noreferrer"
           title={uiLabel(language, { en: 'Share on WhatsApp', gu: 'વોટ્સએપ પર શેર કરો', hi: 'व्हाट्सएप પર શેર करें' })}
@@ -95,7 +100,7 @@ export default function ArticleShareBar({
 
         {/* Facebook */}
         <a
-          href={`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`}
+          href={getFacebookShareHref(articleUrl)}
           target="_blank"
           rel="noopener noreferrer"
           title={uiLabel(language, { en: 'Share on Facebook', gu: 'ફેસબુક પર શેર કરો', hi: 'ફેસબુક પર શેર करें' })}
@@ -109,7 +114,7 @@ export default function ArticleShareBar({
 
         {/* X / Twitter */}
         <a
-          href={`https://twitter.com/intent/tweet?text=${encodedTitle}&url=${encodedUrl}`}
+          href={getTwitterShareHref(articleUrl, title)}
           target="_blank"
           rel="noopener noreferrer"
           title={uiLabel(language, { en: 'Share on X', gu: 'X પર શેર કરો', hi: 'X પર શેર करें' })}

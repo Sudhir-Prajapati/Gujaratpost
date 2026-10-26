@@ -54,15 +54,26 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Gujarat Post",
     description: "Latest Gujarati breaking news, politics, business, sports and entertainment.",
-    url: "/",
+    url: "https://gujaratpost.in",
     siteName: "Gujarat Post",
     locale: "gu_IN",
     type: "website",
+    images: [
+      {
+        url: "https://gujaratpost.in/logo.png",
+        width: 1200,
+        height: 630,
+        alt: "Gujarat Post",
+        type: "image/png",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Gujarat Post",
     description: "Latest Gujarati breaking news.",
+    site: "@gujaratpostin",
+    images: ["https://gujaratpost.in/logo.png"],
   },
   icons: {
     icon: [

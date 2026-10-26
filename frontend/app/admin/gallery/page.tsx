@@ -17,7 +17,9 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
-  Check
+  Check,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
 import { PHOTOS } from '@/data';
@@ -148,6 +150,10 @@ export default function GalleryPage() {
 
   // Form states for Upload
   const [uploading, setUploading] = useState(false);
+  const [uploadProgressText, setUploadProgressText] = useState('');
+  const [uploadingExtraIdx, setUploadingExtraIdx] = useState<number | null>(null);
+  const batchFileInputRef = useRef<HTMLInputElement>(null);
+  const editBatchFileInputRef = useRef<HTMLInputElement>(null);
   const [src, setSrc] = useState('');
   const [alt, setAlt] = useState('');
   const [caption, setCaption] = useState('');
@@ -254,29 +260,136 @@ export default function GalleryPage() {
     showNotification(`"${trimmed}" category added successfully!`, 'success', 'સફળતા');
   };
 
-  // Handle local file upload first to retrieve URL
+  // Single file upload to backend
+  const uploadSingleFile = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+      method: 'POST',
+      body: formData,
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || json.message || 'Upload failed');
+    return json.url || json.data?.url || '';
+  };
+
+  // Handle local file upload (supports single or multiple file selection)
   const handleLocalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
-        method: 'POST',
-        body: formData,
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || 'Upload failed');
-      setSrc(json.url);
+      const fileList = Array.from(files);
+      setUploadProgressText('મુખ્ય તસવીર અપલોડ થઈ રહી છે...');
+      const firstUrl = await uploadSingleFile(fileList[0]);
+      setSrc(firstUrl);
+
+      // If user selected multiple files at once from their PC
+      if (fileList.length > 1) {
+        const remainingFiles = fileList.slice(1);
+        const newExtras: Array<{ src: string; captionGu: string; description: string; photographer: string }> = [];
+        for (let i = 0; i < remainingFiles.length; i++) {
+          setUploadProgressText(`વધારાની તસવીર ${i + 1}/${remainingFiles.length} અપલોડ થઈ રહી છે...`);
+          const extraUrl = await uploadSingleFile(remainingFiles[i]);
+          newExtras.push({
+            src: extraUrl,
+            captionGu: '',
+            description: '',
+            photographer: photographer || 'Gujarat Post Team',
+          });
+        }
+        setExtraImages(prev => [...prev, ...newExtras]);
+        showNotification(`${fileList.length} તસવીરો સફળતાપૂર્વક અપલોડ થઈ ગઈ! (૧ મુખ્ય + ${remainingFiles.length} વધારાની)`, 'success');
+      }
     } catch (err: any) {
       showNotification(err.message || 'ઈમેજ અપલોડ કરવામાં ભૂલ આવી', 'error');
     } finally {
       setUploading(false);
+      setUploadProgressText('');
+      e.target.value = '';
     }
   };
 
+  // Batch upload multiple files directly into Extra Images
+  const handleBatchExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    try {
+      const fileList = Array.from(files);
+      const newExtras: Array<{ src: string; captionGu: string; description: string; photographer: string }> = [];
+      for (let i = 0; i < fileList.length; i++) {
+        setUploadProgressText(`વધારાની તસવીર ${i + 1}/${fileList.length} અપલોડ થઈ રહી છે...`);
+        const extraUrl = await uploadSingleFile(fileList[i]);
+        newExtras.push({
+          src: extraUrl,
+          captionGu: '',
+          description: '',
+          photographer: photographer || 'Gujarat Post Team',
+        });
+      }
+      setExtraImages(prev => [...prev, ...newExtras]);
+      showNotification(`${newExtras.length} વધારાની તસવીરો સફળતાપૂર્વક ઉમેરાઈ ગઈ!`, 'success');
+    } catch (err: any) {
+      showNotification(err.message || 'ઈમેજ અપલોડ કરવામાં ભૂલ આવી', 'error');
+    } finally {
+      setUploading(false);
+      setUploadProgressText('');
+      e.target.value = '';
+    }
+  };
 
+  // Upload file for a specific Extra Image slot
+  const handleSlotExtraUpload = async (e: React.ChangeEvent<HTMLInputElement>, slotIdx: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingExtraIdx(slotIdx);
+    try {
+      const extraUrl = await uploadSingleFile(file);
+      setExtraImages(prev => prev.map((item, idx) => idx === slotIdx ? { ...item, src: extraUrl } : item));
+      showNotification(`ઈમેજ #${slotIdx + 2} સફળતાપૂર્વક અપલોડ થઈ ગઈ!`, 'success');
+    } catch (err: any) {
+      showNotification(err.message || 'ઈમેજ અપલોડ કરવામાં ભૂલ આવી', 'error');
+    } finally {
+      setUploadingExtraIdx(null);
+      e.target.value = '';
+    }
+  };
+
+  // Edit Modal: Upload new file for primary image
+  const handleEditPrimaryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setUploadProgressText('મુખ્ય તસવીર અપલોડ થઈ રહી છે...');
+    try {
+      const newUrl = await uploadSingleFile(file);
+      setSrc(newUrl);
+      if (selectedPhoto) {
+        setSelectedPhoto(prev => prev ? { ...prev, src: newUrl } : null);
+      }
+      showNotification('મુખ્ય તસવીર સફળતાપૂર્વક અપડેટ થઈ ગઈ!', 'success');
+    } catch (err: any) {
+      showNotification(err.message || 'ઈમેજ અપલોડ કરવામાં ભૂલ આવી', 'error');
+    } finally {
+      setUploading(false);
+      setUploadProgressText('');
+      e.target.value = '';
+    }
+  };
+
+  // Move extra images up or down
+  const moveExtraImage = (fromIdx: number, direction: 'up' | 'down') => {
+    const toIdx = direction === 'up' ? fromIdx - 1 : fromIdx + 1;
+    if (toIdx < 0 || toIdx >= extraImages.length) return;
+    setExtraImages(prev => {
+      const copy = [...prev];
+      const item = copy[fromIdx];
+      copy[fromIdx] = copy[toIdx];
+      copy[toIdx] = item;
+      return copy;
+    });
+  };
 
   // Submit new photo to gallery db
   const handleUploadSubmit = async (e: React.FormEvent) => {
@@ -304,10 +417,10 @@ export default function GalleryPage() {
           },
           ...validExtra.map((item, idx) => ({
             src: item.src.trim(),
-            title: item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
-            caption: item.captionGu || caption,
-            captionGu: item.captionGu || captionGu,
-            description: item.description || item.captionGu || '',
+            title: captionGu || item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
+            caption: item.description || caption || captionGu,
+            captionGu: captionGu || item.captionGu || caption,
+            description: item.description || caption || captionGu,
             photographer: item.photographer || photographer || 'Gujarat Post Team',
           })),
         ];
@@ -333,11 +446,11 @@ export default function GalleryPage() {
 
       const savedPhoto = json.data || {
         id: `photo-${Date.now()}`,
-        src,
+        src: imagesPayload ? JSON.stringify(imagesPayload) : src,
         alt: alt || captionGu || 'Gujarat Post Gallery',
         caption: caption || captionGu,
         captionGu: captionGu || caption,
-        category,
+        category: finalCat,
         photographer: photographer || 'Gujarat Post Team',
         copyright: copyright || '© Gujarat Post',
         createdAt: new Date().toISOString(),
@@ -368,7 +481,7 @@ export default function GalleryPage() {
       setPhotographer('Gujarat Post Team');
       setCopyright('© Gujarat Post');
       setExtraImages([]);
-      showNotification('ઈમેજ સફળતાપૂર્વક સેવ થઈ ગઈ છે!', 'success');
+      showNotification('ગેલેરી સ્ટોરી સફળતાપૂર્વક સેવ થઈ ગઈ છે!', 'success');
     } catch (err: any) {
       showNotification(err.message || 'ઈમેજ સેવ કરવામાં ભૂલ આવી', 'error');
     } finally {
@@ -409,21 +522,24 @@ export default function GalleryPage() {
     setCopyright(photo.copyright || '© Gujarat Post');
     setFormLang('gu');
 
-    // Populate extraImages if photo has multiple images
-    if (photo.images && Array.isArray(photo.images) && photo.images.length > 1) {
+    // Extract primary src and extraImages
+    let primarySrc = photo.src;
+    if (photo.images && Array.isArray(photo.images) && photo.images.length > 0) {
+      primarySrc = photo.images[0]?.src || photo.images[0]?.url || photo.src;
       setExtraImages(photo.images.slice(1).map((item: any) => ({
         src: item.src || item.url || (typeof item === 'string' ? item : ''),
-        captionGu: item.captionGu || item.title || item.caption || '',
+        captionGu: item.captionGu || item.title || '',
         description: item.description || item.text || item.caption || '',
         photographer: item.photographer || photo.photographer || 'Gujarat Post Team',
       })));
     } else if (typeof photo.src === 'string' && photo.src.trim().startsWith('[')) {
       try {
         const parsed = JSON.parse(photo.src);
-        if (Array.isArray(parsed) && parsed.length > 1) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          primarySrc = parsed[0]?.src || parsed[0]?.url || photo.src;
           setExtraImages(parsed.slice(1).map((item: any) => ({
             src: item.src || item.url || (typeof item === 'string' ? item : ''),
-            captionGu: item.captionGu || item.title || item.caption || '',
+            captionGu: item.captionGu || item.title || '',
             description: item.description || item.text || item.caption || '',
             photographer: item.photographer || photo.photographer || 'Gujarat Post Team',
           })));
@@ -437,6 +553,7 @@ export default function GalleryPage() {
       setExtraImages([]);
     }
 
+    setSrc(primarySrc);
     setEditModalOpen(true);
   };
 
@@ -454,11 +571,11 @@ export default function GalleryPage() {
 
       const validExtra = extraImages.filter(item => item.src && item.src.trim());
       let imagesPayload: any = null;
-      let primarySrc = selectedPhoto.src;
+      let primarySrc = src || selectedPhoto.src;
       if (typeof primarySrc === 'string' && primarySrc.startsWith('[')) {
         try {
           const parsed = JSON.parse(primarySrc);
-          if (Array.isArray(parsed) && parsed.length > 0) primarySrc = parsed[0]?.src || parsed[0];
+          if (Array.isArray(parsed) && parsed.length > 0) primarySrc = parsed[0]?.src || parsed[0]?.url || parsed[0];
         } catch {}
       }
 
@@ -474,10 +591,10 @@ export default function GalleryPage() {
           },
           ...validExtra.map((item, idx) => ({
             src: item.src.trim(),
-            title: item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
-            caption: item.captionGu || caption,
-            captionGu: item.captionGu || captionGu,
-            description: item.description || item.captionGu || '',
+            title: captionGu || item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
+            caption: item.description || caption || captionGu,
+            captionGu: captionGu || item.captionGu || caption,
+            description: item.description || caption || captionGu,
             photographer: item.photographer || photographer || 'Gujarat Post Team',
           })),
         ];
@@ -488,9 +605,9 @@ export default function GalleryPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           src: imagesPayload ? JSON.stringify(imagesPayload) : primarySrc,
-          alt,
-          caption,
-          captionGu,
+          alt: alt || captionGu || 'Gujarat Post Gallery',
+          caption: caption || captionGu,
+          captionGu: captionGu || caption,
           captionHi,
           category: finalCat,
           photographer,
@@ -502,6 +619,7 @@ export default function GalleryPage() {
       const updatedPhoto = {
         ...selectedPhoto,
         ...(json.data || {}),
+        src: imagesPayload ? JSON.stringify(imagesPayload) : primarySrc,
         category: finalCat,
         captionGu: captionGu || caption,
         caption: caption || captionGu,
@@ -515,7 +633,7 @@ export default function GalleryPage() {
       setEditModalOpen(false);
       setSelectedPhoto(null);
       setExtraImages([]);
-      showNotification('ફોટો કેટેગરી અને ડિટેલ્સ સફળતાપૂર્વક અપડેટ થઈ ગઈ છે!', 'success');
+      showNotification('ગેલેરી સ્ટોરી સફળતાપૂર્વક અપડેટ થઈ ગઈ છે!', 'success');
     } catch (err: any) {
       showNotification(err.message || 'અપડેટ કરવામાં ભૂલ આવી', 'error');
     } finally {
@@ -720,16 +838,16 @@ export default function GalleryPage() {
                     ૧. કમ્પ્યુટરથી ઈમેજ પસંદ કરો (Select Image File from PC)
                   </label>
                   <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[11px] font-black">
-                    <span className="text-red-500">*</span> ફરજિયાત (Mandatory)&nbsp;•&nbsp;PNG / JPG / WEBP&nbsp;•&nbsp;Max 5 MB&nbsp;•&nbsp;Min 800×600 px
+                    <span className="text-red-500">*</span> ૧ કે વધુ ફોટા એકસાથે પસંદ કરી શકો છો
                   </span>
                 </div>
                 
                 {src ? (
-                  <div className="relative aspect-video w-full overflow-hidden rounded-2xl border-2 border-red-500/40 bg-zinc-950 shadow-md group">
-                    <img src={src} alt="Upload preview" className="w-full h-full object-cover" />
+                  <div className="relative aspect-video max-h-56 w-full overflow-hidden rounded-2xl border-2 border-red-500/40 bg-zinc-950 shadow-md group flex items-center justify-center">
+                    <img src={src} alt="Upload preview" className="w-full h-full object-contain" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                       <span className="text-white text-xs font-black bg-black/70 px-3.5 py-1.5 rounded-full backdrop-blur">
-                        ઇમેજ તૈયાર છે (Image Ready)
+                        મુખ્ય ઇમેજ તૈયાર છે (Cover Ready)
                       </span>
                       <button
                         type="button"
@@ -749,16 +867,17 @@ export default function GalleryPage() {
                       </div>
                       <div className="space-y-0.5">
                         <p className="text-sm font-black text-zinc-800 dark:text-zinc-200">
-                          {uploading ? 'અપલોડ થઈ રહ્યું છે...' : 'અહીં ક્લિક કરીને ફાઈલ પસંદ કરો'}
+                          {uploading ? (uploadProgressText || 'અપલોડ થઈ રહ્યું છે...') : 'અહીં ક્લિક કરીને ૧ કે વધુ ફોટા પસંદ કરો'}
                         </p>
                         <p className="text-xs font-bold text-zinc-400">
-                          PNG · JPG · WEBP · Max 5 MB · Min 800×600 px
+                          PNG · JPG · WEBP · એકસાથે મલ્ટિપલ ફોટા પસંદ કરી શકો છો
                         </p>
                       </div>
                     </div>
                     <input
                       type="file"
                       accept="image/*"
+                      multiple
                       onChange={handleLocalFileUpload}
                       disabled={uploading}
                       className="hidden"
@@ -773,7 +892,7 @@ export default function GalleryPage() {
                   <div className="w-full border-t border-gray-400 dark:border-zinc-700" />
                 </div>
                 <span className="relative bg-white dark:bg-zinc-900 px-3 text-[11px] font-black uppercase text-zinc-400 tracking-wider select-none">
-                  અથવા ઈમેજ URL લિંક (OR VIA IMAGE URL)
+                  અથવા મુખ્ય ઈમેજ URL લિંક (OR VIA COVER URL)
                 </span>
               </div>
 
@@ -788,21 +907,44 @@ export default function GalleryPage() {
                 />
               </div>
 
-              {/* Gujarati Title & Caption */}
+              {/* Gujarati Title & Heading (ONE HEADING FOR THE ENTIRE STORY) */}
               <div>
-                <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider mb-2">
-                  ટાઇટલ / કેપ્શન (ગુજરાતી)
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                    ટાઇટલ / હેડિંગ (Title / Heading - ગુજરાતી)
+                  </label>
+                  <span className="text-[11px] font-bold text-red-600 dark:text-red-400">
+                    * આખી ગેલેરી સ્ટોરી માટે ૧ જ મુખ્ય હેડિંગ
+                  </span>
+                </div>
                 <input
                   type="text"
-                  placeholder="અહીં ગુજરાતીમાં શીર્ષક લખો..."
+                  placeholder="દા.ત. રકુલ પ્રીતનો સ્ટાઈલિશ આઉટફીટમાં ગ્લેમરસ લુક"
                   value={captionGu}
                   onChange={(e) => {
                     setCaptionGu(e.target.value);
-                    setCaption(e.target.value);
                     setAlt(e.target.value);
                   }}
                   className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm"
+                />
+              </div>
+
+              {/* Story Description (shown below photos) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                    સ્ટોરી વર્ણન / વિગતો (Story Description / Details)
+                  </label>
+                  <span className="text-[11px] font-medium text-zinc-400">
+                    દરેક ફોટા નીચે ડિફોલ્ટ આ વર્ણન દેખાશે
+                  </span>
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="સ્ટોરીનું વર્ણન લખો (દા.ત. રકુલ પ્રીત સિંહ સોશિયલ મીડિયા પર ખૂબ જ એક્ટિવ રહે છે...)"
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm resize-none"
                 />
               </div>
 
@@ -839,78 +981,148 @@ export default function GalleryPage() {
                   />
                 </div>
               </div>
+
               {/* ─── EXTRA IMAGES SECTION (MULTI-IMAGE GALLERY STORY) ─── */}
               <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
-                      વધારાની ઈમેજો (Multiple Images for Gallery Story)
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                      <Camera className="h-4 w-4 text-red-600" />
+                      <span>વધારાની ઈમેજો (Multiple Images for Gallery Story)</span>
+                      {extraImages.length > 0 && (
+                        <span className="ml-1.5 px-2 py-0.5 rounded-full bg-red-100 text-[#B3121B] dark:bg-red-950 dark:text-red-400 text-[11px] font-black">
+                          +{extraImages.length} ફોટા
+                        </span>
+                      )}
                     </h4>
                     <p className="text-[11px] text-zinc-400 font-medium">
-                      જો આ સ્ટોરીમાં ૨ કે વધુ ફોટા હોય તો અહીં ઉમેરો (Image + Caption)
+                      આ સ્ટોરીમાં એક જ હેડિંગ હેઠળ ક્રમશઃ બધી તસવીરો અને વર્ણન દેખાશે
                     </p>
-                    <span className="inline-flex items-center gap-0.5 mt-1 px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-400 text-[10px] font-black">
-                      PNG / JPG / WEBP &bull; Max 5 MB &bull; Min 800&times;600 px per image
-                    </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setExtraImages(prev => [...prev, { src: '', captionGu: '', description: '', photographer: 'Gujarat Post Team' }])}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#B3121B] dark:bg-red-950/40 dark:hover:bg-red-950/60 dark:text-red-400 text-xs font-bold transition border border-red-200/60 dark:border-red-800/40 cursor-pointer shadow-sm"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    + ફોટો ઉમેરો (Add Image)
-                  </button>
+                  
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={batchFileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleBatchExtraUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => batchFileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      + PC થી એકસાથે ફોટા ઉમેરો
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setExtraImages(prev => [...prev, { src: '', captionGu: '', description: '', photographer: photographer || 'Gujarat Post Team' }])}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 text-xs font-bold transition cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      + ખાલી સ્લોટ
+                    </button>
+                  </div>
                 </div>
 
                 {extraImages.map((extra, eIdx) => (
                   <div key={eIdx} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-[#B3121B] dark:text-red-400">
+                      <span className="text-xs font-black text-[#B3121B] dark:text-red-400 flex items-center gap-1.5">
+                        <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center text-[10px] font-black">
+                          {eIdx + 2}
+                        </span>
                         ઈમેજ #{eIdx + 2}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== eIdx))}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 p-1"
-                        title="Remove"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveExtraImage(eIdx, 'up')}
+                          disabled={eIdx === 0}
+                          className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveExtraImage(eIdx, 'down')}
+                          disabled={eIdx === extraImages.length - 1}
+                          className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== eIdx))}
+                          className="text-xs font-bold text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                          title="Remove"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <input
-                      type="text"
-                      placeholder="ઈમેજ URL લિંક (https://...)"
-                      value={extra.src}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: val } : item));
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                    />
+                    {/* Thumbnail preview if src exists */}
+                    {extra.src && (
+                      <div className="relative aspect-video max-h-36 w-full overflow-hidden rounded-xl bg-zinc-950 border border-zinc-300 dark:border-zinc-700">
+                        <img src={extra.src} alt={`Extra ${eIdx + 2}`} className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: '' } : item))}
+                          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow cursor-pointer"
+                          title="Remove image"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
 
-                    <input
-                      type="text"
-                      placeholder="ઈમેજ શીર્ષક / કેપ્શન (ગુજરાતી)"
-                      value={extra.captionGu}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, captionGu: val } : item));
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                    />
+                    {/* Upload file or URL for this slot */}
+                    <div className="flex items-center gap-2">
+                      <label className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 hover:border-red-500 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer shadow-sm">
+                        {uploadingExtraIdx === eIdx ? <Loader2 className="h-3.5 w-3.5 animate-spin text-red-600" /> : <UploadCloud className="h-3.5 w-3.5 text-red-600" />}
+                        <span>{uploadingExtraIdx === eIdx ? 'અપલોડ...' : 'PC થી ફાઈલ પસંદ કરો'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleSlotExtraUpload(e, eIdx)}
+                          disabled={uploadingExtraIdx !== null}
+                          className="hidden"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="અથવા ઈમેજ URL લિંક (https://...)"
+                        value={extra.src}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: val } : item));
+                        }}
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                      />
+                    </div>
 
-                    <textarea
-                      rows={2}
-                      placeholder="ઈમેજ વર્ણન / વિગતો (Description text under image)"
-                      value={extra.description}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white resize-none"
-                    />
+                    {/* Optional custom description for this photo */}
+                    <div>
+                      <textarea
+                        rows={2}
+                        placeholder={`આ તસવીરનું વિશેષ વર્ણન (ખાલી રાખશો તો મુખ્ય સ્ટોરી વર્ણન આપમેળે વપરાશે)`}
+                        value={extra.description}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
+                        }}
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white resize-none"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -928,7 +1140,7 @@ export default function GalleryPage() {
                   disabled={uploading || !src}
                   className="rounded-xl bg-[#B3121B] px-6 py-2.5 text-sm font-black text-white hover:bg-[#8e0e15] shadow-lg shadow-[#B3121B]/25 disabled:opacity-50 transition cursor-pointer active:scale-95"
                 >
-                  {uploading ? 'અપલોડ થઈ રહ્યું છે...' : 'સેવ કરો (Save Photo)'}
+                  {uploading ? (uploadProgressText || 'અપલોડ થઈ રહ્યું છે...') : 'સેવ કરો (Save Gallery Story)'}
                 </button>
               </div>
             </form>
@@ -960,25 +1172,74 @@ export default function GalleryPage() {
             </div>
 
             <form onSubmit={handleEditSubmit} className="space-y-4">
-              <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-zinc-100">
-                <img src={selectedPhoto.src} alt={alt} className="w-full h-full object-cover" />
+              {/* Primary Image preview and upload */}
+              <div className="space-y-2">
+                <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                  મુખ્ય ઈમેજ (Cover / Primary Image)
+                </label>
+                <div className="relative aspect-video max-h-56 w-full overflow-hidden rounded-xl bg-zinc-950 border border-zinc-300 dark:border-zinc-700 flex items-center justify-center">
+                  <img src={src || selectedPhoto.src} alt={alt} className="w-full h-full object-contain" />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 hover:border-red-500 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer shadow-sm">
+                    {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-red-600" /> : <UploadCloud className="h-3.5 w-3.5 text-red-600" />}
+                    <span>{uploading ? (uploadProgressText || 'અપલોડ...') : 'PC થી કવર ઈમેજ બદલો'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditPrimaryUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="અથવા મુખ્ય ઈમેજ URL"
+                    value={src}
+                    onChange={(e) => setSrc(e.target.value)}
+                    className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                  />
+                </div>
               </div>
 
-              {/* Gujarati Title & Caption */}
+              {/* Gujarati Title & Heading (ONE HEADING FOR THE ENTIRE STORY) */}
               <div>
-                <label className="block text-xs font-bold text-zinc-500 uppercase tracking-wider mb-2">
-                  ટાઇટલ / કેપ્શન (ગુજરાતી)
-                </label>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                    ટાઇટલ / હેડિંગ (Title / Heading - ગુજરાતી)
+                  </label>
+                  <span className="text-[11px] font-bold text-red-600 dark:text-red-400">
+                    * આખી ગેલેરી સ્ટોરી માટે ૧ જ મુખ્ય હેડિંગ
+                  </span>
+                </div>
                 <input
                   type="text"
                   placeholder="અહીં ગુજરાતીમાં શીર્ષક લખો..."
                   value={captionGu}
                   onChange={(e) => {
                     setCaptionGu(e.target.value);
-                    setCaption(e.target.value);
                     setAlt(e.target.value);
                   }}
                   className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2.5 text-sm font-bold text-foreground focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white"
+                />
+              </div>
+
+              {/* Story Description (shown below photos) */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-xs font-black text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
+                    સ્ટોરી વર્ણન / વિગતો (Story Description / Details)
+                  </label>
+                  <span className="text-[11px] font-medium text-zinc-400">
+                    દરેક ફોટા નીચે ડિફોલ્ટ આ વર્ણન દેખાશે
+                  </span>
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="સ્ટોરીનું વર્ણન લખો (દા.ત. રકુલ પ્રીત સિંહ સોશિયલ મીડિયા પર ખૂબ જ એક્ટિવ રહે છે...)"
+                  value={caption}
+                  onChange={(e) => setCaption(e.target.value)}
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2 text-sm font-semibold text-foreground focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white resize-none"
                 />
               </div>
 
@@ -1014,75 +1275,148 @@ export default function GalleryPage() {
                   />
                 </div>
               </div>
+
               {/* ─── EXTRA IMAGES SECTION (MULTI-IMAGE GALLERY STORY) ─── */}
               <div className="space-y-3 pt-3 border-t border-zinc-200 dark:border-zinc-800">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200">
-                      વધારાની ઈમેજો (Multiple Images for Gallery Story)
+                    <h4 className="text-xs font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+                      <Camera className="h-4 w-4 text-red-600" />
+                      <span>વધારાની ઈમેજો (Multiple Images for Gallery Story)</span>
+                      {extraImages.length > 0 && (
+                        <span className="ml-1.5 px-2 py-0.5 rounded-full bg-red-100 text-[#B3121B] dark:bg-red-950 dark:text-red-400 text-[11px] font-black">
+                          +{extraImages.length} ફોટા
+                        </span>
+                      )}
                     </h4>
                     <p className="text-[11px] text-zinc-400 font-medium">
-                      જો આ સ્ટોરીમાં ૨ કે વધુ ફોટા હોય તો અહીં ઉમેરો (Image + Caption)
+                      આ સ્ટોરીમાં એક જ હેડિંગ હેઠળ ક્રમશઃ બધી તસવીરો અને વર્ણન દેખાશે
                     </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setExtraImages(prev => [...prev, { src: '', captionGu: '', description: '', photographer: 'Gujarat Post Team' }])}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-[#B3121B] dark:bg-red-950/40 dark:hover:bg-red-950/60 dark:text-red-400 text-xs font-bold transition border border-red-200/60 dark:border-red-800/40 cursor-pointer shadow-sm"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    + ફોટો ઉમેરો (Add Image)
-                  </button>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={editBatchFileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleBatchExtraUpload}
+                      disabled={uploading}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => editBatchFileInputRef.current?.click()}
+                      disabled={uploading}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition shadow-sm cursor-pointer disabled:opacity-50"
+                    >
+                      <UploadCloud className="h-3.5 w-3.5" />
+                      + PC થી એકસાથે ફોટા ઉમેરો
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setExtraImages(prev => [...prev, { src: '', captionGu: '', description: '', photographer: photographer || 'Gujarat Post Team' }])}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-zinc-800 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-200 text-xs font-bold transition cursor-pointer"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      + ખાલી સ્લોટ
+                    </button>
+                  </div>
                 </div>
 
                 {extraImages.map((extra, eIdx) => (
                   <div key={eIdx} className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-zinc-950/40 border border-zinc-200 dark:border-zinc-800 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-black text-[#B3121B] dark:text-red-400">
+                      <span className="text-xs font-black text-[#B3121B] dark:text-red-400 flex items-center gap-1.5">
+                        <span className="w-5 h-5 rounded-full bg-red-100 dark:bg-red-950/80 text-red-600 dark:text-red-400 flex items-center justify-center text-[10px] font-black">
+                          {eIdx + 2}
+                        </span>
                         ઈમેજ #{eIdx + 2}
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== eIdx))}
-                        className="text-xs font-bold text-red-500 hover:text-red-700 p-1"
-                        title="Remove"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => moveExtraImage(eIdx, 'up')}
+                          disabled={eIdx === 0}
+                          className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 cursor-pointer"
+                          title="Move Up"
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveExtraImage(eIdx, 'down')}
+                          disabled={eIdx === extraImages.length - 1}
+                          className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 disabled:opacity-30 cursor-pointer"
+                          title="Move Down"
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setExtraImages(prev => prev.filter((_, idx) => idx !== eIdx))}
+                          className="text-xs font-bold text-red-500 hover:text-red-700 p-1 cursor-pointer"
+                          title="Remove"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
 
-                    <input
-                      type="text"
-                      placeholder="ઈમેજ URL લિંક (https://...)"
-                      value={extra.src}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: val } : item));
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                    />
+                    {/* Thumbnail preview if src exists */}
+                    {extra.src && (
+                      <div className="relative aspect-video max-h-36 w-full overflow-hidden rounded-xl bg-zinc-950 border border-zinc-300 dark:border-zinc-700">
+                        <img src={extra.src} alt={`Extra ${eIdx + 2}`} className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: '' } : item))}
+                          className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white p-1 rounded-full shadow cursor-pointer"
+                          title="Remove image"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    )}
 
-                    <input
-                      type="text"
-                      placeholder="ઈમેજ શીર્ષક / કેપ્શન (ગુજરાતી)"
-                      value={extra.captionGu}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, captionGu: val } : item));
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white"
-                    />
+                    {/* Upload file or URL for this slot */}
+                    <div className="flex items-center gap-2">
+                      <label className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 hover:border-red-500 text-xs font-bold text-zinc-800 dark:text-zinc-200 cursor-pointer shadow-sm">
+                        {uploadingExtraIdx === eIdx ? <Loader2 className="h-3.5 w-3.5 animate-spin text-red-600" /> : <UploadCloud className="h-3.5 w-3.5 text-red-600" />}
+                        <span>{uploadingExtraIdx === eIdx ? 'અપલોડ...' : 'PC થી ફાઈલ પસંદ કરો'}</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => handleSlotExtraUpload(e, eIdx)}
+                          disabled={uploadingExtraIdx !== null}
+                          className="hidden"
+                        />
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="અથવા ઈમેજ URL લિંક (https://...)"
+                        value={extra.src}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, src: val } : item));
+                        }}
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white"
+                      />
+                    </div>
 
-                    <textarea
-                      rows={2}
-                      placeholder="ઈમેજ વર્ણન / વિગતો (Description text under image)"
-                      value={extra.description}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
-                      }}
-                      className="w-full rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-800 dark:bg-zinc-900 dark:text-white resize-none"
-                    />
+                    {/* Optional custom description for this photo */}
+                    <div>
+                      <textarea
+                        rows={2}
+                        placeholder={`આ તસવીરનું વિશેષ વર્ણન (ખાલી રાખશો તો મુખ્ય સ્ટોરી વર્ણન આપમેળે વપરાશે)`}
+                        value={extra.description}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
+                        }}
+                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white resize-none"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1098,9 +1432,9 @@ export default function GalleryPage() {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="rounded-xl bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-850 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+                  className="rounded-xl bg-[#B3121B] px-5 py-2.5 text-sm font-black text-white hover:bg-[#8e0e15] disabled:opacity-50 transition cursor-pointer shadow-md shadow-[#B3121B]/20"
                 >
-                  Save Changes
+                  {uploading ? (uploadProgressText || 'અપલોડ થઈ રહ્યું છે...') : 'સેવ કરો (Save Changes)'}
                 </button>
               </div>
             </form>
