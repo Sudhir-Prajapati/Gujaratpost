@@ -75,7 +75,7 @@ export default function AePanVachoSection({ language = 'gu', spacingClassName = 
     <section className={`${spacingClassName} pt-6 border-t border-border select-none`}>
       {/* ── HEADER MATCHING IMAGE 4: RED BADGE [આ પણ વાંચો] ── */}
       <div className="mb-5 sm:mb-6">
-        <span className="bg-[#B3121B] text-white text-xs sm:text-sm font-black px-3.5 sm:px-4 py-1.5 rounded-md uppercase tracking-wider inline-block shadow-xs">
+        <span className="bg-[#B3121B] text-white text-base sm:text-lg md:text-[20px] font-black px-6 sm:px-7 py-2.5 sm:py-3 rounded-xl uppercase tracking-wide inline-block shadow-lg">
           {language === 'gu' ? 'આ પણ વાંચો' : language === 'hi' ? 'यह भी पढ़ें' : 'Also Read'}
         </span>
       </div>

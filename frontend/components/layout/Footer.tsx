@@ -92,13 +92,23 @@ const topics3Links = [
     { label: 'Technology', href: '/category/technology' },
     { label: 'Photo Gallery', href: '/photos' },
     { label: 'Instagram', href: '/instagram' },
-    { label: 'Weather', href: '/category/weather' },
-    { label: 'Gold-Silver', href: '/category/gold-silver' },
-    { label: 'News Brief', href: '/category/news-brief' }
+    { label: 'AQI', href: '/aqi' },
+    { label: 'News Brief', href: '/news-brief' }
 ];
 
 
-
+const companyLinks = [
+    { label: 'About Us', href: '/about' },
+    { label: 'Contact Us', href: '/contact' },
+    { label: 'Advertise With Us', href: '/advertise' },
+    { label: 'Privacy Policy', href: '/privacy-policy' },
+    // { label: 'Cookie Policy', href: '/cookie-policy' },
+    { label: 'Terms Of Use', href: '/terms' },
+    { label: 'Disclaimer', href: '/disclaimer' },
+    { label: 'Site Map', href: '/sitemap' },
+    { label: 'RSS Feeds', href: '/rss' },
+    // { label: 'Feedback', href: '/feedback' },
+];
 
 
 /* ─── NavColumn Component ─────────────────────────────────────────────────── */
@@ -212,7 +222,8 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
     return (
         <>
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
 @keyframes footerTitleShimmer {
   0% { background-position: -200% 0; }
   50%, 100% { background-position: 200% 0; }
@@ -251,219 +262,97 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                 data-theme="dark"
                 className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative"
             >
-            <div className={`w-full px-4 sm:px-6 md:px-8 lg:px-10 ${wrap}`}>
+                <div className={`w-full px-4 sm:px-6 md:px-8 lg:px-10 ${wrap}`}>
 
-                {/* ── MOBILE ONLY FOOTER (Matching website Image 3 layout) ── */}
-                <div className="md:hidden flex flex-col gap-5 pb-3 pt-1">
-                    {/* Top Branding & Support */}
-                    <div className="flex flex-col items-center text-center pb-5 border-b border-slate-800/80">
-                        {/* Slogan */}
-                        <p
-                            className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
-                            style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
-                            translate="no"
-                        >
-                            Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
-                        </p>
-
-                        {/* Logo */}
-                        <div className="w-[240px] max-w-full flex flex-col items-center mt-5">
-                            {/* Logo */}
-                            <Link
-                                href="/"
-                                className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
-                            >
-                                <Image
-                                    src="/GujaratpostFinalLogo.png"
-                                    alt="Gujarat Post"
-                                    width={662}
-                                    height={163}
-                                    priority
-                                    unoptimized
-                                    className="w-full h-auto block drop-shadow-sm"
-                                />
-                            </Link>
-
-                        {/* Support Us Button in Footer */}
-                        {supportEnabled && <button
-                            type="button"
-                            onClick={openSupportModal}
-                            className="w-full mt-5 flex items-center justify-center gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3.5 text-white shadow-lg shadow-[#CF0907]/30 active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
-                        >
-                            <Heart className="h-4.5 w-4.5 fill-current animate-pulse text-white shrink-0" />
-                            <span className="text-[15.5px] sm:text-[16.5px] font-black tracking-wide drop-shadow-sm">
-                                {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
-                            </span>
-                        </button>}
-                        </div>
-
-                        {/* Social Icons */}
-                        <div className="flex items-center justify-center gap-3 sm:gap-3.5 w-full max-w-xs mx-auto mt-5">
-                            {SOCIAL_LINKS.map((item) => (
-                                <SocialIconButton key={`mob-${item.label}`} item={item} className="h-9.5 w-9.5 shrink-0" />
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Exact 4 NavColumns matching Website (Image 3) in a clean 2x2 grid */}
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-7 px-2">
-                        <NavColumn title="Topics" links={topics1Links} delay={0} />
-                        <NavColumn title="Topics" links={topics2Links} delay={0.7} />
-                        <NavColumn title="Topics" links={topics3Links} delay={1.4} />
-                        <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} />
-                    </div>
-
-                    {/* App Store & Google Play Badges */}
-                    <div className="pt-4 border-t border-slate-800/80 flex flex-col items-center">
-                        <div className="grid grid-cols-2 gap-2.5 w-full max-w-xs">
-                            <a
-                                href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
-                            >
-                                <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
-                                <span translate="no" className="text-[13px] font-black text-white tracking-tight">App Store</span>
-                            </a>
-
-                            <a
-                                href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
-                                target="_blank"
-                                rel="noreferrer"
-                                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
-                            >
-                                <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
-                                <span translate="no" className="text-[13px] font-black text-white tracking-tight">Google Play</span>
-                            </a>
-                        </div>
-                    </div>
-
-                    {/* Legal Policies */}
-                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-extrabold text-slate-400 px-2 text-center">
-                        {[
-                            ['Complain Redressal', '/complaign-redressal'],
-                            ['Cookie Policy', '/cookie-policy'],
-                            ['Cookie Settings', '/cookie-settings'],
-                        ].map(([label, href]) => (
-                            <Link
-                                key={href}
-                                href={href}
-                                onClick={
-                                    href === '/cookie-settings'
-                                        ? (e) => {
-                                            e.preventDefault();
-                                            window.dispatchEvent(new CustomEvent('gp-open-cookie-settings'));
-                                          }
-                                        : undefined
-                                }
-                                className="hover:text-white transition-colors duration-200"
-                            >
-                                <LocalizedText text={label === 'Complaign Redressal' ? 'Complain Redressal' : label} />
-                            </Link>
-                        ))}
-                    </div>
-
-                    {/* Copyright */}
-                    <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10px] text-center px-4">
-                        <p>External links are provided for reference purposes. © {new Date().getFullYear()} GUJARAT POST MEDIA. ALL RIGHTS RESERVED.</p>
-                    </div>
-                </div>
-
-                {/* ── DESKTOP ONLY Main Layout: Preserved 100% Unchanged ── */}
-                <div className="hidden md:flex flex-col lg:flex-row gap-6 lg:gap-0 pb-4 border-b border-slate-800/80">
-
-                    {/* Logo & Brand */}
-                    <div className="flex flex-col items-start gap-1 lg:w-72 flex-shrink-0 select-none">
-                        {/* Unified Logo & Support Button Container - Exact Same Width & Matching Ends */}
-                        <div className="w-[240px] flex flex-col items-start">
+                    {/* ── MOBILE ONLY FOOTER (Matching website Image 3 layout) ── */}
+                    <div className="md:hidden flex flex-col gap-5 pb-3 pt-1">
+                        {/* Top Branding & Support */}
+                        <div className="flex flex-col items-center text-center pb-5 border-b border-slate-800/80">
                             {/* Slogan */}
-                            <div className="w-full flex flex-col justify-center leading-tight mb-2">
-                                <p
-                                    className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
-                                    style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
-                                    translate="no"
+                            <p
+                                className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
+                                style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
+                                translate="no"
+                            >
+                                Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
+                            </p>
+
+                            {/* Logo */}
+                            <div className="w-[240px] max-w-full flex flex-col items-center mt-1">
+                                {/* Logo */}
+                                <Link
+                                    href="/"
+                                    className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
                                 >
-                                    Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
-                                </p>
+                                    <Image
+                                        src="/GujaratpostFinalLogo.png"
+                                        alt="Gujarat Post"
+                                        width={662}
+                                        height={163}
+                                        priority
+                                        unoptimized
+                                        className="w-full h-auto block drop-shadow-sm"
+                                    />
+                                </Link>
+
+                                {/* Support Us Button in Footer */}
+                                {supportEnabled && <button
+                                    type="button"
+                                    onClick={openSupportModal}
+                                    className="w-full mt-5 flex items-center justify-center gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3.5 text-white shadow-lg shadow-[#CF0907]/30 active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
+                                >
+                                    <Heart className="h-4.5 w-4.5 fill-current animate-pulse text-white shrink-0" />
+                                    <span className="text-[15.5px] sm:text-[16.5px] font-black tracking-wide drop-shadow-sm">
+                                        {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
+                                    </span>
+                                </button>}
                             </div>
 
-                            {/* Logo — exact same width as Support Button */}
-                            <Link
-                                href="/"
-                                className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
-                            >
-                                <Image
-                                    src="/GujaratpostFinalLogo.png"
-                                    alt="Gujarat Post"
-                                    width={662}
-                                    height={163}
-                                    priority
-                                    unoptimized
-                                    className="w-full h-auto block drop-shadow-sm"
-                                />
-                            </Link>
-
-                            {/* Support Us Button in Footer */}
-                            {supportEnabled && <button
-                                type="button"
-                                onClick={openSupportModal}
-                                className="mt-5 sm:mt-6 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3 sm:py-3.5 text-white shadow-lg shadow-[#CF0907]/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
-                            >
-                                <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-current animate-pulse text-white shrink-0" />
-                                <span className="text-[15px] sm:text-[16px] font-black tracking-wide whitespace-nowrap drop-shadow-sm">
-                                    {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
-                                </span>
-                            </button>}
-                            {/* Social Icons — same width as button, spread end to end */}
-                            <div className="w-full flex justify-center mt-5 sm:mt-6">
-                                <div className="grid grid-cols-3 gap-x-6.5 sm:gap-x-7 gap-y-4 sm:gap-y-4.5 place-items-center">
-                                    {SOCIAL_LINKS.map((item) => (
-                                        <SocialIconButton key={item.label} item={item} className="h-10 w-10" />
-                                    ))}
-                                </div>
+                            {/* Social Icons */}
+                            <div className="flex items-center justify-center gap-3 sm:gap-3.5 w-full max-w-xs mx-auto mt-5">
+                                {SOCIAL_LINKS.map((item) => (
+                                    <SocialIconButton key={`mob-${item.label}`} item={item} className="h-9.5 w-9.5 shrink-0" />
+                                ))}
                             </div>
                         </div>
 
-                    </div>
+                        {/* Exact 4 NavColumns matching Website (Image 3) in a clean 2x2 grid */}
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-7 px-2">
+                            <NavColumn title="Topics" links={topics1Links} delay={0} />
+                            <NavColumn title="Topics" links={topics2Links} delay={0.7} />
+                            <NavColumn title="Topics" links={topics3Links} delay={1.4} />
+                            <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} />
+                        </div>
 
-                    {/* Nav columns — pushed to the right */}
-                    <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 lg:pl-10">
+                        {/* App Store & Google Play Badges */}
+                        <div className="pt-4 border-t border-slate-800/80 flex flex-col items-center">
+                            <div className="grid grid-cols-2 gap-2.5 w-full max-w-xs">
+                                <a
+                                    href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
+                                >
+                                    <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
+                                    <span translate="no" className="text-[13px] font-black text-white tracking-tight">App Store</span>
+                                </a>
 
-                        {/* Topics Col 1 */}
-                        <NavColumn title="Topics" links={topics1Links} delay={0} />
+                                <a
+                                    href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2 px-3 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-md select-none cursor-pointer"
+                                >
+                                    <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
+                                    <span translate="no" className="text-[13px] font-black text-white tracking-tight">Google Play</span>
+                                </a>
+                            </div>
+                        </div>
 
-                        {/* Topics Col 2 */}
-                        <NavColumn title="Topics" links={topics2Links} delay={0.7} />
-
-                        {/* Topics Col 3 */}
-                        <NavColumn title="Topics" links={topics3Links} delay={1.4} />
-
-                        {/* Company Col 4 */}
-                        <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} />
-
-                    </div>
-
-                </div>
-
-                {/* ── Middle Row: Socials & App Store Downloads ── */}
-                {/* <div className="pt-6 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-800/80">
-
-                    
-
-                </div> */}
-
-                {/* ── DESKTOP ONLY Bottom Bar ── */}
-                <div className="hidden md:grid pt-3 border-t border-slate-900/60 mt-3 grid-cols-3 items-center gap-3 text-[11px] font-extrabold text-slate-400">
-
-                    {/* Left Column: empty spacer on desktop to keep middle centered */}
-                    <div className="hidden md:block" />
-
-                    {/* Center Column: Legal links & Copyright */}
-                    <div className="flex flex-col items-center justify-center gap-2.5 text-center">
-                        {/* Policy Links Row */}
-                        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+                        {/* Legal Policies */}
+                        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-extrabold text-slate-400 px-2 text-center">
                             {[
-                                ['Complaign Redressal', '/complaign-redressal'],
+                                ['Complain Redressal', '/complaign-redressal'],
                                 ['Cookie Policy', '/cookie-policy'],
                                 ['Cookie Settings', '/cookie-settings'],
                             ].map(([label, href]) => (
@@ -475,7 +364,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                             ? (e) => {
                                                 e.preventDefault();
                                                 window.dispatchEvent(new CustomEvent('gp-open-cookie-settings'));
-                                              }
+                                            }
                                             : undefined
                                     }
                                     className="hover:text-white transition-colors duration-200"
@@ -485,40 +374,162 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             ))}
                         </div>
 
-                        {/* Copyright Line */}
-                        <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10.5px] mt-0.5">
+                        {/* Copyright */}
+                        <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10px] text-center px-4">
                             <p>External links are provided for reference purposes. © {new Date().getFullYear()} GUJARAT POST MEDIA. ALL RIGHTS RESERVED.</p>
                         </div>
                     </div>
 
-                    {/* Right Column: Badges (aligned to the right on desktop, centered on mobile) */}
-                    <div className="flex items-center justify-center md:justify-end gap-3 select-none">
-                        {/* App Store Badge */}
-                        <a
-                            href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
-                        >
-                            <AppleIcon className="h-5.5 w-5.5 text-white transition-transform duration-300 group-hover:scale-110" />
-                            <span translate="no" className="text-[14px] font-black text-white tracking-tight">App Store</span>
-                        </a>
+                    {/* ── DESKTOP ONLY Main Layout: Preserved 100% Unchanged ── */}
+                    <div className="hidden md:flex flex-col lg:flex-row gap-6 lg:gap-0 pb-4 border-b border-slate-800/80">
 
-                        {/* Google Play Badge */}
-                        <a
-                            href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
-                        >
-                            <PlayStoreIcon className="h-5.5 w-5.5 transition-transform duration-300 group-hover:scale-110" />
-                            <span translate="no" className="text-[14px] font-black text-white tracking-tight">Google Play</span>
-                        </a>
+                        {/* Logo & Brand */}
+                        <div className="flex flex-col items-start gap-1 lg:w-72 flex-shrink-0 select-none">
+                            {/* Unified Logo & Support Button Container - Exact Same Width & Matching Ends */}
+                            <div className="w-[240px] flex flex-col items-start">
+                                {/* Slogan */}
+                                <div className="w-full flex flex-col justify-center leading-tight mb-2">
+                                    <p
+                                        className="text-[13px] sm:text-[14.5px] md:text-[16px] font-black font-sans tracking-wide text-white whitespace-nowrap select-none"
+                                        style={{ fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}
+                                        translate="no"
+                                    >
+                                        Real Stories. <span className="text-red-600 font-black">Real Gujarat.</span>
+                                    </p>
+                                </div>
+
+                                {/* Logo — exact same width as Support Button */}
+                                <Link
+                                    href="/"
+                                    className="group relative block w-full overflow-hidden transition-transform duration-200 group-hover:scale-[1.02]"
+                                >
+                                    <Image
+                                        src="/GujaratpostFinalLogo.png"
+                                        alt="Gujarat Post"
+                                        width={662}
+                                        height={163}
+                                        priority
+                                        unoptimized
+                                        className="w-full h-auto block drop-shadow-sm"
+                                    />
+                                </Link>
+
+                                {/* Support Us Button in Footer */}
+                                {supportEnabled && <button
+                                    type="button"
+                                    onClick={openSupportModal}
+                                    className="mt-5 sm:mt-6 flex w-full items-center justify-center gap-1.5 sm:gap-2 rounded-xl bg-[#CF0907] hover:bg-[#B80806] px-2.5 sm:px-3 py-3 sm:py-3.5 text-white shadow-lg shadow-[#CF0907]/30 hover:scale-[1.02] active:scale-95 transition-all duration-200 cursor-pointer border border-[#E5201E]/40 select-none"
+                                >
+                                    <Heart className="h-4.5 w-4.5 sm:h-5 sm:w-5 fill-current animate-pulse text-white shrink-0" />
+                                    <span className="text-[15px] sm:text-[16px] font-black tracking-wide whitespace-nowrap drop-shadow-sm">
+                                        {language === 'gu' ? 'ગુજરાત પોસ્ટને સપોર્ટ કરો' : language === 'hi' ? 'गुजरात पोस्ट को सपोर्ट करें' : 'Support Gujarat Post'}
+                                    </span>
+                                </button>}
+                                {/* Social Icons — same width as button, spread end to end */}
+                                <div className="w-full flex justify-center mt-5 sm:mt-6">
+                                    <div className="grid grid-cols-3 gap-x-6.5 sm:gap-x-7 gap-y-4 sm:gap-y-4.5 place-items-center">
+                                        {SOCIAL_LINKS.map((item) => (
+                                            <SocialIconButton key={item.label} item={item} className="h-10 w-10" />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        {/* Nav columns — pushed to the right */}
+                        <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4 lg:pl-10">
+
+                            {/* Topics Col 1 */}
+                            <NavColumn title="Topics" links={topics1Links} delay={0} />
+
+                            {/* Topics Col 2 */}
+                            <NavColumn title="Topics" links={topics2Links} delay={0.7} />
+
+                            {/* Topics Col 3 */}
+                            <NavColumn title="Topics" links={topics3Links} delay={1.4} />
+
+                            {/* Company Col 4 */}
+                            <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} />
+
+                        </div>
+
                     </div>
-                </div>
 
-            </div>
-        </footer>
-    </>
+                    {/* ── Middle Row: Socials & App Store Downloads ── */}
+                    {/* <div className="pt-6 pb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-800/80">
+
+                    
+
+                </div> */}
+
+                    {/* ── DESKTOP ONLY Bottom Bar ── */}
+                    <div className="hidden md:grid pt-3 border-t border-slate-900/60 mt-3 grid-cols-3 items-center gap-3 text-[11px] font-extrabold text-slate-400">
+
+                        {/* Left Column: empty spacer on desktop to keep middle centered */}
+                        <div className="hidden md:block" />
+
+                        {/* Center Column: Legal links & Copyright */}
+                        <div className="flex flex-col items-center justify-center gap-2.5 text-center">
+                            {/* Policy Links Row */}
+                            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
+                                {[
+                                    ['Complaign Redressal', '/complaign-redressal'],
+                                    ['Cookie Policy', '/cookie-policy'],
+                                    ['Cookie Settings', '/cookie-settings'],
+                                ].map(([label, href]) => (
+                                    <Link
+                                        key={href}
+                                        href={href}
+                                        onClick={
+                                            href === '/cookie-settings'
+                                                ? (e) => {
+                                                    e.preventDefault();
+                                                    window.dispatchEvent(new CustomEvent('gp-open-cookie-settings'));
+                                                }
+                                                : undefined
+                                        }
+                                        className="hover:text-white transition-colors duration-200"
+                                    >
+                                        <LocalizedText text={label === 'Complaign Redressal' ? 'Complain Redressal' : label} />
+                                    </Link>
+                                ))}
+                            </div>
+
+                            {/* Copyright Line */}
+                            <div className="flex flex-col items-center justify-center gap-1 text-slate-500 font-extrabold text-[10.5px] mt-0.5">
+                                <p>External links are provided for reference purposes. © {new Date().getFullYear()} GUJARAT POST MEDIA. ALL RIGHTS RESERVED.</p>
+                            </div>
+                        </div>
+
+                        {/* Right Column: Badges (aligned to the right on desktop, centered on mobile) */}
+                        <div className="flex items-center justify-center md:justify-end gap-3 select-none">
+                            {/* App Store Badge */}
+                            <a
+                                href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
+                            >
+                                <AppleIcon className="h-5.5 w-5.5 text-white transition-transform duration-300 group-hover:scale-110" />
+                                <span translate="no" className="text-[14px] font-black text-white tracking-tight">App Store</span>
+                            </a>
+
+                            {/* Google Play Badge */}
+                            <a
+                                href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex items-center gap-2.5 rounded-xl border border-zinc-700 bg-zinc-900 px-4 py-2.5 text-white hover:border-zinc-500 hover:bg-zinc-800 transition-all duration-300 hover:scale-105 active:scale-95 shadow-md select-none cursor-pointer"
+                            >
+                                <PlayStoreIcon className="h-5.5 w-5.5 transition-transform duration-300 group-hover:scale-110" />
+                                <span translate="no" className="text-[14px] font-black text-white tracking-tight">Google Play</span>
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </footer>
+        </>
     );
 }

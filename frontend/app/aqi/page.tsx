@@ -918,7 +918,7 @@ function AqiPageContent() {
       {/* ── Related Weather & Rain News Section ── */}
       <section className="space-y-6 pt-6 border-t border-zinc-200 dark:border-zinc-800">
         <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-center text-zinc-900 dark:text-zinc-100">
-          {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा खबरें' : 'Latest News'}
+          {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'ताज़ा खबरें' : 'Latest News'}
         </h2>
 
         {/* 4-Column News Grid */}
@@ -952,26 +952,21 @@ function AqiPageContent() {
           })}
         </div>
 
-        {/* "વધુ જુઓ ˅" Button */}
+        {/* "વધુ વાંચો ˅" Button matching Crime category styling */}
         {(visibleNewsCount < newsArticles.length || newsPage < newsTotalPages) && (
           <div className="flex justify-center pt-6">
             <button
               type="button"
               onClick={loadMoreNews}
               disabled={loadingMoreNews}
-              className="px-10 py-3.5 rounded-full border-2 border-[#B3121B] bg-white dark:bg-zinc-900 text-[#B3121B] hover:bg-[#B3121B] hover:text-white font-extrabold text-sm sm:text-base transition-all duration-300 shadow-sm hover:shadow-md cursor-pointer tracking-wider flex items-center gap-2 select-none"
-              style={{ fontWeight: 800 }}
+              className="group inline-flex items-center gap-2.5 rounded-full border-2 border-[#B3121B] px-9 py-3 text-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
             >
-              <span
-                className="font-extrabold"
-                style={{
-                  fontWeight: 800,
-                  fontFamily: 'var(--font-noto-sans-gujarati), var(--font-hind-vadodara), "Nirmala UI", sans-serif',
-                }}
-              >
+              <span className="text-lg md:text-xl font-black tracking-wide leading-none">
                 {loadingMoreNews ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...') : language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}
               </span>
-              {!loadingMoreNews && <ChevronDown className="w-5 h-5 stroke-[2.5]" />}
+              {!loadingMoreNews && (
+                <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
+              )}
             </button>
           </div>
         )}

@@ -341,12 +341,12 @@ export default function MediaSidebar({
       <div className="mt-1 pt-2 border-t-2 border-border">
         {/* Header: Red Badge on left + "વધુ ફોટો ગેલેરી →" on right */}
         <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
-          <span className="bg-[#B3121B] text-white px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
-            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
+          <span className="bg-[#B3121B] text-white px-4.5 py-2 text-sm sm:text-base font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
+            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
           </span>
           <Link
             href="/photos"
-            className="text-xs md:text-[13px] font-extrabold text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
+            className="text-sm sm:text-base font-black text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
           >
             <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : language === 'hi' ? 'और फोटो गैलरी' : 'More Photo Gallery'}</span>
             <span>→</span>
@@ -368,10 +368,12 @@ export default function MediaSidebar({
           <div className="pt-2">
             <Link
               href="/photos"
-              className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-4 rounded-full border-2 border-[#B3121B] bg-card text-xs sm:text-sm font-extrabold text-[#B3121B] transition-all duration-200 shadow-xs hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#B3121B] hover:text-white hover:shadow-md text-center cursor-pointer active:scale-95"
+              className="group w-full inline-flex items-center justify-center gap-2 py-3 px-6 rounded-full border-2 border-[#B3121B] bg-card text-[#B3121B] transition-all duration-200 shadow-sm hover:-translate-y-0.5 hover:scale-[1.01] hover:bg-[#B3121B] hover:text-white hover:shadow-md text-center cursor-pointer active:scale-95"
             >
-              <span>{language === 'gu' ? 'બધા ફોટો જુઓ' : language === 'hi' ? 'सभी फोटो देखें' : 'View All Photos'}</span>
-              <ChevronRight className="h-3.5 w-3.5" />
+              <span className="text-base sm:text-lg font-black tracking-wide leading-none">
+                {language === 'gu' ? 'બધા ફોટો જુઓ' : language === 'hi' ? 'सभी फोटो देखें' : 'View All Photos'}
+              </span>
+              <ChevronRight className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-x-1 stroke-[2.5]" />
             </Link>
           </div>
         </div>

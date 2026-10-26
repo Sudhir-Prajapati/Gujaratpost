@@ -242,7 +242,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     return (
       <section className="mx-auto max-w-screen-xl px-4 mt-2">
         {/* Red Panel containing only Shorts */}
-        <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 py-6 border border-white/10 relative overflow-hidden shadow-lg">
+        <div className="w-full bg-[#B3121B] text-white rounded-2xl sm:rounded-3xl md:rounded-sm px-5 md:px-8 py-6 border border-white/10 relative overflow-hidden shadow-lg">
 
           {/* Header */}
           <div className="relative z-10 flex items-center justify-between mb-5 select-none">
@@ -426,7 +426,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* ── Red Panel containing Videos ── */}
-      <div className="w-full bg-[#B3121B] text-white rounded-sm px-3.5 sm:px-5 md:px-8 pt-3.5 sm:pt-4 pb-3.5 sm:pb-4 border border-white/10 relative overflow-hidden shadow-lg">
+      <div className="w-full bg-[#B3121B] text-white rounded-2xl sm:rounded-3xl md:rounded-sm px-3.5 sm:px-5 md:px-8 pt-3.5 sm:pt-4 pb-3.5 sm:pb-4 border border-white/10 relative overflow-hidden shadow-lg">
 
         {/* Header */}
         <div className="relative z-10 flex items-center justify-between mb-3 md:mb-4">

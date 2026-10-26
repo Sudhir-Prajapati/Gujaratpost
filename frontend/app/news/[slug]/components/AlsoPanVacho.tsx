@@ -69,8 +69,8 @@ export default function AlsoPanVacho({
     <section className="also-pan-vacho select-none w-full my-6 pt-2">
       {/* Header matching Gujarat Post visual design */}
       <div className="flex items-center gap-2.5 mb-4 pb-2 border-b border-neutral-200 dark:border-neutral-800">
-        <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]" />
-        <h3 className="text-[17px] sm:text-[19px] font-black text-[#B3121B] dark:text-red-500 tracking-tight flex items-center gap-2">
+        <span className="block w-[5px] h-6 rounded-full bg-[#B3121B]" />
+        <h3 className="text-[18px] sm:text-[21px] font-black text-[#B3121B] dark:text-red-500 tracking-tight flex items-center gap-2">
           {uiLabel(language, { en: 'Also Read', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
         </h3>
         <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent" />

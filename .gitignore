@@ -36,3 +36,6 @@ backend/uploads/*
 signing-key-info.txt
 local.properties
 
+# Database Dumps
+*.sql
+

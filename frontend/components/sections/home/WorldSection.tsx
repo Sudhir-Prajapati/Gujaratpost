@@ -216,6 +216,24 @@ const mockWorldCards = [
     titleGu: 'ગલ્ફ દેશોમાં ભારતીય શ્રમિકો માટે ખુશખબર! નવી કલ્યાણ યોજના જાહેર',
     relativeTimeGu: '6 કલાક પહેલાં',
     views: 90000
+  },
+  {
+    id: 'w-card-5',
+    slug: 'global-space-research-breakthrough-india-556',
+    image: '/assets/demo/4.jpg',
+    categoryGu: 'વિશ્વ',
+    titleGu: 'અવકાશ વિજ્ઞાન ક્ષેત્રે ભારતની ઐતિહાસિક સિદ્ધિ, વિશ્વભરમાં પ્રશંસા',
+    relativeTimeGu: '7 કલાક પહેલાં',
+    views: 85000
+  },
+  {
+    id: 'w-card-6',
+    slug: 'global-economic-forum-digital-innovation-557',
+    image: '/assets/demo/6.jpg',
+    categoryGu: 'વિશ્વ',
+    titleGu: 'વૈશ્વિક આર્થિક મંચ પર ભારતનું મોટું સંબોધન, ડિજિટલ ક્ષેત્રે નવી તકો',
+    relativeTimeGu: '8 કલાક પહેલાં',
+    views: 89000
   }
 ];
 
@@ -319,6 +337,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
     };
   }, [dbWorldArticles]);
 
+  // Desktop view: strictly 4 vertical cards (unchanged)
   const cardsList = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
     dbWorldArticles.slice(1, 5).forEach((art) => {
@@ -335,6 +354,38 @@ export default function WorldSection({ language, initialArticles }: { language: 
     if (list.length < 4) {
       mockWorldCards.forEach((card) => {
         if (list.length < 4 && !list.some((item) => item.id === card.id)) {
+          list.push({
+            id: card.id,
+            slug: card.slug,
+            image: card.image,
+            categoryGu: card.categoryGu,
+            article: null,
+            titleGu: card.titleGu,
+            time: getMockRelativeTime(card.relativeTimeGu, language),
+          });
+        }
+      });
+    }
+    return list;
+  }, [dbWorldArticles, language]);
+
+  // Mobile view: 1 more card added for mobile screen only (displays 6 cards + 1 featured = 7 news total)
+  const mobileCardsList = useMemo(() => {
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
+    dbWorldArticles.slice(1, 8).forEach((art) => {
+      list.push({
+        id: art.id,
+        slug: art.slug,
+        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[1],
+        categoryGu: (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || 'વિશ્વ',
+        article: art,
+        titleGu: art.titleGu || art.title,
+        time: formatTime(art.publishedAt),
+      });
+    });
+    if (list.length < 6) {
+      mockWorldCards.forEach((card) => {
+        if (list.length < 6 && !list.some((item) => item.id === card.id)) {
           list.push({
             id: card.id,
             slug: card.slug,
@@ -400,9 +451,9 @@ export default function WorldSection({ language, initialArticles }: { language: 
               </h3>
             </Link>
 
-            {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section */}
+            {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section (1 more news added on mobile) */}
             <div className="flex flex-col gap-2 mt-1">
-              {cardsList.map((card) => (
+              {mobileCardsList.map((card) => (
                 <Link
                   key={`mob-${card.id}`}
                   href={`/news/${card.slug}`}
