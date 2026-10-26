@@ -441,6 +441,10 @@ export default function CategoriesPage() {
       });
       if (!res.ok) throw new Error('Failed to update category');
       setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, isActive: !c.isActive } : c));
+      clearApiCache();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('gp-categories-updated'));
+      }
     } catch (err: any) {
       alert(err.message);
     }

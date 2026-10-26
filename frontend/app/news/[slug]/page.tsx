@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { SITE_URL } from "@/data";
+import { SITE_URL, cleanArticlePlainText } from "@/data";
 import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
+import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
 
 export const revalidate = 30;
@@ -25,20 +26,44 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   try {
     const article = await getPublicArticleBySlug(slug);
     if (!article) return {};
-    const url = `/news/${article.slug}`;
+    const canonicalUrl = `https://gujaratpost.in/news/${article.slug}`;
     const authorName = typeof article.author === 'string' ? article.author : article.author?.name || 'Gujarat Post';
+    const cleanTitle = cleanArticlePlainText(article.title) || 'Gujarat Post';
+    let cleanDesc = cleanArticlePlainText(article.excerpt || article.content || '');
+    // Strip any residual breadcrumbs or category/city prefixes
+    cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
+    cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
+    if (cleanDesc.length > 170) {
+      const slice = cleanDesc.slice(0, 170);
+      const lastSpace = slice.lastIndexOf(' ');
+      cleanDesc = (lastSpace > 110 ? slice.slice(0, lastSpace) : slice).trim() + '...';
+    }
+    if (!cleanDesc || cleanDesc.length < 20) {
+      cleanDesc = `${cleanTitle} - ગુજરાત અને દેશ-દુનિયાના તમામ મહત્વપૂર્ણ સમાચાર વાંચો ગુજરાત પોસ્ટ પર.`;
+    }
+    const imageUrl = getOpenGraphImageUrl(article.image);
 
     return {
-      title: article.title,
-      description: article.excerpt,
-      alternates: { canonical: url },
+      title: cleanTitle,
+      description: cleanDesc,
+      alternates: { canonical: canonicalUrl },
       authors: [{ name: authorName }],
       openGraph: {
-        title: article.title,
-        description: article.excerpt,
-        url,
+        title: cleanTitle,
+        description: cleanDesc,
+        url: canonicalUrl,
         siteName: "Gujarat Post",
-        images: [{ url: article.image || '', width: 1200, height: 630, alt: article.title }],
+        locale: "gu_IN",
+        images: [
+          {
+            url: imageUrl,
+            secureUrl: imageUrl,
+            width: 1200,
+            height: 630,
+            type: "image/jpeg",
+            alt: cleanTitle,
+          },
+        ],
         type: "article",
         publishedTime: article.publishedAt,
         modifiedTime: article.updatedAt,
@@ -47,9 +72,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       },
       twitter: {
         card: "summary_large_image",
-        title: article.title,
-        description: article.excerpt,
-        images: [article.image || ''],
+        site: "@gujaratpostin",
+        creator: "@gujaratpostin",
+        title: cleanTitle,
+        description: cleanDesc,
+        images: [imageUrl],
       },
     };
   } catch {
@@ -72,9 +99,9 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
   // Dynamically fetch related articles and calculate smart relevance scores
   const categorySlug = (article.category || '').toLowerCase().replace(/\s+/g, '-');
   const [catRes, fallbackRes, trendingRes] = await Promise.all([
-    getPublicArticles({ categorySlug, limit: 20 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ isTrending: true, limit: 20 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ categorySlug, limit: 20, includeContent: true }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ limit: 50, includeContent: true }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ isTrending: true, limit: 20, includeContent: true }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const categoryArticles = catRes?.articles || [];
@@ -119,34 +146,57 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
     uniqueCandidates.push(a);
   }
 
+  const GENERIC_TAGS = new Set([
+    'news', 'popular stories', 'popular-stories', 'popularstories',
+    'trending', 'breaking', 'breaking news', 'national', 'સમાચાર',
+    'ન્યૂઝ', 'લાઇવ', 'વિશેષ', 'ગુજરાત', 'ભારત'
+  ]);
+
+  const articleSlugWords = (article.slug || '')
+    .split('-')
+    .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
+
   const scoredRelated = uniqueCandidates.map((item) => {
     let score = 0;
 
-    // 1. Same category bonus
+    // 1. Same category bonus (primary relevance factor)
     const itemCatSlug = (item.category || '').toLowerCase().replace(/\s+/g, '-');
     if (itemCatSlug === categorySlug && categorySlug !== '') {
-      score += 10;
+      score += 25;
     }
 
-    // 2. Tag overlap bonus
+    // 2. Tag overlap bonus (specific tags heavily weighted, generic tags minimally weighted)
     const itemTags = [
       ...(item.tags || []),
       ...(item.tagsGu || []),
       ...(item.tagsHi || []),
     ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
 
-    let matchingTagsCount = 0;
     itemTags.forEach((t) => {
-      if (currentTags.has(t)) matchingTagsCount++;
+      if (currentTags.has(t)) {
+        score += GENERIC_TAGS.has(t) ? 2 : 15;
+      }
     });
-    score += matchingTagsCount * 8;
 
-    // 3. Popularity & Featured status
+    // 3. Title / Slug keyword similarity (e.g. "cjp", "sharma", "murder", "brics", etc.)
+    const itemSlug = (item.slug || '').toLowerCase();
+    articleSlugWords.forEach((word) => {
+      if (itemSlug.includes(word)) {
+        score += 12;
+      }
+    });
+
+    // 4. Same location bonus
+    if (item.location && article.location && item.location.toLowerCase().trim() === article.location.toLowerCase().trim()) {
+      score += 15;
+    }
+
+    // 5. Popularity & Featured status
     if (item.isTrending) score += 4;
     if (item.isFeatured) score += 3;
     if (item.views) score += Math.min(item.views / 200, 5);
 
-    // 4. Recency bonus
+    // 6. Recency bonus
     const pubTime = new Date(item.publishedAt || (item as any).createdAt || 0).getTime();
     if (pubTime > 0) {
       const daysDiff = (Date.now() - pubTime) / (1000 * 60 * 60 * 24);

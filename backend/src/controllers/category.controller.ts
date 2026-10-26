@@ -10,7 +10,14 @@ export class CategoryController {
    */
   static async getAllCategories(req: Request, res: Response, next: NextFunction) {
     try {
+      const activeOnly = req.query.activeOnly === 'true' || req.query.isActive === 'true';
+      const where: any = {};
+      if (activeOnly) {
+        where.isActive = true;
+      }
+
       const categories = await prisma.category.findMany({
+        where,
         orderBy: {
           displayOrder: 'desc',
         },

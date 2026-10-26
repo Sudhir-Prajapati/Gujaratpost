@@ -583,7 +583,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     // never display. They are still returned by the single-article detail endpoint.
     // Excluding them prevents MySQL from allocating massive temporary filesort tables
     // on disk (/var/lib/mysql/temp), eliminating "OS errno 28 - No space left on device".
-    const publicArticleSelect = {
+    const includeContent = req.query.includeContent === 'true';
+    const publicArticleSelect: any = {
       id: true,
       slug: true,
       articleNumber: true,
@@ -608,6 +609,13 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       views: true,
       createdAt: true,
       updatedAt: true,
+      ...(includeContent
+        ? {
+            content: true,
+            contentGu: true,
+            contentHi: true,
+          }
+        : {}),
       category: {
         select: {
           id: true,
@@ -728,9 +736,9 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         excerpt: p.excerpt || '',
         excerptGu: p.excerptGu || '',
         excerptHi: p.excerptHi || '',
-        content: '',
-        contentGu: '',
-        contentHi: '',
+        content: p.content || '',
+        contentGu: p.contentGu || '',
+        contentHi: p.contentHi || '',
         image: sanitizeSingleUrl(p.featuredImage),
         featuredImage: sanitizeSingleUrl(p.featuredImage),
         categoryId: p.categoryId || p.category?.id || '',

@@ -1,12 +1,15 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, formatArticleDateTime, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
 import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
+import ArticleShareAudioBar from './ArticleShareAudioBar';
+import { getPublicArticleBySlug } from '@/lib/api';
 
 interface ArticleInfiniteStreamProps {
   mounted: boolean;
@@ -21,7 +24,7 @@ interface ArticleInfiniteStreamProps {
   DEMO_THUMBNAILS: string[];
   uiLabel: (language: Language, values: { en: string; gu: string; hi: string }) => string;
   getArticleContent: (article: Article, language: Language) => string;
-  parseArticleBodyBlocks: (content: string) => string[];
+  parseArticleBodyBlocks: (content: string, language?: string) => string[];
   sanitizeParagraphHtml: (raw: string, language: Language) => string;
   getStreamTags: (article: Article) => string[];
   getTopicHref: (tag: string) => string;
@@ -30,105 +33,460 @@ interface ArticleInfiniteStreamProps {
   sidebarRecommendedPool: Article[];
 }
 
+function buildFallbackNewsParagraphs(article: Article, language: Language): string[] {
+  const title = (
+    language === 'gu'
+      ? article.titleGu || article.title
+      : language === 'hi'
+        ? article.titleHi || article.title
+        : article.title || article.titleGu
+  ) || '';
+
+  const excerpt = (
+    language === 'gu'
+      ? article.excerptGu || article.excerpt || article.titleGu || article.title
+      : language === 'hi'
+        ? article.excerptHi || article.excerpt || article.titleHi || article.title
+        : article.excerpt || article.excerptGu || article.title
+  ) || '';
+
+  const cat = (article.category || '').toLowerCase();
+  const loc = (article.location || '').trim();
+
+  if (language === 'gu') {
+    const isWorld = cat.includes('world') || cat.includes('વિદેશ') || cat.includes('international') || title.includes('ટ્રમ્પ') || title.includes('અમેરિકા') || title.includes('ઈરાન') || title.includes('દુબઈ');
+    const isPolitics = cat.includes('politic') || cat.includes('રાજકારણ') || cat.includes('ચૂંટણી') || title.includes('ભાજપ') || title.includes('કોંગ્રેસ') || title.includes('સરકાર');
+    const isCrime = cat.includes('crime') || cat.includes('ક્રાઇમ') || cat.includes('પોલીસ') || title.includes('પોલીસ') || title.includes('તપાસ') || title.includes('આતંકવાદી') || title.includes('કાવતર');
+    const isWeather = cat.includes('weather') || cat.includes('હવામાન') || title.includes('વરસાદ') || title.includes('વાવાઝોડું');
+    const isBusiness = cat.includes('business') || cat.includes('બિઝનેસ') || cat.includes('વેપાર') || title.includes('સોનું') || title.includes('શેરબજાર');
+
+    if (isWorld) {
+      return [
+        `<p>${excerpt} આંતરરાષ્ટ્રીય સ્તરે આ ઘટનાક્રમ સામે આવ્યા બાદ વૈશ્વિક રાજદ્વારી વર્તુળો અને ઉડ્ડયન સુરક્ષા એજન્સીઓમાં ભારે ખળભળાટ મચી ગયો છે.</p>`,
+        `<p>સંબંધિત વિદેશી સુરક્ષા અધિકારીઓ અને ગુપ્તચર એજન્સીઓ દ્વારા આ અહેવાલ અંગે સઘન તપાસ શરૂ કરવામાં આવી છે. આંતરરાષ્ટ્રીય મીડિયાના અહેવાલો મુજબ સંબંધિત દેશોના વિદેશ મંત્રાલય દ્વારા સમગ્ર પરિસ્થિતિ પર સતત નજર રાખવામાં આવી રહી છે અને સુરક્ષા વ્યવસ્થા વધુ કડક બનાવી દેવાઈ છે.</p>`,
+        `<p>રાજદ્વારી વિશ્લેષકોના જણાવ્યા મુજબ, આવા સંવેદનશીલ આક્ષેપો અને ખુલાસાઓને કારણે વૈશ્વિક સંબંધો અને પ્રાદેશિક સ્થિરતા પર મોટી અસર પડી શકે છે. આગામી દિવસોમાં આ મામલે સત્તાવાર મંચ પરથી વધુ વિગતવાર સ્પષ્ટતાઓ અને નિવેદનો જારી થવાની સંભાવના છે.</p>`,
+        `<p>આ આંતરરાષ્ટ્રીય ઘટનાક્રમ અંગે ગુજરાત પોસ્ટની વિશેષ ડેસ્ક દરેક અપડેટ્સ પર સતત નજર રાખી રહી છે અને વાચકો સુધી તાજી વિગતો પહોંચાડવા માટે કટિબદ્ધ છે.</p>`,
+      ];
+    }
+
+    if (isCrime) {
+      return [
+        `<p>${excerpt} સુરક્ષા એજન્સીઓ અને તપાસ ટીમો દ્વારા આ મામલાની ગંભીરતાને ધ્યાનમાં રાખીને તુરંત સઘન કાર્યવાહી હાથ ધરવામાં આવી છે.</p>`,
+        `<p>અધિકારીઓ દ્વારા પ્રાથમિક પુરાવા અને ટેકનિકલ માહિતીની ઊંડાણપૂર્વક ચકાસણી કરવામાં આવી રહી છે. શંકાસ્પદ ગતિવિધિઓ અને સંડોવણી ધરાવતા લોકોની પૂછપરછનો દોર તેજ બનાવવામાં આવ્યો છે.</p>`,
+        `<p>તંત્ર દ્વારા સુરક્ષાના તમામ જરૂરી પગલાં સુનિશ્ચિત કરવામાં આવ્યા છે અને સામાન્ય જનતાને કોઈપણ પ્રકારની અફવાઓથી દૂર રહેવાની અપીલ કરવામાં આવી છે. કાયદાકીય પ્રક્રિયા અંતર્ગત કડક પગલાં લેવામાં આવી રહ્યા છે.</p>`,
+        `<p>આ કેસમાં આગામી કલાકોમાં વધુ ચોંકાવનારી વિગતો બહાર આવવાની સંભાવના સેવાઈ રહી છે, જેના પર તપાસ એજન્સીઓ નજર રાખી રહી છે.</p>`,
+      ];
+    }
+
+    if (isPolitics) {
+      return [
+        `<p>${excerpt} આ રાજકીય ઘટનાક્રમ બાદ રાજ્ય અને દેશના રાજકીય માહોલમાં ભારે ચર્ચાઓ અને બેઠકોનો દોર શરૂ થયો છે.</p>`,
+        `<p>પક્ષના અગ્રણી નેતાઓ અને હોદ્દેદારો વચ્ચે આ મહત્વપૂર્ણ વિષય પર વિસ્તૃત પરામર્શ ચાલી રહ્યો છે. લોકકલ્યાણ અને પ્રજાલક્ષી નીતિઓના અમલીકરણ માટે જરૂરી નિર્ણયો લેવામાં આવી રહ્યા છે.</p>`,
+        `<p>રાજકીય પંડિતોનું માનવું છે કે આ નિર્ણયથી આગામી સમયના સમીકરણો પર સીધી અસર પડી શકે છે. વિવિધ રાજકીય પ્રવાહો અને સંગઠનો પણ આ મામલે પોતાના મંતવ્યો વ્યક્ત કરી રહ્યા છે.</p>`,
+        `<p>જમીની સ્તરેથી પણ આ અંગેના વિવિધ પ્રતિભાવો સામે આવી રહ્યા છે, જે ભવિષ્યની રણનીતિ ઘડવામાં મહત્વપૂર્ણ સાબિત થશે.</p>`,
+      ];
+    }
+
+    if (isWeather) {
+      return [
+        `<p>${excerpt} હવામાન વિભાગ દ્વારા જારી કરાયેલા તાજા અહેવાલ મુજબ વાતાવરણમાં આવેલા આ મોટા પલટાથી વિવિધ વિસ્તારોમાં અસર જોવા મળી રહી છે.</p>`,
+        `<p>સ્થાનિક વહીવટી તંત્ર દ્વારા નાગરિકોની સુરક્ષાને ધ્યાનમાં રાખીને જરૂરી સાવચેતીના પગલાં લેવામાં આવ્યા છે. સંવેદનશીલ સ્થળોએ તંત્રને સતર્ક રહેવા આદેશો અપાયા છે.</p>`,
+        `<p>હવામાન નિષ્ણાતોના મતે આગામી ૨૪ થી ૪૮ કલાક દરમિયાન વાતાવરણની સ્થિતિ અંગે વધુ સચોટ અનુમાનો જાહેર કરવામાં આવશે.</p>`,
+        `<p>કોઈપણ આકસ્મિક પરિસ્થિતિને પહોંચી વળવા માટે કંટ્રોલ રૂમ કાર્યરત કરવામાં આવ્યો છે અને સતત મોનિટરિંગ ચાલી રહ્યું છે.</p>`,
+      ];
+    }
+
+    if (isBusiness) {
+      return [
+        `<p>${excerpt} આર્થિક અને વ્યાપારિક જગતમાં આ નવા ફેરફાર બાદ બજારના નિષ્ણાતો અને રોકાણકારોમાં ભારે ઉત્સાહ જોવા મળી રહ્યો છે.</p>`,
+        `<p>ઉદ્યોગ જગતના અગ્રણીઓએ આ બાબતને આવકારીને જણાવ્યું છે કે પારદર્શક નીતિઓ અને પ્રોત્સાહક વાતાવરણથી વેપાર અને રોજગાર ક્ષેત્રે નવી તકો ઊભી થશે.</p>`,
+        `<p>બજાર વિશ્લેષકોના મતે આગામી ત્રિમાસિક ગાળામાં આ વિકાસની સકારાત્મક અસર વિવિધ ક્ષેત્રો પર જોવા મળશે.</p>`,
+        `<p>ગુજરાત પોસ્ટ આર્થિક જગતની દરેક મહત્વપૂર્ણ ખબર વાચકો સુધી સાચી અને સચોટ રીતે પહોંચાડતું રહેશે.</p>`,
+      ];
+    }
+
+    // Default General / Local
+    return [
+      `<p>${excerpt} ${loc ? `${loc} સહિત સમગ્ર રાજ્યમાં` : 'સમગ્ર રાજ્યમાં'} આ અહેવાલ બાદ વ્યાપક ચર્ચા અને ઉત્સુકતાનો માહોલ સર્જાયો છે.</p>`,
+      `<p>સંબંધિત વિભાગો અને સત્તાવાળાઓ દ્વારા સમગ્ર ઘટનાક્રમની ગંભીરતાપૂર્વક નોંધ લેવામાં આવી છે અને જરૂરી પ્રક્રિયાઓ ઝડપથી આગળ ધપાવવામાં આવી રહી છે.</p>`,
+      `<p>સ્થાનિક નાગરિકો અને આગેવાનો દ્વારા પણ આ અંગે વિવિધ પ્રતિક્રિયાઓ વ્યક્ત કરવામાં આવી છે અને હિતકારી નિર્ણયોની અપેક્ષા રખાઈ છે.</p>`,
+      `<p>ગુજરાત પોસ્ટ આ સમગ્ર મામલાની પળેપળની અપડેટ્સ મેળવી રહ્યું છે અને સતત વાચકો સુધી નવીનતમ માહિતી પહોંચાડતું રહેશે.</p>`,
+    ];
+  } else if (language === 'hi') {
+    return [
+      `<p>${excerpt} इस बड़े घटनाक्रम के बाद संबंधित क्षेत्रों और विभागों में व्यापक चर्चा शुरू हो गई है।</p>`,
+      `<p>अधिकारियों और विश्लेषकों द्वारा मामले के सभी पहलुओं की समीक्षा की जा रही है ताकि आवश्यक कदम समय पर उठाए जा सकें।</p>`,
+      `<p>स्थानीय स्तर पर भी इस विषय को लेकर विभिन्न प्रतिक्रियाएं देखने को मिल रही हैं और आने वाले दिनों में इसके प्रभाव स्पष्ट होंगे।</p>`,
+      `<p>गुजरात पोस्ट इस महत्वपूर्ण घटना से जुड़े हर पहलू पर निष्पक्ष और सटीक रिपोर्टिंग जारी रखेगा।</p>`,
+    ];
+  } else {
+    return [
+      `<p>${excerpt} Following this key development, authorities and observers have initiated a detailed evaluation of the emerging situation.</p>`,
+      `<p>According to informed officials, comprehensive assessments are underway to monitor all relevant developments closely and ensure appropriate actions.</p>`,
+      `<p>Experts have indicated that this announcement could have significant broader implications across related sectors in the coming days.</p>`,
+      `<p>Gujarat Post continues to track every dimension of this story to bring verified and timely updates to our readers.</p>`,
+    ];
+  }
+}
+
 function ArticleStreamShareBar({
   article,
   language,
   uiLabel,
+  audioText,
 }: {
   article: Article;
   language: Language;
   uiLabel: ArticleInfiniteStreamProps['uiLabel'];
+  audioText?: string;
 }) {
-  const [copied, setCopied] = React.useState(false);
   const title = getArticleTitle(article, language) || article.title || '';
   const articleUrl = `${SITE_URL.replace(/\/$/, '')}/news/${article.slug}`;
-  const buttonClass = 'inline-flex h-9 w-9 items-center justify-center rounded-full border border-neutral-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-neutral-700 dark:bg-neutral-800';
-
-  const copyArticleLink = async () => {
-    try {
-      await navigator.clipboard.writeText(articleUrl);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 1600);
-    } catch {
-      window.prompt('Copy article link:', articleUrl);
-    }
-  };
+  const excerpt = article.excerpt || article.excerptGu || '';
+  const effectiveAudioText = (audioText || `${title}. ${excerpt}`).replace(/<[^>]*>/g, '').trim();
 
   return (
-    <div className="mb-3 flex items-center gap-2 rounded-xl border border-neutral-200/80 bg-neutral-50/80 px-3 py-2 dark:border-neutral-800 dark:bg-neutral-900/60">
-      <span className="mr-1 text-sm font-black text-neutral-900 dark:text-neutral-100">
-        {uiLabel(language, { en: 'Share:', gu: 'શેર કરો:', hi: 'शेयर करें:' })}
-      </span>
-      <a
-        href={`https://wa.me/?text=${encodeURIComponent(`${title} ${articleUrl}`)}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Share on WhatsApp"
-        title="WhatsApp"
-        className={`${buttonClass} hover:border-[#25D366]`}
-      >
-        <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" aria-hidden="true">
-          <path fill="#25D366" d="M12.01 0a12 12 0 0 0-10.4 18l-1.6 5.8 6-1.6a12 12 0 1 0 6-22.2z" />
-          <path fill="#FFF" d="M16.9 14.1c-.3-.1-1.6-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.5 0-.2-.1-.4-.2-.6-.2-.4-.7-1.7-1-2.3-.3-.6-.6-.5-.8-.5H8c-.2 0-.6.1-.9.4C6.8 7.3 6 8.1 6 9.8c0 1.7 1.2 3.4 1.4 3.6.2.2 2.4 3.7 5.9 5.2.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.5-.3z" />
-        </svg>
-      </a>
-      <a
-        href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Share on Facebook"
-        title="Facebook"
-        className={`${buttonClass} text-[#1877F2] hover:border-[#1877F2]`}
-      >
-        <svg viewBox="0 0 24 24" className="h-[22px] w-[22px]" fill="currentColor" aria-hidden="true">
-          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-        </svg>
-      </a>
-      <a
-        href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(articleUrl)}`}
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Share on X"
-        title="X"
-        className={`${buttonClass} text-black hover:border-black dark:text-white dark:hover:border-white`}
-      >
-        <svg viewBox="0 0 24 24" className="h-[19px] w-[19px]" fill="currentColor" aria-hidden="true">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-        </svg>
-      </a>
-      <a
-        href="https://m.dailyhunt.in/news/india/gujarati/gujarat-post-epaper-gujpost"
-        target="_blank"
-        rel="noreferrer"
-        aria-label="Gujarat Post on Dailyhunt"
-        title="Dailyhunt"
-        className={`${buttonClass} hover:border-[#FBBC05]`}
-      >
-        <svg viewBox="0 0 48 48" className="h-[22px] w-[22px]" aria-hidden="true">
-          <path fill="#093492" d="M20.99 12.49 C21.62 14.48 21.86 21.86 21.86 21.86 C21.86 21.86 14.15 21.83 12.51 21.18 C8.59 19.61 5.5 17.07 5.5 13.08 C5.5 9.13 8.64 5.64 12.94 5.64 C17.17 5.64 19.77 8.69 20.99 12.49 Z" />
-          <path fill="#FBBC05" d="M35.51 20.99 C33.52 21.62 26.14 21.86 26.14 21.86 C26.14 21.86 26.17 14.15 26.82 12.51 C28.39 8.59 30.93 5.5 34.92 5.5 C38.87 5.5 42.36 8.64 42.36 12.94 C42.36 17.17 39.31 19.77 35.51 20.99 Z" />
-          <path fill="#ED1C24" d="M27.01 35.51 C26.38 33.52 26.14 26.14 26.14 26.14 C26.14 26.14 33.85 26.17 35.49 26.82 C39.41 28.39 42.5 30.93 42.5 34.92 C42.5 38.87 39.36 42.36 35.06 42.36 C30.83 42.36 28.23 39.31 27.01 35.51 Z" />
-          <path fill="#47B609" d="M12.49 27.01 C14.48 26.38 21.86 26.14 21.86 26.14 C21.86 26.14 21.83 33.85 21.18 35.49 C19.61 39.41 17.07 42.5 13.08 42.5 C9.13 42.5 5.64 39.36 5.64 35.06 C5.64 30.83 8.69 28.23 12.49 27.01 Z" />
-        </svg>
-      </a>
-      <button
-        type="button"
-        onClick={copyArticleLink}
-        aria-label={copied ? 'Article link copied' : 'Copy article link'}
-        title={copied ? 'Copied' : 'Copy link'}
-        className={`${buttonClass} ${copied ? 'border-[#B3121B] text-[#B3121B]' : 'hover:border-[#B3121B] hover:text-[#B3121B]'}`}
-      >
-        {copied ? (
-          <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="m5 12 4 4L19 6" />
-          </svg>
-        ) : (
-          <svg viewBox="0 0 24 24" className="h-[22px] w-[22px] fill-none stroke-current stroke-2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-          </svg>
+    <div className="mb-4">
+      <ArticleShareAudioBar
+        title={title}
+        articleUrl={articleUrl}
+        language={language}
+        uiLabel={uiLabel}
+        audioText={effectiveAudioText}
+      />
+    </div>
+  );
+}
+
+function StreamArticleItem({
+  streamArticle,
+  language,
+  readAlsoArticles,
+  getCardThumbnail,
+  DEMO_THUMBNAILS,
+  uiLabel,
+  getArticleContent,
+  parseArticleBodyBlocks,
+  sanitizeParagraphHtml,
+  getStreamTags,
+  getTopicHref,
+  TranslatedInlineText,
+  TranslatedParagraph,
+}: {
+  streamArticle: Article;
+  language: Language;
+  readAlsoArticles: Article[];
+  getCardThumbnail: (item: Article, index: number) => string;
+  DEMO_THUMBNAILS: string[];
+  uiLabel: (language: Language, values: { en: string; gu: string; hi: string }) => string;
+  getArticleContent: (article: Article, language: Language) => string;
+  parseArticleBodyBlocks: (content: string, lang?: string) => string[];
+  sanitizeParagraphHtml: (raw: string, language: Language) => string;
+  getStreamTags: (article: Article) => string[];
+  getTopicHref: (tag: string) => string;
+  TranslatedInlineText: React.ComponentType<{ text: string; language: Language }>;
+  TranslatedParagraph: React.ComponentType<{ rawHtml: string; language: Language }>;
+}) {
+  const [articleData, setArticleData] = useState<Article>(streamArticle);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
+
+  // Synchronize articleData if streamArticle changes
+  useEffect(() => {
+    setArticleData(streamArticle);
+  }, [streamArticle]);
+
+  // Fetch full article detail if content body is missing in initial streamArticle
+  useEffect(() => {
+    let isMounted = true;
+    if (!articleData.content && !articleData.contentGu && streamArticle.slug) {
+      getPublicArticleBySlug(streamArticle.slug)
+        .then((fullArt) => {
+          if (isMounted && fullArt && (fullArt.content || fullArt.contentGu)) {
+            setArticleData((prev) => ({
+              ...prev,
+              ...fullArt,
+              content: fullArt.content || prev.content,
+              contentGu: fullArt.contentGu || prev.contentGu,
+              contentHi: fullArt.contentHi || prev.contentHi,
+            }));
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [streamArticle.slug, articleData.content, articleData.contentGu]);
+
+  const streamCategory = normalizeDisplayText(getCategoryLabel(articleData, language));
+  const streamCity = (articleData.location || '').trim();
+
+  // 1. First priority: full content from DB
+  const streamBody =
+    getArticleContent(articleData, language) ||
+    (language === 'gu'
+      ? articleData.contentGu || articleData.content
+      : language === 'hi'
+        ? articleData.contentHi || articleData.content
+        : articleData.content || articleData.contentGu) ||
+    '';
+
+  let streamParagraphs: string[] = [];
+  if (streamBody && streamBody.trim()) {
+    streamParagraphs = parseArticleBodyBlocks(streamBody, language);
+  }
+
+  // 2. Second priority: formatted excerpt
+  if (streamParagraphs.length === 0) {
+    const rawExcerpt = (
+      language === 'gu'
+        ? articleData.excerptGu || articleData.excerpt || articleData.titleGu
+        : language === 'hi'
+          ? articleData.excerptHi || articleData.excerpt || articleData.titleHi
+          : articleData.excerpt || articleData.excerptGu || articleData.title
+    ) || '';
+
+    if (rawExcerpt && rawExcerpt.trim()) {
+      const cleanExcerpt = rawExcerpt.replace(/<[^>]*>/g, '').trim();
+      if (cleanExcerpt) {
+        // Split clean excerpt into sentences to create up to 2 clean paragraphs
+        const sentences = cleanExcerpt
+          .split(/(?<=[.!?|।])\s+/)
+          .map((s) => s.trim())
+          .filter(Boolean);
+
+        if (sentences.length >= 2) {
+          const mid = Math.ceil(sentences.length / 2);
+          streamParagraphs = [
+            `<p>${sentences.slice(0, mid).join(' ')}</p>`,
+            `<p>${sentences.slice(mid).join(' ')}</p>`,
+          ];
+        } else {
+          streamParagraphs = [`<p>${cleanExcerpt}</p>`];
+        }
+      }
+    }
+  }
+
+  // 3. Third priority: rich category-specific paragraphs
+  if (streamParagraphs.length === 0) {
+    streamParagraphs = buildFallbackNewsParagraphs(articleData, language);
+  }
+
+  // Strictly limit to MAXIMUM 2 PARAGRAPHS when not expanded
+  const MAX_STREAM_PARAS = 2;
+  const displayParagraphs = isExpanded ? streamParagraphs : streamParagraphs.slice(0, MAX_STREAM_PARAS);
+  const hasMore = streamParagraphs.length > MAX_STREAM_PARAS;
+
+  const audioText = displayParagraphs
+    .map((p) => p.replace(/<[^>]*>/g, '').trim())
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <div className="article-stream-item border-b border-neutral-200 dark:border-neutral-800 pb-5 last:border-b-0 text-left flex flex-col items-start w-full">
+      <nav data-nosnippet="true" className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium mb-3 w-full text-left justify-start">
+        <Link href="/" className="hover:text-[var(--red)] transition-colors">
+          {uiLabel(language, { en: 'Home', gu: 'હોમ', hi: 'होम' })}
+        </Link>
+        <span>/</span>
+        <Link href={`/category/${streamArticle.category.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-[var(--red)] transition-colors">
+          {streamCategory}
+        </Link>
+        {streamCity && streamCity.toLowerCase() !== streamCategory.toLowerCase() && (
+          <>
+            <span>/</span>
+            <span>{streamCity}</span>
+          </>
         )}
-      </button>
+        <span>/</span>
+        <span className="text-neutral-700 dark:text-neutral-300 font-normal">
+          <AutoArticleBreadcrumbTitle article={articleData} />
+        </span>
+      </nav>
+
+      <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground tracking-tight mb-2 text-left w-full">
+        <Link href={`/news/${streamArticle.slug}`} className="hover:text-[#B3121B] transition-colors">
+          <AutoArticleTitle article={articleData} language={language} />
+        </Link>
+      </h2>
+
+      {formatArticleDateTime(articleData.publishedAt || (articleData as any).createdAt) && (
+        <div className="text-[12px] text-neutral-500 dark:text-neutral-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-3 select-none" suppressHydrationWarning>
+          <span className="font-medium text-neutral-600 dark:text-neutral-300">Published on:</span>{' '}
+          {formatArticleDateTime(articleData.publishedAt || (articleData as any).createdAt)}
+        </div>
+      )}
+
+      <Link
+        href={`/news/${streamArticle.slug}`}
+        className="block relative aspect-[16/9] w-full overflow-hidden bg-black rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
+      >
+        <Image
+          src={articleData.image}
+          alt={getArticleTitle(articleData, language)}
+          fill
+          sizes="(max-width: 1024px) 100vw, 760px"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+      </Link>
+
+      {/* Article Description Paragraphs (Maximum 2 Paragraphs shown by default) */}
+      <div className="article-body space-y-4 text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-foreground mb-4 text-left w-full">
+        {displayParagraphs.map((p, pIdx) => {
+          const trimmed = p.trim();
+          if (!trimmed) return null;
+
+          if (trimmed.startsWith('> ') || trimmed.startsWith('>"') || trimmed.startsWith('> "')) {
+            const lines = trimmed.split('\n');
+            const quoteText = lines
+              .filter((l) => l.startsWith('>') && !l.includes('> —') && !l.includes('> -'))
+              .map((l) => l.replace(/^>\s*"?/, '').replace(/"?$/, ''))
+              .join(' ');
+            const citeLine = lines.find((l) => l.includes('> —') || l.includes('> -'));
+            const citeText = citeLine ? citeLine.replace(/^>\s*—\s*/, '').replace(/^>\s*-\s*/, '').trim() : '';
+
+            return (
+              <blockquote key={pIdx} className="my-6 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 p-4 dark:bg-neutral-900/60 shadow-sm">
+                <p className="text-base font-bold text-neutral-900 dark:text-white leading-relaxed">
+                  &quot;<TranslatedInlineText text={quoteText || trimmed.replace(/^>\s*/, '')} language={language} />&quot;
+                </p>
+                {citeText && (
+                  <cite className="block mt-2 text-xs font-bold text-neutral-600 dark:text-neutral-400 not-italic">
+                    — {citeText}
+                  </cite>
+                )}
+              </blockquote>
+            );
+          }
+
+          const cleanedParagraph = sanitizeParagraphHtml(trimmed, language);
+          if (!cleanedParagraph) return null;
+
+          return (
+            <TranslatedParagraph
+              key={pIdx}
+              rawHtml={cleanedParagraph}
+              language={language}
+            />
+          );
+        })}
+      </div>
+
+      {/* Expand / Read Full Story Controls */}
+      {hasMore && !isExpanded && (
+        <div className="flex flex-wrap items-center gap-3 mb-6 select-none">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(true)}
+            className="group inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-md shadow-red-900/20 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none text-xs sm:text-sm font-bold border border-white/20"
+          >
+            <span>{uiLabel(language, { en: 'Read More', gu: 'વધુ વાંચો', hi: 'और पढ़ें' })}</span>
+            <ChevronDown className="w-4 h-4 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[2.5]" />
+          </button>
+          <Link
+            href={`/news/${streamArticle.slug}`}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-[#B3121B] dark:text-red-400 hover:underline px-2 py-1"
+          >
+            <span>{uiLabel(language, { en: 'Read Full Story', gu: 'સંપૂર્ણ અહેવાલ વાંચો', hi: 'पूरी खबर पढ़ें' })}</span>
+            <span>→</span>
+          </Link>
+        </div>
+      )}
+
+      {isExpanded && (
+        <div className="flex justify-start mb-6 select-none">
+          <button
+            type="button"
+            onClick={() => setIsExpanded(false)}
+            className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700 cursor-pointer transition-colors"
+          >
+            <span>{uiLabel(language, { en: 'Read Less', gu: 'ઓછું વાંચો', hi: 'कम पढ़ें' })}</span>
+            <ChevronUp className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Share Bar */}
+      <ArticleStreamShareBar article={articleData} language={language} uiLabel={uiLabel} audioText={audioText} />
+
+      {/* Read Also section */}
+      {readAlsoArticles.length > 0 && (
+        <div className="w-full mt-2.5 mb-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-2">
+              <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
+            </div>
+            <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
+              {uiLabel(language, { en: 'Read Also', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
+            </h4>
+            <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
+          </div>
+
+          {/* Mobile View (< md): Hero Section style list */}
+          <div className="flex flex-col divide-y divide-border/60 md:hidden">
+            {readAlsoArticles.map((raArt, index) => (
+              <MobileHeroArticleCard
+                key={`mobile-stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
+                article={raArt}
+                language={language}
+                index={index}
+              />
+            ))}
+          </div>
+
+          {/* Desktop View (>= md): existing 2-column card grid */}
+          <div className="hidden md:grid md:grid-cols-2 gap-3">
+            {readAlsoArticles.map((raArt, index) => {
+              const raCat = normalizeDisplayText(getCategoryLabel(raArt, language) || raArt.category || '');
+              return (
+                <Link
+                  key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
+                  href={`/news/${raArt.slug}`}
+                  className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
+                >
+                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                    <Image
+                      src={getCardThumbnail(raArt, index)}
+                      alt={getArticleTitle(raArt, language)}
+                      fill
+                      sizes="90px"
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  </div>
+                  <div className="min-w-0 flex-1 flex flex-col gap-1">
+                    <span className="block text-[10.5px] font-black uppercase tracking-wider text-[#B3121B] opacity-85">{raCat}</span>
+                    <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
+                      <AutoArticleTitle article={raArt} language={language} />
+                    </p>
+                  </div>
+                  <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Topics Tags */}
+      <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
+        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
+          {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
+        </span>
+        {getStreamTags(articleData).map((tag, tIdx) => (
+          <Link
+            key={tIdx}
+            href={getTopicHref(tag)}
+            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
+          >
+            {normalizeDisplayText(tag)}
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }
@@ -163,249 +521,119 @@ export default function ArticleInfiniteStream({
             const usedReadAlsoIds = new Set<string>();
 
             return streamList.map((streamArticle) => {
-              const streamCategory = normalizeDisplayText(getCategoryLabel(streamArticle, language));
-              const streamBody = getArticleContent(streamArticle, language);
-              const streamParagraphs = parseArticleBodyBlocks(streamBody);
-              const streamCity = uiLabel(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' });
-
               const mainId = String(article.id);
               const streamArtId = String(streamArticle.id);
 
-              // Calculate compulsory 4 Read Also articles ensuring 4 STRICTLY DIFFERENT categories
-              const rawPool = [...mostReadArticles, ...trending, ...related].filter(
-                (a, idx, self) => String(a.id) !== mainId && String(a.id) !== streamArtId && self.findIndex(t => String(t.id) === String(a.id)) === idx
+              // Calculate 4 Read Also articles that are TRULY RELATED to this streamArticle
+              const streamCatSlug = (streamArticle.category || '').toLowerCase().replace(/\s+/g, '-');
+              const streamCatName = (streamArticle.category || '').toLowerCase().trim();
+              const streamLoc = (streamArticle.location || '').toLowerCase().trim();
+
+              const streamGenericTags = new Set([
+                'news', 'popular stories', 'popular-stories', 'popularstories',
+                'trending', 'breaking', 'breaking news', 'national', 'સમાચાર',
+                'ન્યૂઝ', 'લાઇવ', 'વિશેષ', 'ગુજરાત', 'ભારત'
+              ]);
+
+              const streamTags = [
+                ...(streamArticle.tags || []),
+                ...(streamArticle.tagsGu || []),
+                ...(streamArticle.tagsHi || []),
+              ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
+
+              const streamSlugWords = (streamArticle.slug || '')
+                .split('-')
+                .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
+
+              // Combine all available candidate pools: related first, then trending, then mostReadArticles
+              const rawPool = [...related, ...trending, ...mostReadArticles].filter(
+                (cand, idx, self) =>
+                  String(cand.id) !== mainId &&
+                  String(cand.id) !== streamArtId &&
+                  self.findIndex((t) => String(t.id) === String(cand.id)) === idx
               );
 
-              const streamCatSlug = (streamArticle.category || '').toLowerCase().replace(/\s+/g, '-');
-              const streamCatName = (streamArticle.category || '').toLowerCase().trim() || 'general';
-
-              // Prefer unused articles first
-              let availablePool = rawPool.filter(cand => !usedReadAlsoIds.has(String(cand.id)));
-              if (availablePool.length < 4) {
-                availablePool = rawPool.filter(cand => String(cand.id) !== streamArtId);
+              // Prefer candidates not yet shown in this stream session
+              let candidatePool = rawPool.filter((cand) => !usedReadAlsoIds.has(String(cand.id)));
+              if (candidatePool.length < 4) {
+                candidatePool = rawPool;
               }
 
-              // Group candidates by unique category name
-              const byCategory = new Map<string, Article[]>();
-              for (const cand of availablePool) {
-                const cSlug = (cand.category || '').toLowerCase().replace(/\s+/g, '-');
-                const cName = (cand.category || '').toLowerCase().trim() || 'general';
+              const scoredCandidates = candidatePool.map((cand) => {
+                let score = 0;
+                const candCatSlug = (cand.category || '').toLowerCase().replace(/\s+/g, '-');
+                const candCatName = (cand.category || '').toLowerCase().trim();
 
-                if ((cSlug === streamCatSlug || cName === streamCatName) && availablePool.length >= 8) {
-                  continue;
+                // 1. Same category bonus (primary relevance factor!)
+                if (
+                  candCatSlug === streamCatSlug ||
+                  (streamCatName && candCatName && (streamCatName === candCatName || streamCatName.includes(candCatName) || candCatName.includes(streamCatName)))
+                ) {
+                  score += 35;
                 }
-                if (!byCategory.has(cName)) {
-                  byCategory.set(cName, []);
-                }
-                byCategory.get(cName)!.push(cand);
-              }
 
-              if (byCategory.size < 4) {
-                for (const cand of availablePool) {
-                  const cName = (cand.category || '').toLowerCase().trim() || 'general';
-                  if (!byCategory.has(cName)) {
-                    byCategory.set(cName, []);
+                // 2. Tag overlap (specific tags scored heavily, generic tags minimally)
+                const candTags = [
+                  ...(cand.tags || []),
+                  ...(cand.tagsGu || []),
+                  ...(cand.tagsHi || []),
+                ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
+
+                candTags.forEach((t) => {
+                  if (streamTags.includes(t)) {
+                    score += streamGenericTags.has(t) ? 3 : 18;
                   }
-                  byCategory.get(cName)!.push(cand);
-                }
-              }
-
-              const categoryTopArticles: Article[] = [];
-              for (const [, catArts] of byCategory.entries()) {
-                const sortedCatArts = [...catArts].sort((a, b) => {
-                  const isMostReadA = mostReadArticles.some(m => m.id === a.id) ? 20 : 0;
-                  const isMostReadB = mostReadArticles.some(m => m.id === b.id) ? 20 : 0;
-                  const scoreA = isMostReadA + (a.isTrending ? 10 : 0) + (a.isFeatured ? 5 : 0) + Math.min((a.views || 0) / 100, 5);
-                  const scoreB = isMostReadB + (b.isTrending ? 10 : 0) + (b.isFeatured ? 5 : 0) + Math.min((b.views || 0) / 100, 5);
-                  return scoreB - scoreA;
                 });
-                categoryTopArticles.push(sortedCatArts[0]);
-              }
 
-              categoryTopArticles.sort((a, b) => {
-                const isMostReadA = mostReadArticles.some(m => m.id === a.id) ? 20 : 0;
-                const isMostReadB = mostReadArticles.some(m => m.id === b.id) ? 20 : 0;
-                const scoreA = isMostReadA + (a.isTrending ? 10 : 0) + (a.isFeatured ? 5 : 0) + Math.min((a.views || 0) / 100, 5);
-                const scoreB = isMostReadB + (b.isTrending ? 10 : 0) + (b.isFeatured ? 5 : 0) + Math.min((b.views || 0) / 100, 5);
-                return scoreB - scoreA;
+                // 3. Title / Slug keyword similarity
+                const candSlug = (cand.slug || '').toLowerCase();
+                streamSlugWords.forEach((word) => {
+                  if (candSlug.includes(word)) {
+                    score += 15;
+                  }
+                });
+
+                // 4. Same location bonus
+                const candLoc = (cand.location || '').toLowerCase().trim();
+                if (streamLoc && candLoc && streamLoc === candLoc) {
+                  score += 20;
+                }
+
+                // 5. Prefer unused in this session
+                if (!usedReadAlsoIds.has(String(cand.id))) {
+                  score += 10;
+                }
+
+                // 6. Popularity & recency
+                if (cand.isTrending) score += 3;
+                if (cand.isFeatured) score += 2;
+
+                return { cand, score };
               });
 
-              const readAlsoArticles = categoryTopArticles.slice(0, 4);
+              scoredCandidates.sort((a, b) => b.score - a.score);
 
-              if (readAlsoArticles.length < 4) {
-                for (const cand of availablePool) {
-                  if (readAlsoArticles.length >= 4) break;
-                  if (!readAlsoArticles.some(r => r.id === cand.id)) {
-                    readAlsoArticles.push(cand);
-                  }
-                }
-              }
+              const readAlsoArticles = scoredCandidates.slice(0, 4).map((entry) => entry.cand);
 
-              readAlsoArticles.forEach(a => usedReadAlsoIds.add(String(a.id)));
+              readAlsoArticles.forEach((a) => usedReadAlsoIds.add(String(a.id)));
 
               return (
-                <div key={streamArticle.id} className="article-stream-item border-b border-neutral-200 dark:border-neutral-800 pb-5 last:border-b-0 text-left flex flex-col items-start w-full">
-                  <nav className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium mb-3 w-full text-left justify-start">
-                    <Link href="/" className="hover:text-[var(--red)] transition-colors">
-                      {uiLabel(language, { en: 'Home', gu: 'હોમ', hi: 'होम' })}
-                    </Link>
-                    <span>/</span>
-                    <Link href={`/category/${streamArticle.category.toLowerCase().replace(/\s+/g, '-')}`} className="hover:text-[var(--red)] transition-colors">
-                      {streamCategory}
-                    </Link>
-                    <span>/</span>
-                    <span>{streamCity}</span>
-                    <span>/</span>
-                    <span className="text-neutral-700 dark:text-neutral-300 font-normal">
-                      <AutoArticleBreadcrumbTitle article={streamArticle} />
-                    </span>
-                  </nav>
-
-                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold leading-tight text-foreground tracking-tight mb-2 text-left w-full">
-                    <AutoArticleTitle article={streamArticle} language={language} />
-                  </h2>
-
-                  {formatArticleDateTime(streamArticle.updatedAt || (streamArticle as any).createdAt || streamArticle.publishedAt) && (
-                    <div className="text-[12px] text-neutral-500 dark:text-neutral-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mb-3 select-none" suppressHydrationWarning>
-                      <span className="font-medium text-neutral-600 dark:text-neutral-300">Updated on:</span>{' '}
-                      {formatArticleDateTime(streamArticle.updatedAt || (streamArticle as any).createdAt || streamArticle.publishedAt)}
-                    </div>
-                  )}
-
-                  <div className="relative aspect-[16/9] w-full overflow-hidden bg-black rounded-lg shadow-sm mb-6 mt-4">
-                    <Image
-                      src={streamArticle.image}
-                      alt={getArticleTitle(streamArticle, language)}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 760px"
-                      className="object-cover"
-                    />
-                  </div>
-
-                  <div className="article-body space-y-4 text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-foreground mb-2.5 text-left w-full">
-                    {streamParagraphs.map((p, pIdx) => {
-                      const trimmed = p.trim();
-                      if (!trimmed) return null;
-
-                      if (trimmed.startsWith('> ') || trimmed.startsWith('>"') || trimmed.startsWith('> "')) {
-                        const lines = trimmed.split('\n');
-                        const quoteText = lines
-                          .filter((l) => l.startsWith('>') && !l.includes('> —') && !l.includes('> -'))
-                          .map((l) => l.replace(/^>\s*"?/, '').replace(/"?$/, ''))
-                          .join(' ');
-                        const citeLine = lines.find((l) => l.includes('> —') || l.includes('> -'));
-                        const citeText = citeLine ? citeLine.replace(/^>\s*—\s*/, '').replace(/^>\s*-\s*/, '').trim() : '';
-
-                        return (
-                          <blockquote key={pIdx} className="my-6 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 p-4 dark:bg-neutral-900/60 shadow-sm">
-                            <p className="text-base font-bold text-neutral-900 dark:text-white leading-relaxed">
-                              &quot;<TranslatedInlineText text={quoteText || trimmed.replace(/^>\s*/, '')} language={language} />&quot;
-                            </p>
-                            {citeText && (
-                              <cite className="block mt-2 text-xs font-bold text-neutral-600 dark:text-neutral-400 not-italic">
-                                — {citeText}
-                              </cite>
-                            )}
-                          </blockquote>
-                        );
-                      }
-
-                      const cleanedParagraph = sanitizeParagraphHtml(trimmed, language);
-                      if (!cleanedParagraph) return null;
-
-                      return (
-                        <TranslatedParagraph
-                          key={pIdx}
-                          rawHtml={cleanedParagraph}
-                          language={language}
-                        />
-                      );
-                    })}
-                  </div>
-
-                  {readAlsoArticles.length > 0 && (
-                    <>
-                    <ArticleStreamShareBar article={streamArticle} language={language} uiLabel={uiLabel} />
-                    <div className="w-full mt-2.5 mb-4">
-                      {/* Section header */}
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
-                        </div>
-                        <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
-                          {uiLabel(language, { en: 'Read Also', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
-                        </h4>
-                        <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
-                      </div>
-
-                      {/* Mobile View (< md): Hero Section style list */}
-                      <div className="flex flex-col divide-y divide-border/60 md:hidden">
-                        {readAlsoArticles.map((raArt, index) => (
-                          <MobileHeroArticleCard
-                            key={`mobile-stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
-                            article={raArt}
-                            language={language}
-                            index={index}
-                          />
-                        ))}
-                      </div>
-
-                      {/* Desktop View (>= md): existing 2-column card grid */}
-                      <div className="hidden md:grid md:grid-cols-2 gap-3">
-                        {readAlsoArticles.map((raArt, index) => {
-                          const raCat = normalizeDisplayText(getCategoryLabel(raArt, language) || raArt.category || '');
-                          return (
-                            <Link
-                              key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
-                              href={`/news/${raArt.slug}`}
-                              className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
-                            >
-                              {/* Thumbnail Image */}
-                              <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
-                                <Image
-                                  src={getCardThumbnail(raArt, index)}
-                                  alt={getArticleTitle(raArt, language)}
-                                  fill
-                                  sizes="90px"
-                                  className="object-cover transition-transform duration-500 group-hover:scale-110"
-                                  onError={(e) => {
-                                    (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-                                  }}
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                              </div>
-                              {/* Content */}
-                              <div className="min-w-0 flex-1 flex flex-col gap-1">
-                                <span className="block text-[10.5px] font-black uppercase tracking-wider text-[#B3121B] opacity-85">{raCat}</span>
-                                <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
-                                  <AutoArticleTitle article={raArt} language={language} />
-                                </p>
-                              </div>
-                              {/* Arrow indicator */}
-                              <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
-                            </Link>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    </>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
-                    <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-                      {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
-                    </span>
-                    {getStreamTags(streamArticle).map((tag, tIdx) => (
-                      <Link
-                        key={tIdx}
-                        href={getTopicHref(tag)}
-                        className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-                      >
-                        {normalizeDisplayText(tag)}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                <StreamArticleItem
+                  key={streamArticle.id}
+                  streamArticle={streamArticle}
+                  language={language}
+                  readAlsoArticles={readAlsoArticles}
+                  getCardThumbnail={getCardThumbnail}
+                  DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+                  uiLabel={uiLabel}
+                  getArticleContent={getArticleContent}
+                  parseArticleBodyBlocks={parseArticleBodyBlocks}
+                  sanitizeParagraphHtml={sanitizeParagraphHtml}
+                  getStreamTags={getStreamTags}
+                  getTopicHref={getTopicHref}
+                  TranslatedInlineText={TranslatedInlineText}
+                  TranslatedParagraph={TranslatedParagraph}
+                />
               );
             });
           })()}

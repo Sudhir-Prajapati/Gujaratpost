@@ -6,16 +6,12 @@ import { X, ChevronLeft, ChevronRight, Link2, Check, MessageCircle, Phone, Globe
 import { Photo, Language } from '@/types';
 import { getLocalized } from '@/data';
 import Advertisement from '@/components/ads/Advertisement';
-
-// Custom share helper
-const shareUrl = (platform: string, url: string, text: string) => {
-  const encodedUrl = encodeURIComponent(url);
-  const encodedText = encodeURIComponent(text);
-  if (platform === 'facebook') return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-  if (platform === 'twitter') return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`;
-  if (platform === 'whatsapp') return `https://api.whatsapp.com/send?text=${encodedText}%20${encodedUrl}`;
-  return '#';
-};
+import {
+  getFacebookShareHref,
+  getTwitterShareHref,
+  getWhatsAppShareHref,
+  getPublicShareUrl,
+} from '@/lib/facebookShare';
 
 interface PhotoDetailModalProps {
   photos: Photo[];
@@ -62,7 +58,7 @@ const MOCK_DESCRIPTIONS: Record<string, { en: string; gu: string; hi: string }> 
 export default function PhotoDetailModal({ photos, activeIndex, onClose, language, onSelectPhoto }: PhotoDetailModalProps) {
   const [copied, setCopied] = useState(false);
   const activePhoto = photos[activeIndex];
-  const photoUrl = typeof window !== 'undefined' ? `${window.location.origin}/photos` : 'https://gujaratpost.com/photos';
+  const photoUrl = getPublicShareUrl(`/photos/${activePhoto.id}`);
 
   useEffect(() => {
     // Prevent background scrolling when modal is open
@@ -83,7 +79,7 @@ export default function PhotoDetailModal({ photos, activeIndex, onClose, languag
   };
 
   const copyLink = () => {
-    navigator.clipboard.writeText(`${photoUrl}?id=${activePhoto.id}`);
+    navigator.clipboard.writeText(photoUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -174,7 +170,7 @@ export default function PhotoDetailModal({ photos, activeIndex, onClose, languag
                 </span>
                 
                 <a 
-                  href={shareUrl('facebook', photoUrl, photoCaption)} 
+                  href={getFacebookShareHref(photoUrl)} 
                   target="_blank" 
                   rel="noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1877f2] text-white hover:scale-105 transition"
@@ -184,7 +180,7 @@ export default function PhotoDetailModal({ photos, activeIndex, onClose, languag
                 </a>
 
                 <a 
-                  href={shareUrl('twitter', photoUrl, photoCaption)} 
+                  href={getTwitterShareHref(photoUrl, photoCaption)} 
                   target="_blank" 
                   rel="noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-white hover:scale-105 transition"
@@ -194,7 +190,7 @@ export default function PhotoDetailModal({ photos, activeIndex, onClose, languag
                 </a>
 
                 <a 
-                  href={shareUrl('whatsapp', photoUrl, photoCaption)} 
+                  href={getWhatsAppShareHref(photoUrl, photoCaption)} 
                   target="_blank" 
                   rel="noreferrer"
                   className="flex h-8 w-8 items-center justify-center rounded-full bg-[#25d366] text-white hover:scale-105 transition"

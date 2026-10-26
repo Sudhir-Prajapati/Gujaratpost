@@ -11,6 +11,7 @@ import {
   getArticleTitle,
   getCategoryLabel,
   formatViews,
+  CategorySeoMeta,
 } from '@/data';
 import { getCategoryColor, toGu, sortArticlesByLatest } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
@@ -51,6 +52,8 @@ interface Props {
   totalPages: number;
   slug: string;
   resolvedSlug: string;
+  politicsArticles?: Article[];
+  customSeo?: CategorySeoMeta;
 }
 
 interface PairedCategoryConfig {
@@ -74,14 +77,23 @@ export const CATEGORY_PAIRS: Record<string, PairedCategoryConfig> = {
   international: { slug: 'gujarat', name: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
 
   // and in the rajaniti show the fact check
+  politics: { slug: 'fact-check', name: 'Fact Check', gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक' },
 
   // and in the crime show the bharat
   crime: { slug: 'national', name: 'Bharat', gu: 'ભારત', hi: 'भारत' },
 
+  // in manoranjan set technology
+  entertainment: { slug: 'technology', name: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
+  manoranjan: { slug: 'technology', name: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
+  'entertainment-life-style': { slug: 'technology', name: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
+  'entertainment-lifestyle': { slug: 'technology', name: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
+
+  // in technology set manoranjan
+  technology: { slug: 'entertainment', name: 'Entertainment', gu: 'મનોરંજન', hi: 'मनोरंजन' },
+  tech: { slug: 'entertainment', name: 'Entertainment', gu: 'મનોરંજન', hi: 'मनोरंजन' },
+
   // adn in the helth tech
   health: { slug: 'technology', name: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
-
-  // adn in the manoranjan show the fact check
 
   // in the factcheck add the rajniti
   'fact-check': { slug: 'politics', name: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' },
@@ -90,7 +102,139 @@ export const CATEGORY_PAIRS: Record<string, PairedCategoryConfig> = {
   // and in the tranding ad the fact check
   trending: { slug: 'fact-check', name: 'Fact Check', gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक' },
   tranding: { slug: 'fact-check', name: 'Fact Check', gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक' },
+
+  // City Pairs:
+  // in ahmedabad want surat (instead of taza samachar)
+  ahmedabad: { slug: 'surat', name: 'Surat', gu: 'સુરત', hi: 'सूरत' },
+
+  // in surat want vadodara
+  surat: { slug: 'vadodara', name: 'Vadodara', gu: 'વડોદરા', hi: 'वडोदरा' },
+
+  // in rajkot want ahmedabad
+  rajkot: { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
+
+  // in vadodara want rajkot
+  vadodara: { slug: 'rajkot', name: 'Rajkot', gu: 'રાજકોટ', hi: 'राजकोट' },
+  vadodra: { slug: 'rajkot', name: 'Rajkot', gu: 'રાજકોટ', hi: 'राजकोट' },
+
+  // in gandhinagar want other cities
+  gandhinagar: { slug: 'other-cities', name: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' },
+  gandhinager: { slug: 'other-cities', name: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' },
+
+  // in other-cities want ahmedabad
+  'other-cities': { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
+  othercities: { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
+  'other-city': { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
+  other: { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
 };
+
+export const ALSO_READ_CATEGORY_CONFIG: Record<string, [string, string]> = {
+  // Gujarat page (upper: gujarat, world) -> Crime & Bharat
+  gujarat: ['crime', 'national'],
+  state: ['crime', 'national'],
+
+  // Bharat/National page (upper: national, crime) -> World & Fact-Check
+  national: ['world', 'fact-check'],
+  india: ['world', 'fact-check'],
+
+  // World page (upper: world, gujarat) -> Bharat & Crime
+  world: ['national', 'crime'],
+  international: ['national', 'crime'],
+
+  // Politics page (upper: politics, fact-check) -> Crime & Bharat
+  politics: ['crime', 'national'],
+
+  // Crime page (upper: crime, national) -> World & Fact-Check
+  crime: ['world', 'fact-check'],
+
+  // Entertainment page (upper: entertainment, technology) -> Crime & Fact-Check
+  entertainment: ['crime', 'fact-check'],
+  manoranjan: ['crime', 'fact-check'],
+  'entertainment-life-style': ['crime', 'fact-check'],
+  'entertainment-lifestyle': ['crime', 'fact-check'],
+
+  // Technology page (upper: technology, entertainment) -> Crime & Fact-Check
+  technology: ['crime', 'fact-check'],
+  tech: ['crime', 'fact-check'],
+
+  // Health page (upper: health, technology) -> Crime & Fact-Check
+  health: ['crime', 'fact-check'],
+
+  // Fact-Check page (upper: fact-check, politics) -> Crime & Bharat
+  'fact-check': ['crime', 'national'],
+  factcheck: ['crime', 'national'],
+
+  // Trending page (upper: trending, fact-check) -> Crime & Bharat
+  trending: ['crime', 'national'],
+  tranding: ['crime', 'national'],
+
+  // City Pages (upper: city1, city2) -> Alternating main news categories (Crime & Bharat / World & Fact-Check)
+  ahmedabad: ['crime', 'national'],
+  surat: ['world', 'fact-check'],
+  vadodara: ['world', 'fact-check'],
+  vadodra: ['world', 'fact-check'],
+  rajkot: ['crime', 'national'],
+  gandhinagar: ['crime', 'national'],
+  gandhinager: ['crime', 'national'],
+  'other-cities': ['world', 'fact-check'],
+  othercities: ['world', 'fact-check'],
+  'other-city': ['world', 'fact-check'],
+  other: ['world', 'fact-check'],
+};
+
+export const ALSO_READ_CATEGORY_LABELS: Record<string, { en: string; gu: string; hi: string }> = {
+  crime: { en: 'Crime', gu: 'ક્રાઇમ', hi: 'क्राइम' },
+  'fact-check': { en: 'Fact Check', gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक' },
+  national: { en: 'Bharat', gu: 'ભારત', hi: 'भारत' },
+  world: { en: 'World', gu: 'વિશ્વ', hi: 'विश्व' },
+  politics: { en: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' },
+  entertainment: { en: 'Entertainment', gu: 'મનોરંજન', hi: 'मनोरंजन' },
+  gujarat: { en: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
+  technology: { en: 'Technology', gu: 'ટેકનોલોજી', hi: 'टेक्नोलॉजी' },
+  health: { en: 'Health', gu: 'હેલ્થ', hi: 'हेल्थ' },
+  trending: { en: 'Trending', gu: 'ટ્રેન્ડિંગ', hi: 'ट्रेंडिंग' },
+};
+
+/**
+ * Returns two distinct category slugs for "Also Read" (Ae Pan Vacho),
+ * mathematically guaranteeing zero overlap with the page's upper 2 categories (ownCategory & secondCategory).
+ */
+export function getAlsoReadCategories(ownSlug: string, pairedSlug?: string): [string, string] {
+  const normOwn = (ownSlug || '').toLowerCase().trim();
+  const normPaired = (pairedSlug || '').toLowerCase().trim();
+
+  const pool = ['crime', 'fact-check', 'national', 'world', 'politics', 'entertainment', 'gujarat'];
+  const excluded = new Set<string>([normOwn, normPaired]);
+
+  // Handle common aliases for exclusions
+  if (['state'].includes(normOwn) || ['state'].includes(normPaired)) excluded.add('gujarat');
+  if (['india'].includes(normOwn) || ['india'].includes(normPaired)) excluded.add('national');
+  if (['international'].includes(normOwn) || ['international'].includes(normPaired)) excluded.add('world');
+  if (['tech'].includes(normOwn) || ['tech'].includes(normPaired)) excluded.add('technology');
+  if (['factcheck'].includes(normOwn) || ['factcheck'].includes(normPaired)) excluded.add('fact-check');
+  if (['tranding'].includes(normOwn) || ['tranding'].includes(normPaired)) excluded.add('trending');
+  if (
+    ['manoranjan', 'entertainment-life-style', 'entertainment-lifestyle'].includes(normOwn) ||
+    ['manoranjan', 'entertainment-life-style', 'entertainment-lifestyle'].includes(normPaired)
+  ) {
+    excluded.add('entertainment');
+  }
+
+  const mapped = ALSO_READ_CATEGORY_CONFIG[normOwn];
+  if (mapped && !excluded.has(mapped[0]) && !excluded.has(mapped[1]) && mapped[0] !== mapped[1]) {
+    return mapped;
+  }
+
+  const selected: string[] = [];
+  for (const cat of pool) {
+    if (!excluded.has(cat)) {
+      selected.push(cat);
+      if (selected.length === 2) break;
+    }
+  }
+
+  return [selected[0] || 'national', selected[1] || 'world'];
+}
 
 type FilterTab = 'all' | 'paired' | 'latest' | 'video';
 
@@ -188,7 +332,7 @@ function MobileCategoryArticleCard({
 }) {
   if (!article) return null;
 
-  const isVideoCard = isVideo || isVideoItem(article);
+  const isVideoCard = Boolean(isVideo);
   const ytUrl = isVideoCard ? getArticleYouTubeUrl(article) : '';
 
   const rawTitle =
@@ -206,11 +350,12 @@ function MobileCategoryArticleCard({
   const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
 
   const catLabel =
-    (isVideoCard && defaultCategoryLabel)
+    article.customCategoryLabel ||
+    ((isVideoCard && defaultCategoryLabel)
       ? defaultCategoryLabel
       : (getCategoryLabel(article, language) ||
          defaultCategoryLabel ||
-         (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News'));
+         (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News')));
 
   const catSlug =
     article.category?.slug ||
@@ -336,7 +481,7 @@ function MobileCategoryArticleCard({
   );
 }
 
-function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trending, currentPage, totalPages }: Props) {
+function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trending, currentPage, totalPages, politicsArticles: initialPolitics, customSeo }: Props) {
   const { language } = useApp();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
@@ -346,31 +491,26 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   const [hasLoadedMore, setHasLoadedMore] = useState(currentPage > 1);
   const articlesGridRef = useRef<HTMLDivElement>(null);
 
-  // Client-side pagination — no SSR round-trip, instant updates
-  const pageCacheRef = useRef<Record<number, Article[]>>({
-    [currentPage]: articles || [],
-  });
-  const [pagedArticles, setPagedArticles] = useState<Article[]>([]);
-  const [pagedPage, setPagedPage] = useState(currentPage);
-  const [pagedTotalPages, setPagedTotalPages] = useState(totalPages);
+  // Main category articles and pagination state
+  const [mainArticles, setMainArticles] = useState<Article[]>(articles || []);
+  const [mainPage, setMainPage] = useState<number>(currentPage);
+  const [mainTotalPages, setMainTotalPages] = useState<number>(totalPages);
   const [pageLoading, setPageLoading] = useState(false);
 
-  // Active articles for the current page (updates dynamically when page changes)
-  const currentArticles = useMemo(() => {
-    if (pagedArticles && pagedArticles.length > 0) {
-      return pagedArticles;
-    }
-    return articles || [];
-  }, [pagedArticles, articles]);
+  // Client-side pagination cache keyed by `${categorySlug}:${page}`
+  const pageCacheRef = useRef<Record<string, { articles: Article[]; totalPages: number }>>({
+    [`${resolvedSlug}:${currentPage}`]: { articles: articles || [], totalPages },
+  });
 
   // Videos state for Video filter
   const [videos, setVideos] = useState<any[]>([]);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
 
-  // Also Read: Crime & Fact Check articles
-  const [crimeArticles, setCrimeArticles] = useState<any[]>([]);
-  const [factCheckArticles, setFactCheckArticles] = useState<any[]>([]);
+  // Also Read: 2 dynamic category article streams strictly distinct from the upper 2 categories
+  const [alsoReadCat1Articles, setAlsoReadCat1Articles] = useState<any[]>([]);
+  const [alsoReadCat2Articles, setAlsoReadCat2Articles] = useState<any[]>([]);
   const [trendingStories, setTrendingStories] = useState<Article[]>(trending || []);
+  const [politicsStories, setPoliticsStories] = useState<Article[]>(initialPolitics || []);
 
   // Photo Gallery
   const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
@@ -383,22 +523,40 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   const usePublishDate = ['entertainment', 'entertainment-life-style', 'manoranjan'].includes(normSlug);
   const pairedCategory = CATEGORY_PAIRS[normSlug];
 
-  // Articles for the paired category tab (e.g. World on Gujarat, Crime on Bharat)
+  // Derive the 2 Also Read categories (strictly avoiding own category and paired category)
+  const [alsoReadCat1, alsoReadCat2] = useMemo(() => {
+    return getAlsoReadCategories(normSlug, pairedCategory?.slug);
+  }, [normSlug, pairedCategory?.slug]);
+
+  // Articles & pagination for the paired category tab (e.g. World on Gujarat, Crime on Bharat)
   const [pairedArticles, setPairedArticles] = useState<Article[]>([]);
+  const [pairedPage, setPairedPage] = useState<number>(1);
+  const [pairedTotalPages, setPairedTotalPages] = useState<number>(1);
   const [pairedLoading, setPairedLoading] = useState(false);
 
   useEffect(() => {
     if (!pairedCategory?.slug) {
       setPairedArticles([]);
+      setPairedPage(1);
+      setPairedTotalPages(1);
+      return;
+    }
+    const cacheKey = `${pairedCategory.slug}:1`;
+    if (pageCacheRef.current[cacheKey]) {
+      setPairedArticles(pageCacheRef.current[cacheKey].articles);
+      setPairedTotalPages(pageCacheRef.current[cacheKey].totalPages);
       return;
     }
     let isMounted = true;
     setPairedLoading(true);
-    getPublicArticles({ categorySlug: pairedCategory.slug, page: 1, limit: 30 })
+    getPublicArticles({ categorySlug: pairedCategory.slug, page: 1, limit: 42 })
       .then((res) => {
         if (!isMounted) return;
         const fetched = sortArticlesByLatest(res?.articles || []);
+        const tPages = res?.totalPages || 1;
+        pageCacheRef.current[cacheKey] = { articles: fetched, totalPages: tPages };
         setPairedArticles(fetched);
+        setPairedTotalPages(tPages);
       })
       .catch(() => {})
       .finally(() => {
@@ -409,19 +567,34 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     };
   }, [pairedCategory?.slug]);
 
-  // Reset active tab to 'all' whenever category changes
-  useEffect(() => {
-    setActiveTab('all');
-    setPlayingVideoId(null);
-  }, [slug, resolvedSlug]);
-
-  // Scroll page to top instantly whenever category page mounts or slug changes
+  // Reset states whenever category slug or resolvedSlug changes
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    pageCacheRef.current = { [currentPage]: articles || [] };
-    setPagedArticles([]);
-    setPagedPage(currentPage);
-  }, [slug]);
+    pageCacheRef.current[`${resolvedSlug}:${currentPage}`] = { articles: articles || [], totalPages };
+    setMainArticles(articles || []);
+    setMainPage(currentPage);
+    setMainTotalPages(totalPages);
+    setPairedArticles([]);
+    setPairedPage(1);
+    setPairedTotalPages(1);
+    setAlsoReadCat1Articles([]);
+    setAlsoReadCat2Articles([]);
+    setActiveTab('all');
+    setPlayingVideoId(null);
+  }, [slug, resolvedSlug, currentPage, totalPages]);
+
+  // Derived active tab state for unified article rendering and pagination
+  const isPairedTab = activeTab === 'paired' && Boolean(pairedCategory?.slug);
+  const activePage = isPairedTab ? pairedPage : mainPage;
+  const activeTotalPages = isPairedTab ? pairedTotalPages : mainTotalPages;
+
+  // Active articles for current page & tab (updates dynamically when page or tab changes)
+  const currentArticles = useMemo(() => {
+    if (isPairedTab) {
+      return pairedArticles;
+    }
+    return mainArticles;
+  }, [isPairedTab, pairedArticles, mainArticles]);
 
   // Fetch public videos stream for Video tab
   useEffect(() => {
@@ -434,18 +607,56 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       .catch(() => { });
   }, []);
 
-  // Fetch Crime & Fact Check articles for "Also Read" section (12 Crime + 12 Fact Check = 24 articles)
+  // Fetch articles for "Also Read" section from 2 categories strictly different from the upper 2 categories
   useEffect(() => {
-    getPublicArticles({ categorySlug: 'crime', limit: 20 })
-      .then((res) => { if (res?.articles) setCrimeArticles(res.articles); })
-      .catch(() => {});
-    getPublicArticles({ categorySlug: 'fact-check', limit: 20 })
-      .then((res) => { if (res?.articles) setFactCheckArticles(res.articles); })
-      .catch(() => {});
-  }, []);
+    let isMounted = true;
+    if (!alsoReadCat1 || !alsoReadCat2) return;
 
-  // Load the sidebar after the main category feed has rendered.
+    const label1 = ALSO_READ_CATEGORY_LABELS[alsoReadCat1] || { en: alsoReadCat1, gu: alsoReadCat1, hi: alsoReadCat1 };
+    const label2 = ALSO_READ_CATEGORY_LABELS[alsoReadCat2] || { en: alsoReadCat2, gu: alsoReadCat2, hi: alsoReadCat2 };
+
+    Promise.all([
+      getPublicArticles({ categorySlug: alsoReadCat1, limit: 16 }),
+      getPublicArticles({ categorySlug: alsoReadCat2, limit: 16 }),
+    ])
+      .then(([res1, res2]) => {
+        if (!isMounted) return;
+        const list1 = (res1?.articles || []).map((art: any) => ({
+          ...art,
+          customCategoryLabel: language === 'gu' ? label1.gu : language === 'hi' ? label1.hi : label1.en,
+          categorySlug: art.categorySlug || alsoReadCat1,
+        }));
+        const list2 = (res2?.articles || []).map((art: any) => ({
+          ...art,
+          customCategoryLabel: language === 'gu' ? label2.gu : language === 'hi' ? label2.hi : label2.en,
+          categorySlug: art.categorySlug || alsoReadCat2,
+        }));
+        setAlsoReadCat1Articles(list1);
+        setAlsoReadCat2Articles(list2);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [alsoReadCat1, alsoReadCat2, language]);
+
+  // Fetch Top 5 Rajniti / Politics stories specifically for trending category right sidebar
   useEffect(() => {
+    if (normSlug !== 'trending') return;
+    if (politicsStories.length >= 5) return;
+    let active = true;
+    getPublicArticles({ categorySlug: 'politics', limit: 10 })
+      .then((res) => {
+        if (active && res?.articles?.length) setPoliticsStories(sortArticlesByLatest(res.articles));
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [normSlug, politicsStories.length]);
+
+  // Load the sidebar after the main category feed has rendered for other categories.
+  useEffect(() => {
+    if (normSlug === 'trending') return;
     if (trendingStories.length > 0) return;
     let active = true;
     getPublicArticles({ isTrending: true, limit: 10 })
@@ -454,7 +665,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       })
       .catch(() => {});
     return () => { active = false; };
-  }, [trendingStories.length]);
+  }, [normSlug, trendingStories.length]);
 
   // Fetch Photo Gallery
   useEffect(() => {
@@ -492,21 +703,50 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     }
   };
 
-  // Interleave Crime & Fact-Check articles for "Also Read" (24 articles total: 12 Crime + 12 Fact-Check)
+  // Interleave Category 1 & Category 2 articles for "Also Read" (24 articles total: 12 Cat1 + 12 Cat2)
   const alsoReadArticles = useMemo(() => {
+    const currentArticleIds = new Set(
+      [...(mainArticles || []), ...(pairedArticles || [])]
+        .map((a: any) => a.id)
+        .filter(Boolean)
+    );
     const combined: any[] = [];
-    const maxLen = Math.max(crimeArticles.length, factCheckArticles.length);
+    const seenIds = new Set<string>();
+    const maxLen = Math.max(alsoReadCat1Articles.length, alsoReadCat2Articles.length);
     for (let i = 0; i < maxLen; i++) {
-      if (crimeArticles[i]) combined.push(crimeArticles[i]);
-      if (factCheckArticles[i]) combined.push(factCheckArticles[i]);
+      const a1 = alsoReadCat1Articles[i];
+      if (a1 && a1.id && !currentArticleIds.has(a1.id) && !seenIds.has(a1.id)) {
+        seenIds.add(a1.id);
+        combined.push(a1);
+      }
+      const a2 = alsoReadCat2Articles[i];
+      if (a2 && a2.id && !currentArticleIds.has(a2.id) && !seenIds.has(a2.id)) {
+        seenIds.add(a2.id);
+        combined.push(a2);
+      }
     }
     return combined.slice(0, 24);
-  }, [crimeArticles, factCheckArticles]);
+  }, [alsoReadCat1Articles, alsoReadCat2Articles, mainArticles, pairedArticles]);
 
   // Get localized category name aligned exactly with header menu links
   const getCategoryTitleLocalized = () => {
-    if (slug === 'other-cities' || slug === 'otherCities') {
+    if (slug === 'other-cities' || slug === 'otherCities' || slug === 'othercities' || slug === 'other-city' || slug === 'other') {
       return getLocalized(language, { en: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' });
+    }
+    if (slug === 'ahmedabad') {
+      return getLocalized(language, { en: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' });
+    }
+    if (slug === 'surat') {
+      return getLocalized(language, { en: 'Surat', gu: 'સુરત', hi: 'सूरत' });
+    }
+    if (slug === 'vadodara' || slug === 'vadodra') {
+      return getLocalized(language, { en: 'Vadodara', gu: 'વડોદરા', hi: 'वडोदरा' });
+    }
+    if (slug === 'rajkot') {
+      return getLocalized(language, { en: 'Rajkot', gu: 'રાજકોટ', hi: 'राजकोट' });
+    }
+    if (slug === 'gandhinagar' || slug === 'gandhinager') {
+      return getLocalized(language, { en: 'Gandhinagar', gu: 'ગાંધીનગર', hi: 'गांधीनगर' });
     }
     if (slug === 'gujarat' || slug === 'state') {
       return getLocalized(language, { en: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' });
@@ -540,6 +780,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   const getArticleLocation = (art: Article) => {
     if (activeTab === 'video') {
       return categoryName;
+    }
+    if (activeTab === 'paired' && pairedCategory) {
+      return (art as any).categoryGu || getLocalized(language, { en: pairedCategory.name, gu: pairedCategory.gu, hi: pairedCategory.hi });
     }
     if (language === 'gu') {
       return (art as any).categoryGu || art.tagsGu?.[0] || getCategoryLabel(art, language);
@@ -656,7 +899,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     const top6Videos = allAvailableVideos.slice(0, 6);
     const top6Ids = new Set(top6Videos.map((item) => item.id).filter(Boolean));
 
-    // 2. Second Section (Image 2): That category's articles
+    // 2. Second Section (Image 2): That category's actual articles (not videos)
     const categoryArticles = (currentArticles || [])
       .filter((art) => !top6Ids.has(art.id))
       .map((art: any) => ({
@@ -664,35 +907,24 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         category: art.category || categoryName,
         categoryGu: art.categoryGu || categoryName,
         categoryHi: art.categoryHi || categoryName,
-        isVideoItem: true,
       }));
 
     return [...top6Videos, ...categoryArticles];
   }, [currentArticles, videos, category, slug, categoryName]);
 
-  // Items for "બધું" (All) tab: Pure category news articles (no YouTube videos injected)
+  // Items for category news articles (no YouTube videos injected)
   const allSectionItems = useMemo(() => {
     return sortArticlesByLatest(currentArticles || []);
   }, [currentArticles]);
 
   // Dynamic Section Items (Hero + Sub-Hero + Top Stories) driven by activeTab
   const currentSectionItems = useMemo(() => {
-    if (activeTab === 'paired') {
-      return pairedArticles.length > 0 ? pairedArticles : (currentArticles || []);
-    }
-
-    if (activeTab === 'latest') {
-      // Strictly latest uploaded articles sorted by time descending
-      return sortArticlesByLatest(currentArticles || []);
-    }
-
     if (activeTab === 'video') {
       return categoryVideoItems;
     }
-
-    // Default 'all' (બધું): Pure category news articles
+    // Default 'all', 'paired', and 'latest': Pure category news articles
     return allSectionItems;
-  }, [activeTab, pairedArticles, currentArticles, categoryVideoItems, allSectionItems]);
+  }, [activeTab, categoryVideoItems, allSectionItems]);
 
   // Section Hero Article / Item
   const heroArticle = currentSectionItems[0] || currentArticles[0];
@@ -718,92 +950,170 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   // Remaining articles for Popular News grid (steady view)
   const popularArticles = useMemo(() => {
-    const baseList = (activeTab === 'paired' && pairedArticles.length > 0)
-      ? pairedArticles
-      : (activeTab === 'video' && categoryVideoItems.length > 0)
-        ? categoryVideoItems
-        : currentSectionItems;
+    const baseList = activeTab === 'video' ? categoryVideoItems : currentSectionItems;
     return baseList.filter((art) => !topStoriesIds.has(art.id));
-  }, [activeTab, pairedArticles, categoryVideoItems, currentSectionItems, topStoriesIds]);
+  }, [activeTab, categoryVideoItems, currentSectionItems, topStoriesIds]);
 
   // Fast background prefetch of adjacent pages for instant 0ms clicking
   useEffect(() => {
+    const targetSlug = isPairedTab ? pairedCategory!.slug : resolvedSlug;
     const prefetch = (p: number) => {
-      if (p >= 1 && p <= pagedTotalPages && !pageCacheRef.current[p]) {
-        getPublicArticles(resolvedSlug === 'trending'
-          ? { isTrending: true, page: p, limit: 40 }
-          : { categorySlug: resolvedSlug, page: p, limit: 40 })
-          .then((res) => {
-            if (res?.articles?.length) {
-              const sorted = sortArticlesByLatest(res.articles as any[]);
-              pageCacheRef.current[p] = sorted;
-            }
-          })
-          .catch(() => {});
+      if (p >= 1 && p <= activeTotalPages) {
+        const cacheKey = `${targetSlug}:${p}`;
+        if (!pageCacheRef.current[cacheKey]) {
+          getPublicArticles(targetSlug === 'trending'
+            ? { isTrending: true, page: p, limit: 42 }
+            : { categorySlug: targetSlug, page: p, limit: 42 })
+            .then((res) => {
+              if (res?.articles?.length) {
+                const sorted = sortArticlesByLatest(res.articles as any[]);
+                const tPages = res.totalPages || activeTotalPages;
+                pageCacheRef.current[cacheKey] = { articles: sorted, totalPages: tPages };
+              }
+            })
+            .catch(() => {});
+        }
       }
     };
-    prefetch(pagedPage + 1);
-    if (pagedPage > 1) prefetch(pagedPage - 1);
-  }, [pagedPage, pagedTotalPages, resolvedSlug]);
+    prefetch(activePage + 1);
+    if (activePage > 1) prefetch(activePage - 1);
+  }, [isPairedTab, pairedCategory, resolvedSlug, activePage, activeTotalPages]);
 
   const handlePageChange = useCallback(async (page: number) => {
-    if (page === pagedPage || pageLoading) return;
+    const isPaired = activeTab === 'paired' && Boolean(pairedCategory?.slug);
+    const targetSlug = isPaired ? pairedCategory!.slug : resolvedSlug;
+    const curActivePage = isPaired ? pairedPage : mainPage;
+    const curActiveTotalPages = isPaired ? pairedTotalPages : mainTotalPages;
+
+    if (page === curActivePage || page < 1 || page > curActiveTotalPages || pageLoading) return;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-    // 1. Instant switch if page is 1
-    if (page === 1) {
-      const p1 = pageCacheRef.current[1] || articles;
-      setPagedArticles(p1);
-      setPagedPage(1);
+    const cacheKey = `${targetSlug}:${page}`;
+
+    // 1. Instant switch if page is cached (0ms delay)
+    if (pageCacheRef.current[cacheKey]) {
+      const cached = pageCacheRef.current[cacheKey];
+      if (isPaired) {
+        setPairedArticles(cached.articles);
+        setPairedPage(page);
+        if (cached.totalPages) setPairedTotalPages(cached.totalPages);
+      } else {
+        setMainArticles(cached.articles);
+        setMainPage(page);
+        if (cached.totalPages) setMainTotalPages(cached.totalPages);
+      }
       setHasLoadedMore(true);
       setVisibleCount(9999);
-      window.history.pushState({}, '', `/category/${slug}`);
+      const url = page > 1 ? `/category/${slug}?page=${page}` : `/category/${slug}`;
+      window.history.pushState({}, '', url);
       return;
     }
 
-    // 2. Instant switch if page is cached (0ms delay)
-    if (pageCacheRef.current[page]) {
-      setPagedArticles(pageCacheRef.current[page]);
-      setPagedPage(page);
-      setHasLoadedMore(true);
-      setVisibleCount(9999);
-      window.history.pushState({}, '', `/category/${slug}?page=${page}`);
-      return;
-    }
-
-    // 3. Otherwise fetch from API with fast loading indicator
+    // 2. Otherwise fetch from API with fast loading indicator
     setPageLoading(true);
     try {
-      const res = await getPublicArticles(resolvedSlug === 'trending'
-        ? { isTrending: true, page, limit: 40 }
-        : { categorySlug: resolvedSlug, page, limit: 40 });
+      const res = await getPublicArticles(targetSlug === 'trending'
+        ? { isTrending: true, page, limit: 42 }
+        : { categorySlug: targetSlug, page, limit: 42 });
       const fetched = sortArticlesByLatest(res?.articles || []);
-      pageCacheRef.current[page] = fetched;
-      setPagedArticles(fetched);
-      setPagedPage(page);
-      if (res?.totalPages) setPagedTotalPages(res.totalPages);
+      const tPages = res?.totalPages || curActiveTotalPages;
+      pageCacheRef.current[cacheKey] = { articles: fetched, totalPages: tPages };
+
+      if (isPaired) {
+        setPairedArticles(fetched);
+        setPairedPage(page);
+        if (tPages) setPairedTotalPages(tPages);
+      } else {
+        setMainArticles(fetched);
+        setMainPage(page);
+        if (tPages) setMainTotalPages(tPages);
+      }
       setHasLoadedMore(true);
       setVisibleCount(9999);
-      window.history.pushState({}, '', `/category/${slug}?page=${page}`);
+      const url = page > 1 ? `/category/${slug}?page=${page}` : `/category/${slug}`;
+      window.history.pushState({}, '', url);
     } catch {
       // silent fail — keep current articles visible
     } finally {
       setPageLoading(false);
     }
-  }, [pagedPage, pageLoading, resolvedSlug, slug, articles]);
+  }, [activeTab, pairedCategory, resolvedSlug, pairedPage, mainPage, pairedTotalPages, mainTotalPages, pageLoading, slug]);
+
+  const handleTabClick = useCallback((tabId: FilterTab) => {
+    if (activeTab === tabId) return;
+    setActiveTab(tabId);
+    setPlayingVideoId(null);
+
+    if (tabId === 'paired') {
+      // Switched to paired category tab (e.g. World on Gujarat) -> reset to page 1
+      setPairedPage(1);
+      setHasLoadedMore(true);
+      setVisibleCount(9999);
+      const cacheKey = `${pairedCategory?.slug}:1`;
+      if (pageCacheRef.current[cacheKey]) {
+        setPairedArticles(pageCacheRef.current[cacheKey].articles);
+        setPairedTotalPages(pageCacheRef.current[cacheKey].totalPages);
+      } else if (pairedCategory?.slug) {
+        setPairedLoading(true);
+        getPublicArticles({ categorySlug: pairedCategory.slug, page: 1, limit: 42 })
+          .then((res) => {
+            const fetched = sortArticlesByLatest(res?.articles || []);
+            const tPages = res?.totalPages || 1;
+            pageCacheRef.current[cacheKey] = { articles: fetched, totalPages: tPages };
+            setPairedArticles(fetched);
+            setPairedTotalPages(tPages);
+          })
+          .catch(() => {})
+          .finally(() => setPairedLoading(false));
+      }
+      window.history.pushState({}, '', `/category/${slug}`);
+    } else if (tabId === 'all') {
+      // Switched back to main category tab (e.g. Gujarat) -> reset to page 1
+      setMainPage(1);
+      setHasLoadedMore(false);
+      setVisibleCount(12);
+      const cacheKey = `${resolvedSlug}:1`;
+      if (pageCacheRef.current[cacheKey]) {
+        setMainArticles(pageCacheRef.current[cacheKey].articles);
+        setMainTotalPages(pageCacheRef.current[cacheKey].totalPages);
+      } else if (currentPage === 1 && articles?.length) {
+        setMainArticles(articles);
+        setMainTotalPages(totalPages);
+      } else {
+        getPublicArticles(resolvedSlug === 'trending'
+          ? { isTrending: true, page: 1, limit: 42 }
+          : { categorySlug: resolvedSlug, page: 1, limit: 42 }
+        ).then((res) => {
+          if (res?.articles?.length) {
+            const fetched = sortArticlesByLatest(res.articles);
+            const tPages = res.totalPages || totalPages;
+            pageCacheRef.current[cacheKey] = { articles: fetched, totalPages: tPages };
+            setMainArticles(fetched);
+            setMainTotalPages(tPages);
+          }
+        }).catch(() => {});
+      }
+      window.history.pushState({}, '', `/category/${slug}`);
+    } else if (tabId === 'latest') {
+      setHasLoadedMore(true);
+      setVisibleCount(9999);
+    }
+  }, [activeTab, pairedCategory, resolvedSlug, slug, currentPage, articles, totalPages]);
 
   // Handle browser back/forward buttons
   useEffect(() => {
     const onPopState = () => {
       const params = new URLSearchParams(window.location.search);
       const p = parseInt(params.get('page') || '1', 10);
-      if (p !== pagedPage) {
+      const isPaired = activeTab === 'paired' && Boolean(pairedCategory?.slug);
+      const curActivePage = isPaired ? pairedPage : mainPage;
+      if (p !== curActivePage) {
         handlePageChange(p);
       }
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, [pagedPage, handlePageChange]);
+  }, [activeTab, pairedCategory, pairedPage, mainPage, handlePageChange]);
 
   // Compute display articles for the grid
   const displayArticles = useMemo(() => {
@@ -837,6 +1147,18 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   }, [pairedCategory]);
 
   if (!heroArticle && videos.length === 0) {
+    if (pageLoading || (activeTab === 'paired' && pairedLoading)) {
+      return (
+        <div className="mx-auto max-w-screen-xl px-4 py-24 flex justify-center items-center">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 rounded-full border-[3px] border-accent border-t-transparent animate-spin" />
+            <span className="text-sm font-bold text-muted-foreground">
+              {getLocalized(language, { en: 'Loading...', gu: 'લોડ થઈ રહ્યું છે...', hi: 'लोड हो रहा है...' })}
+            </span>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-screen-xl px-4 py-16 text-center text-muted-foreground">
         {getLocalized(language, { en: 'No stories found.', gu: 'કોઈ સમાચાર મળ્યા નહીં.', hi: 'कोई खबर नहीं मिली.' })}
@@ -846,6 +1168,27 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   return (
     <div className="bg-background min-h-screen">
+      {/* Search Engine Optimization Headings (Crawlable by Googlebot / Bingbot, invisible to users so design remains untouched) */}
+      {customSeo && (customSeo.h1 || customSeo.h2) && (
+        <div
+          className="sr-only"
+          aria-hidden="false"
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
+        >
+          {customSeo.h1 && <h1>{customSeo.h1}</h1>}
+          {customSeo.h2 && <h2>{customSeo.h2}</h2>}
+        </div>
+      )}
       <div className="mx-auto max-w-screen-xl px-4 py-2">
 
         {/* ── TOP ROW: Category name ─────────────────────────────── */}
@@ -866,10 +1209,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           {tabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id);
-                setPlayingVideoId(null);
-              }}
+              onClick={() => handleTabClick(tab.id)}
               className={`rounded-full px-5 py-2 text-xs sm:text-sm font-black transition cursor-pointer ${activeTab === tab.id
                   ? 'bg-accent text-white font-black shadow-sm'
                   : 'border border-border bg-card text-foreground hover:border-accent hover:text-accent font-semibold'
@@ -1163,19 +1503,19 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             </div>
           </div>
 
-          {/* RIGHT COLUMN: Trending Stories */}
+          {/* RIGHT COLUMN: Trending Stories (or Top 5 Rajniti / Politics stories on Trending page) */}
           <div className="hidden lg:block">
             <div className="flex items-center gap-2.5 mb-3 pb-2 border-b border-border">
               <span className="w-2 h-2 bg-accent rotate-45 shrink-0 inline-block" />
               <span className="text-sm font-black text-foreground">
                 {normSlug === 'trending'
-                  ? getLocalized(language, { en: 'Story', gu: 'સ્ટોરી', hi: 'स्टोरी' })
-                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडिंग स्टोरी' })}
+                  ? getLocalized(language, { en: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' })
+                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडિંગ સ્ટોરી' })}
               </span>
             </div>
             <div className="flex flex-col divide-y divide-border">
-              {trendingStories.slice(0, 5).map((art: any, i: number) => (
-                <Link key={art.id} href={`/news/${art.slug}`} className="group flex items-start gap-3 py-3 first:pt-1.5 last:pb-1.5">
+              {(normSlug === 'trending' ? politicsStories : trendingStories).slice(0, 5).map((art: any, i: number) => (
+                <Link key={art.id || i} href={`/news/${art.slug}`} className="group flex items-start gap-3 py-3 first:pt-1.5 last:pb-1.5">
                   <span
                     className="text-[28px] font-extrabold leading-none select-none w-8 shrink-0 text-center"
                     style={{
@@ -1187,7 +1527,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     {language === 'gu' ? toGu(i + 1) : i + 1}
                   </span>
                   <p className="min-h-[4.125em] text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
-                    {language === 'gu' ? art.titleGu : language === 'hi' ? art.titleHi : art.title}
+                    {language === 'gu' ? (art.titleGu || art.title) : language === 'hi' ? (art.titleHi || art.title) : art.title}
                   </p>
                 </Link>
               ))}
@@ -1221,54 +1561,16 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     defaultCategorySlug={currentActiveCatSlug}
                     defaultCategoryLabel={currentActiveCatLabel}
                     index={idx}
-                    isVideo={activeTab === 'video' || isVideoItem(art)}
+                    isVideo={false}
                   />
                 ))}
               </div>
 
-              {/* Desktop view (>= md): 3-column grid */}
+              {/* Desktop view (>= md): 3-column clean news grid (actual articles, not videos) */}
               <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-8">
-                {displayArticles.slice(0, visibleCount).map((article) => {
-                  const isVid = activeTab === 'video' || isVideoItem(article);
-                  if (isVid) {
-                    const ytUrl = getArticleYouTubeUrl(article);
-                    return (
-                      <a
-                        key={article.id}
-                        href={ytUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group flex flex-col cursor-pointer"
-                      >
-                        <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted shadow-sm">
-                          <ArticleMedia
-                            src={article.image || (article as any).featuredImage || (article as any).thumbnail}
-                            alt={getArticleTitle(article, language)}
-                            className="transition-transform duration-300 group-hover:scale-105"
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
-                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600/90 text-white shadow group-hover:scale-110 transition-transform">
-                              <Play className="h-5 w-5 fill-current ml-0.5" />
-                            </span>
-                          </div>
-                          <span className="absolute top-2 right-2 bg-black/80 text-white text-[10px] font-black uppercase px-2 py-0.5 rounded flex items-center gap-1">
-                            <VideoIcon className="w-3 h-3 text-red-500" /> VIDEO
-                          </span>
-                        </div>
-                        <div className="mt-2.5 flex-1 min-w-0">
-                          <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
-                            <Play className="w-2.5 h-2.5 fill-current text-red-600" />
-                            {getArticleLocation(article)}
-                          </span>
-                          <h3 className="mt-1 text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                            <AutoArticleTitle article={article} language={language} />
-                          </h3>
-                        </div>
-                      </a>
-                    );
-                  }
-                  return <NewsCard key={article.id} article={article} variant="flat" />;
-                })}
+                {displayArticles.slice(0, visibleCount).map((article) => (
+                  <NewsCard key={article.id} article={article} variant="flat" />
+                ))}
               </div>
 
               {/* View More — page 1 only, before pagination appears */}
@@ -1291,15 +1593,15 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               )}
 
               {/* Pagination — shown after "View More" or on page 2+ */}
-              {hasLoadedMore && pagedTotalPages > 1 && (
+              {activeTab !== 'video' && hasLoadedMore && activeTotalPages > 1 && (
                 <div className="mt-8 flex items-center justify-center gap-1.5 flex-wrap">
                   {/* Prev */}
                   <button
                     type="button"
-                    onClick={() => handlePageChange(pagedPage - 1)}
-                    disabled={pagedPage <= 1 || pageLoading}
+                    onClick={() => handlePageChange(activePage - 1)}
+                    disabled={activePage <= 1 || pageLoading}
                     className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${
-                      pagedPage <= 1
+                      activePage <= 1
                         ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
                         : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
                     }`}
@@ -1308,11 +1610,11 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   </button>
 
                   {/* Page numbers */}
-                  {Array.from({ length: pagedTotalPages }, (_, i) => i + 1)
+                  {Array.from({ length: activeTotalPages }, (_, i) => i + 1)
                     .filter((p) => {
-                      if (pagedTotalPages <= 7) return true;
-                      if (p === 1 || p === pagedTotalPages) return true;
-                      if (Math.abs(p - pagedPage) <= 2) return true;
+                      if (activeTotalPages <= 7) return true;
+                      if (p === 1 || p === activeTotalPages) return true;
+                      if (Math.abs(p - activePage) <= 2) return true;
                       return false;
                     })
                     .reduce<(number | 'ellipsis')[]>((acc, p, idx, arr) => {
@@ -1332,7 +1634,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           onClick={() => handlePageChange(item as number)}
                           disabled={pageLoading}
                           className={`flex items-center justify-center w-9 h-9 rounded-full border text-sm font-black transition-all duration-150 ${
-                            item === pagedPage
+                            item === activePage
                               ? 'bg-accent border-accent text-white shadow-sm'
                               : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
                           }`}
@@ -1345,10 +1647,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   {/* Next */}
                   <button
                     type="button"
-                    onClick={() => handlePageChange(pagedPage + 1)}
-                    disabled={pagedPage >= pagedTotalPages || pageLoading}
+                    onClick={() => handlePageChange(activePage + 1)}
+                    disabled={activePage >= activeTotalPages || pageLoading}
                     className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${
-                      pagedPage >= pagedTotalPages
+                      activePage >= activeTotalPages
                         ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
                         : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
                     }`}
@@ -1398,11 +1700,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   : language === 'hi'
                   ? (article.titleHi || article.title)
                   : article.title;
-                const artCategory = language === 'gu'
-                  ? (article.categoryGu || article.category)
-                  : language === 'hi'
-                  ? (article.categoryHi || article.category)
-                  : article.category;
+                const artCategory =
+                  article.customCategoryLabel ||
+                  (language === 'gu'
+                    ? (article.categoryGu || article.category)
+                    : language === 'hi'
+                    ? (article.categoryHi || article.category)
+                    : article.category);
                 const fallbackImg = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
                 const artImg = article.image || article.featuredImage || article.thumbnail || fallbackImg;
 
