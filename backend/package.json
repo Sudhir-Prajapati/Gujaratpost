@@ -4,8 +4,12 @@
   "description": "Node.js & Express backend for Gujarat Post admin dashboard",
   "main": "dist/index.js",
   "scripts": {
+    "predev": "node scripts/start-mysql.js",
+    "predev:win": "node scripts/start-mysql.js",
     "dev": "nodemon --exec \"node --max-old-space-size=4096 node_modules/tsx/dist/cli.mjs\" src/index.ts",
     "dev:win": "node --max-old-space-size=4096 node_modules/tsx/dist/cli.mjs src/index.ts",
+    "db:start": "node scripts/start-mysql.js",
+    "db:stop": "taskkill /F /IM mysqld.exe",
     "build": "node scripts/build.js",
     "postinstall": "prisma generate",
     "start": "node dist/index.js",

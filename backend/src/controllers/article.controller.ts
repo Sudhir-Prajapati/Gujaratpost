@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { randomUUID } from 'crypto';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { BadRequestError } from '../utils/errors.js';
@@ -1007,4 +1008,96 @@ export class ArticleController {
       next(error);
     }
   }
+
+  /**
+   * Helper to ensure custom_locations table exists in database
+   */
+  static async ensureCustomLocationsTable() {
+    try {
+      await prisma.$executeRawUnsafe(`
+        CREATE TABLE IF NOT EXISTS \`custom_locations\` (
+          \`id\` VARCHAR(191) NOT NULL,
+          \`name\` VARCHAR(191) NOT NULL UNIQUE,
+          \`sublabel\` VARCHAR(191) NULL,
+          \`createdAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+          PRIMARY KEY (\`id\`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `).catch(() => null);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * GET /api/admin/articles/locations
+   * Returns list of saved custom locations and any distinct locations used in articles
+   */
+  static async getLocations(req: Request, res: Response, next: NextFunction) {
+    try {
+      await ArticleController.ensureCustomLocationsTable();
+
+      let customLocations: Array<{ id: string; name: string; sublabel: string | null }> = [];
+      try {
+        customLocations = await prisma.$queryRawUnsafe<Array<{ id: string; name: string; sublabel: string | null }>>(
+          `SELECT id, name, sublabel FROM \`custom_locations\` ORDER BY createdAt DESC`
+        );
+      } catch {
+        customLocations = [];
+      }
+
+      // Also get any distinct locations from posts table
+      const postsWithLocation = await prisma.post.findMany({
+        where: { location: { not: null } },
+        select: { location: true },
+        distinct: ['location'],
+      });
+
+      const usedLocations = postsWithLocation
+        .map((p) => p.location?.trim())
+        .filter((l): l is string => Boolean(l));
+
+      return sendSuccess(res, {
+        customLocations,
+        usedLocations,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/admin/articles/locations
+   * Body: { name: string, sublabel?: string }
+   */
+  static async addCustomLocation(req: Request, res: Response, next: NextFunction) {
+    try {
+      await ArticleController.ensureCustomLocationsTable();
+      const { name, sublabel } = req.body || {};
+      const trimmedName = String(name || '').trim();
+      if (!trimmedName) {
+        return res.status(400).json({ success: false, message: 'Location name is required' });
+      }
+
+      const id = randomUUID ? randomUUID() : `loc_${Date.now()}`;
+      const trimmedSublabel = sublabel ? String(sublabel).trim() : null;
+
+      try {
+        await prisma.$executeRawUnsafe(
+          `INSERT INTO \`custom_locations\` (\`id\`, \`name\`, \`sublabel\`, \`createdAt\`)
+           VALUES (?, ?, ?, NOW())
+           ON DUPLICATE KEY UPDATE \`sublabel\` = COALESCE(VALUES(\`sublabel\`), \`sublabel\`)`,
+          id,
+          trimmedName,
+          trimmedSublabel
+        );
+      } catch (err: any) {
+        console.warn('Could not insert custom location into DB:', err?.message);
+      }
+
+      return sendSuccess(res, { name: trimmedName, sublabel: trimmedSublabel }, 'Custom location saved successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+
