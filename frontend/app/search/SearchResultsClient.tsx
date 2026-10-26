@@ -16,14 +16,14 @@ const strings = {
     placeholder: 'સમાચાર, શહેર, વર્ગ અથવા વિષય શોધો...',
     searchBtn: 'શોધો',
     searchingBtn: 'શોધી રહ્યું...',
-    defaultSection: 'તાજા સમાચાર',
+    defaultSection: 'લેટેસ્ટ સમાચાર',
     searchingNotice: (q: string) => `"${q}" માટે સમાચાર શોધી રહ્યાં છીએ...`,
-    searchingNoticeDefault: 'તાજા સમાચાર લોડ થઈ રહ્યા છે...',
+    searchingNoticeDefault: 'લેટેસ્ટ સમાચાર લોડ થઈ રહ્યા છે...',
     pleaseWait: 'કૃપા કરીને એક ક્ષણ રાહ જુઓ...',
     resultsFor: (q: string) => `"${q}" માટે પરિણામ`,
     articlesCount: (n: number) => `${n} સમાચાર`,
     foundCount: (n: number) => `${n} સમાચાર મળ્યા`,
-    noFoundNotice: (q: string) => `"${q}" માટે કોઈ ચોક્કસ સમાચાર મળ્યા નથી, તમારા માટે તાજા સમાચાર:`,
+    noFoundNotice: (q: string) => `"${q}" માટે કોઈ ચોક્કસ સમાચાર મળ્યા નથી, તમારા માટે લેટેસ્ટ સમાચાર:`,
     noFound: 'કોઈ સમાચાર મળ્યા નહીં',
     tryFewer: 'ઓછા શબ્દો વાપરો અથવા શહેર, વર્ગ કે વ્યક્તિ દ્વારા શોધો.',
     loadMore: 'વધુ જુઓ',
@@ -335,21 +335,21 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
                   type="button"
                   onClick={handleLoadMore}
                   disabled={isLoadingMore}
-                  className="group inline-flex items-center justify-center gap-2 rounded-full border-2 border-accent px-8 py-2.5 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-75 disabled:pointer-events-none"
+                  className="group inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] disabled:opacity-75 disabled:pointer-events-none"
                 >
                   {isLoadingMore ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin text-current" />
-                      <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                      <Loader2 className="h-5 w-5 animate-spin text-current" />
+                      <span className="text-lg md:text-xl font-black tracking-wide leading-none">
                         {t.loadingMore}
                       </span>
                     </>
                   ) : (
                     <>
-                      <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                      <span className="text-lg md:text-xl font-black tracking-wide leading-none">
                         {t.loadMore}
                       </span>
-                      <ChevronDown className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[2.5]" />
+                      <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
                     </>
                   )}
                 </button>

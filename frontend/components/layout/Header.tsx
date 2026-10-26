@@ -831,153 +831,153 @@ export default function Header() {
             transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
           }}
         >
-            {/* Menu Drawer Content Container */}
-            <div className="px-4 py-4 space-y-4 pb-24">
-              {/* Mobile User Profile & Theme Toggle Bar */}
-              <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/60 border border-border">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setAuthModalOpen(true);
-                  }}
-                  className="flex items-center gap-2 text-xs font-black text-foreground hover:text-red-600 transition"
-                >
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-xs">
-                    <User className="h-4 w-4" />
-                  </div>
-                  <span>{language === 'gu' ? 'સાઇન ઇન / એકાઉન્ટ' : language === 'hi' ? 'साइन इन / खाता' : 'Sign In / Account'}</span>
-                </button>
+          {/* Menu Drawer Content Container */}
+          <div className="px-4 py-4 space-y-4 pb-24">
+            {/* Mobile User Profile & Theme Toggle Bar */}
+            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/60 border border-border">
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  setAuthModalOpen(true);
+                }}
+                className="flex items-center gap-2 text-xs font-black text-foreground hover:text-red-600 transition"
+              >
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-xs">
+                  <User className="h-4 w-4" />
+                </div>
+                <span>{language === 'gu' ? 'સાઇન ઇન / એકાઉન્ટ' : language === 'hi' ? 'साइन इन / खाता' : 'Sign In / Account'}</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={toggleTheme}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-card text-xs font-bold text-foreground transition active:scale-95"
-                >
-                  {theme === 'dark' ? (
-                    <>
-                      <Sun className="h-3.5 w-3.5 text-amber-400" />
-                      <span>Light</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="h-3.5 w-3.5 text-slate-700" />
-                      <span>Dark</span>
-                    </>
-                  )}
-                </button>
-              </div>
-              {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
-              <div className={`grid ${supportEnabled ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 sm:gap-2.5`}>
-                <Link
-                  href="/news-brief"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-zinc-950 to-black h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
-                >
-                  <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0" />
-                  <span className="font-black tracking-wide leading-none">BRIEF</span>
-                </Link>
-                <Link
-                  href="/aqi"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="w-4 h-4 text-amber-500 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.4"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2v2" />
-                    <path d="m4.93 4.93 1.41 1.41" />
-                    <path d="M20 12h2" />
-                    <path d="m19.07 4.93-1.41 1.41" />
-                    <path d="M15.9 16A5 5 0 1 0 9 10.45" />
-                    <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
-                  </svg>
-                  <span className="font-black tracking-wide leading-none">AQI</span>
-                </Link>
-                <a
-                  href="/epaper"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
-                >
-                  <BookOpen className="h-4 w-4 shrink-0 text-white" strokeWidth={2.4} />
-                  <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
-                    {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
-                  </span>
-                </a>
-                {supportEnabled && <button
-                  type="button"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    openSupportModal();
-                  }}
-                  onMouseEnter={prefetchSupportDetails}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
-                >
-                  <Heart className="h-4 w-4 shrink-0 fill-white text-white" />
-                  <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
-                    {language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}
-                  </span>
-                </button>}
-              </div>
-              
-              {/* App downloads CTA (Matches Footer Image 1 Style) */}
-              <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
-                <a
-                  href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
-                >
-                  <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
-                  <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">App Store</span>
-                </a>
-                <a
-                  href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
-                >
-                  <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
-                  <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">Google Play</span>
-                </a>
-              </div>
-
-              {/* Flat Link Grid */}
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-                {[...navLinks, ...otherLinks].map((link, idx) => {
-                  const active = isActive(link.href);
-                  return (
-                    <a
-                      key={`${link.href}-${link.label || ''}-${idx}`}
-                      href={link.href}
-                      onClick={() => setMenuOpen(false)}
-                      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
-                        ? 'border-accent/30 bg-accent/8 text-accent font-extrabold'
-                        : 'border-border bg-muted/60 text-foreground hover:border-accent/25 hover:text-accent'
-                        }`}
-                      aria-current={active ? 'page' : undefined}
-                    >
-                      {active && (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-                      )}
-                      <span className="truncate">{getNavLabel(link)}</span>
-                    </a>
-                  );
-                })}
-              </div>
-
-              {/* Social links at bottom of drawer */}
-              <div className="pt-3 border-t border-border flex items-center gap-2.5">
-                <span className="text-xs font-bold text-muted-foreground shrink-0">Follow Us:</span>
-                <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', whatsapp: 'https://wa.me/919909907237' }} />
-              </div>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-card text-xs font-bold text-foreground transition active:scale-95"
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <Sun className="h-3.5 w-3.5 text-amber-400" />
+                    <span>Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="h-3.5 w-3.5 text-slate-700" />
+                    <span>Dark</span>
+                  </>
+                )}
+              </button>
             </div>
+            {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
+            <div className={`grid ${supportEnabled ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 sm:gap-2.5`}>
+              <Link
+                href="/news-brief"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-zinc-950 to-black h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
+              >
+                <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0" />
+                <span className="font-black tracking-wide leading-none">BRIEF</span>
+              </Link>
+              <Link
+                href="/aqi"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="w-4 h-4 text-amber-500 shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 2v2" />
+                  <path d="m4.93 4.93 1.41 1.41" />
+                  <path d="M20 12h2" />
+                  <path d="m19.07 4.93-1.41 1.41" />
+                  <path d="M15.9 16A5 5 0 1 0 9 10.45" />
+                  <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
+                </svg>
+                <span className="font-black tracking-wide leading-none">AQI</span>
+              </Link>
+              <a
+                href="/epaper"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
+              >
+                <BookOpen className="h-4 w-4 shrink-0 text-white" strokeWidth={2.4} />
+                <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
+                  {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
+                </span>
+              </a>
+              {supportEnabled && <button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false);
+                  openSupportModal();
+                }}
+                onMouseEnter={prefetchSupportDetails}
+                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
+              >
+                <Heart className="h-4 w-4 shrink-0 fill-white text-white" />
+                <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
+                  {language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}
+                </span>
+              </button>}
+            </div>
+
+            {/* App downloads CTA (Matches Footer Image 1 Style) */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+              <a
+                href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
+              >
+                <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
+                <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">App Store</span>
+              </a>
+              <a
+                href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
+              >
+                <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
+                <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">Google Play</span>
+              </a>
+            </div>
+
+            {/* Flat Link Grid */}
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+              {[...navLinks, ...otherLinks].map((link, idx) => {
+                const active = isActive(link.href);
+                return (
+                  <a
+                    key={`${link.href}-${link.label || ''}-${idx}`}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
+                      ? 'border-accent/30 bg-accent/8 text-accent font-extrabold'
+                      : 'border-border bg-muted/60 text-foreground hover:border-accent/25 hover:text-accent'
+                      }`}
+                    aria-current={active ? 'page' : undefined}
+                  >
+                    {active && (
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
+                    )}
+                    <span className="truncate">{getNavLabel(link)}</span>
+                  </a>
+                );
+              })}
+            </div>
+
+            {/* Social links at bottom of drawer */}
+            <div className="pt-3 border-t border-border flex items-center gap-2.5">
+              <span className="text-xs font-bold text-muted-foreground shrink-0">Follow Us:</span>
+              <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', whatsapp: 'https://wa.me/919909907237' }} />
+            </div>
+          </div>
         </div>
       </header>
 
@@ -1059,39 +1059,39 @@ export default function Header() {
 
             {/* Other / અન્ય Dropdown Trigger — sits right after the last nav link (Podcast) */}
             {otherLinks.length > 0 && (
-            <div
-              ref={triggerRef}
-              className="relative shrink-0"
-              onMouseEnter={() => {
-                setOtherMenuOpen(true);
-                const rect = triggerRef.current?.getBoundingClientRect();
-                const navWrapper = triggerRef.current?.closest('nav > div');
-                const navRect = navWrapper?.getBoundingClientRect();
-                if (rect && navRect) {
-                  setDropdownLeft(rect.left - navRect.left);
-                }
-              }}
-              onMouseLeave={() => setOtherMenuOpen(false)}
-            >
-              <button
-                type="button"
-                onClick={() => {
+              <div
+                ref={triggerRef}
+                className="relative shrink-0"
+                onMouseEnter={() => {
+                  setOtherMenuOpen(true);
                   const rect = triggerRef.current?.getBoundingClientRect();
                   const navWrapper = triggerRef.current?.closest('nav > div');
                   const navRect = navWrapper?.getBoundingClientRect();
                   if (rect && navRect) {
                     setDropdownLeft(rect.left - navRect.left);
                   }
-                  setOtherMenuOpen(!otherMenuOpen);
                 }}
-                className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
-                  }`}
-                style={{ fontWeight: 800 }}
+                onMouseLeave={() => setOtherMenuOpen(false)}
               >
-                <span key={language} className="font-bold sm:font-black" style={{ fontWeight: 800 }}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
-                <ChevronDown strokeWidth={2.5} className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const rect = triggerRef.current?.getBoundingClientRect();
+                    const navWrapper = triggerRef.current?.closest('nav > div');
+                    const navRect = navWrapper?.getBoundingClientRect();
+                    if (rect && navRect) {
+                      setDropdownLeft(rect.left - navRect.left);
+                    }
+                    setOtherMenuOpen(!otherMenuOpen);
+                  }}
+                  className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
+                    }`}
+                  style={{ fontWeight: 800 }}
+                >
+                  <span key={language} className="font-bold sm:font-black" style={{ fontWeight: 800 }}>{language === 'gu' ? 'અન્ય' : language === 'hi' ? 'अन्य' : 'More'}</span>
+                  <ChevronDown strokeWidth={2.5} className={`h-4 w-4 transition-transform duration-200 ${otherMenuOpen ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
             )}
 
             {/* Non-scrollable controls pinned to the right (Support Us & E-Paper CTAs) */}

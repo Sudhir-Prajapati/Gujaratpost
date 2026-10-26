@@ -1617,12 +1617,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                             setIsContentExpanded(true);
                             setSidebarMoreRecommended(true);
                           }}
-                          className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
+                          className="group inline-flex items-center gap-2.5 px-9 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
                         >
-                          <span className="text-base font-black tracking-wide leading-none">
+                          <span className="text-lg md:text-xl font-black tracking-wide leading-none">
                             {uiLabel(language, { en: 'Read More', gu: 'વધુ વાંચો', hi: 'और पढ़ें' })}
                           </span>
-                          <ChevronDown className="w-4.5 h-4.5 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[2.5]" />
+                          <ChevronDown className="w-5 h-5 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[3]" />
                         </button>
                       </div>
                     </div>
@@ -1728,9 +1728,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
                 </div>
 
-                {/* Mobile view (< md): Hero Section style list */}
+                {/* Mobile view (< md): Hero Section style list (1 more news added: 3 items) */}
                 <div className="flex flex-col divide-y divide-border/60 md:hidden mt-3">
-                  {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 2).map((item, index) => (
+                  {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 3).map((item, index) => (
                     <MobileHeroArticleCard
                       key={`rec-mob-${item.id || index}`}
                       article={item}

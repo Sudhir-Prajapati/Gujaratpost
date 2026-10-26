@@ -23,6 +23,7 @@ import { SocialIcon } from '@/components/ui/SocialLinks';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkCategoryFeed from '@/components/apk/ApkCategoryFeed';
+import PhotoGallerySection from '@/components/sections/home/PhotoGallerySection';
 
 const FALLBACK_GALLERY_IMAGES = [
   'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&q=80',
@@ -340,8 +341,8 @@ function MobileCategoryArticleCard({
     (language === 'hi'
       ? article.titleHi
       : language === 'gu'
-      ? (article.titleGu || article.title)
-      : (article.titleEn || article.title)) ||
+        ? (article.titleGu || article.title)
+        : (article.titleEn || article.title)) ||
     article.title ||
     '';
 
@@ -355,8 +356,8 @@ function MobileCategoryArticleCard({
     ((isVideoCard && defaultCategoryLabel)
       ? defaultCategoryLabel
       : (getCategoryLabel(article, language) ||
-         defaultCategoryLabel ||
-         (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News')));
+        defaultCategoryLabel ||
+        (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News')));
 
   const catSlug =
     article.category?.slug ||
@@ -560,7 +561,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         setPairedArticles(fetched);
         setPairedTotalPages(tPages);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         if (isMounted) setPairedLoading(false);
       });
@@ -636,7 +637,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         setAlsoReadCat1Articles(list1);
         setAlsoReadCat2Articles(list2);
       })
-      .catch(() => {});
+      .catch(() => { });
 
     return () => {
       isMounted = false;
@@ -652,7 +653,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       .then((res) => {
         if (active && res?.articles?.length) setPoliticsStories(sortArticlesByLatest(res.articles));
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => { active = false; };
   }, [normSlug, politicsStories.length]);
 
@@ -665,7 +666,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       .then((res) => {
         if (active && res?.articles) setTrendingStories(res.articles);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => { active = false; };
   }, [normSlug, trendingStories.length]);
 
@@ -678,7 +679,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           setHasMoreGalleryPhotos(res.length >= 8);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const loadMoreGalleryPhotos = async () => {
@@ -973,7 +974,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 pageCacheRef.current[cacheKey] = { articles: sorted, totalPages: tPages };
               }
             })
-            .catch(() => {});
+            .catch(() => { });
         }
       }
     };
@@ -1065,7 +1066,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             setPairedArticles(fetched);
             setPairedTotalPages(tPages);
           })
-          .catch(() => {})
+          .catch(() => { })
           .finally(() => setPairedLoading(false));
       }
       window.history.pushState({}, '', `/category/${slug}`);
@@ -1093,7 +1094,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
             setMainArticles(fetched);
             setMainTotalPages(tPages);
           }
-        }).catch(() => {});
+        }).catch(() => { });
       }
       window.history.pushState({}, '', `/category/${slug}`);
     } else if (tabId === 'latest') {
@@ -1138,7 +1139,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     } else {
       list.push({
         id: 'latest',
-        gu: 'તાજા સમાચાર',
+        gu: 'લેટેસ્ટ સમાચાર',
         hi: 'તાઝા સમાચાર',
         en: 'Latest',
       });
@@ -1197,8 +1198,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         <div className="flex items-center justify-between border-b border-border pb-2 mb-3">
           <div className="flex items-center gap-3">
             <h1 className="flex items-center gap-0 select-none leading-none">
-              <span className="inline-block w-1 self-stretch rounded-sm bg-[#B3121B] mr-2" style={{minHeight: '1.5em'}} aria-hidden="true" />
-              <span className="text-[19px] md:text-[21px] font-black tracking-tight text-foreground">
+              <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-2.5 my-0.5" style={{ minHeight: '1.4em' }} aria-hidden="true" />
+              <span className="text-[26px] sm:text-[23px] md:text-[21px] font-black tracking-tight text-foreground">
                 {categoryName}
               </span>
             </h1>
@@ -1213,8 +1214,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
               className={`rounded-full px-5 py-2 text-xs sm:text-sm font-black transition cursor-pointer ${activeTab === tab.id
-                  ? 'bg-accent text-white font-black shadow-sm'
-                  : 'border border-border bg-card text-foreground hover:border-accent hover:text-accent font-semibold'
+                ? 'bg-accent text-white font-black shadow-sm'
+                : 'border border-border bg-card text-foreground hover:border-accent hover:text-accent font-semibold'
                 }`}
             >
               {getLocalized(language, { en: tab.en, gu: tab.gu, hi: tab.hi })}
@@ -1243,7 +1244,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={heroArticle.image || (heroArticle as any).thumbnail || (heroArticle.videoId ? `https://img.youtube.com/vi/${heroArticle.videoId}/hqdefault.jpg` : undefined)}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition">
                           <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
@@ -1262,7 +1263,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={heroArticle.image || (heroArticle as any).featuredImage}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1335,7 +1336,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={art.image || art.featuredImage || art.thumbnail}
                           alt={getArticleTitle(art, language)}
                           className="transition-transform duration-300"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         {isVid && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
@@ -1409,7 +1410,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
                           className="transition-transform duration-300"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1433,7 +1434,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
                           className="transition-transform duration-300"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1478,7 +1479,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
                           alt={getArticleTitle(fourthStory, language)}
                           className="transition-transform duration-300"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1502,7 +1503,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
                           alt={getArticleTitle(fourthStory, language)}
                           className="transition-transform duration-300"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1591,12 +1592,12 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                       setVisibleCount(9999);
                       setHasLoadedMore(true);
                     }}
-                    className="group inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-2.5 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
+                    className="group inline-flex items-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
                   >
-                    <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                    <span className="text-lg md:text-xl font-black tracking-wide leading-none">
                       {getLocalized(language, { en: 'View More', gu: 'વધુ જુઓ', hi: 'और देखें' })}
                     </span>
-                    <ChevronDown className="w-4.5 h-4.5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[2.5]" />
+                    <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
                   </button>
                 </div>
               )}
@@ -1609,11 +1610,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     type="button"
                     onClick={() => handlePageChange(activePage - 1)}
                     disabled={activePage <= 1 || pageLoading}
-                    className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${
-                      activePage <= 1
-                        ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
-                        : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
-                    }`}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${activePage <= 1
+                      ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
+                      : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
+                      }`}
                   >
                     <ChevronLeft className="w-4 h-4" strokeWidth={2.5} />
                   </button>
@@ -1642,11 +1642,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           type="button"
                           onClick={() => handlePageChange(item as number)}
                           disabled={pageLoading}
-                          className={`flex items-center justify-center w-9 h-9 rounded-full border text-sm font-black transition-all duration-150 ${
-                            item === activePage
-                              ? 'bg-accent border-accent text-white shadow-sm'
-                              : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
-                          }`}
+                          className={`flex items-center justify-center w-9 h-9 rounded-full border text-sm font-black transition-all duration-150 ${item === activePage
+                            ? 'bg-accent border-accent text-white shadow-sm'
+                            : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
+                            }`}
                         >
                           {language === 'gu' ? toGu(item as number) : item}
                         </button>
@@ -1658,11 +1657,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     type="button"
                     onClick={() => handlePageChange(activePage + 1)}
                     disabled={activePage >= activeTotalPages || pageLoading}
-                    className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${
-                      activePage >= activeTotalPages
-                        ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
-                        : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
-                    }`}
+                    className={`flex items-center justify-center w-9 h-9 rounded-full border font-bold text-sm transition-all duration-150 ${activePage >= activeTotalPages
+                      ? 'border-border/40 text-muted-foreground/40 cursor-not-allowed'
+                      : 'border-border bg-card hover:border-accent hover:text-accent hover:bg-accent/5 cursor-pointer shadow-sm active:scale-95'
+                      }`}
                   >
                     <ChevronRight className="w-4 h-4" strokeWidth={2.5} />
                   </button>
@@ -1678,7 +1676,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         {alsoReadArticles.length > 0 && (
           <div className="mt-8 border-t border-border pt-6">
             <div className="flex items-center gap-2.5 mb-5">
-              <span className="section-heading-badge bg-[#B3121B] text-white px-4 py-1.5 text-sm md:text-base font-black rounded-lg select-none leading-none tracking-tight">
+              <span className="section-heading-badge bg-[#B3121B] text-white px-6 sm:px-7 py-2.5 sm:py-3 text-base sm:text-lg md:text-[20px] font-black rounded-xl select-none leading-none tracking-wide shadow-lg">
                 {getLocalized(language, { en: 'Also Read', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
               </span>
             </div>
@@ -1707,15 +1705,15 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const artTitle = language === 'gu'
                   ? (article.titleGu || article.title)
                   : language === 'hi'
-                  ? (article.titleHi || article.title)
-                  : article.title;
+                    ? (article.titleHi || article.title)
+                    : article.title;
                 const artCategory =
                   article.customCategoryLabel ||
                   (language === 'gu'
                     ? (article.categoryGu || article.category)
                     : language === 'hi'
-                    ? (article.categoryHi || article.category)
-                    : article.category);
+                      ? (article.categoryHi || article.category)
+                      : article.category);
                 const fallbackImg = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
                 const artImg = article.image || article.featuredImage || article.thumbnail || fallbackImg;
 
@@ -1773,8 +1771,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const photoTitle = language === 'gu'
                   ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
                   : language === 'hi'
-                  ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
-                  : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
+                    ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
+                    : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
                 const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
@@ -1819,8 +1817,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const photoTitle = language === 'gu'
                   ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
                   : language === 'hi'
-                  ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
-                  : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
+                    ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
+                    : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
                 const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;

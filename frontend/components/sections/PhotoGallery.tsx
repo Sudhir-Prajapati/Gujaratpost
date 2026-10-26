@@ -145,14 +145,19 @@ export default function PhotoGallery() {
       <div className="mx-auto max-w-screen-xl px-4">
         {/* Top Header Matching User Mockup */}
         <div className="flex items-center justify-between pb-3 border-b-2 border-neutral-900 dark:border-neutral-700 mb-6">
-          <div className="section-heading-badge bg-[#B3121B] text-white font-extrabold text-[15px] px-4 py-2 rounded-xl shadow-sm tracking-wide">
-            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
-          </div>
           <Link
             href="/photos"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 transition-colors"
+            prefetch={true}
+            className="section-heading-badge bg-[#B3121B] text-white font-black text-[19px] sm:text-[21px] md:text-[23px] px-6 py-2.5 sm:py-3 rounded-xl shadow-md tracking-tight cursor-pointer hover:bg-red-700 transition-colors"
           >
-            {language === 'gu' ? 'વધુ ફોટો ગેલેરી →' : language === 'hi' ? 'और फोटो गैलरी →' : 'More Photo Gallery →'}
+            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
+          </Link>
+          <Link
+            href="/photos"
+            prefetch={true}
+            className="text-[#B3121B] hover:text-red-700 font-black text-[17px] sm:text-[18px] md:text-[20px] hover:underline flex items-center gap-1.5 transition-colors cursor-pointer relative z-20 py-1"
+          >
+            {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और फोटो गैलरी →' : 'More Photo Gallery →'}
           </Link>
         </div>
 
@@ -190,11 +195,11 @@ export default function PhotoGallery() {
             {[...gallery, ...gallery].map((photo, index) => (
               <div
                 key={`${photo.id}-${index}`}
-                className="group relative flex-shrink-0 w-[230px] sm:w-[260px] md:w-[280px] aspect-[3/4]"
+                className="group relative flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] h-[280px] md:h-[350px]"
               >
                 <Link
                   href={`/photos/${photo.id}`}
-                  className="group relative flex h-full w-full overflow-hidden rounded-2xl shadow-md border border-border/40 hover:border-[#B3121B]/40 transition-all duration-300 bg-neutral-900"
+                  className="group relative flex h-full w-full overflow-hidden rounded-2xl shadow-lg border border-border/10 hover:border-[#B3121B]/40 transition-all duration-300 bg-neutral-900"
                   onMouseEnter={() => setHoveredId(`${photo.id}-${index}`)}
                   onMouseLeave={() => setHoveredId(null)}
                 >
@@ -209,14 +214,14 @@ export default function PhotoGallery() {
 
                   {/* Category Chip */}
                   <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-[#B3121B] text-white text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-md select-none">
+                    <span className="bg-[#B3121B] text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md select-none">
                       {photo.category || photo.tag || CATS[index % CATS.length]}
                     </span>
                   </div>
 
                   {/* Caption (bottom) */}
                   <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-                    <p className="text-white font-extrabold leading-snug line-clamp-2 drop-shadow-md text-[14px] md:text-[15px]">
+                    <p className="text-white font-bold leading-snug line-clamp-2 drop-shadow-md text-[14.5px] md:text-[16.5px]">
                       {getLocalized(language, {
                         en: photo.caption || photo.alt,
                         gu: photo.captionGu || photo.caption || photo.alt,

@@ -50,18 +50,20 @@ export default function LatestUpdatesSection({
     const latestIdSet = new Set(sortedInit.slice(0, 10).map((a) => a.id));
     const pool: Article[] = [
       ...(initialMostRead || []),
+      ...(initialArticles || []),
     ];
-    const top5: Article[] = [];
+    const topList: Article[] = [];
     const seen = new Set<string>();
     for (const a of pool) {
       if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id)) {
         seen.add(a.id);
-        top5.push(a);
-        if (top5.length >= 5) break;
+        topList.push(a);
+        if (topList.length >= 10) break;
       }
     }
-    return top5;
+    return topList;
   });
+  const [isMostReadExpanded, setIsMostReadExpanded] = useState(false);
   const [popularArticles, setPopularArticles] = useState<Article[]>(
     initialPopularNews || []
   );
@@ -78,17 +80,18 @@ export default function LatestUpdatesSection({
       const latestIdSet = new Set(top10Latest.map((a) => a.id));
       const pool: Article[] = [
         ...(initialMostRead || []),
+        ...(initialArticles || []),
       ];
-      const top5: Article[] = [];
+      const topList: Article[] = [];
       const seen = new Set<string>();
       for (const a of pool) {
         if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id)) {
           seen.add(a.id);
-          top5.push(a);
-          if (top5.length >= 5) break;
+          topList.push(a);
+          if (topList.length >= 10) break;
         }
       }
-      setMostRead(top5);
+      setMostRead(topList);
     }
     if (initialPopularNews && initialPopularNews.length > 0) {
       setPopularArticles(initialPopularNews);
@@ -122,20 +125,22 @@ export default function LatestUpdatesSection({
         ...heroMostRead,
         ...viewedArticles,
         ...((heroRes && Array.isArray(heroRes.popularNewsArticles)) ? heroRes.popularNewsArticles : []),
+        ...(res && Array.isArray(res.articles) ? res.articles : []),
+        ...(initialArticles || []),
       ];
 
-      const top5MostRead: Article[] = [];
+      const topListMostRead: Article[] = [];
       const seenIds = new Set<string>();
 
       for (const art of candidatePool) {
         if (art && art.id && !seenIds.has(art.id) && !latestIdSet.has(art.id)) {
           seenIds.add(art.id);
-          top5MostRead.push(art);
-          if (top5MostRead.length >= 5) break;
+          topListMostRead.push(art);
+          if (topListMostRead.length >= 10) break;
         }
       }
 
-      setMostRead(top5MostRead);
+      setMostRead(topListMostRead);
 
       // Fetch Admin-managed Popular News Articles for "લોકપ્રિય સમાચાર"
       if (heroRes && Array.isArray(heroRes.popularNewsArticles) && heroRes.popularNewsArticles.length > 0) {
@@ -476,7 +481,52 @@ export default function LatestUpdatesSection({
   const sidebarContent = (
     <div className="flex flex-col gap-6 sticky top-20 select-none">
       {/* ── 1. MOST READ SECTION (સૌથી વધુ વંચાયેલા) ── */}
-      <div>
+      {/* ─── MOBILE VIEW (< md): Modern Card UI matching Image 2 ─── */}
+      <div className="md:hidden overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">
+        {/* Brand Red Header matching Logo */}
+        <div className="bg-[#B3121B] px-4 py-3.5 flex items-center justify-between">
+          <h3 className="text-[17px] font-black text-white tracking-wide">
+            {labelMostRead}
+          </h3>
+        </div>
+
+        {/* List of items with red dots and clean dividers */}
+        <div className="divide-y divide-slate-100 dark:divide-slate-800/80 p-1 sm:p-2">
+          {mostRead.slice(0, isMostReadExpanded ? 10 : 5).map((art) => (
+            <Link
+              key={art.id}
+              href={`/news/${art.slug}`}
+              className="group flex items-start gap-3 py-3 px-3 hover:bg-muted/30 transition-colors rounded-lg"
+            >
+              <span className="w-2.5 h-2.5 rounded-full bg-[#B3121B] mt-1.5 shrink-0" />
+              <h4 className="text-[15.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors flex-1" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                <AutoArticleTitle article={art} language={language} />
+              </h4>
+            </Link>
+          ))}
+        </div>
+
+        {/* Expand / Collapse "વધુ વાંચો" button for mobile */}
+        {mostRead.length > 5 && (
+          <button
+            type="button"
+            onClick={() => setIsMostReadExpanded(!isMostReadExpanded)}
+            className="w-full py-3 px-4 text-center text-[13.5px] font-black text-[#B3121B] hover:bg-muted/40 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
+          >
+            <span>
+              {isMostReadExpanded
+                ? (language === 'gu' ? 'ઓછું વાંચો' : language === 'hi' ? 'कम पढ़ें' : 'Show Less')
+                : (language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More')}
+            </span>
+            <span className="text-xs transition-transform duration-200">
+              {isMostReadExpanded ? '▲' : '▼'}
+            </span>
+          </button>
+        )}
+      </div>
+
+      {/* ─── DESKTOP VIEW (>= md): Numbered list (100% UNTOUCHED) ─── */}
+      <div className="hidden md:block">
         <div className="flex items-center gap-1.5 border-b-[3px] border-slate-950 dark:border-slate-800 pb-2.5 mb-3.5">
           <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
           <h3 className="text-[15px] font-black text-foreground">
