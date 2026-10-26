@@ -18,6 +18,8 @@ interface RelatedStoriesSectionProps {
   getCardThumbnail: (item: Article, index: number) => string;
   DEMO_THUMBNAILS: string[];
   uiLabel: (language: Language, values: { en: string; gu: string; hi: string }) => string;
+  excludeArticles?: Article[];
+  fallbackArticles?: Article[];
 }
 
 export default function RelatedStoriesSection({
@@ -30,6 +32,8 @@ export default function RelatedStoriesSection({
   getCardThumbnail,
   DEMO_THUMBNAILS,
   uiLabel,
+  excludeArticles,
+  fallbackArticles,
 }: RelatedStoriesSectionProps) {
   const displayRelated = React.useMemo(() => {
     const seenIds = new Set<string>();
@@ -39,31 +43,62 @@ export default function RelatedStoriesSection({
     const currId = String(article?.id || '');
     const currSlug = String(article?.slug || '').trim().toLowerCase();
     const currTitle = String(article?.title || article?.titleGu || '').trim().toLowerCase();
+    const currTitleHi = String(article?.titleHi || '').trim().toLowerCase();
 
+    // Exclude active article
+    if (currId) seenIds.add(currId);
+    if (currSlug) seenSlugs.add(currSlug);
+    if (currTitle) seenTitles.add(currTitle);
+    if (currTitleHi) seenTitles.add(currTitleHi);
+
+    // Exclude articles shown in "Aa Pan Vacho" (Also Read)
+    if (Array.isArray(excludeArticles) && excludeArticles.length > 0) {
+      for (const ex of excludeArticles) {
+        if (!ex) continue;
+        const exId = String(ex.id || '');
+        const exSlug = String(ex.slug || '').trim().toLowerCase();
+        const exTitle = String(ex.title || ex.titleGu || '').trim().toLowerCase();
+        const exTitleHi = String(ex.titleHi || '').trim().toLowerCase();
+        if (exId) seenIds.add(exId);
+        if (exSlug) seenSlugs.add(exSlug);
+        if (exTitle) seenTitles.add(exTitle);
+        if (exTitleHi) seenTitles.add(exTitleHi);
+      }
+    }
+
+    const candidatePool = [...(related || []), ...(fallbackArticles || [])];
     const result: Article[] = [];
-    for (const item of (related || [])) {
+    for (const item of candidatePool) {
       if (!item) continue;
       const itemId = String(item.id || '');
       const itemSlug = String(item.slug || '').trim().toLowerCase();
       const itemTitle = String(item.title || item.titleGu || '').trim().toLowerCase();
+      const itemTitleHi = String(item.titleHi || '').trim().toLowerCase();
 
-      // Exclude active article
-      if (itemId === currId || (currSlug && itemSlug === currSlug) || (currTitle && itemTitle === currTitle)) {
-        continue;
-      }
-
-      // Exclude duplicates by ID, slug, or title
-      if ((itemId && seenIds.has(itemId)) || (itemSlug && seenSlugs.has(itemSlug)) || (itemTitle && seenTitles.has(itemTitle))) {
+      // Exclude active article and excluded articles
+      if (
+        (itemId && seenIds.has(itemId)) ||
+        (itemSlug && seenSlugs.has(itemSlug)) ||
+        (itemTitle && seenTitles.has(itemTitle)) ||
+        (itemTitleHi && seenTitles.has(itemTitleHi))
+      ) {
         continue;
       }
 
       if (itemId) seenIds.add(itemId);
       if (itemSlug) seenSlugs.add(itemSlug);
       if (itemTitle) seenTitles.add(itemTitle);
+      if (itemTitleHi) seenTitles.add(itemTitleHi);
       result.push(item);
     }
+
+    // Safety fallback: if no excludeArticles was provided and pool has > 4 items, start from the 5th item
+    if ((!excludeArticles || excludeArticles.length === 0) && result.length > 4) {
+      return result.slice(4);
+    }
+
     return result;
-  }, [related, article?.id, article?.slug, article?.title, article?.titleGu]);
+  }, [related, fallbackArticles, excludeArticles, article?.id, article?.slug, article?.title, article?.titleGu, article?.titleHi]);
 
   if (!displayRelated || displayRelated.length === 0) return null;
 

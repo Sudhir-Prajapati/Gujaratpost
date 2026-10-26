@@ -68,6 +68,7 @@ interface CategoryData {
   id: string;
   slug: string;
   name: string;
+  isActive?: boolean;
 }
 
 export default function ArticleList() {
@@ -252,7 +253,7 @@ export default function ArticleList() {
         const json = await res.json();
         if (res.ok) {
           const raw: CategoryData[] = json.data || [];
-          setCategories(raw.filter((c) => !isDisplayOnlySectionCategory(c)));
+          setCategories(raw.filter((c) => !isDisplayOnlySectionCategory(c) && c.isActive !== false));
         }
       } catch (err) {
         console.error('Failed to load categories', err);

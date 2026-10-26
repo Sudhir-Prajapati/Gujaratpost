@@ -1,20 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { 
   ChevronLeft, ChevronRight, Eye, Phone, Globe, Mail,
-  Bookmark, Printer, Copy, Maximize2, X, Camera, Share2, Sparkles, Layers
+  Bookmark, Printer, Copy, Maximize2, X, Camera, Share2, Sparkles, Layers,
+  ChevronDown, Loader2
 } from 'lucide-react';
 import { 
   getLocalized, PHOTOS, formatDate, formatViews, 
   getArticleTitle, getCategoryLabel, getPhotoCategoryBadge 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
-import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import { getPublicGallery } from '@/lib/api';
+import { useAutoTranslate } from '@/lib/translate';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import type { Language } from '@/types';
+import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import ArticleShareAudioBar from '@/app/news/[slug]/components/ArticleShareAudioBar';
 
 const ReadingProgressBar = memo(function ReadingProgressBar() {
   const [progress, setProgress] = useState(0);
@@ -31,6 +36,64 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
 
   return <div className="reading-progress" style={{ width: `${progress}%` }} />;
 });
+
+const LiveDateTime = memo(function LiveDateTime({ language }: { language: Language }) {
+  const [dateStr, setDateStr] = useState('');
+
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      const options: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      };
+      const locale = language === 'en' ? 'en-US' : language === 'hi' ? 'hi-IN' : 'gu-IN';
+      setDateStr(now.toLocaleString(locale, options));
+    };
+    update();
+    const timer = setInterval(update, 60000);
+    return () => clearInterval(timer);
+  }, [language]);
+
+  return <span suppressHydrationWarning>{dateStr}</span>;
+});
+
+function formatTimeAgo(dateString?: string | Date | null, language: string = 'gu'): string {
+  if (!dateString) return language === 'gu' ? 'હમણાં જ' : 'Just now';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  if (isNaN(diffMs) || diffMs < 0) return language === 'gu' ? 'હમણાં જ' : 'Just now';
+
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (language === 'gu') {
+    if (diffMins < 1) return 'હમણાં જ';
+    if (diffMins < 60) return `${diffMins} મિનિટ પહેલા`;
+    if (diffHours < 24) return `${diffHours} કલાક પહેલા`;
+    if (diffDays < 30) return `${diffDays} દિવસ પહેલા`;
+    return `${Math.floor(diffDays / 30)} મહિના પહેલા`;
+  }
+  if (language === 'hi') {
+    if (diffMins < 1) return 'अभी';
+    if (diffMins < 60) return `${diffMins} मिनट पहले`;
+    if (diffHours < 24) return `${diffHours} घंटे पहले`;
+    if (diffDays < 30) return `${diffDays} दिन पहले`;
+    return `${Math.floor(diffDays / 30)} महीने पहले`;
+  }
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 30) return `${diffDays}d ago`;
+  return `${Math.floor(diffDays / 30)} mo ago`;
+}
 
 const DEMO_THUMBNAILS = [
   'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=400&auto=format&fit=crop&q=80',
@@ -83,16 +146,78 @@ const SidebarThumb = memo(function SidebarThumb({
   }, [item, index]);
 
   return (
-    <div className="imgwrap">
+    <div className="relative w-full h-full">
       <Image
         src={src}
         alt={itemTitle}
         fill
-        sizes="92px"
-        className="object-cover"
+        sizes="130px"
+        className="object-cover rounded-lg group-hover:scale-105 transition-transform duration-300"
         onError={() => setSrc(fallback)}
       />
     </div>
+  );
+});
+
+const MorePhotoCard = memo(function MorePhotoCard({
+  item,
+  index,
+  language,
+}: {
+  item: any;
+  index: number;
+  language: Language;
+}) {
+  const rawItemTitle = item.captionGu || item.caption || item.titleGu || item.title || item.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : 'Photo Gallery');
+  const itemCategory = getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
+  const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+  const initialSrc = item.src || item.coverImage || item.image || item.thumbnail || fallback;
+  const [src, setSrc] = useState(initialSrc);
+
+  useEffect(() => {
+    setSrc(item.src || item.coverImage || item.image || item.thumbnail || fallback);
+  }, [item, fallback]);
+
+  return (
+    <Link
+      href={`/photos/${item.id || item._id}`}
+      className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 select-none"
+    >
+      <Image
+        src={src}
+        alt={rawItemTitle}
+        fill
+        sizes="(max-width: 640px) 100vw, 400px"
+        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+        onError={() => setSrc(fallback)}
+      />
+
+      {/* Top subtle gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
+
+      {/* Bottom deep gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
+
+      {/* Category badge top-left (rounded pill matching reference) */}
+      <div className="absolute top-3.5 left-3.5 z-10 pointer-events-none">
+        <span className="text-white text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-md bg-[#B3121B] inline-block">
+          <AutoTranslateString text={itemCategory} language={language} />
+        </span>
+      </div>
+
+      {/* Title at bottom matching reference image */}
+      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 z-10 pointer-events-none">
+        <h4 className="text-white text-[15px] sm:text-[16.5px] font-bold leading-snug line-clamp-2 drop-shadow-lg group-hover:text-red-200 transition-colors">
+          <AutoTranslateString text={rawItemTitle} language={language} />
+        </h4>
+      </div>
+
+      {/* Border glow on hover matching home screen */}
+      <div
+        className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ boxShadow: 'inset 0 0 0 2px #B3121B' }}
+      />
+    </Link>
   );
 });
 
@@ -159,28 +284,25 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const photoUrl = propPhotoUrl || `https://gujaratpost.com/photos/${photo?.id || activeId}`;
   const mainFallback = FALLBACK_NEWS_IMAGES[currentPhotoIndex % FALLBACK_NEWS_IMAGES.length];
 
-  const rawCaption = photo?.captionGu || photo?.caption || photo?.alt || 'Photo Gallery';
-  const caption = getLocalized(language, { 
-    en: photo?.caption || photo?.alt || '', 
-    gu: photo?.captionGu || photo?.caption || photo?.alt || '', 
-    hi: photo?.captionHi || photo?.caption || photo?.alt || '' 
-  }) || rawCaption;
-
-  const title = caption;
+  const rawCaption = photo?.captionGu || photo?.caption || photo?.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery');
+  const autoTranslatedTitle = useAutoTranslate(rawCaption, language);
+  const title = (language !== 'gu' && autoTranslatedTitle) ? autoTranslatedTitle : rawCaption;
+  const caption = title;
   
-  const descriptionData = (photo && MOCK_DESCRIPTIONS[photo.id]) || {
-    category: {
-      en: getPhotoCategoryBadge(photo, 'en'),
-      gu: getPhotoCategoryBadge(photo, 'gu'),
-      hi: getPhotoCategoryBadge(photo, 'hi'),
-    },
-    en: photo?.captionEn || photo?.caption || '',
-    gu: photo?.captionGu || photo?.caption || '',
-    hi: photo?.captionHi || photo?.caption || ''
-  };
+  const category = getCategoryLabel(photo?.category || photo?.categorySlug || photo || 'photos', language);
 
-  const category = getLocalized(language, descriptionData.category);
-  const bodyText = getLocalized(language, descriptionData) || photo?.caption || '';
+  const rawDescription = useMemo(() => {
+    if (photo && MOCK_DESCRIPTIONS[photo.id]) {
+      const mock = MOCK_DESCRIPTIONS[photo.id];
+      if (language === 'gu') return mock.gu;
+      if (language === 'hi') return mock.hi || mock.gu;
+      return mock.en || mock.gu;
+    }
+    return photo?.caption || photo?.captionGu || photo?.alt || '';
+  }, [photo, language]);
+
+  const autoTranslatedDesc = useAutoTranslate(rawDescription, language);
+  const bodyText = (language !== 'gu' && autoTranslatedDesc) ? autoTranslatedDesc : rawDescription;
   const paragraphs = bodyText.split(/\n\n+/).filter(Boolean);
 
   const authorName = photo?.photographer || (language === 'gu' ? 'ગુજરાત પોસ્ટ' : language === 'hi' ? 'गुजरात पोस्ट' : 'Gujarat Post');
@@ -228,78 +350,52 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
     if (Array.isArray(rawImages) && rawImages.length > 0) {
       items = rawImages.map((entry: any, idx: number) => {
-        if (typeof entry === 'string') {
-          const desc = paragraphs[idx] || (idx === 0 ? (photo?.caption || photo?.captionGu || bodyText) : '');
-          return {
-            id: `${photo?.id || 'item'}-${idx + 1}`,
-            src: entry,
-            title: idx === 0 ? title : `${title} (${idx + 1})`,
-            description: desc || caption,
-            photographer: photo?.photographer || authorName,
-            source: photo?.copyright || 'ગુજરાત પોસ્ટ',
-          };
+        const itemSrc = typeof entry === 'string' ? entry : (entry.src || entry.url || photo?.src || mainFallback);
+        let itemDesc = (typeof entry === 'object' && (entry.description || entry.captionGu || entry.caption))
+          ? (entry.description || entry.captionGu || entry.caption)
+          : (paragraphs[idx] || (photo?.caption && photo?.caption !== title ? photo.caption : ''));
+
+        if (itemDesc === title) {
+          itemDesc = (photo?.caption && photo?.caption !== title) ? photo.caption : '';
         }
-        const itemTitle = entry.title || entry.captionGu || entry.caption || (idx === 0 ? title : `${title} (${idx + 1})`);
-        const itemDesc = entry.description || entry.text || entry.caption || paragraphs[idx] || caption;
+
+        if (typeof itemDesc === 'string' && itemDesc.startsWith(title)) {
+          itemDesc = itemDesc.substring(title.length).replace(/^[:\s\-]+/, '');
+        }
+
         return {
-          id: entry.id || `${photo?.id || 'item'}-${idx + 1}`,
-          src: entry.src || entry.url || photo?.src,
-          title: itemTitle,
+          id: (typeof entry === 'object' && entry.id) || `${photo?.id || 'item'}-${idx + 1}`,
+          src: itemSrc,
+          title: title,
           description: itemDesc,
-          photographer: entry.photographer || photo?.photographer || authorName,
-          source: entry.source || entry.copyright || photo?.copyright || 'ગુજરાત પોસ્ટ',
+          photographer: (typeof entry === 'object' && entry.photographer) || photo?.photographer || authorName,
+          source: photo?.copyright || 'ગુજરાત પોસ્ટ',
         };
       });
     }
 
-    // 5. If only 1 image on photo and no rawImages array:
-    if (items.length <= 1) {
-      const firstItem = {
-        id: photo?.id || 'photo-1',
-        src: photo?.src || mainFallback,
-        title: title,
-        description: photo?.caption && photo?.caption !== title ? photo.caption : (paragraphs[0] || caption),
-        photographer: photo?.photographer || authorName,
-        source: photo?.copyright || 'ગુજરાત પોસ્ટ',
-      };
-
-      // Check for related gallery photos by celebrity/topic/subject
-      // Example: For "અવનીત કૌર" (Avneet Kaur), find the other Avneet Kaur photos in database
-      const keywords = (photo?.captionGu || photo?.caption || '')
-        .split(/[\s,:-]+/)
-        .filter((w: string) => w.length >= 4 && !['સાથે', 'કર્યા', 'વાયરલ', 'વાઇરલ', 'ફોટો', 'તસવીર', 'તસવીરો', 'હોટ', 'લુક', 'અંદાજ', 'નવા', 'જોવા', 'મળી'].includes(w));
-
-      let relatedMatches: any[] = [];
-      if (keywords.length > 0) {
-        relatedMatches = photosList.filter((p: any) => {
-          if (!p || p.id === photo?.id) return false;
-          const text = `${p.captionGu || ''} ${p.caption || ''} ${p.alt || ''}`;
-          return keywords.some((kw: string) => text.includes(kw));
-        });
+    // If only 1 image on photo and no rawImages array:
+    if (items.length === 0) {
+      let desc = photo?.caption && photo?.caption !== title ? photo.caption : (paragraphs[0] || '');
+      if (desc === title) desc = '';
+      if (typeof desc === 'string' && desc.startsWith(title)) {
+        desc = desc.substring(title.length).replace(/^[:\s\-]+/, '');
       }
 
-      if (relatedMatches.length > 0) {
-        items = [
-          firstItem,
-          ...relatedMatches.slice(0, 5).map((p: any, idx: number) => {
-            const pTitle = getLocalized(language, { en: p.caption, gu: p.captionGu, hi: p.captionHi }) || p.alt || title;
-            return {
-              id: p.id || `related-${idx}`,
-              src: p.src,
-              title: pTitle,
-              description: p.caption || p.captionGu || pTitle,
-              photographer: p.photographer || authorName,
-              source: p.copyright || 'ગુજરાત પોસ્ટ',
-            };
-          }),
-        ];
-      } else {
-        items = [firstItem];
-      }
+      items = [
+        {
+          id: photo?.id || 'photo-1',
+          src: photo?.src || mainFallback,
+          title: title,
+          description: desc,
+          photographer: photo?.photographer || authorName,
+          source: photo?.copyright || 'ગુજરાત પોસ્ટ',
+        },
+      ];
     }
 
     return items;
-  }, [photo, photosList, language, title, caption, bodyText, paragraphs, authorName, mainFallback]);
+  }, [photo, language, title, caption, paragraphs, authorName, mainFallback]);
 
   // Keyboard navigation for Lightbox
   useEffect(() => {
@@ -334,7 +430,59 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
     return ['Photo Gallery', 'Gujarat', 'Ahmedabad', 'Breaking News', 'Live', 'Special Coverage', 'Pictures', 'Gujarat Post'];
   }, [language]);
 
-  const sidebarRecommendedPool = photosList.filter((p: any) => p.id !== photo?.id);
+  // Photos pool excluding active photo for the 8-grid and load more
+  const activePhotoId = photo?.id || photo?._id || activeId;
+  const initialPool = useMemo(() => {
+    return (photosList || []).filter((p: any) => (p.id || p._id) !== activePhotoId);
+  }, [photosList, activePhotoId]);
+
+  const [morePhotosList, setMorePhotosList] = useState<any[]>(initialPool);
+  const [visiblePhotoCount, setVisiblePhotoCount] = useState(8);
+  const [galleryPage, setGalleryPage] = useState(1);
+  const [loadingMoreGallery, setLoadingMoreGallery] = useState(false);
+  const [hasMoreFromApi, setHasMoreFromApi] = useState(true);
+
+  useEffect(() => {
+    setMorePhotosList(initialPool);
+  }, [initialPool]);
+
+  const handleLoadMorePhotos = async () => {
+    // 1. If we have more in memory than visiblePhotoCount, reveal next 8
+    if (visiblePhotoCount + 8 <= morePhotosList.length) {
+      setVisiblePhotoCount((prev) => prev + 8);
+      return;
+    }
+
+    // 2. Fetch more from API
+    if (hasMoreFromApi && !loadingMoreGallery) {
+      setLoadingMoreGallery(true);
+      try {
+        const nextPage = galleryPage + 1;
+        const res = await getPublicGallery({ page: nextPage, limit: 12 });
+        if (res && res.length > 0) {
+          setMorePhotosList((prev) => {
+            const existingIds = new Set(prev.map((p) => p.id || p._id));
+            const newItems = res.filter((p: any) => !existingIds.has(p.id || p._id) && (p.id || p._id) !== activePhotoId);
+            return [...prev, ...newItems];
+          });
+          setGalleryPage(nextPage);
+          setVisiblePhotoCount((prev) => prev + 8);
+        } else {
+          setHasMoreFromApi(false);
+          setVisiblePhotoCount(morePhotosList.length);
+        }
+      } catch {
+        setHasMoreFromApi(false);
+        setVisiblePhotoCount(morePhotosList.length);
+      } finally {
+        setLoadingMoreGallery(false);
+      }
+    } else {
+      setVisiblePhotoCount(morePhotosList.length);
+    }
+  };
+
+  const sidebarRecommendedPool = morePhotosList;
 
   return (
     <>
@@ -410,11 +558,11 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
               </Link>
               <span>/</span>
               <Link href="/photos" className="hover:text-[var(--red)] transition-colors">
-                {getLocalized(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
+                {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
               </Link>
               <span>/</span>
               <span className="text-neutral-700 dark:text-neutral-300 font-normal truncate max-w-[280px] sm:max-w-md">
-                <AutoTranslateString text={photo?.caption || photo?.alt || title} language={language} />
+                <AutoTranslateString text={rawCaption} language={language} />
               </span>
             </nav>
 
@@ -422,16 +570,18 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
               <div className="art-kick">
                 <span className="bar"></span>
-                <span>{category} · {language === 'gu' ? 'અંતરદૃશ્ય કવરેજ' : language === 'hi' ? 'विशेष कवरेज' : 'Special Coverage'}</span>
+                <span>
+                  <AutoTranslateString text={category} language={language} /> · {language === 'gu' ? 'વિશેષ કવરેજ' : language === 'hi' ? 'विशेष कवरेज' : 'Special Coverage'}
+                </span>
               </div>
               <span className="live-badge rounded bg-accent px-2.5 py-0.5 text-xs font-black text-white ml-2 shadow-sm">
-                📷 {galleryItems.length} {language === 'gu' ? 'તસવીરો' : language === 'hi' ? 'तस्वीरें' : 'Photos'}
+                📷 {galleryItems.length} {galleryItems.length === 1 ? (language === 'gu' ? 'તસવીર' : language === 'hi' ? 'तस्वीर' : 'Photo') : (language === 'gu' ? 'તસવીરો' : language === 'hi' ? 'तस्वीरें' : 'Photos')}
               </span>
             </div>
 
             {/* Article Title */}
             <h1 className="article-title">
-              <AutoTranslateString text={title} language={language} />
+              <AutoTranslateString text={rawCaption} language={language} />
             </h1>
 
             {/* Byline / Author card matching NewsDetailClient */}
@@ -442,21 +592,18 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 </div>
                 <div>
                   <div className="text-[13.5px]">
-                    <span className="text-[var(--ink-2)]">{language === 'gu' ? 'લેખક:' : language === 'hi' ? 'लेखक:' : 'Author:'} </span>
+                    <span className="text-[var(--ink-2)]">Published by: </span>
                     <span className="font-bold text-[var(--red)]">
                       {authorName}
                     </span>
                   </div>
                   <div className="text-[12px] text-[var(--ink-3)] mt-[2px]" suppressHydrationWarning>
-                    <span>{formatDate(photo?.createdAt || '2026-08-12')}</span>
+                    <LiveDateTime language={language} />
                   </div>
                 </div>
               </div>
               
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="text-[12.5px] text-[var(--ink-2)]" suppressHydrationWarning>
-                  👁 {formatViews(photo?.views || 10450)} {getLocalized(language, { en: 'views', gu: 'વ્યૂઝ', hi: 'વ્યૂઝ' })}
-                </span>
                 
                 {/* Google News Follow Badge */}
                 <a
@@ -482,205 +629,111 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             </div>
 
             {/* Top Share Row */}
-            <div className="share-row-custom select-none flex flex-wrap gap-3 items-center mb-6 p-3.5 rounded-2xl bg-neutral-50/80 dark:bg-neutral-900/60 border border-neutral-200/80 dark:border-neutral-800/80 shadow-sm backdrop-blur-sm" suppressHydrationWarning>
-              <span className="lbl font-black text-neutral-900 dark:text-neutral-100 mr-1 text-[14px] tracking-wide uppercase flex items-center gap-1.5 select-none" suppressHydrationWarning>
-                <span className="h-2 w-2 rounded-full bg-[#B3121B] animate-ping" />
-                {language === 'gu' ? 'શેર કરો:' : language === 'hi' ? 'શેર કરેં:' : 'Share:'}
-              </span>
-
-              {/* WhatsApp */}
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(`${title} ${photoUrl}`)}`}
-                target="_blank"
-                rel="noreferrer"
-                title="WhatsApp"
-                suppressHydrationWarning
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(37,211,102,0.35)] hover:border-[#25D366]"
-              >
-                <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-                  <path fill="#25D366" d="M12.01 0a12 12 0 0 0-10.4 18l-1.6 5.8 6-1.6a12 12 0 1 0 6-22.2z" />
-                  <path fill="#FFF" d="M16.9 14.1c-.3-.1-1.6-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.5 0-.2-.1-.4-.2-.6-.2-.4-.7-1.7-1-2.3-.3-.6-.6-.5-.8-.5H8c-.2 0-.6.1-.9.4C6.8 7.3 6 8.1 6 9.8c0 1.7 1.2 3.4 1.4 3.6.2.2 2.4 3.7 5.9 5.2.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.5-.3z" />
-                </svg>
-              </a>
-
-              {/* Facebook */}
-              <a
-                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(photoUrl)}`}
-                target="_blank"
-                rel="noreferrer"
-                title="Facebook"
-                suppressHydrationWarning
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(24,119,242,0.35)] hover:border-[#1877F2]"
-              >
-                <svg viewBox="0 0 24 24" className="w-[20px] h-[20px] shrink-0 fill-[#1877F2] transition-transform duration-300 group-hover:rotate-[15deg] group-hover:scale-110">
-                  <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.35c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12z" />
-                </svg>
-              </a>
-
-              {/* X */}
-              <a
-                href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title} ${photoUrl}`)}`}
-                target="_blank"
-                rel="noreferrer"
-                title="X"
-                suppressHydrationWarning
-                className="group relative flex items-center justify-center w-11 h-11 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-300 hover:scale-[1.15] hover:-translate-y-1 active:scale-95 cursor-pointer shadow-sm hover:shadow-[0_8px_20px_rgba(0,0,0,0.25)] dark:hover:shadow-[0_8px_20px_rgba(255,255,255,0.2)] hover:border-black dark:hover:border-white"
-              >
-                <svg viewBox="0 0 24 24" className="w-[18px] h-[18px] shrink-0 text-neutral-900 dark:text-neutral-100 transition-transform duration-300 group-hover:rotate-[-12deg] group-hover:scale-110">
-                  <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
-
-              {/* Action Buttons */}
-              <div className="ml-auto flex items-center gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => setSaved(!saved)} 
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all duration-200 shadow-sm ${saved ? 'bg-amber-500 text-white border-amber-600' : 'bg-card border-border hover:bg-muted text-foreground'}`}
-                >
-                  <Bookmark className={`h-3.5 w-3.5 ${saved ? 'fill-white' : ''}`} />
-                  {saved ? 'Saved' : 'Save'}
-                </button>
-
-                <button 
-                  type="button" 
-                  onClick={() => window.print()} 
-                  className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-all duration-200 shadow-sm"
-                >
-                  <Printer className="h-3.5 w-3.5 text-muted-foreground" />
-                  Print
-                </button>
-
-                <button 
-                  type="button" 
-                  onClick={copyUrl} 
-                  className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border px-3.5 py-1.5 text-xs font-bold text-foreground hover:bg-muted transition-all duration-200 shadow-sm"
-                >
-                  <Copy className="h-3.5 w-3.5 text-muted-foreground" />
-                  {copied ? 'Copied!' : 'Copy'}
-                </button>
-              </div>
+            <div className="mb-6">
+              <ArticleShareAudioBar
+                title={title}
+                articleUrl={photoUrl}
+                language={language}
+                copied={copied}
+                copyUrl={copyUrl}
+                saved={saved}
+                handleToggleSave={() => setSaved(!saved)}
+                audioText={title}
+              />
             </div>
 
-            {/* Vertical Continuous Gallery Stream: Image -> Text -> Ad -> Image -> Text */}
-            <div className="gallery-stream mt-6 space-y-9">
-              {galleryItems.map((item, idx) => {
-                const itemSrc = item.src || mainFallback;
+            {/* Gallery: Single heading + numbered image grid (1, 2, 3, 4...) */}
+            <div className="gallery-stream mt-6">
+              <article className="overflow-hidden rounded-2xl bg-white dark:bg-[#0f0f10] border border-neutral-200 dark:border-neutral-800 shadow-sm dark:shadow-2xl">
 
-                return (
-                  <div key={item.id || idx} className="gallery-story-block">
-                    {/* Modern Photo Card: White in Light Mode, Dark/Black in Dark Mode */}
-                    <article className="overflow-hidden rounded-2xl bg-white dark:bg-[#0f0f10] border border-neutral-200 dark:border-neutral-800 shadow-sm dark:shadow-2xl transition-all duration-300">
-                      
-                      {/* Image Area with Badges: White in Light Mode, Black in Dark Mode */}
-                      <div className="relative w-full bg-white dark:bg-black flex items-center justify-center overflow-hidden min-h-[320px] max-h-[700px] select-none border-b border-neutral-100 dark:border-neutral-800/80">
-                        
-                        {/* Top-Left Counter Badge matching Reference (1/4, 2/4...) */}
-                        <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 rounded-full bg-black/75 dark:bg-black/80 backdrop-blur-md px-3.5 py-1 text-xs font-black text-white border border-white/20 shadow-md">
-                          <Camera className="h-3.5 w-3.5 text-red-500" />
-                          <span>{idx + 1} / {galleryItems.length}</span>
+                {/* Single shared description block at top */}
+                {paragraphs.length > 0 && (
+                  <div className="p-5 md:p-6 bg-white dark:bg-[#131315] border-b border-neutral-100 dark:border-neutral-800">
+                    <p className="text-[15px] leading-relaxed text-neutral-700 dark:text-neutral-300">
+                      <AutoTranslateString text={paragraphs.slice(0, 2).join(' ')} language={language} />
+                    </p>
+                  </div>
+                )}
+
+                {/* Image display: single hero image (full uncropped photo, centered) OR multiple image grid */}
+                {galleryItems.length === 1 ? (
+                  <div className="p-1 sm:p-2 flex justify-center">
+                    <div
+                      className="relative group overflow-hidden rounded-xl sm:rounded-2xl bg-neutral-950 cursor-pointer w-full flex items-center justify-center min-h-[360px] max-h-[82vh] shadow-inner"
+                      onClick={() => { setActiveLightboxIndex(0); setIsLightboxOpen(true); }}
+                    >
+                      {/* Ambient blur backdrop for rich presentation without blank voids */}
+                      <div
+                        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none"
+                        style={{ backgroundImage: `url(${galleryItems[0]?.src || mainFallback})` }}
+                      />
+
+                      {/* Complete uncropped photo centered with natural proportions */}
+                      <img
+                        src={galleryItems[0]?.src || mainFallback}
+                        alt={galleryItems[0]?.title || caption}
+                        className="relative z-10 w-auto max-w-full h-auto max-h-[80vh] object-contain mx-auto transition-transform duration-500 ease-out group-hover:scale-[1.01]"
+                        loading="eager"
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (target.src !== mainFallback) target.src = mainFallback;
+                        }}
+                      />
+                      {/* Expand icon on hover */}
+                      <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 pointer-events-none">
+                        <div className="rounded-full bg-black/60 p-3 text-white shadow-xl hover:bg-[#B3121B] transition-colors">
+                          <Maximize2 className="h-6 w-6 text-white" />
                         </div>
-
-                        {/* Top-Right Fullscreen Expand Button matching Reference */}
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setActiveLightboxIndex(idx);
-                            setIsLightboxOpen(true);
-                          }}
-                          className="absolute top-3.5 right-3.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/75 dark:bg-black/80 backdrop-blur-md text-white hover:bg-[#B3121B] hover:scale-110 active:scale-95 transition-all border border-white/20 shadow-md cursor-pointer"
-                          title="Full Screen"
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-1 p-1">
+                    {galleryItems.map((item, idx) => {
+                      const itemSrc = item.src || mainFallback;
+                      return (
+                        <div
+                          key={item.id || idx}
+                          className="relative group overflow-hidden rounded-xl bg-black cursor-pointer"
+                          style={{ aspectRatio: '4/3' }}
+                          onClick={() => { setActiveLightboxIndex(idx); setIsLightboxOpen(true); }}
                         >
-                          <Maximize2 className="h-4 w-4" />
-                        </button>
-
-                        {/* Responsive Poster / Photo preserving natural aspect ratio */}
-                        <div className="w-full flex items-center justify-center p-2 sm:p-3">
                           <img
                             src={itemSrc}
                             alt={item.title || caption}
-                            className="w-auto h-auto max-h-[660px] max-w-full object-contain mx-auto rounded-lg shadow-sm"
-                            loading={idx === 0 ? 'eager' : 'lazy'}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading={idx < 2 ? 'eager' : 'lazy'}
                             onError={(e) => {
                               const target = e.currentTarget;
                               const fallback = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
                               if (target.src !== fallback) target.src = fallback;
                             }}
                           />
+                          {/* Number badge */}
+                          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-black text-white border border-white/20 shadow">
+                            <Camera className="h-3 w-3 text-red-400" />
+                            <span>{idx + 1}</span>
+                          </div>
+                          {/* Expand icon on hover */}
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                            <div className="rounded-full bg-black/60 p-2">
+                              <Maximize2 className="h-5 w-5 text-white" />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-
-                      {/* Text Section Directly Under Image: White in Light Mode, Dark in Dark Mode */}
-                      <div className="p-5 md:p-6 bg-white dark:bg-[#131315] text-neutral-900 dark:text-white space-y-3.5">
-                        <div className="text-[14.5px] md:text-[16px] leading-relaxed text-neutral-700 dark:text-neutral-200">
-                          <strong className="text-neutral-900 dark:text-white font-black text-[16px] md:text-[17.5px] mr-2 block sm:inline mb-1 sm:mb-0">
-                            {item.title}:
-                          </strong>
-                          <span>{item.description}</span>
-                          <span className="font-bold text-neutral-500 dark:text-neutral-400 ml-2 inline-block text-[13.5px]">
-                            ({language === 'gu' ? 'તસવીર:' : language === 'hi' ? 'તસવીર:' : 'Image:'} {item.photographer || authorName})
-                          </span>
-                        </div>
-
-                        {/* Social Share Row Below Text */}
-                        <div className="flex items-center gap-2 pt-3 border-t border-neutral-200 dark:border-white/10 flex-wrap">
-                          <span className="text-[11.5px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400 mr-1 select-none">
-                            {language === 'gu' ? 'શેર:' : language === 'hi' ? 'શેર:' : 'Share:'}
-                          </span>
-
-                          {/* WhatsApp */}
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(`${item.title}\n${item.description}\n${photoUrl}`)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Share on WhatsApp"
-                            className="group flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-[#25D366] dark:bg-white/10 dark:hover:bg-[#25D366] transition-all hover:scale-110 active:scale-95 border border-neutral-200 dark:border-white/10 shadow-sm"
-                          >
-                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#25D366] group-hover:fill-white">
-                              <path d="M12.01 0a12 12 0 0 0-10.4 18l-1.6 5.8 6-1.6a12 12 0 1 0 6-22.2z" />
-                              <path fill="#25D366" d="M12.01 1.8a10.2 10.2 0 0 1 8.8 15.3l.5 1.8-1.9-.5A10.2 10.2 0 1 1 12.01 1.8z" />
-                              <path fill="#FFF" d="M16.9 14.1c-.3-.1-1.6-.8-1.9-.9-.3-.1-.5-.1-.7.2-.2.3-.7.9-.9 1.1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.8-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.1.2-.3.2-.5 0-.2-.1-.4-.2-.6-.2-.4-.7-1.7-1-2.3-.3-.6-.6-.5-.8-.5H8c-.2 0-.6.1-.9.4C6.8 7.3 6 8.1 6 9.8c0 1.7 1.2 3.4 1.4 3.6.2.2 2.4 3.7 5.9 5.2.8.3 1.5.6 2 .7.8.3 1.6.2 2.2.1.7-.1 2.2-.9 2.5-1.8.3-.9.3-1.6.2-1.8-.1-.1-.3-.2-.5-.3z" />
-                            </svg>
-                          </a>
-
-                          {/* Facebook */}
-                          <a
-                            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(photoUrl)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Share on Facebook"
-                            className="group flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-[#1877F2] dark:bg-white/10 dark:hover:bg-[#1877F2] transition-all hover:scale-110 active:scale-95 border border-neutral-200 dark:border-white/10 shadow-sm"
-                          >
-                            <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#1877F2] group-hover:fill-white">
-                              <path d="M24 12c0-6.627-5.373-12-12-12S0 5.373 0 12c0 5.99 4.388 10.954 10.125 11.854V15.47H7.078v-3.47h3.047V9.35c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12z" />
-                            </svg>
-                          </a>
-
-                          {/* X */}
-                          <a
-                            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${item.title} ${photoUrl}`)}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            title="Post on X"
-                            className="group flex h-8 w-8 items-center justify-center rounded-full bg-neutral-100 hover:bg-black dark:bg-white/10 dark:hover:bg-white transition-all hover:scale-110 active:scale-95 border border-neutral-200 dark:border-white/10 shadow-sm"
-                          >
-                            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current text-neutral-800 dark:text-white group-hover:text-white dark:group-hover:text-black">
-                              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                            </svg>
-                          </a>
-                        </div>
-                      </div>
-                    </article>
-
-                    {/* In-feed Ad Banner between photos matching Reference */}
-                    {idx < galleryItems.length - 1 && (
-                      <div className="my-7">
-                        <AdSectionBanner section="IN_ARTICLE" className="w-full" showFallback={false} />
-                      </div>
-                    )}
+                      );
+                    })}
                   </div>
-                );
-              })}
+                )}
+
+                {/* Photographer credit at bottom */}
+                <div className="px-4 py-3 bg-white dark:bg-[#131315] border-t border-neutral-100 dark:border-neutral-800">
+                  <span className="text-[13px] text-neutral-500 dark:text-neutral-400">
+                    <Camera className="inline h-3.5 w-3.5 mr-1 text-red-500" />
+                    {language === 'gu' ? 'તસવીર:' : language === 'hi' ? 'तस्वीर:' : 'Photo:'} {authorName}
+                  </span>
+                </div>
+              </article>
             </div>
 
             {/* Topics Tags Bar matching NewsDetailClient */}
@@ -698,29 +751,116 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 </Link>
               ))}
             </div>
+
+            {/* 8 More Photos Section with "વધુ જુઓ" Load More */}
+            {morePhotosList.length > 0 && (
+              <section className="mt-12 pt-8 border-t border-neutral-200 dark:border-neutral-800">
+                {/* Header: Rounded red pill + Title + View All link */}
+                <div className="flex items-center justify-between pb-3 mb-5 border-b border-neutral-200 dark:border-neutral-800">
+                  <div className="flex items-center gap-2">
+                    <span className="w-[5px] h-[19px] bg-[#B3121B] rounded-full inline-block shrink-0" />
+                    <h3 className="text-[19px] font-bold text-neutral-900 dark:text-white tracking-tight leading-none">
+                      {language === 'gu' ? 'વધુ ફોટો સ્ટોરીઝ' : language === 'hi' ? 'अन्य फोटो गैलरी' : 'More Photo Stories'}
+                    </h3>
+                  </div>
+                  <Link
+                    href="/photos"
+                    className="text-[13.5px] font-bold text-[#B3121B] hover:underline flex items-center gap-0.5 shrink-0"
+                  >
+                    {language === 'gu' ? 'બધા જુઓ' : language === 'hi' ? 'सभी देखें' : 'View All'} →
+                  </Link>
+                </div>
+
+                {/* Grid of Photo Cards — 8 cards initially */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {morePhotosList.slice(0, visiblePhotoCount).map((item: any, idx: number) => (
+                    <MorePhotoCard
+                      key={item.id || item._id || idx}
+                      item={item}
+                      index={idx}
+                      language={language}
+                    />
+                  ))}
+                </div>
+
+                {/* Load More Button ("વધુ જુઓ") */}
+                {visiblePhotoCount < morePhotosList.length && (
+                  <div className="flex justify-center mt-8">
+                    <button
+                      type="button"
+                      onClick={handleLoadMorePhotos}
+                      disabled={loadingMoreGallery}
+                      className="group inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[#B3121B] hover:bg-red-700 text-white font-bold text-[14.5px] shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-60 select-none border border-white/20"
+                    >
+                      {loadingMoreGallery ? (
+                        <>
+                          <Loader2 className="w-4.5 h-4.5 animate-spin" />
+                          <span>{language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...'}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}</span>
+                          <ChevronDown className="w-4.5 h-4.5 stroke-[2.5] transition-transform duration-200 group-hover:translate-y-0.5" />
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </section>
+            )}
           </article>
 
-          {/* Sidebar matching NewsDetailClient */}
+          {/* Sidebar - Latest News */}
           <aside className="select-none h-fit sticky top-[100px]" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
-            <div className="wtitle mb-3">
-              <span className="d"></span>
-              <span>{language === 'gu' ? 'તમારા માટે ભલામણ' : language === 'hi' ? 'आपके लिए अनुशंसित' : 'Recommended Stories'}</span>
+            {/* Header: Rounded red capsule + લેટેસ્ટ સમાચાર + વધુ જુઓ → */}
+            <div className="flex items-center justify-between pb-3 mb-1 border-b border-neutral-200 dark:border-neutral-800">
+              <div className="flex items-center gap-2">
+                <span className="w-[5px] h-[19px] bg-[#B3121B] rounded-full inline-block shrink-0" />
+                <h2 className="text-[18px] font-bold text-neutral-900 dark:text-white tracking-tight leading-none">
+                  {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'लेटेस्ट समाचार' : 'Latest News'}
+                </h2>
+              </div>
+              <Link
+                href="/category/trending"
+                className="text-[13.5px] font-bold text-[#B3121B] hover:underline whitespace-nowrap flex items-center gap-0.5 shrink-0"
+              >
+                {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'} →
+              </Link>
             </div>
 
+            {/* Latest News List — text left, image right */}
             <div className="space-y-0">
-              {sidebarRecommendedPool.slice(0, 6).map((item: any, index: number) => {
-                const itemTitle = getLocalized(language, { en: item.caption, gu: item.captionGu, hi: item.captionHi });
-                const itemCategory = item.category || (language === 'gu' ? 'ગેલેરી' : 'Gallery');
+              {(dbTrending && dbTrending.length > 0 ? dbTrending : sidebarRecommendedPool).slice(0, 8).map((item: any, index: number) => {
+                const isNewsItem = !!(item.title || item.titleGu || item.titleEn);
+                const rawItemTitle = isNewsItem
+                  ? (getLocalized(language, { en: item.title || item.titleEn || '', gu: item.titleGu || item.title || '', hi: item.titleHi || item.title || '' }) || item.title || '')
+                  : (getLocalized(language, { en: item.caption || '', gu: item.captionGu || item.caption || '', hi: item.captionHi || item.caption || '' }) || item.caption || '');
+                const itemCategory = getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
+                const itemHref = isNewsItem ? `/news/${item.slug || item.id}` : `/photos/${item.id}`;
+                const relTime = formatTimeAgo(item.createdAt || item.publishedAt, language);
+
                 return (
-                  <Link key={item.id} href={`/photos/${item.id}`} className="s-compact hover:opacity-85 transition-opacity">
-                    <div>
-                      <span className="kick">{itemCategory}</span>
-                      <h3>{itemTitle}</h3>
-                      <div className="meta" suppressHydrationWarning>
-                        <span>{formatDate(item.createdAt || '2026-08-12')}</span>
-                      </div>
+                  <Link
+                    key={item.id || index}
+                    href={itemHref}
+                    className="flex items-center justify-between gap-3 py-3 border-b border-neutral-200 dark:border-neutral-800 hover:opacity-90 transition-opacity group"
+                  >
+                    {/* Text — left side */}
+                    <div className="flex-1 min-w-0 pr-1">
+                      <span className="text-[12.5px] font-bold text-[#B3121B] block mb-1">
+                        <AutoTranslateString text={itemCategory} language={language} />
+                      </span>
+                      <h3 className="text-[14.5px] font-bold leading-[1.35] text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                        <AutoTranslateString text={rawItemTitle} language={language} />
+                      </h3>
+                      <span className="text-[12px] text-neutral-500 dark:text-neutral-400 mt-1.5 block" suppressHydrationWarning>
+                        {relTime}
+                      </span>
                     </div>
-                    <SidebarThumb item={item} index={index} itemTitle={itemTitle} />
+                    {/* Thumbnail — right side */}
+                    <div className="relative shrink-0 w-[124px] h-[82px] rounded-lg overflow-hidden bg-neutral-200 dark:bg-neutral-800">
+                      <SidebarThumb item={item} index={index} itemTitle={rawItemTitle} />
+                    </div>
                   </Link>
                 );
               })}

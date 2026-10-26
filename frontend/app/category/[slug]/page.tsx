@@ -1,4 +1,4 @@
-import { CATEGORY_META, categorySlugMapping } from "@/data";
+import { CATEGORY_META, categorySlugMapping, CATEGORY_CUSTOM_SEO, getCategoryCustomSeo } from "@/data";
 import { getPublicArticles, getPublicCategories } from "@/lib/api";
 import { sortArticlesByLatest } from "@/lib/utils";
 import CategoryPageClient from "./CategoryPageClient";
@@ -11,24 +11,37 @@ export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const resolvedSlug = categorySlugMapping[slug] || slug;
+  const rawLower = (slug || '').toLowerCase().trim();
+  const resolvedSlug = categorySlugMapping[rawLower] || categorySlugMapping[slug] || rawLower;
   const category = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
   const name = category?.name || slug;
 
+  const customSeo = getCategoryCustomSeo(resolvedSlug, name, category?.gu) || CATEGORY_CUSTOM_SEO[resolvedSlug] || CATEGORY_CUSTOM_SEO[rawLower];
+
+  const pageTitle = customSeo?.title || `${name} News`;
+  const metaDesc = customSeo?.description || `Latest ${name} news, photos and videos from Gujarat Post.`;
+  const canonicalUrl = customSeo?.url || `/category/${slug}`;
+
   return {
-    title: `${name} News`,
-    description: `Latest ${name} news, photos and videos from Gujarat Post.`,
+    title: customSeo?.title ? { absolute: customSeo.title } : pageTitle,
+    description: metaDesc,
+    keywords: customSeo?.keywords,
     alternates: {
-      canonical: `/category/${slug}`,
+      canonical: canonicalUrl,
       types: {
         'application/rss+xml': `/rss/${resolvedSlug || slug}.xml`,
       },
     },
     openGraph: {
-      title: `${name} News | Gujarat Post`,
-      description: `Latest ${name} news from Gujarat Post.`,
-      url: `/category/${slug}`,
+      title: pageTitle.includes('Gujarat Post') ? pageTitle : `${pageTitle} | Gujarat Post`,
+      description: metaDesc,
+      url: canonicalUrl,
       type: "website",
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle.includes('Gujarat Post') ? pageTitle : `${pageTitle} | Gujarat Post`,
+      description: metaDesc,
     },
   };
 }
@@ -43,9 +56,10 @@ export default async function CategoryPage({
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
   const page = parseInt(resolvedSearchParams?.page || "1", 10);
-  const limit = parseInt(resolvedSearchParams?.limit || "40", 10);
+  const limit = parseInt(resolvedSearchParams?.limit || "42", 10);
 
-  const resolvedSlug = categorySlugMapping[slug] || slug;
+  const rawLower = (slug || '').toLowerCase().trim();
+  const resolvedSlug = categorySlugMapping[rawLower] || categorySlugMapping[slug] || rawLower;
 
   // Direct multimedia / special category routes to their dedicated pages
   if (resolvedSlug === 'videos' || resolvedSlug === 'video') {
@@ -68,7 +82,7 @@ export default async function CategoryPage({
 
   // Known categories have local metadata, so only fetch their article feed before rendering.
   // Custom database categories still need the category list for validation and labels.
-  const [dbCategories, catRes] = await Promise.all([
+  const [dbCategories, catRes, politicsRes] = await Promise.all([
     fallbackCat ? Promise.resolve([]) : getPublicCategories().catch(() => []),
     getPublicArticles({
       categorySlug: resolvedSlug === 'trending' ? undefined : resolvedSlug,
@@ -76,6 +90,9 @@ export default async function CategoryPage({
       page,
       limit,
     }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    resolvedSlug === 'trending'
+      ? getPublicArticles({ categorySlug: 'politics', limit: 10 }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
+      : Promise.resolve({ articles: [], total: 0, totalPages: 1 }),
   ]);
 
   const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);
@@ -93,6 +110,8 @@ export default async function CategoryPage({
     color: dbCat?.color || "#dc2626",
   };
 
+  const customSeo = getCategoryCustomSeo(resolvedSlug, categoryData.name, categoryData.nameGu);
+
   let rawArticles = catRes?.articles || [];
   let total = catRes?.total || 0;
   let totalPages = catRes?.totalPages || 1;
@@ -101,7 +120,7 @@ export default async function CategoryPage({
   if (!rawArticles || rawArticles.length === 0) {
     const fallbackRes = await getPublicArticles({
       page: 1,
-      limit: 40,
+      limit: 42,
     }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
     rawArticles = fallbackRes.articles || [];
     total = fallbackRes.total || rawArticles.length;
@@ -109,13 +128,15 @@ export default async function CategoryPage({
   }
 
   const articles = sortArticlesByLatest(rawArticles);
-  
+  const politicsArticles = sortArticlesByLatest(politicsRes?.articles || []);
 
   return (
     <CategoryPageClient
       articles={articles}
       category={categoryData}
       trending={[]}
+      politicsArticles={politicsArticles}
+      customSeo={customSeo}
       currentPage={page}
       totalPages={totalPages || Math.ceil(total / limit)}
       slug={slug}

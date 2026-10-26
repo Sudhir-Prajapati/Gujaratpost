@@ -24,6 +24,8 @@ interface CategoryData {
   slug?: string;
   headerType?: string;
   displayOrder?: number;
+  isActive?: boolean;
+  status?: string;
 }
 
 interface AuthorData {
@@ -1050,8 +1052,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           if (!isEditMode) {
             setCategoryId((prev) => {
               if (prev) return prev;
-              const guj = filtered.find(isGujaratCat);
-              return guj ? guj.id : (filtered[0]?.id || '');
+              const activeCats = filtered.filter((c) => c.isActive !== false && (c as any).status !== 'inactive');
+              const guj = activeCats.find(isGujaratCat);
+              return guj ? guj.id : (activeCats[0]?.id || '');
             });
             setLocation((prev) => prev || 'Gujarat');
           }
@@ -1074,6 +1077,21 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       }
     }
     loadSelectors();
+
+    const handleCategoriesUpdated = () => {
+      fetch('/api/admin/categories')
+        .then((res) => res.json())
+        .then((catJson) => {
+          const rawCats: any[] = catJson.data?.categories || catJson.data || [];
+          const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c));
+          setCategories(filtered);
+        })
+        .catch(() => {});
+    };
+    window.addEventListener('gp-categories-updated', handleCategoriesUpdated);
+    return () => {
+      window.removeEventListener('gp-categories-updated', handleCategoriesUpdated);
+    };
   }, []);
 
   // Parse body string into distinct sections (Highlights, Desc1, Story Sections, Quote, Embeds)
@@ -2318,7 +2336,13 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   );
 
   const sortedCategories = useMemo(() => {
-    const valid = categories.filter((c) => !isDisplayOnlySectionCategory(c));
+    // Show only active categories (if category is not active, then do not show)
+    const isSelected = (c: CategoryData) => c.id === categoryId || additionalCategoryIds.includes(c.id);
+    const valid = categories.filter((c) => {
+      if (isDisplayOnlySectionCategory(c)) return false;
+      const isActive = c.isActive !== false && (c as any).status !== 'inactive' && (c as any).status !== 'disabled';
+      return isActive || isSelected(c);
+    });
 
     // 1. Gujarat State (Always #1)
     const gujaratCats = valid.filter(isGujaratCat);
@@ -2368,7 +2392,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       electionGroup: electionCats,
       allSorted: [...gujaratCats, ...districtCats, ...mainNewsCats, ...electionCats],
     };
-  }, [categories]);
+  }, [categories, categoryId, additionalCategoryIds]);
 
   const categoryOptions = useMemo(() => {
     return sortedCategories.allSorted.map((cat) => ({
