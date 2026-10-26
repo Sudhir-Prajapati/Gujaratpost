@@ -11,6 +11,8 @@
     "start": "node dist/index.js",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:local:start": "node scripts/start-local-mysql.js",
+    "db:local:import": "node scripts/import-local-dump.js",
     "db:seed": "node node_modules/tsx/dist/cli.mjs prisma/seed.ts",
     "redis:clear": "node scripts/clear_redis.js",
     "test:rss": "node node_modules/tsx/dist/cli.mjs scripts/test_rss_suite.ts"

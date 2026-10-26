@@ -7,7 +7,6 @@ import { CookieConsentBanner } from "@/components/consent/CookieConsentBanner";
 import { CookieSettingsModal } from "@/components/consent/CookieSettingsModal";
 import MainLayoutWrapper from "@/components/layout/MainLayoutWrapper";
 import ScrollToTop from "@/components/ui/ScrollToTop";
-import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 const notoSansGujarati = Noto_Sans_Gujarati({
   subsets: ["gujarati", "latin"],
@@ -92,9 +91,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://img.youtube.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://i.ytimg.com" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />
+
+        {/* Google Analytics (GA4) — Direct in <head> like FinTrade */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                  window.dataLayer = window.dataLayer || [];
+                  function gtag(){dataLayer.push(arguments);}
+                  gtag('js', new Date());
+                  gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}');
+                `,
+              }}
+            />
+          </>
+        )}
       </head>
       <body className="antialiased" suppressHydrationWarning>
-        <GoogleAnalytics />
         <AppProvider>
           <CookieConsentProvider>
             <MainLayoutWrapper>{children}</MainLayoutWrapper>
