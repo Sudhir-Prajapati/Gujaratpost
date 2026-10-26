@@ -137,6 +137,63 @@ export const CATEGORY_META: Record<string, { name: string; gu: string; hi: strin
   webstory: { name: 'Webstory', gu: 'વેબસ્ટોરી', hi: 'વેબ स्टोरीज' },
 };
 
+export const PHOTO_CATEGORY_TRANSLATIONS: Record<string, { en: string; gu: string; hi: string }> = {
+  'સમાચાર': { en: 'News', gu: 'સમાચાર', hi: 'समाचार' },
+  'news': { en: 'News', gu: 'સમાચાર', hi: 'समाचार' },
+  'general': { en: 'News', gu: 'સમાચાર', hi: 'समाचार' },
+  'મનોરંજન': { en: 'Entertainment', gu: 'મનોરંજન', hi: 'मनोरंजन' },
+  'entertainment': { en: 'Entertainment', gu: 'મનોરંજન', hi: 'मनोरंजन' },
+  'ગ્લેમરસ': { en: 'Glamour', gu: 'ગ્લેમરસ', hi: 'ग्लैमर' },
+  'glamour': { en: 'Glamour', gu: 'ગ્લેમરસ', hi: 'ग्लैमर' },
+  'ગુજરાત': { en: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
+  'gujarat': { en: 'Gujarat', gu: 'ગુજરાત', hi: 'गुजरात' },
+  'સંસ્કૃતિ': { en: 'Culture', gu: 'સંસ્કૃતિ', hi: 'संस्कृति' },
+  'culture': { en: 'Culture', gu: 'સંસ્કૃતિ', hi: 'संस्कृति' },
+  'પ્રવાસ': { en: 'Travel', gu: 'પ્રવાસ', hi: 'यात्रा' },
+  'travel': { en: 'Travel', gu: 'પ્રવાસ', hi: 'यात्रा' },
+  'ઉત્સવ': { en: 'Festival', gu: 'ઉત્સવ', hi: 'उत्सव' },
+  'festival': { en: 'Festival', gu: 'ઉત્સવ', hi: 'उत्सव' },
+  'લાઇફસ્ટાઇલ': { en: 'Lifestyle', gu: 'લાઇફસ્ટાઇલ', hi: 'लाइफस्टाइल' },
+  'લાઈફસ્ટાઈલ': { en: 'Lifestyle', gu: 'લાઇફસ્ટાઇલ', hi: 'लाइफस्टाइल' },
+  'lifestyle': { en: 'Lifestyle', gu: 'લાઇફસ્ટાઇલ', hi: 'लाइफस्टाइल' },
+  'ધર્મ': { en: 'Religion', gu: 'ધર્મ', hi: 'धर्म' },
+  'religion': { en: 'Religion', gu: 'ધર્મ', hi: 'धर्म' },
+  'ખેલ': { en: 'Sports', gu: 'ખેલ', hi: 'खेल' },
+  'સ્પોર્ટ્સ': { en: 'Sports', gu: 'સ્પોર્ટ્સ', hi: 'खेल' },
+  'sports': { en: 'Sports', gu: 'સ્પોર્ટ્સ', hi: 'खेल' },
+  'રાજકારણ': { en: 'Politics', gu: 'રાજકારણ', hi: 'राजनीति' },
+  'politics': { en: 'Politics', gu: 'રાજકારણ', hi: 'राजनीति' },
+  'વિશ્વ': { en: 'World', gu: 'વિશ્વ', hi: 'विश्व' },
+  'world': { en: 'World', gu: 'વિશ્વ', hi: 'विश्व' },
+  'ફોટો ગેલેરી': { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' },
+  'photo gallery': { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' },
+};
+
+export function getPhotoCategoryBadge(photo: any, language: Language | string): string {
+  const cat = (photo?.category || '').trim();
+  const lowerCat = cat.toLowerCase();
+
+  if (language === 'gu') {
+    if (photo?.categoryGu) return photo.categoryGu;
+    if (PHOTO_CATEGORY_TRANSLATIONS[cat]) return PHOTO_CATEGORY_TRANSLATIONS[cat].gu;
+    if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].gu;
+    return cat || 'સમાચાર';
+  }
+
+  if (language === 'hi') {
+    if (photo?.categoryHi) return photo.categoryHi;
+    if (PHOTO_CATEGORY_TRANSLATIONS[cat]) return PHOTO_CATEGORY_TRANSLATIONS[cat].hi;
+    if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].hi;
+    return cat === 'સમાચાર' ? 'समाचार' : (cat || 'समाचार');
+  }
+
+  // language === 'en'
+  if (photo?.categoryEn) return photo.categoryEn;
+  if (PHOTO_CATEGORY_TRANSLATIONS[cat]) return PHOTO_CATEGORY_TRANSLATIONS[cat].en;
+  if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].en;
+  return cat === 'સમાચાર' ? 'News' : (cat || 'News');
+}
+
 export interface CategorySeoMeta {
   title?: string;
   description?: string;

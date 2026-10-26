@@ -12,6 +12,7 @@ import {
   getCategoryLabel,
   formatViews,
   CategorySeoMeta,
+  getPhotoCategoryBadge,
 } from '@/data';
 import { getCategoryColor, toGu, sortArticlesByLatest } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
