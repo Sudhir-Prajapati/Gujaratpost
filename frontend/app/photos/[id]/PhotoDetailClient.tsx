@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { 
   getLocalized, PHOTOS, formatDate, formatViews, 
-  getArticleTitle, getCategoryLabel 
+  getArticleTitle, getCategoryLabel, getPhotoCategoryBadge 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import { getPublicGallery } from '@/lib/api';

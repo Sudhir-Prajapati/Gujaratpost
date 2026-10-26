@@ -155,8 +155,10 @@ export default function ArticleMedia({
     <img
       src={cleanSrc}
       alt={alt}
-      className={`absolute inset-0 w-full h-full object-cover ${className}`}
-      style={isAbsolute ? { width: '100%', height: '100%', objectFit: 'cover', ...style } : style}
+      className={`absolute inset-0 w-full h-full ${className}`}
+      // Every article thumbnail must show the complete source image, even when
+      // an older caller still supplies cover/zoom styling for its fixed frame.
+      style={{ ...style, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', transform: 'none', scale: '1' }}
       onError={() => setHasError(true)}
       loading={priority ? 'eager' : 'lazy'}
       fetchPriority={priority ? 'high' : 'auto'}

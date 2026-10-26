@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import SupportModal from '@/components/ui/SupportModal';
 import { useIsApk } from '@/lib/useIsApk';
 import { getPublicSupportDetails } from '@/lib/api';
@@ -63,14 +63,14 @@ function clearGoogleTranslateCookie() {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const { isApk } = useIsApk();
+  const { isApk, isReady: isApkReady } = useIsApk();
   const [theme, setTheme] = useState<Theme>('light');
   const [apkTheme, setApkTheme] = useState<Theme>('light');
   const [language, setLanguage] = useState<Language>('gu');
   const [fsLevel, setFsLevel] = useState<number>(1);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [supportEnabled, setSupportEnabled] = useState(true);
-  const hydrated = useRef(false);
+  const [preferencesReady, setPreferencesReady] = useState(false);
 
   const openSupportModal = () => {
     if (supportEnabled) setSupportModalOpen(true);
@@ -105,7 +105,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener('gp-open-support', handleGlobalSupportOpen);
   }, [supportEnabled]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     let savedTheme: string | null = null;
     let savedApkTheme: string | null = null;
     let savedLanguage: string | null = null;
@@ -122,44 +122,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.warn('LocalStorage not accessible:', e);
     }
 
-    const frame = window.requestAnimationFrame(() => {
-      if (savedTheme === 'light' || savedTheme === 'dark') setTheme(savedTheme);
-      if (savedApkTheme === 'light' || savedApkTheme === 'dark') setApkTheme(savedApkTheme);
+    if (savedTheme === 'light' || savedTheme === 'dark') setTheme(savedTheme);
+    if (savedApkTheme === 'light' || savedApkTheme === 'dark') setApkTheme(savedApkTheme);
 
-      if (savedLanguage === 'gu' || savedLanguage === 'en' || savedLanguage === 'hi') {
-        // User has an explicit saved preference — honour it
-        setLanguage(savedLanguage as Language);
-      } else {
-        // First-time session: no preference saved → persist 'gu' as the session default
-        try {
-          sessionStorage.setItem('gp-lang', 'gu');
-        } catch (e) {
-          console.warn('Failed to save default language:', e);
-        }
-        // State already initialised to 'gu', nothing else to do
+    if (savedLanguage === 'gu' || savedLanguage === 'en' || savedLanguage === 'hi') {
+      // User has an explicit saved preference — honour it
+      setLanguage(savedLanguage as Language);
+    } else {
+      // First-time session: no preference saved → persist 'gu' as the session default
+      try {
+        sessionStorage.setItem('gp-lang', 'gu');
+      } catch (e) {
+        console.warn('Failed to save default language:', e);
       }
+      // State already initialised to 'gu', nothing else to do
+    }
 
-      if (savedFsLevel !== null) {
-        const level = parseInt(savedFsLevel, 10);
-        if (!isNaN(level) && level >= 0 && level <= 3) setFsLevel(level);
-      }
+    if (savedFsLevel !== null) {
+      const level = parseInt(savedFsLevel, 10);
+      if (!isNaN(level) && level >= 0 && level <= 3) setFsLevel(level);
+    }
 
-      hydrated.current = true;
-    });
-
-    return () => window.cancelAnimationFrame(frame);
+    setPreferencesReady(true);
   }, []);
 
   // Theme application:
   // If isApk is true, apply apkTheme ONLY.
   // If isApk is false (standard website or web mobile view), apply website theme ONLY.
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!preferencesReady || !isApkReady) return;
     const activeTheme = isApk ? apkTheme : theme;
     document.documentElement.classList.toggle('dark', activeTheme === 'dark');
     document.documentElement.setAttribute('data-theme', activeTheme);
     document.documentElement.style.setProperty('--gp-font-size', FONT_SIZES[fsLevel]);
 
-    if (!hydrated.current) return;
     try {
       if (isApk) {
         localStorage.setItem('gp-apk-theme', apkTheme);
@@ -170,19 +166,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       console.warn('Failed to save to localStorage:', e);
     }
-  }, [theme, apkTheme, isApk, fsLevel]);
+  }, [theme, apkTheme, isApk, isApkReady, fsLevel, preferencesReady]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if (!preferencesReady) return;
+    document.documentElement.removeAttribute('data-gp-language-pending');
     document.documentElement.lang = language;
     clearGoogleTranslateCookie();
 
-    if (!hydrated.current) return;
     try {
       sessionStorage.setItem('gp-lang', language); // session-only: resets each new tab
     } catch (e) {
       console.warn('Failed to save language to sessionStorage:', e);
     }
-  }, [language]);
+  }, [language, preferencesReady]);
 
   const toggleTheme = () => setTheme((current) => (current === 'light' ? 'dark' : 'light'));
   const toggleApkTheme = () => {

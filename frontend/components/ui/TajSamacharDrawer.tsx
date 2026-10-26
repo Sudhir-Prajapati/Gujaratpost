@@ -8,6 +8,8 @@ import { Article } from '@/types';
 import { Megaphone, X } from 'lucide-react';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { useIsApk } from '@/lib/useIsApk';
+import { useApp } from '@/components/AppProvider';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 // Helper to resolve absolute or relative image URLs cleanly
 function getFullImageUrl(url?: string | null): string {
@@ -137,6 +139,7 @@ const FALLBACK_ARTICLES: Partial<Article>[] = [
 export default function TajSamacharDrawer() {
   const pathname = usePathname();
   const { isApk } = useIsApk();
+  const { language } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [articles, setArticles] = useState<any[]>(FALLBACK_ARTICLES);
   const [loading, setLoading] = useState(false);
@@ -243,8 +246,8 @@ export default function TajSamacharDrawer() {
       <div className={`fixed ${isApk ? 'bottom-[72px] left-4 z-45' : 'bottom-6 left-6 z-[9990]'} flex items-center gap-3`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          aria-label="તાજા સમાચાર (Latest News)"
-          title="તાજા સમાચાર જુઓ"
+          aria-label={language === 'gu' ? 'તાજા સમાચાર (Latest News)' : language === 'hi' ? 'ताज़ा समाचार (Latest News)' : 'Latest News'}
+          title={language === 'gu' ? 'તાજા સમાચાર જુઓ' : language === 'hi' ? 'ताज़ा समाचार देखें' : 'View Latest News'}
           className="relative group flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
         >
           {/* Periodic pulse ring animation (expands every 4 seconds) */}
@@ -274,8 +277,8 @@ export default function TajSamacharDrawer() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
               </span>
-              <h3 className="text-base sm:text-lg font-bold tracking-wide text-white drop-shadow-sm font-gujarati leading-none flex items-center">
-                તાજા સમાચાર
+              <h3 className={`text-base sm:text-lg font-bold tracking-wide text-white drop-shadow-sm leading-none flex items-center ${language === 'gu' ? 'font-gujarati' : ''}`}>
+                {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
               </h3>
             </div>
 
@@ -309,7 +312,11 @@ export default function TajSamacharDrawer() {
               </div>
             ) : articles.length === 0 ? (
               <div className="p-6 text-center text-gray-500 text-sm">
-                હાલ કોઈ તાજા સમાચાર ઉપલબ્ધ નથી.
+                {language === 'gu'
+                  ? 'હાલ કોઈ તાજા સમાચાર ઉપલબ્ધ નથી.'
+                  : language === 'hi'
+                  ? 'फिलहाल कोई ताज़ा समाचार उपलब्ध नहीं है।'
+                  : 'No latest news available right now.'}
               </div>
             ) : (
               <>
@@ -330,7 +337,7 @@ export default function TajSamacharDrawer() {
                       <div className="w-24 h-20 sm:w-28 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-gray-100 dark:bg-gray-800 border border-gray-400/80 dark:border-gray-700 shadow-sm">
                         <ArticleMedia
                           src={imageSrc}
-                          alt={item.titleGu || item.title || 'Taj Samachar'}
+                          alt={language === 'gu' ? (item.titleGu || item.title || 'તાજા સમાચાર') : language === 'hi' ? (item.titleHi || item.title || 'ताज़ा समाचार') : (item.titleEn || item.title || 'Latest News')}
                           fill
                           className="group-hover:scale-105 transition-transform duration-300"
                         />
@@ -338,8 +345,12 @@ export default function TajSamacharDrawer() {
 
                       {/* Title & Metadata */}
                       <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
-                        <h4 className="text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors font-gujarati">
-                          {item.titleGu || item.title}
+                        <h4 className={`text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}>
+                          <AutoArticleTitle
+                            article={{ ...item, titleGu: item.titleGu || item.title } as any}
+                            language={language as any}
+                            fallback={item.titleGu || item.title || ''}
+                          />
                         </h4>
                       </div>
                     </Link>
@@ -350,7 +361,11 @@ export default function TajSamacharDrawer() {
                 {loadingMore && (
                   <div className="flex items-center justify-center p-3 text-red-700 gap-2 text-xs font-semibold animate-pulse bg-red-50/40 dark:bg-red-950/10 rounded-xl my-1">
                     <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                    વધુ તાજા સમાચાર લોડ થઈ રહ્યા છે...
+                    {language === 'gu'
+                      ? 'વધુ તાજા સમાચાર લોડ થઈ રહ્યા છે...'
+                      : language === 'hi'
+                      ? 'और ताज़ा समाचार लोड हो रहे हैं...'
+                      : 'Loading more latest news...'}
                   </div>
                 )}
               </>

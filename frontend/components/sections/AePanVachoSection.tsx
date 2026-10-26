@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getPublicArticles } from '@/lib/api';
+import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 
 interface ArticleItem {
   id: string;
@@ -97,22 +99,22 @@ export default function AePanVachoSection({ language = 'gu', spacingClassName = 
               >
                 {/* 16:9 Image */}
                 <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted shadow-xs">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <ArticleMedia
                     src={image}
                     alt={title}
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
+                    className="absolute inset-0 h-full w-full"
                   />
                 </div>
 
                 {/* Content: Category Label + Title */}
                 <div className="mt-2.5 flex flex-col">
                   <span className="text-[11px] sm:text-[11.5px] font-black text-[#B3121B] uppercase tracking-wide">
-                    {art.customCategoryLabel}
+                    {art.customCategoryLabel ? (
+                      <AutoTranslateString text={art.customCategoryLabel} language={language as any} />
+                    ) : null}
                   </span>
                   <h4 className="mt-1 text-[13.5px] sm:text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                    {title}
+                    <AutoArticleTitle article={art as any} language={language as any} />
                   </h4>
                 </div>
               </Link>

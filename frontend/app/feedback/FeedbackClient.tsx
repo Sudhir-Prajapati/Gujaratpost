@@ -1,5 +1,7 @@
 'use client';
 
+import LocalizedContent from '@/components/i18n/LocalizedContent';
+
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import {
@@ -224,6 +226,7 @@ export default function FeedbackClient({
   const activeCategories = submissionType === 'COMPLAINT' ? COMPLAINT_CATEGORIES : FEEDBACK_CATEGORIES;
 
   return (
+    <LocalizedContent enabled={initialType === 'COMPLAINT'}>
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0A0A] text-neutral-900 dark:text-neutral-100 pb-16">
       
       {/* ── 1. Hero & Breadcrumb ── */}
@@ -750,5 +753,6 @@ export default function FeedbackClient({
       </section>
 
     </div>
+    </LocalizedContent>
   );
 }

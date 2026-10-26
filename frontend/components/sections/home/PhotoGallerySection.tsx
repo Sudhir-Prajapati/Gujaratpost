@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Language } from '@/types';
-import { getLocalized, PHOTOS } from '@/data';
+import { getLocalized, PHOTOS, getPhotoCategoryBadge } from '@/data';
 import { getPublicGallery } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
@@ -33,7 +33,7 @@ function GalleryStripImage({ src: initialSrc, alt, index }: { src: string; alt: 
       fill
       sizes="(max-width: 768px) 85vw, 350px"
       draggable={false}
-      className="object-cover pointer-events-none transition-transform duration-700 ease-out group-hover:scale-[1.07]"
+      className="object-contain pointer-events-none transition-transform duration-700 ease-out"
       onError={() => setSrc(fallback)}
     />
   );
@@ -228,8 +228,7 @@ function GalleryScrollStrip({
       >
         {repeatedGallery.map((item, index) => {
           const absIdx = index;
-          const cat = item.category ||
-            (language === 'gu' ? CATS_GU[absIdx % CATS_GU.length] : CATS_EN[absIdx % CATS_EN.length]);
+          const cat = getPhotoCategoryBadge(item, language);
           const title = getLocalized(language, {
             en: item.caption || item.alt || item.title || '',
             gu: item.captionGu || item.caption || item.alt || '',
@@ -267,7 +266,7 @@ function GalleryScrollStrip({
                   className="text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md"
                   style={{ backgroundColor: accentColor }}
                 >
-                  {cat}
+                  <AutoTranslateString text={cat} language={language} />
                 </span>
               </div>
 
@@ -280,7 +279,7 @@ function GalleryScrollStrip({
                 <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="h-[2px] w-7 rounded-full" style={{ backgroundColor: accentColor }} />
                   <span className="text-white/80 text-[11px] font-bold tracking-wider uppercase">
-                    {language === 'gu' ? 'ફોટો જુઓ' : 'View Photos'}
+                    {getLocalized(language, { en: 'View Photos', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}
                   </span>
                   <svg className="h-3 w-3" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />

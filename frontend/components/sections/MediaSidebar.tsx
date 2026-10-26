@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Play, Bell, ChevronRight, Camera } from 'lucide-react';
 import { safeYouTubeId } from '@/lib/youtube';
 import { toGu } from '@/lib/utils';
-import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const FALLBACK_PHOTO_IMAGES = [
   'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=800&q=80',
@@ -79,7 +79,7 @@ export function SidebarPhotoCardImage({
       fill
       unoptimized
       sizes="(max-width: 768px) 100vw, 360px"
-      className="object-cover transition-transform duration-500 ease-out group-hover:scale-108"
+      className="object-contain transition-transform duration-500 ease-out"
       onError={() => {
         if (src !== fallback) {
           setSrc(fallback);
@@ -119,7 +119,7 @@ export function SidebarPhotoCard({ photo, index, language }: { photo: any; index
       {/* Bottom title text overlaid inside */}
       <div className="absolute inset-x-0 bottom-0 p-3.5 z-10 pointer-events-none">
         <p className="text-white text-[13px] sm:text-[14px] font-bold leading-snug line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
-          {title}
+          <AutoTranslateString text={title} language={language as any} />
         </p>
       </div>
     </Link>
@@ -151,7 +151,7 @@ export function SidebarPhotoMiniCard({ photo, index, language }: { photo: any; i
       {/* Bottom title */}
       <div className="absolute inset-x-0 bottom-0 p-2 z-10 pointer-events-none">
         <p className="text-white text-[11px] font-bold leading-tight line-clamp-2 drop-shadow-sm group-hover:text-amber-300 transition-colors">
-          {title}
+          <AutoTranslateString text={title} language={language as any} />
         </p>
       </div>
     </Link>
@@ -277,7 +277,7 @@ export default function MediaSidebar({
                     alt={item.titleGu || item.title || 'Video'}
                     fill
                     sizes="(max-width: 768px) 100px, 120px"
-                    className="object-cover transition-transform duration-300 group-hover/thumb:scale-105"
+                    className="object-contain transition-transform duration-300"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover/thumb:bg-black/10 transition-all">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-xs transition-transform group-hover/thumb:scale-110">
@@ -294,11 +294,11 @@ export default function MediaSidebar({
                 {/* Title + Views count */}
                 <div className="flex flex-col flex-1 min-w-0">
                   <h4 className="text-[12.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                    {item.titleGu || item.title}
+                    <AutoTranslateString text={item.titleGu || item.title || ''} language={language as any} />
                   </h4>
                   <span className="text-[10px] font-semibold text-muted-foreground mt-1 flex items-center gap-1">
                     <span className="text-[#B3121B]">▶</span>
-                    <span>{item.views || '350 views'}</span>
+                    <span>{language === 'gu' ? toGu(item.views || '350 views') : (item.views || '350 views')}</span>
                   </span>
                 </div>
               </div>
@@ -318,7 +318,7 @@ export default function MediaSidebar({
                   <img
                     src={(art as any).featuredImage || art.image || (art as any).thumbnail || '/assets/demo/1.jpg'}
                     alt={art.title || ''}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="absolute inset-0 w-full h-full object-contain transition-transform duration-300"
                     loading="lazy"
                   />
                 </div>
@@ -342,13 +342,13 @@ export default function MediaSidebar({
         {/* Header: Red Badge on left + "વધુ ફોટો ગેલેરી →" on right */}
         <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
           <span className="bg-[#B3121B] text-white px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
-            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
+            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
           </span>
           <Link
             href="/photos"
             className="text-xs md:text-[13px] font-extrabold text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
           >
-            <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : 'More Photo Gallery'}</span>
+            <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : language === 'hi' ? 'और फोटो गैलरी' : 'More Photo Gallery'}</span>
             <span>→</span>
           </Link>
         </div>

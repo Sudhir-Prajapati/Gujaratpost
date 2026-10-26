@@ -65,6 +65,8 @@ router.delete('/articles/bulk-delete-old', requireAuth, requireRole([Role.SUPER_
 router.get('/articles/range-list', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.listArticlesInRange);
 router.get('/articles/range-count', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.countArticlesInRange);
 router.delete('/articles/bulk-delete-range', requireAuth, requireRole([Role.SUPER_ADMIN]), ArticleController.bulkDeleteArticlesInRange);
+router.get('/articles/locations', requireAuth, requireRole(articleRoles), ArticleController.getLocations);
+router.post('/articles/locations', requireAuth, requireRole(articleRoles), ArticleController.addCustomLocation);
 router.get('/articles', requireAuth, requireRole(articleRoles), ArticleController.getAllArticles);
 router.get('/articles/:id', requireAuth, requireRole(articleRoles), ArticleController.getArticleById);
 router.post('/articles', requireAuth, requireRole(articleRoles), ArticleController.createArticle);

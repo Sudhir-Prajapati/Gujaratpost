@@ -9,6 +9,7 @@ import { getLocalized } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import { stripHtmlTags, getMockTitle } from './homeHelpers';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const mockFactCheckList = [
   {
@@ -148,21 +149,21 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   }, [fetchFreshFactCheckArticles, initialArticles]);
 
   const getStatusInfo = (art: any) => {
-    const tagStr = (art.tagsGu?.[0] || art.tags?.[0] || art.titleGu || art.title || '').toLowerCase();
-    if (tagStr.includes('સાચું') || tagStr.includes('true') || tagStr.includes('સત્ય')) {
-      return { labelGu: 'સાચું', labelEn: 'TRUE', color: 'text-green-600' };
+    const tagStr = (art?.tagsGu?.[0] || art?.tags?.[0] || art?.titleGu || art?.title || '').toLowerCase();
+    if (tagStr.includes('સાચું') || tagStr.includes('true') || tagStr.includes('સત્ય') || tagStr.includes('सच')) {
+      return { labelGu: 'સાચું', labelHi: 'सच', labelEn: 'TRUE', color: 'text-green-600' };
     }
-    if (tagStr.includes('ભ્રામક') || tagStr.includes('misleading') || tagStr.includes('અધૂરું')) {
-      return { labelGu: 'ભ્રામક', labelEn: 'MISLEADING', color: 'text-yellow-600' };
+    if (tagStr.includes('ભ્રામક') || tagStr.includes('misleading') || tagStr.includes('અધૂરું') || tagStr.includes('भ्रामक')) {
+      return { labelGu: 'ભ્રામક', labelHi: 'भ्रामक', labelEn: 'MISLEADING', color: 'text-yellow-600' };
     }
-    return { labelGu: 'ખોટો દાવો', labelEn: 'FAKE CLAIM', color: 'text-red-600' };
+    return { labelGu: 'ખોટો દાવો', labelHi: 'झूठा दावा', labelEn: 'FAKE CLAIM', color: 'text-red-600' };
   };
 
   const hasDb = factCheckArticles.length > 0;
   const featArt = hasDb ? factCheckArticles[0] : null;
   const gridDbList = hasDb ? factCheckArticles.slice(1, 7) : [];
 
-  const featStatus = featArt ? getStatusInfo(featArt) : { labelGu: 'ખોટો દાવો', labelEn: 'FAKE CLAIM', color: 'text-red-600' };
+  const featStatus = featArt ? getStatusInfo(featArt) : { labelGu: 'ખોટો દાવો', labelHi: 'झूठा दावा', labelEn: 'FAKE CLAIM', color: 'text-red-600' };
   const featTitle = featArt ? getLocalized(language, { en: featArt.title, gu: featArt.titleGu || featArt.title, hi: (featArt as any).titleHi || featArt.title }) : (
     language === 'gu'
       ? 'શું સરકારે ખરેખર બધા વિદ્યાર્થીઓને મફત લેપટોપ આપવાની જાહેરાત કરી? જાણો સત્ય'
@@ -191,7 +192,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
           href="/category/fact-check"
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
-          {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'More →'}
         </Link>
       </div>
 
@@ -210,21 +211,29 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                 alt="Fact Check Featured"
                 fill
                 sizes="(max-width: 1024px) 100vw, 35vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className="object-contain transition-transform duration-300"
               />
             </div>
             <span className={`flex items-center gap-1 font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase tracking-wide ${featStatus.color}`}>
               <span className="text-[10px]">●</span>
-              {language === 'gu' ? featStatus.labelGu : featStatus.labelEn}
+              {language === 'gu' ? featStatus.labelGu : language === 'hi' ? featStatus.labelHi : featStatus.labelEn}
             </span>
             <h3 className="text-[16px] md:text-[17.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-              {featTitle}
+              {featArt ? (
+                <AutoArticleTitle article={featArt} language={language} />
+              ) : (
+                <AutoTranslateString text={featTitle} language={language} />
+              )}
             </h3>
-            {featExcerpt && (
+            {featArt ? (
               <p className="text-muted-foreground text-[13.5px] leading-relaxed mt-2.5 line-clamp-3 select-none">
-                {featExcerpt}
+                <AutoArticleExcerpt article={featArt} language={language} />
               </p>
-            )}
+            ) : featExcerpt ? (
+              <p className="text-muted-foreground text-[13.5px] leading-relaxed mt-2.5 line-clamp-3 select-none">
+                <AutoTranslateString text={featExcerpt} language={language} />
+              </p>
+            ) : null}
           </Link>
 
         </div>
@@ -236,7 +245,6 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             {hasDb && gridDbList.length > 0 ? (
               gridDbList.map((item) => {
                 const st = getStatusInfo(item);
-                const title = getLocalized(language, { en: item.title, gu: item.titleGu || item.title, hi: (item as any).titleHi || item.title });
                 return (
                   <Link
                     key={`mob-${item.id}`}
@@ -249,11 +257,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       <div className="flex mb-1">
                         <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${st.color}`}>
                           <span className="text-[10px]">●</span>
-                          {language === 'gu' ? st.labelGu : st.labelEn}
+                          {language === 'gu' ? st.labelGu : language === 'hi' ? st.labelHi : st.labelEn}
                         </span>
                       </div>
                       <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                        {title}
+                        <AutoArticleTitle article={item} language={language} />
                       </h4>
                     </div>
 
@@ -261,10 +269,10 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     <div className="relative aspect-[16/10] w-[130px] h-[88px] sm:w-[140px] sm:h-[94px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                       <Image
                         src={item.image || '/assets/demo/2.jpg'}
-                        alt={title}
+                        alt={item.titleGu || item.title}
                         fill
                         sizes="(max-width: 640px) 130px, 140px"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="object-contain transition-transform duration-300"
                       />
                     </div>
                   </Link>
@@ -288,11 +296,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                           : 'text-yellow-600'
                         }`}>
                         <span className="text-[10px]">●</span>
-                        {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
+                        {language === 'gu' ? item.statusLabelGu : language === 'hi' ? (item.status === 'true' ? 'सच' : item.status === 'fake' ? 'झूठा दावा' : 'भ्रामक') : item.status.toUpperCase()}
                       </span>
                     </div>
                     <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                      {getMockTitle(item, language)}
+                      <AutoTranslateString text={item.titleGu} language={language} />
                     </h4>
                   </div>
 
@@ -303,7 +311,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       alt={item.titleGu}
                       fill
                       sizes="(max-width: 640px) 130px, 140px"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-contain transition-transform duration-300"
                     />
                   </div>
                 </Link>
@@ -316,7 +324,6 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             {hasDb && gridDbList.length > 0 ? (
               gridDbList.map((item) => {
                 const st = getStatusInfo(item);
-                const title = getLocalized(language, { en: item.title, gu: item.titleGu || item.title, hi: (item as any).titleHi || item.title });
                 return (
                   <Link
                     key={item.id}
@@ -327,10 +334,10 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
                       <Image
                         src={item.image || '/assets/demo/2.jpg'}
-                        alt={title}
+                        alt={item.titleGu || item.title}
                         fill
                         sizes="(max-width: 1024px) 155px, 170px"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        className="object-contain transition-transform duration-300"
                       />
                     </div>
 
@@ -340,11 +347,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       <div className="flex mb-1">
                         <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${st.color}`}>
                           <span className="text-[10px]">●</span>
-                          {language === 'gu' ? st.labelGu : st.labelEn}
+                          {language === 'gu' ? st.labelGu : language === 'hi' ? st.labelHi : st.labelEn}
                         </span>
                       </div>
                       <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                        {title}
+                        <AutoArticleTitle article={item} language={language} />
                       </h4>
                     </div>
                   </Link>
@@ -364,7 +371,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       alt={item.titleGu}
                       fill
                       sizes="(max-width: 1024px) 155px, 170px"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-contain transition-transform duration-300"
                     />
                   </div>
 
@@ -379,11 +386,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                           : 'text-yellow-600'
                         }`}>
                         <span className="text-[10px]">●</span>
-                        {language === 'gu' ? item.statusLabelGu : item.status.toUpperCase()}
+                        {language === 'gu' ? item.statusLabelGu : language === 'hi' ? (item.status === 'true' ? 'सच' : item.status === 'fake' ? 'झूठा दावा' : 'भ्रामक') : item.status.toUpperCase()}
                       </span>
                     </div>
                     <h4 className="text-[13.5px] md:text-[14px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                      {getMockTitle(item, language)}
+                      <AutoTranslateString text={item.titleGu} language={language} />
                     </h4>
                   </div>
                 </Link>

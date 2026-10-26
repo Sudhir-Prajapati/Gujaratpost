@@ -8,6 +8,7 @@ import { useIsApk } from '@/lib/useIsApk';
 import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight } from 'lucide-react';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
+import { buildTwitterPostButton, normalizeTwitterPostLinks } from '@/lib/article-social-links';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
 
@@ -227,29 +228,7 @@ function formatPdfDownloadUrl(url: string): string {
 }
 
 function buildTwitterCardHtml(url: string, language?: string): string {
-  const cleanUrl = url && url.trim() !== '#' ? url.trim() : '#';
-  const isGu = language === 'gu';
-  const isHi = language === 'hi';
-  const title = 'View Official Post on X (Twitter)';
-  const sub = isGu
-    ? 'સત્તાવાર ટ્વીટ જોવા માટે અહીં ક્લિક કરો'
-    : isHi
-      ? 'आधिकारिक ट्वीट देखने के लिए यहाँ क्लिक करें'
-      : 'Click to view official post on X';
-  const btn = isGu ? 'ટ્વીટ જુઓ ↗' : isHi ? 'ट्वीट देखें ↗' : 'View Post ↗';
-
-  return `<div class="gp-x-card my-6">
-    <div style="display:flex;align-items:center;gap:14px;min-width:0;position:relative;z-index:1">
-      <span class="gp-x-icon">𝕏</span>
-      <div style="min-width:0">
-        <span class="gp-x-title">${title}</span>
-        <span class="gp-x-sub">${sub}</span>
-      </div>
-    </div>
-    <a href="${cleanUrl}" target="_blank" rel="noopener noreferrer" class="gp-x-btn" style="position:relative;z-index:1">
-      <span>${btn}</span>
-    </a>
-  </div>`;
+  return buildTwitterPostButton(url, language);
 }
 
 function buildPdfCardHtml(url: string, language?: string): string {
@@ -295,15 +274,8 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
   // Clean duplicate fl_attachment if any in legacy content
   cleaned = cleaned.replace(/\/fl_attachment\/fl_attachment\//gi, '/fl_attachment/');
 
-  // Upgrade Twitter / X cards to clean official design
-  cleaned = cleaned.replace(
-    /<(div|p)[^>]*class=["'][^"']*(?:border|rounded|bg-|p-|my-|gp-x)[^"']*["'][^>]*>[\s\S]*?(?:View Tweet|View Official Post|Post on X|Twitter|ટ્વીટ)[\s\S]*?<\/(?:div|p)>(?:\s*<\/div>)?/gi,
-    (match) => {
-      const hrefMatch = match.match(/href=["']([^"']+)["']/i);
-      const url = hrefMatch && hrefMatch[1] && hrefMatch[1] !== '#' ? hrefMatch[1] : '#';
-      return buildTwitterCardHtml(url, language);
-    }
-  );
+  // Collapse saved cards and orphan links into one working post button.
+  cleaned = normalizeTwitterPostLinks(cleaned, language);
 
   // Extract PDF URL from body or props
   let detectedPdf = articlePdfUrl || '';
@@ -567,6 +539,35 @@ interface Props {
   related: Article[];
   trending: Article[];
   articleUrl: string;
+}
+
+// Helper: Format Instagram URL or embed code to Embed iframe URL
+function getInstagramEmbedUrl(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  const iframeSrcMatch = trimmed.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  if (iframeSrcMatch && iframeSrcMatch[1]) return iframeSrcMatch[1];
+  const permalinkMatch = trimmed.match(/data-instgrm-permalink=["']([^"']+)["']/i);
+  if (permalinkMatch && permalinkMatch[1]) return getInstagramEmbedUrl(permalinkMatch[1]);
+  const igMatch = trimmed.match(/(?:https?:\/\/)?(?:www\.)?(?:instagram\.com|instagr\.am)\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
+  if (igMatch && igMatch[1]) {
+    const isReel = trimmed.includes('/reel/') || trimmed.includes('/reels/');
+    return `https://www.instagram.com/${isReel ? 'reel' : 'p'}/${igMatch[1]}/embed/`;
+  }
+  if (trimmed.includes('instagram.com') && trimmed.includes('/embed')) return trimmed;
+  return trimmed;
+}
+
+// Helper: Format Facebook URL or embed code to Embed iframe URL
+function getFacebookEmbedUrl(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  const iframeSrcMatch = trimmed.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+  if (iframeSrcMatch && iframeSrcMatch[1]) return iframeSrcMatch[1].replace(/&amp;/g, '&');
+  if (trimmed.includes('facebook.com/plugins/post.php') || trimmed.includes('facebook.com/plugins/video.php')) return trimmed.replace(/&amp;/g, '&');
+  const isVideo = /watch|video|reel|fb\.watch/i.test(trimmed);
+  const endpoint = isVideo ? 'https://www.facebook.com/plugins/video.php' : 'https://www.facebook.com/plugins/post.php';
+  return `${endpoint}?href=${encodeURIComponent(trimmed)}&show_text=true&width=500`;
 }
 
 export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
@@ -995,8 +996,26 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     // Append Twitter card if set on article object and not already present in body HTML
     const twUrl = (article as any).twitterUrl || (article as any).twitter;
-    if (twUrl && twUrl.trim() && !cleaned.includes('gp-x-card')) {
+    if (twUrl && twUrl.trim() && !cleaned.includes('data-gp-x-link')) {
       cleaned += buildTwitterCardHtml(twUrl.trim(), language);
+    }
+
+    // Append Instagram embed if set on article object and not already present in body HTML
+    const igUrl = (article as any).instagramUrl || (article as any).instagram;
+    if (igUrl && igUrl.trim() && !cleaned.includes('instagram.com/')) {
+      const igEmbed = getInstagramEmbedUrl(igUrl.trim());
+      if (igEmbed) {
+        cleaned += `<div class="my-6 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${igEmbed}" class="w-full min-h-[540px] border-0" allowtransparency="true" allowfullscreen="true" frameborder="0" scrolling="no"></iframe></div>`;
+      }
+    }
+
+    // Append Facebook embed if set on article object and not already present in body HTML
+    const fbUrl = (article as any).facebookUrl || (article as any).facebook;
+    if (fbUrl && fbUrl.trim() && !cleaned.includes('facebook.com/plugins')) {
+      const fbEmbed = getFacebookEmbedUrl(fbUrl.trim());
+      if (fbEmbed) {
+        cleaned += `<div class="my-6 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${fbEmbed}" class="w-full min-h-[460px] border-0" allowfullscreen="true" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+      }
     }
 
     return cleaned;

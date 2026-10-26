@@ -148,23 +148,22 @@ export function CookieSettingsModal() {
         }
         .gp-toggle-track { transition: background 0.2s ease; }
         .gp-toggle-thumb { transition: transform 0.2s ease; }
+        .gp-cookie-actions button {
+          font-size: 12px;
+          font-weight: 600;
+          line-height: 20px;
+        }
       `}</style>
 
       <div
         ref={modalRef}
-        className="relative w-full max-w-lg flex flex-col rounded-2xl overflow-hidden text-neutral-900 dark:text-neutral-100"
+        className="relative w-full max-w-lg flex flex-col rounded-2xl overflow-hidden bg-white text-neutral-900 dark:bg-neutral-900 dark:text-neutral-100"
         style={{
           maxHeight: '92vh',
-          background: 'linear-gradient(180deg, #ffffff 0%, #fafafa 100%)',
           boxShadow: '0 32px 80px -16px rgba(0,0,0,0.35)',
           animation: 'gpModalSlideUp 0.3s cubic-bezier(0.16,1,0.3,1) both',
         }}
       >
-        {/* Dark mode bg */}
-        <div className="absolute inset-0 hidden dark:block rounded-2xl pointer-events-none z-0"
-          style={{ background: 'linear-gradient(180deg, #18120f 0%, #1c1410 100%)' }}
-        />
-
         {/* Header */}
         <div className="relative flex items-center justify-between px-5 py-4 border-b border-neutral-200/80 dark:border-white/8">
           {/* Red gradient accent */}
@@ -207,15 +206,11 @@ export function CookieSettingsModal() {
         </div>
 
         {/* Scrollable body */}
-        <div className="relative flex-1 overflow-y-auto px-5 py-4 space-y-3">
+        <div className="relative min-h-0 flex-1 overflow-y-auto px-5 py-4 space-y-3">
 
           {/* Strictly Necessary — always on */}
-          <div className="rounded-xl border border-green-200/60 dark:border-green-900/40 overflow-hidden"
-            style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}
+          <div className="relative rounded-xl border border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950 overflow-hidden"
           >
-            <div className="hidden dark:block absolute inset-0 rounded-xl pointer-events-none"
-              style={{ background: 'linear-gradient(135deg, rgba(5,46,22,0.4) 0%, rgba(5,46,22,0.2) 100%)' }}
-            />
             <div className="relative flex items-start justify-between gap-4 px-4 py-3.5">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-green-600 text-white shadow-sm">
@@ -235,7 +230,7 @@ export function CookieSettingsModal() {
                       {getLocalized(language, { gu: 'હંમેશા સક્રિય', en: 'Always On', hi: 'हमेशा सक्रिय' })}
                     </span>
                   </div>
-                  <p className="mt-0.5 text-[11px] text-green-800 dark:text-green-400/80 leading-relaxed">
+                  <p className="mt-0.5 text-[11px] text-green-800 dark:text-green-200 leading-relaxed">
                     {getLocalized(language, {
                       gu: 'લૉગિન, સુરક્ષા, ફોર્મ સબમિશન અને cookie પસંદગી સ્ટોર કરવા માટે જરૂરી.',
                       en: 'Required for session security, login, and storing your consent. Cannot be disabled.',
@@ -262,8 +257,8 @@ export function CookieSettingsModal() {
                 key={cat.key}
                 className={`rounded-xl border transition-all duration-200 overflow-hidden ${
                   isOn
-                    ? 'border-neutral-200 dark:border-white/10 bg-white dark:bg-white/4'
-                    : 'border-neutral-200/60 dark:border-white/6 bg-neutral-50 dark:bg-white/2'
+                    ? 'border-red-200 dark:border-red-900 bg-white dark:bg-neutral-800'
+                    : 'border-neutral-200 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-900'
                 }`}
               >
                 <div className="flex items-center justify-between gap-3 px-4 py-3.5">
@@ -287,6 +282,8 @@ export function CookieSettingsModal() {
                       onClick={() => setExpandedKey(isExpanded ? null : cat.key)}
                       className="p-1 rounded-lg text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-white/8 transition-colors cursor-pointer"
                       aria-label={isExpanded ? 'Collapse' : 'Expand'}
+                      aria-expanded={isExpanded}
+                      aria-controls={`cookie-description-${cat.key}`}
                     >
                       {isExpanded ? <ChevronDown className="h-3.5 w-3.5 rotate-180 transition-transform" /> : <ChevronDown className="h-3.5 w-3.5 transition-transform" />}
                     </button>
@@ -295,6 +292,7 @@ export function CookieSettingsModal() {
                       type="button"
                       role="switch"
                       aria-checked={isOn}
+                      aria-label={getLocalized(language, { gu: cat.titleGu, en: cat.titleEn, hi: cat.titleHi })}
                       onClick={() => toggleCategory(cat.key)}
                       className="gp-toggle-track relative h-6 w-11 shrink-0 rounded-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
                       style={{ background: isOn ? '#B3121B' : '#d1d5db' }}
@@ -308,8 +306,8 @@ export function CookieSettingsModal() {
                 </div>
                 {/* Expanded description */}
                 {isExpanded && (
-                  <div className="px-4 pb-3.5 border-t border-neutral-100 dark:border-white/6 pt-3">
-                    <p className="text-[11.5px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                  <div id={`cookie-description-${cat.key}`} className="px-4 pb-3.5 border-t border-neutral-200 dark:border-neutral-700 pt-3">
+                    <p className="text-[11.5px] text-neutral-600 dark:text-neutral-300 leading-relaxed">
                       {getLocalized(language, { gu: cat.descGu, en: cat.descEn, hi: cat.descHi })}
                     </p>
                   </div>
@@ -329,10 +327,10 @@ export function CookieSettingsModal() {
         </div>
 
         {/* Footer */}
-        <div className="relative border-t border-neutral-200/80 dark:border-white/8 px-5 py-4">
-          <div className="flex flex-col sm:flex-row gap-2.5 sm:items-center sm:justify-between">
+        <div className="gp-cookie-actions relative shrink-0 border-t border-neutral-200 dark:border-neutral-700 px-5 py-4">
+          <div className="grid grid-cols-1 min-[360px]:grid-cols-2 gap-2.5 [&_button]:flex [&_button]:w-full [&_button]:min-w-0 [&_button]:min-h-11 [&_button]:items-center [&_button]:justify-center [&_button]:px-3 [&_button]:py-2.5 [&_button]:text-xs [&_button]:font-semibold [&_button]:leading-5 [&_button]:text-center [&_button]:focus-visible:outline-2 [&_button]:focus-visible:outline-offset-2 [&_button]:focus-visible:outline-red-500">
             {/* Left: reject / accept all */}
-            <div className="flex gap-2">
+            <div className="contents">
               <button
                 type="button"
                 onClick={rejectOptional}
@@ -350,7 +348,7 @@ export function CookieSettingsModal() {
             </div>
 
             {/* Right: cancel + save */}
-            <div className="flex gap-2 sm:ml-auto">
+            <div className="contents">
               <button
                 type="button"
                 onClick={closeSettingsModal}
@@ -367,7 +365,7 @@ export function CookieSettingsModal() {
                   boxShadow: '0 4px 14px -4px rgba(179,18,27,0.4)',
                 }}
               >
-                <Check className="h-3.5 w-3.5" />
+                <Check className="h-3.5 w-3.5 shrink-0" />
                 {getLocalized(language, { gu: 'સાચવો', en: 'Save Preferences', hi: 'सहेजें' })}
               </button>
             </div>

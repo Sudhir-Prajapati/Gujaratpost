@@ -1920,7 +1920,7 @@ export default function HeroSection({
                       fill
                       priority
                       loading="eager"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-contain transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 350px"
                     />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition-colors flex items-center justify-center">
@@ -2025,41 +2025,43 @@ export default function HeroSection({
         );
       })}
 
-      {/* 17. NEWSLETTER SECTION (Screenshot 5) */}
-      <div className="mx-auto max-w-screen-xl px-4 py-1 mb-2.5 select-none">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-6 md:p-8 bg-[#140e0c] text-white rounded-xl shadow-md border border-white/5">
-          <div className="flex flex-col gap-2 max-w-xl text-center lg:text-left">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-black leading-tight">
-              {language === 'gu'
-                ? 'દરરોજ સવારે ગુજરાતના મુખ્ય સમાચાર — તમારા ઈનબોક્સમાં'
-                : 'Every morning main news of Gujarat — in your inbox'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#a3a3a3] font-bold">
-              {language === 'gu'
-                ? 'ન્યૂઝલેટર સબસ્ક્રાઇબ કરો અને દિવસની શરૂઆત માહિતી સાથે કરો.'
-                : 'Subscribe to our newsletter and start your day informed.'}
-            </p>
-          </div>
+      {/* 17. NEWSLETTER SECTION (Hidden in frontend; set to true anytime in future to re-enable) */}
+      {false && (
+        <div className="mx-auto max-w-screen-xl px-4 py-1 mb-2.5 select-none">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-6 md:p-8 bg-[#140e0c] text-white rounded-xl shadow-md border border-white/5">
+            <div className="flex flex-col gap-2 max-w-xl text-center lg:text-left">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-black leading-tight">
+                {language === 'gu'
+                  ? 'દરરોજ સવારે ગુજરાતના મુખ્ય સમાચાર — તમારા ઈનબોક્સમાં'
+                  : 'Every morning main news of Gujarat — in your inbox'}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#a3a3a3] font-bold">
+                {language === 'gu'
+                  ? 'ન્યૂઝલેટર સબસ્ક્રાઇબ કરો અને દિવસની શરૂઆત માહિતી સાથે કરો.'
+                  : 'Subscribe to our newsletter and start your day informed.'}
+              </p>
+            </div>
 
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full lg:w-auto min-w-0 sm:min-w-[400px]"
-          >
-            <input
-              type="email"
-              placeholder={language === 'gu' ? 'તમારો ઈમેલ દાખલ કરો' : 'Enter your email'}
-              className="flex-1 px-4 py-3 bg-[#241c19] border border-[#3c302a] text-white text-sm rounded-sm focus:outline-none focus:border-[#e02020] placeholder-[#6d5e56]"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-[#e02020] hover:bg-[#c01818] text-white text-sm font-black px-6 py-3 rounded-sm transition-all whitespace-nowrap"
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full lg:w-auto min-w-0 sm:min-w-[400px]"
             >
-              {language === 'gu' ? 'સબસ્ક્રાઇબ' : 'Subscribe'}
-            </button>
-          </form>
+              <input
+                type="email"
+                placeholder={language === 'gu' ? 'તમારો ઈમેલ દાખલ કરો' : 'Enter your email'}
+                className="flex-1 px-4 py-3 bg-[#241c19] border border-[#3c302a] text-white text-sm rounded-sm focus:outline-none focus:border-[#e02020] placeholder-[#6d5e56]"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-[#e02020] hover:bg-[#c01818] text-white text-sm font-black px-6 py-3 rounded-sm transition-all whitespace-nowrap"
+              >
+                {language === 'gu' ? 'સબસ્ક્રાઇબ' : 'Subscribe'}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );
