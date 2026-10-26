@@ -84,6 +84,35 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="gu" data-scroll-behavior="smooth" className={`${notoSansGujarati.variable} ${hindVadodara.variable}`} suppressHydrationWarning>
       <head>
+        {/* Apply browser preferences before the first paint, without changing SSR text. */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (() => {
+            const root = document.documentElement;
+            try {
+              const preview = new URLSearchParams(location.search).get('preview');
+              const cached = sessionStorage.getItem('gp_is_apk');
+              const isApk = preview === 'apk' || preview === 'app' ||
+                (preview !== 'web' && preview !== 'desktop' && (cached === 'true' ||
+                  (cached !== 'false' && (matchMedia('(display-mode: standalone)').matches ||
+                    matchMedia('(display-mode: fullscreen)').matches || navigator.standalone === true ||
+                    document.referrer.includes('android-app://') || document.referrer.includes('app.vercel.gujaratpost.twa') ||
+                    /gujaratpost-app|wv/i.test(navigator.userAgent)))));
+              const theme = localStorage.getItem(isApk ? 'gp-apk-theme' : 'gp-theme');
+              root.classList.toggle('dark', theme === 'dark');
+              root.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+              const level = Number(localStorage.getItem('gp-fs-level') ?? '1');
+              if (Number.isInteger(level) && level >= 0 && level <= 3)
+                root.style.setProperty('--gp-font-size', ['14px', '16px', '18px', '20px'][level]);
+            } catch {}
+            try {
+              const language = sessionStorage.getItem('gp-lang');
+              if (language === 'en' || language === 'hi') {
+                root.lang = language;
+                root.setAttribute('data-gp-language-pending', '');
+              }
+            } catch {}
+          })();
+        ` }} />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png" />

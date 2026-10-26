@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/components/AppProvider';
 import AqiSkeleton from '@/components/aqi/AqiSkeleton';
 import { getPublicArticles } from '@/lib/api';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 import {
   Search,
   Wind,
@@ -943,7 +944,7 @@ function AqiPageContent() {
                     />
                   </div>
                   <h4 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug group-hover:text-red-600 transition-colors">
-                    {title}
+                    <AutoArticleTitle article={art as any} language={language} />
                   </h4>
                 </div>
               </Link>

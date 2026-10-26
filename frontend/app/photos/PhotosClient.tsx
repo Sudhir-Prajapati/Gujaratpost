@@ -8,6 +8,7 @@ import { PHOTOS, getLocalized, getCategoryLabel } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import AePanVachoSection from '@/components/sections/AePanVachoSection';
 import { getPublicArticles } from '@/lib/api';
+import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const FALLBACK_NEWS_IMAGES = [
   'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
@@ -34,7 +35,7 @@ function PhotoCardImage({ src: rawSrc, alt, index }: { src?: string; alt: string
       alt={alt} 
       fill 
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" 
-      className="object-cover transition-transform duration-700 ease-out group-hover:scale-105" 
+      className="object-contain transition-transform duration-700 ease-out" 
       onError={() => setSrc(fallback)}
     />
   );
@@ -113,12 +114,12 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
       {/* 4-Column Uniform Grid matching Image 2 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
         {gallery.map((photo, index) => {
-          const categoryText = photo.category || photo.categoryGu || getLocalized(language, { en: 'News', gu: 'સમાચાર', hi: 'समाचार' });
-          const title = getLocalized(language, {
-            en: photo.caption || photo.alt || '',
-            gu: photo.captionGu || photo.caption || photo.alt || '',
-            hi: photo.captionHi || photo.caption || photo.alt || '',
-          });
+          const categoryText = language === 'gu'
+            ? (photo.categoryGu || photo.category || 'સમાચાર')
+            : language === 'hi'
+            ? (photo.categoryHi || 'समाचार')
+            : (photo.categoryEn || 'News');
+          const captionSource = photo.caption || photo.captionGu || photo.alt || '';
 
           return (
             <Link 
@@ -128,7 +129,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
             >
               <PhotoCardImage 
                 src={photo.src} 
-                alt={title || 'Gallery Photo'} 
+                alt={captionSource || 'Gallery Photo'} 
                 index={index}
               />
 
@@ -141,14 +142,14 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
               {/* Category Badge matching Image 2 */}
               <div className="absolute top-3.5 left-3.5 z-10">
                 <span className="inline-block rounded-md bg-[#B3121B] px-2.5 py-0.5 text-[11px] font-black text-white uppercase tracking-wide shadow-md">
-                  {categoryText}
+                  <AutoTranslateString text={categoryText} language={language} />
                 </span>
               </div>
 
               {/* Title & Call-to-action overlay matching Image 2 */}
               <div className="absolute bottom-0 inset-x-0 p-4 pt-8 z-10 pointer-events-none">
                 <h2 className="text-white text-[14px] sm:text-[15px] font-black leading-snug line-clamp-2 drop-shadow-md select-none transition-transform duration-300 group-hover:-translate-y-0.5">
-                  {title}
+                  <AutoTranslateString text={captionSource} language={language} />
                 </h2>
 
                 {/* "— ફોટો જુઓ >" Link matching Image 2 */}
@@ -198,15 +199,15 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
                       alt={title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-contain transition-transform duration-300"
                     />
                   </div>
                   <div className="p-3">
                     <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
-                      {getCategoryLabel(article, language)}
+                      <AutoTranslateString text={getCategoryLabel(article, language)} language={language} />
                     </span>
                     <h3 className="mt-1 text-[12.5px] md:text-sm font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                      {title}
+                      <AutoArticleTitle article={article} language={language} />
                     </h3>
                     {dateLabel && <span className="mt-2 block text-[10px] font-semibold text-muted-foreground">{dateLabel}</span>}
                   </div>

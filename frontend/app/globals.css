@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+/* Keep SSR's default Gujarati text out of the first paint for other languages.
+   AppProvider reveals the page in a layout effect once the saved language is ready. */
+html[data-gp-language-pending] body {
+  visibility: hidden;
+}
+
 html.modal-open, body.modal-open {
   overflow: hidden !important;
   height: 100vh !important;

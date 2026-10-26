@@ -10,10 +10,11 @@ import {
 } from 'lucide-react';
 import { 
   getLocalized, PHOTOS, formatDate, formatViews, 
-  getArticleTitle, getCategoryLabel 
+  getArticleTitle, getCategoryLabel, getPhotoCategoryBadge 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const ReadingProgressBar = memo(function ReadingProgressBar() {
   const [progress, setProgress] = useState(0);
@@ -168,9 +169,13 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const title = caption;
   
   const descriptionData = (photo && MOCK_DESCRIPTIONS[photo.id]) || {
-    category: { en: photo?.category || "Photo Gallery", gu: photo?.category || 'સમાચાર', hi: photo?.category || 'સમાચાર' },
-    en: photo?.caption || '',
-    gu: photo?.caption || photo?.captionGu || '',
+    category: {
+      en: getPhotoCategoryBadge(photo, 'en'),
+      gu: getPhotoCategoryBadge(photo, 'gu'),
+      hi: getPhotoCategoryBadge(photo, 'hi'),
+    },
+    en: photo?.captionEn || photo?.caption || '',
+    gu: photo?.captionGu || photo?.caption || '',
     hi: photo?.captionHi || photo?.caption || ''
   };
 
@@ -409,7 +414,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
               </Link>
               <span>/</span>
               <span className="text-neutral-700 dark:text-neutral-300 font-normal truncate max-w-[280px] sm:max-w-md">
-                {photo?.caption || photo?.alt || title}
+                <AutoTranslateString text={photo?.caption || photo?.alt || title} language={language} />
               </span>
             </nav>
 
@@ -425,7 +430,9 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             </div>
 
             {/* Article Title */}
-            <h1 className="article-title">{title}</h1>
+            <h1 className="article-title">
+              <AutoTranslateString text={title} language={language} />
+            </h1>
 
             {/* Byline / Author card matching NewsDetailClient */}
             <div className="byline select-none" suppressHydrationWarning>

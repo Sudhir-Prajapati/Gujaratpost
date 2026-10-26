@@ -11,6 +11,7 @@ import {
   getArticleTitle,
   getCategoryLabel,
   formatViews,
+  getPhotoCategoryBadge,
 } from '@/data';
 import { getCategoryColor, toGu, sortArticlesByLatest } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
@@ -18,7 +19,7 @@ import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { SocialIcon } from '@/components/ui/SocialLinks';
-import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkCategoryFeed from '@/components/apk/ApkCategoryFeed';
 
@@ -251,11 +252,11 @@ function MobileCategoryArticleCard({
         {isVideoCard && (
           <span className="text-[11px] font-black uppercase tracking-wide text-accent flex items-center gap-1 mb-1">
             <Play className="w-2.5 h-2.5 fill-current text-red-600" />
-            {catLabel}
+            <AutoTranslateString text={catLabel} language={language} />
           </span>
         )}
         <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-          {hasPrefix ? (
+          {hasPrefix && language === 'gu' ? (
             <>
               <span
                 className={
@@ -278,7 +279,8 @@ function MobileCategoryArticleCard({
         <ArticleMedia
           src={imgSrc}
           alt={rawTitle || ''}
-          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+          className="h-full w-full"
+          style={{ objectFit: 'contain', objectPosition: 'center' }}
         />
         {isVideoCard && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/25">
@@ -900,7 +902,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={heroArticle.image || (heroArticle as any).thumbnail || (heroArticle.videoId ? `https://img.youtube.com/vi/${heroArticle.videoId}/hqdefault.jpg` : undefined)}
                           alt={getArticleTitle(heroArticle, language)}
-                          className="transition-transform duration-500 group-hover:scale-105"
+                          className="transition-transform duration-500"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition">
                           <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
@@ -918,7 +921,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={heroArticle.image || (heroArticle as any).featuredImage}
                           alt={getArticleTitle(heroArticle, language)}
-                          className="transition-transform duration-500 group-hover:scale-105"
+                          className="transition-transform duration-500"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -990,7 +994,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={art.image || art.featuredImage || art.thumbnail}
                           alt={getArticleTitle(art, language)}
-                          className="transition-transform duration-300 group-hover:scale-105"
+                          className="transition-transform duration-300"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         {isVid && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
@@ -1063,7 +1068,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
-                          className="transition-transform duration-300 group-hover:scale-105"
+                          className="transition-transform duration-300"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1086,7 +1092,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
-                          className="transition-transform duration-300 group-hover:scale-105"
+                          className="transition-transform duration-300"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1130,7 +1137,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
                           alt={getArticleTitle(fourthStory, language)}
-                          className="transition-transform duration-300 group-hover:scale-105"
+                          className="transition-transform duration-300"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1153,7 +1161,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                         <ArticleMedia
                           src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
                           alt={getArticleTitle(fourthStory, language)}
-                          className="transition-transform duration-300 group-hover:scale-105"
+                          className="transition-transform duration-300"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1187,7 +1196,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     {language === 'gu' ? toGu(i + 1) : i + 1}
                   </span>
                   <p className="min-h-[4.125em] text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
-                    {language === 'gu' ? art.titleGu : language === 'hi' ? art.titleHi : art.title}
+                    <AutoArticleTitle article={art} language={language} />
                   </p>
                 </Link>
               ))}
@@ -1244,8 +1253,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           <ArticleMedia
                             src={article.image || (article as any).featuredImage || (article as any).thumbnail}
                             alt={getArticleTitle(article, language)}
-                            className="transition-transform duration-300 group-hover:scale-105"
-                          />
+                            className="transition-transform duration-300"
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                        />
                           <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600/90 text-white shadow group-hover:scale-110 transition-transform">
                               <Play className="h-5 w-5 fill-current ml-0.5" />
@@ -1412,17 +1422,16 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                       <img
                         src={artImg}
                         alt={artTitle}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                        className="transition-transform duration-300 group-hover:scale-105"
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                         loading="lazy"
                       />
                     </div>
                     <span className="text-[10px] font-black text-accent uppercase tracking-wider mt-2">
-                      {artCategory}
+                      <AutoTranslateString text={artCategory} language={language} />
                     </span>
                     <h4 className="text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
-                      {artTitle}
+                      <AutoArticleTitle article={article} language={language} />
                     </h4>
                   </Link>
                 );
@@ -1461,9 +1470,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const photoTitle = language === 'gu'
                   ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
                   : language === 'hi'
-                  ? (photo.captionHi || photo.caption || photo.titleHi || photo.title || photo.alt || '')
-                  : (photo.caption || photo.alt || photo.title || '');
-                const photoCategory = photo.category || getLocalized(language, { en: 'News', gu: 'સમાચાર', hi: 'समाचार' });
+                  ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
+                  : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
+                const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
 
@@ -1475,7 +1484,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   >
                     <img
                       src={photoSrc}
-                      alt={photoTitle || 'Gallery'}
+                      alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                       className="transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
@@ -1487,13 +1496,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
                     {/* Category pill badge top-left */}
                     <span className="absolute top-3.5 left-3.5 z-10 bg-[#b31217] text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-sm pointer-events-none">
-                      {photoCategory}
+                      <AutoTranslateString text={photoCategory} language={language as any} />
                     </span>
 
                     {/* Title inside card at bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
                       <p className="text-white text-[16px] sm:text-[17px] font-black leading-snug line-clamp-2 drop-shadow-md">
-                        {photoTitle}
+                        <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
                     </div>
                   </Link>
@@ -1507,9 +1516,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const photoTitle = language === 'gu'
                   ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
                   : language === 'hi'
-                  ? (photo.captionHi || photo.caption || photo.titleHi || photo.title || photo.alt || '')
-                  : (photo.caption || photo.alt || photo.title || '');
-                const photoCategory = photo.category || getLocalized(language, { en: 'News', gu: 'સમાચાર', hi: 'समाचार' });
+                  ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
+                  : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
+                const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
 
@@ -1522,7 +1531,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   >
                     <img
                       src={photoSrc}
-                      alt={photoTitle || 'Gallery'}
+                      alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
                       style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
                       className="transition-transform duration-500 group-hover:scale-105"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
@@ -1533,13 +1542,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
                     {/* Category pill badge top-left */}
                     <span className="absolute top-2.5 left-2.5 z-10 bg-[#b31217] text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-sm pointer-events-none">
-                      {photoCategory}
+                      <AutoTranslateString text={photoCategory} language={language as any} />
                     </span>
 
                     {/* Title + "― ફોટો જુઓ >" inside the card at bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-3 z-10 flex flex-col pointer-events-none">
                       <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md mb-2">
-                        {photoTitle}
+                        <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
                       <div className="flex items-center gap-1.5 text-white">
                         <span className="w-5 h-[2px] bg-[#b31217] inline-block" />

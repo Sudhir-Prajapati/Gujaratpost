@@ -9,6 +9,8 @@ import { SOCIAL_LINKS, SocialIcon } from '@/components/ui/SocialLinks';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import { useApp } from '@/components/AppProvider';
+import { companyLinks } from '@/lib/company-links';
+import { LocalizedText } from '@/components/i18n/LocalizedContent';
 
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
 const INSTAGRAM_GRADIENT = 'linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%)';
@@ -96,18 +98,7 @@ const topics3Links = [
 ];
 
 
-const companyLinks = [
-    { label: 'About Us', href: '/about' },
-    { label: 'Contact Us', href: '/contact' },
-    { label: 'Advertise With Us', href: '/advertise' },
-    { label: 'Privacy Policy', href: '/privacy-policy' },
-    { label: 'Cookie Policy', href: '/cookie-policy' },
-    { label: 'Terms Of Use', href: '/terms' },
-    { label: 'Disclaimer', href: '/disclaimer' },
-    { label: 'Site Map', href: '/sitemap' },
-    { label: 'RSS Feeds', href: '/rss' },
-    { label: 'Feedback', href: '/feedback' },
-];
+
 
 
 /* ─── NavColumn Component ─────────────────────────────────────────────────── */
@@ -119,7 +110,7 @@ function NavColumn({
     delay = 0,
 }: {
     title: string;
-    links: { label: string; href: string; isSupport?: boolean }[];
+    links: { label: string; href: string; isSupport?: boolean; localized?: boolean }[];
     titleHref?: string;
     onSupportClick?: () => void;
     delay?: number;
@@ -138,7 +129,7 @@ function NavColumn({
                                 className="font-black text-[17px] leading-tight uppercase tracking-tight transition-all duration-300 footer-title-shimmer"
                                 style={{ animationDelay: `${delay}s` }}
                             >
-                                {title}
+                                {title === 'Company' ? <LocalizedText text={title} /> : title}
                             </span>
                         </div>
                         {/* Animated accent underline */}
@@ -161,7 +152,7 @@ function NavColumn({
                                 className="font-black text-[17px] leading-tight uppercase tracking-tight transition-all duration-300 footer-title-shimmer"
                                 style={{ animationDelay: `${delay}s` }}
                             >
-                                {title}
+                                {title === 'Company' ? <LocalizedText text={title} /> : title}
                             </h3>
                         </div>
                         {/* Animated accent underline */}
@@ -193,7 +184,7 @@ function NavColumn({
                                 className="group text-[15px] font-semibold text-slate-300 hover:text-white transition-all duration-200 block leading-snug hover:translate-x-1.5 hover:scale-[1.06] origin-left relative pl-0 hover:pl-2"
                             >
                                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 group-hover:w-1 h-3.5 bg-red-500 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100" />
-                                {item.label}
+                                {item.localized ? <LocalizedText text={item.label} /> : item.label}
                             </Link>
                         )}
                     </li>
@@ -367,7 +358,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                 }
                                 className="hover:text-white transition-colors duration-200"
                             >
-                                {label}
+                                <LocalizedText text={label === 'Complaign Redressal' ? 'Complain Redressal' : label} />
                             </Link>
                         ))}
                     </div>
@@ -489,7 +480,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                     }
                                     className="hover:text-white transition-colors duration-200"
                                 >
-                                    {label}
+                                    <LocalizedText text={label === 'Complaign Redressal' ? 'Complain Redressal' : label} />
                                 </Link>
                             ))}
                         </div>

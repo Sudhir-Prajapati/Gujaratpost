@@ -145,7 +145,7 @@ export default function InstagramPageClient() {
                         <img
                           src={reel.thumb}
                           alt={reel.displayTitle}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="absolute inset-0 h-full w-full object-contain transition-transform duration-500"
                           loading="lazy"
                         />
 
@@ -272,7 +272,7 @@ export default function InstagramPageClient() {
               <img
                 src={selectedReel.thumb}
                 alt={selectedReel.displayTitle}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
 

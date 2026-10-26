@@ -57,7 +57,7 @@ export default function MainLayoutWrapper({ children }: Props) {
 
   // News brief has a minimal locked viewport wrapper
   if (pathname === '/news-brief') {
-    return <main className="fixed inset-0 h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden bg-[#f0f2f5] select-none touch-none overscroll-none">{children}</main>;
+    return <main className="fixed inset-0 h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden bg-[#f0f2f5] dark:bg-[#0c0d10] text-gray-900 dark:text-gray-100 select-none touch-none overscroll-none">{children}</main>;
   }
 
   // DEDICATED ANDROID MOBILE APK VIEW:
