@@ -36,22 +36,23 @@ async function main() {
     throw new Error('Local MySQL is offline. Start your MySQL service, or set MYSQLD_PATH to mysqld.exe and provide the existing backend/mysql_data directory.');
   }
   console.log(`[MySQL] Starting the project database on port ${port}...`);
-  const child = spawn(executable, [`--datadir=${dataDir}`, `--port=${port}`], {
-    detached: true, stdio: 'ignore', windowsHide: true,
-  });
-  let launchError;
-  let exited = false;
-  child.once('error', (error) => { launchError = error; });
-  child.once('exit', () => { exited = true; });
-  child.unref();
+  if (process.platform === 'win32') {
+    const psCmd = `Start-Process -FilePath '${executable}' -ArgumentList '--datadir="${dataDir}"','--port=${port}' -WindowStyle Hidden`;
+    spawn('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', psCmd], {
+      stdio: 'ignore', windowsHide: true, detached: true,
+    }).unref();
+  } else {
+    const child = spawn(executable, [`--datadir=${dataDir}`, `--port=${port}`], {
+      detached: true, stdio: 'ignore',
+    });
+    child.unref();
+  }
   const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
-    if (launchError) throw launchError;
     if (await isListening(host, port)) {
       console.log(`[MySQL] Database port ${port} is ready.`);
       return;
     }
-    if (exited) break;
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
   throw new Error('MySQL did not become ready. Check backend/mysql_data/*.err for the server error.');
