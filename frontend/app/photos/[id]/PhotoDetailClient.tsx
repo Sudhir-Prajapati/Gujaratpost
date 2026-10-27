@@ -760,7 +760,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                   <div className="flex items-center gap-2">
                     <span className="w-[5px] h-[19px] bg-[#B3121B] rounded-full inline-block shrink-0" />
                     <h3 className="text-[19px] font-bold text-neutral-900 dark:text-white tracking-tight leading-none">
-                      {language === 'gu' ? 'વધુ ફોટો સ્ટોરીઝ' : language === 'hi' ? 'अन्य फोटो गैलरी' : 'More Photo Stories'}
+                      {language === 'gu' ? 'વધુ ફોટો' : language === 'hi' ? 'अन्य फोटो' : 'More Photos'}
                     </h3>
                   </div>
                   <Link
