@@ -11,6 +11,7 @@ import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import { buildTwitterPostButton, normalizeTwitterPostLinks } from '@/lib/article-social-links';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
+import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
 
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
@@ -35,7 +36,12 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
   return <div className="reading-progress" style={{ width: `${progress}%` }} />;
 });
 
-const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: string }) {
+const ArticleContentBody = memo(function ArticleContentBody({
+  html,
+}: {
+  html: string;
+  activeSpeechText?: string;
+}) {
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const cleanHtml = useMemo(() => {
@@ -671,6 +677,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [activeSpeechText, setActiveSpeechText] = useState('');
+  const [activeSpeechIndex, setActiveSpeechIndex] = useState(-1);
+  const [totalSpeechChunks, setTotalSpeechChunks] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [adSlide, setAdSlide] = useState(0);
   const [relatedLimit, setRelatedLimit] = useState(8);
@@ -1191,19 +1200,189 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     window.setTimeout(() => setCopied(false), 1800);
   };
 
-  const toggleAudio = () => {
-    if (!('speechSynthesis' in window)) return;
+  const startAudio = useCallback((langToUse: Language = language) => {
+    stopArticleAudio();
+    setIsContentExpanded(true); // Automatically expand so reader can see highlighted text
+    setSpeaking(true);
+
+    const directTitle = getArticleTitle(article, langToUse) || article.title || '';
+    const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
+
+    // Prefer translated title/body if available with robust full-body fallbacks
+    const speechTitle = (langToUse === language && title) ? title : directTitle;
+    const speechBody =
+      (langToUse === language && body && body.trim().length > 10 ? body : '') ||
+      (directBody && directBody.trim().length > 10 ? directBody : '') ||
+      (article as any).contentGu ||
+      (article as any).contentHi ||
+      (article as any).content ||
+      excerpt ||
+      '';
+
+    playArticleAudio({
+      title: speechTitle,
+      body: speechBody,
+      excerpt: excerpt || '',
+      language: langToUse,
+      onStart: () => setSpeaking(true),
+      onChunkChange: (idx, chunkText, total) => {
+        setActiveSpeechIndex(idx);
+        setActiveSpeechText(chunkText);
+        setTotalSpeechChunks(total);
+      },
+      onEnd: () => {
+        setSpeaking(false);
+        setActiveSpeechIndex(-1);
+        setActiveSpeechText('');
+      },
+      onError: () => {
+        setSpeaking(false);
+        setActiveSpeechIndex(-1);
+        setActiveSpeechText('');
+      },
+    });
+  }, [article, language, title, body, excerpt]);
+
+  const toggleAudio = useCallback(() => {
     if (speaking) {
-      window.speechSynthesis.cancel();
+      stopArticleAudio();
       setSpeaking(false);
+      setActiveSpeechIndex(-1);
+      setActiveSpeechText('');
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(`${title}. ${excerpt.replace(/<[^>]*>/g, '')}`);
-    utterance.lang = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
-    utterance.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-    setSpeaking(true);
-  };
+    startAudio(language);
+  }, [speaking, startAudio, language]);
+
+  // If user switches language while audio is active, seamlessly re-speak in the new language without reload!
+  useEffect(() => {
+    if (speaking) {
+      startAudio(language);
+    } else {
+      setActiveSpeechIndex(-1);
+      setActiveSpeechText('');
+    }
+  }, [language]);
+
+  const articleContainerRef = useRef<HTMLElement>(null);
+
+  // Directly highlight current spoken sentence in RED in the article itself!
+  useEffect(() => {
+    const root = articleContainerRef.current;
+    if (!root) return;
+
+    // 1. Remove previous active speech highlights
+    const prevActiveItems = root.querySelectorAll('[data-gp-speech-active="true"]');
+    prevActiveItems.forEach((el) => {
+      el.removeAttribute('data-gp-speech-active');
+      el.classList.remove(
+        'gp-speech-active',
+        'border-l-4',
+        'border-b-2',
+        'border-[#B3121B]',
+        'dark:border-red-500',
+        'bg-red-50/70',
+        'dark:bg-red-950/40',
+        'text-[#B3121B]',
+        'dark:text-red-400',
+        'font-bold',
+        'px-2.5',
+        'py-1.5',
+        'rounded-r',
+        'transition-all'
+      );
+    });
+
+    const h1Elem = root.querySelector('h1');
+    if (h1Elem) {
+      h1Elem.classList.remove('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400');
+    }
+
+    if (!speaking || !activeSpeechText || activeSpeechText.trim().length < 3) return;
+
+    // 2. If reading the heading (first chunk or matches title)
+    if (activeSpeechIndex === 0 && h1Elem) {
+      h1Elem.setAttribute('data-gp-speech-active', 'true');
+      h1Elem.classList.add('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400', 'transition-all', 'duration-200');
+      h1Elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // 3. Extract key words from active spoken text
+    const cleanChunk = activeSpeechText.replace(/[.,?!।;:()"'“”]/g, ' ').trim();
+    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 1);
+    if (words.length === 0) return;
+
+    // 4. Find matching candidate elements inside the article: paragraphs, list items, headings, blockquotes
+    const candidates = Array.from(root.querySelectorAll('.article-body p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3, p'));
+    let bestElem: HTMLElement | null = null;
+    let maxMatch = 0;
+
+    for (const cand of candidates) {
+      const txt = (cand.textContent || '').toLowerCase();
+      if (!txt.trim()) continue;
+
+      let matchCount = 0;
+      for (const w of words) {
+        if (txt.includes(w.toLowerCase())) {
+          matchCount++;
+        }
+      }
+
+      if (matchCount > maxMatch) {
+        maxMatch = matchCount;
+        bestElem = cand as HTMLElement;
+      }
+    }
+
+    // If no keyword match found (e.g. translated speech text), fallback to index proportion
+    if (!bestElem && candidates.length > 0 && activeSpeechIndex > 0) {
+      const fallbackIdx = Math.min(candidates.length - 1, Math.max(0, activeSpeechIndex - 1));
+      bestElem = candidates[fallbackIdx] as HTMLElement;
+    }
+
+    if (bestElem) {
+      bestElem.setAttribute('data-gp-speech-active', 'true');
+      bestElem.classList.add(
+        'gp-speech-active',
+        'border-l-4',
+        'border-b-2',
+        'border-[#B3121B]',
+        'dark:border-red-500',
+        'bg-red-50/70',
+        'dark:bg-red-950/40',
+        'text-[#B3121B]',
+        'dark:text-red-400',
+        'font-bold',
+        'px-2.5',
+        'py-1.5',
+        'rounded-r',
+        'transition-all',
+        'duration-200'
+      );
+      bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [speaking, activeSpeechIndex, activeSpeechText]);
+
+  // Clean up and stop playing audio whenever article changes or component unmounts
+  useEffect(() => {
+    stopArticleAudio();
+    setSpeaking(false);
+    setActiveSpeechIndex(-1);
+    setActiveSpeechText('');
+
+    const onGlobalStop = () => {
+      setSpeaking(false);
+      setActiveSpeechIndex(-1);
+      setActiveSpeechText('');
+    };
+    window.addEventListener('gp-tts-stop', onGlobalStop);
+
+    return () => {
+      stopArticleAudio();
+      window.removeEventListener('gp-tts-stop', onGlobalStop);
+    };
+  }, [article.id, article.slug]);
 
   const shareLinks = [
     {
@@ -1320,7 +1499,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       <ReadingProgressBar />
       <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2 overflow-x-clip">
         <div key={`${article.id}-${language}`} className="article-grid" suppressHydrationWarning>
-          <article suppressHydrationWarning>
+          <article ref={articleContainerRef} suppressHydrationWarning>
             <nav data-nosnippet="true" className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium">
               <Link href="/" className="hover:text-[var(--red)] transition-colors">
                 {uiLabel(language, { en: 'Home', gu: 'હોમ', hi: 'होम' })}
@@ -1349,7 +1528,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               {article.isBreaking && <span className="live-badge rounded bg-accent px-2 py-1 text-xs font-black text-white ml-2">BREAKING</span>}
             </div>
 
-            <h1 className="article-title">{title}</h1>
+            <h1 className={`article-title transition-all duration-200 ${speaking && activeSpeechIndex === 0 ? 'text-[#B3121B] dark:text-red-400 font-black border-b-4 border-[#B3121B] pb-1.5' : ''}`}>
+              {title}
+            </h1>
             <div
               className="article-sub [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through"
               suppressHydrationWarning
@@ -1516,6 +1697,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             <ArticleShareAudioBar
               title={title}
+              body={body}
               articleUrl={articleUrl}
               language={language}
               copied={copied}
@@ -1551,7 +1733,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               if (!bottomHtml) {
                 return (
                   <div>
-                    <ArticleContentBody html={formattedArticleBodyHtml} />
+                    <ArticleContentBody html={formattedArticleBodyHtml} activeSpeechText={activeSpeechText} />
 
                     {/* Full PDF Page-by-Page Document Viewer */}
                     {hasPdfPages && pdfDocumentUrl && (
@@ -1599,7 +1781,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
               return (
                 <div className="relative">
-                  <ArticleContentBody html={topHtml} />
+                  <ArticleContentBody html={topHtml} activeSpeechText={activeSpeechText} />
 
                   {/* IN_ARTICLE Ad Banner displayed inside description */}
                   <AdSectionBanner section="IN_ARTICLE" className="my-6" />
@@ -1628,7 +1810,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                     </div>
                   ) : (
                     <div className="space-y-4 transition-all duration-500 ease-in-out">
-                      <ArticleContentBody html={bottomHtml} />
+                      <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
 
                       {/* Full PDF Page-by-Page Document Viewer */}
                       {hasPdfPages && pdfDocumentUrl && (

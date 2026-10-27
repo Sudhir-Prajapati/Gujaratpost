@@ -8,10 +8,12 @@ import {
   getWhatsAppShareHref, 
   getPublicShareUrl 
 } from '@/lib/facebookShare';
+import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
 
 export interface ArticleShareAudioBarProps {
   title: string;
   articleUrl: string;
+  body?: string;
   language?: Language;
   copied?: boolean;
   copyUrl?: () => void;
@@ -28,6 +30,7 @@ export interface ArticleShareAudioBarProps {
 export default function ArticleShareAudioBar({
   title,
   articleUrl,
+  body,
   language = 'gu',
   copied,
   copyUrl,
@@ -55,6 +58,30 @@ export default function ArticleShareAudioBar({
       } catch {}
     }
   }, [articleUrl, saved]);
+
+  // Reset internal audio state if stopArticleAudio is called globally (e.g. navigation or page switch)
+  useEffect(() => {
+    const onGlobalStop = () => {
+      setInternalSpeaking(false);
+    };
+    window.addEventListener('gp-tts-stop', onGlobalStop);
+    return () => window.removeEventListener('gp-tts-stop', onGlobalStop);
+  }, []);
+
+  // If language changes while internal audio is speaking, seamlessly re-speak in new language
+  useEffect(() => {
+    if (toggleAudio === undefined && internalSpeaking) {
+      stopArticleAudio();
+      playArticleAudio({
+        title,
+        body: body || audioText,
+        language,
+        onStart: () => setInternalSpeaking(true),
+        onEnd: () => setInternalSpeaking(false),
+        onError: () => setInternalSpeaking(false),
+      });
+    }
+  }, [language, internalSpeaking, title, body, audioText, toggleAudio]);
 
   const ui = (values: { en: string; gu: string; hi: string }) => {
     if (uiLabel) return uiLabel(language, values);
@@ -106,20 +133,19 @@ export default function ArticleShareAudioBar({
       toggleAudio();
       return;
     }
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     if (isSpeaking) {
-      window.speechSynthesis.cancel();
+      stopArticleAudio();
       setInternalSpeaking(false);
       return;
     }
-    const textToRead = (audioText || title || '').replace(/<[^>]*>/g, '').trim();
-    if (!textToRead) return;
-    const utterance = new SpeechSynthesisUtterance(textToRead);
-    utterance.lang = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
-    utterance.onend = () => setInternalSpeaking(false);
-    utterance.onerror = () => setInternalSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-    setInternalSpeaking(true);
+    playArticleAudio({
+      title,
+      body: body || audioText,
+      language,
+      onStart: () => setInternalSpeaking(true),
+      onEnd: () => setInternalSpeaking(false),
+      onError: () => setInternalSpeaking(false),
+    });
   };
 
   const onPrint = () => {

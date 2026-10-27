@@ -143,8 +143,8 @@ export async function translateOnFly(text: string, targetLang: Language): Promis
     await acquireSlot();
     try {
       const endpoints = [
-        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`,
         `https://translate.googleapis.com/translate_a/single?client=dict-chrome-ex&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`,
+        `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(textToTranslate)}`,
       ];
 
       for (const url of endpoints) {
@@ -177,7 +177,7 @@ export async function translateOnFly(text: string, targetLang: Language): Promis
   return fetchPromise;
 }
 
-function isAlreadyTargetLanguage(text: string, targetLang: Language): boolean {
+export function isAlreadyTargetLanguage(text: string, targetLang: Language): boolean {
   const plain = text.replace(/<[^>]*>/g, '').trim();
   if (!plain) return true;
 

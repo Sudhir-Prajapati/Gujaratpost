@@ -134,25 +134,26 @@ function ArticleStreamShareBar({
   language,
   uiLabel,
   audioText,
+  body,
 }: {
   article: Article;
   language: Language;
   uiLabel: ArticleInfiniteStreamProps['uiLabel'];
   audioText?: string;
+  body?: string;
 }) {
   const title = getArticleTitle(article, language) || article.title || '';
   const articleUrl = `${SITE_URL.replace(/\/$/, '')}/news/${article.slug}`;
-  const excerpt = article.excerpt || article.excerptGu || '';
-  const effectiveAudioText = (audioText || `${title}. ${excerpt}`).replace(/<[^>]*>/g, '').trim();
+  const fullBody = body || (article as any)?.content || (article as any)?.contentGu || (article as any)?.contentHi || '';
 
   return (
     <div className="mb-4">
       <ArticleShareAudioBar
         title={title}
+        body={fullBody}
         articleUrl={articleUrl}
         language={language}
         uiLabel={uiLabel}
-        audioText={effectiveAudioText}
       />
     </div>
   );
@@ -409,7 +410,7 @@ function StreamArticleItem({
       )}
 
       {/* Share Bar */}
-      <ArticleStreamShareBar article={articleData} language={language} uiLabel={uiLabel} audioText={audioText} />
+      <ArticleStreamShareBar article={articleData} language={language} uiLabel={uiLabel} audioText={audioText} body={streamBody} />
 
       {/* Read Also section */}
       {readAlsoArticles.length > 0 && (

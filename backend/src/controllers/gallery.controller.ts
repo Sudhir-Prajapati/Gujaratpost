@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
-import { BadRequestError } from '../utils/errors.js';
+import { BadRequestError, NotFoundError } from '../utils/errors.js';
 
 const DEFAULT_5_PHOTOS = [
   {
@@ -78,12 +78,113 @@ export function formatGalleryPhoto(photo: any) {
       }
     } catch {}
   }
+  if (!p.images || !Array.isArray(p.images) || p.images.length === 0) {
+    p.images = [
+      {
+        src: p.src,
+        title: p.captionGu || p.alt || p.caption || 'Gallery Photo',
+        caption: p.caption || p.alt || '',
+        captionGu: p.captionGu || p.caption || p.alt || '',
+        description: p.caption || p.alt || '',
+        photographer: p.photographer || 'Gujarat Post Team'
+      }
+    ];
+  }
   return p;
+}
+
+const GU_STOPWORDS = new Set([
+  'અને', 'તેની', 'તેમના', 'તેમની', 'સાથે', 'કરી', 'કર્યાં', 'કર્યા', 'રહ્યાં', 'રહી', 'રહ્યા', 'રહ્યો',
+  'છે', 'હતા', 'હતી', 'પણ', 'માટે', 'પર', 'થી', 'ને', 'ના', 'ની', 'નો', 'નું', 'માં', 'એ',
+  'આ', 'તે', 'કોઈ', 'જોવા', 'મળી', 'મળ્યો', 'થયા', 'થઈ', 'થયો', 'આવ્યો', 'આવી', 'આવ્યા',
+  'વાયરલ', 'ફોટો', 'ફોટોશૂટ', 'તસવીરો', 'લુક', 'લૂક', 'અંદાજ', 'ગ્લેમરસ', 'હોટ', 'બોલ્ડ', 'પોઝ',
+  'સમાચાર', 'ગેલેરી', 'લાગી', 'લાગે', 'નવો', 'નવી', 'નવા', 'ખૂબ', 'જ', 'વધારે', 'કે', 'ધ',
+  'સામે', 'જોઈ', 'જોઇ', 'જોવા', 'આપ્યાં', 'આપ્યા', 'કર્યું', 'કર્યો', 'થતી', 'થતો', 'કરે', 'કરતાં'
+]);
+
+function normalizeWord(word: string): string {
+  if (!word) return '';
+  let w = word.trim();
+  const suffixes = ['નો', 'ની', 'ના', 'નું', 'માં', 'થી', 'એ', 'ઓ'];
+  for (const sfx of suffixes) {
+    if (w.length > sfx.length + 3 && w.endsWith(sfx)) {
+      w = w.slice(0, -sfx.length);
+      break;
+    }
+  }
+  return w;
+}
+
+function extractKeyTerms(text: string): string[] {
+  if (!text) return [];
+  const clean = text.replace(/[\'\"\'\"\.,!?;:()[\]{}\-_\\\/]/g, ' ');
+  const rawWords = clean.split(/\s+/).map(w => w.trim()).filter(Boolean);
+  
+  const subjects: string[] = [];
+  for (let i = 0; i < rawWords.length; i++) {
+    const raw = rawWords[i];
+    const norm = normalizeWord(raw);
+    if (norm.length >= 3 && !GU_STOPWORDS.has(raw) && !GU_STOPWORDS.has(norm)) {
+      subjects.push(norm);
+      if (raw !== norm) subjects.push(raw);
+    }
+    if (i < rawWords.length - 1) {
+      const nextNorm = normalizeWord(rawWords[i+1]);
+      if (!GU_STOPWORDS.has(rawWords[i]) && !GU_STOPWORDS.has(rawWords[i+1]) && norm.length >= 3) {
+        subjects.push(`${norm} ${nextNorm}`);
+      }
+    }
+  }
+  return [...new Set(subjects)];
+}
+
+function rankPhotosRelatedTo(targetPhoto: any, allPhotos: any[]): any[] {
+  if (!targetPhoto || !allPhotos || allPhotos.length === 0) return allPhotos;
+
+  const title = `${targetPhoto.captionGu || ''} ${targetPhoto.caption || ''} ${targetPhoto.alt || ''}`;
+  const terms = extractKeyTerms(title);
+  const targetId = targetPhoto.id || targetPhoto.src;
+
+  const candidatePhotos = allPhotos.filter(
+    (p: any) => (p.id || p.src) !== targetId && p.caption !== 'ગેલેરી ફોટો' && p.caption !== ''
+  );
+
+  const scored = candidatePhotos.map((p: any) => {
+    const pTitle = `${p.captionGu || ''} ${p.caption || ''} ${p.alt || ''}`;
+    let score = 0;
+
+    for (const t of terms) {
+      if (t.includes(' ') && pTitle.includes(t)) {
+        score += 30; // Bigram match (e.g. person full name)
+      } else if (!t.includes(' ') && pTitle.includes(t)) {
+        score += 15; // Single term match (e.g. person name, wedding, etc.)
+      }
+    }
+
+    if (targetPhoto.category && p.category === targetPhoto.category) {
+      score += 1;
+    }
+    if (typeof p.src === 'string' && p.src.startsWith('[')) {
+      score += 0.5; // Multi-slide album boost
+    }
+
+    return { photo: p, score };
+  });
+
+  // Sort by score desc; if tied, sort by createdAt desc
+  scored.sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    const dateA = a.photo.createdAt ? new Date(a.photo.createdAt).getTime() : 0;
+    const dateB = b.photo.createdAt ? new Date(b.photo.createdAt).getTime() : 0;
+    return dateB - dateA;
+  });
+
+  return scored.map(s => s.photo);
 }
 
 export class GalleryController {
   /**
-   * Fetch all gallery photos with pagination and search.
+   * Fetch all gallery photos with pagination, search, and relatedToId support.
    */
   static async getAllPhotos(req: Request, res: Response, next: NextFunction) {
     try {
@@ -92,6 +193,7 @@ export class GalleryController {
       const skip = (page - 1) * limit;
 
       const query = (req.query.query as string) || '';
+      const relatedToId = (req.query.relatedToId as string) || '';
 
       const where: any = {};
 
@@ -114,17 +216,62 @@ export class GalleryController {
       let total = 0;
 
       try {
-        [photos, total] = await Promise.all([
-          prisma.galleryPhoto.findMany({
-            where,
-            orderBy: {
-              createdAt: 'desc',
-            },
-            skip,
-            take: limit,
-          }),
-          prisma.galleryPhoto.count({ where }),
-        ]);
+        if (query) {
+          [photos, total] = await Promise.all([
+            prisma.galleryPhoto.findMany({
+              where,
+              orderBy: {
+                createdAt: 'desc',
+              },
+              skip,
+              take: limit,
+            }),
+            prisma.galleryPhoto.count({ where }),
+          ]);
+        } else if (relatedToId) {
+          // Find target photo to rank related photos first, followed by other gallery photos
+          let targetPhoto = await prisma.galleryPhoto.findUnique({
+            where: { id: relatedToId },
+          });
+          if (!targetPhoto) {
+            targetPhoto = DEFAULT_5_PHOTOS.find(
+              (p) => p.id === relatedToId || p.id === `photo-${relatedToId}` || p.id === relatedToId.replace('photo-', '')
+            ) as any;
+          }
+
+          if (targetPhoto) {
+            const allCandidates = await prisma.galleryPhoto.findMany({
+              where: {
+                id: { not: targetPhoto.id },
+                caption: { notIn: ['ગેલેરી ફોટો', ''] },
+              },
+              orderBy: { createdAt: 'desc' },
+            });
+
+            const ranked = rankPhotosRelatedTo(targetPhoto, allCandidates);
+            total = ranked.length;
+            photos = ranked.slice(skip, skip + limit);
+          } else {
+            const [rawPhotos, totalCount] = await Promise.all([
+              prisma.$queryRawUnsafe<any[]>(
+                `SELECT * FROM gallery_photos WHERE caption != 'ગેલેરી ફોટો' AND caption != '' ORDER BY (CASE WHEN src LIKE '[%' THEN 0 ELSE 1 END), createdAt DESC LIMIT ${limit} OFFSET ${skip}`
+              ),
+              prisma.galleryPhoto.count({ where }),
+            ]);
+            photos = rawPhotos;
+            total = totalCount;
+          }
+        } else {
+          // Prioritize multi-image albums with rich Cloudinary gallery stories first
+          const [rawPhotos, totalCount] = await Promise.all([
+            prisma.$queryRawUnsafe<any[]>(
+              `SELECT * FROM gallery_photos WHERE caption != 'ગેલેરી ફોટો' AND caption != '' ORDER BY (CASE WHEN src LIKE '[%' THEN 0 ELSE 1 END), createdAt DESC LIMIT ${limit} OFFSET ${skip}`
+            ),
+            prisma.galleryPhoto.count({ where }),
+          ]);
+          photos = rawPhotos;
+          total = totalCount;
+        }
       } catch (dbErr) {
         console.warn('Gallery DB fetch error, returning default 5 photos:', dbErr);
       }
@@ -159,7 +306,7 @@ export class GalleryController {
   }
 
   /**
-   * Fetch a single gallery photo by ID.
+   * Fetch a single gallery photo by ID with related photos.
    */
   static async getPhotoById(req: Request, res: Response, next: NextFunction) {
     try {
@@ -202,7 +349,29 @@ export class GalleryController {
         }
       }
 
-      return sendSuccess(res, { photo: formatGalleryPhoto(photo) }, 'Photo retrieved successfully.');
+      if (!photo) {
+        throw new NotFoundError('Photo not found');
+      }
+
+      // Fetch related photos pool (related items first, then remaining gallery photos)
+      let relatedPhotos: any[] = [];
+      try {
+        const allCandidates = await prisma.galleryPhoto.findMany({
+          where: {
+            id: { not: photo.id },
+            caption: { notIn: ['ગેલેરી ફોટો', ''] },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+        relatedPhotos = rankPhotosRelatedTo(photo, allCandidates).slice(0, 50);
+      } catch (relErr) {
+        console.warn('Error fetching related photos for single photo:', relErr);
+      }
+
+      const formatted = formatGalleryPhoto(photo);
+      formatted.relatedPhotos = relatedPhotos.map(formatGalleryPhoto);
+
+      return sendSuccess(res, { photo: formatted }, 'Photo retrieved successfully.');
     } catch (error) {
       next(error);
     }
