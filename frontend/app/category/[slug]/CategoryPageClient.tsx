@@ -1520,7 +1520,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               <span className="text-sm font-black text-foreground">
                 {normSlug === 'trending'
                   ? getLocalized(language, { en: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' })
-                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडિંગ સ્ટોરી' })}
+                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडिंग स्टोरी' })}
               </span>
             </div>
             <div className="flex flex-col divide-y divide-border">
@@ -1537,7 +1537,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     {language === 'gu' ? toGu(i + 1) : i + 1}
                   </span>
                   <p className="min-h-[4.125em] text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
-                    {language === 'gu' ? (art.titleGu || art.title) : language === 'hi' ? (art.titleHi || art.title) : art.title}
+                    <AutoArticleTitle article={art} language={language} />
                   </p>
                 </Link>
               ))}
