@@ -123,7 +123,15 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       const rawDesc = stripHtmlTags(photo.caption || photo.captionGu || photo.alt || rawTitle);
       const catName = photo.category || 'ફોટો ગેલેરી';
       const authorName = photo.photographer || 'Gujarat Post Team';
-      const imageUrl = (photo.src || '').trim();
+      let imageUrl = (photo.src || '').trim();
+      if (imageUrl.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(imageUrl);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            imageUrl = parsed[0]?.src || parsed[0]?.url || (typeof parsed[0] === 'string' ? parsed[0] : '');
+          }
+        } catch {}
+      }
 
       itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>

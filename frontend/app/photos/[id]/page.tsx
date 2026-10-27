@@ -5,16 +5,8 @@ import { getPublicGallery, getPublicGalleryPhoto, getPublicArticles } from "@/li
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import PhotoDetailClient from "./PhotoDetailClient";
 
-export const revalidate = 300;
-
-export async function generateStaticParams() {
-  try {
-    const photos = await getPublicGallery({ limit: 30 });
-    return (photos || []).map((photo) => ({ id: photo.id }));
-  } catch {
-    return [];
-  }
-}
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -66,15 +58,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 export default async function PhotoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   
-  // 1. Fetch photo details from backend API (by ID first, with gallery pool fallback)
+  // 1. Fetch photo details from backend API (by ID first, with related gallery pool)
   const [photoById, allPhotos, trendingRes] = await Promise.all([
     getPublicGalleryPhoto(id),
-    getPublicGallery({ limit: 50 }),
+    getPublicGallery({ limit: 50, relatedToId: id }),
     getPublicArticles({ limit: 8, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 0 })),
   ]);
 
   const photo = photoById || (allPhotos || []).find((p: any) => p.id === id || p._id === id) || (allPhotos && allPhotos[0]);
   if (!photo) notFound();
+
+  // If photo has relatedPhotos from getPhotoById, prioritize those, otherwise allPhotos (which also respects relatedToId)
+  const galleryList = (photo?.relatedPhotos && photo.relatedPhotos.length > 0)
+    ? photo.relatedPhotos
+    : (allPhotos || []);
 
   const trending = trendingRes?.articles || [];
   const photoUrl = `${SITE_URL}/photos/${photo.id || photo._id || id}`;
@@ -83,7 +80,7 @@ export default async function PhotoDetailPage({ params }: { params: Promise<{ id
     <PhotoDetailClient
       activeId={id}
       photo={photo}
-      allPhotos={allPhotos || []}
+      allPhotos={galleryList}
       trending={trending}
       photoUrl={photoUrl}
     />

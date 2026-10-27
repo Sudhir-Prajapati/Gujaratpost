@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Camera } from 'lucide-react';
 import { PHOTOS, getLocalized, getCategoryLabel } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import AePanVachoSection from '@/components/sections/AePanVachoSection';
@@ -21,12 +21,38 @@ const FALLBACK_NEWS_IMAGES = [
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
 ];
 
-function PhotoCardImage({ src: rawSrc, alt, index }: { src?: string; alt: string; index: number }) {
+function resolvePhotoUrl(val: any, fallback: string = ''): string {
+  if (!val) return fallback;
+  let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+        }
+      } catch {}
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
+  }
+  if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
+    const first = val.images[0];
+    return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+  }
+  return fallback;
+}
+
+function PhotoCardImage({ src: rawSrc, alt, index }: { src?: any; alt: string; index: number }) {
   const fallback = FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length];
-  const [src, setSrc] = useState(rawSrc || fallback);
+  const initial = resolvePhotoUrl(rawSrc, fallback);
+  const [src, setSrc] = useState(initial);
 
   useEffect(() => {
-    setSrc(rawSrc || fallback);
+    setSrc(resolvePhotoUrl(rawSrc, fallback));
   }, [rawSrc, fallback]);
 
   return (
@@ -150,11 +176,17 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
                 style={{ opacity: 0.88 }}
               />
 
-              {/* Category Badge matching Image 2 */}
-              <div className="absolute top-3.5 left-3.5 z-10">
+              {/* Category Badge & Photo Count Badge */}
+              <div className="absolute top-3.5 inset-x-3.5 z-10 flex items-center justify-between">
                 <span className="inline-block rounded-md bg-[#B3121B] px-2.5 py-0.5 text-[11px] font-black text-white uppercase tracking-wide shadow-md">
                   <AutoTranslateString text={categoryText} language={language} />
                 </span>
+                {Array.isArray(photo.images) && photo.images.length > 1 && (
+                  <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[11px] font-black text-white shadow-md border border-white/20">
+                    <Camera className="w-3 h-3 text-red-400" />
+                    <span>{photo.images.length}</span>
+                  </span>
+                )}
               </div>
 
               {/* Title & Call-to-action overlay matching Image 2 */}
