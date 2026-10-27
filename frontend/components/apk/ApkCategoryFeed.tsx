@@ -55,7 +55,7 @@ export default function ApkCategoryFeed({
         if (!isMounted) return;
         setPairedArticles(sortArticlesByLatest(res?.articles || []));
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       isMounted = false;
     };
@@ -182,16 +182,19 @@ export default function ApkCategoryFeed({
 
         {/* ── 2. QUICK FILTER TABS (All / Latest / Trending) ──────────── */}
         <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
-          {tabs.map((tab) => (
+          {[
+            { id: 'all', gu: 'બધું', hi: 'सभी', en: 'All' },
+            { id: 'latest', gu: 'લેટેસ્ટ સમાચાર', hi: 'ताज़ा समाचार', en: 'Latest' },
+            { id: 'trending', gu: 'ટ્રેન્ડિંગ', hi: 'ट्रेंडिंग', en: 'Trending' },
+          ].map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id as CategoryTab)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer active:scale-95 ${
-                activeTab === tab.id
-                  ? 'bg-[#B3121B] text-white shadow-xs font-extrabold'
-                  : 'bg-gray-100 dark:bg-[#222228] text-gray-700 dark:text-gray-300 border border-gray-400 dark:border-gray-700 hover:bg-gray-200'
-              }`}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition cursor-pointer active:scale-95 ${activeTab === tab.id
+                ? 'bg-[#B3121B] text-white shadow-xs font-extrabold'
+                : 'bg-gray-100 dark:bg-[#222228] text-gray-700 dark:text-gray-300 border border-gray-400 dark:border-gray-700 hover:bg-gray-200'
+                }`}
             >
               {getLocalized(language, { gu: tab.gu, hi: tab.hi, en: tab.en })}
             </button>

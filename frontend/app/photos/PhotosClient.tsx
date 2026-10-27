@@ -30,12 +30,12 @@ function PhotoCardImage({ src: rawSrc, alt, index }: { src?: string; alt: string
   }, [rawSrc, fallback]);
 
   return (
-    <Image 
-      src={src} 
-      alt={alt} 
-      fill 
-      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" 
-      className="object-contain transition-transform duration-700 ease-out" 
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+      className="object-contain transition-transform duration-700 ease-out"
       onError={() => setSrc(fallback)}
     />
   );
@@ -51,7 +51,19 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
   const [latestPage, setLatestPage] = useState(1);
   const [latestTotalPages, setLatestTotalPages] = useState(1);
   const [loadingMoreLatest, setLoadingMoreLatest] = useState(false);
-  let photoList = [...(initialPhotos || [])];
+  const [photos, setPhotos] = useState<any[]>(initialPhotos || []);
+
+  useEffect(() => {
+    getPublicGallery({ limit: 60 })
+      .then((res) => {
+        if (res && res.length > 0) {
+          setPhotos(res.filter((p: any) => p && (p.src || p.id)));
+        }
+      })
+      .catch(() => { });
+  }, []);
+
+  let photoList = photos.length > 0 ? [...photos] : [...(initialPhotos || [])];
   if (photoList.length < 5) {
     const existingIds = new Set(photoList.map(p => p.id || p.src));
     for (const defPhoto of PHOTOS) {
@@ -73,7 +85,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
         setLatestArticles(res?.articles?.slice(0, 8) || []);
         setLatestTotalPages(res?.totalPages || 1);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const loadMoreLatest = async () => {
@@ -97,47 +109,46 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
   };
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-8">
-      <header className="mb-8 border-b border-border/60 pb-5">
-        <h1 className="text-3xl font-black text-foreground tracking-tight">
-          {getLocalized(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
+    <div className="mx-auto max-w-screen-xl px-4 pt-3 pb-8">
+      <header className="flex items-center justify-between border-b border-border pb-2 mb-4">
+        <h1 className="flex items-center select-none leading-none">
+          <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-2.5 my-0.5" style={{ minHeight: '1.4em' }} aria-hidden="true" />
+          <span className="text-[26px] sm:text-[24px] md:text-[21px] font-black tracking-tight text-foreground">
+            {getLocalized(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
+          </span>
         </h1>
-        <p className="text-sm font-semibold text-muted-foreground mt-1.5">
-          {getLocalized(language, { 
-            en: 'Latest Gujarat news moments in pictures.', 
-            gu: 'ગુજરાતના તાજા સમાચારના દૃશ્યો.', 
-            hi: 'गुजरात की ताजा खबरों की तस्वीरें.' 
-          })}
-        </p>
       </header>
 
-      {/* 4-Column Uniform Grid matching Image 2 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+      {/* Photo Gallery Grid matching Home Page Card Dimensions */}
+      <div className="w-full flex flex-col items-center sm:flex-row sm:flex-wrap sm:justify-center gap-5 sm:gap-6 mx-auto">
         {gallery.map((photo, index) => {
           const categoryText = language === 'gu'
             ? (photo.categoryGu || photo.category || 'સમાચાર')
             : language === 'hi'
-            ? (photo.categoryHi || 'समाचार')
-            : (photo.categoryEn || 'News');
+              ? (photo.categoryHi || 'समाचार')
+              : (photo.categoryEn || 'News');
           const captionSource = photo.caption || photo.captionGu || photo.alt || '';
 
           return (
-            <Link 
-              key={`${photo.id}-${index}`} 
-              href={`/photos/${photo.id}`} 
-              className="group relative block w-full overflow-hidden rounded-2xl shadow-md border border-border/20 bg-card aspect-[4/5] sm:aspect-[3/4] lg:aspect-[4/5] transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:border-[#B3121B]/40 select-none"
+            <Link
+              key={`${photo.id}-${index}`}
+              href={`/photos/${photo.id}`}
+              className="group relative flex flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] h-[280px] md:h-[350px] mx-auto sm:mx-0 overflow-hidden rounded-2xl shadow-lg border border-border/10 bg-card select-none transition-transform duration-300 hover:-translate-y-1"
             >
-              <PhotoCardImage 
-                src={photo.src} 
-                alt={captionSource || 'Gallery Photo'} 
+              <PhotoCardImage
+                src={photo.src}
+                alt={captionSource || 'Gallery Photo'}
                 index={index}
               />
 
-              {/* Subtle top shadow for category badge readability */}
-              <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/50 via-black/20 to-transparent pointer-events-none" />
+              {/* Top ambient gradient */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
 
-              {/* Deep dark gradient overlay at bottom for title and CTA readability */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/60 to-transparent pointer-events-none" />
+              {/* Bottom dark gradient overlay */}
+              <div
+                className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
+                style={{ opacity: 0.88 }}
+              />
 
               {/* Category Badge matching Image 2 */}
               <div className="absolute top-3.5 left-3.5 z-10">
@@ -152,15 +163,21 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
                   <AutoTranslateString text={captionSource} language={language} />
                 </h2>
 
-                {/* "— ફોટો જુઓ >" Link matching Image 2 */}
-                <div className="flex items-center gap-1.5 mt-2">
-                  <div className="h-[2px] w-5 rounded-full bg-[#B3121B] shrink-0" />
-                  <span className="text-white text-[12px] sm:text-[13px] font-bold tracking-wide">
-                    {getLocalized(language, { en: 'View Photos', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}
+                {/* "— ફોટો જુઓ >" Link matching Home page */}
+                <div className="flex items-center gap-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="h-[2.5px] w-7 rounded-full bg-[#B3121B]" />
+                  <span className="text-white text-[13.5px] md:text-[14.5px] font-extrabold tracking-wide">
+                    {language === 'gu' ? 'ફોટો જુઓ' : 'View Photos'}
                   </span>
-                  <ChevronRight className="h-3.5 w-3.5 text-[#B3121B] stroke-[3] transition-transform duration-200 group-hover:translate-x-1" />
+                  <ChevronRight className="h-4 w-4 text-[#B3121B] stroke-[3]" />
                 </div>
               </div>
+
+              {/* Border glow on hover matching Home page */}
+              <div
+                className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ boxShadow: 'inset 0 0 0 2px #B3121B' }}
+              />
             </Link>
           );
         })}
@@ -171,7 +188,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
           <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
             <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
             <h2 className="text-base md:text-lg font-black text-foreground">
-              {language === 'gu' ? 'તાજા સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+              {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
             </h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -221,12 +238,14 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
                 type="button"
                 onClick={loadMoreLatest}
                 disabled={loadingMoreLatest}
-                className="inline-flex items-center gap-2 rounded-full border border-accent px-6 py-2 text-sm font-bold text-accent transition-colors hover:bg-accent hover:text-white disabled:cursor-wait disabled:opacity-60"
+                className="group inline-flex items-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] disabled:cursor-wait disabled:opacity-60"
               >
-                {loadingMoreLatest
-                  ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...')
-                  : (language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read more')}
-                {!loadingMoreLatest && <ChevronRight className="h-4 w-4" />}
+                <span className="text-lg md:text-xl font-black tracking-wide leading-none">
+                  {loadingMoreLatest
+                    ? (language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...')
+                    : (language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read more')}
+                </span>
+                {!loadingMoreLatest && <ChevronRight className="w-5 h-5 transition-transform duration-200 group-hover:translate-x-0.5 stroke-[3]" />}
               </button>
             </div>
           )}

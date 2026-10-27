@@ -84,62 +84,43 @@ export default function MobileHeroArticleCard({
   };
 
   return (
-    <div className={`group flex flex-col py-3.5 first:pt-1.5 last:pb-1 min-w-0 ${className}`}>
-      {/* Top: Headline (left) + Thumbnail (right) */}
-      <Link
-        href={href}
-        className="flex flex-row items-start justify-between gap-3 min-w-0"
-      >
-        <div className="flex-1 min-w-0 pr-1">
-          <h3 className="text-[17px] sm:text-[18px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-            {hasPrefix ? (
-              <>
-                <span
-                  className={
-                    index % 2 === 0
-                      ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
-                      : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
-                  }
-                >
-                  {prefixText}
-                </span>
-                <span>{restText}</span>
-              </>
-            ) : (
-              <AutoArticleTitle article={article} language={language} />
-            )}
-          </h3>
-        </div>
-
-        <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-          <ArticleMedia
-            src={imgSrc}
-            alt={rawTitle || ''}
-            className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-          />
-        </div>
-      </Link>
-
-      {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-      <div className="flex items-center justify-between mt-3.5 pt-0.5">
-        <Link
-          href={`/category/${catSlug}`}
-          className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
-        >
-          <span>{catLabel}</span>
-          <ChevronRight className="w-3 h-3 text-muted-foreground" />
-        </Link>
-
-        <button
-          type="button"
-          onClick={handleShare}
-          className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
-          aria-label="Share"
-        >
-          <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-          <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
-        </button>
+    <Link
+      href={href}
+      className={`group flex flex-row items-center justify-between gap-3 py-3 border-b border-border/50 last:border-b-0 min-w-0 ${className}`}
+    >
+      {/* Left: Category label in red on top + Headline below (clean normal UI) */}
+      <div className="flex flex-col flex-1 min-w-0 pr-1">
+        <span className="text-[#B3121B] font-black text-[12px] sm:text-[13px] uppercase tracking-wide mb-1 leading-none select-none">
+          {catLabel}
+        </span>
+        <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+          {hasPrefix ? (
+            <>
+              <span
+                className={
+                  index % 2 === 0
+                    ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
+                    : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
+                }
+              >
+                {prefixText}
+              </span>
+              <span>{restText}</span>
+            </>
+          ) : (
+            <AutoArticleTitle article={article} language={language} />
+          )}
+        </h3>
       </div>
-    </div>
+
+      {/* Right: Thumbnail */}
+      <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+        <ArticleMedia
+          src={imgSrc}
+          alt={rawTitle || ''}
+          className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+        />
+      </div>
+    </Link>
   );
 }

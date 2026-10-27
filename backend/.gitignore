@@ -1,0 +1,16 @@
+# Ignore local MySQL data directory
+mysql_data/
+mysql_data/**
+*.sql
+*.ibd
+*.sdi
+binlog.*
+undo_*
+ib_*
+ibdata*
+ibtmp*
+uploads/*
+!uploads/.gitkeep
+node_modules/
+dist/
+.env

@@ -276,7 +276,7 @@ export default function ApkHomeFeed({
   const mostReadTitle = language === 'hi' ? 'सबसे ज्यादा पढ़े गए' : language === 'en' ? 'Most Read' : 'સૌથી વધુ વંચાયેલા';
   const viewAllText = language === 'hi' ? 'सभी देखें' : language === 'en' ? 'View All' : 'બધા જુઓ';
   const videosTitle = language === 'hi' ? 'वीडियो' : language === 'en' ? 'VIDEOS' : 'વીડિયો';
-  const latestFeedTitle = language === 'hi' ? 'તાज़ा સમાચાર फ़ीड' : language === 'en' ? 'Latest News Feed' : 'તાજા સમાચાર ફિડ';
+  const latestFeedTitle = language === 'hi' ? 'તાज़ा સમાચાર फ़ीड' : language === 'en' ? 'Latest News Feed' : 'લેટેસ્ટ સમાચાર ફીડ';
   const latestBadgeText = language === 'hi' ? 'नवीनतम' : language === 'en' ? 'Latest' : 'નવીનતમ';
   const loadingMoreText = language === 'hi' ? 'और समाचार लोड हो रहे हैं...' : language === 'en' ? 'Loading more news...' : 'વધુ સમાચાર લોડ થઈ રહ્યા છે...';
   const allLoadedText = language === 'hi' ? '— सभी समाचार लोड हो गए —' : language === 'en' ? '— All news loaded —' : '— તમામ સમાચાર લોડ થઈ ગયા —';

@@ -211,7 +211,7 @@ function StreamArticleItem({
             }));
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
     return () => {
       isMounted = false;
@@ -647,9 +647,9 @@ export default function ArticleInfiniteStream({
           <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
         </div>
 
-        {/* Mobile View (< md): Hero Section style list */}
+        {/* Mobile View (< md): Hero Section style list (7 items) */}
         <div className="flex flex-col divide-y divide-border/60 md:hidden">
-          {sidebarRecommendedPool.slice(0, 6).map((item, index) => (
+          {sidebarRecommendedPool.slice(0, 7).map((item, index) => (
             <MobileHeroArticleCard
               key={`stream-rec-mob-${item.id || index}`}
               article={item}

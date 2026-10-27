@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronLeft, Home } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 
 const DISTRICTS = [
@@ -254,10 +254,10 @@ export default function DistrictBar({
   return (
     <div className="w-full border-t border-border/40 bg-card/95 backdrop-blur-md select-none relative z-40">
       <div className="mx-auto flex max-w-[1700px] items-center gap-0 md:gap-2 px-0 md:px-2 xl:px-3">
-        {/* Gujarat Map Logo and vertical separator (At start for both mobile & desktop) */}
+        {/* ─── DESKTOP (>= md): Gujarat Map Logo first (100% UNTOUCHED) ─── */}
         <Link
           href="/category/gujarat"
-          className="flex items-center justify-center shrink-0 pl-1.5 sm:pl-2 md:pl-0 md:ml-2.5 pr-1.5 sm:pr-2 border-r border-border/60 h-8 md:h-9 self-center overflow-hidden"
+          className="hidden md:flex items-center justify-center shrink-0 pl-1.5 sm:pl-2 md:pl-0 md:ml-2.5 pr-1.5 sm:pr-2 border-r border-border/60 h-8 md:h-9 self-center overflow-hidden"
           title={language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}
         >
           <img
@@ -269,6 +269,37 @@ export default function DistrictBar({
             className="district-gujarat-logo h-6 md:h-7.5 max-h-6 md:max-h-7.5 w-auto object-contain transition-transform duration-200 hover:scale-105 cursor-pointer select-none shrink-0"
           />
         </Link>
+
+        {/* ─── MOBILE (< md): 1st Home Logo, 2nd Gujarat Logo (SWAPPED FOR MOBILE ONLY) ─── */}
+        <div className="flex md:hidden items-center shrink-0 border-r border-border/60 h-8 self-center pr-1.5 pl-1 gap-1">
+          {/* 1st: Home Logo */}
+          <Link
+            href="/"
+            className={`flex shrink-0 h-8 items-center justify-center px-1 transition-colors duration-150 ${
+              pathname === '/' ? 'text-accent font-black' : 'text-foreground hover:text-accent'
+            }`}
+            aria-label="Home"
+            title={language === 'gu' ? 'મુખ્ય પૃષ્ઠ' : language === 'hi' ? 'मुख्य पृष्ठ' : 'Home'}
+          >
+            <Home className="h-5 w-5 shrink-0 text-accent transition-transform duration-200 hover:scale-110" strokeWidth={2.3} />
+          </Link>
+
+          {/* 2nd: Gujarat Logo (next to home logo) */}
+          <Link
+            href="/category/gujarat"
+            className="flex items-center justify-center shrink-0 px-1 overflow-hidden"
+            title={language === 'gu' ? 'ગુજરાત' : language === 'hi' ? 'ગુજરાત' : 'Gujarat'}
+          >
+            <img
+              src="/assets/GujaratLogo.png"
+              alt="Gujarat Logo"
+              width={26}
+              height={22}
+              style={{ height: '22px', maxHeight: '22px', width: 'auto', maxWidth: '32px', objectFit: 'contain' }}
+              className="district-gujarat-logo h-5.5 max-h-5.5 w-auto object-contain transition-transform duration-200 hover:scale-105 cursor-pointer select-none shrink-0"
+            />
+          </Link>
+        </div>
 
         {/* Scrollable list + scroll arrows wrapper */}
         <div className="relative flex-1 min-w-0">
@@ -313,8 +344,9 @@ export default function DistrictBar({
               })}
             </div>
 
-            {/* ─── MOBILE VIEW (< md): 1st Video, 2nd Gujarat (with Dropdown of all cities), then other categories ─── */}
+            {/* ─── MOBILE VIEW (< md): Categories list ─── */}
             <div className="flex md:hidden items-center gap-3.5 py-0 pl-2 pr-2">
+
               {/* 1. Video Link */}
               <Link
                 href="/videos"

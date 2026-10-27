@@ -245,7 +245,7 @@ export default function YouTubeLatest() {
             {/* Live & Latest Updates badge inline */}
             <div className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2.5 py-1 text-[11px] font-black text-[#ff0000] dark:bg-red-950/20 dark:text-red-400">
               <Flame className="h-3.5 w-3.5 fill-current animate-pulse" />
-              <span>{getLocalized(language, { en: 'Live & Latest Updates', gu: 'લાઇવ અને તાજા સમાચાર', hi: 'लाइव और ताजा अपडेट' })}</span>
+              <span>{getLocalized(language, { en: 'Live & Latest Updates', gu: 'લાઇવ અને લેટેસ્ટ સમાચાર', hi: 'लाइव और ताजा अपडेट' })}</span>
             </div>
           </div>
 

@@ -40,7 +40,7 @@ const ALL_APP_CATEGORIES: CategoryItem[] = [
   { nameGu: 'ટ્રેન્ડિંગ', nameHi: 'ट्रेंडिंग', nameEn: 'Trending', href: '/category/trending' },
   { nameGu: 'ચૂંટણી 2027', nameHi: 'चुनाव 2027', nameEn: 'Election 2027', href: '/category/election-2027' },
   { nameGu: 'પોડકાસ્ટ', nameHi: 'पॉडकास्ट', nameEn: 'Podcast', href: '/videos?tab=podcast' },
-  { nameGu: 'તાજા સમાચાર', nameHi: 'ताजा समाचार', nameEn: 'Latest News', href: '/category/latest' },
+  { nameGu: 'લેટેસ્ટ સમાચાર', nameHi: 'ताजा समाचार', nameEn: 'Latest News', href: '/category/latest' },
   { nameGu: 'ઇન્સ્ટાગ્રામ', nameHi: 'इंस्टाग्राम', nameEn: 'Instagram', href: 'https://www.instagram.com/gujaratpost.in/', isExternal: true },
   { nameGu: 'શોર્ટ વીડિયો', nameHi: 'शॉर्ट वीडियो', nameEn: 'Short Videos', href: '/shorts' },
   { nameGu: 'હવામાન', nameHi: 'मौसम', nameEn: 'Weather', href: '/category/weather' },

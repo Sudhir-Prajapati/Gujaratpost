@@ -296,14 +296,14 @@ export default function NewsBriefPageClient() {
       <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white dark:bg-[#14151a] border-b border-neutral-200 dark:border-zinc-800/80 shadow-xs z-10 transition-colors duration-200" style={{ height: 64 }}>
         <Link href="/" className="group relative flex shrink-0 items-center">
           <div className="relative block h-8 sm:h-10 md:h-12 lg:h-14 w-32 sm:w-44 md:w-54 lg:w-60 overflow-hidden">
-          <Image
-            src="/GujaratpostFinalLogo.png"
-            alt="Gujarat Post"
-            fill
-            sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 216px, 240px"
-            className="object-contain object-left dark:brightness-110"
-            priority
-          />
+            <Image
+              src="/GujaratpostFinalLogo.png"
+              alt="Gujarat Post"
+              fill
+              sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 216px, 240px"
+              className="object-contain object-left dark:brightness-110"
+              priority
+            />
           </div>
         </Link>
 
@@ -334,7 +334,7 @@ export default function NewsBriefPageClient() {
             aria-label="Back to home"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B3121B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
+              <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </Link>
         </div>
@@ -431,7 +431,7 @@ export default function NewsBriefPageClient() {
             <div className="flex items-center justify-between pt-0.5 shrink-0">
               <Link
                 href={`/news/${currentArticle.slug}`}
-                className="px-5 py-2 sm:px-5 sm:py-2 rounded-full border-2 border-[#B3121B] dark:border-[#f84a54] text-[#B3121B] dark:text-[#f84a54] font-black text-[15px] sm:text-[15.5px] hover:bg-[#B3121B] hover:text-white dark:hover:bg-[#f84a54] dark:hover:text-black transition-colors active:scale-95"
+                className="px-5 py-2 sm:px-5 sm:py-2 rounded-full border-2 border-[#B3121B] text-[#B3121B] font-black text-[15px] sm:text-[15.5px] hover:bg-[#B3121B] hover:text-white transition-colors active:scale-95"
               >
                 {language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More'}
               </Link>
