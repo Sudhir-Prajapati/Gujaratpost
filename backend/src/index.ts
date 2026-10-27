@@ -11,6 +11,8 @@ import { prisma } from './config/prisma.js';
 import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { autoPublishDueArticles } from './controllers/article.controller.js';
+import { RssController } from './controllers/rss.controller.js';
+
 
 
 // Extend globalThis so TypeScript knows about our stored HTTP server reference
@@ -116,8 +118,16 @@ app.get('/', (req, res) => {
   });
 });
 
+// Legacy PHP RSS routes and direct public RSS feeds on root domain
+app.get('/rss-feed-politics.php', RssController.getLegacyPoliticsRss);
+app.get('/rss-feed-gallery.php', RssController.getLegacyGalleryRss);
+app.get('/rss.xml', RssController.getPublicRss);
+app.get('/rss/:category.xml', RssController.getPublicRss);
+app.get('/rss/:category', RssController.getPublicRss);
+
 // Mount all API routes under the /api prefix
 app.use('/api', masterRouter);
+
 
 // Centralized error handler middleware (must be defined last)
 app.use(errorHandler);

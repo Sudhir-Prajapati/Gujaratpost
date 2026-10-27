@@ -15,8 +15,12 @@ export async function GET(
       return new Response('Category required', { status: 400 });
     }
 
-    const backendUrl = getBackendApiUrl(`/api/public/rss/${encodeURIComponent(cleanCategory)}`);
+    const endpoint = cleanCategory.toLowerCase() === 'home'
+      ? '/api/public/rss'
+      : `/api/public/rss/${encodeURIComponent(cleanCategory)}`;
+    const backendUrl = getBackendApiUrl(endpoint);
     const headers: Record<string, string> = {};
+
 
     const ifNoneMatch = request.headers.get('if-none-match');
     const ifModifiedSince = request.headers.get('if-modified-since');
