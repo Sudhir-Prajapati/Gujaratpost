@@ -11,6 +11,7 @@ import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import { buildTwitterPostButton, normalizeTwitterPostLinks } from '@/lib/article-social-links';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
+import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
 
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
@@ -1192,18 +1193,44 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   };
 
   const toggleAudio = () => {
-    if (!('speechSynthesis' in window)) return;
     if (speaking) {
-      window.speechSynthesis.cancel();
+      stopArticleAudio();
       setSpeaking(false);
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(`${title}. ${excerpt.replace(/<[^>]*>/g, '')}`);
-    utterance.lang = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
-    utterance.onend = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
-    setSpeaking(true);
+    playArticleAudio({
+      title,
+      body,
+      excerpt,
+      language,
+      onStart: () => setSpeaking(true),
+      onEnd: () => setSpeaking(false),
+      onError: () => setSpeaking(false),
+    });
   };
+
+  // If user switches language while audio is active, seamlessly re-speak in the new language
+  useEffect(() => {
+    if (speaking) {
+      stopArticleAudio();
+      playArticleAudio({
+        title,
+        body,
+        excerpt,
+        language,
+        onStart: () => setSpeaking(true),
+        onEnd: () => setSpeaking(false),
+        onError: () => setSpeaking(false),
+      });
+    }
+  }, [language]);
+
+  // Clean up any playing audio when user navigates away
+  useEffect(() => {
+    return () => {
+      stopArticleAudio();
+    };
+  }, []);
 
   const shareLinks = [
     {
@@ -1516,6 +1543,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             <ArticleShareAudioBar
               title={title}
+              body={body}
               articleUrl={articleUrl}
               language={language}
               copied={copied}
