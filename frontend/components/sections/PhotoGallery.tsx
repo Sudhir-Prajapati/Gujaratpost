@@ -38,12 +38,38 @@ function GallerySkeleton() {
   );
 }
 
-function SafeGalleryImage({ src: initialSrc, alt, index }: { src: string; alt: string; index: number }) {
+function resolvePhotoUrl(val: any, fallback: string = ''): string {
+  if (!val) return fallback;
+  let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+        }
+      } catch {}
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
+  }
+  if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
+    const first = val.images[0];
+    return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+  }
+  return fallback;
+}
+
+function SafeGalleryImage({ src: initialSrc, alt, index }: { src: any; alt: string; index: number }) {
   const fallback = FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length];
-  const [src, setSrc] = useState(initialSrc || fallback);
+  const initial = resolvePhotoUrl(initialSrc, fallback);
+  const [src, setSrc] = useState(initial);
 
   useEffect(() => {
-    setSrc(initialSrc || fallback);
+    setSrc(resolvePhotoUrl(initialSrc, fallback));
   }, [initialSrc, fallback]);
 
   return (

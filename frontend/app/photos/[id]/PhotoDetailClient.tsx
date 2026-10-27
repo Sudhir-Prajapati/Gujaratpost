@@ -115,17 +115,34 @@ const FALLBACK_NEWS_IMAGES = [
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
 ];
 
-function getCardThumbnail(art: any, index: number = 0): string {
-  const raw = art?.image || art?.featuredImage || art?.thumbnail || art?.src;
-  if (
-    raw &&
-    raw.trim() !== '' &&
-    !raw.includes('photo-1599930113854') &&
-    !raw.includes('placehold.co')
-  ) {
-    return raw;
+function resolvePhotoUrl(val: any, fallback: string = ''): string {
+  if (!val) return fallback;
+  let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+        }
+      } catch {}
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
   }
-  return DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+  if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
+    const first = val.images[0];
+    return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+  }
+  return fallback;
+}
+
+function getCardThumbnail(art: any, index: number = 0): string {
+  const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+  return resolvePhotoUrl(art, fallback);
 }
 
 const SidebarThumb = memo(function SidebarThumb({
@@ -137,13 +154,13 @@ const SidebarThumb = memo(function SidebarThumb({
   index: number;
   itemTitle: string;
 }) {
-  const initial = getCardThumbnail(item, index);
   const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+  const initial = resolvePhotoUrl(item, fallback);
   const [src, setSrc] = useState(initial);
 
   useEffect(() => {
-    setSrc(getCardThumbnail(item, index));
-  }, [item, index]);
+    setSrc(resolvePhotoUrl(item, fallback));
+  }, [item, fallback]);
 
   return (
     <div className="relative w-full h-full">
@@ -171,11 +188,11 @@ const MorePhotoCard = memo(function MorePhotoCard({
   const rawItemTitle = item.captionGu || item.caption || item.titleGu || item.title || item.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : 'Photo Gallery');
   const itemCategory = getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
   const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-  const initialSrc = item.src || item.coverImage || item.image || item.thumbnail || fallback;
+  const initialSrc = resolvePhotoUrl(item, fallback);
   const [src, setSrc] = useState(initialSrc);
 
   useEffect(() => {
-    setSrc(item.src || item.coverImage || item.image || item.thumbnail || fallback);
+    setSrc(resolvePhotoUrl(item, fallback));
   }, [item, fallback]);
 
   return (
@@ -198,11 +215,17 @@ const MorePhotoCard = memo(function MorePhotoCard({
       {/* Bottom deep gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
 
-      {/* Category badge top-left (rounded pill matching reference) */}
-      <div className="absolute top-3.5 left-3.5 z-10 pointer-events-none">
+      {/* Category badge top-left & photo count badge top-right */}
+      <div className="absolute top-3.5 inset-x-3.5 z-10 flex items-center justify-between pointer-events-none">
         <span className="text-white text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-md bg-[#B3121B] inline-block">
           <AutoTranslateString text={itemCategory} language={language} />
         </span>
+        {Array.isArray(item.images) && item.images.length > 1 && (
+          <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
+            <Camera className="w-3 h-3 text-red-400" />
+            <span>{item.images.length}</span>
+          </span>
+        )}
       </div>
 
       {/* Title at bottom matching reference image */}
@@ -275,6 +298,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const [copied, setCopied] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [activeLightboxIndex, setActiveLightboxIndex] = useState(0);
+  const [activeSlideIndex, setActiveSlideIndex] = useState(0);
 
   const photosList = dbAllPhotos && dbAllPhotos.length > 0 ? dbAllPhotos : PHOTOS;
   const photo = dbPhoto || photosList.find((p: any) => p.id === activeId || p.id === `photo-${activeId}` || p.id === activeId.replace('photo-', '')) || photosList[0];
@@ -397,13 +421,16 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
     return items;
   }, [photo, language, title, caption, paragraphs, authorName, mainFallback]);
 
-  // Keyboard navigation for Lightbox
+  // Keyboard navigation for Lightbox and Main Slider
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (isLightboxOpen) {
         if (e.key === 'ArrowRight') setActiveLightboxIndex((prev) => (prev + 1) % galleryItems.length);
         if (e.key === 'ArrowLeft') setActiveLightboxIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
         if (e.key === 'Escape') setIsLightboxOpen(false);
+      } else if (galleryItems.length > 1) {
+        if (e.key === 'ArrowRight') setActiveSlideIndex((prev) => (prev + 1) % galleryItems.length);
+        if (e.key === 'ArrowLeft') setActiveSlideIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -458,7 +485,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
       setLoadingMoreGallery(true);
       try {
         const nextPage = galleryPage + 1;
-        const res = await getPublicGallery({ page: nextPage, limit: 12 });
+        const res = await getPublicGallery({ page: nextPage, limit: 12, relatedToId: activePhotoId });
         if (res && res.length > 0) {
           setMorePhotosList((prev) => {
             const existingIds = new Set(prev.map((p) => p.id || p._id));
@@ -655,76 +682,154 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                   </div>
                 )}
 
-                {/* Image display: single hero image (full uncropped photo, centered) OR multiple image grid */}
-                {galleryItems.length === 1 ? (
-                  <div className="p-1 sm:p-2 flex justify-center">
+                {/* Image display: Single main photo stage with Prev/Next slider controls and thumbnail bar */}
+                <div className="p-1 sm:p-2 flex flex-col justify-center">
+                  <div
+                    className="relative group overflow-hidden rounded-xl sm:rounded-2xl bg-neutral-950 cursor-pointer w-full flex items-center justify-center min-h-[360px] sm:min-h-[460px] max-h-[82vh] shadow-inner select-none"
+                    onClick={() => { setActiveLightboxIndex(activeSlideIndex); setIsLightboxOpen(true); }}
+                  >
+                    {/* Ambient blur backdrop for rich presentation without blank voids */}
                     <div
-                      className="relative group overflow-hidden rounded-xl sm:rounded-2xl bg-neutral-950 cursor-pointer w-full flex items-center justify-center min-h-[360px] max-h-[82vh] shadow-inner"
-                      onClick={() => { setActiveLightboxIndex(0); setIsLightboxOpen(true); }}
-                    >
-                      {/* Ambient blur backdrop for rich presentation without blank voids */}
-                      <div
-                        className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none"
-                        style={{ backgroundImage: `url(${galleryItems[0]?.src || mainFallback})` }}
-                      />
+                      className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none transition-all duration-700"
+                      style={{ backgroundImage: `url(${galleryItems[activeSlideIndex]?.src || mainFallback})` }}
+                    />
 
-                      {/* Complete uncropped photo centered with natural proportions */}
-                      <img
-                        src={galleryItems[0]?.src || mainFallback}
-                        alt={galleryItems[0]?.title || caption}
-                        className="relative z-10 w-auto max-w-full h-auto max-h-[80vh] object-contain mx-auto transition-transform duration-500 ease-out group-hover:scale-[1.01]"
-                        loading="eager"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== mainFallback) target.src = mainFallback;
-                        }}
-                      />
-                      {/* Expand icon on hover */}
-                      <div className="absolute inset-0 z-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20 pointer-events-none">
-                        <div className="rounded-full bg-black/60 p-3 text-white shadow-xl hover:bg-[#B3121B] transition-colors">
-                          <Maximize2 className="h-6 w-6 text-white" />
+                    {/* Complete uncropped photo centered with natural proportions */}
+                    <img
+                      key={activeSlideIndex}
+                      src={galleryItems[activeSlideIndex]?.src || mainFallback}
+                      alt={galleryItems[activeSlideIndex]?.title || caption}
+                      className="relative z-10 w-auto max-w-full h-auto max-h-[78vh] object-contain mx-auto transition-transform duration-500 ease-out group-hover:scale-[1.01]"
+                      loading="eager"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== mainFallback) target.src = mainFallback;
+                      }}
+                    />
+
+                    {/* Top-left Photo Count Badge */}
+                    {galleryItems.length > 1 && (
+                      <div className="absolute top-3.5 left-3.5 z-20 flex items-center gap-1.5 rounded-full bg-black/80 backdrop-blur-md px-3 py-1 text-[12px] font-black text-white border border-white/20 shadow-lg pointer-events-none">
+                        <Camera className="h-3.5 w-3.5 text-red-400" />
+                        <span>{activeSlideIndex + 1} / {galleryItems.length}</span>
+                      </div>
+                    )}
+
+                    {/* Top-right Lightbox Expand Icon */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveLightboxIndex(activeSlideIndex);
+                        setIsLightboxOpen(true);
+                      }}
+                      className="absolute top-3.5 right-3.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white hover:bg-[#B3121B] transition-all border border-white/20 shadow-lg cursor-pointer"
+                      title={language === 'gu' ? 'મોટો ફોટો જુઓ' : 'View Fullscreen'}
+                      aria-label="Fullscreen"
+                    >
+                      <Maximize2 className="h-4.5 w-4.5 text-white" />
+                    </button>
+
+                    {/* Prev / Next navigation arrow buttons */}
+                    {galleryItems.length > 1 && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSlideIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length);
+                          }}
+                          aria-label="Previous photo"
+                          className="absolute left-3.5 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/75 text-white hover:bg-[#B3121B] hover:scale-110 active:scale-95 transition-all shadow-xl backdrop-blur-md border border-white/20 cursor-pointer"
+                        >
+                          <ChevronLeft className="h-6 w-6 stroke-[2.5]" />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setActiveSlideIndex((prev) => (prev + 1) % galleryItems.length);
+                          }}
+                          aria-label="Next photo"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-black/75 text-white hover:bg-[#B3121B] hover:scale-110 active:scale-95 transition-all shadow-xl backdrop-blur-md border border-white/20 cursor-pointer"
+                        >
+                          <ChevronRight className="h-6 w-6 stroke-[2.5]" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Thumbnail Navigation Bar for multi-image albums */}
+                  {galleryItems.length > 1 && (
+                    <div className="mt-2.5 p-3 bg-neutral-100 dark:bg-[#131315] rounded-xl border border-neutral-200 dark:border-neutral-800">
+                      <div className="flex items-center justify-between mb-2 px-1">
+                        <span className="text-[12.5px] font-bold text-neutral-700 dark:text-neutral-300 flex items-center gap-1.5">
+                          <Camera className="w-3.5 h-3.5 text-red-500" />
+                          <span>
+                            {language === 'gu'
+                              ? `તસવીર ${activeSlideIndex + 1} / ${galleryItems.length}`
+                              : language === 'hi'
+                                ? `तस्वीर ${activeSlideIndex + 1} / ${galleryItems.length}`
+                                : `Photo ${activeSlideIndex + 1} of ${galleryItems.length}`}
+                          </span>
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setActiveSlideIndex((prev) => (prev - 1 + galleryItems.length) % galleryItems.length)}
+                            className="p-1 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-[#B3121B] hover:text-white transition-colors cursor-pointer"
+                            aria-label="Previous thumbnail"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setActiveSlideIndex((prev) => (prev + 1) % galleryItems.length)}
+                            className="p-1 rounded bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-[#B3121B] hover:text-white transition-colors cursor-pointer"
+                            aria-label="Next thumbnail"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
+
+                      {/* Thumbnails row */}
+                      <div className="flex gap-2.5 overflow-x-auto scrollbar-hide py-1">
+                        {galleryItems.map((item, idx) => {
+                          const isSelected = idx === activeSlideIndex;
+                          const thumbSrc = item.src || mainFallback;
+                          return (
+                            <button
+                              key={item.id || idx}
+                              type="button"
+                              onClick={() => setActiveSlideIndex(idx)}
+                              className={`relative shrink-0 w-20 h-14 sm:w-24 sm:h-16 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${
+                                isSelected
+                                  ? 'border-[#B3121B] scale-105 shadow-md ring-2 ring-[#B3121B]/40 opacity-100'
+                                  : 'border-transparent opacity-60 hover:opacity-100 hover:border-neutral-400'
+                              }`}
+                            >
+                              <img
+                                src={thumbSrc}
+                                alt={item.title || `Thumbnail ${idx + 1}`}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  const target = e.currentTarget;
+                                  const fallback = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
+                                  if (target.src !== fallback) target.src = fallback;
+                                }}
+                              />
+                              <span className="absolute bottom-1 right-1 text-[10px] font-black text-white bg-black/80 px-1.5 py-0.5 rounded backdrop-blur-sm">
+                                {idx + 1}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-1 p-1">
-                    {galleryItems.map((item, idx) => {
-                      const itemSrc = item.src || mainFallback;
-                      return (
-                        <div
-                          key={item.id || idx}
-                          className="relative group overflow-hidden rounded-xl bg-black cursor-pointer"
-                          style={{ aspectRatio: '4/3' }}
-                          onClick={() => { setActiveLightboxIndex(idx); setIsLightboxOpen(true); }}
-                        >
-                          <img
-                            src={itemSrc}
-                            alt={item.title || caption}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                            loading={idx < 2 ? 'eager' : 'lazy'}
-                            onError={(e) => {
-                              const target = e.currentTarget;
-                              const fallback = FALLBACK_NEWS_IMAGES[idx % FALLBACK_NEWS_IMAGES.length];
-                              if (target.src !== fallback) target.src = fallback;
-                            }}
-                          />
-                          {/* Number badge */}
-                          <div className="absolute top-2 left-2 z-10 flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-black text-white border border-white/20 shadow">
-                            <Camera className="h-3 w-3 text-red-400" />
-                            <span>{idx + 1}</span>
-                          </div>
-                          {/* Expand icon on hover */}
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
-                            <div className="rounded-full bg-black/60 p-2">
-                              <Maximize2 className="h-5 w-5 text-white" />
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+                  )}
+                </div>
 
                 {/* Photographer credit at bottom */}
                 <div className="px-4 py-3 bg-white dark:bg-[#131315] border-t border-neutral-100 dark:border-neutral-800">
