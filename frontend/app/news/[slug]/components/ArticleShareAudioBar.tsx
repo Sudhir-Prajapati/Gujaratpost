@@ -59,6 +59,21 @@ export default function ArticleShareAudioBar({
     }
   }, [articleUrl, saved]);
 
+  // If language changes while internal audio is speaking, seamlessly re-speak in new language
+  useEffect(() => {
+    if (toggleAudio === undefined && internalSpeaking) {
+      stopArticleAudio();
+      playArticleAudio({
+        title,
+        body: body || audioText,
+        language,
+        onStart: () => setInternalSpeaking(true),
+        onEnd: () => setInternalSpeaking(false),
+        onError: () => setInternalSpeaking(false),
+      });
+    }
+  }, [language, internalSpeaking, title, body, audioText, toggleAudio]);
+
   const ui = (values: { en: string; gu: string; hi: string }) => {
     if (uiLabel) return uiLabel(language, values);
     return values[language] || values.gu || values.en;

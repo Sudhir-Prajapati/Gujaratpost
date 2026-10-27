@@ -36,7 +36,13 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
   return <div className="reading-progress" style={{ width: `${progress}%` }} />;
 });
 
-const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: string }) {
+const ArticleContentBody = memo(function ArticleContentBody({
+  html,
+  activeSpeechText,
+}: {
+  html: string;
+  activeSpeechText?: string;
+}) {
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const cleanHtml = useMemo(() => {
@@ -56,6 +62,78 @@ const ArticleContentBody = memo(function ArticleContentBody({ html }: { html: st
       bodyRef.current.innerHTML = cleanHtml;
     }
   }, [cleanHtml]);
+
+  // Visual karaoke-style red text highlighting where speaker reaches
+  useEffect(() => {
+    const container = bodyRef.current;
+    if (!container) return;
+
+    // Clear any previous active speech highlights
+    const oldMarks = container.querySelectorAll('.gp-speech-highlight');
+    oldMarks.forEach((m) => {
+      const parent = m.parentNode;
+      if (parent) {
+        while (m.firstChild) {
+          parent.insertBefore(m.firstChild, m);
+        }
+        parent.removeChild(m);
+      }
+    });
+
+    if (!activeSpeechText || activeSpeechText.trim().length < 3) return;
+
+    // Prepare search phrase from spoken sentence
+    const cleanChunk = activeSpeechText.replace(/[.,?!।;:()"'“”]/g, ' ').trim();
+    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 1);
+    if (words.length === 0) return;
+
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    let node: Text | null = null;
+
+    while ((node = walker.nextNode() as Text | null)) {
+      if (node.parentElement?.closest('.gp-speech-highlight')) continue;
+      const textVal = node.nodeValue || '';
+      if (!textVal.trim()) continue;
+
+      let matchIndex = -1;
+      let matchLength = 0;
+
+      const lowerVal = textVal.toLowerCase();
+      const lowerChunk = cleanChunk.toLowerCase();
+      const directIdx = lowerVal.indexOf(lowerChunk);
+
+      if (directIdx !== -1) {
+        matchIndex = directIdx;
+        matchLength = cleanChunk.length;
+      } else {
+        // Match by leading key words
+        const sample = words.slice(0, Math.min(words.length, 4)).join(' ').toLowerCase();
+        const subIdx = lowerVal.indexOf(sample);
+        if (subIdx !== -1) {
+          matchIndex = subIdx;
+          matchLength = Math.min(textVal.length - subIdx, cleanChunk.length);
+        }
+      }
+
+      if (matchIndex !== -1 && matchLength > 0) {
+        try {
+          const range = document.createRange();
+          range.setStart(node, matchIndex);
+          range.setEnd(node, Math.min(node.length, matchIndex + matchLength));
+
+          const mark = document.createElement('mark');
+          mark.className = 'gp-speech-highlight text-[#B3121B] dark:text-red-400 font-black bg-red-100/90 dark:bg-red-950/70 px-1 py-0.5 rounded border-b-2 border-[#B3121B] transition-all duration-200 shadow-xs inline';
+          range.surroundContents(mark);
+
+          // Gently scroll highlighted text into viewport if not visible
+          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          break;
+        } catch {
+          // Continue if DOM range split is not clean
+        }
+      }
+    }
+  }, [activeSpeechText]);
 
   // Both SSR and client initial render produce identical empty <div>
   // innerHTML is set imperatively after mount via ref — no hydration mismatch
@@ -672,6 +750,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const [activeSpeechText, setActiveSpeechText] = useState('');
+  const [activeSpeechIndex, setActiveSpeechIndex] = useState(-1);
+  const [totalSpeechChunks, setTotalSpeechChunks] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [adSlide, setAdSlide] = useState(0);
   const [relatedLimit, setRelatedLimit] = useState(8);
@@ -1192,38 +1273,146 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     window.setTimeout(() => setCopied(false), 1800);
   };
 
-  const toggleAudio = () => {
+  const startAudio = useCallback((langToUse: Language = language) => {
+    stopArticleAudio();
+    setIsContentExpanded(true); // Automatically expand so reader can see highlighted text
+    setSpeaking(true);
+
+    const directTitle = getArticleTitle(article, langToUse) || article.title || '';
+    const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
+
+    // Prefer translated title/body if available for current language
+    const speechTitle = (langToUse === language && title) ? title : directTitle;
+    const speechBody = (langToUse === language && body) ? body : directBody;
+
+    playArticleAudio({
+      title: speechTitle,
+      body: speechBody,
+      excerpt: excerpt || '',
+      language: langToUse,
+      onStart: () => setSpeaking(true),
+      onChunkChange: (idx, chunkText, total) => {
+        setActiveSpeechIndex(idx);
+        setActiveSpeechText(chunkText);
+        setTotalSpeechChunks(total);
+      },
+      onEnd: () => {
+        setSpeaking(false);
+        setActiveSpeechIndex(-1);
+        setActiveSpeechText('');
+      },
+      onError: () => {
+        setSpeaking(false);
+        setActiveSpeechIndex(-1);
+        setActiveSpeechText('');
+      },
+    });
+  }, [article, language, title, body, excerpt]);
+
+  const toggleAudio = useCallback(() => {
     if (speaking) {
       stopArticleAudio();
       setSpeaking(false);
+      setActiveSpeechIndex(-1);
+      setActiveSpeechText('');
       return;
     }
-    playArticleAudio({
-      title,
-      body,
-      excerpt,
-      language,
-      onStart: () => setSpeaking(true),
-      onEnd: () => setSpeaking(false),
-      onError: () => setSpeaking(false),
-    });
-  };
+    startAudio(language);
+  }, [speaking, startAudio, language]);
 
-  // If user switches language while audio is active, seamlessly re-speak in the new language
+  // If user switches language while audio is active, seamlessly re-speak in the new language without reload!
   useEffect(() => {
     if (speaking) {
-      stopArticleAudio();
-      playArticleAudio({
-        title,
-        body,
-        excerpt,
-        language,
-        onStart: () => setSpeaking(true),
-        onEnd: () => setSpeaking(false),
-        onError: () => setSpeaking(false),
-      });
+      startAudio(language);
+    } else {
+      setActiveSpeechIndex(-1);
+      setActiveSpeechText('');
     }
   }, [language]);
+
+  const articleContainerRef = useRef<HTMLElement>(null);
+
+  // Directly highlight current spoken sentence in RED in the article itself!
+  useEffect(() => {
+    const root = articleContainerRef.current;
+    if (!root) return;
+
+    // 1. Remove previous active speech highlights
+    const prevMarks = root.querySelectorAll('.gp-speech-highlight');
+    prevMarks.forEach((m) => {
+      const parent = m.parentNode;
+      if (parent) {
+        while (m.firstChild) {
+          parent.insertBefore(m.firstChild, m);
+        }
+        parent.removeChild(m);
+      }
+    });
+
+    const prevActiveItems = root.querySelectorAll('[data-gp-speech-active="true"]');
+    prevActiveItems.forEach((el) => {
+      el.removeAttribute('data-gp-speech-active');
+      el.classList.remove('text-[#B3121B]', 'dark:text-red-400', 'font-black', 'bg-red-50/70', 'dark:bg-red-950/40', 'rounded-md', 'transition-all');
+    });
+
+    if (!speaking || !activeSpeechText || activeSpeechText.trim().length < 3) return;
+
+    // 2. Extract key words from active spoken text
+    const cleanChunk = activeSpeechText.replace(/[.,?!।;:()"'“”]/g, ' ').trim();
+    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 2);
+    if (words.length === 0) return;
+
+    // 3. Find matching candidate elements inside the article: paragraphs, list items, headings, blockquotes
+    const candidates = root.querySelectorAll('p, li, blockquote, h1, h2, h3');
+    let bestElem: Element | null = null;
+    let maxMatch = 0;
+
+    candidates.forEach((cand) => {
+      const txt = cand.textContent || '';
+      if (!txt.trim()) return;
+
+      let matchCount = 0;
+      for (const w of words) {
+        if (txt.includes(w)) {
+          matchCount++;
+        }
+      }
+
+      if (matchCount > maxMatch && matchCount >= Math.min(2, words.length)) {
+        maxMatch = matchCount;
+        bestElem = cand;
+      }
+    });
+
+    if (bestElem) {
+      // Highlight the matching element/sentence in vibrant RED!
+      (bestElem as HTMLElement).setAttribute('data-gp-speech-active', 'true');
+      (bestElem as HTMLElement).classList.add('text-[#B3121B]', 'dark:text-red-400', 'font-black', 'bg-red-50/70', 'dark:bg-red-950/40', 'rounded-md', 'transition-all', 'duration-200');
+
+      // Also try wrapping the exact phrase in a mark if possible
+      const nodeWalker = document.createTreeWalker(bestElem, NodeFilter.SHOW_TEXT);
+      let textNode: Text | null = null;
+      while ((textNode = nodeWalker.nextNode() as Text | null)) {
+        const val = textNode.nodeValue || '';
+        const sample = words.slice(0, Math.min(words.length, 3)).join(' ');
+        const idx = val.indexOf(sample);
+        if (idx !== -1) {
+          try {
+            const range = document.createRange();
+            range.setStart(textNode, idx);
+            range.setEnd(textNode, Math.min(textNode.length, idx + sample.length));
+            const mark = document.createElement('mark');
+            mark.className = 'gp-speech-highlight text-[#B3121B] dark:text-red-400 font-black bg-red-100/90 dark:bg-red-950/70 px-1 py-0.5 rounded border-b-2 border-[#B3121B] shadow-xs inline';
+            range.surroundContents(mark);
+            break;
+          } catch {}
+        }
+      }
+
+      // Smoothly scroll the highlighted sentence into view
+      bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [speaking, activeSpeechText]);
 
   // Clean up any playing audio when user navigates away
   useEffect(() => {
@@ -1347,7 +1536,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       <ReadingProgressBar />
       <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2 overflow-x-clip">
         <div key={`${article.id}-${language}`} className="article-grid" suppressHydrationWarning>
-          <article suppressHydrationWarning>
+          <article ref={articleContainerRef} suppressHydrationWarning>
             <nav data-nosnippet="true" className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium">
               <Link href="/" className="hover:text-[var(--red)] transition-colors">
                 {uiLabel(language, { en: 'Home', gu: 'હોમ', hi: 'होम' })}
@@ -1376,7 +1565,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               {article.isBreaking && <span className="live-badge rounded bg-accent px-2 py-1 text-xs font-black text-white ml-2">BREAKING</span>}
             </div>
 
-            <h1 className="article-title">{title}</h1>
+            <h1 className={`article-title transition-colors duration-200 ${speaking && activeSpeechIndex === 0 ? 'text-[#B3121B] dark:text-red-400 font-black' : ''}`}>
+              {title}
+            </h1>
             <div
               className="article-sub [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through"
               suppressHydrationWarning
@@ -1579,7 +1770,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               if (!bottomHtml) {
                 return (
                   <div>
-                    <ArticleContentBody html={formattedArticleBodyHtml} />
+                    <ArticleContentBody html={formattedArticleBodyHtml} activeSpeechText={activeSpeechText} />
 
                     {/* Full PDF Page-by-Page Document Viewer */}
                     {hasPdfPages && pdfDocumentUrl && (
@@ -1627,7 +1818,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
               return (
                 <div className="relative">
-                  <ArticleContentBody html={topHtml} />
+                  <ArticleContentBody html={topHtml} activeSpeechText={activeSpeechText} />
 
                   {/* IN_ARTICLE Ad Banner displayed inside description */}
                   <AdSectionBanner section="IN_ARTICLE" className="my-6" />
@@ -1656,7 +1847,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                     </div>
                   ) : (
                     <div className="space-y-4 transition-all duration-500 ease-in-out">
-                      <ArticleContentBody html={bottomHtml} />
+                      <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
 
                       {/* Full PDF Page-by-Page Document Viewer */}
                       {hasPdfPages && pdfDocumentUrl && (

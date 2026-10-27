@@ -1,6 +1,7 @@
 'use client';
 
 import type { Language } from '@/types';
+import { translateOnFly, isAlreadyTargetLanguage } from '@/lib/translate';
 
 // Helper: Strip HTML tags and markdown, leave clean readable speech text
 export function cleanTextForSpeech(htmlOrText: string): string {
@@ -159,6 +160,7 @@ export interface PlayArticleOptions {
   excerpt?: string;
   language: Language;
   onStart?: () => void;
+  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number) => void;
   onEnd?: () => void;
   onError?: (err?: any) => void;
 }
@@ -169,6 +171,7 @@ export function playArticleAudio({
   excerpt,
   language,
   onStart,
+  onChunkChange,
   onEnd,
   onError,
 }: PlayArticleOptions): () => void {
@@ -176,136 +179,178 @@ export function playArticleAudio({
 
   const playId = ++currentPlayId;
 
-  // 1. Prepare full speech text: Heading (title) + Full Description (body / excerpt)
-  const cleanTitle = cleanTextForSpeech(title);
-  const cleanBody = cleanTextForSpeech(body || excerpt || '');
+  // Immediately kick off asynchronous text preparation & language alignment
+  (async () => {
+    // 1. Prepare full speech text: Heading (title) + Full Description (body / excerpt)
+    const cleanTitle = cleanTextForSpeech(title);
+    const cleanBody = cleanTextForSpeech(body || excerpt || '');
 
-  // Full text is Title first, then full body
-  const combinedText = cleanTitle ? `${cleanTitle}. ${cleanBody}` : cleanBody;
-  if (!combinedText) {
-    if (onError) onError(new Error('No text to read'));
-    return () => {};
-  }
+    // Full text is Title first, then full body
+    let combinedText = cleanTitle ? `${cleanTitle}. ${cleanBody}` : cleanBody;
+    if (!combinedText) {
+      if (playId === currentPlayId && onError) onError(new Error('No text to read'));
+      return;
+    }
 
-  // 2. Break into sentence chunks for natural smooth delivery
-  const chunks = chunkTextIntoSentences(combinedText);
-  if (chunks.length === 0) {
-    if (onError) onError(new Error('No readable sentences found'));
-    return () => {};
-  }
-
-  if (onStart) onStart();
-
-  // 3. Check if device has a reliable native voice for the language
-  // Gujarati on iOS/Windows almost never has a native voice, so fallback to high-quality /api/tts stream
-  const nativeVoice = getBestVoice(language);
-  const shouldUseBrowserSpeech = nativeVoice !== null && (language !== 'gu' || nativeVoice.lang.toLowerCase().startsWith('gu'));
-
-  if (shouldUseBrowserSpeech && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-    // ══════════════════════════════════════════════════════════════════════════════
-    // MODE A: Device Native SpeechSynthesis with chunk queueing
-    // ══════════════════════════════════════════════════════════════════════════════
-    let chunkIndex = 0;
-
-    const speakNextChunk = () => {
-      if (playId !== currentPlayId) return;
-
-      if (chunkIndex >= chunks.length) {
-        if (onEnd) onEnd();
-        return;
-      }
-
-      const text = chunks[chunkIndex++];
-      const utterance = new SpeechSynthesisUtterance(text);
-      activeUtterance = utterance;
-
-      if (nativeVoice) {
-        utterance.voice = nativeVoice;
-      }
-      utterance.lang = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
-      utterance.rate = 0.95; // slightly relaxed natural pace
-
-      utterance.onend = () => {
-        if (playId === currentPlayId) {
-          speakNextChunk();
+    // 2. Real-time language check:
+    // If the text passed is NOT yet in the requested language (e.g. user switched language in header without reload),
+    // automatically translate the clean speech text to the target language on the fly in ~100-200ms!
+    if (!isAlreadyTargetLanguage(combinedText, language)) {
+      try {
+        const translated = await translateOnFly(combinedText, language);
+        if (playId !== currentPlayId) return; // user cancelled/switched again
+        if (translated && translated.trim()) {
+          combinedText = translated;
         }
+      } catch (err) {
+        console.warn('[TTS translateOnFly error]:', err);
+      }
+    }
+
+    if (playId !== currentPlayId) return;
+
+    // 3. Break into natural sentence chunks (approx 60-140 chars)
+    const chunks = chunkTextIntoSentences(combinedText);
+    if (chunks.length === 0) {
+      if (playId === currentPlayId && onError) onError(new Error('No readable sentences found'));
+      return;
+    }
+
+    if (onStart) onStart();
+
+    // 4. Check if device has a reliable native voice for the language
+    // Gujarati on iOS/Windows almost never has a native voice, so fallback to high-quality /api/tts stream
+    const nativeVoice = getBestVoice(language);
+    const shouldUseBrowserSpeech = nativeVoice !== null && (language !== 'gu' || nativeVoice.lang.toLowerCase().startsWith('gu'));
+
+    if (shouldUseBrowserSpeech && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      // ══════════════════════════════════════════════════════════════════════════════
+      // MODE A: Device Native SpeechSynthesis with chunk queueing & visual tracking
+      // ══════════════════════════════════════════════════════════════════════════════
+      let chunkIndex = 0;
+
+      const speakNextChunk = () => {
+        if (playId !== currentPlayId) return;
+
+        if (chunkIndex >= chunks.length) {
+          if (onChunkChange) onChunkChange(-1, '', chunks.length);
+          if (onEnd) onEnd();
+          return;
+        }
+
+        const currentIndex = chunkIndex;
+        const text = chunks[chunkIndex++];
+        const utterance = new SpeechSynthesisUtterance(text);
+        activeUtterance = utterance;
+
+        if (nativeVoice) {
+          utterance.voice = nativeVoice;
+        }
+        utterance.lang = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
+        utterance.rate = 0.95; // slightly relaxed natural pace
+
+        utterance.onstart = () => {
+          if (playId === currentPlayId && onChunkChange) {
+            onChunkChange(currentIndex, text, chunks.length);
+          }
+        };
+
+        // Also broadcast immediately in case onstart is delayed in some mobile browsers
+        if (onChunkChange) {
+          onChunkChange(currentIndex, text, chunks.length);
+        }
+
+        utterance.onend = () => {
+          if (playId === currentPlayId) {
+            speakNextChunk();
+          }
+        };
+
+        utterance.onerror = (e) => {
+          // If interrupted by cancel, ignore
+          if (e.error === 'interrupted' || e.error === 'canceled') return;
+          console.warn('[Web Speech Error]:', e);
+          if (playId === currentPlayId) {
+            speakNextChunk();
+          }
+        };
+
+        window.speechSynthesis.speak(utterance);
       };
 
-      utterance.onerror = (e) => {
-        // If interrupted by cancel, ignore
-        if (e.error === 'interrupted' || e.error === 'canceled') return;
-        console.warn('[Web Speech Error]:', e);
-        if (playId === currentPlayId) {
-          speakNextChunk();
+      speakNextChunk();
+    } else {
+      // ══════════════════════════════════════════════════════════════════════════════
+      // MODE B: High-Quality Audio Stream via /api/tts (Guaranteed for iPhone, Windows & all devices)
+      // ══════════════════════════════════════════════════════════════════════════════
+      let chunkIndex = 0;
+
+      const playNextAudioChunk = () => {
+        if (playId !== currentPlayId) return;
+
+        if (chunkIndex >= chunks.length) {
+          if (onChunkChange) onChunkChange(-1, '', chunks.length);
+          if (onEnd) onEnd();
+          return;
         }
+
+        const currentIndex = chunkIndex;
+        const chunkText = chunks[chunkIndex++];
+        const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
+
+        const audio = new Audio(audioUrl);
+        activeAudio = audio;
+
+        // Broadcast active sentence to highlight in RED
+        if (onChunkChange) {
+          onChunkChange(currentIndex, chunkText, chunks.length);
+        }
+
+        // Preload the next chunk in background for seamless playback without pauses
+        if (chunkIndex < chunks.length) {
+          const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunks[chunkIndex])}`;
+          const preloader = new Audio();
+          preloader.preload = 'auto';
+          preloader.src = nextUrl;
+        }
+
+        audio.onended = () => {
+          if (playId === currentPlayId) {
+            playNextAudioChunk();
+          }
+        };
+
+        audio.onerror = (err) => {
+          console.warn('[Audio Stream Chunk Error]:', err);
+          // Continue to next chunk on transient network glitch
+          if (playId === currentPlayId) {
+            playNextAudioChunk();
+          }
+        };
+
+        audio.play().catch((err) => {
+          // Autoplay policy or user cancellation
+          if (err.name !== 'AbortError') {
+            console.warn('[Audio Play Error]:', err);
+          }
+          if (playId === currentPlayId && chunkIndex < chunks.length) {
+            playNextAudioChunk();
+          } else if (onEnd) {
+            if (onChunkChange) onChunkChange(-1, '', chunks.length);
+            onEnd();
+          }
+        });
       };
 
-      window.speechSynthesis.speak(utterance);
-    };
-
-    speakNextChunk();
-  } else {
-    // ══════════════════════════════════════════════════════════════════════════════
-    // MODE B: High-Quality Audio Stream via /api/tts (Guaranteed for iPhone, Windows & all devices)
-    // ══════════════════════════════════════════════════════════════════════════════
-    let chunkIndex = 0;
-
-    const playNextAudioChunk = () => {
-      if (playId !== currentPlayId) return;
-
-      if (chunkIndex >= chunks.length) {
-        if (onEnd) onEnd();
-        return;
-      }
-
-      const chunkText = chunks[chunkIndex++];
-      const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
-
-      const audio = new Audio(audioUrl);
-      activeAudio = audio;
-
-      // Preload the next chunk in background for seamless playback without pauses
-      if (chunkIndex < chunks.length) {
-        const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunks[chunkIndex])}`;
-        const preloader = new Audio();
-        preloader.preload = 'auto';
-        preloader.src = nextUrl;
-      }
-
-      audio.onended = () => {
-        if (playId === currentPlayId) {
-          playNextAudioChunk();
-        }
-      };
-
-      audio.onerror = (err) => {
-        console.warn('[Audio Stream Chunk Error]:', err);
-        // Continue to next chunk on transient network glitch
-        if (playId === currentPlayId) {
-          playNextAudioChunk();
-        }
-      };
-
-      audio.play().catch((err) => {
-        // Autoplay policy or user cancellation
-        if (err.name !== 'AbortError') {
-          console.warn('[Audio Play Error]:', err);
-        }
-        if (playId === currentPlayId && chunkIndex < chunks.length) {
-          playNextAudioChunk();
-        } else if (onEnd) {
-          onEnd();
-        }
-      });
-    };
-
-    playNextAudioChunk();
-  }
+      playNextAudioChunk();
+    }
+  })();
 
   // Return cancel function
   return () => {
     if (playId === currentPlayId) {
       stopArticleAudio();
+      if (onChunkChange) onChunkChange(-1, '', 0);
       if (onEnd) onEnd();
     }
   };
