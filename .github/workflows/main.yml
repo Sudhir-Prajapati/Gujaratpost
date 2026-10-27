@@ -1,0 +1,82 @@
+name: gujarat-post-deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install SSH keys
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          install -m 600 -D /dev/null ~/.ssh/id_rsa
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          SSH_PORT="${{ secrets.SSH_PORT || '1186' }}"
+          ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Connect SSH and deploy Backend and Frontend
+        run: |
+          SSH_PORT="${{ secrets.SSH_PORT || '1186' }}"
+
+          ssh -p "$SSH_PORT" -o StrictHostKeyChecking=yes \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" << 'EOF'
+
+            set -e
+
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+            cd /var/app/Gujarat-Post-Website
+
+            echo "---------- Pulling Latest Code ----------"
+            git pull origin main
+
+            echo "========== BACKEND DEPLOYMENT =========="
+
+            cd /var/app/Gujarat-Post-Website/backend
+
+            echo "---------- Installing Backend Dependencies ----------"
+            npm install
+
+            echo "---------- Building Backend ----------"
+            npm run build
+
+            echo "---------- Restarting Backend ----------"
+            pm2 restart gujarat-post-backend --update-env > /dev/null 2>&1
+
+            echo "========== FRONTEND DEPLOYMENT Succssfully DevOPS Team...=========="
+
+            cd /var/app/Gujarat-Post-Website/frontend
+
+            echo "---------- Installing Frontend Dependencies ----------"
+            npm install
+
+            echo "---------- Building Frontend Succssfully DevOPS Team ----------"
+            npm run build
+
+            echo "---------- Restarting Frontend ----------"
+            pm2 restart gujarat-post-frontend --update-env > /dev/null 2>&1
+
+            echo "========== DEPLOYMENT SUCCESSFUL Succssfully DevOPS Team....=========="
+
+          EOF
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -rf ~/.ssh
