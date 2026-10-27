@@ -1190,7 +1190,7 @@ export default function Header() {
                     : 'border-border bg-card hover:bg-muted hover:border-foreground/20 text-foreground'
                     }`}
                 >
-                  {city}
+                  {cityTranslations[city]?.[language] || city}
                 </button>
               ))}
             </div>
