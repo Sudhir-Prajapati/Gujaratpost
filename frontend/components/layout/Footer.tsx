@@ -222,7 +222,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
     const wrap = isInline ? 'pt-2 pb-1.5' : 'pt-4 pb-3';
 
     return (
-        <>
+        <div className={!isInline ? 'mt-12 sm:mt-16 md:mt-20' : ''}>
             <style dangerouslySetInnerHTML={{
                 __html: `
 @keyframes footerTitleShimmer {
@@ -531,6 +531,6 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
 
                 </div>
             </footer>
-        </>
+        </div>
     );
 }
