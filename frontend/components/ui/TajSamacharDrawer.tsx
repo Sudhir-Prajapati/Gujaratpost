@@ -8,6 +8,8 @@ import { Article } from '@/types';
 import { Megaphone, X } from 'lucide-react';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { useIsApk } from '@/lib/useIsApk';
+import { useApp } from '@/components/AppProvider';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 // Helper to resolve absolute or relative image URLs cleanly
 function getFullImageUrl(url?: string | null): string {
@@ -137,6 +139,7 @@ const FALLBACK_ARTICLES: Partial<Article>[] = [
 export default function TajSamacharDrawer() {
   const pathname = usePathname();
   const { isApk } = useIsApk();
+  const { language } = useApp();
   const [isOpen, setIsOpen] = useState(false);
   const [articles, setArticles] = useState<any[]>(FALLBACK_ARTICLES);
   const [loading, setLoading] = useState(false);
@@ -243,8 +246,8 @@ export default function TajSamacharDrawer() {
       <div className={`fixed ${isApk ? 'bottom-[72px] left-4 z-45' : 'bottom-6 left-6 z-[9990]'} flex items-center gap-3`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          aria-label="તાજા સમાચાર (Latest News)"
-          title="તાજા સમાચાર જુઓ"
+          aria-label="લેટેસ્ટ સમાચાર (Latest News)"
+          title="લેટેસ્ટ સમાચાર જુઓ"
           className="relative group flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
         >
           {/* Periodic pulse ring animation (expands every 4 seconds) */}
@@ -264,98 +267,102 @@ export default function TajSamacharDrawer() {
           )}
           <div className={`fixed ${isApk ? 'bottom-[72px] left-3 right-3 max-h-[76vh]' : 'bottom-24 left-4 sm:left-6 w-[calc(100vw-32px)] sm:w-[410px] max-h-[82vh]'} z-[9995] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-red-900/20 overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-4`}>
 
-          {/* Header Bar - Red & Black Theme (Bigger & Vertically Centered) */}
-          <div className="bg-gradient-to-r from-red-700 via-red-600 to-black text-white px-5 py-3 flex items-center justify-between shadow-md relative overflow-hidden min-h-[48px]">
-            {/* Background subtle sheen */}
-            <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-black/40 to-transparent pointer-events-none" />
+            {/* Header Bar - Red & Black Theme (Bigger & Vertically Centered) */}
+            <div className="bg-gradient-to-r from-red-700 via-red-600 to-black text-white px-5 py-3 flex items-center justify-between shadow-md relative overflow-hidden min-h-[48px]">
+              {/* Background subtle sheen */}
+              <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-gradient-to-l from-black/40 to-transparent pointer-events-none" />
 
-            <div className="flex items-center gap-2.5 z-10 my-auto">
-              <span className="relative flex h-3 w-3 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-              </span>
-              <h3 className="text-base sm:text-lg font-bold tracking-wide text-white drop-shadow-sm font-gujarati leading-none flex items-center">
-                તાજા સમાચાર
-              </h3>
+              <div className="flex items-center gap-2.5 z-10 my-auto">
+                <span className="relative flex h-3 w-3 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                </span>
+                <h3 className="text-base sm:text-lg font-bold tracking-wide text-white drop-shadow-sm font-gujarati leading-none flex items-center">
+                  લેટેસ્ટ સમાચાર
+                </h3>
+              </div>
+
+              <button
+                onClick={() => setIsOpen(false)}
+                className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/35 text-white flex items-center justify-center transition-colors focus:outline-none z-10 my-auto"
+                aria-label="Close"
+              >
+                <X className="w-4 h-4 text-white" />
+              </button>
             </div>
 
-            <button
-              onClick={() => setIsOpen(false)}
-              className="w-7 h-7 rounded-full bg-white/20 hover:bg-white/35 text-white flex items-center justify-center transition-colors focus:outline-none z-10 my-auto"
-              aria-label="Close"
+            {/* Drawer Body - Scrollable Article List with Infinite Scroll */}
+            <div
+              onScroll={handleScroll}
+              className="overflow-y-auto flex-1 divide-y divide-gray-400 dark:divide-gray-800 p-2 max-h-[440px] custom-scrollbar bg-white dark:bg-gray-900"
             >
-              <X className="w-4 h-4 text-white" />
-            </button>
-          </div>
-
-          {/* Drawer Body - Scrollable Article List with Infinite Scroll */}
-          <div
-            onScroll={handleScroll}
-            className="overflow-y-auto flex-1 divide-y divide-gray-400 dark:divide-gray-800 p-2 max-h-[440px] custom-scrollbar bg-white dark:bg-gray-900"
-          >
-            {loading ? (
-              // Loading Skeleton
-              <div className="space-y-4 p-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 animate-pulse">
-                    <div className="w-24 h-20 bg-gray-200 dark:bg-gray-800 rounded-lg" />
-                    <div className="flex-1 space-y-2 py-1">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full" />
-                      <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
-                      <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/3 mt-2" />
+              {loading ? (
+                // Loading Skeleton
+                <div className="space-y-4 p-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3 animate-pulse">
+                      <div className="w-24 h-20 bg-gray-200 dark:bg-gray-800 rounded-lg" />
+                      <div className="flex-1 space-y-2 py-1">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full" />
+                        <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-3/4" />
+                        <div className="h-3 bg-gray-200 dark:bg-gray-800 rounded w-1/3 mt-2" />
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : articles.length === 0 ? (
-              <div className="p-6 text-center text-gray-500 text-sm">
-                હાલ કોઈ તાજા સમાચાર ઉપલબ્ધ નથી.
-              </div>
-            ) : (
-              <>
-                {articles.map((item, idx) => {
-                  const articleSlug = item.slug || `news-${item.id}`;
-                  const rawImg = item.image || item.featuredImage || item.thumbnail;
-                  const imageSrc = getFullImageUrl(rawImg);
-                  const timeAgo = getRelativeTime(item.publishedAt || item.createdAt || new Date().toISOString());
+                  ))}
+                </div>
+              ) : articles.length === 0 ? (
+                <div className="p-6 text-center text-gray-500 text-sm">
+                  હાલ કોઈ લેટેસ્ટ સમાચાર ઉપલબ્ધ નથી.
+                </div>
+              ) : (
+                <>
+                  {articles.map((item, idx) => {
+                    const articleSlug = item.slug || `news-${item.id}`;
+                    const rawImg = item.image || item.featuredImage || item.thumbnail;
+                    const imageSrc = getFullImageUrl(rawImg);
+                    const timeAgo = getRelativeTime(item.publishedAt || item.createdAt || new Date().toISOString());
 
-                  return (
-                    <Link
-                      key={`${item.id || item.slug}-${idx}`}
-                      href={`/news/${articleSlug}`}
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-start gap-3 p-3 hover:bg-red-50/60 dark:hover:bg-red-950/20 rounded-xl transition-all duration-200 group cursor-pointer"
-                    >
-                      {/* Thumbnail Image */}
-                      <div className="w-24 h-20 sm:w-28 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-gray-100 dark:bg-gray-800 border border-gray-400/80 dark:border-gray-700 shadow-sm">
-                        <ArticleMedia
-                          src={imageSrc}
-                          alt={item.titleGu || item.title || 'Taj Samachar'}
-                          fill
-                          className="group-hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
+                    return (
+                      <Link
+                        key={`${item.id || item.slug}-${idx}`}
+                        href={`/news/${articleSlug}`}
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-start gap-3 p-3 hover:bg-red-50/60 dark:hover:bg-red-950/20 rounded-xl transition-all duration-200 group cursor-pointer"
+                      >
+                        {/* Thumbnail Image */}
+                        <div className="w-24 h-20 sm:w-28 sm:h-20 rounded-lg overflow-hidden flex-shrink-0 relative bg-gray-100 dark:bg-gray-800 border border-gray-400/80 dark:border-gray-700 shadow-sm">
+                          <ArticleMedia
+                            src={imageSrc}
+                            alt={language === 'gu' ? (item.titleGu || item.title || 'તાજા સમાચાર') : language === 'hi' ? (item.titleHi || item.title || 'ताज़ा समाचार') : (item.titleEn || item.title || 'Latest News')}
+                            fill
+                            className="group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
 
-                      {/* Title & Metadata */}
-                      <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
-                        <h4 className="text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors font-gujarati">
-                          {item.titleGu || item.title}
-                        </h4>
-                      </div>
-                    </Link>
-                  );
-                })}
+                        {/* Title & Metadata */}
+                        <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
+                          <h4 className={`text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}>
+                            <AutoArticleTitle
+                              article={{ ...item, titleGu: item.titleGu || item.title } as any}
+                              language={language as any}
+                              fallback={item.titleGu || item.title || ''}
+                            />
+                          </h4>
+                        </div>
+                      </Link>
+                    );
+                  })}
 
-                {/* Bottom Spinner when loading more articles */}
-                {loadingMore && (
-                  <div className="flex items-center justify-center p-3 text-red-700 gap-2 text-xs font-semibold animate-pulse bg-red-50/40 dark:bg-red-950/10 rounded-xl my-1">
-                    <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                    વધુ તાજા સમાચાર લોડ થઈ રહ્યા છે...
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                  {/* Bottom Spinner when loading more articles */}
+                  {loadingMore && (
+                    <div className="flex items-center justify-center p-3 text-red-700 gap-2 text-xs font-semibold animate-pulse bg-red-50/40 dark:bg-red-950/10 rounded-xl my-1">
+                      <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                      વધુ લેટેસ્ટ સમાચાર લોડ થઈ રહ્યા છે...
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </>
       )}

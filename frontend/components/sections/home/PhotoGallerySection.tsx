@@ -3,9 +3,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Language } from '@/types';
-import { getLocalized, PHOTOS } from '@/data';
+import { getLocalized, PHOTOS, getPhotoCategoryBadge } from '@/data';
 import { getPublicGallery } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
@@ -33,7 +34,7 @@ function GalleryStripImage({ src: initialSrc, alt, index }: { src: string; alt: 
       fill
       sizes="(max-width: 768px) 85vw, 350px"
       draggable={false}
-      className="object-cover pointer-events-none transition-transform duration-700 ease-out group-hover:scale-[1.07]"
+      className="object-contain pointer-events-none transition-transform duration-700 ease-out"
       onError={() => setSrc(fallback)}
     />
   );
@@ -44,12 +45,14 @@ interface StripProps {
   galleryList: any[];
   language: Language;
   accentColor?: string;
+  onActivePhotoChange?: (photo: any) => void;
 }
 
 function GalleryScrollStrip({
   galleryList,
   language,
   accentColor = '#B3121B',
+  onActivePhotoChange,
 }: StripProps) {
   const CATS_GU = ['સમાચાર', 'મનોરંજન', 'ગ્લેમરસ', 'ગુજરાત', 'સંસ્કૃતિ', 'પ્રવાસ', 'ઉત્સવ', 'લાઈફસ્ટાઈલ'];
   const CATS_EN = ['News', 'Entertainment', 'Glamour', 'Gujarat', 'Culture', 'Travel', 'Festival', 'Lifestyle'];
@@ -110,8 +113,21 @@ function GalleryScrollStrip({
     el.style.scrollBehavior = 'auto';
     lastTimeRef.current = performance.now();
     scrollPosRef.current = el.scrollLeft;
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const SPEED = isMobile ? 46 : 32; // Minor speed increase for mobile auto-scroll; desktop strictly 32 px/sec
 
-    const SPEED = 32; // Comfortable, smooth scrolling speed in px/sec
+    let lastReportedIdx = -1;
+    const checkActivePhoto = () => {
+      if (!onActivePhotoChange || galleryList.length === 0 || !el) return;
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      const cardWidth = isMobile ? window.innerWidth * 0.82 + 16 : 336;
+      const idx = Math.max(0, Math.floor((el.scrollLeft + cardWidth * 0.35) / cardWidth)) % galleryList.length;
+      if (idx !== lastReportedIdx && galleryList[idx]) {
+        lastReportedIdx = idx;
+        onActivePhotoChange(galleryList[idx]);
+      }
+    };
+    checkActivePhoto();
 
     const loop = (now: number) => {
       const dt = Math.min(now - lastTimeRef.current, 50);
@@ -142,6 +158,7 @@ function GalleryScrollStrip({
         }
       }
 
+      checkActivePhoto();
       animFrameIdRef.current = requestAnimationFrame(loop);
     };
 
@@ -151,7 +168,7 @@ function GalleryScrollStrip({
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
     };
-  }, [galleryList.length, copies]);
+  }, [galleryList, copies, onActivePhotoChange]);
 
   // Mouse Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -228,8 +245,7 @@ function GalleryScrollStrip({
       >
         {repeatedGallery.map((item, index) => {
           const absIdx = index;
-          const cat = item.category ||
-            (language === 'gu' ? CATS_GU[absIdx % CATS_GU.length] : CATS_EN[absIdx % CATS_EN.length]);
+          const cat = getPhotoCategoryBadge(item, language);
           const title = getLocalized(language, {
             en: item.caption || item.alt || item.title || '',
             gu: item.captionGu || item.caption || item.alt || '',
@@ -267,7 +283,7 @@ function GalleryScrollStrip({
                   className="text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md"
                   style={{ backgroundColor: accentColor }}
                 >
-                  {cat}
+                  <AutoTranslateString text={cat} language={language} />
                 </span>
               </div>
 
@@ -277,13 +293,13 @@ function GalleryScrollStrip({
                   <AutoTranslateString text={title} language={language} />
                 </p>
 
-                <div className="flex items-center gap-2 mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="h-[2px] w-7 rounded-full" style={{ backgroundColor: accentColor }} />
-                  <span className="text-white/80 text-[11px] font-bold tracking-wider uppercase">
+                <div className="flex items-center gap-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="h-[2.5px] w-7 rounded-full" style={{ backgroundColor: accentColor }} />
+                  <span className="text-white text-[13.5px] md:text-[14.5px] font-extrabold tracking-wide">
                     {language === 'gu' ? 'ફોટો જુઓ' : 'View Photos'}
                   </span>
-                  <svg className="h-3 w-3" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                  <svg className="h-4 w-4" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
               </div>
@@ -303,7 +319,9 @@ function GalleryScrollStrip({
 
 /* --- Main Component -------------------------------------------------------- */
 export default function PhotoGallerySection({ language }: { language: Language }) {
+  const router = useRouter();
   const [photos, setPhotos] = useState<any[]>([]);
+  const [activePhoto, setActivePhoto] = useState<any>(null);
 
   useEffect(() => {
     // Fetch up to 50 photos to give users a full, rich gallery stream
@@ -320,6 +338,9 @@ export default function PhotoGallerySection({ language }: { language: Language }
         }
       }
       setPhotos(items);
+      if (items.length > 0 && !activePhoto) {
+        setActivePhoto(items[0]);
+      }
     }).catch(() => {
       setPhotos(PHOTOS);
     });
@@ -327,20 +348,36 @@ export default function PhotoGallerySection({ language }: { language: Language }
 
   const allPhotos = photos.length >= 2 ? photos : PHOTOS;
 
+  const handleOpenPhotos = (e: React.MouseEvent) => {
+    e.preventDefault();
+    try {
+      router.push('/photos');
+    } catch {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/photos';
+      }
+    }
+  };
+
   return (
     <section className="py-2 bg-background select-none">
       <div className="mx-auto max-w-screen-xl px-4">
 
         {/* ── Header: ફોટો ગેલેરી ── */}
         <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
-          <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight shadow-xs">
-            {language === 'gu' ? 'ફોટો   ગેલેરી' : language === 'hi' ? 'फोटो   गैलरी' : 'Photo   Gallery'}
-          </span>
           <Link
             href="/photos"
-            className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline flex items-center gap-1 transition-colors"
+            prefetch={true}
+            className="section-heading-badge bg-[#B3121B] text-white px-6 py-2.5 sm:py-3 text-[19px] sm:text-[21px] md:text-[23px] font-black rounded-xl select-none leading-none tracking-tight shadow-md cursor-pointer hover:bg-red-700 transition-colors"
           >
-            <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : 'More Photo Gallery'}</span>
+            {language === 'gu' ? 'ફોટો   ગેલેરી' : language === 'hi' ? 'फोटो   गैलरी' : 'Photo   Gallery'}
+          </Link>
+          <Link
+            href="/photos"
+            prefetch={true}
+            className="text-[#B3121B] hover:text-red-700 font-black text-[17px] sm:text-[18px] md:text-[20px] hover:underline flex items-center gap-1.5 transition-colors cursor-pointer relative z-20 py-1"
+          >
+            <span>{language === 'gu' ? 'વધુ જુઓ' : 'More →'}</span>
             <span>→</span>
           </Link>
         </div>
@@ -350,6 +387,7 @@ export default function PhotoGallerySection({ language }: { language: Language }
           galleryList={allPhotos}
           language={language}
           accentColor="#B3121B"
+          onActivePhotoChange={setActivePhoto}
         />
 
       </div>

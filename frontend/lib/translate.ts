@@ -5,7 +5,11 @@ import { Language } from '@/types';
 
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 const memoryCache: Record<string, string> = {};
-const CACHE_PREFIX = 'gp_tr_v6';
+const CACHE_PREFIX = 'gp_tr_v7';
+
+// Gujarati & Devanagari word characters (excluding OM \u0AD0, \u0950, numerals, and punctuation)
+const GUJARATI_LETTERS_REGEX = /[\u0A85-\u0A94\u0A95-\u0AA8\u0AAA-\u0AB0\u0AB2-\u0AB3\u0AB5-\u0AB9\u0ABD-\u0ACC\u0ACD]/;
+const DEVANAGARI_LETTERS_REGEX = /[\u0905-\u0939\u093D-\u094D\u0958-\u0961]/;
 
 // ─── In-flight deduplication: same key won't fire a second fetch ──────────────
 const inFlight: Record<string, Promise<string>> = {};
@@ -38,13 +42,20 @@ function isBadCacheValue(val: string, original: string, targetLang: Language): b
   if (!val || typeof val !== 'string' || !val.trim()) return true;
   const valTrimmed = val.trim();
 
-  // If target is English, but value still contains Gujarati script, it's untranslated/bad cache!
-  if (targetLang === 'en' && /[\u0A80-\u0AFF]/.test(valTrimmed)) {
-    return true;
+  const gujMatches = (valTrimmed.match(new RegExp(GUJARATI_LETTERS_REGEX, 'g')) || []).length;
+  const devMatches = (valTrimmed.match(new RegExp(DEVANAGARI_LETTERS_REGEX, 'g')) || []).length;
+  const latMatches = (valTrimmed.match(/[a-zA-Z]/g) || []).length;
+
+  // If target is English, it must contain Latin letters and not be predominantly Gujarati/Devanagari
+  if (targetLang === 'en') {
+    if (latMatches === 0 && (gujMatches > 0 || devMatches > 0)) return true;
+    if (gujMatches > latMatches) return true;
+    return false;
   }
-  // If target is Hindi, but value still contains Gujarati script and no Devanagari, it's bad cache!
-  if (targetLang === 'hi' && /[\u0A80-\u0AFF]/.test(valTrimmed) && !/[\u0900-\u097F]/.test(valTrimmed)) {
-    return true;
+  // If target is Hindi, it should have Devanagari letters and not remain Gujarati
+  if (targetLang === 'hi') {
+    if (devMatches === 0 && gujMatches > 0) return true;
+    return false;
   }
   return false;
 }
@@ -170,12 +181,13 @@ function isAlreadyTargetLanguage(text: string, targetLang: Language): boolean {
   const plain = text.replace(/<[^>]*>/g, '').trim();
   if (!plain) return true;
 
-  const hasGujarati = /[\u0A80-\u0AFF]/.test(plain);
-  const hasDevanagari = /[\u0900-\u097F]/.test(plain);
+  const hasGujarati = GUJARATI_LETTERS_REGEX.test(plain);
+  const hasDevanagari = DEVANAGARI_LETTERS_REGEX.test(plain);
+  const hasLatin = /[a-zA-Z]/.test(plain);
 
   if (targetLang === 'gu') return hasGujarati && !hasDevanagari;
   if (targetLang === 'hi') return hasDevanagari && !hasGujarati;
-  return !hasGujarati && !hasDevanagari;
+  return hasLatin && !hasGujarati && !hasDevanagari;
 }
 
 function detectSourceLanguage(text: string, targetLang: Language): Language | 'auto' {

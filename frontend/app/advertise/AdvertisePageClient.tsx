@@ -1,5 +1,7 @@
 'use client';
 
+import LocalizedContent from '@/components/i18n/LocalizedContent';
+
 import React from 'react';
 import Link from 'next/link';
 import {
@@ -105,6 +107,7 @@ export default function AdvertisePageClient({ initialData }: Props) {
   };
 
   return (
+    <LocalizedContent>
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 transition-colors">
       {/* Breadcrumb Navigation */}
       <div className="border-b border-gray-100 dark:border-gray-800 bg-gray-50/70 dark:bg-gray-900/40">
@@ -236,5 +239,6 @@ export default function AdvertisePageClient({ initialData }: Props) {
         </div>
       </main>
     </div>
+    </LocalizedContent>
   );
 }

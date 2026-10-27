@@ -13,18 +13,18 @@ import ApkVideoPlayer from '@/components/apk/ApkVideoPlayer';
 import { toGu } from '@/lib/utils';
 import type { Article } from '@/types';
 import ArticleMedia from '@/components/ui/ArticleMedia';
-import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 type TabType = 'video' | 'short' | 'latest';
 
 function timeAgo(dateStr?: string, language = 'gu'): string {
   if (!dateStr) return '';
   const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-  if (diff < 1) return language === 'gu' ? 'હમણાં જ' : 'Just now';
-  if (diff < 60) return language === 'gu' ? `${diff} મિનિટ પહેલા` : `${diff}m ago`;
+  if (diff < 1) return language === 'gu' ? 'હમણાં જ' : language === 'hi' ? 'अभी' : 'Just now';
+  if (diff < 60) return language === 'gu' ? `${diff} મિનિટ પહેલા` : language === 'hi' ? `${diff} मिनट पहले` : `${diff}m ago`;
   const h = Math.floor(diff / 60);
-  if (h < 24) return language === 'gu' ? `${h} કલાક પહેલા` : `${h}h ago`;
-  return language === 'gu' ? `${Math.floor(h / 24)} દિવસ પહેલા` : `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return language === 'gu' ? `${h} કલાક પહેલા` : language === 'hi' ? `${h} घंटे पहले` : `${h}h ago`;
+  return language === 'gu' ? `${Math.floor(h / 24)} દિવસ પહેલા` : language === 'hi' ? `${Math.floor(h / 24)} दिन पहले` : `${Math.floor(h / 24)}d ago`;
 }
 
 function YoutubeIcon({ className = 'h-5 w-5' }: { className?: string }) {
@@ -100,14 +100,14 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
       {/* Top-Left Red Pill Badge: "ફોટો ગેલેરી" matching homepage */}
       <div className="absolute top-2.5 left-2.5 z-10">
         <span className="bg-[#B3121B] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs select-none">
-          {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
+          {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
         </span>
       </div>
 
       {/* Bottom title text overlaid inside */}
       <div className="absolute inset-x-0 bottom-0 p-3 z-10 pointer-events-none">
         <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
-          {photo.titleGu || photo.title}
+          <AutoTranslateString text={photo.titleGu || photo.title || ''} language={language as any} />
         </p>
       </div>
     </Link>
@@ -246,7 +246,7 @@ export default function VideosPageClient() {
       id: 'f1',
       youtubeId: 'ituhQR8gwas',
       title: 'Gujarat Post News Live',
-      titleGu: 'ગુજરાત પોસ્ટ ન્યૂઝ — તાજા સમાચાર',
+      titleGu: 'ગુજરાત પોસ્ટ ન્યૂઝ — લેટેસ્ટ સમાચાર',
       titleHi: 'गुजरात पोस्ट न्यूज़ — ताजा समाचार',
       thumbnail: 'https://i.ytimg.com/vi/ituhQR8gwas/hqdefault.jpg',
       duration: '16:17',
@@ -536,7 +536,9 @@ export default function VideosPageClient() {
               {/* Title / Handle / Description */}
               <div className="text-center md:text-left min-w-0">
                 <div className="flex items-center justify-center md:justify-start gap-2">
-                  <h1 className="text-xl md:text-2xl font-black tracking-tight leading-none">ગુજરાત પોસ્ટ</h1>
+                  <h1 className="text-xl md:text-2xl font-black tracking-tight leading-none">
+                    {getLocalized(language, { en: 'Gujarat Post', gu: 'ગુજરાત પોસ્ટ', hi: 'गुजरात पोस्ट' })}
+                  </h1>
                   <span className="flex items-center justify-center bg-white/20 text-white rounded-full p-0.5" title="Verified Channel">
                     <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
@@ -544,10 +546,18 @@ export default function VideosPageClient() {
                   </span>
                 </div>
                 <p className="mt-2 text-xs md:text-[13px] font-semibold opacity-90 leading-none">
-                  @GujaratPost · 4.2M સબસ્ક્રાઇબર્સ · 3,240 વિડિયો
+                  {getLocalized(language, {
+                    en: '@GujaratPost · 4.2M Subscribers · 3,240 Videos',
+                    gu: '@GujaratPost · 4.2M સબસ્ક્રાઇબર્સ · 3,240 વિડિયો',
+                    hi: '@GujaratPost · 4.2M सब्सक्राइबर्स · 3,240 वीडियो',
+                  })}
                 </p>
                 <p className="mt-3 text-xs leading-relaxed max-w-xl opacity-80 font-semibold line-clamp-2 md:line-clamp-none">
-                  ગુજરાતના તાજા સમાચાર, બ્રેકિંગ ન્યૂઝ, એક્સક્લુઝિવ તપાસ અહેવાલ અને ખાસ કાર્યક્રમો — સૌથી પહેલા, સૌથી ઝડપી. અમારી યુટ્યુબ ચેનલ સબસ્ક્રાઇબ કરો.
+                  {getLocalized(language, {
+                    en: 'Gujarat\'s latest news, breaking updates, exclusive investigative reports and special programs — first and fastest. Subscribe to our YouTube channel.',
+                    gu: 'ગુજરાતના તાજા સમાચાર, બ્રેકિંગ ન્યૂઝ, એક્સક્લુઝિવ તપાસ અહેવાલ અને ખાસ કાર્યક્રમો — સૌથી પહેલા, સૌથી ઝડપી. અમારી યુટ્યુબ ચેનલ સબસ્ક્રાઇબ કરો.',
+                    hi: 'गुजरात की ताजा खबरें, ब्रेकिंग न्यूज, एक्सक्लूसिव जांच रिपोर्ट और विशेष कार्यक्रम — सबसे पहले, सबसे तेज। हमारे यूट्यूब चैनल को सब्सक्राइब करें।',
+                  })}
                 </p>
               </div>
             </div>
@@ -561,7 +571,7 @@ export default function VideosPageClient() {
                 className="inline-flex items-center justify-center gap-2 bg-white text-black font-black text-xs md:text-sm px-5 py-2.5 rounded-full hover:bg-slate-100 hover:scale-102 transition-all shadow cursor-pointer select-none active:scale-[0.98]"
               >
                 <Bell className="h-4 w-4 shrink-0 fill-current" />
-                <span>સબસ્ક્રાઇબ કરો</span>
+                <span>{getLocalized(language, { en: 'Subscribe', gu: 'સબસ્ક્રાઇબ કરો', hi: 'सब्सक्राइब करें' })}</span>
               </a>
               <a
                 href="https://www.youtube.com/@Gujaratpostnews"
@@ -570,7 +580,7 @@ export default function VideosPageClient() {
                 className="inline-flex items-center justify-center gap-2 bg-black/20 hover:bg-black/35 border border-white/25 text-white font-black text-xs md:text-sm px-5 py-2.5 rounded-full hover:scale-102 transition-all cursor-pointer select-none active:scale-[0.98]"
               >
                 <Play className="h-4 w-4 shrink-0 fill-current" />
-                <span>YouTube પર જુઓ</span>
+                <span>{getLocalized(language, { en: 'Watch on YouTube', gu: 'YouTube પર જુઓ', hi: 'YouTube पर देखें' })}</span>
               </a>
             </div>
 
@@ -648,13 +658,13 @@ export default function VideosPageClient() {
                 >
                   <span className="inline-flex items-center gap-1 text-[11px] font-black text-accent uppercase tracking-wider">
                     <Radio className="h-3 w-3 fill-current animate-pulse text-accent" />
-                    યુટ્યુબ પર હમણાં
+                    {getLocalized(language, { en: 'Now on YouTube', gu: 'યુટ્યુબ પર હમણાં', hi: 'यूट्यूब पर अभी' })}
                   </span>
                   <h2 className="mt-1 text-base md:text-lg font-black leading-snug tracking-tight text-foreground hover:text-accent transition-colors line-clamp-3">
-                    {featuredVideo.titleGu}
+                    <AutoTranslateString text={featuredVideo.titleGu || featuredVideo.title || ''} language={language} />
                   </h2>
                   <p className="mt-2 text-xs font-semibold text-muted-foreground">
-                    👁 {featuredVideo.views} views · {featuredVideo.duration}
+                    👁 {language === 'gu' ? toGu(featuredVideo.views) : featuredVideo.views} {getLocalized(language, { en: 'views', gu: 'વ્યૂઝ', hi: 'व्यूज' })} · {featuredVideo.duration}
                   </p>
                 </div>
               </div>
@@ -665,15 +675,15 @@ export default function VideosPageClient() {
               <div className="flex items-center gap-2.5 mb-5 pb-2 border-b-2 border-border">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
                 <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                  લેટેસ્ટ વીડિયો
+                  {getLocalized(language, { en: 'Latest Videos', gu: 'લેટેસ્ટ વીડિયો', hi: 'लेटेस्ट वीडियो' })}
                 </h3>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-x-4 md:gap-y-6">
                 {latestVideos.map((item) => (
                   <div
                     key={item.id}
-                    className="group flex flex-col cursor-pointer"
+                    className="group flex flex-col cursor-pointer p-3.5 md:p-0 bg-card md:bg-transparent border md:border-0 border-border rounded-xl md:rounded-none shadow-xs md:shadow-none transition-all"
                     onClick={() => {
                       if (isApk) {
                         setApkModalVideoId(safeYouTubeId(item.youtubeId));
@@ -683,7 +693,7 @@ export default function VideosPageClient() {
                       }
                     }}
                   >
-                    <div className="relative aspect-video w-full rounded-md overflow-hidden bg-black shadow-sm group">
+                    <div className="relative aspect-video w-full rounded-lg md:rounded-md overflow-hidden bg-black shadow-sm group">
                       {playingVideoId === item.id ? (
                         <iframe
                           className="absolute inset-0 h-full w-full"
@@ -698,29 +708,35 @@ export default function VideosPageClient() {
                             src={item.thumbnail}
                             alt={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
                             fill
-                            sizes="(max-width: 768px) 50vw, 25vw"
+                            sizes="(max-width: 768px) 100vw, 25vw"
                             className="object-cover transition-transform duration-300 group-hover:scale-103"
                           />
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition-all">
-                            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-accent shadow-sm transition-transform group-hover:scale-110">
-                              <Play className="h-4.5 w-4.5 fill-current ml-0.5" />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                            <span className="flex h-11 w-11 md:h-10 md:w-10 items-center justify-center rounded-full bg-white text-accent shadow-sm transition-transform group-hover:scale-110">
+                              <Play className="h-5 w-5 md:h-4.5 md:w-4.5 fill-current ml-0.5" />
                             </span>
                           </div>
-                          <span className="absolute bottom-1.5 right-1.5 rounded bg-black/85 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                          <span className="absolute bottom-2 right-2 md:bottom-1.5 md:right-1.5 rounded bg-black/85 px-2 py-0.5 md:px-1.5 md:py-0.5 text-xs md:text-[10px] font-bold text-white tracking-wide">
                             {item.duration}
                           </span>
                         </div>
                       )}
                     </div>
                     <div className="mt-2.5 min-w-0">
-                      <h4 className="text-[12.5px] md:text-[13px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        {getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
+                      <span className="md:hidden inline-flex items-center gap-1 text-[11px] font-black text-accent uppercase tracking-wider mb-1">
+                        <Radio className="h-3 w-3 fill-current animate-pulse text-accent" />
+                        યુટ્યુબ પર હમણાં
+                      </span>
+                      <h4 className="text-[13px] md:text-[13px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                        <AutoTranslateString text={item.titleGu || item.title || ''} language={language} />
                       </h4>
-                      <div className="mt-1 flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground">
+                      <div className="mt-2 md:mt-1 flex items-center gap-1.5 text-xs md:text-[10px] font-semibold md:font-bold text-muted-foreground">
                         <span className="text-accent">▶</span>
                         <span>Gujarat Post</span>
                         <span>·</span>
-                        <span>{toGu(formatViews(item.views))} views</span>
+                        <span>{language === 'gu' ? toGu(formatViews(item.views)) : formatViews(item.views)} {getLocalized(language, { en: 'views', gu: 'વ્યૂઝ', hi: 'व्यूज' })}</span>
+                        <span className="md:hidden">·</span>
+                        <span className="md:hidden">{item.duration}</span>
                       </div>
                     </div>
                   </div>
@@ -738,10 +754,14 @@ export default function VideosPageClient() {
             <div className="group rounded-xl border border-red-100 dark:border-red-950/20 bg-gradient-to-br from-red-50/10 to-red-50/30 dark:from-red-950/5 dark:to-red-950/10 p-5 mb-6 text-center shadow-sm hover:shadow transition-all duration-300">
               <div className="flex items-center justify-center gap-2 text-accent font-black text-[13px] uppercase tracking-wide mb-2.5">
                 <YoutubeIcon className="h-6 w-6 text-[#FF0000] drop-shadow-sm transition-transform duration-300 group-hover:scale-105" />
-                <span>ગુજરાત પોસ્ટ યુટ્યુબ ચેનલ</span>
+                <span>{getLocalized(language, { en: 'Gujarat Post YouTube Channel', gu: 'ગુજરાત પોસ્ટ યુટ્યુબ ચેનલ', hi: 'गुजरात पोस्ट यूट्यूब चैनल' })}</span>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground font-semibold px-1 mb-4 leading-normal">
-                તમામ વીડિયો, બુલેટિન અને એક્સક્લુઝિવ તપાસ — એક જ જગ્યાએ, ગમે ત્યારે નિહાળો.
+                {getLocalized(language, {
+                  en: 'All videos, bulletins and exclusive investigations — in one place, watch anytime.',
+                  gu: 'તમામ વીડિયો, બુલેટિન અને એક્સક્લુઝિવ તપાસ — એક જ જગ્યાએ, ગમે ત્યારે નિહાળો.',
+                  hi: 'सभी वीडियो, बुलेटिन और एक्सक्लूसिव जांच — एक ही जगह, कभी भी देखें।',
+                })}
               </p>
               <a
                 href="https://www.youtube.com/@Gujaratpostnews?sub_confirmation=1"
@@ -750,7 +770,7 @@ export default function VideosPageClient() {
                 className="w-full inline-flex items-center justify-center gap-2 bg-[#E62117] hover:bg-[#CC181E] text-white font-black text-sm py-2.5 rounded-xl transition-all hover:scale-102 shadow hover:shadow-md cursor-pointer select-none active:scale-[0.98]"
               >
                 <Bell className="h-4 w-4 fill-current shrink-0" />
-                <span>સબસ્ક્રાઇબ કરો</span>
+                <span>{getLocalized(language, { en: 'Subscribe', gu: 'સબસ્ક્રાઇબ કરો', hi: 'सब्सक्राइब करें' })}</span>
               </a>
             </div>
 
@@ -759,7 +779,7 @@ export default function VideosPageClient() {
               <div className="flex items-center gap-2 mb-3.5 pb-2 border-b-2 border-border">
                 <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
                 <span className="text-sm font-black text-foreground">
-                  લોકપ્રિય વીડિયો
+                  {getLocalized(language, { en: 'Popular Videos', gu: 'લોકપ્રિય વીડિયો', hi: 'लोकप्रिय वीडियो' })}
                 </span>
               </div>
               <div className="flex flex-col divide-y divide-border">
@@ -776,7 +796,7 @@ export default function VideosPageClient() {
                         WebkitTextStroke: '1.5px var(--ink-3)'
                       }}
                     >
-                      {toGu(i + 1)}
+                      {language === 'gu' ? toGu(i + 1) : i + 1}
                     </span>
 
                     {/* Video Thumbnail with play icon */}
@@ -832,11 +852,11 @@ export default function VideosPageClient() {
                         className="text-[12.5px] font-bold leading-snug text-foreground/95 group-hover:text-accent transition-colors line-clamp-2"
                         title={item.titleGu}
                       >
-                        {item.titleGu}
+                        <AutoTranslateString text={item.titleGu || (item as any).title || ''} language={language} />
                       </a>
                       <span className="text-[10px] font-semibold text-muted-foreground mt-1 flex items-center gap-1">
                         <span className="text-accent">▶</span>
-                        <span>{item.views}</span>
+                        <span>{language === 'gu' ? toGu(item.views) : item.views}</span>
                       </span>
                     </div>
                   </div>
@@ -849,13 +869,13 @@ export default function VideosPageClient() {
               <div className="mt-4 pt-3 border-t-2 border-border">
                 <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
                   <span className="bg-[#B3121B] text-white px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
-                    {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
+                    {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
                   </span>
                   <Link
                     href="/photos"
-                    className="text-xs md:text-[13px] font-extrabold text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
+                    className="text-sm sm:text-base font-black text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
                   >
-                    <span>{language === 'gu' ? 'વધુ ફોટો ગેલેરી' : 'More Photo Gallery'}</span>
+                    <span>{getLocalized(language, { en: 'More Photo Gallery', gu: 'વધુ ફોટો ગેલેરી', hi: 'और फोटो गैलरी' })}</span>
                     <span>→</span>
                   </Link>
                 </div>
@@ -932,7 +952,7 @@ export default function VideosPageClient() {
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
                 <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                  શોર્ટ્સ
+                  {getLocalized(language, { en: 'Shorts', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स' })}
                 </h3>
               </div>
               {visibleShortsCount < shortsVideos.length && (
@@ -948,30 +968,30 @@ export default function VideosPageClient() {
               )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {shortsVideos.slice(0, visibleShortsCount).map((item) => (
                 <a
                   key={item.id}
                   href={`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group relative aspect-[9/16] w-full rounded-lg overflow-hidden bg-black shadow-sm cursor-pointer"
+                  className="group relative aspect-[9/16] w-full max-w-[280px] sm:max-w-none mx-auto rounded-xl overflow-hidden bg-black shadow-sm cursor-pointer"
                 >
                   <Image
                     src={item.thumbnail}
                     alt={item.titleGu}
                     fill
-                    sizes="(max-width: 768px) 50vw, 15vw"
+                    sizes="(max-width: 768px) 100vw, 15vw"
                     className="object-cover opacity-85 transition-transform duration-300 group-hover:scale-105 group-hover:opacity-95"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-3">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur mb-2 transition-transform group-hover:scale-110 self-start">
-                      <Play className="h-3 w-3 fill-current ml-0.5" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-3">
+                    <span className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur mb-2 transition-transform group-hover:scale-110 self-start">
+                      <Play className="h-4 w-4 sm:h-3 sm:w-3 fill-current ml-0.5" />
                     </span>
-                    <h4 className="text-[11px] font-bold leading-snug text-white line-clamp-2">
-                      {item.titleGu}
+                    <h4 className="text-[13px] sm:text-[11px] font-bold leading-snug text-white line-clamp-2">
+                      <AutoTranslateString text={item.titleGu || item.title || ''} language={language} />
                     </h4>
-                    <span className="text-[9px] font-black text-accent mt-0.5">
+                    <span className="text-[10px] sm:text-[9px] font-black text-accent mt-0.5">
                       {item.hash}
                     </span>
                   </div>
@@ -991,7 +1011,7 @@ export default function VideosPageClient() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 gap-4">
               {latestImageArticles.slice(0, visibleLatestNewsCount).map((article: any) => {
                 const title = language === 'gu'
                   ? (article.titleGu || article.title)
@@ -1004,25 +1024,25 @@ export default function VideosPageClient() {
                   <Link
                     key={article.id}
                     href={`/news/${article.slug}`}
-                    className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
+                    className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow p-3.5 sm:p-0 flex flex-col"
                   >
-                    <div className="relative aspect-video overflow-hidden bg-muted">
+                    <div className="relative aspect-video w-full rounded-lg sm:rounded-none overflow-hidden bg-muted">
                       <Image
                         src={image}
                         alt={title}
                         fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
+                        sizes="(max-width: 768px) 100vw, 25vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
                     <div className="p-3">
                       <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
-                        {getCategoryLabel(article, language)}
+                        <AutoTranslateString text={getCategoryLabel(article, language)} language={language} />
                       </span>
                       <h4 className="mt-1 text-[12.5px] md:text-sm font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        {title}
+                        <AutoArticleTitle article={article} language={language} />
                       </h4>
-                      <span className="mt-2 block text-[10px] font-semibold text-muted-foreground">
+                      <span className="mt-2 block text-xs md:text-[10px] font-semibold text-muted-foreground">
                         {timeAgo(article.publishedAt || article.createdAt, language)}
                       </span>
                     </div>
@@ -1035,10 +1055,12 @@ export default function VideosPageClient() {
                 <button
                   type="button"
                   onClick={() => setVisibleLatestNewsCount((count) => count + 8)}
-                  className="inline-flex items-center gap-2 rounded-full border-2 border-accent px-8 py-3 text-sm font-black text-accent transition-colors hover:bg-accent hover:text-white"
+                  className="group inline-flex items-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
                 >
-                  {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
-                  <ChevronDown className="h-4 w-4" />
+                  <span className="text-lg md:text-xl font-black tracking-wide leading-none">
+                    {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
+                  </span>
+                  <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
                 </button>
               </div>
             )}

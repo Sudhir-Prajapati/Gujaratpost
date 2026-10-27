@@ -1,5 +1,7 @@
 'use client';
 
+import LocalizedContent, { useLocalizedPageData } from '@/components/i18n/LocalizedContent';
+
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -25,9 +27,9 @@ interface AboutPageClientProps {
 }
 
 export default function AboutPageClient({ initialData }: AboutPageClientProps) {
-  const data = initialData || {};
+  const data = useLocalizedPageData(initialData) || {};
 
-  // Directly display information from admin without requiring language selection
+  // Prefer the selected editorial language, then translate any remaining source text.
   const title =
     data.title || data.titleGu || data.titleEn || data.titleHi || 'ગુજરાત પોસ્ટ વિશે';
   const subtitle =
@@ -120,6 +122,7 @@ export default function AboutPageClient({ initialData }: AboutPageClientProps) {
       : defaultRules;
 
   return (
+    <LocalizedContent>
     <div className="min-h-screen bg-[#F8F9FA] dark:bg-[#0A0A0A] text-neutral-900 dark:text-neutral-100 pb-16 sm:pb-14">
       {/* 1. Cohesive Hero & Key Stats Section (Seamless integration without harsh dividing border) */}
       <section className="relative overflow-hidden bg-gradient-to-b from-red-950/15 via-[#F8F9FA]/80 dark:via-[#0A0A0A]/80 to-[#F8F9FA] dark:to-[#0A0A0A] -mt-3 sm:-mt-4 pt-3 sm:pt-4 pb-6 sm:pb-8">
@@ -500,5 +503,6 @@ export default function AboutPageClient({ initialData }: AboutPageClientProps) {
         </div>
       </section>
     </div>
+    </LocalizedContent>
   );
 }

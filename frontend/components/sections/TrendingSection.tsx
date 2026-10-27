@@ -127,24 +127,45 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
   }, [initialArticles]);
 
   // Auto-scroll effect
+  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   useEffect(() => {
     if (!trending.length) return;
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
     if (isMobile) {
-      // Mobile: smoothly scroll 1 full card at a time every 3.5s
+      // Mobile: smoothly scroll card by card every 2.6s (minor faster + loop reliably without getting stuck)
       const interval = setInterval(() => {
         const el = scrollContainerRef.current;
         if (!el || isPaused.current) return;
-        const cardWidth = el.firstElementChild?.clientWidth || el.clientWidth;
-        const step = cardWidth + 16;
+        const cardElements = el.children;
+        if (!cardElements || cardElements.length <= 1) return;
+
+        const currentScroll = el.scrollLeft;
         const maxScroll = el.scrollWidth - el.clientWidth;
-        if (el.scrollLeft >= maxScroll - 15) {
+
+        // If at or near the end, loop smoothly back to first card
+        if (currentScroll >= maxScroll - 20) {
           el.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          el.scrollBy({ left: step, behavior: 'smooth' });
+          return;
         }
-      }, 3500);
+
+        // Find next card whose offsetLeft is clearly beyond current scroll position
+        let nextCard: HTMLElement | null = null;
+        for (let i = 0; i < cardElements.length; i++) {
+          const card = cardElements[i] as HTMLElement;
+          if (card.offsetLeft > currentScroll + 20) {
+            nextCard = card;
+            break;
+          }
+        }
+
+        if (nextCard) {
+          el.scrollTo({ left: nextCard.offsetLeft, behavior: 'smooth' });
+        } else {
+          el.scrollTo({ left: 0, behavior: 'smooth' });
+        }
+      }, 2600);
       return () => clearInterval(interval);
     } else {
       // Desktop: preserve continuous crawl
@@ -233,8 +254,22 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         className="relative group/carousel"
         onMouseEnter={() => { isPaused.current = true; }}
         onMouseLeave={() => { isPaused.current = false; }}
-        onTouchStart={() => { isPaused.current = true; }}
-        onTouchEnd={() => { setTimeout(() => { isPaused.current = false; }, 2500); }}
+        onTouchStart={() => {
+          isPaused.current = true;
+          if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+        }}
+        onTouchEnd={() => {
+          if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = setTimeout(() => {
+            isPaused.current = false;
+          }, 2000);
+        }}
+        onTouchCancel={() => {
+          if (pauseTimeoutRef.current) clearTimeout(pauseTimeoutRef.current);
+          pauseTimeoutRef.current = setTimeout(() => {
+            isPaused.current = false;
+          }, 1500);
+        }}
       >
         {/* Left Arrow */}
         {showLeftArrow && (
@@ -256,7 +291,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
             <Link
               key={article.id}
               href={`/news/${article.slug}`}
-              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-400 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-start w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
+              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-400 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-center w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
             >
               {/* Image Container */}
               <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-muted">

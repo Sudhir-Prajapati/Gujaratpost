@@ -158,7 +158,7 @@ export default function DynamicCategorySection({ category, language, initialArti
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
               />
               <span className="absolute top-3 left-3 bg-[#B3121B] text-white text-[10px] font-black uppercase px-2.5 py-1 rounded shadow-sm">
-                {language === 'gu' ? 'તાજા સમાચાર' : 'LATEST'}
+                {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : 'LATEST'}
               </span>
             </div>
 
@@ -190,7 +190,7 @@ export default function DynamicCategorySection({ category, language, initialArti
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <span className="absolute top-3 left-3 bg-[#B3121B] text-white text-[10px] font-black uppercase px-2.5 py-1 rounded shadow-sm">
-                    {language === 'gu' ? 'તાજા સમાચાર' : 'LATEST'}
+                    {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : 'LATEST'}
                   </span>
                 </div>
                 <div>

@@ -24,6 +24,7 @@ import {
   Tag,
   FileText,
   Film,
+  Clock,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch, clearApiCache } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
@@ -42,6 +43,7 @@ interface ArticleData {
   createdAt?: string;
   updatedAt?: string;
   publishedAt?: string;
+  scheduledAt?: string;
   authorId: string;
   author: {
     id: string;
@@ -444,6 +446,43 @@ export default function ArticleList() {
     });
   };
 
+  const formatPublishDateTime = (dateStr?: string) => {
+    if (!dateStr) return { date: '—', time: '' };
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return { date: '—', time: '' };
+
+    let date = '';
+    let time = '';
+
+    try {
+      date = d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'Asia/Kolkata',
+      });
+      time = d.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+        timeZone: 'Asia/Kolkata',
+      }).toUpperCase();
+    } catch {
+      date = d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+      time = d.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      }).toUpperCase();
+    }
+
+    return { date, time };
+  };
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -743,9 +782,27 @@ export default function ArticleList() {
                       </div>
                     </td>
 
-                    {/* Published Date */}
-                    <td className="px-4 py-3.5 whitespace-nowrap text-center text-sm text-zinc-600 dark:text-zinc-400 font-medium border border-black dark:border-zinc-600">
-                      {formatDate(art.createdAt || art.updatedAt || art.publishedAt)}
+                    {/* Published Date & Time */}
+                    <td className="px-4 py-3.5 whitespace-nowrap text-center text-sm border border-black dark:border-zinc-600">
+                      {(() => {
+                        const rawDate = (art.status === 'SCHEDULED' && art.scheduledAt)
+                          ? art.scheduledAt
+                          : (art.publishedAt || art.createdAt || art.updatedAt);
+                        const { date, time } = formatPublishDateTime(rawDate);
+                        return (
+                          <div className="flex flex-col items-center justify-center leading-tight gap-1">
+                            <span className="font-bold text-zinc-900 dark:text-zinc-100 text-[13.5px]">
+                              {date}
+                            </span>
+                            {time && (
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-500 dark:text-zinc-400">
+                                <Clock className="h-3 w-3 text-zinc-400 shrink-0" />
+                                <span>{time}</span>
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     {/* Status badge */}
@@ -951,6 +1008,17 @@ export default function ArticleList() {
                       <span className="flex items-center gap-1">
                         <Eye className="h-3.5 w-3.5 text-zinc-400" />
                         {reviewModal.article.views} views
+                      </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-zinc-400" />
+                        <span>Published: {(() => {
+                          const rawDate = (reviewModal.article.status === 'SCHEDULED' && (reviewModal.fullData?.scheduledAt || reviewModal.article.scheduledAt))
+                            ? (reviewModal.fullData?.scheduledAt || reviewModal.article.scheduledAt)
+                            : (reviewModal.fullData?.publishedAt || reviewModal.article.publishedAt || reviewModal.fullData?.createdAt || reviewModal.article.createdAt);
+                          const { date, time } = formatPublishDateTime(rawDate);
+                          return time ? `${date} at ${time}` : date;
+                        })()}</span>
                       </span>
                     </div>
                   </div>

@@ -448,7 +448,9 @@ export default function CrimeSection({
             id: featArt.id,
             slug: featArt.slug,
             image: featArt.image || DEMO_IMAGES[c % DEMO_IMAGES.length],
-            title: getLocalized(language, { en: featArt.title, gu: featArt.titleGu || featArt.title, hi: (featArt as any).titleHi || featArt.title }),
+            article: featArt as Article,
+            title: featArt.title,
+            titleGu: featArt.titleGu || featArt.title,
           },
           subs: [],
         });
@@ -462,7 +464,9 @@ export default function CrimeSection({
         id: col.featured.id,
         slug: col.featured.slug,
         image: col.featured.image,
+        article: null as Article | null,
         title: getMockTitle(col.featured, language),
+        titleGu: col.featured.titleGu,
       },
       subs: [],
     }));
@@ -482,7 +486,7 @@ export default function CrimeSection({
           href="/category/crime"
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline pb-0.5"
         >
-          {language === 'gu' ? 'વધુ જુઓ →' : 'More See →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'More →'}
         </Link>
       </div>
 
@@ -497,7 +501,7 @@ export default function CrimeSection({
                   alt={currentSlide.titleGu}
                   fill
                   sizes="(max-width: 768px) 100vw, 40vw"
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                  className="object-contain transition-transform duration-300"
                 />
                 <button
                   type="button"
@@ -553,7 +557,7 @@ export default function CrimeSection({
                 <h4 className="text-[16px] md:text-[14.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                   {item.article
                     ? <AutoArticleTitle article={item.article} language={language} />
-                    : (getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi }))}
+                    : <AutoTranslateString text={item.titleGu || item.title} language={language} />}
                 </h4>
               </div>
               <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted">
@@ -584,7 +588,11 @@ export default function CrimeSection({
                 />
               </div>
               <h3 className="text-[14px] md:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                {col.featured.title}
+                {col.featured.article ? (
+                  <AutoArticleTitle article={col.featured.article} language={language} />
+                ) : (
+                  <AutoTranslateString text={col.featured.titleGu || col.featured.title} language={language} />
+                )}
               </h3>
             </Link>
           </div>

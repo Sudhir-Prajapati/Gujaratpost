@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Share2, ChevronUp, ChevronDown } from 'lucide-react';
+import { Share2, ChevronUp, ChevronDown, Sun, Moon } from 'lucide-react';
 import { getArticleTitle, getArticleExcerpt, getArticleContent, getCategoryLabel } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
@@ -38,7 +38,7 @@ function timeAgo(dateStr?: string): string {
 }
 
 export default function NewsBriefPageClient() {
-  const { language } = useApp();
+  const { language, theme, toggleTheme } = useApp();
   const [activeIndex, setActiveIndex] = useState(0);
   const [copied, setCopied] = useState(false);
   const [briefArticles, setBriefArticles] = useState<Article[]>([]);
@@ -272,12 +272,12 @@ export default function NewsBriefPageClient() {
 
   if (!currentArticle) {
     return (
-      <div className="fixed inset-0 h-screen h-[100dvh] w-full flex flex-col items-center justify-center bg-[#f0f2f5] gap-4 overflow-hidden select-none">
+      <div className="fixed inset-0 h-screen h-[100dvh] w-full flex flex-col items-center justify-center bg-[#f0f2f5] dark:bg-[#0c0d10] gap-4 overflow-hidden select-none">
         <div className="relative w-12 h-12">
-          <div className="absolute inset-0 rounded-full border-4 border-neutral-200" />
+          <div className="absolute inset-0 rounded-full border-4 border-neutral-200 dark:border-zinc-800" />
           <div className="absolute inset-0 rounded-full border-4 border-t-[#B3121B] animate-spin" />
         </div>
-        <p className="text-neutral-400 font-semibold text-sm">Loading stories...</p>
+        <p className="text-neutral-500 dark:text-zinc-400 font-semibold text-sm">Loading stories...</p>
       </div>
     );
   }
@@ -285,7 +285,7 @@ export default function NewsBriefPageClient() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 h-screen h-[100dvh] w-screen w-full flex flex-col overflow-hidden bg-[#f0f2f5] select-none touch-none overscroll-none"
+      className="fixed inset-0 h-screen h-[100dvh] w-screen w-full flex flex-col overflow-hidden bg-[#f0f2f5] dark:bg-[#0c0d10] text-neutral-900 dark:text-zinc-100 select-none touch-none overscroll-none transition-colors duration-200"
       style={{ touchAction: 'none', overscrollBehavior: 'none' }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
@@ -293,42 +293,58 @@ export default function NewsBriefPageClient() {
       onWheel={handleWheel}
     >
       {/* ── COMPACT NAVBAR ── */}
-      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white border-b border-neutral-100 shadow-sm z-10" style={{ height: 64 }}>
+      <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 bg-white dark:bg-[#14151a] border-b border-neutral-200 dark:border-zinc-800/80 shadow-xs z-10 transition-colors duration-200" style={{ height: 64 }}>
         <Link href="/" className="group relative flex shrink-0 items-center">
           <div className="relative block h-8 sm:h-10 md:h-12 lg:h-14 w-32 sm:w-44 md:w-54 lg:w-60 overflow-hidden">
-          <Image
-            src="/GujaratpostFinalLogo.png"
-            alt="Gujarat Post"
-            fill
-            sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 216px, 240px"
-            className="object-contain object-left"
-            priority
-          />
+            <Image
+              src="/GujaratpostFinalLogo.png"
+              alt="Gujarat Post"
+              fill
+              sizes="(max-width: 640px) 128px, (max-width: 768px) 176px, (max-width: 1024px) 216px, 240px"
+              className="object-contain object-left dark:brightness-110"
+              priority
+            />
           </div>
         </Link>
 
         {/* Article counter */}
-        <span className="text-[13px] font-bold text-neutral-500 tabular-nums">
+        <span className="text-[13px] font-bold text-neutral-600 dark:text-zinc-400 tabular-nums">
           {activeIndex + 1} / {briefArticles.length}
         </span>
 
-        {/* Back arrow */}
-        <Link
-          href="/"
-          className="flex items-center justify-center w-8 h-8 rounded-full border border-neutral-200 bg-white hover:bg-neutral-50 transition-colors"
-          aria-label="Back to home"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B3121B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
-        </Link>
+        {/* Right buttons: Theme toggle & Back arrow */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-neutral-50 dark:hover:bg-zinc-700 transition-colors shadow-2xs cursor-pointer"
+            aria-label="Toggle theme"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="h-4 w-4 text-amber-400" />
+            ) : (
+              <Moon className="h-4 w-4 text-neutral-700 dark:text-zinc-300" />
+            )}
+          </button>
+
+          <Link
+            href="/"
+            className="flex items-center justify-center w-8 h-8 rounded-full border border-neutral-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 hover:bg-neutral-50 dark:hover:bg-zinc-700 transition-colors shadow-2xs"
+            aria-label="Back to home"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#B3121B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </div>
 
       {/* ── BODY: card + right-side nav ── */}
       <div className="flex-1 min-h-0 flex items-center justify-center px-2.5 sm:px-4 py-2 sm:py-3 gap-0 md:gap-4 overflow-hidden">
         {/* ── Article Card ── */}
         <div
-          className="w-full bg-white rounded-2xl shadow-md overflow-hidden flex flex-col border border-neutral-100 h-full max-h-[700px]"
+          className="w-full bg-white dark:bg-[#16171d] rounded-2xl shadow-md dark:shadow-2xl overflow-hidden flex flex-col border border-neutral-200/80 dark:border-zinc-800 h-full max-h-[700px] transition-colors duration-200"
           style={{
             maxWidth: 456,
             transform: animDir === 'up' ? 'translateY(-8px)' : animDir === 'down' ? 'translateY(8px)' : 'translateY(0)',
@@ -338,7 +354,7 @@ export default function NewsBriefPageClient() {
         >
           {/* Hero image with rounded corners or Gujarat Post logo fallback */}
           <div
-            className="relative w-full overflow-hidden rounded-xl mx-2.5 sm:mx-3 mt-2.5 sm:mt-3 shrink-0 bg-neutral-900 border border-neutral-100"
+            className="relative w-full overflow-hidden rounded-xl mx-2.5 sm:mx-3 mt-2.5 sm:mt-3 shrink-0 bg-neutral-900 border border-neutral-200/80 dark:border-zinc-800"
             style={{ aspectRatio: '16/10', width: 'calc(100% - 20px)' }}
           >
             {/* Always present default branded Gujarat Post logo layer as base */}
@@ -387,27 +403,27 @@ export default function NewsBriefPageClient() {
 
             {/* Category + time row */}
             <div className="flex items-center gap-2 flex-wrap shrink-0">
-              <span className="text-[14px] sm:text-[14.5px] font-black text-[#B3121B] uppercase tracking-wide">{category}</span>
+              <span className="text-[14px] sm:text-[14.5px] font-black text-[#B3121B] dark:text-[#f84a54] uppercase tracking-wide">{category}</span>
               {ago && (
                 <>
-                  <span className="text-neutral-300 text-xs">·</span>
-                  <span className="text-[13px] sm:text-[13.5px] text-neutral-500 font-medium">{ago}</span>
+                  <span className="text-neutral-300 dark:text-zinc-600 text-xs">·</span>
+                  <span className="text-[13px] sm:text-[13.5px] text-neutral-500 dark:text-zinc-400 font-medium">{ago}</span>
                 </>
               )}
             </div>
 
             {/* Title */}
-            <h2 className="font-black text-neutral-900 leading-snug text-[18px] sm:text-[20px] line-clamp-2 sm:line-clamp-3 shrink-0">
+            <h2 className="font-black text-neutral-900 dark:text-zinc-50 leading-snug text-[18px] sm:text-[20px] line-clamp-2 sm:line-clamp-3 shrink-0">
               {title}
             </h2>
 
             {/* Excerpt */}
-            <p className="text-neutral-700 text-[15px] sm:text-[16px] leading-relaxed line-clamp-4 sm:line-clamp-5 flex-1 min-h-0 overflow-hidden font-normal">
+            <p className="text-neutral-700 dark:text-zinc-300 text-[15px] sm:text-[16px] leading-relaxed line-clamp-4 sm:line-clamp-5 flex-1 min-h-0 overflow-hidden font-normal">
               {displayParagraph}
             </p>
 
             {/* Disclaimer */}
-            <p className="text-[11.5px] sm:text-[12px] text-neutral-400 leading-tight italic shrink-0">
+            <p className="text-[11.5px] sm:text-[12px] text-neutral-400 dark:text-zinc-500 leading-tight italic shrink-0">
               Disclaimer – આ ન્યૂઝ AI-જનરેટેડ સારાંશ છે અને એડિટર દ્વારા રિવ્યૂ કરાયો છે.
             </p>
 
@@ -423,12 +439,12 @@ export default function NewsBriefPageClient() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="relative w-9 h-9 rounded-full bg-neutral-800 flex items-center justify-center active:scale-95 transition hover:bg-neutral-700"
+                className="relative w-9 h-9 rounded-full bg-neutral-800 dark:bg-zinc-800 border border-neutral-700 dark:border-zinc-700 flex items-center justify-center active:scale-95 transition hover:bg-neutral-700 dark:hover:bg-zinc-700 cursor-pointer"
                 aria-label="Share"
               >
                 <Share2 className="w-3.5 h-3.5 text-white stroke-[2]" />
                 {copied && (
-                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow">
+                  <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black dark:bg-white text-white dark:text-black text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap shadow">
                     Copied!
                   </span>
                 )}
@@ -437,24 +453,24 @@ export default function NewsBriefPageClient() {
           </div>
 
           {/* ── INTERACTIVE ANIMATED NEXT STORY BAR (Mobile View Only) ── */}
-          <div className="flex md:hidden py-2.5 px-4 items-center justify-between border-t border-neutral-100 bg-neutral-50/80 shrink-0">
+          <div className="flex md:hidden py-2.5 px-4 items-center justify-between border-t border-neutral-200 dark:border-zinc-800 bg-neutral-50/90 dark:bg-[#121318] shrink-0">
             {/* Left: Previous story button (if activeIndex > 0) or latest badge */}
             {activeIndex > 0 ? (
               <button
                 type="button"
                 onClick={handlePrev}
-                className="flex items-center gap-2 text-[14px] font-bold text-neutral-600 hover:text-neutral-900 active:scale-95 transition-colors cursor-pointer group py-0.5"
+                className="flex items-center gap-2 text-[14px] font-bold text-neutral-600 dark:text-zinc-300 hover:text-neutral-900 dark:hover:text-white active:scale-95 transition-colors cursor-pointer group py-0.5"
                 aria-label="Previous story"
               >
-                <div className="w-7 h-7 rounded-full bg-white border border-neutral-200 flex items-center justify-center group-hover:border-neutral-400 transition-colors shadow-xs">
-                  <ChevronUp className="w-4 h-4 text-neutral-700 group-hover:text-black stroke-[2.5]" />
+                <div className="w-7 h-7 rounded-full bg-white dark:bg-zinc-800 border border-neutral-200 dark:border-zinc-700 flex items-center justify-center group-hover:border-neutral-400 dark:group-hover:border-zinc-500 transition-colors shadow-xs">
+                  <ChevronUp className="w-4 h-4 text-neutral-700 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white stroke-[2.5]" />
                 </div>
                 <span>{language === 'gu' ? 'પાછળ' : language === 'hi' ? 'पिछली खबर' : 'Previous'}</span>
               </button>
             ) : (
-              <div className="flex items-center gap-2 text-[13px] font-bold tracking-wide text-neutral-500 py-0.5">
+              <div className="flex items-center gap-2 text-[13px] font-bold tracking-wide text-neutral-500 dark:text-zinc-400 py-0.5">
                 <span className="w-2.5 h-2.5 rounded-full bg-[#B3121B] animate-pulse" />
-                <span>{language === 'gu' ? 'નવી સ્ટોરી' : language === 'hi' ? 'તાज़ा खबर' : 'Latest'}</span>
+                <span>{language === 'gu' ? 'નવી સ્ટોરી' : language === 'hi' ? 'ताज़ा खबर' : 'Latest'}</span>
               </div>
             )}
 
@@ -463,14 +479,14 @@ export default function NewsBriefPageClient() {
               type="button"
               onClick={handleNext}
               disabled={activeIndex >= briefArticles.length - 1 && !hasMore}
-              className="flex items-center gap-2.5 text-neutral-800 hover:text-[#B3121B] active:scale-95 transition-all cursor-pointer group disabled:opacity-30 disabled:cursor-not-allowed py-0.5"
+              className="flex items-center gap-2.5 text-neutral-800 dark:text-zinc-200 hover:text-[#B3121B] dark:hover:text-[#f84a54] active:scale-95 transition-all cursor-pointer group disabled:opacity-30 disabled:cursor-not-allowed py-0.5"
               aria-label="Next story"
             >
-              <span className="text-[14px] font-bold tracking-wide group-hover:text-[#B3121B] transition-colors">
+              <span className="text-[14px] font-bold tracking-wide group-hover:text-[#B3121B] dark:group-hover:text-[#f84a54] transition-colors">
                 {language === 'gu' ? 'આગળની સ્ટોરી' : language === 'hi' ? 'अगली खबर' : 'Next Story'}
               </span>
-              <div className="relative w-7 h-7 rounded-full bg-red-50 border border-red-200 group-hover:bg-[#B3121B] group-hover:border-[#B3121B] flex items-center justify-center transition-all shadow-xs">
-                <ChevronDown className="w-4 h-4 text-[#B3121B] group-hover:text-white stroke-[2.5] animate-bounce" />
+              <div className="relative w-7 h-7 rounded-full bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900/60 group-hover:bg-[#B3121B] dark:group-hover:bg-[#B3121B] group-hover:border-[#B3121B] flex items-center justify-center transition-all shadow-xs">
+                <ChevronDown className="w-4 h-4 text-[#B3121B] dark:text-red-400 group-hover:text-white dark:group-hover:text-white stroke-[2.5] animate-bounce" />
               </div>
             </button>
           </div>
@@ -481,7 +497,7 @@ export default function NewsBriefPageClient() {
           <button
             onClick={handlePrev}
             disabled={activeIndex === 0}
-            className="w-11 h-11 rounded-full bg-neutral-500 flex items-center justify-center shadow-md active:scale-90 transition disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer hover:bg-neutral-600"
+            className="w-11 h-11 rounded-full bg-neutral-500 dark:bg-zinc-700 hover:bg-neutral-600 dark:hover:bg-zinc-600 flex items-center justify-center shadow-md active:scale-90 transition disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
             aria-label="Previous"
           >
             <ChevronUp className="w-5 h-5 text-white stroke-[2.5]" />
@@ -489,7 +505,7 @@ export default function NewsBriefPageClient() {
           <button
             onClick={handleNext}
             disabled={activeIndex >= briefArticles.length - 1 && !hasMore}
-            className="w-11 h-11 rounded-full bg-neutral-800 flex items-center justify-center shadow-md active:scale-90 transition disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer hover:bg-neutral-700"
+            className="w-11 h-11 rounded-full bg-neutral-800 dark:bg-zinc-800 hover:bg-neutral-700 dark:hover:bg-zinc-700 border border-transparent dark:border-zinc-700 flex items-center justify-center shadow-md active:scale-90 transition disabled:opacity-25 disabled:cursor-not-allowed cursor-pointer"
             aria-label="Next"
           >
             <ChevronDown className="w-5 h-5 text-white stroke-[2.5]" />

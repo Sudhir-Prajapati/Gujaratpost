@@ -361,12 +361,33 @@ function MobileHorizontalCardStrip({
   cards: Article[];
   language: Language;
 }) {
+  const displayCards = cards.slice(0, 3);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const isInteractingRef = useRef<boolean>(false);
   const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const updateActiveIndex = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const cardElements = container.querySelectorAll<HTMLElement>('a');
+    if (!cardElements.length) return;
+    const containerCenter = container.scrollLeft + container.clientWidth / 2;
+    let closestIndex = 0;
+    let minDistance = Infinity;
+    cardElements.forEach((card, idx) => {
+      const cardCenter = card.offsetLeft + card.clientWidth / 2;
+      const distance = Math.abs(cardCenter - containerCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIndex = idx;
+      }
+    });
+    setActiveIndex(closestIndex);
+  };
 
   useEffect(() => {
-    if (!cards || cards.length <= 1) return;
+    if (!displayCards || displayCards.length <= 1) return;
 
     const interval = setInterval(() => {
       if (isInteractingRef.current) return;
@@ -376,38 +397,20 @@ function MobileHorizontalCardStrip({
       const cardElements = container.querySelectorAll<HTMLElement>('a');
       if (cardElements.length <= 1) return;
 
-      const currentScroll = container.scrollLeft;
-      const maxScroll = container.scrollWidth - container.clientWidth;
-
-      // If we are at or near the end, loop smoothly back to start
-      if (currentScroll >= maxScroll - 25) {
-        container.scrollTo({ left: 0, behavior: 'smooth' });
-        return;
-      }
-
-      // Find the first card whose left edge is noticeably past the current scroll position
-      let nextCard: HTMLElement | null = null;
-      for (let i = 0; i < cardElements.length; i++) {
-        const card = cardElements[i];
-        if (card.offsetLeft > currentScroll + 25) {
-          nextCard = card;
-          break;
-        }
-      }
-
+      const nextIdx = (activeIndex + 1) % cardElements.length;
+      const nextCard = cardElements[nextIdx];
       if (nextCard) {
-        const targetLeft = Math.max(0, nextCard.offsetLeft - 20);
+        const targetLeft = nextCard.offsetLeft - (container.clientWidth - nextCard.clientWidth) / 2;
         container.scrollTo({
-          left: targetLeft,
+          left: Math.max(0, targetLeft),
           behavior: 'smooth',
         });
-      } else {
-        container.scrollTo({ left: 0, behavior: 'smooth' });
+        setActiveIndex(nextIdx);
       }
-    }, 2000);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [cards.length]);
+  }, [displayCards.length, activeIndex]);
 
   const handleTouchStart = () => {
     isInteractingRef.current = true;
@@ -421,48 +424,122 @@ function MobileHorizontalCardStrip({
     }, 3500);
   };
 
+  const scrollToIndex = (idx: number) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const cardElements = container.querySelectorAll<HTMLElement>('a');
+    if (cardElements[idx]) {
+      const card = cardElements[idx];
+      const targetLeft = card.offsetLeft - (container.clientWidth - card.clientWidth) / 2;
+      container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+      setActiveIndex(idx);
+    }
+  };
+
+  if (!displayCards || displayCards.length === 0) return null;
+
   return (
-    <div
-      ref={scrollContainerRef}
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onMouseEnter={handleTouchStart}
-      onMouseLeave={handleTouchEnd}
-      className="md:hidden -mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain scroll-pl-5 sm:scroll-pl-6"
-    >
-      <div className="flex gap-3.5 pl-5 pr-5 sm:pl-6 sm:pr-6 pb-3 pt-0.5 items-stretch">
-        {cards.map((art, idx) => (
-          <Link
-            key={art.id || idx}
-            href={`/news/${art.slug}`}
-                              className="group relative shrink-0 snap-start w-[280px] sm:w-[300px] h-[360px] sm:h-[380px] rounded-[20px] overflow-hidden bg-muted border border-border/20 shadow-[0_8px_20px_rgba(0,0,0,0.18)] dark:shadow-[0_8px_20px_rgba(0,0,0,0.5)] flex flex-col justify-end select-none active:scale-[0.98] transition-transform duration-200"
-          >
-            {/* Full-bleed background media */}
-            <ArticleMedia
-              src={art.image || (art as any).featuredImage || getArticleImage(art)}
-              alt={art.title || ''}
-              showPlayBadge={false}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-            />
+    <div className="md:hidden flex flex-col gap-2">
+      <div
+        ref={scrollContainerRef}
+        onScroll={updateActiveIndex}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onMouseEnter={handleTouchStart}
+        onMouseLeave={handleTouchEnd}
+        className="-mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain"
+      >
+        <div className="flex gap-4 px-[8vw] sm:px-6 pb-1 pt-0.5 items-stretch">
+          {displayCards.map((art, idx) => (
+            <Link
+              key={art.id || idx}
+              href={`/news/${art.slug}`}
+              className="group relative shrink-0 snap-center w-[84vw] sm:w-[325px] rounded-2xl bg-card dark:bg-card/90 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col overflow-hidden select-none active:scale-[0.99] transition-all duration-200"
+            >
+              {/* Top Image Container matching Fact Check UI (Image 2) */}
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+                <ArticleMedia
+                  src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                  alt={art.title || ''}
+                  showPlayBadge={false}
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                />
 
-            {/* Gradient overlay: smooth dark fade from bottom */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/98 via-black/75 via-55% to-transparent pointer-events-none" />
+                {/* Rank Badge top-left matching Fact Check */}
+                <div
+                  className="absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white shadow-md z-10 select-none"
+                  style={{ backgroundColor: idx === 0 ? '#B3121B' : 'rgba(15, 23, 42, 0.8)' }}
+                >
+                  {idx + 1}
+                </div>
 
-            {/* Category badge top-right */}
-            <span className="absolute top-3 right-3 bg-[#B3121B] text-white text-[10.5px] font-black px-2.5 py-0.5 rounded shadow-sm uppercase tracking-wider select-none z-10">
-              {getCategoryLabel(art, language)}
-            </span>
+                {/* Badge top-right matching Fact Check style */}
+                <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded bg-[#B3121B] backdrop-blur-sm px-2 py-0.5 text-[10px] font-black text-white shadow-md z-10 select-none">
+                  <span>✔</span>
+                  <span>{getCategoryLabel(art, language)}</span>
+                </div>
 
-            {/* Bottom content overlay */}
-            <div className="absolute inset-x-0 bottom-0 p-3.5 flex flex-col justify-end text-left z-10">
-              <h4 className="text-[18.5px] sm:text-[19.5px] font-black leading-[1.3] text-white line-clamp-3 drop-shadow-md">
-                <AutoArticleTitle article={art} language={language} />
-              </h4>
-            </div>
-          </Link>
-        ))}
+                {/* Left Floating Arrow */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    scrollToIndex((activeIndex - 1 + displayCards.length) % displayCards.length);
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 dark:bg-black/70 shadow-md text-foreground hover:bg-white transition-all cursor-pointer"
+                  aria-label="Previous slide"
+                >
+                  <ChevronLeft className="h-4 w-4 stroke-[3]" />
+                </button>
+
+                {/* Right Floating Arrow */}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    scrollToIndex((activeIndex + 1) % displayCards.length);
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 dark:bg-black/70 shadow-md text-foreground hover:bg-white transition-all cursor-pointer"
+                  aria-label="Next slide"
+                >
+                  <ChevronRight className="h-4 w-4 stroke-[3]" />
+                </button>
+              </div>
+
+              {/* Bottom Content Container matching Fact Check UI (Image 2) */}
+              <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
+                <h4 className="text-[15.5px] sm:text-[16.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                  <AutoArticleTitle article={art} language={language} />
+                </h4>
+                <div className="mt-2.5 flex items-center text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span>{language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'સत्याપિત' : 'Verified'}</span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
       </div>
+
+      {/* 3-Page Pagination Dots for Mobile Slider */}
+      {displayCards.length > 1 && (
+        <div className="flex items-center justify-center gap-1.5 pt-1 pb-1">
+          {displayCards.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => scrollToIndex(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
+              className={`transition-all duration-300 rounded-full cursor-pointer ${
+                idx === activeIndex
+                  ? 'w-5 h-1.5 bg-[#B3121B]'
+                  : 'w-1.5 h-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+              }`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -874,6 +951,7 @@ export default function HeroSection({
   );
   const [trendingArtDB, setTrendingArtDB] = useState<Article[]>(initialPopularPool);
   const [mostReadArtDB, setMostReadArtDB] = useState<Article[]>(initialMostReadPool);
+  const [isHeroMostReadExpanded, setIsHeroMostReadExpanded] = useState(false);
   const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>(
     (initialCategoryArticles['gujarat'] && initialCategoryArticles['gujarat'].length > 0)
       ? initialCategoryArticles['gujarat']
@@ -1686,15 +1764,17 @@ export default function HeroSection({
               // AND AFTER THAT 3: Bottom Row 3 Image Cards are completely separate & different
               const desktopCards = getBottomCards(uniqueTopStories, heroSettingsState || initialHeroSettings);
 
-              const heroThreeArticles = afterTop3News.slice(3, 6).length >= 3
-                ? afterTop3News.slice(3, 6)
-                : (uniqueTopStories.slice(6, 9).length >= 3 ? uniqueTopStories.slice(6, 9) : afterTop3News.slice(3, 6));
-
-              // Total articles in mobile horizontal scroll (upper hero + bottom cards):
-              const mobileHorizontalCards = [
-                ...heroThreeArticles,
-                ...desktopCards.slice(0, 3),
-              ].filter((art, index, self) => art && (art.id || art.slug) && self.findIndex((a) => (a.id && a.id === art.id) || (a.slug && a.slug === art.slug)) === index);
+              // Mobile Horizontal Scroll: Strictly 3 articles for the 3-page slider
+              const mobileHorizontalCards = (
+                desktopCards.length >= 3
+                  ? desktopCards.slice(0, 3)
+                  : [
+                      ...desktopCards,
+                      ...afterTop3News.slice(3),
+                      ...uniqueTopStories.slice(9),
+                      ...articlesList,
+                    ].filter((art, index, self) => art && (art.id || art.slug) && self.findIndex((a) => (a.id && a.id === art.id) || (a.slug && a.slug === art.slug)) === index)
+              ).slice(0, 3);
 
               return (
                 <>
@@ -1732,9 +1812,9 @@ export default function HeroSection({
                           ))}
                         </div>
 
-                        {/* ─── MOBILE VIEW (< md): Boxed Cards with Card Background & Border (matches Image 2) ─── */}
+                        {/* ─── MOBILE VIEW (< md): Clean Compact Cards matching Image 4 ─── */}
                         <div className="flex flex-col gap-2.5 md:hidden">
-                          {afterTop3News.slice(0, 3).map((story, idx) => {
+                          {afterTop3News.slice(0, 6).map((story, idx) => {
                             const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
                             const colonIdx = rawTitle.indexOf(':');
                             const hasPrefix = colonIdx > 3 && colonIdx <= 48;
@@ -1742,73 +1822,39 @@ export default function HeroSection({
                             const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
 
                             return (
-                              <div
+                              <Link
                                 key={story.id || story.slug || idx}
-                                className="group flex flex-col p-3 sm:p-3.5 rounded-2xl bg-card/75 dark:bg-card/60 hover:bg-card/90 border border-border/60 hover:border-border transition-all min-w-0 shadow-2xs"
+                                href={`/news/${story.slug}`}
+                                className="group flex flex-row items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-card/75 dark:bg-card/60 hover:bg-card/90 border border-border/60 hover:border-border transition-all min-w-0 shadow-2xs"
                               >
-                                {/* Top: Headline (left) + Thumbnail (right, image size unchanged) */}
-                                <Link
-                                  href={`/news/${story.slug}`}
-                                  className="flex flex-row items-start justify-between gap-3 min-w-0"
-                                >
-                                  <div className="flex-1 min-w-0 pr-1">
-                                    <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                                      {hasPrefix ? (
-                                        <>
-                                          <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
-                                            {prefixText}
-                                          </span>
-                                          <span>{restText}</span>
-                                        </>
-                                      ) : (
-                                        <AutoArticleTitle article={story} language={language} />
-                                      )}
-                                    </h3>
-                                  </div>
-
-                                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                                    <ArticleMedia
-                                      src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                                      alt={story.title || ''}
-                                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                                    />
-                                  </div>
-                                </Link>
-
-                                {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
-                                <div className="flex items-center justify-between mt-2.5 pt-0.5">
-                                  <Link
-                                    href={`/category/${(story as any).category?.slug || (story as any).categorySlug || 'news'}`}
-                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
-                                  >
-                                    <span>{getCategoryLabel(story, language)}</span>
-                                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                                  </Link>
-
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      const title = getArticleTitle(story, language);
-                                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
-                                      const text = `${title}\n\n${url}`;
-                                      if (typeof navigator !== 'undefined' && navigator.share) {
-                                        navigator.share({ title, url, text }).catch(() => {
-                                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                        });
-                                      } else {
-                                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                      }
-                                    }}
-                                    className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
-                                    aria-label="Share"
-                                  >
-                                    <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-                                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
-                                  </button>
+                                {/* Left: Category name on top in red + Headline below (Matching Image 2) */}
+                                <div className="flex flex-col flex-1 min-w-0 pr-1">
+                                  <span className="text-[#B3121B] font-black text-[12px] sm:text-[13px] uppercase tracking-wide mb-1 leading-none select-none">
+                                    {getCategoryLabel(story, language)}
+                                  </span>
+                                  <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                                    {hasPrefix ? (
+                                      <>
+                                        <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
+                                          {prefixText}
+                                        </span>
+                                        <span>{restText}</span>
+                                      </>
+                                    ) : (
+                                      <AutoArticleTitle article={story} language={language} />
+                                    )}
+                                  </h3>
                                 </div>
-                              </div>
+
+                                {/* Right: Thumbnail */}
+                                <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
+                                  <ArticleMedia
+                                    src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                                    alt={story.title || ''}
+                                    className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                  />
+                                </div>
+                              </Link>
                             );
                           })}
                         </div>
@@ -1822,7 +1868,7 @@ export default function HeroSection({
                     <div className="border-t border-border/80 pt-4 md:pt-4">
                       {/* ─── MOBILE VIEW (< md): Premium Verts-style horizontal card strip with Auto-scroll (Matching Image 2) ─── */}
                       <MobileHorizontalCardStrip
-                        cards={mobileHorizontalCards.slice(0, 6)}
+                        cards={mobileHorizontalCards.slice(0, 3)}
                         language={language}
                       />
 
@@ -1880,7 +1926,7 @@ export default function HeroSection({
             />
 
             {/* YouTube Video Section */}
-            <div className="w-full rounded-xl border-2 border-red-400 border-t-4 border-t-[#B3121B] bg-gradient-to-b from-white to-red-50/45 p-4 shadow-[0_8px_24px_rgba(127,29,29,0.16)] ring-2 ring-red-100 flex flex-col gap-2.5 dark:border-red-800 dark:ring-red-950/70 dark:from-card dark:to-red-950/20">
+            <div className="w-full rounded-2xl md:rounded-xl border-2 border-red-400 border-t-4 border-t-[#B3121B] bg-gradient-to-b from-white to-red-50/45 p-4 shadow-[0_8px_24px_rgba(127,29,29,0.16)] ring-2 ring-red-100 flex flex-col gap-2.5 dark:border-red-800 dark:ring-red-950/70 dark:from-card dark:to-red-950/20 overflow-hidden">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] flex items-center gap-1.5 select-none">
                   <Play className="h-3.5 w-3.5 fill-current" />
@@ -1920,7 +1966,7 @@ export default function HeroSection({
                       fill
                       priority
                       loading="eager"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="object-contain transition-transform duration-500"
                       sizes="(max-width: 768px) 100vw, 350px"
                     />
                     <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition-colors flex items-center justify-center">
@@ -1956,7 +2002,52 @@ export default function HeroSection({
             </div>
 
             {/* Popular Articles */}
-            <div className="w-full overflow-hidden rounded-xl border border-slate-400 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
+            {/* Mobile View (< md): Image 2 style */}
+            <div className="md:hidden w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">
+              <div className="bg-[#B3121B] px-4 py-3 flex items-center justify-between">
+                <span className="text-white font-black text-[16px] tracking-wide">
+                  {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : 'Most Read'}
+                </span>
+                <Link
+                  href="/category/trending"
+                  className="text-[12px] font-bold text-white/90 hover:text-white hover:underline"
+                >
+                  {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
+                </Link>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800/80 p-1">
+                {(mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, isHeroMostReadExpanded ? 10 : 5).map((art) => (
+                  <Link
+                    key={art.id}
+                    href={`/news/${art.slug}`}
+                    className="group flex items-start gap-2.5 py-2.5 px-3 hover:bg-muted/30 transition-colors rounded-lg"
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#B3121B] mt-1.5 shrink-0" />
+                    <h4 className="text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors flex-1 line-clamp-2">
+                      <AutoArticleTitle article={art} language={language} />
+                    </h4>
+                  </Link>
+                ))}
+              </div>
+              {/* Expand / Collapse "વધુ વાંચો" button for mobile */}
+              <button
+                type="button"
+                onClick={() => setIsHeroMostReadExpanded(!isHeroMostReadExpanded)}
+                className="w-full py-2.5 px-3 text-center text-[13px] font-black text-[#B3121B] hover:bg-muted/40 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-center gap-1.5 transition-colors cursor-pointer select-none"
+              >
+                <span>
+                  {isHeroMostReadExpanded
+                    ? (language === 'gu' ? 'ઓછું વાંચો' : language === 'hi' ? 'कम पढ़ें' : 'Show Less')
+                    : (language === 'gu' ? 'વધુ વાંચો' : language === 'hi' ? 'और पढ़ें' : 'Read More')}
+                </span>
+                <span className="text-xs transition-transform duration-200">
+                  {isHeroMostReadExpanded ? '▲' : '▼'}
+                </span>
+              </button>
+            </div>
+
+            {/* Desktop View (>= md): 100% UNTOUCHED */}
+            <div className="hidden md:flex w-full overflow-hidden rounded-xl border border-slate-400 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] select-none">
                   {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : 'Most Read'}
@@ -2025,41 +2116,43 @@ export default function HeroSection({
         );
       })}
 
-      {/* 17. NEWSLETTER SECTION (Screenshot 5) */}
-      <div className="mx-auto max-w-screen-xl px-4 py-1 mb-2.5 select-none">
-        <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-6 md:p-8 bg-[#140e0c] text-white rounded-xl shadow-md border border-white/5">
-          <div className="flex flex-col gap-2 max-w-xl text-center lg:text-left">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-black leading-tight">
-              {language === 'gu'
-                ? 'દરરોજ સવારે ગુજરાતના મુખ્ય સમાચાર — તમારા ઈનબોક્સમાં'
-                : 'Every morning main news of Gujarat — in your inbox'}
-            </h3>
-            <p className="text-xs sm:text-sm text-[#a3a3a3] font-bold">
-              {language === 'gu'
-                ? 'ન્યૂઝલેટર સબસ્ક્રાઇબ કરો અને દિવસની શરૂઆત માહિતી સાથે કરો.'
-                : 'Subscribe to our newsletter and start your day informed.'}
-            </p>
-          </div>
+      {/* 17. NEWSLETTER SECTION (Hidden in frontend; set to true anytime in future to re-enable) */}
+      {false && (
+        <div className="mx-auto max-w-screen-xl px-4 py-1 mb-2.5 select-none">
+          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 p-6 md:p-8 bg-[#140e0c] text-white rounded-xl shadow-md border border-white/5">
+            <div className="flex flex-col gap-2 max-w-xl text-center lg:text-left">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-black leading-tight">
+                {language === 'gu'
+                  ? 'દરરોજ સવારે ગુજરાતના મુખ્ય સમાચાર — તમારા ઈનબોક્સમાં'
+                  : 'Every morning main news of Gujarat — in your inbox'}
+              </h3>
+              <p className="text-xs sm:text-sm text-[#a3a3a3] font-bold">
+                {language === 'gu'
+                  ? 'ન્યૂઝલેટર સબસ્ક્રાઇબ કરો અને દિવસની શરૂઆત માહિતી સાથે કરો.'
+                  : 'Subscribe to our newsletter and start your day informed.'}
+              </p>
+            </div>
 
-          <form
-            onSubmit={(e) => e.preventDefault()}
-            className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full lg:w-auto min-w-0 sm:min-w-[400px]"
-          >
-            <input
-              type="email"
-              placeholder={language === 'gu' ? 'તમારો ઈમેલ દાખલ કરો' : 'Enter your email'}
-              className="flex-1 px-4 py-3 bg-[#241c19] border border-[#3c302a] text-white text-sm rounded-sm focus:outline-none focus:border-[#e02020] placeholder-[#6d5e56]"
-              required
-            />
-            <button
-              type="submit"
-              className="bg-[#e02020] hover:bg-[#c01818] text-white text-sm font-black px-6 py-3 rounded-sm transition-all whitespace-nowrap"
+            <form
+              onSubmit={(e) => e.preventDefault()}
+              className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full lg:w-auto min-w-0 sm:min-w-[400px]"
             >
-              {language === 'gu' ? 'સબસ્ક્રાઇબ' : 'Subscribe'}
-            </button>
-          </form>
+              <input
+                type="email"
+                placeholder={language === 'gu' ? 'તમારો ઈમેલ દાખલ કરો' : 'Enter your email'}
+                className="flex-1 px-4 py-3 bg-[#241c19] border border-[#3c302a] text-white text-sm rounded-sm focus:outline-none focus:border-[#e02020] placeholder-[#6d5e56]"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-[#e02020] hover:bg-[#c01818] text-white text-sm font-black px-6 py-3 rounded-sm transition-all whitespace-nowrap"
+              >
+                {language === 'gu' ? 'સબસ્ક્રાઇબ' : 'Subscribe'}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

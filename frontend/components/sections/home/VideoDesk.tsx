@@ -242,7 +242,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
     return (
       <section className="mx-auto max-w-screen-xl px-4 mt-2">
         {/* Red Panel containing only Shorts */}
-        <div className="w-full bg-[#B3121B] text-white rounded-sm px-5 md:px-8 py-6 border border-white/10 relative overflow-hidden shadow-lg">
+        <div className="w-full bg-[#B3121B] text-white rounded-2xl sm:rounded-3xl md:rounded-sm px-5 md:px-8 py-6 border border-white/10 relative overflow-hidden shadow-lg">
 
           {/* Header */}
           <div className="relative z-10 flex items-center justify-between mb-5 select-none">
@@ -331,7 +331,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                             alt={card.titleGu}
                             fill
                             sizes="175px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="object-contain transition-transform duration-300"
                           />
                           {/* Gradient overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/20" />
@@ -426,7 +426,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
   return (
     <section className="mx-auto max-w-screen-xl px-4 mt-2">
       {/* ── Red Panel containing Videos ── */}
-      <div className="w-full bg-[#B3121B] text-white rounded-sm px-3.5 sm:px-5 md:px-8 pt-3.5 sm:pt-4 pb-3.5 sm:pb-4 border border-white/10 relative overflow-hidden shadow-lg">
+      <div className="w-full bg-[#B3121B] text-white rounded-2xl sm:rounded-3xl md:rounded-sm px-3.5 sm:px-5 md:px-8 pt-3.5 sm:pt-4 pb-3.5 sm:pb-4 border border-white/10 relative overflow-hidden shadow-lg">
 
         {/* Header */}
         <div className="relative z-10 flex items-center justify-between mb-3 md:mb-4">
@@ -463,7 +463,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 priority
                 loading="eager"
                 sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-cover transition-transform duration-300 group-hover:scale-[1.02] animate-in fade-in duration-500"
+                className="object-contain transition-transform duration-300 animate-in fade-in duration-500"
               />
               {/* Large play button */}
               <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[54px] h-[54px] rounded-full bg-white/95 text-[#B3121B] flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-110">
@@ -515,7 +515,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                       alt={v.titleGu || v.title}
                       fill
                       sizes="108px"
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="object-contain transition-transform duration-300"
                     />
                     {/* Mini play */}
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 text-[#B3121B] flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">

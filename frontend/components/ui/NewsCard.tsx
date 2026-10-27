@@ -13,6 +13,7 @@ import { getCategoryColor, toGu } from '@/lib/utils';
 import { useApp } from '@/components/AppProvider';
 import { useAutoTranslate } from '@/lib/translate';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 
 interface NewsCardProps {
   article: Article;
@@ -76,7 +77,7 @@ export default function NewsCard({
               {displayCategory}
             </span>
             <h1 className="line-clamp-3 text-xl font-black leading-tight text-white md:text-4xl lg:text-5xl">
-              {title}
+              <AutoArticleTitle article={article} language={language} fallback={title} />
             </h1>
           </div>
         </div>
@@ -99,7 +100,7 @@ export default function NewsCard({
               {displayCategory}
             </span>
             <h2 className="line-clamp-2 text-sm sm:text-base font-black leading-snug text-white">
-              {title}
+              <AutoArticleTitle article={article} language={language} fallback={title} />
             </h2>
           </div>
         </div>
@@ -123,7 +124,7 @@ export default function NewsCard({
               {displayCategory}
             </span>
             <h3 className="line-clamp-2 text-[14px] sm:text-[15px] font-black leading-snug text-foreground">
-              {title}
+              <AutoArticleTitle article={article} language={language} fallback={title} />
             </h3>
           </div>
           {showDate && (
@@ -148,7 +149,7 @@ export default function NewsCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 text-sm font-black leading-snug text-foreground">
-            {title}
+            <AutoArticleTitle article={article} language={language} fallback={title} />
           </p>
         </div>
       </Link>
@@ -162,7 +163,8 @@ export default function NewsCard({
           <ArticleMedia
             src={mediaSrc}
             alt={article.title}
-            className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-105"
+            className="absolute inset-0 h-full w-full"
+            style={{ objectFit: 'contain', objectPosition: 'center' }}
           />
         </div>
         <div className="flex flex-col flex-1 mt-2.5 justify-between">
@@ -178,7 +180,7 @@ export default function NewsCard({
               )}
             </div>
             <h3 className="line-clamp-2 text-[13.5px] md:text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors mt-0.5 tracking-tight min-h-[2.6rem]">
-              {title}
+              <AutoArticleTitle article={article} language={language} fallback={title} />
             </h3>
           </div>
         </div>
@@ -234,7 +236,7 @@ export default function NewsCard({
             className="line-clamp-2 text-[13px] sm:text-[13.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors tracking-tight min-h-[2.6rem]"
             title={title}
           >
-            {title}
+            <AutoArticleTitle article={article} language={language} fallback={title} />
           </h3>
         </div>
 

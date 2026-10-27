@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
-import { Play, X, ExternalLink } from 'lucide-react';
+import { Play, X, ExternalLink, ChevronDown } from 'lucide-react';
 import { getPublicReels, getPublicVideos, getPublicGallery, getPublicArticles } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
 import { getReelThumbnail } from '@/components/sections/InstagramStories';
@@ -145,7 +145,7 @@ export default function InstagramPageClient() {
                         <img
                           src={reel.thumb}
                           alt={reel.displayTitle}
-                          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          className="absolute inset-0 h-full w-full object-contain transition-transform duration-500"
                           loading="lazy"
                         />
 
@@ -206,17 +206,12 @@ export default function InstagramPageClient() {
                 <button
                   type="button"
                   onClick={() => setVisibleCount((c) => c + 6)}
-                  className="px-6 sm:px-8 py-2.5 rounded-full border-2 border-[#B3121B] bg-card text-sm sm:text-base font-extrabold text-[#B3121B] transition-all duration-200 shadow-xs hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-[#B3121B] hover:text-white hover:shadow-md cursor-pointer active:scale-95 text-center select-none"
+                  className="group inline-flex items-center gap-2.5 rounded-full border-2 border-[#B3121B] px-9 py-3 text-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
                 >
-                  <span
-                    className="font-extrabold"
-                    style={{
-                      fontWeight: 800,
-                      fontFamily: 'var(--font-noto-sans-gujarati), var(--font-hind-vadodara), "Nirmala UI", sans-serif',
-                    }}
-                  >
-                    {language === 'gu' ? 'વધુ રીલ્સ જુઓ ↓' : language === 'hi' ? 'और रील्स देखें ↓' : 'Load More Reels ↓'}
+                  <span className="text-lg md:text-xl font-black tracking-wide leading-none">
+                    {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
                   </span>
+                  <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
                 </button>
               </div>
             )}
@@ -272,7 +267,7 @@ export default function InstagramPageClient() {
               <img
                 src={selectedReel.thumb}
                 alt={selectedReel.displayTitle}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             </div>
 
