@@ -1593,6 +1593,13 @@ router.get('/tickers', async (req, res, next) => {
 router.get('/rss', RssController.getPublicRss);
 router.get('/rss/:category', RssController.getPublicRss);
 
+/**
+ * Legacy RSS Feeds for Dailyhunt & backward compatibility
+ */
+router.get('/rss-feed-politics.php', RssController.getLegacyPoliticsRss);
+router.get('/rss-feed-gallery.php', RssController.getLegacyGalleryRss);
+
+
 
 /**
  * GET /api/public/astrology

@@ -63,6 +63,124 @@ export class RssController {
     }
   }
 
+  /**
+   * GET /rss-feed-politics.php (and /api/public/rss-feed-politics.php)
+   * Legacy PHP RSS feed endpoint for Dailyhunt compatibility.
+   * Maps query parameter `?name=...` to corresponding dynamic feed.
+   */
+  static async getLegacyPoliticsRss(req: Request, res: Response, next: NextFunction) {
+    try {
+      const rawName = (req.query.name as string || '').trim().toLowerCase();
+      const LEGACY_MAP: Record<string, string> = {
+        'news': 'home',
+        'gujarat': 'gujarat',
+        'gandhinagar': 'gandhinagar',
+        'ahmedabad': 'ahmedabad',
+        'surat': 'surat',
+        'vadodara': 'vadodara',
+        'rajkot': 'rajkot',
+        'others': 'other-cities',
+        'national': 'national',
+        'international': 'world',
+        'entertainment-life-style': 'entertainment-life-style',
+        'popular-stories': 'trending',
+        'politics': 'politics',
+        'fact-check': 'fact-check',
+        'health': 'health',
+        'technology': 'technology',
+        'crime': 'crime',
+        'video': 'videos',
+        'videos': 'videos',
+        'instagram': 'instagram',
+        'reels': 'instagram',
+        'gallery': 'photos',
+        'photos': 'photos',
+        'home': 'home',
+      };
+
+      const categorySlug = rawName ? (LEGACY_MAP[rawName] || rawName) : 'politics';
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+
+      const feed = await generatePublicRssFeed({
+        categorySlug,
+        limit,
+      });
+
+      const ifNoneMatch = req.headers['if-none-match'];
+      const ifModifiedSince = req.headers['if-modified-since'];
+
+      if (ifNoneMatch && ifNoneMatch === feed.etag) {
+        res.setHeader('ETag', feed.etag);
+        res.setHeader('Last-Modified', feed.lastModified.toUTCString());
+        return res.status(304).end();
+      }
+
+      if (ifModifiedSince) {
+        const clientDate = new Date(ifModifiedSince);
+        if (!isNaN(clientDate.getTime()) && clientDate.getTime() >= Math.floor(feed.lastModified.getTime() / 1000) * 1000) {
+          res.setHeader('ETag', feed.etag);
+          res.setHeader('Last-Modified', feed.lastModified.toUTCString());
+          return res.status(304).end();
+        }
+      }
+
+      res.set({
+        'Content-Type': 'application/rss+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+        ETag: feed.etag,
+        'Last-Modified': feed.lastModified.toUTCString(),
+      });
+
+      return res.status(200).send(feed.xml);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * GET /rss-feed-gallery.php (and /api/public/rss-feed-gallery.php)
+   * Legacy PHP Gallery RSS feed endpoint for Dailyhunt compatibility.
+   */
+  static async getLegacyGalleryRss(req: Request, res: Response, next: NextFunction) {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+      const feed = await generatePublicRssFeed({
+        categorySlug: 'photos',
+        limit,
+      });
+
+      const ifNoneMatch = req.headers['if-none-match'];
+      const ifModifiedSince = req.headers['if-modified-since'];
+
+      if (ifNoneMatch && ifNoneMatch === feed.etag) {
+        res.setHeader('ETag', feed.etag);
+        res.setHeader('Last-Modified', feed.lastModified.toUTCString());
+        return res.status(304).end();
+      }
+
+      if (ifModifiedSince) {
+        const clientDate = new Date(ifModifiedSince);
+        if (!isNaN(clientDate.getTime()) && clientDate.getTime() >= Math.floor(feed.lastModified.getTime() / 1000) * 1000) {
+          res.setHeader('ETag', feed.etag);
+          res.setHeader('Last-Modified', feed.lastModified.toUTCString());
+          return res.status(304).end();
+        }
+      }
+
+      res.set({
+        'Content-Type': 'application/rss+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+        ETag: feed.etag,
+        'Last-Modified': feed.lastModified.toUTCString(),
+      });
+
+      return res.status(200).send(feed.xml);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+
   // ==========================================
   // Admin RSS Source Management
   // ==========================================

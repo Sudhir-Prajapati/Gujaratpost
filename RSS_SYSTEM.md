@@ -13,10 +13,17 @@ All public feeds return `Content-Type: application/rss+xml; charset=utf-8` and s
 
 | Route | Method | Description |
 | :--- | :--- | :--- |
-| `/rss.xml` | `GET` | Main public RSS feed containing the latest published news articles (proxied via Next.js App Router). |
-| `/rss/:category.xml` | `GET` | Category-specific RSS feed (e.g. `/rss/gujarat.xml`, `/rss/politics.xml`, `/rss/business.xml`, `/rss/national.xml`). |
+| `/rss.xml` | `GET` | Main public RSS feed containing latest published news articles. |
+| `/rss/home.xml` | `GET` | Home news feed (all stories). |
+| `/rss/:category.xml` | `GET` | Category-specific RSS feed (e.g. `/rss/gujarat.xml`, `/rss/politics.xml`, `/rss/national.xml`, `/rss/world.xml`, `/rss/health.xml`, `/rss/technology.xml`, `/rss/crime.xml`). |
+| `/rss/photos.xml` | `GET` | Dynamic photo gallery RSS feed generated from GalleryPhoto records. |
+| `/rss/videos.xml` | `GET` | Dynamic video news RSS feed generated from Video records with YouTube media enclosure. |
+| `/rss/instagram.xml` | `GET` | Dynamic visual reels RSS feed generated from Reel records. |
+| `/rss-feed-politics.php?name=:name` | `GET` | Legacy PHP endpoint for Dailyhunt. Maps `name` parameter to modern feeds. |
+| `/rss-feed-gallery.php` | `GET` | Legacy PHP photo gallery endpoint for Dailyhunt. Maps to `/rss/photos.xml`. |
 | `/api/public/rss` | `GET` | Direct backend API endpoint for all published articles. Supports `?limit=50`. |
 | `/api/public/rss/:category` | `GET` | Direct backend API endpoint for category articles. Supports both `:category` and `:category.xml`. |
+
 
 ### Key XML Specifications:
 - **Encoding**: UTF-8 with clean Gujarati Unicode characters.

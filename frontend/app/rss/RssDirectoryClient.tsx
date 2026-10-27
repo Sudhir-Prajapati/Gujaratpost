@@ -282,7 +282,103 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
             })}
           </div>
         )}
+
+        {/* ── Dailyhunt & Legacy PHP Feeds Compatibility Section ── */}
+        <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-1.5">
+                <span>Dailyhunt & Aggregator Compatibility</span>
+              </div>
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
+                ડેઇલીહન્ટ (Dailyhunt) અને લીગસી PHP RSS ફીડ્સ
+              </h3>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                જૂની વેબસાઇટના આ તમામ PHP URLs નવા ડેટાબેઝ અને નવી સિસ્ટમ સાથે 100% ચાલુ રહેશે.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              { name: 'મુખ્ય સમાચાર (General News)', path: '/rss-feed-politics.php?name=news', target: '/rss.xml', desc: 'તમામ સમાચારોની સંપૂર્ણ ફીડ' },
+              { name: 'ગુજરાત (Gujarat)', path: '/rss-feed-politics.php?name=gujarat', target: '/rss/gujarat.xml', desc: 'સમગ્ર ગુજરાત રાજ્યના સમાચારો' },
+              { name: 'ગાંધીનગર (Gandhinagar)', path: '/rss-feed-politics.php?name=gandhinagar', target: '/rss/gandhinagar.xml', desc: 'પાટનગર ગાંધીનગર સમાચારો' },
+              { name: 'અમદાવાદ (Ahmedabad)', path: '/rss-feed-politics.php?name=ahmedabad', target: '/rss/ahmedabad.xml', desc: 'અમદાવાદ મહાનગર સમાચારો' },
+              { name: 'સુરત (Surat)', path: '/rss-feed-politics.php?name=surat', target: '/rss/surat.xml', desc: 'સુરત શહેર અને જિલ્લા સમાચારો' },
+              { name: 'વડોદરા (Vadodara)', path: '/rss-feed-politics.php?name=vadodara', target: '/rss/vadodara.xml', desc: 'વડોદરા શહેર સમાચારો' },
+              { name: 'રાજકોટ (Rajkot)', path: '/rss-feed-politics.php?name=rajkot', target: '/rss/rajkot.xml', desc: 'રાજકોટ અને સૌરાષ્ટ્ર સમાચારો' },
+              { name: 'અન્ય શહેરો (Other Cities)', path: '/rss-feed-politics.php?name=others', target: '/rss/other-cities.xml', desc: 'અન્ય શહેરો અને તાલુકા સમાચારો' },
+              { name: 'ભારત (National)', path: '/rss-feed-politics.php?name=national', target: '/rss/national.xml', desc: 'દેશભરના રાષ્ટ્રીય સમાચારો' },
+              { name: 'વિશ્વ (International)', path: '/rss-feed-politics.php?name=international', target: '/rss/world.xml', desc: 'આંતરરાષ્ટ્રીય વિશ્વ સમાચારો' },
+              { name: 'મનોરંજન & લાઇફસ્ટાઇલ', path: '/rss-feed-politics.php?name=entertainment-life-style', target: '/rss/entertainment-life-style.xml', desc: 'બોલીવુડ અને લાઇફસ્ટાઇલ કવરેજ' },
+              { name: 'લોકપ્રિય સ્ટોરીઝ (Trending)', path: '/rss-feed-politics.php?name=popular-stories', target: '/rss/trending.xml', desc: 'ટ્રેન્ડિંગ અને પોપ્યુલર સમાચારો' },
+              { name: 'રાજનીતિ (Politics)', path: '/rss-feed-politics.php?name=politics', target: '/rss/politics.xml', desc: 'રાજકીય વિશ્લેષણ અને સમાચારો' },
+              { name: 'ફેક્ટ ચેક (Fact Check)', path: '/rss-feed-politics.php?name=fact-check', target: '/rss/fact-check.xml', desc: 'સત્ય તપાસ અને વાયરલ ફેક્ટ ચેક' },
+              { name: 'ફોટો ગેલેરી (Gallery)', path: '/rss-feed-gallery.php', target: '/rss/photos.xml', desc: 'તસવીરોમાં સમાચાર અને ફોટો ગેલેરી' },
+            ].map((feed, idx) => {
+              const fullUrl = `${cleanSiteUrl}${feed.path}`;
+              const isCopied = copiedSlug === `legacy-${idx}`;
+
+              return (
+                <div
+                  key={idx}
+                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
+                        {feed.name}
+                      </h4>
+                      <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/40">
+                        {feed.target}
+                      </span>
+                    </div>
+                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 break-all">
+                      {feed.path}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end gap-2">
+                    <button
+                      onClick={() => copyToClipboard(fullUrl, `legacy-${idx}`)}
+                      className={`px-3 py-1 text-xs font-medium rounded-lg border transition flex items-center gap-1.5 cursor-pointer ${
+                        isCopied
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400'
+                          : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600'
+                      }`}
+                      title="Copy URL for Dailyhunt"
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-600" />
+                          <span>કૉપિ થયું</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy Legacy URL</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href={feed.path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition flex items-center justify-center cursor-pointer"
+                      title="Test live XML feed"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
+
