@@ -2,11 +2,8 @@ name: gujarat-post-deploy
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - 'frontend/**'
-      - '.github/workflows/deploy.yml'
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
