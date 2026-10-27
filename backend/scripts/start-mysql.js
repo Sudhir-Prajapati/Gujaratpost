@@ -50,6 +50,7 @@ async function main() {
   const deadline = Date.now() + 30000;
   while (Date.now() < deadline) {
     if (await isListening(host, port)) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log(`[MySQL] Database port ${port} is ready.`);
       return;
     }
