@@ -38,7 +38,6 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
 
 const ArticleContentBody = memo(function ArticleContentBody({
   html,
-  activeSpeechText,
 }: {
   html: string;
   activeSpeechText?: string;
@@ -62,78 +61,6 @@ const ArticleContentBody = memo(function ArticleContentBody({
       bodyRef.current.innerHTML = cleanHtml;
     }
   }, [cleanHtml]);
-
-  // Visual karaoke-style red text highlighting where speaker reaches
-  useEffect(() => {
-    const container = bodyRef.current;
-    if (!container) return;
-
-    // Clear any previous active speech highlights
-    const oldMarks = container.querySelectorAll('.gp-speech-highlight');
-    oldMarks.forEach((m) => {
-      const parent = m.parentNode;
-      if (parent) {
-        while (m.firstChild) {
-          parent.insertBefore(m.firstChild, m);
-        }
-        parent.removeChild(m);
-      }
-    });
-
-    if (!activeSpeechText || activeSpeechText.trim().length < 3) return;
-
-    // Prepare search phrase from spoken sentence
-    const cleanChunk = activeSpeechText.replace(/[.,?!।;:()"'“”]/g, ' ').trim();
-    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 1);
-    if (words.length === 0) return;
-
-    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-    let node: Text | null = null;
-
-    while ((node = walker.nextNode() as Text | null)) {
-      if (node.parentElement?.closest('.gp-speech-highlight')) continue;
-      const textVal = node.nodeValue || '';
-      if (!textVal.trim()) continue;
-
-      let matchIndex = -1;
-      let matchLength = 0;
-
-      const lowerVal = textVal.toLowerCase();
-      const lowerChunk = cleanChunk.toLowerCase();
-      const directIdx = lowerVal.indexOf(lowerChunk);
-
-      if (directIdx !== -1) {
-        matchIndex = directIdx;
-        matchLength = cleanChunk.length;
-      } else {
-        // Match by leading key words
-        const sample = words.slice(0, Math.min(words.length, 4)).join(' ').toLowerCase();
-        const subIdx = lowerVal.indexOf(sample);
-        if (subIdx !== -1) {
-          matchIndex = subIdx;
-          matchLength = Math.min(textVal.length - subIdx, cleanChunk.length);
-        }
-      }
-
-      if (matchIndex !== -1 && matchLength > 0) {
-        try {
-          const range = document.createRange();
-          range.setStart(node, matchIndex);
-          range.setEnd(node, Math.min(node.length, matchIndex + matchLength));
-
-          const mark = document.createElement('mark');
-          mark.className = 'gp-speech-highlight text-[#B3121B] dark:text-red-400 font-black bg-red-100/90 dark:bg-red-950/70 px-1 py-0.5 rounded border-b-2 border-[#B3121B] transition-all duration-200 shadow-xs inline';
-          range.surroundContents(mark);
-
-          // Gently scroll highlighted text into viewport if not visible
-          mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          break;
-        } catch {
-          // Continue if DOM range split is not clean
-        }
-      }
-    }
-  }, [activeSpeechText]);
 
   // Both SSR and client initial render produce identical empty <div>
   // innerHTML is set imperatively after mount via ref — no hydration mismatch
@@ -1281,9 +1208,16 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const directTitle = getArticleTitle(article, langToUse) || article.title || '';
     const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
 
-    // Prefer translated title/body if available for current language
+    // Prefer translated title/body if available with robust full-body fallbacks
     const speechTitle = (langToUse === language && title) ? title : directTitle;
-    const speechBody = (langToUse === language && body) ? body : directBody;
+    const speechBody =
+      (langToUse === language && body && body.trim().length > 10 ? body : '') ||
+      (directBody && directBody.trim().length > 10 ? directBody : '') ||
+      (article as any).contentGu ||
+      (article as any).contentHi ||
+      (article as any).content ||
+      excerpt ||
+      '';
 
     playArticleAudio({
       title: speechTitle,
@@ -1338,88 +1272,117 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     if (!root) return;
 
     // 1. Remove previous active speech highlights
-    const prevMarks = root.querySelectorAll('.gp-speech-highlight');
-    prevMarks.forEach((m) => {
-      const parent = m.parentNode;
-      if (parent) {
-        while (m.firstChild) {
-          parent.insertBefore(m.firstChild, m);
-        }
-        parent.removeChild(m);
-      }
-    });
-
     const prevActiveItems = root.querySelectorAll('[data-gp-speech-active="true"]');
     prevActiveItems.forEach((el) => {
       el.removeAttribute('data-gp-speech-active');
-      el.classList.remove('text-[#B3121B]', 'dark:text-red-400', 'font-black', 'bg-red-50/70', 'dark:bg-red-950/40', 'rounded-md', 'transition-all');
+      el.classList.remove(
+        'gp-speech-active',
+        'border-l-4',
+        'border-b-2',
+        'border-[#B3121B]',
+        'dark:border-red-500',
+        'bg-red-50/70',
+        'dark:bg-red-950/40',
+        'text-[#B3121B]',
+        'dark:text-red-400',
+        'font-bold',
+        'px-2.5',
+        'py-1.5',
+        'rounded-r',
+        'transition-all'
+      );
     });
+
+    const h1Elem = root.querySelector('h1');
+    if (h1Elem) {
+      h1Elem.classList.remove('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400');
+    }
 
     if (!speaking || !activeSpeechText || activeSpeechText.trim().length < 3) return;
 
-    // 2. Extract key words from active spoken text
+    // 2. If reading the heading (first chunk or matches title)
+    if (activeSpeechIndex === 0 && h1Elem) {
+      h1Elem.setAttribute('data-gp-speech-active', 'true');
+      h1Elem.classList.add('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400', 'transition-all', 'duration-200');
+      h1Elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    // 3. Extract key words from active spoken text
     const cleanChunk = activeSpeechText.replace(/[.,?!।;:()"'“”]/g, ' ').trim();
-    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 2);
+    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 1);
     if (words.length === 0) return;
 
-    // 3. Find matching candidate elements inside the article: paragraphs, list items, headings, blockquotes
-    const candidates = root.querySelectorAll('p, li, blockquote, h1, h2, h3');
-    let bestElem: Element | null = null;
+    // 4. Find matching candidate elements inside the article: paragraphs, list items, headings, blockquotes
+    const candidates = Array.from(root.querySelectorAll('.article-body p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3, p'));
+    let bestElem: HTMLElement | null = null;
     let maxMatch = 0;
 
-    candidates.forEach((cand) => {
-      const txt = cand.textContent || '';
-      if (!txt.trim()) return;
+    for (const cand of candidates) {
+      const txt = (cand.textContent || '').toLowerCase();
+      if (!txt.trim()) continue;
 
       let matchCount = 0;
       for (const w of words) {
-        if (txt.includes(w)) {
+        if (txt.includes(w.toLowerCase())) {
           matchCount++;
         }
       }
 
-      if (matchCount > maxMatch && matchCount >= Math.min(2, words.length)) {
+      if (matchCount > maxMatch) {
         maxMatch = matchCount;
-        bestElem = cand;
+        bestElem = cand as HTMLElement;
       }
-    });
+    }
+
+    // If no keyword match found (e.g. translated speech text), fallback to index proportion
+    if (!bestElem && candidates.length > 0 && activeSpeechIndex > 0) {
+      const fallbackIdx = Math.min(candidates.length - 1, Math.max(0, activeSpeechIndex - 1));
+      bestElem = candidates[fallbackIdx] as HTMLElement;
+    }
 
     if (bestElem) {
-      // Highlight the matching element/sentence in vibrant RED!
-      (bestElem as HTMLElement).setAttribute('data-gp-speech-active', 'true');
-      (bestElem as HTMLElement).classList.add('text-[#B3121B]', 'dark:text-red-400', 'font-black', 'bg-red-50/70', 'dark:bg-red-950/40', 'rounded-md', 'transition-all', 'duration-200');
-
-      // Also try wrapping the exact phrase in a mark if possible
-      const nodeWalker = document.createTreeWalker(bestElem, NodeFilter.SHOW_TEXT);
-      let textNode: Text | null = null;
-      while ((textNode = nodeWalker.nextNode() as Text | null)) {
-        const val = textNode.nodeValue || '';
-        const sample = words.slice(0, Math.min(words.length, 3)).join(' ');
-        const idx = val.indexOf(sample);
-        if (idx !== -1) {
-          try {
-            const range = document.createRange();
-            range.setStart(textNode, idx);
-            range.setEnd(textNode, Math.min(textNode.length, idx + sample.length));
-            const mark = document.createElement('mark');
-            mark.className = 'gp-speech-highlight text-[#B3121B] dark:text-red-400 font-black bg-red-100/90 dark:bg-red-950/70 px-1 py-0.5 rounded border-b-2 border-[#B3121B] shadow-xs inline';
-            range.surroundContents(mark);
-            break;
-          } catch {}
-        }
-      }
-
-      // Smoothly scroll the highlighted sentence into view
+      bestElem.setAttribute('data-gp-speech-active', 'true');
+      bestElem.classList.add(
+        'gp-speech-active',
+        'border-l-4',
+        'border-b-2',
+        'border-[#B3121B]',
+        'dark:border-red-500',
+        'bg-red-50/70',
+        'dark:bg-red-950/40',
+        'text-[#B3121B]',
+        'dark:text-red-400',
+        'font-bold',
+        'px-2.5',
+        'py-1.5',
+        'rounded-r',
+        'transition-all',
+        'duration-200'
+      );
       bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [speaking, activeSpeechText]);
+  }, [speaking, activeSpeechIndex, activeSpeechText]);
 
-  // Clean up any playing audio when user navigates away
+  // Clean up and stop playing audio whenever article changes or component unmounts
   useEffect(() => {
+    stopArticleAudio();
+    setSpeaking(false);
+    setActiveSpeechIndex(-1);
+    setActiveSpeechText('');
+
+    const onGlobalStop = () => {
+      setSpeaking(false);
+      setActiveSpeechIndex(-1);
+      setActiveSpeechText('');
+    };
+    window.addEventListener('gp-tts-stop', onGlobalStop);
+
     return () => {
       stopArticleAudio();
+      window.removeEventListener('gp-tts-stop', onGlobalStop);
     };
-  }, []);
+  }, [article.id, article.slug]);
 
   const shareLinks = [
     {
@@ -1565,7 +1528,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               {article.isBreaking && <span className="live-badge rounded bg-accent px-2 py-1 text-xs font-black text-white ml-2">BREAKING</span>}
             </div>
 
-            <h1 className={`article-title transition-colors duration-200 ${speaking && activeSpeechIndex === 0 ? 'text-[#B3121B] dark:text-red-400 font-black' : ''}`}>
+            <h1 className={`article-title transition-all duration-200 ${speaking && activeSpeechIndex === 0 ? 'text-[#B3121B] dark:text-red-400 font-black border-b-4 border-[#B3121B] pb-1.5' : ''}`}>
               {title}
             </h1>
             <div
