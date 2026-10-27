@@ -182,14 +182,20 @@ const bootstrap = async () => {
         console.warn('Redis connection notice (running without cache):', err?.message || err);
       });
 
-    // 4. Validate Prisma connection to MySQL in background (non-blocking)
-    prisma.$connect()
-      .then(() => {
+    // 4. Validate Prisma connection to MySQL in background (non-blocking with retry)
+    const connectPrismaWithRetry = async (attempt = 1, maxAttempts = 10) => {
+      try {
+        await prisma.$connect();
         console.log('Successfully connected to MySQL database via Prisma.');
-      })
-      .catch((dbErr) => {
-        console.warn('MySQL initial connection warning (will retry automatically):', dbErr?.message || dbErr);
-      });
+      } catch (dbErr: any) {
+        if (attempt < maxAttempts) {
+          setTimeout(() => connectPrismaWithRetry(attempt + 1, maxAttempts), 1500);
+        } else {
+          console.warn('MySQL connection warning after retries:', dbErr?.message || dbErr);
+        }
+      }
+    };
+    connectPrismaWithRetry();
   } catch (error) {
     console.error('Bootstrap warning:', error);
     // Start listening anyway so backend stays online
