@@ -49,6 +49,42 @@ interface FeedPreviewResult {
   previewItems: PreviewItem[];
 }
 
+function getLegacyFeedPath(slug: string): string {
+  const s = (slug || '').trim().toLowerCase();
+  if (s === 'photos' || s === 'gallery') return '/rss-feed-gallery.php';
+  const map: Record<string, string> = {
+    home: 'news',
+    news: 'news',
+    'other-cities': 'others',
+    others: 'others',
+    world: 'international',
+    international: 'international',
+    trending: 'popular-stories',
+    'popular-stories': 'popular-stories',
+    entertainment: 'entertainment-life-style',
+    'entertainment-life-style': 'entertainment-life-style',
+    videos: 'video',
+    video: 'video',
+    instagram: 'instagram',
+    reels: 'instagram',
+    health: 'health',
+    technology: 'technology',
+    tech: 'technology',
+    crime: 'crime',
+    politics: 'politics',
+    gujarat: 'gujarat',
+    gandhinagar: 'gandhinagar',
+    ahmedabad: 'ahmedabad',
+    surat: 'surat',
+    vadodara: 'vadodara',
+    rajkot: 'rajkot',
+    national: 'national',
+    'fact-check': 'fact-check',
+  };
+  const nameParam = map[s] || s;
+  return `/rss-feed-politics.php?name=${encodeURIComponent(nameParam)}`;
+}
+
 function getErrorMessage(err: unknown, defaultMsg: string): string {
   if (err instanceof Error) return err.message;
   return defaultMsg;
@@ -318,7 +354,7 @@ export default function AdminRssPage() {
       </div>
 
       {/* Main All-Stories Feed Banner */}
-      <div className="bg-gradient-to-r from-orange-600 to-rose-600 rounded-2xl p-5 sm:p-6 text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="bg-gradient-to-r from-orange-600 to-rose-600 rounded-2xl p-5 sm:p-6 text-white shadow-md flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Rss className="w-4 h-4 text-white" />
@@ -327,54 +363,79 @@ export default function AdminRssPage() {
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-            સંપૂર્ણ ગુજરાત પોસ્ટ RSS ફીડ
+            સંપૂર્ણ ગુજરાત પોસ્ટ RSS ફીડ (All Stories)
           </h2>
-          <p className="text-white/80 text-xs sm:text-sm font-mono mt-1 break-all">
-            {cleanOriginUrl}/rss.xml
+          <p className="text-white/80 text-xs sm:text-sm mt-1">
+            નવા RSS 2.0 XML અને ડેઇલીહન્ટ જૂના PHP ફોર્મેટ બંને ઉપલબ્ધ છે.
           </p>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => copyCategoryUrl(`${cleanOriginUrl}/rss.xml`, '__all__')}
-            className="px-4 py-2 text-xs font-bold bg-white text-zinc-900 hover:bg-zinc-100 rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          >
-            {copiedCategorySlug === '__all__' ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-zinc-700" />
-                <span>Copy URL</span>
-              </>
-            )}
-          </button>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+          {/* New Modern URL Copy */}
+          <div className="flex items-center gap-1.5 bg-black/20 p-1.5 rounded-xl border border-white/20">
+            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-white text-orange-700">
+              New
+            </span>
+            <button
+              onClick={() => copyCategoryUrl(`${cleanOriginUrl}/rss.xml`, '__all_new__')}
+              className="px-2.5 py-1 text-xs font-bold text-white hover:bg-white/20 rounded-lg transition flex items-center gap-1 cursor-pointer"
+              title="Copy New RSS URL"
+            >
+              {copiedCategorySlug === '__all_new__' ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>કૉપિ થઈ!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy New (/rss.xml)</span>
+                </>
+              )}
+            </button>
+            <a
+              href="/rss.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1 rounded-lg hover:bg-white/20 text-white transition flex items-center justify-center cursor-pointer"
+              title="Open XML"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
 
-          <a
-            href="/rss.xml"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 text-xs font-bold bg-black/20 hover:bg-black/30 text-white rounded-xl border border-white/20 transition flex items-center gap-1.5 cursor-pointer"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            <span>Open XML</span>
-          </a>
-
-          <button
-            onClick={() => {
-              setTestUrl(`${cleanOriginUrl}/rss.xml`);
-              setTestResult(null);
-              setTestError(null);
-              setShowTestModal(true);
-            }}
-            className="px-4 py-2 text-xs font-bold bg-black/20 hover:bg-black/30 text-white rounded-xl border border-white/20 transition flex items-center gap-1.5 cursor-pointer"
-            title="Test and validate this XML feed"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Test Feed</span>
-          </button>
+          {/* Dailyhunt Old PHP URL Copy */}
+          <div className="flex items-center gap-1.5 bg-black/20 p-1.5 rounded-xl border border-white/20">
+            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-500 text-white">
+              Dailyhunt
+            </span>
+            <button
+              onClick={() => copyCategoryUrl(`${cleanOriginUrl}/rss-feed-politics.php?name=news`, '__all_old__')}
+              className="px-2.5 py-1 text-xs font-bold text-white hover:bg-white/20 rounded-lg transition flex items-center gap-1 cursor-pointer"
+              title="Copy Dailyhunt Old PHP URL"
+            >
+              {copiedCategorySlug === '__all_old__' ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-300" />
+                  <span>કૉપિ થઈ!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>Copy Dailyhunt PHP</span>
+                </>
+              )}
+            </button>
+            <a
+              href="/rss-feed-politics.php?name=news"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-1 rounded-lg hover:bg-white/20 text-white transition flex items-center justify-center cursor-pointer"
+              title="Open Dailyhunt PHP XML"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
         </div>
       </div>
 
@@ -434,14 +495,18 @@ export default function AdminRssPage() {
                   <th className="pb-3 px-3 font-semibold">Slug</th>
                   <th className="pb-3 px-3 font-semibold">Articles</th>
                   <th className="pb-3 px-3 font-semibold">Status</th>
-                  <th className="pb-3 px-3 font-semibold">Public RSS Feed URL</th>
+                  <th className="pb-3 px-3 font-semibold">Feed URLs (New & Dailyhunt)</th>
                   <th className="pb-3 px-3 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800/80">
                 {filteredCategories.map((cat) => {
-                  const feedUrl = `${cleanOriginUrl}/rss/${cat.slug}.xml`;
-                  const isCopied = copiedCategorySlug === cat.slug;
+                  const newPath = `/rss/${cat.slug}.xml`;
+                  const newFeedUrl = `${cleanOriginUrl}${newPath}`;
+                  const legacyPath = getLegacyFeedPath(cat.slug);
+                  const legacyUrl = `${cleanOriginUrl}${legacyPath}`;
+                  const isCopiedNew = copiedCategorySlug === `new-${cat.slug}`;
+                  const isCopiedOld = copiedCategorySlug === `old-${cat.slug}`;
                   const isActive = cat.isActive !== false;
 
                   return (
@@ -489,52 +554,77 @@ export default function AdminRssPage() {
                       </td>
 
                       <td className="py-3 px-3">
-                        <div
-                          className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 max-w-xs truncate"
-                          title={feedUrl}
-                        >
-                          /rss/{cat.slug}.xml
+                        <div className="space-y-1.5 min-w-[280px]">
+                          {/* New URL Row */}
+                          <div className="flex items-center justify-between gap-1.5 bg-orange-50/50 dark:bg-orange-950/20 px-2 py-1 rounded-md border border-orange-200/50 dark:border-orange-900/40">
+                            <span className="text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-orange-500 text-white leading-none">
+                              New
+                            </span>
+                            <span className="font-mono text-[11px] text-zinc-600 dark:text-zinc-300 truncate flex-1" title={newFeedUrl}>
+                              {newPath}
+                            </span>
+                            <button
+                              onClick={() => copyCategoryUrl(newFeedUrl, `new-${cat.slug}`)}
+                              className="px-1.5 py-0.5 text-[10px] font-semibold bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 hover:text-orange-600 rounded flex items-center gap-1 cursor-pointer"
+                              title="Copy New URL"
+                            >
+                              {isCopiedNew ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              <span>{isCopiedNew ? 'Done' : 'Copy'}</span>
+                            </button>
+                            <a
+                              href={newPath}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-0.5 text-zinc-400 hover:text-orange-600"
+                              title="Open New XML"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
+
+                          {/* Dailyhunt Old PHP URL Row */}
+                          <div className="flex items-center justify-between gap-1.5 bg-blue-50/50 dark:bg-blue-950/20 px-2 py-1 rounded-md border border-blue-200/50 dark:border-blue-900/40">
+                            <span className="text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-blue-600 text-white leading-none">
+                              Dailyhunt
+                            </span>
+                            <span className="font-mono text-[11px] text-blue-900 dark:text-blue-300 truncate flex-1" title={legacyUrl}>
+                              {legacyPath}
+                            </span>
+                            <button
+                              onClick={() => copyCategoryUrl(legacyUrl, `old-${cat.slug}`)}
+                              className="px-1.5 py-0.5 text-[10px] font-semibold bg-white dark:bg-zinc-900 border border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 rounded flex items-center gap-1 cursor-pointer"
+                              title="Copy Dailyhunt URL"
+                            >
+                              {isCopiedOld ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                              <span>{isCopiedOld ? 'Done' : 'Copy'}</span>
+                            </button>
+                            <a
+                              href={legacyPath}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-0.5 text-blue-500 hover:text-blue-700"
+                              title="Open Dailyhunt Feed"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          </div>
                         </div>
                       </td>
 
                       <td className="py-3 px-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => copyCategoryUrl(feedUrl, cat.slug)}
-                            className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition flex items-center gap-1 cursor-pointer ${
-                              isCopied
-                                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400'
-                                : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600'
-                            }`}
-                            title="Copy feed URL"
-                          >
-                            {isCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                            <span>{isCopied ? 'Copied' : 'Copy'}</span>
-                          </button>
-
-                          <a
-                            href={`/rss/${cat.slug}.xml`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="p-1 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 transition cursor-pointer"
-                            title="Open Live Feed XML in new tab"
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-
-                          <button
-                            onClick={() => {
-                              setTestUrl(feedUrl);
-                              setTestResult(null);
-                              setTestError(null);
-                              setShowTestModal(true);
-                            }}
-                            className="p-1 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-emerald-600 transition cursor-pointer"
-                            title="Validate with Feed Tester"
-                          >
-                            <ShieldCheck className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => {
+                            setTestUrl(legacyUrl);
+                            setTestResult(null);
+                            setTestError(null);
+                            setShowTestModal(true);
+                          }}
+                          className="px-2.5 py-1 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-emerald-600 transition inline-flex items-center gap-1 cursor-pointer"
+                          title="Validate feed"
+                        >
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          <span>Validate</span>
+                        </button>
                       </td>
                     </tr>
                   );

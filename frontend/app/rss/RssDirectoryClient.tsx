@@ -10,6 +10,8 @@ import {
   Radio,
   Layers,
   Sparkles,
+  FileCode,
+  Globe,
 } from 'lucide-react';
 
 interface CategoryItem {
@@ -25,9 +27,50 @@ interface Props {
   siteUrl: string;
 }
 
+function getLegacyFeedPath(slug: string): string {
+  const s = (slug || '').trim().toLowerCase();
+  if (s === 'photos' || s === 'gallery') {
+    return '/rss-feed-gallery.php';
+  }
+
+  const map: Record<string, string> = {
+    home: 'news',
+    news: 'news',
+    'other-cities': 'others',
+    others: 'others',
+    world: 'international',
+    international: 'international',
+    trending: 'popular-stories',
+    'popular-stories': 'popular-stories',
+    entertainment: 'entertainment-life-style',
+    'entertainment-life-style': 'entertainment-life-style',
+    videos: 'video',
+    video: 'video',
+    instagram: 'instagram',
+    reels: 'instagram',
+    health: 'health',
+    technology: 'technology',
+    tech: 'technology',
+    crime: 'crime',
+    politics: 'politics',
+    gujarat: 'gujarat',
+    gandhinagar: 'gandhinagar',
+    ahmedabad: 'ahmedabad',
+    surat: 'surat',
+    vadodara: 'vadodara',
+    rajkot: 'rajkot',
+    national: 'national',
+    'fact-check': 'fact-check',
+  };
+
+  const nameParam = map[s] || s;
+  return `/rss-feed-politics.php?name=${encodeURIComponent(nameParam)}`;
+}
+
 export default function RssDirectoryClient({ categories, siteUrl }: Props) {
   const [search, setSearch] = useState('');
-  const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [formatFilter, setFormatFilter] = useState<'both' | 'new' | 'old'>('both');
 
   const [cleanSiteUrl, setCleanSiteUrl] = useState(
     siteUrl ? siteUrl.replace(/\/+$/, '') : 'http://localhost:3000'
@@ -39,7 +82,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
     }
   }, []);
 
-  const copyToClipboard = async (url: string, slugKey: string) => {
+  const copyToClipboard = async (url: string, key: string) => {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(url);
@@ -54,8 +97,8 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
         document.execCommand('copy');
         document.body.removeChild(textarea);
       }
-      setCopiedSlug(slugKey);
-      setTimeout(() => setCopiedSlug(null), 2200);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 2000);
     } catch {
       window.prompt('Copy feed URL:', url);
     }
@@ -73,7 +116,8 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
     );
   }, [categories, search]);
 
-  const mainFeedUrl = `${cleanSiteUrl}/rss.xml`;
+  const mainNewFeedUrl = `${cleanSiteUrl}/rss.xml`;
+  const mainOldFeedUrl = `${cleanSiteUrl}/rss-feed-politics.php?name=news`;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
@@ -84,13 +128,14 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 mb-3">
                 <Radio className="w-3.5 h-3.5 text-orange-500" />
-                <span>RSS 2.0 ફીડ્સ</span>
+                <span>RSS 2.0 & Dailyhunt ફીડ્સ ડિરેક્ટરી</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
                 ગુજરાત પોસ્ટ RSS ફીડ્સ ડિરેક્ટરી
               </h1>
-              <p className="mt-1.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-xl">
-                તમારી પસંદગીની કેટેગરીના RSS ફીડ્સ સરળતાથી મેળવો અને તમારા RSS રીડરમાં સબ્સ્ક્રાઇબ કરો.
+              <p className="mt-1.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-2xl">
+                તમારી પસંદગીની કેટેગરીના <strong>New RSS URLs</strong> અથવા <strong>Dailyhunt (Old PHP) URLs</strong> બંને
+                સરળતાથી કૉપિ કરો અને તમારા ફીડ રીડર અથવા ડેઇલીહન્ટમાં સેટ કરો.
               </p>
             </div>
 
@@ -120,65 +165,132 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
       </div>
 
       <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
-        {/* ── Compact Main All-Stories Feed Strip ── */}
+        {/* ── Main All-Stories Feed Strip with BOTH New & Old URLs ── */}
         {!search && (
-          <div className="bg-white dark:bg-zinc-900 border border-orange-200 dark:border-orange-950/60 rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="bg-white dark:bg-zinc-900 border border-orange-200 dark:border-orange-950/60 rounded-2xl p-4 sm:p-6 shadow-xs space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Rss className="w-5 h-5" />
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Rss className="w-6 h-6" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-base text-zinc-900 dark:text-zinc-100">
-                    સંપૂર્ણ ગુજરાત પોસ્ટ ફીડ (તમામ સમાચારો)
+                  <h2 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
+                    સંપૂર્ણ ગુજરાત પોસ્ટ ફીડ (તમામ સમાચારો — All Stories)
                   </h2>
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300">
-                    All Stories
+                    Main Feed
                   </span>
                 </div>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-mono">
-                  {mainFeedUrl}
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  વેબસાઇટના તમામ લેટેસ્ટ પબ્લિશ્ડ સમાચારો આ બંને ફીડ્સમાં સતત અપડેટ થાય છે.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => copyToClipboard(mainFeedUrl, '__all__')}
-                className={`px-3.5 py-2 text-xs font-semibold rounded-xl border transition flex items-center gap-1.5 cursor-pointer ${
-                  copiedSlug === '__all__'
-                    ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-300'
-                    : 'bg-zinc-100 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-orange-50 dark:hover:bg-zinc-700 hover:text-orange-600'
-                }`}
-              >
-                {copiedSlug === '__all__' ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>URL કૉપિ થઈ!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>Copy URL</span>
-                  </>
-                )}
-              </button>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
+              {/* Option A: New Modern URL */}
+              <div className="bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200/80 dark:border-orange-900/50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-orange-500 text-white">
+                      New Modern Format
+                    </span>
+                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      /rss.xml
+                    </span>
+                  </div>
+                  <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                    {mainNewFeedUrl}
+                  </p>
+                </div>
 
-              <a
-                href="/rss.xml"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-orange-600 hover:bg-orange-700 text-white transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-              >
-                <ExternalLink className="w-3.5 h-3.5" />
-                <span>Open XML</span>
-              </a>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => copyToClipboard(mainNewFeedUrl, '__main_new__')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer ${
+                      copiedKey === '__main_new__'
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : 'bg-white dark:bg-zinc-800 border-orange-300 dark:border-orange-800 hover:bg-orange-100 dark:hover:bg-zinc-700 text-orange-700 dark:text-orange-300'
+                    }`}
+                  >
+                    {copiedKey === '__main_new__' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>કૉપિ થઈ ગયું!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy New URL</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href="/rss.xml"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-lg border border-orange-300 dark:border-orange-800 bg-white dark:bg-zinc-800 text-orange-600 hover:bg-orange-100 dark:hover:bg-zinc-700 transition flex items-center justify-center cursor-pointer"
+                    title="Open XML Feed"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Option B: Dailyhunt Old PHP URL */}
+              <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
+                      Dailyhunt (Old PHP)
+                    </span>
+                    <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                      /rss-feed-politics.php?name=news
+                    </span>
+                  </div>
+                  <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                    {mainOldFeedUrl}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => copyToClipboard(mainOldFeedUrl, '__main_old__')}
+                    className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition flex items-center gap-1.5 cursor-pointer ${
+                      copiedKey === '__main_old__'
+                        ? 'bg-emerald-600 border-emerald-600 text-white'
+                        : 'bg-white dark:bg-zinc-800 border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-zinc-700 text-blue-700 dark:text-blue-300'
+                    }`}
+                  >
+                    {copiedKey === '__main_old__' ? (
+                      <>
+                        <Check className="w-3.5 h-3.5" />
+                        <span>કૉપિ થઈ ગયું!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>Copy Dailyhunt URL</span>
+                      </>
+                    )}
+                  </button>
+                  <a
+                    href="/rss-feed-politics.php?name=news"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-800 text-blue-600 hover:bg-blue-100 dark:hover:bg-zinc-700 transition flex items-center justify-center cursor-pointer"
+                    title="Open Dailyhunt PHP XML Feed"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ── Category Header & Count ── */}
-        <div className="flex items-center justify-between pt-2">
+        {/* ── Category Header, Format Filter & Count ── */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-orange-600 dark:text-orange-400" />
             <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
@@ -189,17 +301,53 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
             </span>
           </div>
 
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="text-xs text-orange-600 dark:text-orange-400 hover:underline cursor-pointer"
-            >
-              બધી કેટેગરીઝ બતાવો
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Format Filter Pills */}
+            <div className="inline-flex items-center p-1 rounded-xl bg-zinc-200/70 dark:bg-zinc-800 text-xs font-medium">
+              <button
+                onClick={() => setFormatFilter('both')}
+                className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                  formatFilter === 'both'
+                    ? 'bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 font-bold shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                }`}
+              >
+                બંને URLs (Both)
+              </button>
+              <button
+                onClick={() => setFormatFilter('new')}
+                className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                  formatFilter === 'new'
+                    ? 'bg-orange-500 text-white font-bold shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                }`}
+              >
+                New XML
+              </button>
+              <button
+                onClick={() => setFormatFilter('old')}
+                className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                  formatFilter === 'old'
+                    ? 'bg-blue-600 text-white font-bold shadow-xs'
+                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
+                }`}
+              >
+                Dailyhunt PHP
+              </button>
+            </div>
+
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="text-xs text-orange-600 dark:text-orange-400 hover:underline cursor-pointer ml-2"
+              >
+                બધા બતાવો
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* ── Simple Category Cards Grid ── */}
+        {/* ── Category Cards Grid ── */}
         {filteredCategories.length === 0 ? (
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-12 px-4 text-center">
             <Search className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
@@ -215,170 +363,151 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredCategories.map((cat) => {
-              const feedUrl = `${cleanSiteUrl}/rss/${cat.slug}.xml`;
-              const isCopied = copiedSlug === cat.slug;
+              const newFeedPath = `/rss/${cat.slug}.xml`;
+              const newFeedUrl = `${cleanSiteUrl}${newFeedPath}`;
+
+              const legacyPath = getLegacyFeedPath(cat.slug);
+              const legacyUrl = `${cleanSiteUrl}${legacyPath}`;
+
+              const isCopiedNew = copiedKey === `new-${cat.slug}`;
+              const isCopiedOld = copiedKey === `old-${cat.slug}`;
 
               return (
                 <div
                   key={cat.id}
-                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 hover:border-orange-400 dark:hover:border-orange-500/50 hover:shadow-sm transition flex flex-col justify-between group"
+                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 sm:p-5 hover:border-orange-300 dark:hover:border-zinc-700 hover:shadow-sm transition flex flex-col justify-between gap-4"
                 >
+                  {/* Top: Category Title & Slug Badge */}
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className="text-[11px] font-mono text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-[11px] font-mono text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2.5 py-0.5 rounded-md font-medium">
                         {cat.name}
                       </span>
-                      <span className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 px-1.5 py-0.5 rounded border border-orange-200/50 dark:border-orange-900/50">
-                        RSS 2.0
+                      <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 px-2 py-0.5 rounded border border-orange-200/60 dark:border-orange-900/50">
+                        {cat.slug}
                       </span>
                     </div>
 
-                    <h4 className="text-base font-bold text-zinc-900 dark:text-zinc-100 group-hover:text-orange-600 transition-colors">
+                    <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
                       {cat.nameGu || cat.name}
                     </h4>
-
-                    <p className="font-mono text-[11px] text-zinc-400 truncate mt-1">
-                      /rss/{cat.slug}.xml
-                    </p>
+                    {cat.descriptionGu && (
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">
+                        {cat.descriptionGu}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="mt-3.5 pt-3 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => copyToClipboard(feedUrl, cat.slug)}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition flex items-center gap-1.5 cursor-pointer ${
-                        isCopied
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600'
-                      }`}
-                      title="Copy category RSS feed URL"
-                    >
-                      {isCopied ? (
-                        <>
-                          <Check className="w-3.5 h-3.5" />
-                          <span>કૉપિ થયું</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copy URL</span>
-                        </>
-                      )}
-                    </button>
+                  {/* Feed URL Boxes (New and/or Old depending on filter) */}
+                  <div className="space-y-2.5 pt-2 border-t border-zinc-100 dark:border-zinc-800/80">
+                    {/* 1. New RSS URL Row */}
+                    {(formatFilter === 'both' || formatFilter === 'new') && (
+                      <div className="bg-zinc-50 dark:bg-zinc-800/60 border border-zinc-200/80 dark:border-zinc-700/60 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-orange-500 text-white leading-none">
+                              New XML
+                            </span>
+                            <span className="font-mono text-xs text-zinc-700 dark:text-zinc-300 truncate">
+                              {newFeedPath}
+                            </span>
+                          </div>
+                        </div>
 
-                    <a
-                      href={`/rss/${cat.slug}.xml`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition flex items-center justify-center cursor-pointer"
-                      title="Open XML Feed"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => copyToClipboard(newFeedUrl, `new-${cat.slug}`)}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1 cursor-pointer ${
+                              isCopiedNew
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'bg-white dark:bg-zinc-900 border-zinc-300 dark:border-zinc-700 hover:bg-orange-50 hover:border-orange-300 hover:text-orange-600 text-zinc-700 dark:text-zinc-300'
+                            }`}
+                            title="Copy New RSS URL"
+                          >
+                            {isCopiedNew ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                <span>કૉપિ થઈ!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy New</span>
+                              </>
+                            )}
+                          </button>
+
+                          <a
+                            href={newFeedPath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-orange-600 hover:border-orange-300 transition flex items-center justify-center cursor-pointer"
+                            title="Open New XML Feed"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 2. Old Dailyhunt PHP URL Row */}
+                    {(formatFilter === 'both' || formatFilter === 'old') && (
+                      <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-900/40 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-600 text-white leading-none">
+                              Dailyhunt PHP
+                            </span>
+                            <span className="font-mono text-xs text-blue-900 dark:text-blue-300 truncate">
+                              {legacyPath}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => copyToClipboard(legacyUrl, `old-${cat.slug}`)}
+                            className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition flex items-center gap-1 cursor-pointer ${
+                              isCopiedOld
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'bg-white dark:bg-zinc-900 border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950 text-blue-700 dark:text-blue-300'
+                            }`}
+                            title="Copy Dailyhunt Old PHP URL"
+                          >
+                            {isCopiedOld ? (
+                              <>
+                                <Check className="w-3 h-3" />
+                                <span>કૉપિ થઈ!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy Dailyhunt</span>
+                              </>
+                            )}
+                          </button>
+
+                          <a
+                            href={legacyPath}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition flex items-center justify-center cursor-pointer"
+                            title="Open Dailyhunt PHP Feed"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-
-        {/* ── Dailyhunt & Legacy PHP Feeds Compatibility Section ── */}
-        <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-zinc-800 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 mb-1.5">
-                <span>Dailyhunt & Aggregator Compatibility</span>
-              </div>
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                ડેઇલીહન્ટ (Dailyhunt) અને લીગસી PHP RSS ફીડ્સ
-              </h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                જૂની વેબસાઇટના આ તમામ PHP URLs નવા ડેટાબેઝ અને નવી સિસ્ટમ સાથે 100% ચાલુ રહેશે.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {[
-              { name: 'મુખ્ય સમાચાર (General News)', path: '/rss-feed-politics.php?name=news', target: '/rss.xml', desc: 'તમામ સમાચારોની સંપૂર્ણ ફીડ' },
-              { name: 'ગુજરાત (Gujarat)', path: '/rss-feed-politics.php?name=gujarat', target: '/rss/gujarat.xml', desc: 'સમગ્ર ગુજરાત રાજ્યના સમાચારો' },
-              { name: 'ગાંધીનગર (Gandhinagar)', path: '/rss-feed-politics.php?name=gandhinagar', target: '/rss/gandhinagar.xml', desc: 'પાટનગર ગાંધીનગર સમાચારો' },
-              { name: 'અમદાવાદ (Ahmedabad)', path: '/rss-feed-politics.php?name=ahmedabad', target: '/rss/ahmedabad.xml', desc: 'અમદાવાદ મહાનગર સમાચારો' },
-              { name: 'સુરત (Surat)', path: '/rss-feed-politics.php?name=surat', target: '/rss/surat.xml', desc: 'સુરત શહેર અને જિલ્લા સમાચારો' },
-              { name: 'વડોદરા (Vadodara)', path: '/rss-feed-politics.php?name=vadodara', target: '/rss/vadodara.xml', desc: 'વડોદરા શહેર સમાચારો' },
-              { name: 'રાજકોટ (Rajkot)', path: '/rss-feed-politics.php?name=rajkot', target: '/rss/rajkot.xml', desc: 'રાજકોટ અને સૌરાષ્ટ્ર સમાચારો' },
-              { name: 'અન્ય શહેરો (Other Cities)', path: '/rss-feed-politics.php?name=others', target: '/rss/other-cities.xml', desc: 'અન્ય શહેરો અને તાલુકા સમાચારો' },
-              { name: 'ભારત (National)', path: '/rss-feed-politics.php?name=national', target: '/rss/national.xml', desc: 'દેશભરના રાષ્ટ્રીય સમાચારો' },
-              { name: 'વિશ્વ (International)', path: '/rss-feed-politics.php?name=international', target: '/rss/world.xml', desc: 'આંતરરાષ્ટ્રીય વિશ્વ સમાચારો' },
-              { name: 'મનોરંજન & લાઇફસ્ટાઇલ', path: '/rss-feed-politics.php?name=entertainment-life-style', target: '/rss/entertainment-life-style.xml', desc: 'બોલીવુડ અને લાઇફસ્ટાઇલ કવરેજ' },
-              { name: 'લોકપ્રિય સ્ટોરીઝ (Trending)', path: '/rss-feed-politics.php?name=popular-stories', target: '/rss/trending.xml', desc: 'ટ્રેન્ડિંગ અને પોપ્યુલર સમાચારો' },
-              { name: 'રાજનીતિ (Politics)', path: '/rss-feed-politics.php?name=politics', target: '/rss/politics.xml', desc: 'રાજકીય વિશ્લેષણ અને સમાચારો' },
-              { name: 'ફેક્ટ ચેક (Fact Check)', path: '/rss-feed-politics.php?name=fact-check', target: '/rss/fact-check.xml', desc: 'સત્ય તપાસ અને વાયરલ ફેક્ટ ચેક' },
-              { name: 'ફોટો ગેલેરી (Gallery)', path: '/rss-feed-gallery.php', target: '/rss/photos.xml', desc: 'તસવીરોમાં સમાચાર અને ફોટો ગેલેરી' },
-            ].map((feed, idx) => {
-              const fullUrl = `${cleanSiteUrl}${feed.path}`;
-              const isCopied = copiedSlug === `legacy-${idx}`;
-
-              return (
-                <div
-                  key={idx}
-                  className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-3.5 shadow-2xs flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-zinc-100">
-                        {feed.name}
-                      </h4>
-                      <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900/40">
-                        {feed.target}
-                      </span>
-                    </div>
-                    <p className="font-mono text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 break-all">
-                      {feed.path}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 pt-2.5 border-t border-zinc-100 dark:border-zinc-800/80 flex items-center justify-end gap-2">
-                    <button
-                      onClick={() => copyToClipboard(fullUrl, `legacy-${idx}`)}
-                      className={`px-3 py-1 text-xs font-medium rounded-lg border transition flex items-center gap-1.5 cursor-pointer ${
-                        isCopied
-                          ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-600 dark:text-emerald-400'
-                          : 'bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600'
-                      }`}
-                      title="Copy URL for Dailyhunt"
-                    >
-                      {isCopied ? (
-                        <>
-                          <Check className="w-3 h-3 text-emerald-600" />
-                          <span>કૉપિ થયું</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span>Copy Legacy URL</span>
-                        </>
-                      )}
-                    </button>
-
-                    <a
-                      href={feed.path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="p-1 rounded-lg border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-300 transition flex items-center justify-center cursor-pointer"
-                      title="Test live XML feed"
-                    >
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </a>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
       </div>
     </div>
   );
 }
-
