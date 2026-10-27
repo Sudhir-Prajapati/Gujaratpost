@@ -59,7 +59,7 @@ jobs:
             echo "---------- Restarting Backend ----------"
             pm2 restart gujarat-post-backend --update-env > /dev/null 2>&1
 
-            echo "========== FRONTEND DEPLOYMENT Succssfully DevOPS Team...=========="
+            echo "========== FRONTEND DEPLOYMENT =========="
 
             cd /var/app/Gujarat-Post-Website/frontend
 
