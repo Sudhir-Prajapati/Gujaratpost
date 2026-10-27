@@ -9,7 +9,6 @@ import { SOCIAL_LINKS, SocialIcon } from '@/components/ui/SocialLinks';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import RandomAdsSection from '@/components/ads/RandomAdsSection';
 import { useApp } from '@/components/AppProvider';
-import { companyLinks } from '@/lib/company-links';
 import { LocalizedText } from '@/components/i18n/LocalizedContent';
 
 /* ─── Social Icon Button with brand hover color ─────────────────────────── */
@@ -98,14 +97,14 @@ const topics3Links = [
 
 
 const companyLinks = [
-    { label: 'About Us', href: '/about' },
-    { label: 'Contact Us', href: '/contact' },
-    { label: 'Advertise With Us', href: '/advertise' },
-    { label: 'Privacy Policy', href: '/privacy-policy' },
-    // { label: 'Cookie Policy', href: '/cookie-policy' },
-    { label: 'Terms Of Use', href: '/terms' },
-    { label: 'Disclaimer', href: '/disclaimer' },
-    { label: 'Site Map', href: '/sitemap' },
+    { label: 'About Us', href: '/about', localized: true },
+    { label: 'Contact Us', href: '/contact', localized: true },
+    { label: 'Advertise With Us', href: '/advertise', localized: true },
+    { label: 'Privacy Policy', href: '/privacy-policy', localized: true },
+    // { label: 'Cookie Policy', href: '/cookie-policy', localized: true },
+    { label: 'Terms Of Use', href: '/terms', localized: true },
+    { label: 'Disclaimer', href: '/disclaimer', localized: true },
+    { label: 'Site Map', href: '/sitemap', localized: true },
     { label: 'RSS Feeds', href: '/rss' },
     // { label: 'Feedback', href: '/feedback' },
 ];
