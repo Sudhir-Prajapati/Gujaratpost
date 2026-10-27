@@ -59,20 +59,22 @@ jobs:
             echo "---------- Restarting Backend ----------"
             pm2 restart gujarat-post-backend --update-env > /dev/null 2>&1
 
-            echo "========== FRONTEND DEPLOYMENT =============="
+            echo "========== BACKEND DEPLOYMENT SUCCESSFUL =========="
+
+            echo "========== FRONTEND DEPLOYMENT =========="
 
             cd /var/app/Gujarat-Post-Website/frontend
 
             echo "---------- Installing Frontend Dependencies ----------"
             npm install
 
-            echo "---------- Building Frontend Succssfully DevOPS Team ----------"
+            echo "---------- Building Frontend ----------"
             npm run build
 
             echo "---------- Restarting Frontend ----------"
             pm2 restart gujarat-post-frontend --update-env > /dev/null 2>&1
 
-            echo "========== DEPLOYMENT SUCCESSFUL Succssfully DevOPS Team....=========="
+            echo "========== DEPLOYMENT SUCCESSFUL - DevOps Team =========="
 
           EOF
 
