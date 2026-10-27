@@ -508,11 +508,11 @@ function AqiPageContent() {
               onClick={() => setActiveTab('aqi')}
               className={`flex items-center gap-1.5 sm:gap-2.5 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-t-xl sm:rounded-t-2xl text-xs sm:text-base font-extrabold transition-all border-t border-x cursor-pointer ${
                 activeTab === 'aqi'
-                  ? 'bg-white border-neutral-200 text-neutral-900 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] dark:bg-zinc-900 dark:border-zinc-800 dark:text-white z-20'
-                  : 'bg-neutral-100/90 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 border-neutral-200/70 dark:bg-zinc-850 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-800'
+                  ? 'bg-white border-neutral-200 text-neutral-900 -mb-px z-20 border-b border-b-white dark:bg-zinc-900 dark:border-zinc-800 dark:border-b-zinc-900 dark:text-white shadow-[0_-4px_12px_rgba(0,0,0,0.03)]'
+                  : 'bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 border-neutral-200/80 border-b border-b-neutral-200 dark:bg-zinc-950 dark:hover:bg-zinc-800/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:border-zinc-800 dark:border-b-zinc-800 z-10'
               }`}
             >
-              <Wind className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeTab === 'aqi' ? 'text-red-600' : 'text-neutral-400 dark:text-zinc-500'}`} />
+              <Wind className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${activeTab === 'aqi' ? 'text-red-600 dark:text-red-500' : 'text-neutral-400 dark:text-zinc-400'}`} />
               <span>AQI</span>
             </button>
             <button
@@ -520,11 +520,11 @@ function AqiPageContent() {
               onClick={() => setActiveTab('weather')}
               className={`flex items-center gap-1.5 sm:gap-2.5 px-4 sm:px-8 py-2.5 sm:py-3.5 rounded-t-xl sm:rounded-t-2xl text-xs sm:text-base font-extrabold transition-all border-t border-x cursor-pointer ${
                 activeTab === 'weather'
-                  ? 'bg-white border-neutral-200 text-neutral-900 shadow-[0_-4px_12px_rgba(0,0,0,0.03)] dark:bg-zinc-900 dark:border-zinc-800 dark:text-white z-20'
-                  : 'bg-neutral-100/90 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 border-neutral-200/70 dark:bg-zinc-850 dark:text-zinc-400 dark:border-zinc-800 dark:hover:bg-zinc-800'
+                  ? 'bg-white border-neutral-200 text-neutral-900 -mb-px z-20 border-b border-b-white dark:bg-zinc-900 dark:border-zinc-800 dark:border-b-zinc-900 dark:text-white shadow-[0_-4px_12px_rgba(0,0,0,0.03)]'
+                  : 'bg-neutral-100 hover:bg-neutral-200/80 text-neutral-600 hover:text-neutral-900 border-neutral-200/80 border-b border-b-neutral-200 dark:bg-zinc-950 dark:hover:bg-zinc-800/80 dark:text-zinc-400 dark:hover:text-zinc-100 dark:border-zinc-800 dark:border-b-zinc-800 z-10'
               }`}
             >
-              <Sun className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${activeTab === 'weather' ? 'text-amber-500' : 'text-neutral-400 dark:text-zinc-500'}`} />
+              <Sun className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors ${activeTab === 'weather' ? 'text-amber-500 dark:text-amber-400' : 'text-neutral-400 dark:text-zinc-400'}`} />
               <span>{language === 'gu' ? 'હવામાન' : language === 'hi' ? 'मौसम' : 'Weather'}</span>
             </button>
           </div>

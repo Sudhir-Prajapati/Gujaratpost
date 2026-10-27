@@ -263,7 +263,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
   const activeFuel = fuelPrices[fuelCity] || fuelPrices.Ahmedabad || FUEL_PRICE_CITY_MAP.Ahmedabad;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2.5 relative">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5 mb-5 relative">
       {/* Blurred Red Ambient Glow Orbs in Background */}
       <div className="absolute -top-6 left-10 w-96 h-96 bg-[#B3121B]/15 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute -bottom-6 right-10 w-[420px] h-[420px] bg-red-600/12 rounded-full blur-[120px] pointer-events-none" />

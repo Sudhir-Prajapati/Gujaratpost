@@ -1192,7 +1192,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           {customSeo.h2 && <h2>{customSeo.h2}</h2>}
         </div>
       )}
-      <div className="mx-auto max-w-screen-xl px-4 py-2">
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-14 sm:pb-20">
 
         {/* ── TOP ROW: Category name ─────────────────────────────── */}
         <div className="flex items-center justify-between border-b border-border pb-2 mb-3">
@@ -1520,7 +1520,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               <span className="text-sm font-black text-foreground">
                 {normSlug === 'trending'
                   ? getLocalized(language, { en: 'Politics', gu: 'રાજનીતિ', hi: 'राजनीति' })
-                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडિંગ સ્ટોરી' })}
+                  : getLocalized(language, { en: 'Trending Story', gu: 'ટ્રેન્ડિંગ સ્ટોરી', hi: 'ट्रेंडिंग स्टोरी' })}
               </span>
             </div>
             <div className="flex flex-col divide-y divide-border">
@@ -1537,7 +1537,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     {language === 'gu' ? toGu(i + 1) : i + 1}
                   </span>
                   <p className="min-h-[4.125em] text-[14px] md:text-[14.5px] font-bold leading-snug text-foreground/90 group-hover:text-accent transition-colors line-clamp-3">
-                    {language === 'gu' ? (art.titleGu || art.title) : language === 'hi' ? (art.titleHi || art.title) : art.title}
+                    <AutoArticleTitle article={art} language={language} />
                   </p>
                 </Link>
               ))}
@@ -1743,7 +1743,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
         {/* ── PHOTO GALLERY (8 Photos with Text Inside, Red Border matching user design) ── */}
         {galleryPhotos.length > 0 && (
-          <div className="mt-8 border-t border-border pt-6">
+          <div className="mt-10 sm:mt-14 border-t border-border pt-8 pb-8 sm:pb-12">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
                 <span className="section-heading-badge bg-[#B3121B] text-white px-4 py-1.5 text-sm md:text-base font-black rounded-lg select-none leading-none tracking-tight">
