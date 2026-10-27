@@ -339,6 +339,7 @@ export default function TajSamacharDrawer() {
                           />
                         </div>
 
+
                         {/* Title & Metadata */}
                         <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
                           <h4 className={`text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}>
