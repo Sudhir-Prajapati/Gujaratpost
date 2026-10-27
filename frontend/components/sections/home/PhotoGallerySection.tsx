@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Camera } from 'lucide-react';
 import type { Language } from '@/types';
 import { getLocalized, PHOTOS, getPhotoCategoryBadge } from '@/data';
 import { getPublicGallery } from '@/lib/api';
@@ -22,11 +22,37 @@ const FALLBACK_NEWS_IMAGES = [
   'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
 ];
 
+function resolvePhotoUrl(val: any, fallback: string = ''): string {
+  if (!val) return fallback;
+  let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
+  if (typeof raw === 'string') {
+    const trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+        }
+      } catch {}
+    }
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
+  }
+  if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
+    const first = val.images[0];
+    return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+  }
+  return fallback;
+}
+
 /* --- Robust Image with onError fallback ----------------------------------- */
-function GalleryStripImage({ src: initialSrc, alt, index }: { src: string; alt: string; index: number }) {
+function GalleryStripImage({ src: initialSrc, alt, index }: { src?: any; alt: string; index: number }) {
   const fallback = FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length];
-  const [src, setSrc] = useState(initialSrc || fallback);
-  useEffect(() => { setSrc(initialSrc || fallback); }, [initialSrc, fallback]);
+  const initial = resolvePhotoUrl(initialSrc, fallback);
+  const [src, setSrc] = useState(initial);
+  useEffect(() => { setSrc(resolvePhotoUrl(initialSrc, fallback)); }, [initialSrc, fallback]);
   return (
     <Image
       src={src}
@@ -277,14 +303,20 @@ function GalleryScrollStrip({
                 style={{ opacity: 0.88 }}
               />
 
-              {/* Category chip */}
-              <div className="absolute top-3 left-3 z-10">
+              {/* Category chip & Photo count badge */}
+              <div className="absolute top-3 inset-x-3 z-10 flex items-center justify-between pointer-events-none">
                 <span
                   className="text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md"
                   style={{ backgroundColor: accentColor }}
                 >
                   <AutoTranslateString text={cat} language={language} />
                 </span>
+                {Array.isArray(item.images) && item.images.length > 1 && (
+                  <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
+                    <Camera className="w-3 h-3 text-red-400" />
+                    <span>{item.images.length}</span>
+                  </span>
+                )}
               </div>
 
               {/* Caption & View link */}
