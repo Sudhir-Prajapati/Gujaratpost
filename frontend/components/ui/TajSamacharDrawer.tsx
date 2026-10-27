@@ -246,8 +246,8 @@ export default function TajSamacharDrawer() {
       <div className={`fixed ${isApk ? 'bottom-[72px] left-4 z-45' : 'bottom-6 left-6 z-[9990]'} flex items-center gap-3`}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          aria-label="લેટેસ્ટ સમાચાર (Latest News)"
-          title="લેટેસ્ટ સમાચાર જુઓ"
+          aria-label={language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
+          title={language === 'gu' ? 'લેટેસ્ટ સમાચાર જુઓ' : language === 'hi' ? 'ताज़ा समाचार देखें' : 'View Latest News'}
           className="relative group flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
         >
           {/* Periodic pulse ring animation (expands every 4 seconds) */}
@@ -277,8 +277,8 @@ export default function TajSamacharDrawer() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
                 </span>
-                <h3 className="text-base sm:text-lg font-bold tracking-wide text-white drop-shadow-sm font-gujarati leading-none flex items-center">
-                  લેટેસ્ટ સમાચાર
+                <h3 className={`text-base sm:text-lg font-bold tracking-wide text-white drop-shadow-sm ${language === 'gu' ? 'font-gujarati' : 'font-sans'} leading-none flex items-center`}>
+                  {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
                 </h3>
               </div>
 
@@ -312,7 +312,7 @@ export default function TajSamacharDrawer() {
                 </div>
               ) : articles.length === 0 ? (
                 <div className="p-6 text-center text-gray-500 text-sm">
-                  હાલ કોઈ લેટેસ્ટ સમાચાર ઉપલબ્ધ નથી.
+                  {language === 'gu' ? 'હાલ કોઈ લેટેસ્ટ સમાચાર ઉપલબ્ધ નથી.' : language === 'hi' ? 'फिलहाल कोई ताज़ा समाचार उपलब्ध नहीं है।' : 'No latest news available right now.'}
                 </div>
               ) : (
                 <>
@@ -357,7 +357,7 @@ export default function TajSamacharDrawer() {
                   {loadingMore && (
                     <div className="flex items-center justify-center p-3 text-red-700 gap-2 text-xs font-semibold animate-pulse bg-red-50/40 dark:bg-red-950/10 rounded-xl my-1">
                       <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                      વધુ લેટેસ્ટ સમાચાર લોડ થઈ રહ્યા છે...
+                      {language === 'gu' ? 'વધુ લેટેસ્ટ સમાચાર લોડ થઈ રહ્યા છે...' : language === 'hi' ? 'और ताज़ा खबरें लोड हो रही हैं...' : 'Loading more latest news...'}
                     </div>
                   )}
                 </>

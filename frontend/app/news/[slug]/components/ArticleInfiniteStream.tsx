@@ -172,7 +172,8 @@ function StreamArticleItem({
   getTopicHref,
   TranslatedInlineText,
   TranslatedParagraph,
-}: {
+}:
+{
   streamArticle: Article;
   language: Language;
   readAlsoArticles: Article[];
