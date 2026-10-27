@@ -12,6 +12,7 @@ import ApkBottomNav from '@/components/apk/ApkBottomNav';
 
 import { useEffect } from 'react';
 import { useApp } from '@/components/AppProvider';
+import { stopArticleAudio } from '@/lib/articleTtsPlayer';
 
 interface Props {
   children: React.ReactNode;
@@ -21,6 +22,11 @@ export default function MainLayoutWrapper({ children }: Props) {
   const pathname = usePathname();
   const { isApk } = useIsApk();
   const { apkTheme } = useApp();
+
+  // Instantly stop any active article TTS voice when navigating to another article/page
+  useEffect(() => {
+    stopArticleAudio();
+  }, [pathname]);
 
   // Gracefully handle ChunkLoadError from HMR / dynamic chunk invalidations
   useEffect(() => {

@@ -59,6 +59,15 @@ export default function ArticleShareAudioBar({
     }
   }, [articleUrl, saved]);
 
+  // Reset internal audio state if stopArticleAudio is called globally (e.g. navigation or page switch)
+  useEffect(() => {
+    const onGlobalStop = () => {
+      setInternalSpeaking(false);
+    };
+    window.addEventListener('gp-tts-stop', onGlobalStop);
+    return () => window.removeEventListener('gp-tts-stop', onGlobalStop);
+  }, []);
+
   // If language changes while internal audio is speaking, seamlessly re-speak in new language
   useEffect(() => {
     if (toggleAudio === undefined && internalSpeaking) {

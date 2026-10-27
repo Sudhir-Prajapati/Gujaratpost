@@ -12,6 +12,9 @@ export function cleanTextForSpeech(htmlOrText: string): string {
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
+    // Remove (KEY HIGHLIGHTS) / એક નજરમાં headers
+    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, ' ')
+    .replace(/(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE)/gi, ' ')
     // Replace block tags with period/newline to maintain sentence rhythm
     .replace(/<\/(p|div|h[1-6]|li|blockquote|tr)>/gi, '. ')
     .replace(/<br\s*\/?>/gi, '. ')
@@ -79,8 +82,21 @@ export function chunkTextIntoSentences(text: string, maxLen = 140): string[] {
     sentences.push(buffer.trim());
   }
 
-  // Filter out tiny or empty chunks
-  return sentences.filter((s) => s.replace(/^[.,?!।\s]+$/, '').length > 0);
+  // Filter out tiny or empty chunks, and DEDUPLICATE any consecutive duplicate chunks
+  const cleaned: string[] = [];
+  for (const s of sentences) {
+    const trimmed = s.replace(/^[.,?!।\s]+|[.,?!।\s]+$/g, '').trim();
+    if (trimmed.length > 2) {
+      const prev = cleaned[cleaned.length - 1];
+      const normCur = trimmed.toLowerCase().replace(/[\s.,?!।:;-]/g, '');
+      const normPrev = prev ? prev.toLowerCase().replace(/[\s.,?!।:;-]/g, '') : '';
+      if (!normPrev || normPrev !== normCur) {
+        cleaned.push(trimmed);
+      }
+    }
+  }
+
+  return cleaned;
 }
 
 // Global active player state to ensure only one audio plays at any time
@@ -88,26 +104,55 @@ let activeAudio: HTMLAudioElement | null = null;
 let activeUtterance: SpeechSynthesisUtterance | null = null;
 let currentPlayId = 0;
 
+export function isArticleAudioPlaying(): boolean {
+  if (activeAudio && !activeAudio.paused && activeAudio.currentTime > 0) return true;
+  if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis.speaking) return true;
+  return false;
+}
+
 export function stopArticleAudio() {
   currentPlayId++;
 
-  // Stop any streaming audio
+  // 1. Immediately pause and flush HTML5 audio
   if (activeAudio) {
     try {
       activeAudio.pause();
       activeAudio.currentTime = 0;
       activeAudio.src = '';
+      activeAudio.load();
     } catch {}
-    activeAudio = null;
   }
 
-  // Stop any browser speech synthesis
+  // 2. Force stop browser speech synthesis (with Chrome pause+cancel workaround)
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
+      window.speechSynthesis.pause();
       window.speechSynthesis.cancel();
+      setTimeout(() => {
+        try {
+          window.speechSynthesis.cancel();
+        } catch {}
+      }, 20);
     } catch {}
     activeUtterance = null;
   }
+
+  // 3. Broadcast global stop event to keep all UI buttons in sync
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new Event('gp-tts-stop'));
+    } catch {}
+  }
+}
+
+// Automatically stop audio on browser back/forward or tab unload
+if (typeof window !== 'undefined') {
+  window.addEventListener('popstate', () => {
+    stopArticleAudio();
+  });
+  window.addEventListener('beforeunload', () => {
+    stopArticleAudio();
+  });
 }
 
 export function hasNativeVoice(lang: Language): boolean {
@@ -183,10 +228,26 @@ export function playArticleAudio({
   (async () => {
     // 1. Prepare full speech text: Heading (title) + Full Description (body / excerpt)
     const cleanTitle = cleanTextForSpeech(title);
-    const cleanBody = cleanTextForSpeech(body || excerpt || '');
+    let cleanBody = cleanTextForSpeech(body || excerpt || '');
 
-    // Full text is Title first, then full body
-    let combinedText = cleanTitle ? `${cleanTitle}. ${cleanBody}` : cleanBody;
+    // Deduplicate: If body begins with the title (or title begins with the first sentence of body),
+    // remove the duplicated sentence from body so it doesn't get spoken twice!
+    if (cleanTitle && cleanBody) {
+      const normTitle = cleanTitle.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
+      const firstSentenceMatch = cleanBody.match(/^([^.?!।\n]+)/);
+      if (firstSentenceMatch) {
+        const firstSentenceNorm = firstSentenceMatch[1].toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
+        if (
+          firstSentenceNorm === normTitle ||
+          (normTitle.length > 10 && (firstSentenceNorm.startsWith(normTitle) || normTitle.startsWith(firstSentenceNorm)))
+        ) {
+          cleanBody = cleanBody.slice(firstSentenceMatch[0].length).replace(/^[.,?!।\s]+/, '').trim();
+        }
+      }
+    }
+
+    // Combine title and body: title first, then body
+    let combinedText = cleanTitle ? (cleanBody ? `${cleanTitle}. ${cleanBody}` : cleanTitle) : cleanBody;
     if (!combinedText) {
       if (playId === currentPlayId && onError) onError(new Error('No text to read'));
       return;
@@ -218,132 +279,71 @@ export function playArticleAudio({
 
     if (onStart) onStart();
 
-    // 4. Check if device has a reliable native voice for the language
-    // Gujarati on iOS/Windows almost never has a native voice, so fallback to high-quality /api/tts stream
-    const nativeVoice = getBestVoice(language);
-    const shouldUseBrowserSpeech = nativeVoice !== null && (language !== 'gu' || nativeVoice.lang.toLowerCase().startsWith('gu'));
-
-    if (shouldUseBrowserSpeech && typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      // ══════════════════════════════════════════════════════════════════════════════
-      // MODE A: Device Native SpeechSynthesis with chunk queueing & visual tracking
-      // ══════════════════════════════════════════════════════════════════════════════
-      let chunkIndex = 0;
-
-      const speakNextChunk = () => {
-        if (playId !== currentPlayId) return;
-
-        if (chunkIndex >= chunks.length) {
-          if (onChunkChange) onChunkChange(-1, '', chunks.length);
-          if (onEnd) onEnd();
-          return;
-        }
-
-        const currentIndex = chunkIndex;
-        const text = chunks[chunkIndex++];
-        const utterance = new SpeechSynthesisUtterance(text);
-        activeUtterance = utterance;
-
-        if (nativeVoice) {
-          utterance.voice = nativeVoice;
-        }
-        utterance.lang = language === 'hi' ? 'hi-IN' : language === 'gu' ? 'gu-IN' : 'en-IN';
-        utterance.rate = 0.95; // slightly relaxed natural pace
-
-        utterance.onstart = () => {
-          if (playId === currentPlayId && onChunkChange) {
-            onChunkChange(currentIndex, text, chunks.length);
-          }
-        };
-
-        // Also broadcast immediately in case onstart is delayed in some mobile browsers
-        if (onChunkChange) {
-          onChunkChange(currentIndex, text, chunks.length);
-        }
-
-        utterance.onend = () => {
-          if (playId === currentPlayId) {
-            speakNextChunk();
-          }
-        };
-
-        utterance.onerror = (e) => {
-          // If interrupted by cancel, ignore
-          if (e.error === 'interrupted' || e.error === 'canceled') return;
-          console.warn('[Web Speech Error]:', e);
-          if (playId === currentPlayId) {
-            speakNextChunk();
-          }
-        };
-
-        window.speechSynthesis.speak(utterance);
-      };
-
-      speakNextChunk();
-    } else {
-      // ══════════════════════════════════════════════════════════════════════════════
-      // MODE B: High-Quality Audio Stream via /api/tts (Guaranteed for iPhone, Windows & all devices)
-      // ══════════════════════════════════════════════════════════════════════════════
-      let chunkIndex = 0;
-
-      const playNextAudioChunk = () => {
-        if (playId !== currentPlayId) return;
-
-        if (chunkIndex >= chunks.length) {
-          if (onChunkChange) onChunkChange(-1, '', chunks.length);
-          if (onEnd) onEnd();
-          return;
-        }
-
-        const currentIndex = chunkIndex;
-        const chunkText = chunks[chunkIndex++];
-        const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
-
-        const audio = new Audio(audioUrl);
-        activeAudio = audio;
-
-        // Broadcast active sentence to highlight in RED
-        if (onChunkChange) {
-          onChunkChange(currentIndex, chunkText, chunks.length);
-        }
-
-        // Preload the next chunk in background for seamless playback without pauses
-        if (chunkIndex < chunks.length) {
-          const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunks[chunkIndex])}`;
-          const preloader = new Audio();
-          preloader.preload = 'auto';
-          preloader.src = nextUrl;
-        }
-
-        audio.onended = () => {
-          if (playId === currentPlayId) {
-            playNextAudioChunk();
-          }
-        };
-
-        audio.onerror = (err) => {
-          console.warn('[Audio Stream Chunk Error]:', err);
-          // Continue to next chunk on transient network glitch
-          if (playId === currentPlayId) {
-            playNextAudioChunk();
-          }
-        };
-
-        audio.play().catch((err) => {
-          // Autoplay policy or user cancellation
-          if (err.name !== 'AbortError') {
-            console.warn('[Audio Play Error]:', err);
-          }
-          if (playId === currentPlayId && chunkIndex < chunks.length) {
-            playNextAudioChunk();
-          } else if (onEnd) {
-            if (onChunkChange) onChunkChange(-1, '', chunks.length);
-            onEnd();
-          }
-        });
-      };
-
-      playNextAudioChunk();
+    // 4. Play via high-quality Google TTS Audio stream (/api/tts)
+    // HTML5 audio stops instantly when paused and works identically across all devices
+    if (!activeAudio && typeof window !== 'undefined') {
+      activeAudio = new Audio();
     }
+    const player = activeAudio;
+    if (!player) return;
+
+    let chunkIndex = 0;
+
+    const playNextAudioChunk = () => {
+      if (playId !== currentPlayId) return;
+
+      if (chunkIndex >= chunks.length) {
+        if (onChunkChange) onChunkChange(-1, '', chunks.length);
+        if (onEnd) onEnd();
+        return;
+      }
+
+      const currentIndex = chunkIndex;
+      const chunkText = chunks[chunkIndex++];
+      const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
+
+      // Broadcast active sentence to highlight in RED
+      if (onChunkChange) {
+        onChunkChange(currentIndex, chunkText, chunks.length);
+      }
+
+      // Preload next chunk
+      if (chunkIndex < chunks.length) {
+        const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunks[chunkIndex])}`;
+        const preloader = new Audio();
+        preloader.preload = 'auto';
+        preloader.src = nextUrl;
+      }
+
+      player.onended = () => {
+        if (playId === currentPlayId) {
+          playNextAudioChunk();
+        }
+      };
+
+      player.onerror = (err) => {
+        console.warn('[Audio Stream Chunk Error]:', err);
+        if (playId === currentPlayId) {
+          playNextAudioChunk();
+        }
+      };
+
+      player.src = audioUrl;
+      player.load();
+      player.play().catch((err) => {
+        if (err.name !== 'AbortError') {
+          console.warn('[Audio Play Error]:', err);
+        }
+        if (playId === currentPlayId && chunkIndex < chunks.length) {
+          playNextAudioChunk();
+        } else if (playId === currentPlayId && onEnd) {
+          if (onChunkChange) onChunkChange(-1, '', chunks.length);
+          onEnd();
+        }
+      });
+    };
+
+    playNextAudioChunk();
   })();
 
   // Return cancel function
