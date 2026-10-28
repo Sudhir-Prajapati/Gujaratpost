@@ -576,6 +576,48 @@ function getFacebookEmbedUrl(raw: string): string {
   return `${endpoint}?href=${encodeURIComponent(trimmed)}&show_text=true&width=500`;
 }
 
+function getReadableArticleCandidates(root: HTMLElement): HTMLElement[] {
+  const candidates: HTMLElement[] = [];
+  const h1Elem = root.querySelector<HTMLElement>('h1');
+  if (h1Elem) candidates.push(h1Elem);
+
+  const subElem = root.querySelector<HTMLElement>('.article-sub');
+  if (subElem) {
+    const subParas = Array.from(subElem.querySelectorAll<HTMLElement>('p, li'));
+    if (subParas.length > 0) {
+      subParas.forEach((p) => {
+        if ((p.textContent || '').trim().length > 3) candidates.push(p);
+      });
+    } else if ((subElem.textContent || '').trim().length > 3) {
+      candidates.push(subElem);
+    }
+  }
+
+  const gistItems = Array.from(root.querySelectorAll<HTMLElement>('.article-gist-item'));
+  for (const g of gistItems) {
+    if ((g.textContent || '').trim().length > 3 && !candidates.includes(g)) {
+      candidates.push(g);
+    }
+  }
+
+  const bodyElems = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      '.article-body p, .article-body > div > p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3'
+    )
+  );
+
+  for (const el of bodyElems) {
+    if (!candidates.includes(el) && el !== h1Elem && el !== subElem && !subElem?.contains(el)) {
+      const text = (el.textContent || '').trim();
+      if (text.length > 3 && !el.closest('.byline') && !el.closest('.art-kick') && !el.closest('figure')) {
+        candidates.push(el);
+      }
+    }
+  }
+
+  return candidates;
+}
+
 export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
   const { language } = useApp();
   const router = useRouter();
@@ -678,7 +720,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [activeSpeechText, setActiveSpeechText] = useState('');
+  const [activeSpeechRawText, setActiveSpeechRawText] = useState('');
   const [activeSpeechIndex, setActiveSpeechIndex] = useState(-1);
+  const [activeSpeechElemIndex, setActiveSpeechElemIndex] = useState(-1);
   const [totalSpeechChunks, setTotalSpeechChunks] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [adSlide, setAdSlide] = useState(0);
@@ -1205,11 +1249,20 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     setIsContentExpanded(true); // Automatically expand so reader can see highlighted text
     setSpeaking(true);
 
+    const root = articleContainerRef.current;
+    const candidates = root ? getReadableArticleCandidates(root) : [];
+    const speechItems: { text: string; elemIndex: number }[] = [];
+    candidates.forEach((el, idx) => {
+      const t = (el.textContent || '').trim();
+      if (t.length > 2) {
+        speechItems.push({ text: t, elemIndex: idx });
+      }
+    });
+
     const directTitle = getArticleTitle(article, langToUse) || article.title || '';
     const directExcerpt = (article.excerpt || (article as any).excerptGu || (article as any).excerptHi || '');
     const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
 
-    // Prefer translated title/excerpt/body if available with robust full-body fallbacks
     const speechTitle = (langToUse === language && title) ? title : directTitle;
     const speechExcerpt = (langToUse === language && excerpt) ? excerpt : directExcerpt;
     const speechBody =
@@ -1222,26 +1275,33 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     playArticleAudio({
       title: speechTitle,
+      items: speechItems.length > 0 ? speechItems : undefined,
       subheading: speechExcerpt,
       excerpt: speechExcerpt,
       highlights: gistPoints,
       body: speechBody,
       language: langToUse,
       onStart: () => setSpeaking(true),
-      onChunkChange: (idx, chunkText, total) => {
+      onChunkChange: (idx, chunkText, total, elemIdx, rawChunk) => {
         setActiveSpeechIndex(idx);
         setActiveSpeechText(chunkText);
+        setActiveSpeechRawText(rawChunk || chunkText);
+        setActiveSpeechElemIndex(typeof elemIdx === 'number' && elemIdx >= 0 ? elemIdx : idx);
         setTotalSpeechChunks(total);
       },
       onEnd: () => {
         setSpeaking(false);
         setActiveSpeechIndex(-1);
+        setActiveSpeechElemIndex(-1);
         setActiveSpeechText('');
+        setActiveSpeechRawText('');
       },
       onError: () => {
         setSpeaking(false);
         setActiveSpeechIndex(-1);
+        setActiveSpeechElemIndex(-1);
         setActiveSpeechText('');
+        setActiveSpeechRawText('');
       },
     });
   }, [article, language, title, excerpt, gistPoints, body]);
@@ -1251,7 +1311,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       stopArticleAudio();
       setSpeaking(false);
       setActiveSpeechIndex(-1);
+      setActiveSpeechElemIndex(-1);
       setActiveSpeechText('');
+      setActiveSpeechRawText('');
       return;
     }
     startAudio(language);
@@ -1259,6 +1321,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   // If user switches language while audio is active, seamlessly re-speak in the new language without reload!
   useEffect(() => {
+    lastSpeechElemIndex.current = 0;
     if (speaking) {
       stopArticleAudio();
       const timer = setTimeout(() => {
@@ -1267,11 +1330,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       return () => clearTimeout(timer);
     } else {
       setActiveSpeechIndex(-1);
+      setActiveSpeechElemIndex(-1);
       setActiveSpeechText('');
+      setActiveSpeechRawText('');
     }
   }, [language]);
 
   const articleContainerRef = useRef<HTMLElement>(null);
+  const lastSpeechElemIndex = useRef(0);
 
   // Directly highlight current spoken sentence in RED in the article itself!
   useEffect(() => {
@@ -1282,150 +1348,55 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const prevActiveItems = root.querySelectorAll('[data-gp-speech-active="true"]');
     prevActiveItems.forEach((el) => {
       el.removeAttribute('data-gp-speech-active');
-      el.classList.remove(
-        'gp-speech-active',
-        'border-l-4',
-        'border-b-2',
-        'border-[#B3121B]',
-        'dark:border-red-500',
-        'bg-red-50/80',
-        'dark:bg-red-950/40',
-        'text-[#B3121B]',
-        'dark:text-red-400',
-        'font-bold',
-        'font-semibold',
-        'px-2.5',
-        'py-1.5',
-        'rounded-r',
-        'transition-all'
-      );
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.borderLeft = '';
+      htmlEl.style.borderBottom = '';
+      htmlEl.style.backgroundColor = '';
+      htmlEl.style.color = '';
+      htmlEl.style.paddingLeft = '';
+      htmlEl.style.paddingRight = '';
+      htmlEl.style.paddingTop = '';
+      htmlEl.style.paddingBottom = '';
+      htmlEl.style.borderRadius = '';
+      htmlEl.style.boxShadow = '';
     });
 
-    const h1Elem = root.querySelector('h1');
+    const h1Elem = root.querySelector<HTMLElement>('h1');
     if (h1Elem) {
-      h1Elem.classList.remove('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400');
+      h1Elem.removeAttribute('data-gp-speech-active');
+      h1Elem.style.borderBottom = '';
+      h1Elem.style.color = '';
+      h1Elem.style.backgroundColor = '';
     }
 
-    if (!speaking || !activeSpeechText || activeSpeechText.trim().length < 2) return;
+    if (!speaking || activeSpeechElemIndex < 0) return;
 
-    // 2. Gather all readable article elements in document order
-    const candidates: HTMLElement[] = [];
-    if (h1Elem) candidates.push(h1Elem);
-    const subElem = root.querySelector<HTMLElement>('.article-sub');
-    if (subElem) candidates.push(subElem);
+    // 2. Gather candidates in same exact order
+    const candidates = getReadableArticleCandidates(root);
+    const bestElem = candidates[activeSpeechElemIndex];
 
-    const bodyElems = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        '.article-gist-item, .article-body p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3, [class*="rounded-r-xl"] li, .article-body div, p'
-      )
-    );
-
-    for (const el of bodyElems) {
-      if (!candidates.includes(el) && el !== h1Elem && el !== subElem) {
-        const text = (el.textContent || '').trim();
-        if (text.length > 5 && !el.closest('.byline') && !el.closest('.art-kick') && !el.closest('figure')) {
-          candidates.push(el);
-        }
-      }
-    }
-
-    // 3. Match activeSpeechText to the correct candidate element
-    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
-    const chunkNorm = norm(activeSpeechText);
-    if (!chunkNorm) return;
-
-    let bestElem: HTMLElement | null = null;
-    let highestScore = 0;
-
-    // Check heading first: if chunk matches title or activeSpeechIndex === 0
-    if (h1Elem) {
-      const h1Norm = norm(h1Elem.textContent || '');
-      if (h1Norm.includes(chunkNorm) || chunkNorm.includes(h1Norm) || (activeSpeechIndex === 0 && (h1Norm.startsWith(chunkNorm) || chunkNorm.startsWith(h1Norm)))) {
-        bestElem = h1Elem;
-        highestScore = 1000;
-      }
-    }
-
-    // Check subheading if not matched heading
-    if (!bestElem && subElem) {
-      const subNorm = norm(subElem.textContent || '');
-      if (subNorm && (subNorm.includes(chunkNorm) || chunkNorm.includes(subNorm))) {
-        bestElem = subElem;
-        highestScore = 900;
-      }
-    }
-
-    // Check body candidate elements
-    if (!bestElem) {
-      const chunkWords = activeSpeechText
-        .replace(/[.,?!।;:()"'“”\-–—]/g, ' ')
-        .trim()
-        .split(/\s+/)
-        .filter((w) => w.length > 2);
-
-      for (let i = 0; i < candidates.length; i++) {
-        const cand = candidates[i];
-        const candText = cand.textContent || '';
-        const candNorm = norm(candText);
-        if (!candNorm) continue;
-
-        // Direct substring match
-        if (candNorm.includes(chunkNorm) || (chunkNorm.length > 15 && candNorm.startsWith(chunkNorm.slice(0, 15)))) {
-          bestElem = cand;
-          highestScore = 500;
-          break;
-        }
-
-        // Word overlap match
-        if (chunkWords.length > 0) {
-          let matches = 0;
-          for (const w of chunkWords) {
-            if (candText.toLowerCase().includes(w.toLowerCase())) {
-              matches++;
-            }
-          }
-          const score = matches / chunkWords.length;
-          if (score > highestScore && score >= 0.3) {
-            highestScore = score;
-            bestElem = cand;
-          }
-        }
-      }
-    }
-
-    // Fallback: if no match found, use index progression across candidates
-    if (!bestElem && candidates.length > 0) {
-      const fallbackIdx = Math.min(candidates.length - 1, Math.max(0, activeSpeechIndex));
-      bestElem = candidates[fallbackIdx];
-    }
-
-    // 4. Highlight best matching element with the red line
+    // 3. Highlight best matching element with the red line and background
     if (bestElem) {
       bestElem.setAttribute('data-gp-speech-active', 'true');
       if (bestElem.tagName === 'H1') {
-        bestElem.classList.add('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400', 'transition-all', 'duration-200');
+        bestElem.style.borderBottom = '4px solid #B3121B';
+        bestElem.style.color = '#B3121B';
+        bestElem.style.backgroundColor = 'rgba(179, 18, 27, 0.05)';
       } else {
-        bestElem.classList.add(
-          'gp-speech-active',
-          'border-l-4',
-          'border-b-2',
-          'border-[#B3121B]',
-          'dark:border-red-500',
-          'bg-red-50/80',
-          'dark:bg-red-950/40',
-          'text-[#B3121B]',
-          'dark:text-red-400',
-          'font-semibold',
-          'px-2.5',
-          'py-1.5',
-          'rounded-r',
-          'transition-all',
-          'duration-200'
-        );
+        bestElem.style.borderLeft = '4px solid #B3121B';
+        bestElem.style.backgroundColor = 'rgba(179, 18, 27, 0.08)';
+        bestElem.style.color = '#B3121B';
+        bestElem.style.paddingLeft = '14px';
+        bestElem.style.paddingRight = '8px';
+        bestElem.style.paddingTop = '4px';
+        bestElem.style.paddingBottom = '4px';
+        bestElem.style.borderRadius = '0 6px 6px 0';
+        bestElem.style.boxShadow = '0 1px 3px rgba(179, 18, 27, 0.12)';
+        bestElem.style.transition = 'all 0.2s ease-in-out';
       }
       bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [speaking, activeSpeechIndex, activeSpeechText]);
+  }, [speaking, activeSpeechElemIndex]);
 
   // Clean up and stop playing audio whenever article changes or component unmounts
   useEffect(() => {
