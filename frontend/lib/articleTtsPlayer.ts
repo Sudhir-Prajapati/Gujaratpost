@@ -198,15 +198,21 @@ export function getBestVoice(lang: Language): SpeechSynthesisVoice | null {
   return null;
 }
 
+export interface SpeechItem {
+  text: string;
+  elemIndex: number;
+}
+
 export interface PlayArticleOptions {
   title: string;
   subheading?: string;
   excerpt?: string;
   highlights?: string[];
   body?: string;
+  items?: SpeechItem[];
   language: Language;
   onStart?: () => void;
-  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number, rawChunkText?: string) => void;
+  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number, elemIndex?: number, rawChunkText?: string) => void;
   onEnd?: () => void;
   onError?: (err?: any) => void;
 }
@@ -217,6 +223,7 @@ export function playArticleAudio({
   excerpt,
   highlights,
   body,
+  items,
   language,
   onStart,
   onChunkChange,
@@ -229,58 +236,70 @@ export function playArticleAudio({
 
   // Immediately kick off asynchronous text preparation & language alignment
   (async () => {
-    // 1. Prepare speech text in natural visual reading order:
-    // 1) Heading (title)
-    // 2) Subheading (subheading / excerpt)
-    // 3) Key Highlights (highlights / એક નજરમાં points)
-    // 4) Full Article Description (body - all paragraphs first to last)
-    const cleanTitle = cleanTextForSpeech(title);
-    let cleanSubheading = cleanTextForSpeech(subheading || excerpt || '');
-    let cleanBody = cleanTextForSpeech(body || '');
-
-    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
-    const normTitle = norm(cleanTitle);
-
-    // If subheading is identical to or starts with title, remove duplicate title part
-    if (cleanSubheading && normTitle) {
-      const normSub = norm(cleanSubheading);
-      if (normSub === normTitle) {
-        cleanSubheading = '';
-      } else if (normSub.startsWith(normTitle)) {
-        cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
-      }
+interface ChunkEntry {
+      chunkText: string;
+      elemIndex: number;
     }
 
-    // Clean and prepare highlights / એક નજરમાં points
-    const cleanHighlights: string[] = [];
-    if (highlights && Array.isArray(highlights) && highlights.length > 0) {
-      const gistHeader = language === 'hi' ? 'एक नजर में' : language === 'en' ? 'At a glance' : 'એક નજરમાં';
-      cleanHighlights.push(gistHeader);
+    const chunkEntries: ChunkEntry[] = [];
 
-      for (const pt of highlights) {
-        const c = cleanTextForSpeech(pt);
-        if (c && c.length > 2) {
-          cleanHighlights.push(c);
+    if (items && Array.isArray(items) && items.length > 0) {
+      // Direct element-by-element chunking with 100% accurate element index tracking!
+      for (const item of items) {
+        const clean = cleanTextForSpeech(item.text);
+        if (!clean || clean.length < 2) continue;
+        const subChunks = chunkTextIntoSentences(clean);
+        for (const sc of subChunks) {
+          if (sc && sc.trim().length > 1) {
+            chunkEntries.push({ chunkText: sc.trim(), elemIndex: item.elemIndex });
+          }
         }
       }
+    } else {
+      const cleanTitle = cleanTextForSpeech(title);
+      let cleanSubheading = cleanTextForSpeech(subheading || excerpt || '');
+      let cleanBody = cleanTextForSpeech(body || '');
+
+      const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
+      const normTitle = norm(cleanTitle);
+
+      if (cleanSubheading && normTitle) {
+        const normSub = norm(cleanSubheading);
+        if (normSub === normTitle) {
+          cleanSubheading = '';
+        } else if (normSub.startsWith(normTitle)) {
+          cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
+        }
+      }
+
+      let curElemIdx = 0;
+      if (cleanTitle) {
+        const tChunks = chunkTextIntoSentences(cleanTitle);
+        tChunks.forEach((c) => chunkEntries.push({ chunkText: c, elemIndex: 0 }));
+        curElemIdx++;
+      }
+      if (cleanSubheading) {
+        const sChunks = chunkTextIntoSentences(cleanSubheading);
+        sChunks.forEach((c) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+        curElemIdx++;
+      }
+      if (highlights && Array.isArray(highlights) && highlights.length > 0) {
+        highlights.forEach((h) => {
+          const ch = cleanTextForSpeech(h);
+          if (ch && ch.length > 2) {
+            const hChunks = chunkTextIntoSentences(ch);
+            hChunks.forEach((c) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+            curElemIdx++;
+          }
+        });
+      }
+      if (cleanBody) {
+        const bChunks = chunkTextIntoSentences(cleanBody);
+        bChunks.forEach((c: string) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+      }
     }
 
-    // Assemble text parts: Title -> Subheading -> Highlights -> Body
-    const parts: string[] = [];
-    if (cleanTitle) parts.push(cleanTitle);
-    if (cleanSubheading) parts.push(cleanSubheading);
-    if (cleanHighlights.length > 0) parts.push(...cleanHighlights);
-    if (cleanBody) parts.push(cleanBody);
-
-    let combinedText = parts.join('. ');
-    if (!combinedText) {
-      if (playId === currentPlayId && onError) onError(new Error('No text to read'));
-      return;
-    }
-
-    // 2. Break into natural sentence chunks (approx 60-140 chars)
-    const chunks = chunkTextIntoSentences(combinedText);
-    if (chunks.length === 0) {
+    if (chunkEntries.length === 0) {
       if (playId === currentPlayId && onError) onError(new Error('No readable sentences found'));
       return;
     }
@@ -299,14 +318,16 @@ export function playArticleAudio({
     const playNextAudioChunk = async () => {
       if (playId !== currentPlayId) return;
 
-      if (chunkIndex >= chunks.length) {
-        if (onChunkChange) onChunkChange(-1, '', chunks.length);
+      if (chunkIndex >= chunkEntries.length) {
+        if (onChunkChange) onChunkChange(-1, '', chunkEntries.length, -1);
         if (onEnd) onEnd();
         return;
       }
 
       const currentIndex = chunkIndex;
-      const rawChunk = chunks[chunkIndex++];
+      const currentEntry = chunkEntries[chunkIndex++];
+      const rawChunk = currentEntry.chunkText;
+      const elemIndex = currentEntry.elemIndex;
       let chunkText = rawChunk;
 
       // Real-time language check: if chunk text does not match target language, translate this chunk in ~20ms
@@ -323,14 +344,14 @@ export function playArticleAudio({
 
       const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
 
-      // Broadcast active sentence to highlight in RED
+      // Broadcast active sentence and exact element index to highlight in RED
       if (onChunkChange) {
-        onChunkChange(currentIndex, chunkText, chunks.length, rawChunk);
+        onChunkChange(currentIndex, chunkText, chunkEntries.length, elemIndex, rawChunk);
       }
 
       // Preload next chunk
-      if (chunkIndex < chunks.length) {
-        const nextChunk = chunks[chunkIndex];
+      if (chunkIndex < chunkEntries.length) {
+        const nextChunk = chunkEntries[chunkIndex].chunkText;
         const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(nextChunk)}`;
         const preloader = new Audio();
         preloader.preload = 'auto';
@@ -356,10 +377,10 @@ export function playArticleAudio({
         if (err.name !== 'AbortError') {
           console.warn('[Audio Play Error]:', err);
         }
-        if (playId === currentPlayId && chunkIndex < chunks.length) {
+        if (playId === currentPlayId && chunkIndex < chunkEntries.length) {
           playNextAudioChunk();
         } else if (playId === currentPlayId && onEnd) {
-          if (onChunkChange) onChunkChange(-1, '', chunks.length);
+          if (onChunkChange) onChunkChange(-1, '', chunkEntries.length, -1);
           onEnd();
         }
       });

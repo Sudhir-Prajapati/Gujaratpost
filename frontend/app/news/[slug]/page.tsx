@@ -8,8 +8,11 @@ import NewsDetailClient from "./NewsDetailClient";
 export const revalidate = 30;
 
 export async function generateStaticParams() {
+  if (process.env.NODE_ENV === 'development') {
+    return [];
+  }
   try {
-    const res = await getPublicArticles({ limit: 50 });
+    const res = await getPublicArticles({ limit: 30 });
     if (res && Array.isArray(res.articles)) {
       return res.articles.map((art: any) => ({
         slug: art.slug,

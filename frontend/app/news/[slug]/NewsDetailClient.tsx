@@ -576,6 +576,48 @@ function getFacebookEmbedUrl(raw: string): string {
   return `${endpoint}?href=${encodeURIComponent(trimmed)}&show_text=true&width=500`;
 }
 
+function getReadableArticleCandidates(root: HTMLElement): HTMLElement[] {
+  const candidates: HTMLElement[] = [];
+  const h1Elem = root.querySelector<HTMLElement>('h1');
+  if (h1Elem) candidates.push(h1Elem);
+
+  const subElem = root.querySelector<HTMLElement>('.article-sub');
+  if (subElem) {
+    const subParas = Array.from(subElem.querySelectorAll<HTMLElement>('p, li'));
+    if (subParas.length > 0) {
+      subParas.forEach((p) => {
+        if ((p.textContent || '').trim().length > 3) candidates.push(p);
+      });
+    } else if ((subElem.textContent || '').trim().length > 3) {
+      candidates.push(subElem);
+    }
+  }
+
+  const gistItems = Array.from(root.querySelectorAll<HTMLElement>('.article-gist-item'));
+  for (const g of gistItems) {
+    if ((g.textContent || '').trim().length > 3 && !candidates.includes(g)) {
+      candidates.push(g);
+    }
+  }
+
+  const bodyElems = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      '.article-body p, .article-body > div > p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3'
+    )
+  );
+
+  for (const el of bodyElems) {
+    if (!candidates.includes(el) && el !== h1Elem && el !== subElem && !subElem?.contains(el)) {
+      const text = (el.textContent || '').trim();
+      if (text.length > 3 && !el.closest('.byline') && !el.closest('.art-kick') && !el.closest('figure')) {
+        candidates.push(el);
+      }
+    }
+  }
+
+  return candidates;
+}
+
 export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
   const { language } = useApp();
   const router = useRouter();
@@ -680,6 +722,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [activeSpeechText, setActiveSpeechText] = useState('');
   const [activeSpeechRawText, setActiveSpeechRawText] = useState('');
   const [activeSpeechIndex, setActiveSpeechIndex] = useState(-1);
+  const [activeSpeechElemIndex, setActiveSpeechElemIndex] = useState(-1);
   const [totalSpeechChunks, setTotalSpeechChunks] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [adSlide, setAdSlide] = useState(0);
@@ -1203,15 +1246,23 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   const startAudio = useCallback((langToUse: Language = language) => {
     stopArticleAudio();
-    lastSpeechElemIndex.current = 0;
     setIsContentExpanded(true); // Automatically expand so reader can see highlighted text
     setSpeaking(true);
+
+    const root = articleContainerRef.current;
+    const candidates = root ? getReadableArticleCandidates(root) : [];
+    const speechItems: { text: string; elemIndex: number }[] = [];
+    candidates.forEach((el, idx) => {
+      const t = (el.textContent || '').trim();
+      if (t.length > 2) {
+        speechItems.push({ text: t, elemIndex: idx });
+      }
+    });
 
     const directTitle = getArticleTitle(article, langToUse) || article.title || '';
     const directExcerpt = (article.excerpt || (article as any).excerptGu || (article as any).excerptHi || '');
     const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
 
-    // Prefer translated title/excerpt/body if available with robust full-body fallbacks
     const speechTitle = (langToUse === language && title) ? title : directTitle;
     const speechExcerpt = (langToUse === language && excerpt) ? excerpt : directExcerpt;
     const speechBody =
@@ -1224,27 +1275,31 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     playArticleAudio({
       title: speechTitle,
+      items: speechItems.length > 0 ? speechItems : undefined,
       subheading: speechExcerpt,
       excerpt: speechExcerpt,
       highlights: gistPoints,
       body: speechBody,
       language: langToUse,
       onStart: () => setSpeaking(true),
-      onChunkChange: (idx, chunkText, total, rawChunkText) => {
+      onChunkChange: (idx, chunkText, total, elemIdx, rawChunk) => {
         setActiveSpeechIndex(idx);
         setActiveSpeechText(chunkText);
-        setActiveSpeechRawText(rawChunkText || chunkText);
+        setActiveSpeechRawText(rawChunk || chunkText);
+        setActiveSpeechElemIndex(typeof elemIdx === 'number' && elemIdx >= 0 ? elemIdx : idx);
         setTotalSpeechChunks(total);
       },
       onEnd: () => {
         setSpeaking(false);
         setActiveSpeechIndex(-1);
+        setActiveSpeechElemIndex(-1);
         setActiveSpeechText('');
         setActiveSpeechRawText('');
       },
       onError: () => {
         setSpeaking(false);
         setActiveSpeechIndex(-1);
+        setActiveSpeechElemIndex(-1);
         setActiveSpeechText('');
         setActiveSpeechRawText('');
       },
@@ -1256,7 +1311,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       stopArticleAudio();
       setSpeaking(false);
       setActiveSpeechIndex(-1);
+      setActiveSpeechElemIndex(-1);
       setActiveSpeechText('');
+      setActiveSpeechRawText('');
       return;
     }
     startAudio(language);
@@ -1273,7 +1330,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       return () => clearTimeout(timer);
     } else {
       setActiveSpeechIndex(-1);
+      setActiveSpeechElemIndex(-1);
       setActiveSpeechText('');
+      setActiveSpeechRawText('');
     }
   }, [language]);
 
@@ -1310,129 +1369,13 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       h1Elem.style.backgroundColor = '';
     }
 
-    if (!speaking || !activeSpeechText || activeSpeechText.trim().length < 2) return;
+    if (!speaking || activeSpeechElemIndex < 0) return;
 
-    // 2. Gather all readable article elements in document order
-    const candidates: HTMLElement[] = [];
-    if (h1Elem) candidates.push(h1Elem);
+    // 2. Gather candidates in same exact order
+    const candidates = getReadableArticleCandidates(root);
+    const bestElem = candidates[activeSpeechElemIndex];
 
-    // Subheading: if .article-sub has child <p>, include those <p>, else include .article-sub
-    const subElem = root.querySelector<HTMLElement>('.article-sub');
-    if (subElem) {
-      const subParas = Array.from(subElem.querySelectorAll<HTMLElement>('p, li'));
-      if (subParas.length > 0) {
-        subParas.forEach((p) => {
-          if ((p.textContent || '').trim().length > 3) candidates.push(p);
-        });
-      } else if ((subElem.textContent || '').trim().length > 3) {
-        candidates.push(subElem);
-      }
-    }
-
-    // Gist bullet items
-    const gistItems = Array.from(root.querySelectorAll<HTMLElement>('.article-gist-item'));
-    for (const g of gistItems) {
-      if ((g.textContent || '').trim().length > 3 && !candidates.includes(g)) {
-        candidates.push(g);
-      }
-    }
-
-    // Body elements (paragraphs, list items, quotes, headings)
-    const bodyElems = Array.from(
-      root.querySelectorAll<HTMLElement>(
-        '.article-body p, .article-body > div > p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3'
-      )
-    );
-
-    for (const el of bodyElems) {
-      if (!candidates.includes(el) && el !== h1Elem && el !== subElem && !subElem?.contains(el)) {
-        const text = (el.textContent || '').trim();
-        if (text.length > 3 && !el.closest('.byline') && !el.closest('.art-kick') && !el.closest('figure')) {
-          candidates.push(el);
-        }
-      }
-    }
-
-    if (candidates.length === 0) return;
-
-    // 3. Match activeSpeechText or activeSpeechRawText strictly FORWARD line-by-line so it NEVER jumps backwards
-    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•\r\n\t]/g, '');
-    const chunkNorm = norm(activeSpeechText);
-    const rawChunkNorm = norm(activeSpeechRawText || '');
-
-    const chunkWords = (activeSpeechRawText || activeSpeechText)
-      .replace(/[.,?!।;:()"'“”\-–—#*•\r\n\t]/g, ' ')
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 2);
-
-    let matchedIdx = -1;
-
-    // If starting at beginning (heading)
-    if (activeSpeechIndex === 0) {
-      lastSpeechElemIndex.current = 0;
-      matchedIdx = 0;
-    } else {
-      const curIdx = Math.min(candidates.length - 1, Math.max(0, lastSpeechElemIndex.current));
-
-      const isCandidateMatch = (cand: HTMLElement) => {
-        const candNorm = norm(cand.textContent || '');
-        if (!candNorm) return false;
-        if (chunkNorm && (candNorm.includes(chunkNorm) || chunkNorm.includes(candNorm))) return true;
-        if (rawChunkNorm && (candNorm.includes(rawChunkNorm) || rawChunkNorm.includes(candNorm))) return true;
-        if (chunkNorm.length > 10 && candNorm.startsWith(chunkNorm.slice(0, 10))) return true;
-        if (rawChunkNorm.length > 10 && candNorm.startsWith(rawChunkNorm.slice(0, 10))) return true;
-        return false;
-      };
-
-      // 1) If next candidate exists and matches, advance to it!
-      if (curIdx + 1 < candidates.length && isCandidateMatch(candidates[curIdx + 1])) {
-        matchedIdx = curIdx + 1;
-      }
-
-      // 2) If cur candidate matches current chunk (e.g. multiple sentences in same paragraph)
-      if (matchedIdx === -1 && curIdx < candidates.length && isCandidateMatch(candidates[curIdx])) {
-        matchedIdx = curIdx;
-      }
-
-      // 3) Search strictly forward from curIdx (never backwards!)
-      if (matchedIdx === -1) {
-        for (let i = curIdx + 1; i < candidates.length; i++) {
-          if (isCandidateMatch(candidates[i])) {
-            matchedIdx = i;
-            break;
-          }
-        }
-      }
-
-      // 4) Word-overlap forward match
-      if (matchedIdx === -1 && chunkWords.length > 0) {
-        let bestScore = 0;
-        for (let i = curIdx; i < candidates.length; i++) {
-          const cand = candidates[i];
-          const candText = (cand.textContent || '').toLowerCase();
-          let matches = 0;
-          for (const w of chunkWords) {
-            if (candText.includes(w.toLowerCase())) matches++;
-          }
-          const score = matches / chunkWords.length;
-          if (score > bestScore && score >= 0.25) {
-            bestScore = score;
-            matchedIdx = i;
-          }
-        }
-      }
-
-      // 5) Fallback: advance smoothly by forward progression
-      if (matchedIdx === -1) {
-        matchedIdx = Math.min(candidates.length - 1, Math.max(curIdx, activeSpeechIndex));
-      }
-    }
-
-    lastSpeechElemIndex.current = matchedIdx;
-    const bestElem = candidates[matchedIdx];
-
-    // 4. Highlight best matching element with the red line and background
+    // 3. Highlight best matching element with the red line and background
     if (bestElem) {
       bestElem.setAttribute('data-gp-speech-active', 'true');
       if (bestElem.tagName === 'H1') {
@@ -1453,7 +1396,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
       bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [speaking, activeSpeechIndex, activeSpeechText, activeSpeechRawText]);
+  }, [speaking, activeSpeechElemIndex]);
 
   // Clean up and stop playing audio whenever article changes or component unmounts
   useEffect(() => {
