@@ -11,7 +11,7 @@ import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import { buildTwitterPostButton, normalizeTwitterPostLinks } from '@/lib/article-social-links';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
-import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
+import { playArticleAudio, stopArticleAudio, cleanTextForSpeech } from '@/lib/articleTtsPlayer';
 
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
@@ -616,6 +616,46 @@ function getReadableArticleCandidates(root: HTMLElement): HTMLElement[] {
   }
 
   return candidates;
+}
+
+function findMatchingCandidate(
+  candidates: HTMLElement[],
+  activeElemIndex: number,
+  chunkText: string,
+  rawChunk: string
+): HTMLElement | null {
+  if (!candidates || candidates.length === 0) return null;
+
+  const norm = (s: string) => (s || '').replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '').toLowerCase();
+
+  // 1. Direct index check first (fastest and most accurate when aligned)
+  if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
+    const candidate = candidates[activeElemIndex];
+    const cNorm = norm(candidate.textContent || '');
+    const sNorm = norm(rawChunk || chunkText || '');
+    if (sNorm && (cNorm.includes(sNorm.slice(0, 15)) || sNorm.includes(cNorm.slice(0, 15)))) {
+      return candidate;
+    }
+  }
+
+  // 2. Search through all candidates for a strong text match
+  const searchNorm = norm(rawChunk || chunkText || '');
+  if (searchNorm.length >= 6) {
+    const searchPrefix = searchNorm.slice(0, Math.min(20, searchNorm.length));
+    for (const c of candidates) {
+      const cNorm = norm(c.textContent || '');
+      if (cNorm.includes(searchPrefix) || (searchNorm.length >= 12 && cNorm.length >= 12 && searchPrefix.includes(cNorm.slice(0, 12)))) {
+        return c;
+      }
+    }
+  }
+
+  // 3. Safe fallback to activeElemIndex ONLY if within valid bounds (never clamp to end)
+  if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
+    return candidates[activeElemIndex];
+  }
+
+  return null;
 }
 
 export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
@@ -1249,16 +1289,6 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     setIsContentExpanded(true); // Automatically expand so reader can see highlighted text
     setSpeaking(true);
 
-    const root = articleContainerRef.current;
-    const candidates = root ? getReadableArticleCandidates(root) : [];
-    const speechItems: { text: string; elemIndex: number }[] = [];
-    candidates.forEach((el, idx) => {
-      const t = (el.textContent || '').trim();
-      if (t.length > 2) {
-        speechItems.push({ text: t, elemIndex: idx });
-      }
-    });
-
     const directTitle = getArticleTitle(article, langToUse) || article.title || '';
     const directExcerpt = (article.excerpt || (article as any).excerptGu || (article as any).excerptHi || '');
     const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
@@ -1272,6 +1302,56 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       (article as any).contentHi ||
       (article as any).content ||
       '';
+
+    // Build complete speech items in exact visual document order:
+    // 0: Heading (Title)
+    // 1: Subheading (Excerpt)
+    // 2..K: Highlights (All points)
+    // K..N: All Body Paragraphs (First to Last)
+    const speechItems: { text: string; elemIndex: number }[] = [];
+    let elemIdxCounter = 0;
+
+    const cleanTitle = cleanTextForSpeech(speechTitle);
+    if (cleanTitle) {
+      speechItems.push({ text: cleanTitle, elemIndex: elemIdxCounter++ });
+    }
+
+    const cleanSub = cleanTextForSpeech(speechExcerpt);
+    if (cleanSub && cleanSub !== cleanTitle) {
+      speechItems.push({ text: cleanSub, elemIndex: elemIdxCounter++ });
+    }
+
+    if (gistPoints && Array.isArray(gistPoints) && gistPoints.length > 0) {
+      for (const pt of gistPoints) {
+        const cleanPt = cleanTextForSpeech(pt);
+        if (cleanPt && cleanPt.length > 2) {
+          speechItems.push({ text: cleanPt, elemIndex: elemIdxCounter++ });
+        }
+      }
+    }
+
+    // Body: Extract EVERY paragraph so the reader continues reading the body without stopping!
+    const bodyParagraphs = (displayParagraphs && displayParagraphs.length > 0)
+      ? displayParagraphs
+      : parseArticleBodyBlocks(speechBody, langToUse, (article as any)?.pdfUrl || (article as any)?.pdf);
+
+    if (bodyParagraphs && bodyParagraphs.length > 0) {
+      for (const p of bodyParagraphs) {
+        const cleanP = cleanTextForSpeech(p);
+        if (cleanP && cleanP.length > 3) {
+          speechItems.push({ text: cleanP, elemIndex: elemIdxCounter++ });
+        }
+      }
+    } else if (speechBody) {
+      const rawBlocks = speechBody
+        .split(/<\/p>|<\/div>|<\/li>|<\/h[1-6]>|<\/blockquote>|\r?\n\r?\n+/gi)
+        .map((p: string) => cleanTextForSpeech(p))
+        .filter((p: string) => p && p.length > 3);
+
+      for (const p of rawBlocks) {
+        speechItems.push({ text: p, elemIndex: elemIdxCounter++ });
+      }
+    }
 
     playArticleAudio({
       title: speechTitle,
@@ -1304,7 +1384,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         setActiveSpeechRawText('');
       },
     });
-  }, [article, language, title, excerpt, gistPoints, body]);
+  }, [article, language, title, excerpt, gistPoints, body, displayParagraphs]);
 
   const toggleAudio = useCallback(() => {
     if (speaking) {
@@ -1371,9 +1451,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     if (!speaking || activeSpeechElemIndex < 0) return;
 
-    // 2. Gather candidates in same exact order
+    // 2. Match candidate element matching exact sentence or accurate element index
     const candidates = getReadableArticleCandidates(root);
-    const bestElem = candidates[activeSpeechElemIndex];
+    const bestElem = findMatchingCandidate(candidates, activeSpeechElemIndex, activeSpeechText, activeSpeechRawText);
 
     // 3. Highlight best matching element with the red line and background
     if (bestElem) {
@@ -1396,7 +1476,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
       bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [speaking, activeSpeechElemIndex]);
+  }, [speaking, activeSpeechElemIndex, activeSpeechText, activeSpeechRawText]);
 
   // Clean up and stop playing audio whenever article changes or component unmounts
   useEffect(() => {
