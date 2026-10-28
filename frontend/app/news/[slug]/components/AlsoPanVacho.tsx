@@ -29,6 +29,7 @@ export default function AlsoPanVacho({
 
   const handleShare = async (e: React.MouseEvent, art: Article) => {
     e.preventDefault();
+    
     e.stopPropagation();
 
     const origin = typeof window !== 'undefined' ? window.location.origin : 'https://gujaratpost.in';
