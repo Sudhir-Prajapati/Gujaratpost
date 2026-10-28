@@ -82,7 +82,7 @@ const topics2Links = [
     { label: 'Fact Check', href: '/category/fact-check' },
     { label: 'Trending News', href: '/category/trending' },
     { label: 'E-Paper', href: '/epaper' },
-    { label: 'Saved Articles', href: '/saved', localized: true },
+    { label: 'Saved Articles', href: '/saved' },
 ];
 
 
@@ -198,7 +198,7 @@ function NavColumn({
                                     className="group text-[15px] font-semibold text-slate-300 hover:text-white transition-all duration-200 block leading-snug hover:translate-x-1.5 hover:scale-[1.06] origin-left relative pl-0 hover:pl-2"
                                 >
                                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 group-hover:w-1 h-3.5 bg-red-500 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100" />
-                                    {item.localized && !englishOnly ? <LocalizedText text={displayLabel} /> : displayLabel}
+                                    {item.localized && !englishOnly ? <LocalizedText text={displayLabel} /> : <span translate="no">{displayLabel}</span>}
                                 </Link>
                             )}
                         </li>
@@ -265,10 +265,8 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
             )}
             <footer
                 data-theme="dark"
-                className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative mt-auto pb-[max(1rem,env(safe-area-inset-bottom,1rem))]"
+                className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative mt-auto pb-[env(safe-area-inset-bottom,0px)]"
             >
-                {/* Prevent iPhone bounce / overscroll white space below footer */}
-                <div className="absolute top-full left-0 right-0 h-[100vh] bg-[#050B14] pointer-events-none" />
                 <div className={`w-full px-4 sm:px-6 md:px-8 lg:px-10 ${wrap}`}>
 
                     {/* ── MOBILE ONLY FOOTER (Matching website Image 3 layout) ── */}

@@ -2955,15 +2955,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                 {isFeatured && (
                   <span
                     className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 text-white font-bold px-2.5 py-1 shadow-2xs text-xs"
-                    title="Promoted to Home / Main Hero Grid"
+                    title="Promoted to Home / News (Main Hero Grid)"
                   >
-                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1 rounded">⭐ Home</span>
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1 rounded">⭐ Home / News</span>
                     <span>Main Hero Grid</span>
                     <button
                       type="button"
                       onClick={() => setIsFeatured(false)}
                       className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20"
-                      title="Remove from Home / Main Hero Grid"
+                      title="Remove from Home / News (Main Hero Grid)"
                     >
                       <X className="h-3 w-3" />
                     </button>
@@ -3334,10 +3334,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                       {!collapsedSections.gujarat && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                          {/* 0. HOME / MAIN HERO GRID CARD (Show in Home) */}
+                          {/* 0. HOME / NEWS / MAIN HERO GRID CARD (Show in Home / News) */}
                           {(() => {
                             const q = categorySearch.trim().toLowerCase();
-                            const matchesHome = !q || 'home'.includes(q) || 'hero'.includes(q) || 'મુખ્ય'.includes(q) || 'હોમ'.includes(q) || 'featured'.includes(q);
+                            const matchesHome = !q || 'home'.includes(q) || 'news'.includes(q) || 'hero'.includes(q) || 'મુખ્ય'.includes(q) || 'હોમ'.includes(q) || 'સમાચાર'.includes(q) || 'featured'.includes(q);
                             const matchesTab = categoryFilterTab === 'all' || categoryFilterTab === 'gujarat' || (categoryFilterTab === 'selected' && isFeatured);
 
                             if (!matchesHome || !matchesTab) return null;
@@ -3375,7 +3375,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                           : 'text-zinc-900 dark:text-zinc-100 group-hover:text-amber-700 dark:group-hover:text-amber-300'
                                       }`}
                                     >
-                                      Home
+                                      Home / News
                                     </span>
 
                                     {/* Badges */}
@@ -3394,7 +3394,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                                   {/* Gujarati Script Subtitle */}
                                   <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
-                                    મુખ્ય હોમ પેજ (Show in Home)
+                                    મુખ્ય હોમ પેજ / સમાચાર (Show in Home / News)
                                   </span>
                                   <span className="inline-block text-[9.5px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.2 rounded mt-1.5">
                                     📍 Main Hero Grid
@@ -3777,15 +3777,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           />
         </div>
 
-        {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video - Multiple Allowed) [Size: 1100px X 541px] */}
+        {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video - Multiple Allowed) [Size: 1280px X 720px (16:9)] */}
         <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
                 <Video className="h-4 w-4 text-red-600 shrink-0" />
                 <span>Upload Primary Media (Featured Photo or Video)</span>
-                <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 shadow-2xs">
-                  PNG / JPG / WEBP • Max 10 MB • Size: 1100 × 541 px
+                <span className="rounded-md border border-emerald-400 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-2xs flex items-center gap-1">
+                  ⭐ Perfect Size: 1280 × 720 px (16:9 Ratio)
+                </span>
+                <span className="rounded-md border border-zinc-300 bg-zinc-100 px-2 py-0.5 text-[11px] font-bold text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  PNG / JPG / WEBP • Max 10 MB
                 </span>
                 <span className="text-red-500 font-bold">*</span>
               </label>
@@ -3826,6 +3829,26 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             </div>
           </div>
 
+          {/* 🌟 Prominent Guidance Banner for Perfect Image Size */}
+          <div className="flex items-start gap-3 rounded-xl border-2 border-emerald-400/80 bg-emerald-50/90 p-3.5 text-emerald-950 dark:border-emerald-700/80 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-xs">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white font-black text-xs shadow-xs">
+              16:9
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-extrabold text-[13px] text-emerald-900 dark:text-emerald-100">
+                  પરફેક્ટ ઇમેજ સાઇઝ: <span className="underline decoration-emerald-500 font-black">1280 × 720 px</span> (16:9 Aspect Ratio)
+                </span>
+                <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white uppercase tracking-wider">
+                  Perfect Fit Everywhere
+                </span>
+              </div>
+              <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed font-medium">
+                આ <strong>1280 × 720 px (16:9)</strong> સાઇઝ વેબસાઇટમાં બધે જ (હોમપેજ હેડલાઇન, કેટેગરી ગ્રીડ, આર્ટિકલ ડિટેલ પેજ અને WhatsApp / Facebook / Twitter શેરિંગ) કોઈપણ કટિંગ કે બ્લેક બોર્ડર વગર 100% પરફેક્ટ ફિટ થશે. (FHD: <strong>1920 × 1080 px</strong> પણ વાપરી શકો છો).
+              </p>
+            </div>
+          </div>
+
           {imageMode === 'upload' ? (
             <div className="space-y-3">
               <div className="relative rounded-2xl border-2 border-dashed border-gray-400 bg-white p-6 dark:border-zinc-600 dark:bg-zinc-900/60 text-center transition-all hover:border-red-500 hover:bg-red-50/20 dark:hover:border-red-500">
@@ -3850,11 +3873,17 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         <UploadCloud className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                        <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">
                           Click to browse or drag & drop multiple Images or Videos from your computer
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5 font-medium">
-                          Supports Photos (JPG, PNG, WebP) & Videos (MP4, WebM, MOV) up to 200MB • Multiple Selection Allowed
+                        <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                          <span className="rounded-md bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 border border-emerald-300 dark:border-emerald-700">
+                            ⭐ Recommended Perfect Size: 1280 × 720 px (16:9 Ratio)
+                          </span>
+                          <span>(Best fit for Homepage, Category & Article detail)</span>
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5">
+                          Photos (JPG, PNG, WebP) up to 10MB • Videos (MP4, WebM, MOV) up to 200MB
                         </p>
                       </div>
                       <span className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-xs">
@@ -4070,8 +4099,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         <ImageIcon className="h-4 w-4 text-red-600" />
                         <span>Image {sectionNum} ({labelSuffix} Story Media)</span>
                       </span>
-                      <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 shadow-2xs">
-                        PNG / JPG / WEBP • Max 10 MB • Size: 1100 × 541 px
+                      <span className="rounded-md border border-emerald-400 bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-2xs">
+                        ⭐ Perfect Size: 1280 × 720 px (16:9)
+                      </span>
+                      <span className="rounded-md border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        PNG / JPG / WebP • Max 10 MB
                       </span>
                     </div>
 

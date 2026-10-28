@@ -5,13 +5,7 @@ import LocalizedContent from '@/components/i18n/LocalizedContent';
 import React from 'react';
 import Link from 'next/link';
 import {
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  ExternalLink,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 import { SocialLinks } from '@/components/ui/SocialLinks';
 
@@ -139,39 +133,6 @@ export default function AdvertisePageClient({ initialData }: Props) {
 
         {/* Info List Section */}
         <div className="space-y-6 pt-2 border-t border-gray-100 dark:border-gray-800/80">
-          {/* Address */}
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white flex items-center gap-1.5">
-              <span>Address:</span>
-            </h2>
-            <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
-              {officeAddress}
-            </div>
-            {locationUrl && (
-              <div className="pt-0.5">
-                <a
-                  href={locationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs sm:text-sm font-bold text-red-600 hover:text-red-700 underline decoration-red-400 underline-offset-2 transition"
-                >
-                  <span>Location</span>
-                  <ExternalLink className="w-3 h-3 text-red-600" />
-                </a>
-              </div>
-            )}
-          </div>
-
-          {/* Contact no */}
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
-              Contact no:
-            </h2>
-            <div className="text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-200">
-              {contactPhone}
-            </div>
-          </div>
-
           {/* Online Advertising */}
           <div className="space-y-1">
             <h2 className="text-sm font-bold text-gray-900 dark:text-white">
@@ -184,16 +145,6 @@ export default function AdvertisePageClient({ initialData }: Props) {
               >
                 {onlineAdsEmail}
               </a>
-            </div>
-          </div>
-
-          {/* Print Advertising */}
-          <div className="space-y-1">
-            <h2 className="text-sm font-bold text-gray-900 dark:text-white">
-              Print Advertising:
-            </h2>
-            <div className="text-xs sm:text-sm font-medium text-gray-800 dark:text-gray-200 break-all">
-              {printAdsEmail}
             </div>
           </div>
 
