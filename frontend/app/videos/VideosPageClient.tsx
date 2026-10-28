@@ -178,7 +178,7 @@ export default function VideosPageClient() {
             '*'
           );
         }
-      } catch {}
+      } catch { }
       return next;
     });
   };
@@ -612,8 +612,8 @@ export default function VideosPageClient() {
                 key={tab.key}
                 onClick={() => handleTabChange(tab.key)}
                 className={`rounded-full px-5 py-2 text-xs font-black whitespace-nowrap transition cursor-pointer ${active
-                    ? 'bg-accent text-white font-black border border-accent'
-                    : 'border border-border bg-card text-foreground hover:border-accent hover:text-accent font-semibold'
+                  ? 'bg-accent text-white font-black border border-accent'
+                  : 'border border-border bg-card text-foreground hover:border-accent hover:text-accent font-semibold'
                   }`}
               >
                 {getLocalized(language, { en: tab.en, gu: tab.gu, hi: tab.hi })}
@@ -738,19 +738,19 @@ export default function VideosPageClient() {
                         </div>
                       )}
                     </div>
-                    <div className="mt-2.5 min-w-0">
+                    <div className="mt-3 md:mt-2.5 min-w-0">
                       <span className="md:hidden inline-flex items-center gap-1 text-[11px] font-black text-accent uppercase tracking-wider mb-1">
                         <Radio className="h-3 w-3 fill-current animate-pulse text-accent" />
                         યુટ્યુબ પર હમણાં
                       </span>
-                      <h4 className="text-[13px] md:text-[13px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                        <AutoTranslateString text={item.titleGu || item.title || ''} language={language} />
+                      <h4 className="text-[15px] md:text-[13px] font-black md:font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                        {getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })}
                       </h4>
                       <div className="mt-2 md:mt-1 flex items-center gap-1.5 text-xs md:text-[10px] font-semibold md:font-bold text-muted-foreground">
                         <span className="text-accent">▶</span>
                         <span>Gujarat Post</span>
                         <span>·</span>
-                        <span>{language === 'gu' ? toGu(formatViews(item.views)) : formatViews(item.views)} {getLocalized(language, { en: 'views', gu: 'વ્યૂઝ', hi: 'व्यूज' })}</span>
+                        <span>{toGu(formatViews(item.views))} views</span>
                         <span className="md:hidden">·</span>
                         <span className="md:hidden">{item.duration}</span>
                       </div>
@@ -884,140 +884,143 @@ export default function VideosPageClient() {
             {sidebarCounts.photoCount > 0 && (
               <div className="mt-4 pt-3 border-t-2 border-border">
                 <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
-                  <span className="bg-[#B3121B] text-white px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
+                  <span className="bg-[#B3121B] text-white px-4.5 py-2 text-sm sm:text-base font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
                     {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
                   </span>
-                  <Link
-                    href="/photos"
-                    className="text-sm sm:text-base font-black text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
-                  >
-                    <span>{getLocalized(language, { en: 'More Photo Gallery', gu: 'વધુ ફોટો ગેલેરી', hi: 'और फोटो गैलरी' })}</span>
-                    <span>→</span>
-                  </Link>
-                </div>
+    <Link
+      href="/photos"
+      className="text-sm sm:text-base font-black text-[#B3121B] hover:text-red-700 hover:underline flex items-center gap-1 transition-colors"
+    >
+      <span>{getLocalized(language, { en: 'More Photo Gallery', gu: 'વધુ ફોટો ગેલેરી', hi: 'और फोटो गैलरी' })}</span>
+      <span>→</span>
+    </Link>
+  </div>
 
-                {/* Photo Gallery: Dynamic count based on left column height */}
-                <div className="flex flex-col gap-2.5">
-                  {latestPhotos.slice(0, sidebarCounts.photoCount).map((photo, idx) => (
-                    <SidebarPhotoCard
-                      key={photo.id || idx}
-                      photo={photo}
-                      index={idx}
-                      language={language}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
+  {/* Photo Gallery: Dynamic count based on left column height */ }
+  <div className="flex flex-col gap-2.5">
+    {latestPhotos.slice(0, sidebarCounts.photoCount).map((photo, idx) => (
+      <SidebarPhotoCard
+        key={photo.id || idx}
+        photo={photo}
+        index={idx}
+        language={language}
+      />
+    ))}
+  </div>
+              </div >
+            )
+}
 
-            {/* ── 3. LATEST NEWS (તાજા સમાચાર) ── */}
-            {sidebarCounts.newsCount > 0 && (
-              <div className="mt-3 pt-2.5 border-t-2 border-border">
-                <div className="flex items-center justify-between mb-3.5 pb-2 border-b-2 border-border">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
-                    <span className="text-sm font-black text-foreground">
-                      {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'लेटेस्ट समाचार' : 'Latest News'}
-                    </span>
-                  </div>
-                  <Link href="/category/latest" className="text-xs font-bold text-accent hover:underline">
-                    {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
-                  </Link>
-                </div>
-                <div className="flex flex-col divide-y divide-border">
-                  {latestImageArticles.slice(0, sidebarCounts.newsCount).map((art) => (
-                    <Link
-                      key={art.id}
-                      href={`/news/${art.slug}`}
-                      className="group flex items-start gap-3 py-2.5 first:pt-1 last:pb-0"
-                    >
-                      <div className="flex flex-col flex-1 min-w-0">
-                        <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
-                          {getCategoryLabel(art, language)}
-                        </span>
-                        <h4 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
-                          <AutoArticleTitle article={art} language={language} />
-                        </h4>
-                        <span className="text-[10px] font-semibold text-muted-foreground mt-1">
-                          {timeAgo(art.publishedAt || (art as any).createdAt, language)}
-                        </span>
-                      </div>
-                      <div className="relative w-24 h-18 sm:w-28 sm:h-20 shrink-0 self-start rounded-lg overflow-hidden bg-muted border border-border/40">
-                        <img
-                          src={(art as any).featuredImage || art.image || (art as any).thumbnail || '/assets/gujarat-post-logo.png'}
-                          alt={art.title}
-                          className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
-                          loading="lazy"
-                        />
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div> {/* CLOSE FIRST GRID */}
-
-        {/* ── FULL WIDTH SECTIONS BELOW SIDEBAR ────────────────────────────── */}
-        <div className="mt-2 flex flex-col border-t border-border pt-2">
-
-          {/* ── SECTION 2: SHORTS ────────────────────────────────────── */}
-          <section id="short" className="order-1 mb-4 pt-0">
-            <div className="flex items-center justify-between gap-3 mb-3 pb-1.5 border-b-2 border-border">
-              <div className="flex items-center gap-2.5">
-                <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
-                <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
-                  {getLocalized(language, { en: 'Shorts', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स' })}
-                </h3>
-              </div>
-              {visibleShortsCount < shortsVideos.length && (
-                <button
-                  type="button"
-                  onClick={() => setVisibleShortsCount((count) => count + 5)}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-bold text-accent hover:bg-accent/10 transition-colors"
-                  aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : 'Show more shorts'}
-                >
-                  {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'More videos'}
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              )}
+{/* ── 3. LATEST NEWS (તાજા સમાચાર) ── */ }
+{
+  sidebarCounts.newsCount > 0 && (
+    <div className="mt-3 pt-2.5 border-t-2 border-border">
+      <div className="flex items-center justify-between mb-3.5 pb-2 border-b-2 border-border">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-4.5 bg-accent rounded-sm inline-block shrink-0" />
+          <span className="text-sm font-black text-foreground">
+            {language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'लेटेस्ट समाचार' : 'Latest News'}
+          </span>
+        </div>
+        <Link href="/category/latest" className="text-xs font-bold text-accent hover:underline">
+          {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
+        </Link>
+      </div>
+      <div className="flex flex-col divide-y divide-border">
+        {latestImageArticles.slice(0, sidebarCounts.newsCount).map((art) => (
+          <Link
+            key={art.id}
+            href={`/news/${art.slug}`}
+            className="group flex items-start gap-3 py-2.5 first:pt-1 last:pb-0"
+          >
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
+                {getCategoryLabel(art, language)}
+              </span>
+              <h4 className="text-[13.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2 mt-0.5">
+                <AutoArticleTitle article={art} language={language} />
+              </h4>
+              <span className="text-[10px] font-semibold text-muted-foreground mt-1">
+                {timeAgo(art.publishedAt || (art as any).createdAt, language)}
+              </span>
             </div>
+            <div className="relative w-24 h-18 sm:w-28 sm:h-20 shrink-0 self-start rounded-lg overflow-hidden bg-muted border border-border/40">
+              <img
+                src={(art as any).featuredImage || art.image || (art as any).thumbnail || '/assets/gujarat-post-logo.png'}
+                alt={art.title}
+                className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = '/assets/gujarat-post-logo.png'; }}
+                loading="lazy"
+              />
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  )
+}
+          </div >
+        </div > {/* CLOSE FIRST GRID */ }
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
-              {shortsVideos.slice(0, visibleShortsCount).map((item) => (
-                <a
-                  key={item.id}
-                  href={`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group relative aspect-[9/16] w-full max-w-[280px] sm:max-w-none mx-auto rounded-xl overflow-hidden bg-black shadow-sm cursor-pointer"
-                >
-                  <Image
-                    src={item.thumbnail}
-                    alt={item.titleGu}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 15vw"
-                    className="object-cover opacity-85 transition-transform duration-300 group-hover:scale-105 group-hover:opacity-95"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-3">
-                    <span className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur mb-2 transition-transform group-hover:scale-110 self-start">
-                      <Play className="h-4 w-4 sm:h-3 sm:w-3 fill-current ml-0.5" />
-                    </span>
+{/* ── FULL WIDTH SECTIONS BELOW SIDEBAR ────────────────────────────── */ }
+<div className="mt-2 flex flex-col border-t border-border pt-2">
+
+  {/* ── SECTION 2: SHORTS ────────────────────────────────────── */}
+  <section id="short" className="order-1 mb-4 pt-0">
+    <div className="flex items-center justify-between gap-3 mb-3 pb-1.5 border-b-2 border-border">
+      <div className="flex items-center gap-2.5">
+        <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
+        <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
+          {getLocalized(language, { en: 'Shorts', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स' })}
+        </h3>
+      </div>
+      {visibleShortsCount < shortsVideos.length && (
+        <button
+          type="button"
+          onClick={() => setVisibleShortsCount((count) => count + 5)}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-bold text-accent hover:bg-accent/10 transition-colors"
+          aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : 'Show more shorts'}
+        >
+          {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'More videos'}
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+
+    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      {shortsVideos.slice(0, visibleShortsCount).map((item) => (
+        <a
+          key={item.id}
+          href={`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group relative aspect-[9/16] w-full max-w-[280px] sm:max-w-none mx-auto rounded-xl overflow-hidden bg-black shadow-sm cursor-pointer"
+        >
+          <Image
+            src={item.thumbnail}
+            alt={item.titleGu}
+            fill
+            sizes="(max-width: 768px) 100vw, 15vw"
+            className="object-cover opacity-85 transition-transform duration-300 group-hover:scale-105 group-hover:opacity-95"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-3">
+            <span className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur mb-2 transition-transform group-hover:scale-110 self-start">
+              <Play className="h-4 w-4 sm:h-3 sm:w-3 fill-current ml-0.5" />
+            </span>
                     <h4 className="text-[13px] sm:text-[11px] font-bold leading-snug text-white line-clamp-2">
                       <AutoTranslateString text={item.titleGu || item.title || ''} language={language} />
                     </h4>
-                    <span className="text-[10px] sm:text-[9px] font-black text-accent mt-0.5">
-                      {item.hash}
-                    </span>
-                  </div>
-                </a>
+  <span className="text-[10px] sm:text-[9px] font-black text-accent mt-0.5">
+    {item.hash}
+  </span>
+</div>
+                </a >
               ))}
-            </div>
-          </section>
+            </div >
+          </section >
 
-          {/* ── SECTION 3: LATEST NEWS ──────────────────────────────── */}
-          <section id="latest" className="order-2 mb-5 pt-2">
+  {/* ── SECTION 3: LATEST NEWS ──────────────────────────────── */ }
+  < section id = "latest" className = "order-2 mb-5 pt-2" >
             <div className="flex items-center justify-between gap-3 mb-5 pb-2 border-b-2 border-border">
               <div className="flex items-center gap-2.5">
                 <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
@@ -1051,52 +1054,56 @@ export default function VideosPageClient() {
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
-                    <div className="p-3">
-                      <span className="text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
+                    <div className="p-0 pt-3 sm:p-3">
+                      <span className="text-[11px] sm:text-[10px] font-black text-accent uppercase tracking-wider line-clamp-1">
                         <AutoTranslateString text={getCategoryLabel(article, language)} language={language} />
                       </span>
-                      <h4 className="mt-1 text-[12.5px] md:text-sm font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
+                      <h4 className="mt-1 text-[15px] sm:text-base md:text-sm font-black md:font-bold leading-snug text-foreground group-hover:text-accent transition-colors line-clamp-2">
                         <AutoArticleTitle article={article} language={language} />
                       </h4>
-                      <span className="mt-2 block text-xs md:text-[10px] font-semibold text-muted-foreground">
-                        {timeAgo(article.publishedAt || article.createdAt, language)}
-                      </span>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-            {visibleLatestNewsCount < latestImageArticles.length && (
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  onClick={() => setVisibleLatestNewsCount((count) => count + 8)}
-                  className="group inline-flex items-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
-                >
-                  <span className="text-lg md:text-xl font-black tracking-wide leading-none">
-                    {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
-                  </span>
-                  <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
-                </button>
-              </div>
-            )}
-          </section>
-
-        </div>
-
-      </div>
-
-      {/* APK: YouTube-style video player (player at top + related below) */}
-      {isApk && apkModalVideoId && (
-        <ApkVideoPlayer
-          videoId={apkModalVideoId}
-          initialVideo={apkSelectedVideo}
-          allVideos={cleanVideos.filter((v) => v.youtubeId !== apkModalVideoId).slice(0, 20)}
-          onClose={() => { setApkModalVideoId(null); setApkSelectedVideo(null); }}
-          onSelectVideo={(ytId, video) => { setApkModalVideoId(ytId); setApkSelectedVideo(video || null); }}
-        />
-      )}
+      <span className="mt-2 block text-xs md:text-[10px] font-semibold text-muted-foreground">
+        {timeAgo(article.publishedAt || article.createdAt, language)}
+      </span>
     </div>
+  </Link>
+  );
+              })}
+</div>
+{
+  visibleLatestNewsCount < latestImageArticles.length && (
+    <div className="mt-6 flex justify-center">
+      <button
+        type="button"
+        onClick={() => setVisibleLatestNewsCount((count) => count + 8)}
+        className="group inline-flex items-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]"
+      >
+        <span className="text-lg md:text-xl font-black tracking-wide leading-none">
+          {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
+        </span>
+        <ChevronDown className="w-5 h-5 transition-transform duration-200 group-hover:translate-y-0.5 stroke-[3]" />
+      </button>
+    </div>
+  )
+}
+          </section >
+
+        </div >
+
+      </div >
+
+  {/* APK: YouTube-style video player (player at top + related below) */ }
+{
+  isApk && apkModalVideoId && (
+    <ApkVideoPlayer
+      videoId={apkModalVideoId}
+      initialVideo={apkSelectedVideo}
+      allVideos={cleanVideos.filter((v) => v.youtubeId !== apkModalVideoId).slice(0, 20)}
+      onClose={() => { setApkModalVideoId(null); setApkSelectedVideo(null); }}
+      onSelectVideo={(ytId, video) => { setApkModalVideoId(ytId); setApkSelectedVideo(video || null); }}
+    />
+  )
+}
+    </div >
   );
 }
 
