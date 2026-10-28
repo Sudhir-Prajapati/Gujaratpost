@@ -46,6 +46,7 @@ function getLegacyFeedPath(slug: string): string {
     'entertainment-life-style': 'entertainment-life-style',
     videos: 'video',
     video: 'video',
+    shorts: 'video',
     instagram: 'instagram',
     reels: 'instagram',
     health: 'health',
@@ -134,8 +135,8 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                 ગુજરાત પોસ્ટ RSS ફીડ્સ ડિરેક્ટરી
               </h1>
               <p className="mt-1.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-2xl">
-                તમારી પસંદગીની કેટેગરીના <strong>New RSS URLs</strong> અથવા <strong>Dailyhunt (Old PHP) URLs</strong> બંને
-                સરળતાથી કૉપિ કરો અને તમારા ફીડ રીડર અથવા ડેઇલીહન્ટમાં સેટ કરો.
+                તમારી પસંદગીની કેટેગરીના <strong>New RSS URLs</strong> અથવા <strong>Old Link URLs</strong> બંને
+                સરળતાથી કૉપિ કરો અને તમારા ફીડ રીડરમાં સેટ કરો.
               </p>
             </div>
 
@@ -237,12 +238,12 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                 </div>
               </div>
 
-              {/* Option B: Dailyhunt Old PHP URL */}
+              {/* Option B: Old Link URL */}
               <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/50 rounded-xl p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
-                      Dailyhunt (Old PHP)
+                      OLD LINK
                     </span>
                     <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
                       /rss-feed-politics.php?name=news
@@ -270,7 +271,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Dailyhunt URL</span>
+                        <span>Copy Old Link URL</span>
                       </>
                     )}
                   </button>
@@ -279,7 +280,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-800 text-blue-600 hover:bg-blue-100 dark:hover:bg-zinc-700 transition flex items-center justify-center cursor-pointer"
-                    title="Open Dailyhunt PHP XML Feed"
+                    title="Open Old Link Feed"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -332,7 +333,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
                 }`}
               >
-                Dailyhunt PHP
+                Old Link
               </button>
             </div>
 
@@ -452,13 +453,13 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                       </div>
                     )}
 
-                    {/* 2. Old Dailyhunt PHP URL Row */}
+                    {/* 2. Old Link URL Row */}
                     {(formatFilter === 'both' || formatFilter === 'old') && (
                       <div className="bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200/70 dark:border-blue-900/40 rounded-xl p-2.5 flex items-center justify-between gap-2">
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-600 text-white leading-none">
-                              Dailyhunt PHP
+                              OLD LINK
                             </span>
                             <span className="font-mono text-xs text-blue-900 dark:text-blue-300 truncate">
                               {legacyPath}
@@ -474,7 +475,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                                 ? 'bg-emerald-600 border-emerald-600 text-white'
                                 : 'bg-white dark:bg-zinc-900 border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-950 text-blue-700 dark:text-blue-300'
                             }`}
-                            title="Copy Dailyhunt Old PHP URL"
+                            title="Copy Old Link URL"
                           >
                             {isCopiedOld ? (
                               <>
@@ -484,7 +485,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                             ) : (
                               <>
                                 <Copy className="w-3 h-3" />
-                                <span>Copy Dailyhunt</span>
+                                <span>Copy Old Link</span>
                               </>
                             )}
                           </button>
@@ -494,7 +495,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition flex items-center justify-center cursor-pointer"
-                            title="Open Dailyhunt PHP Feed"
+                            title="Open Old Link Feed"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>

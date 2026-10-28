@@ -11,7 +11,7 @@ import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import { buildTwitterPostButton, normalizeTwitterPostLinks } from '@/lib/article-social-links';
 import dynamic from 'next/dynamic';
 import ArticleShareAudioBar from './components/ArticleShareAudioBar';
-import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
+import { playArticleAudio, stopArticleAudio, cleanTextForSpeech } from '@/lib/articleTtsPlayer';
 
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
@@ -45,7 +45,7 @@ const ArticleContentBody = memo(function ArticleContentBody({
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const cleanHtml = useMemo(() => {
-    return (html || '')
+    const raw = (html || '')
       .replace(/\\r\\n/g, '\n')
       .replace(/\\r/g, '')
       .replace(/\\n/g, '\n')
@@ -54,6 +54,14 @@ const ArticleContentBody = memo(function ArticleContentBody({
         /(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/[^"'\s)]+?\.)(?:jpg|jpeg|png|webp|gif)/gi,
         '$1avif'
       );
+    const blocks = raw.split(/\n\s*\n+/);
+    const wrapped = blocks.map((b) => {
+      const t = b.trim();
+      if (!t) return '';
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(t)) return t;
+      return `<p class="article-para my-3">${t}</p>`;
+    });
+    return wrapped.filter(Boolean).join('\n\n');
   }, [html]);
 
   useEffect(() => {
@@ -67,6 +75,8 @@ const ArticleContentBody = memo(function ArticleContentBody({
   return (
     <div
       ref={bodyRef}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
       className="article-body text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[17px] sm:[&_p]:text-[18px] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4"
     />
   );
@@ -102,7 +112,7 @@ const DetailSlideVideo = memo(function DetailSlideVideo({
       autoPlay
       muted
       onEnded={onEnded}
-      className="h-full w-full object-cover"
+      className="h-full w-full object-contain bg-black"
       poster="/assets/placeholder.jpg"
     />
   );
@@ -362,7 +372,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
 
-    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-black/5 dark:bg-black/40 shadow-sm"><img src="${sanitizeImageUrl(cleanUrl)}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-cover" /></div>${caption}</figure>`;
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-neutral-950 dark:bg-black shadow-sm"><img src="${sanitizeImageUrl(cleanUrl)}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -576,6 +586,80 @@ function getFacebookEmbedUrl(raw: string): string {
   return `${endpoint}?href=${encodeURIComponent(trimmed)}&show_text=true&width=500`;
 }
 
+function getReadableArticleCandidates(root: HTMLElement): HTMLElement[] {
+  const candidates: HTMLElement[] = [];
+  const h1Elem = root.querySelector<HTMLElement>('h1');
+  if (h1Elem) candidates.push(h1Elem);
+
+  const subElem = root.querySelector<HTMLElement>('.article-sub');
+  if (subElem) {
+    const subParas = Array.from(subElem.querySelectorAll<HTMLElement>('p, li'));
+    if (subParas.length > 0) {
+      subParas.forEach((p) => {
+        if ((p.textContent || '').trim().length > 3) candidates.push(p);
+      });
+    } else if ((subElem.textContent || '').trim().length > 3) {
+      candidates.push(subElem);
+    }
+  }
+
+  const gistItems = Array.from(root.querySelectorAll<HTMLElement>('.article-gist-item'));
+  for (const g of gistItems) {
+    if ((g.textContent || '').trim().length > 3 && !candidates.includes(g)) {
+      candidates.push(g);
+    }
+  }
+
+  const bodyElems = Array.from(
+    root.querySelectorAll<HTMLElement>(
+      '.article-body p, .article-body > div > p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3'
+    )
+  );
+
+  for (const el of bodyElems) {
+    if (!candidates.includes(el) && el !== h1Elem && el !== subElem && !subElem?.contains(el)) {
+      const text = (el.textContent || '').trim();
+      if (text.length > 3 && !el.closest('.byline') && !el.closest('.art-kick') && !el.closest('figure')) {
+        candidates.push(el);
+      }
+    }
+  }
+
+  return candidates;
+}
+
+function findMatchingCandidate(
+  candidates: HTMLElement[],
+  activeElemIndex: number,
+  chunkText: string,
+  rawChunk: string
+): HTMLElement | null {
+  if (!candidates || candidates.length === 0) return null;
+
+  // 1. Direct index check (100% exact since speechItems is built directly in visual document order)
+  if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
+    return candidates[activeElemIndex];
+  }
+
+  // 2. Text search fallback if activeElemIndex was out of bounds
+  const norm = (s: string) => (s || '').replace(/[\s.,?!।:;'"“”\-–—#*•’‘]/g, '').toLowerCase();
+  const searchNorm = norm(chunkText || rawChunk || '');
+  if (searchNorm.length >= 6) {
+    const p10 = searchNorm.slice(0, Math.min(10, searchNorm.length));
+    const p20 = searchNorm.slice(0, Math.min(20, searchNorm.length));
+    const mid12 = searchNorm.length > 20 ? searchNorm.slice(8, 20) : '';
+
+    for (const c of candidates) {
+      const cNorm = norm(c.textContent || '');
+      if (cNorm.includes(p20) || cNorm.includes(p10) || (mid12 && cNorm.includes(mid12))) {
+        return c;
+      }
+    }
+  }
+
+  return null;
+}
+
 export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
   const { language } = useApp();
   const router = useRouter();
@@ -678,7 +762,9 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const [copied, setCopied] = useState(false);
   const [speaking, setSpeaking] = useState(false);
   const [activeSpeechText, setActiveSpeechText] = useState('');
+  const [activeSpeechRawText, setActiveSpeechRawText] = useState('');
   const [activeSpeechIndex, setActiveSpeechIndex] = useState(-1);
+  const [activeSpeechElemIndex, setActiveSpeechElemIndex] = useState(-1);
   const [totalSpeechChunks, setTotalSpeechChunks] = useState(0);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [adSlide, setAdSlide] = useState(0);
@@ -1027,6 +1113,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
+    // Ensure all plain text paragraphs are properly wrapped in <p> elements
+    const rawBlocks = cleaned.split(/\n\s*\n+/);
+    const wrappedBlocks = rawBlocks.map((block) => {
+      const trimmed = block.trim();
+      if (!trimmed) return '';
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
+        return trimmed;
+      }
+      return `<p class="article-para my-3">${trimmed}</p>`;
+    });
+    cleaned = wrappedBlocks.filter(Boolean).join('\n\n');
     return cleaned;
   }, [body, title, language, article, hasPdfPages]);
 
@@ -1206,49 +1303,108 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     setSpeaking(true);
 
     const directTitle = getArticleTitle(article, langToUse) || article.title || '';
+    const directExcerpt = (article.excerpt || (article as any).excerptGu || (article as any).excerptHi || '');
     const directBody = getArticleContent(article, langToUse) || (article as any).content || '';
 
-    // Prefer translated title/body if available with robust full-body fallbacks
     const speechTitle = (langToUse === language && title) ? title : directTitle;
+    const speechExcerpt = (langToUse === language && excerpt) ? excerpt : directExcerpt;
     const speechBody =
       (langToUse === language && body && body.trim().length > 10 ? body : '') ||
       (directBody && directBody.trim().length > 10 ? directBody : '') ||
       (article as any).contentGu ||
       (article as any).contentHi ||
       (article as any).content ||
-      excerpt ||
       '';
+
+    // Build complete speech items in exact visual document order:
+    // 0: Heading (Title)
+    // 1: Subheading (Excerpt)
+    // 2..K: Highlights (All points)
+    // K..N: All Body Paragraphs (First to Last)
+    const root = articleContainerRef.current;
+    const domCandidates = root ? getReadableArticleCandidates(root) : [];
+
+    const speechItems: { text: string; elemIndex: number }[] = [];
+
+    // Prioritize direct DOM candidate elements so speech items match visual elements 1-to-1
+    if (domCandidates.length > 2) {
+      domCandidates.forEach((el, idx) => {
+        const t = cleanTextForSpeech(el.textContent || '');
+        if (t.length > 2) {
+          speechItems.push({ text: t, elemIndex: idx });
+        }
+      });
+    }
+
+    // Fallback if DOM candidates were not ready yet
+    if (speechItems.length === 0) {
+      let elemIdxCounter = 0;
+      const cleanTitle = cleanTextForSpeech(speechTitle);
+      if (cleanTitle) speechItems.push({ text: cleanTitle, elemIndex: elemIdxCounter++ });
+
+      const cleanSub = cleanTextForSpeech(speechExcerpt);
+      if (cleanSub && cleanSub !== cleanTitle) speechItems.push({ text: cleanSub, elemIndex: elemIdxCounter++ });
+
+      if (gistPoints && Array.isArray(gistPoints)) {
+        for (const pt of gistPoints) {
+          const cleanPt = cleanTextForSpeech(pt);
+          if (cleanPt && cleanPt.length > 2) speechItems.push({ text: cleanPt, elemIndex: elemIdxCounter++ });
+        }
+      }
+
+      const bodyParagraphs = (displayParagraphs && displayParagraphs.length > 0)
+        ? displayParagraphs
+        : parseArticleBodyBlocks(speechBody, langToUse, (article as any)?.pdfUrl || (article as any)?.pdf);
+
+      if (bodyParagraphs && bodyParagraphs.length > 0) {
+        for (const p of bodyParagraphs) {
+          const cleanP = cleanTextForSpeech(p);
+          if (cleanP && cleanP.length > 3) speechItems.push({ text: cleanP, elemIndex: elemIdxCounter++ });
+        }
+      }
+    }
 
     playArticleAudio({
       title: speechTitle,
+      items: speechItems.length > 0 ? speechItems : undefined,
+      subheading: speechExcerpt,
+      excerpt: speechExcerpt,
+      highlights: gistPoints,
       body: speechBody,
-      excerpt: excerpt || '',
       language: langToUse,
       onStart: () => setSpeaking(true),
-      onChunkChange: (idx, chunkText, total) => {
+      onChunkChange: (idx, chunkText, total, elemIdx, rawChunk) => {
         setActiveSpeechIndex(idx);
         setActiveSpeechText(chunkText);
+        setActiveSpeechRawText(rawChunk || chunkText);
+        setActiveSpeechElemIndex(typeof elemIdx === 'number' && elemIdx >= 0 ? elemIdx : idx);
         setTotalSpeechChunks(total);
       },
       onEnd: () => {
         setSpeaking(false);
         setActiveSpeechIndex(-1);
+        setActiveSpeechElemIndex(-1);
         setActiveSpeechText('');
+        setActiveSpeechRawText('');
       },
       onError: () => {
         setSpeaking(false);
         setActiveSpeechIndex(-1);
+        setActiveSpeechElemIndex(-1);
         setActiveSpeechText('');
+        setActiveSpeechRawText('');
       },
     });
-  }, [article, language, title, body, excerpt]);
+  }, [article, language, title, excerpt, gistPoints, body, displayParagraphs]);
 
   const toggleAudio = useCallback(() => {
     if (speaking) {
       stopArticleAudio();
       setSpeaking(false);
       setActiveSpeechIndex(-1);
+      setActiveSpeechElemIndex(-1);
       setActiveSpeechText('');
+      setActiveSpeechRawText('');
       return;
     }
     startAudio(language);
@@ -1256,15 +1412,23 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   // If user switches language while audio is active, seamlessly re-speak in the new language without reload!
   useEffect(() => {
+    lastSpeechElemIndex.current = 0;
     if (speaking) {
-      startAudio(language);
+      stopArticleAudio();
+      const timer = setTimeout(() => {
+        startAudio(language);
+      }, 80);
+      return () => clearTimeout(timer);
     } else {
       setActiveSpeechIndex(-1);
+      setActiveSpeechElemIndex(-1);
       setActiveSpeechText('');
+      setActiveSpeechRawText('');
     }
   }, [language]);
 
   const articleContainerRef = useRef<HTMLElement>(null);
+  const lastSpeechElemIndex = useRef(0);
 
   // Directly highlight current spoken sentence in RED in the article itself!
   useEffect(() => {
@@ -1275,94 +1439,55 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const prevActiveItems = root.querySelectorAll('[data-gp-speech-active="true"]');
     prevActiveItems.forEach((el) => {
       el.removeAttribute('data-gp-speech-active');
-      el.classList.remove(
-        'gp-speech-active',
-        'border-l-4',
-        'border-b-2',
-        'border-[#B3121B]',
-        'dark:border-red-500',
-        'bg-red-50/70',
-        'dark:bg-red-950/40',
-        'text-[#B3121B]',
-        'dark:text-red-400',
-        'font-bold',
-        'px-2.5',
-        'py-1.5',
-        'rounded-r',
-        'transition-all'
-      );
+      const htmlEl = el as HTMLElement;
+      htmlEl.style.borderLeft = '';
+      htmlEl.style.borderBottom = '';
+      htmlEl.style.backgroundColor = '';
+      htmlEl.style.color = '';
+      htmlEl.style.paddingLeft = '';
+      htmlEl.style.paddingRight = '';
+      htmlEl.style.paddingTop = '';
+      htmlEl.style.paddingBottom = '';
+      htmlEl.style.borderRadius = '';
+      htmlEl.style.boxShadow = '';
     });
 
-    const h1Elem = root.querySelector('h1');
+    const h1Elem = root.querySelector<HTMLElement>('h1');
     if (h1Elem) {
-      h1Elem.classList.remove('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400');
+      h1Elem.removeAttribute('data-gp-speech-active');
+      h1Elem.style.borderBottom = '';
+      h1Elem.style.color = '';
+      h1Elem.style.backgroundColor = '';
     }
 
-    if (!speaking || !activeSpeechText || activeSpeechText.trim().length < 3) return;
+    if (!speaking || activeSpeechElemIndex < 0) return;
 
-    // 2. If reading the heading (first chunk or matches title)
-    if (activeSpeechIndex === 0 && h1Elem) {
-      h1Elem.setAttribute('data-gp-speech-active', 'true');
-      h1Elem.classList.add('border-b-4', 'border-[#B3121B]', 'pb-1.5', 'text-[#B3121B]', 'dark:text-red-400', 'transition-all', 'duration-200');
-      h1Elem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return;
-    }
+    // 2. Match candidate element matching exact sentence or accurate element index
+    const candidates = getReadableArticleCandidates(root);
+    const bestElem = findMatchingCandidate(candidates, activeSpeechElemIndex, activeSpeechText, activeSpeechRawText);
 
-    // 3. Extract key words from active spoken text
-    const cleanChunk = activeSpeechText.replace(/[.,?!।;:()"'“”]/g, ' ').trim();
-    const words = cleanChunk.split(/\s+/).filter((w) => w.length > 1);
-    if (words.length === 0) return;
-
-    // 4. Find matching candidate elements inside the article: paragraphs, list items, headings, blockquotes
-    const candidates = Array.from(root.querySelectorAll('.article-body p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3, p'));
-    let bestElem: HTMLElement | null = null;
-    let maxMatch = 0;
-
-    for (const cand of candidates) {
-      const txt = (cand.textContent || '').toLowerCase();
-      if (!txt.trim()) continue;
-
-      let matchCount = 0;
-      for (const w of words) {
-        if (txt.includes(w.toLowerCase())) {
-          matchCount++;
-        }
-      }
-
-      if (matchCount > maxMatch) {
-        maxMatch = matchCount;
-        bestElem = cand as HTMLElement;
-      }
-    }
-
-    // If no keyword match found (e.g. translated speech text), fallback to index proportion
-    if (!bestElem && candidates.length > 0 && activeSpeechIndex > 0) {
-      const fallbackIdx = Math.min(candidates.length - 1, Math.max(0, activeSpeechIndex - 1));
-      bestElem = candidates[fallbackIdx] as HTMLElement;
-    }
-
+    // 3. Highlight best matching element with the red line and background
     if (bestElem) {
       bestElem.setAttribute('data-gp-speech-active', 'true');
-      bestElem.classList.add(
-        'gp-speech-active',
-        'border-l-4',
-        'border-b-2',
-        'border-[#B3121B]',
-        'dark:border-red-500',
-        'bg-red-50/70',
-        'dark:bg-red-950/40',
-        'text-[#B3121B]',
-        'dark:text-red-400',
-        'font-bold',
-        'px-2.5',
-        'py-1.5',
-        'rounded-r',
-        'transition-all',
-        'duration-200'
-      );
+      if (bestElem.tagName === 'H1') {
+        bestElem.style.borderBottom = '4px solid #B3121B';
+        bestElem.style.color = '#B3121B';
+        bestElem.style.backgroundColor = 'rgba(179, 18, 27, 0.05)';
+      } else {
+        bestElem.style.borderLeft = '4px solid #B3121B';
+        bestElem.style.backgroundColor = 'rgba(179, 18, 27, 0.08)';
+        bestElem.style.color = '#B3121B';
+        bestElem.style.paddingLeft = '14px';
+        bestElem.style.paddingRight = '8px';
+        bestElem.style.paddingTop = '4px';
+        bestElem.style.paddingBottom = '4px';
+        bestElem.style.borderRadius = '0 6px 6px 0';
+        bestElem.style.boxShadow = '0 1px 3px rgba(179, 18, 27, 0.12)';
+        bestElem.style.transition = 'all 0.2s ease-in-out';
+      }
       bestElem.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [speaking, activeSpeechIndex, activeSpeechText]);
+  }, [speaking, activeSpeechElemIndex, activeSpeechText, activeSpeechRawText]);
 
   // Clean up and stop playing audio whenever article changes or component unmounts
   useEffect(() => {
@@ -1589,14 +1714,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             {/* Gist: એક નજરમાં */}
             {gistPoints.length > 0 && (
-              <div className="my-2 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
+              <div className="article-gist-container my-2 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
                 <div className="flex items-center gap-2 font-black text-[#B3121B] text-base mb-3 select-none">
                   <span className="text-[#B3121B] font-bold text-sm">♦</span>
                   <span>{uiLabel(language, { en: 'At a Glance', gu: 'એક નજરમાં', hi: 'एक नजर में' })}</span>
                 </div>
                 <ul className="space-y-2.5 text-[15px] sm:text-[15.5px] font-semibold text-neutral-800 dark:text-neutral-200">
                   {gistPoints.map((point, index) => (
-                    <li key={index} className="flex items-start gap-2.5">
+                    <li key={index} className="article-gist-item flex items-start gap-2.5">
                       <span className="text-[#B3121B] font-bold mt-0.5 shrink-0 select-none">•</span>
                       <span className="leading-relaxed">
                         <TranslatedInlineText text={point} language={language} />
@@ -1608,7 +1733,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
             )}
 
             <figure className="article-fig mb-3">
-              <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-black/5 dark:bg-black/40 rounded-lg shadow-sm group">
+              <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-neutral-950 dark:bg-black rounded-lg shadow-sm group">
                 {/* Indicator Badge (only if multiple images exist) */}
                 {slideImages.length > 1 && (
                   <div className="absolute top-3.5 left-3.5 z-20 bg-black/75 backdrop-blur-sm text-white font-black text-xs px-2.5 py-1 rounded select-none shadow">
@@ -1662,7 +1787,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                           fill
                           unoptimized={true}
                           sizes="(max-width: 1024px) 100vw, 66vw"
-                          className="object-cover"
+                          className="object-contain"
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                           loading={index === 0 ? 'eager' : 'lazy'}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -1697,6 +1823,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             <ArticleShareAudioBar
               title={title}
+              subheading={excerpt}
+              excerpt={excerpt}
               body={body}
               articleUrl={articleUrl}
               language={language}
@@ -1779,6 +1907,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 );
               }
 
+              const isExpandedState = isContentExpanded || speaking;
+
               return (
                 <div className="relative">
                   <ArticleContentBody html={topHtml} activeSpeechText={activeSpeechText} />
@@ -1786,7 +1916,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   {/* IN_ARTICLE Ad Banner displayed inside description */}
                   <AdSectionBanner section="IN_ARTICLE" className="my-6" />
 
-                  {!isContentExpanded ? (
+                  {!isExpandedState && (
                     <div className="relative pt-2 pb-2">
                       {/* Smooth gradient fade overlay */}
                       <div className="absolute -top-28 inset-x-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-[#0d1117] dark:via-[#0d1117]/90 dark:to-transparent pointer-events-none" />
@@ -1808,70 +1938,70 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4 transition-all duration-500 ease-in-out">
-                      <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
-
-                      {/* Full PDF Page-by-Page Document Viewer */}
-                      {hasPdfPages && pdfDocumentUrl && (
-                        <ArticlePdfPagesViewer
-                          pdfUrl={pdfDocumentUrl}
-                          language={language}
-                          title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
-                        />
-                      )}
-
-                      {/* Horizontal Ad Banner placed directly after full article description */}
-                      <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
-
-                      {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
-                      {readAlsoPool.length > 0 && (
-                        <AlsoPanVacho
-                          articles={readAlsoPool}
-                          language={language}
-                          getCardThumbnail={getCardThumbnail}
-                          DEMO_THUMBNAILS={DEMO_THUMBNAILS}
-                          uiLabel={uiLabel}
-                        />
-                      )}
-
-                      {/* Topics Tags directly inside article after Aa Pan Vacho */}
-                      {tags.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
-                          <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-                            {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
-                          </span>
-                          {tags.map((tag, tIdx) => (
-                            <Link
-                              key={tIdx}
-                              href={getTopicHref(tag)}
-                              className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-                            >
-                              {normalizeDisplayText(tag)}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Collapse / Read Less Button */}
-                      <div className="flex justify-center pt-6 pb-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsContentExpanded(false);
-                            setSidebarMoreRecommended(false);
-                            window.scrollTo({ top: 380, behavior: 'smooth' });
-                          }}
-                          className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
-                        >
-                          <span className="text-base md:text-lg font-black tracking-wide leading-none">
-                            {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
-                          </span>
-                          <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
-                        </button>
-                      </div>
-                    </div>
                   )}
+
+                  <div className={isExpandedState ? 'space-y-4 transition-all duration-500 ease-in-out' : 'hidden'}>
+                    <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
+
+                    {/* Full PDF Page-by-Page Document Viewer */}
+                    {hasPdfPages && pdfDocumentUrl && (
+                      <ArticlePdfPagesViewer
+                        pdfUrl={pdfDocumentUrl}
+                        language={language}
+                        title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
+                      />
+                    )}
+
+                    {/* Horizontal Ad Banner placed directly after full article description */}
+                    <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
+
+                    {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
+                    {readAlsoPool.length > 0 && (
+                      <AlsoPanVacho
+                        articles={readAlsoPool}
+                        language={language}
+                        getCardThumbnail={getCardThumbnail}
+                        DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+                        uiLabel={uiLabel}
+                      />
+                    )}
+
+                    {/* Topics Tags directly inside article after Aa Pan Vacho */}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
+                        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
+                          {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
+                        </span>
+                        {tags.map((tag, tIdx) => (
+                          <Link
+                            key={tIdx}
+                            href={getTopicHref(tag)}
+                            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
+                          >
+                            {normalizeDisplayText(tag)}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Collapse / Read Less Button */}
+                    <div className="flex justify-center pt-6 pb-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsContentExpanded(false);
+                          setSidebarMoreRecommended(false);
+                          window.scrollTo({ top: 380, behavior: 'smooth' });
+                        }}
+                        className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
+                      >
+                        <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                          {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
+                        </span>
+                        <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               );
             })()}
@@ -1940,13 +2070,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                             <AutoArticleTitle article={item} language={language} />
                           </h3>
                         </div>
-                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-xs self-start">
+                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-xs self-start">
                           <Image
                             src={getCardThumbnail(item, index)}
                             alt={item.title || ''}
                             fill
                             sizes="114px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="object-contain transition-transform duration-300 group-hover:scale-105"
+                            style={{ objectFit: 'contain', objectPosition: 'center' }}
                           />
                         </div>
                       </Link>

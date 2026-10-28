@@ -508,14 +508,11 @@ function MobileHorizontalCardStrip({
                 </button>
               </div>
 
-              {/* Bottom Content Container matching Fact Check UI (Image 2) */}
-              <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
+              {/* Bottom Content Container */}
+              <div className="p-3.5 sm:p-4 flex flex-col justify-center flex-1 min-w-0">
                 <h4 className="text-[15.5px] sm:text-[16.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                   <AutoArticleTitle article={art} language={language} />
                 </h4>
-                <div className="mt-2.5 flex items-center text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
-                  <span>{language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'સत्याપિત' : 'Verified'}</span>
-                </div>
               </div>
             </Link>
           ))}
@@ -801,7 +798,60 @@ function HeroStorySlider({
 /* ===========================================================================
    Main HeroSection -- tv9gujarati.com style 3-column layout
 =========================================================================== */
-// Helper to safely extract category slug from article (handles object or string)
+// Helper to safely extract all category tokens from article (handles primary category, categories array, and location)
+function getArticleCategoryTokens(a: any): string[] {
+  if (!a) return [];
+  const tokens: string[] = [];
+  const add = (v: any) => {
+    if (typeof v === 'string' && v.trim()) tokens.push(v.toLowerCase().trim());
+  };
+
+  add(a.categoryId);
+  add(a.categorySlug);
+  if (typeof a.category === 'string') {
+    add(a.category);
+  } else if (a.category && typeof a.category === 'object') {
+    add(a.category.id);
+    add(a.category.slug);
+    add(a.category.name);
+    add(a.category.nameGu);
+    add(a.category.nameHi);
+  }
+  add(a.categoryName);
+  add(a.categoryGu);
+  add(a.categoryHi);
+  add(a.location);
+
+  if (Array.isArray(a.categories)) {
+    for (const item of a.categories) {
+      if (!item) continue;
+      add(item.id);
+      add(item.categoryId);
+      add(item.slug);
+      add(item.name);
+      add(item.nameGu);
+      add(item.nameHi);
+      if (item.category && typeof item.category === 'object') {
+        add(item.category.id);
+        add(item.category.slug);
+        add(item.category.name);
+        add(item.category.nameGu);
+        add(item.category.nameHi);
+      }
+    }
+  }
+
+  return tokens;
+}
+
+function articleMatchesCat(a: any, ...targets: string[]): boolean {
+  const tokens = getArticleCategoryTokens(a);
+  return targets.some((target) => {
+    const t = target.toLowerCase().trim();
+    return tokens.some((token) => token === t || token.includes(t));
+  });
+}
+
 function getCatSlug(a: any): string {
   if (!a) return '';
   const cat = (a as any).category;
@@ -955,44 +1005,44 @@ export default function HeroSection({
   const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>(
     (initialCategoryArticles['gujarat'] && initialCategoryArticles['gujarat'].length > 0)
       ? initialCategoryArticles['gujarat']
-      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'gujarat', 'state', 'ગુજરાત')).slice(0, 16)
   );
   const [crimeArtDB, setCrimeArtDB] = useState<Article[]>(
     (initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0)
       ? initialCategoryArticles['crime']
-      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime').slice(0, 8)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'crime', 'ક્રાઇમ')).slice(0, 8)
   );
   const [nationalArtDB, setNationalArtDB] = useState<Article[]>(
     (initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0)
       ? initialCategoryArticles['national']
-      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'national', 'india', 'ભારત')).slice(0, 16)
   );
   const [worldArtDB, setWorldArtDB] = useState<Article[]>(
     (initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0)
       ? initialCategoryArticles['world']
-      : publishedInitialArticles.filter((a) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 8)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ')).slice(0, 10)
   );
   const [politicsArtDB, setPoliticsArtDB] = useState<Article[]>(
     (initialCategoryArticles['politics'] && initialCategoryArticles['politics'].length > 0)
       ? initialCategoryArticles['politics']
-      : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'politics', 'rajkaran', 'રાજકારણ')).slice(0, 16)
   );
   const [factCheckArtDB, setFactCheckArtDB] = useState<Article[]>(
     (initialCategoryArticles['fact-check'] && initialCategoryArticles['fact-check'].length > 0)
       ? initialCategoryArticles['fact-check']
       : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
         ? initialCategoryArticles['factcheck']
-        : publishedInitialArticles.filter((a) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10)
+        : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 10)
   );
   const [businessArtDB, setBusinessArtDB] = useState<Article[]>(
     (initialCategoryArticles['business'] && initialCategoryArticles['business'].length > 0)
       ? initialCategoryArticles['business']
-      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'business').slice(0, 4)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'business', 'વેપાર', 'બિઝનેસ')).slice(0, 4)
   );
   const [sportsArtDB, setSportsArtDB] = useState<Article[]>(
     (initialCategoryArticles['sports'] && initialCategoryArticles['sports'].length > 0)
       ? initialCategoryArticles['sports']
-      : publishedInitialArticles.filter((a) => getCatSlug(a) === 'sports').slice(0, 7)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત')).slice(0, 7)
   );
   const [dynamicTrendingTopics, setDynamicTrendingTopics] = useState<string[]>(initialHeroSettings?.trendingTopics || initialHeroSettings?.setting?.trendingTopics || []);
   const [marketRates, setMarketRates] = useState<any>(initialMarketRates || {
@@ -1057,14 +1107,14 @@ export default function HeroSection({
           const pool = computeHeroPoolList(sorted, heroRes || initialHeroSettings);
           setTopStories(pool);
           setBottomFeatured(getBottomCards(pool, heroRes || initialHeroSettings));
-          setGujaratArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
-          setCrimeArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
-          setNationalArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16));
-          setWorldArtDB(sorted.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 8));
-          setPoliticsArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16));
-          setFactCheckArtDB(sorted.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10));
-          setBusinessArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
-          setSportsArtDB(sorted.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
+          setGujaratArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'gujarat', 'state', 'ગુજરાત')).slice(0, 16));
+          setCrimeArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'crime', 'ક્રાઇમ')).slice(0, 8));
+          setNationalArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'national', 'india', 'ભારત')).slice(0, 16));
+          setWorldArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ')).slice(0, 10));
+          setPoliticsArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'politics', 'rajkaran', 'રાજકારણ')).slice(0, 16));
+          setFactCheckArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 10));
+          setBusinessArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'business', 'વેપાર', 'બિઝનેસ')).slice(0, 4));
+          setSportsArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત')).slice(0, 7));
         }
       }).catch(() => { });
     };
@@ -1349,13 +1399,7 @@ export default function HeroSection({
     instagram: <InstagramStories key="instagram" initialReels={initialReels} />,
     world: (
       <Fragment key="world-frag">
-        <WorldSection key="world" language={language} initialArticles={(worldArtDB && worldArtDB.length > 0) ? worldArtDB : ((initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => {
-          const c = ((a as any).category?.slug || (a as any).categorySlug || a.category || '').toLowerCase().trim();
-          const n = ((a as any).category?.name || (a as any).categoryName || '').toLowerCase().trim();
-          const gu = ((a as any).category?.nameGu || (a as any).categoryGu || '').toLowerCase().trim();
-          const loc = (a.location || '').toLowerCase().trim();
-          return c === 'world' || c === 'international' || c === 'videsh' || n === 'world' || n === 'international' || gu.includes('વિશ્વ') || gu.includes('વિદેશ') || loc === 'international' || loc === 'world';
-        }))} />
+        <WorldSection key="world" language={language} initialArticles={(worldArtDB && worldArtDB.length > 0) ? worldArtDB : ((initialCategoryArticles['world'] && initialCategoryArticles['world'].length > 0) ? initialCategoryArticles['world'] : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ')))} />
         <AdSectionBanner section="AFTER_WORLD" />
       </Fragment>
     ),
@@ -1579,12 +1623,28 @@ export default function HeroSection({
 
   const [savedIds, setSavedIds] = useState<string[]>([]);
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('gp-saved-articles');
-      if (stored) setSavedIds(JSON.parse(stored));
-    } catch (e) {
-      console.warn(e);
-    }
+    const updateSaved = () => {
+      try {
+        const stored = localStorage.getItem('gp-saved-articles');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed)) {
+            setSavedIds(parsed);
+            return;
+          }
+        }
+        setSavedIds([]);
+      } catch (e) {
+        console.warn(e);
+      }
+    };
+    updateSaved();
+    window.addEventListener('gp-saved-changed', updateSaved);
+    window.addEventListener('storage', updateSaved);
+    return () => {
+      window.removeEventListener('gp-saved-changed', updateSaved);
+      window.removeEventListener('storage', updateSaved);
+    };
   }, []);
   const toggleSave = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -1593,6 +1653,7 @@ export default function HeroSection({
     setSavedIds(next);
     try {
       localStorage.setItem('gp-saved-articles', JSON.stringify(next));
+      window.dispatchEvent(new Event('gp-saved-changed'));
     } catch (err) {
       console.warn(err);
     }

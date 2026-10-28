@@ -16,7 +16,7 @@ import gpLogo from '../../public/Gujarat Post Logo.gif';
 const CATEGORIES = [
   { labelGu: 'હોમ', labelHi: 'होम', labelEn: 'Home', href: '/', icon: Home, isHome: true },
   { labelGu: 'ગુજરાત', labelHi: 'गुजरात', labelEn: 'Gujarat', href: '/category/gujarat', icon: MapPin },
-  { labelGu: 'વીડિયો', labelHi: 'वीडियो', labelEn: 'Videos', href: '/videos', icon: Video },
+  { labelGu: 'વીડિયો', labelHi: 'वीडियो', labelEn: 'Video', href: '/videos', icon: Video },
   { labelGu: 'શૉર્ટ્સ', labelHi: 'शॉर्ट्स', labelEn: 'Shorts', href: '/shorts', icon: Zap },
   { labelGu: 'ક્રાઇમ', labelHi: 'क्राइम', labelEn: 'Crime', href: '/category/crime', icon: AlertTriangle },
   { labelGu: 'રાજકારણ', labelHi: 'राजनीति', labelEn: 'Politics', href: '/category/politics', icon: Landmark },

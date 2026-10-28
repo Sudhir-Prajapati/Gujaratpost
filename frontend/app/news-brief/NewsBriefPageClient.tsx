@@ -385,7 +385,8 @@ export default function NewsBriefPageClient() {
                 alt={title || 'Gujarat Post'}
                 fill
                 sizes="(max-width: 640px) 380px, 456px"
-                className="object-cover relative z-20"
+                className="object-contain relative z-20"
+                style={{ objectFit: 'contain', objectPosition: 'center' }}
                 priority
                 unoptimized
                 onError={() => {

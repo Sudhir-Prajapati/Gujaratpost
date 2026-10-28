@@ -322,14 +322,15 @@ function StreamArticleItem({
 
       <Link
         href={`/news/${streamArticle.slug}`}
-        className="block relative aspect-[16/9] w-full overflow-hidden bg-black rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
+        className="block relative aspect-[16/9] w-full overflow-hidden bg-neutral-950 dark:bg-black rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
       >
         <Image
           src={articleData.image}
           alt={getArticleTitle(articleData, language)}
           fill
           sizes="(max-width: 1024px) 100vw, 760px"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-contain transition-transform duration-500 group-hover:scale-105"
+          style={{ objectFit: 'contain', objectPosition: 'center' }}
         />
       </Link>
 
@@ -447,13 +448,14 @@ function StreamArticleItem({
                   href={`/news/${raArt.slug}`}
                   className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
                 >
-                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-sm">
+                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-sm">
                     <Image
                       src={getCardThumbnail(raArt, index)}
                       alt={getArticleTitle(raArt, language)}
                       fill
                       sizes="90px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                      className="object-contain transition-transform duration-500 group-hover:scale-110"
+                      style={{ objectFit: 'contain', objectPosition: 'center' }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
                       }}
@@ -679,13 +681,14 @@ export default function ArticleInfiniteStream({
                     <AutoArticleTitle article={item} language={language} />
                   </h3>
                 </div>
-                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-xs self-start">
+                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-xs self-start">
                   <Image
                     src={getCardThumbnail(item, index)}
                     alt={item.title || ''}
                     fill
                     sizes="114px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="object-contain transition-transform duration-300 group-hover:scale-105"
+                    style={{ objectFit: 'contain', objectPosition: 'center' }}
                   />
                 </div>
               </Link>

@@ -12,9 +12,8 @@ export function cleanTextForSpeech(htmlOrText: string): string {
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
-    // Remove (KEY HIGHLIGHTS) / એક નજરમાં headers
-    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, ' ')
-    .replace(/(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE)/gi, ' ')
+    // Remove markdown utility lines like "## KEY HIGHLIGHTS"
+    .replace(/^#{1,6}\s*📌?.*(KEY HIGHLIGHTS|AT A GLANCE).*$/gmi, ' ')
     // Replace block tags with period/newline to maintain sentence rhythm
     .replace(/<\/(p|div|h[1-6]|li|blockquote|tr)>/gi, '. ')
     .replace(/<br\s*\/?>/gi, '. ')
@@ -199,21 +198,32 @@ export function getBestVoice(lang: Language): SpeechSynthesisVoice | null {
   return null;
 }
 
+export interface SpeechItem {
+  text: string;
+  elemIndex: number;
+}
+
 export interface PlayArticleOptions {
   title: string;
-  body?: string;
+  subheading?: string;
   excerpt?: string;
+  highlights?: string[];
+  body?: string;
+  items?: SpeechItem[];
   language: Language;
   onStart?: () => void;
-  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number) => void;
+  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number, elemIndex?: number, rawChunkText?: string) => void;
   onEnd?: () => void;
   onError?: (err?: any) => void;
 }
 
 export function playArticleAudio({
   title,
-  body,
+  subheading,
   excerpt,
+  highlights,
+  body,
+  items,
   language,
   onStart,
   onChunkChange,
@@ -226,61 +236,81 @@ export function playArticleAudio({
 
   // Immediately kick off asynchronous text preparation & language alignment
   (async () => {
-    // 1. Prepare full speech text: Heading (title) + Full Description (body / excerpt)
-    const cleanTitle = cleanTextForSpeech(title);
-    let cleanBody = cleanTextForSpeech(body || excerpt || '');
+interface ChunkEntry {
+      chunkText: string;
+      elemIndex: number;
+    }
 
-    // Deduplicate: If body begins with the title (or title begins with the first sentence of body),
-    // remove the duplicated sentence from body so it doesn't get spoken twice!
-    if (cleanTitle && cleanBody) {
-      const normTitle = cleanTitle.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
-      const firstSentenceMatch = cleanBody.match(/^([^.?!।\n]+)/);
-      if (firstSentenceMatch) {
-        const firstSentenceNorm = firstSentenceMatch[1].toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
-        if (
-          firstSentenceNorm === normTitle ||
-          (normTitle.length > 10 && (firstSentenceNorm.startsWith(normTitle) || normTitle.startsWith(firstSentenceNorm)))
-        ) {
-          cleanBody = cleanBody.slice(firstSentenceMatch[0].length).replace(/^[.,?!।\s]+/, '').trim();
+    const chunkEntries: ChunkEntry[] = [];
+
+    if (items && Array.isArray(items) && items.length > 0) {
+      // Direct element-by-element chunking with 100% accurate element index tracking!
+      for (const item of items) {
+        const clean = cleanTextForSpeech(item.text);
+        if (!clean || clean.length < 2) continue;
+        const subChunks = chunkTextIntoSentences(clean);
+        for (const sc of subChunks) {
+          if (sc && sc.trim().length > 1) {
+            chunkEntries.push({ chunkText: sc.trim(), elemIndex: item.elemIndex });
+          }
+        }
+      }
+    } else {
+      const cleanTitle = cleanTextForSpeech(title);
+      let cleanSubheading = cleanTextForSpeech(subheading || excerpt || '');
+      let cleanBody = cleanTextForSpeech(body || '');
+
+      const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
+      const normTitle = norm(cleanTitle);
+
+      if (cleanSubheading && normTitle) {
+        const normSub = norm(cleanSubheading);
+        if (normSub === normTitle) {
+          cleanSubheading = '';
+        } else if (normSub.startsWith(normTitle)) {
+          cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
+        }
+      }
+
+      let curElemIdx = 0;
+      if (cleanTitle) {
+        const tChunks = chunkTextIntoSentences(cleanTitle);
+        tChunks.forEach((c) => chunkEntries.push({ chunkText: c, elemIndex: 0 }));
+        curElemIdx++;
+      }
+      if (cleanSubheading) {
+        const sChunks = chunkTextIntoSentences(cleanSubheading);
+        sChunks.forEach((c) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+        curElemIdx++;
+      }
+      if (highlights && Array.isArray(highlights) && highlights.length > 0) {
+        highlights.forEach((h) => {
+          const ch = cleanTextForSpeech(h);
+          if (ch && ch.length > 2) {
+            const hChunks = chunkTextIntoSentences(ch);
+            hChunks.forEach((c) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+            curElemIdx++;
+          }
+        });
+      }
+      if (cleanBody) {
+        const bodyParas = cleanBody.split(/(?:\r?\n\s*){2,}|(?:\.\s*\n)/).map(p => p.trim()).filter(Boolean);
+        for (const bp of (bodyParas.length > 0 ? bodyParas : [cleanBody])) {
+          const bChunks = chunkTextIntoSentences(bp);
+          bChunks.forEach((c: string) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+          curElemIdx++;
         }
       }
     }
 
-    // Combine title and body: title first, then body
-    let combinedText = cleanTitle ? (cleanBody ? `${cleanTitle}. ${cleanBody}` : cleanTitle) : cleanBody;
-    if (!combinedText) {
-      if (playId === currentPlayId && onError) onError(new Error('No text to read'));
-      return;
-    }
-
-    // 2. Real-time language check:
-    // If the text passed is NOT yet in the requested language (e.g. user switched language in header without reload),
-    // automatically translate the clean speech text to the target language on the fly in ~100-200ms!
-    if (!isAlreadyTargetLanguage(combinedText, language)) {
-      try {
-        const translated = await translateOnFly(combinedText, language);
-        if (playId !== currentPlayId) return; // user cancelled/switched again
-        if (translated && translated.trim()) {
-          combinedText = translated;
-        }
-      } catch (err) {
-        console.warn('[TTS translateOnFly error]:', err);
-      }
-    }
-
-    if (playId !== currentPlayId) return;
-
-    // 3. Break into natural sentence chunks (approx 60-140 chars)
-    const chunks = chunkTextIntoSentences(combinedText);
-    if (chunks.length === 0) {
+    if (chunkEntries.length === 0) {
       if (playId === currentPlayId && onError) onError(new Error('No readable sentences found'));
       return;
     }
 
     if (onStart) onStart();
 
-    // 4. Play via high-quality Google TTS Audio stream (/api/tts)
-    // HTML5 audio stops instantly when paused and works identically across all devices
+    // 3. Play via high-quality Google TTS Audio stream (/api/tts)
     if (!activeAudio && typeof window !== 'undefined') {
       activeAudio = new Audio();
     }
@@ -289,27 +319,44 @@ export function playArticleAudio({
 
     let chunkIndex = 0;
 
-    const playNextAudioChunk = () => {
+    const playNextAudioChunk = async () => {
       if (playId !== currentPlayId) return;
 
-      if (chunkIndex >= chunks.length) {
-        if (onChunkChange) onChunkChange(-1, '', chunks.length);
+      if (chunkIndex >= chunkEntries.length) {
+        if (onChunkChange) onChunkChange(-1, '', chunkEntries.length, -1);
         if (onEnd) onEnd();
         return;
       }
 
       const currentIndex = chunkIndex;
-      const chunkText = chunks[chunkIndex++];
+      const currentEntry = chunkEntries[chunkIndex++];
+      const rawChunk = currentEntry.chunkText;
+      const elemIndex = currentEntry.elemIndex;
+      let chunkText = rawChunk;
+
+      // Real-time language check: if chunk text does not match target language, translate this chunk in ~20ms
+      // Universal check works across EN -> HI, EN -> GU, GU -> HI, HI -> GU, etc.
+      if (!isAlreadyTargetLanguage(chunkText, language)) {
+        try {
+          const tr = await translateOnFly(chunkText, language);
+          if (playId !== currentPlayId) return;
+          if (tr && tr.trim()) chunkText = tr.trim();
+        } catch {}
+      }
+
+      if (playId !== currentPlayId) return;
+
       const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
 
-      // Broadcast active sentence to highlight in RED
+      // Broadcast active sentence and exact element index to highlight in RED
       if (onChunkChange) {
-        onChunkChange(currentIndex, chunkText, chunks.length);
+        onChunkChange(currentIndex, chunkText, chunkEntries.length, elemIndex, rawChunk);
       }
 
       // Preload next chunk
-      if (chunkIndex < chunks.length) {
-        const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunks[chunkIndex])}`;
+      if (chunkIndex < chunkEntries.length) {
+        const nextChunk = chunkEntries[chunkIndex].chunkText;
+        const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(nextChunk)}`;
         const preloader = new Audio();
         preloader.preload = 'auto';
         preloader.src = nextUrl;
@@ -334,10 +381,10 @@ export function playArticleAudio({
         if (err.name !== 'AbortError') {
           console.warn('[Audio Play Error]:', err);
         }
-        if (playId === currentPlayId && chunkIndex < chunks.length) {
+        if (playId === currentPlayId && chunkIndex < chunkEntries.length) {
           playNextAudioChunk();
         } else if (playId === currentPlayId && onEnd) {
-          if (onChunkChange) onChunkChange(-1, '', chunks.length);
+          if (onChunkChange) onChunkChange(-1, '', chunkEntries.length, -1);
           onEnd();
         }
       });

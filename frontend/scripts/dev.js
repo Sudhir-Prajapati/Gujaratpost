@@ -18,7 +18,15 @@ try {
   nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
 }
 
-const devArgs = ['dev'];
+// Safely clear any leftover production build artifacts to prevent ENOENT manifest mismatch in dev mode
+const buildIdFile = path.join(realCwd, '.next', 'BUILD_ID');
+try {
+  if (fs.existsSync(buildIdFile)) {
+    fs.rmSync(path.join(realCwd, '.next'), { recursive: true, force: true, maxRetries: 3 });
+  }
+} catch (_) {}
+
+const devArgs = ['dev', '--webpack'];
 if (process.env.PORT && !process.argv.includes('-p') && !process.argv.includes('--port')) {
   devArgs.push('-p', process.env.PORT);
 }

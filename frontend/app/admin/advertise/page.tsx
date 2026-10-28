@@ -8,12 +8,9 @@ import {
   ExternalLink,
   CheckCircle,
   AlertCircle,
-  Phone,
   Mail,
-  MapPin,
   Globe,
   Sparkles,
-  Link as LinkIcon,
   ShieldCheck,
 } from 'lucide-react';
 import { getAdminAdvertise, updateAdminAdvertise } from '@/lib/api';
@@ -30,11 +27,11 @@ export default function AdminAdvertisePage() {
   const [formData, setFormData] = useState({
     pageTitle: 'Advertise With Us',
     description: DEFAULT_DESCRIPTION,
-    officeAddress: 'Gujarat Post Bhavan, S.G. Highway, Prahlad Nagar, Vastrapur, Ahmedabad, Gujarat 380015',
-    locationUrl: 'https://maps.google.com/?q=Gujarat+Post+Bhavan+Ahmedabad',
-    contactPhone: '079 4000 4000 / +91 99099 07237',
+    officeAddress: '',
+    locationUrl: '',
+    contactPhone: '',
     onlineAdsEmail: 'digital.advertising@gujaratpost.in',
-    printAdsEmail: 'advt@gujaratpost.in & epaper@gujaratpost.in',
+    printAdsEmail: '',
     websiteUrl: 'https://gujaratpost.in/',
   });
 
@@ -50,11 +47,11 @@ export default function AdminAdvertisePage() {
         setFormData({
           pageTitle: data.pageTitle || 'Advertise With Us',
           description: data.description || DEFAULT_DESCRIPTION,
-          officeAddress: data.officeAddress || '',
-          locationUrl: data.locationUrl || '',
-          contactPhone: data.contactPhone || '',
-          onlineAdsEmail: data.onlineAdsEmail || '',
-          printAdsEmail: data.printAdsEmail || '',
+          officeAddress: '',
+          locationUrl: '',
+          contactPhone: '',
+          onlineAdsEmail: data.onlineAdsEmail || 'digital.advertising@gujaratpost.in',
+          printAdsEmail: '',
           websiteUrl: data.websiteUrl || 'https://gujaratpost.in/',
         });
       }
@@ -200,84 +197,16 @@ export default function AdminAdvertisePage() {
           </div>
         </div>
 
-        {/* Section 2: Address & Location Link */}
+        {/* Section 2: Advertising Email & Website */}
         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
           <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <MapPin className="w-4 h-4 text-red-600" />
+            <Mail className="w-4 h-4 text-red-600" />
             <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-              2. Address & Location
-            </h2>
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5">
-              Office Address
-            </label>
-            <textarea
-              rows={2}
-              value={formData.officeAddress}
-              onChange={(e) => setFormData({ ...formData, officeAddress: e.target.value })}
-              placeholder="Gujarat Post Bhavan, S.G. Highway, Prahlad Nagar, Vastrapur, Ahmedabad, Gujarat 380015"
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
-              <LinkIcon className="w-3.5 h-3.5 text-red-600" />
-              <span>Location (Google Maps Link)</span>
-            </label>
-            <input
-              type="text"
-              value={formData.locationUrl}
-              onChange={(e) => setFormData({ ...formData, locationUrl: e.target.value })}
-              placeholder="https://maps.google.com/?q=..."
-              className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:outline-none font-mono text-xs"
-            />
-            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
-              Links directly from the &ldquo;Location ↗&rdquo; link on the public page.
-            </p>
-          </div>
-        </div>
-
-        {/* Section 3: Contact Number, Advertising Emails & Website */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-xs space-y-4">
-          <div className="flex items-center gap-2 border-b border-gray-100 dark:border-gray-700 pb-3">
-            <Phone className="w-4 h-4 text-red-600" />
-            <h2 className="text-sm sm:text-base font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-              3. Contact, Advertising Emails & Website
+              2. Advertising Email & Website
             </h2>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
-                <Phone className="w-3.5 h-3.5 text-red-600" />
-                <span>Contact no</span>
-              </label>
-              <input
-                type="text"
-                value={formData.contactPhone}
-                onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                placeholder="079 4000 4000 / +91 99099 07237"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:outline-none font-medium"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-red-600" />
-                <span>Website</span>
-              </label>
-              <input
-                type="text"
-                value={formData.websiteUrl}
-                onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
-                placeholder="https://gujaratpost.in/"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
-              />
-            </div>
-
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
                 <Mail className="w-3.5 h-3.5 text-red-600" />
@@ -294,15 +223,15 @@ export default function AdminAdvertisePage() {
 
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-gray-700 dark:text-gray-300 mb-1.5 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-amber-600" />
-                <span>Print Advertising (Email)</span>
+                <Globe className="w-3.5 h-3.5 text-red-600" />
+                <span>Website</span>
               </label>
               <input
                 type="text"
-                value={formData.printAdsEmail}
-                onChange={(e) => setFormData({ ...formData, printAdsEmail: e.target.value })}
-                placeholder="advt@gujaratpost.in & epaper@gujaratpost.in"
-                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:outline-none font-medium"
+                value={formData.websiteUrl}
+                onChange={(e) => setFormData({ ...formData, websiteUrl: e.target.value })}
+                placeholder="https://gujaratpost.in/"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-red-500 focus:outline-none"
               />
             </div>
           </div>

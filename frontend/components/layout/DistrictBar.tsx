@@ -223,13 +223,21 @@ export default function DistrictBar({
   const getNavLabel = (link: { label: string; labelGu?: string; labelHi?: string; href: string }) => {
     if (language === 'hi') return link.labelHi || link.label;
     if (language === 'gu') return link.labelGu || link.label;
+    if (link.label === 'Videos') return 'Video';
     return link.label;
   };
 
   // Video Link
   const videoLink = useMemo(() => {
-    return navLinks.find((l) => l.href === '/videos') || {
-      label: 'Videos',
+    const found = navLinks.find((l) => l.href === '/videos');
+    if (found) {
+      return {
+        ...found,
+        label: found.label === 'Videos' ? 'Video' : found.label,
+      };
+    }
+    return {
+      label: 'Video',
       labelGu: 'વીડિયો',
       labelHi: 'वीडियो',
       href: '/videos',

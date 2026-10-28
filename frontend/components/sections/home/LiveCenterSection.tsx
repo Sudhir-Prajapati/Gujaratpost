@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { Radio, Fuel, TrendingUp, TrendingDown, Trophy, Wind, ChevronDown, Shield, Megaphone } from 'lucide-react';
 import type { Language } from '@/types';
 import { getLiveCenterData } from '@/lib/api';
@@ -263,7 +262,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
   const activeFuel = fuelPrices[fuelCity] || fuelPrices.Ahmedabad || FUEL_PRICE_CITY_MAP.Ahmedabad;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2.5 mb-5 relative">
+    <div className="mx-auto max-w-screen-xl px-4 mt-2.5 mb-2 sm:mb-2.5 relative">
       {/* Blurred Red Ambient Glow Orbs in Background */}
       <div className="absolute -top-6 left-10 w-96 h-96 bg-[#B3121B]/15 rounded-full blur-[100px] pointer-events-none" />
       <div className="absolute -bottom-6 right-10 w-[420px] h-[420px] bg-red-600/12 rounded-full blur-[120px] pointer-events-none" />
@@ -492,40 +491,29 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         </div>
 
         {/* ── Bottom Live Highlights Ticker Bar ───────────────────── */}
-        <div className="mt-4 pt-3 border-t-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 flex flex-wrap md:flex-nowrap items-center justify-between gap-4 select-none">
+        <div className="mt-4 pt-3 border-t-2 border-[#B3121B]/20 dark:border-[#B3121B]/15 flex items-center gap-3 sm:gap-4 select-none w-full">
           <div className="flex items-center gap-2 shrink-0">
-            <span className="bg-[#B3121B] text-white text-[14.5px] sm:text-[12px] font-black px-4 sm:px-3.5 py-2 sm:py-1.5 rounded-lg flex items-center gap-2 sm:gap-1.5 shadow-xs hover:scale-105 transition-transform duration-200 cursor-default">
-              <Megaphone className="h-4.5 w-4.5 sm:h-4 sm:w-4 animate-bounce" />
+            <span className="bg-[#B3121B] text-white text-[13px] sm:text-[12px] font-black px-3.5 py-1.5 rounded-lg flex items-center gap-2 shadow-xs cursor-default shrink-0">
+              <Megaphone className="h-4 w-4 animate-bounce" />
               Live Highlights
             </span>
           </div>
 
-          <div className="flex items-center gap-4 text-[14.5px] sm:text-[12px] font-extrabold text-slate-700 dark:text-slate-300 overflow-x-auto scrollbar-hide py-1.5 sm:py-1">
-            <span>{stocks[0].name} ₹{stocks[0].value.toLocaleString('en-IN')} <span className={`font-black ${stocks[0].change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{stocks[0].change >= 0 ? '▲' : '▼'} {stocks[0].change}</span></span>
+          <div className="flex-1 flex items-center justify-between gap-3 text-[13.5px] sm:text-[12.5px] font-extrabold text-slate-700 dark:text-slate-300 overflow-x-auto scrollbar-hide py-1">
+            <span className="whitespace-nowrap">{stocks[0].name} ₹{stocks[0].value.toLocaleString('en-IN')} <span className={`font-black ${stocks[0].change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{stocks[0].change >= 0 ? '▲' : '▼'} {stocks[0].change}</span></span>
             <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>{stocks[1].name} ₹{stocks[1].value.toLocaleString('en-IN')} <span className={`font-black ${stocks[1].change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{stocks[1].change >= 0 ? '▲' : '▼'} {stocks[1].change}</span></span>
+            <span className="whitespace-nowrap">{stocks[1].name} ₹{stocks[1].value.toLocaleString('en-IN')} <span className={`font-black ${stocks[1].change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{stocks[1].change >= 0 ? '▲' : '▼'} {stocks[1].change}</span></span>
             <span className="text-slate-300 dark:text-slate-700">|</span>
-            <span>{stocks[2].name} ₹{stocks[2].value.toLocaleString('en-IN')} <span className={`font-black ${stocks[2].change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{stocks[2].change >= 0 ? '▲' : '▼'} {stocks[2].change}</span></span>
+            <span className="whitespace-nowrap">{stocks[2].name} ₹{stocks[2].value.toLocaleString('en-IN')} <span className={`font-black ${stocks[2].change >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>{stocks[2].change >= 0 ? '▲' : '▼'} {stocks[2].change}</span></span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span>Petrol ₹{activeFuel.petrol} /L</span>
+            <span className="whitespace-nowrap">Petrol ₹{activeFuel.petrol} /L</span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span>USD ₹{usdRate.rate} <span className="text-red-600 font-black">▼ {usdRate.change}</span></span>
+            <span className="whitespace-nowrap">Diesel ₹{activeFuel.diesel} /L</span>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="whitespace-nowrap">USD ₹{usdRate.rate} <span className="text-red-600 font-black">▼ {usdRate.change}</span></span>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <span className="whitespace-nowrap">Gold 24K ₹78,450 /10g</span>
           </div>
-
-          <Link
-            href="/live-updates"
-            className="group/link relative overflow-hidden shrink-0 border-2 border-red-300 dark:border-red-800/80 bg-white dark:bg-slate-900 text-[#B3121B] dark:text-red-400 hover:text-white dark:hover:text-white font-black text-[15.5px] sm:text-[14px] md:text-[15px] rounded-xl px-5 sm:px-4.5 py-2 sm:py-1.5 flex items-center gap-2 sm:gap-1.5 transition-all duration-300 hover:border-[#B3121B] hover:shadow-[0_8px_20px_-3px_rgba(179,18,27,0.45)] hover:-translate-y-0.5 active:scale-95 select-none"
-          >
-            {/* Sliding vibrant crimson background fill on hover */}
-            <span className="absolute inset-0 bg-gradient-to-r from-[#C21E26] via-[#B3121B] to-[#8C0B12] transition-transform duration-300 ease-out -translate-x-full group-hover/link:translate-x-0" />
-
-            {/* Sweep light shimmer flare */}
-            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/30 to-transparent transition-transform duration-700 ease-out group-hover/link:translate-x-full" />
-
-            {/* Content with smooth text color and arrow slide */}
-            <span className="relative z-10 transition-colors duration-200">View More Updates</span>
-            <span className="relative z-10 font-bold text-lg sm:text-base transition-transform duration-300 ease-out group-hover/link:translate-x-1.5">→</span>
-          </Link>
         </div>
 
       </div>

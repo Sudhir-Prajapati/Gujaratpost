@@ -127,7 +127,8 @@ export const CATEGORY_META: Record<string, { name: string; gu: string; hi: strin
   vadodara: { name: 'Vadodara', gu: 'વડોદરા', hi: 'वडोदरा' },
   'other-cities': { name: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' },
   otherCities: { name: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' },
-  videos: { name: 'Videos', gu: 'વીડિયો', hi: 'वीडियो' },
+  videos: { name: 'Video', gu: 'વીડિયો', hi: 'वीडियो' },
+  video: { name: 'Video', gu: 'વીડિયો', hi: 'वीडियो' },
   shorts: { name: 'Shorts', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स' },
   podcasts: { name: 'Podcasts', gu: 'પોડકાસ્ટ', hi: 'पॉडकास्ट' },
   varsad: { name: 'Rainfall', gu: 'વરસાદ', hi: 'वर्षा' },
@@ -709,7 +710,7 @@ export const categorySlugMapping: Record<string, string> = {
 
 export const NAV_ITEMS: NavItem[] = [
   ['Home', 'મુખ્ય', 'મુખ્ય', '/'],
-  ['Videos', 'વીડિયો', 'વીડિયો', '/videos'],
+  ['Video', 'વીડિયો', 'વીડિયો', '/videos'],
   ['Gujarat', 'ગુજરાત', 'ગુજરાત', '/category/gujarat'],
   ['India', 'ભારત', 'ભારત', '/category/national'],
   ['World', 'વિશ્વ', 'વિશ્વ', '/category/world'],

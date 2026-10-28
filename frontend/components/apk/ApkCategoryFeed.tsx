@@ -211,13 +211,14 @@ export default function ApkCategoryFeed({
             className="group block bg-white dark:bg-[#18181b] rounded-2xl overflow-hidden border border-gray-400/90 dark:border-gray-800 shadow-xs hover:shadow-md transition active:scale-[0.99]"
           >
             {/* Hero Image */}
-            <div className="relative aspect-[16/9] w-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+            <div className="relative aspect-[16/9] w-full bg-neutral-950 dark:bg-black overflow-hidden">
               <Image
                 src={heroArticle.image || (heroArticle as any).featuredImage || '/logo.png'}
                 alt={heroArticle.titleGu || heroArticle.title}
                 fill
                 priority
-                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                className="object-contain transition-transform duration-500 group-hover:scale-105"
+                style={{ objectFit: 'contain', objectPosition: 'center' }}
                 sizes="(max-width: 640px) 100vw, 450px"
               />
               <span className="absolute top-2.5 left-2.5 bg-[#B3121B] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wide">
@@ -301,12 +302,13 @@ export default function ApkCategoryFeed({
               </div>
 
               {/* Right: Crisp Rounded Thumbnail */}
-              <div className="relative w-24 h-20 shrink-0 rounded-xl overflow-hidden bg-slate-100 dark:bg-slate-800 shadow-2xs">
+              <div className="relative w-24 h-20 shrink-0 rounded-xl overflow-hidden bg-neutral-950 dark:bg-black shadow-2xs">
                 <Image
                   src={art.image || (art as any).featuredImage || '/logo.png'}
                   alt={art.titleGu || art.title}
                   fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="object-contain group-hover:scale-105 transition-transform duration-300"
+                  style={{ objectFit: 'contain', objectPosition: 'center' }}
                   sizes="96px"
                 />
               </div>

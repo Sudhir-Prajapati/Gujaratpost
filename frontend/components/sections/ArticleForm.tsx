@@ -33,8 +33,11 @@ interface AuthorData {
   name: string;
 }
 
-// Ordered City / Location options: 1. National, 2. Gujarat State, 3. All Gujarat Cities, 4. Other States & Metros, 5. International
+// Ordered City / Location options: 0. None / Not Selected, 1. National, 2. Gujarat State, 3. All Gujarat Cities, 4. Other States & Metros, 5. International
 const LOCATION_OPTIONS = [
+  // 0. None / Not Selected
+  { value: '', label: 'None / Not Selected (કોઈ નહીં)', sublabel: 'સામાન્ય / કોઈ ચોક્કસ શહેર નહીં' },
+
   // 1. National
   { value: 'National', label: 'National', sublabel: 'દેશ' },
 
@@ -1048,16 +1051,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           const rawCats: any[] = catJson.data?.categories || catJson.data || [];
           const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c));
           setCategories(filtered);
-
-          if (!isEditMode) {
-            setCategoryId((prev) => {
-              if (prev) return prev;
-              const activeCats = filtered.filter((c) => c.isActive !== false && (c as any).status !== 'inactive');
-              const guj = activeCats.find(isGujaratCat);
-              return guj ? guj.id : (activeCats[0]?.id || '');
-            });
-            setLocation((prev) => prev || 'Gujarat');
-          }
+          // Do not auto-select Gujarat or any category by default. Admin must choose explicitly.
+          // Do not auto-set location to Gujarat by default.
         }
         if (autRes.ok) setAuthors(autJson.data?.authors || autJson.data || []);
 
@@ -1642,17 +1637,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .map((t: any) => (t.tag?.name || t.name || '').trim())
             .filter((name: string) => name.length > 0);
           setTagsString(names.join(', '));
-
-          if (loadedAddCats.length === 0) {
-            // Match tag names to category IDs for additional categories selection
-            loadedAddCats = categories
-              .filter((c) => names.some((n: string) => n.toLowerCase() === c.name.toLowerCase()))
-              .map((c) => c.id)
-              .filter((id) => id !== primaryCatId);
-          }
         } else {
           setTagsString('');
         }
+        // Only set additional categories explicitly saved on the article (no auto-matching from tag names)
         setAdditionalCategoryIds(Array.from(new Set(loadedAddCats)));
       } catch (err: any) {
         console.error('Error loading article in edit mode:', err);
@@ -2225,42 +2213,17 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const handleCategorySelect = (val: string) => {
     setCategoryId(val);
     setAdditionalCategoryIds((prev) => prev.filter((id) => id !== val));
-    const selectedCat = categories.find((c) => c.id === val);
-    let resolvedLoc = location;
-    if (selectedCat) {
-      const catNameLower = selectedCat.name.trim().toLowerCase();
-
-      // Auto-set location based on category type
-      if (INTERNATIONAL_CATEGORY_NAMES.some((n) => catNameLower.includes(n))) {
-        resolvedLoc = 'International';
-        setLocation('International');
-      } else if (NATIONAL_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
-        resolvedLoc = 'National';
-        setLocation('National');
-      } else if (GUJARAT_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
-        // Try to match exact city, else default to Gujarat
-        const cityMatch = LOCATION_OPTIONS.find(
-          (loc) => loc.value.toLowerCase() === catNameLower || catNameLower.includes(loc.value.toLowerCase())
-        );
-        resolvedLoc = cityMatch ? cityMatch.value : 'Gujarat';
-        setLocation(resolvedLoc);
-      } else {
-        // No match — try direct match across all options
-        const directMatch = LOCATION_OPTIONS.find(
-          (loc) => loc.value.toLowerCase() === catNameLower || loc.label.toLowerCase() === catNameLower
-        );
-        if (directMatch) {
-          resolvedLoc = directMatch.value;
-          setLocation(directMatch.value);
-        }
-      }
-    }
     const currentTitle = title || titleGu || titleHi;
-    generateSeoWithGeminiAI(currentTitle, val, resolvedLoc, true);
+    generateSeoWithGeminiAI(currentTitle, val, location, true);
   };
 
-  // Combine base LOCATION_OPTIONS and custom user-created locations
+  // Combine base LOCATION_OPTIONS and custom user-created locations with None option at top
   const allLocationOptions = useMemo(() => {
+    const noneOption: SelectOption = {
+      value: '',
+      label: 'None / Not Selected (કોઈ નહીં)',
+      sublabel: 'સામાન્ય / કોઈ ચોક્કસ શહેર નહીં',
+    };
     const standardSet = new Set(LOCATION_OPTIONS.map((o) => o.value.toLowerCase()));
     const validCustom = customLocations.filter((c) => !standardSet.has(c.value.toLowerCase()));
 
@@ -2277,8 +2240,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       });
     }
 
-    if (validCustom.length === 0) return LOCATION_OPTIONS;
-    return [...LOCATION_OPTIONS, ...validCustom];
+    const restStandard = LOCATION_OPTIONS.filter((o) => o.value !== '');
+    return [noneOption, ...restStandard, ...validCustom];
   }, [customLocations, location]);
 
   // Create, persist, and select a custom city / location
@@ -2412,6 +2375,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   }, [categoryId, additionalCategoryIds]);
 
   const selectedCount = selectedCatIds.length;
+  const totalSelectedCount = selectedCount + (isFeatured ? 1 : 0) + (isBreaking ? 1 : 0) + (isTrending ? 1 : 0);
 
   if (fetching) {
     return (
@@ -2453,8 +2417,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => router.push('/admin/articles')}
-            className="rounded-lg border border-gray-400 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-950/40"
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/admin/articles');
+              }
+            }}
+            className="rounded-lg border border-gray-400 p-2 hover:bg-zinc-50 dark:border-zinc-700 dark:hover:bg-zinc-950/40 cursor-pointer"
+            title="Back to Articles"
           >
             <ArrowLeft className="h-4 w-4" />
           </button>
@@ -2709,16 +2680,30 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
               <div className="flex items-center gap-1.5 shrink-0">
                 {(() => {
                   const selectedCat = categories.find((c) => c.id === categoryId);
-                  const catNameLower = selectedCat?.name?.trim().toLowerCase() || '';
-                  if (INTERNATIONAL_CATEGORY_NAMES.some((n) => catNameLower.includes(n))) {
+                  const catSlugOrName = (selectedCat?.slug || selectedCat?.name || '').trim().toLowerCase();
+                  if (['world', 'international', 'global'].includes(catSlugOrName)) {
                     return <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800 shrink-0">🌍 International</span>;
-                  } else if (NATIONAL_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
+                  } else if (['national', 'india', 'bharat'].includes(catSlugOrName)) {
                     return <span className="text-[10px] text-orange-600 dark:text-orange-400 font-semibold bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full border border-orange-200 dark:border-orange-800 shrink-0">🇮🇳 National</span>;
-                  } else if (GUJARAT_CATEGORY_NAMES.some((n) => catNameLower.includes(n) || catNameLower === n)) {
+                  } else if (catSlugOrName === 'gujarat') {
                     return <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800 shrink-0">🏙️ Gujarat</span>;
                   }
                   return null;
                 })()}
+                {location && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLocation('');
+                      const currentTitle = title || titleGu || titleHi;
+                      autoGenerateSeoDetails(currentTitle, categoryId, '', false);
+                    }}
+                    className="text-[10px] text-zinc-400 hover:text-red-500 font-semibold transition-colors cursor-pointer ml-1"
+                    title="Clear location"
+                  >
+                    ✕ Clear
+                  </button>
+                )}
               </div>
             </div>
             <CustomSelect
@@ -2870,14 +2855,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     (સમાચાર વિભાગો અને શ્રેણીઓ)
                   </span>
                   <span className="text-red-500 font-bold">*</span>
-                  {selectedCount === 0 ? (
+                  {totalSelectedCount === 0 ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 ring-1 ring-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800">
                       <AlertCircle className="h-3 w-3" /> Select at least 1 section
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-black text-white shadow-xs">
                       <Check className="h-3.5 w-3.5" />
-                      {selectedCount} {selectedCount === 1 ? 'Section' : 'Sections'} Selected
+                      {totalSelectedCount} {totalSelectedCount === 1 ? 'Section' : 'Sections'} Selected
                     </span>
                   )}
                 </div>
@@ -2916,7 +2901,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           </div>
 
           {/* 2. Active Selections Quick Tray (Visible whenever at least 1 category is checked) */}
-          {selectedCount > 0 && (
+          {totalSelectedCount > 0 && (
             <div className="bg-emerald-50/40 dark:bg-emerald-950/15 border-b border-zinc-100 dark:border-zinc-800/80 px-5 py-3">
               <div className="flex items-center gap-2 flex-wrap text-xs">
                 <span className="font-bold text-zinc-600 dark:text-zinc-400 shrink-0 flex items-center gap-1">
@@ -2965,6 +2950,63 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     </span>
                   );
                 })}
+
+                {/* Home / Hero Grid Chip */}
+                {isFeatured && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 text-white font-bold px-2.5 py-1 shadow-2xs text-xs"
+                    title="Promoted to Home / News (Main Hero Grid)"
+                  >
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1 rounded">⭐ Home / News</span>
+                    <span>Main Hero Grid</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsFeatured(false)}
+                      className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20"
+                      title="Remove from Home / News (Main Hero Grid)"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+
+                {/* Breaking News Chip */}
+                {isBreaking && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 text-white font-bold px-2.5 py-1 shadow-2xs text-xs"
+                    title="Promoted to Breaking News Ticker"
+                  >
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1 rounded">⚡ Flash</span>
+                    <span>Breaking News</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsBreaking(false)}
+                      className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20"
+                      title="Remove Breaking News promotion"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+
+                {/* Trending Story Chip */}
+                {isTrending && (
+                  <span
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 text-white font-bold px-2.5 py-1 shadow-2xs text-xs"
+                    title="Promoted to Trending Sidebar & List"
+                  >
+                    <span className="text-[10px] uppercase font-black tracking-wider bg-white/20 px-1 rounded">🔥 Trending</span>
+                    <span>Trending Story</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsTrending(false)}
+                      className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20"
+                      title="Remove Trending Story promotion"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -3277,11 +3319,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                             Gujarat & State Cities / Districts (ગુજરાત અને શહેરો / જિલ્લાઓ)
                           </span>
                           <span className="text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-full">
-                            {gujaratList.length}
+                            {gujaratList.length + 1}
                           </span>
-                          {gujaratList.some(isSelected) && (
+                          {(gujaratList.some(isSelected) || isFeatured) && (
                             <span className="text-[10px] font-bold bg-emerald-600 text-white px-1.5 py-0.2 rounded-full">
-                              ✓ {gujaratList.filter(isSelected).length} selected
+                              ✓ {gujaratList.filter(isSelected).length + (isFeatured ? 1 : 0)} selected
                             </span>
                           )}
                         </div>
@@ -3292,6 +3334,76 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                       {!collapsedSections.gujarat && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                          {/* 0. HOME / NEWS / MAIN HERO GRID CARD (Show in Home / News) */}
+                          {(() => {
+                            const q = categorySearch.trim().toLowerCase();
+                            const matchesHome = !q || 'home'.includes(q) || 'news'.includes(q) || 'hero'.includes(q) || 'મુખ્ય'.includes(q) || 'હોમ'.includes(q) || 'સમાચાર'.includes(q) || 'featured'.includes(q);
+                            const matchesTab = categoryFilterTab === 'all' || categoryFilterTab === 'gujarat' || (categoryFilterTab === 'selected' && isFeatured);
+
+                            if (!matchesHome || !matchesTab) return null;
+
+                            return (
+                              <div
+                                key="__home_hero_card__"
+                                onClick={() => setIsFeatured(!isFeatured)}
+                                className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                                  isFeatured
+                                    ? 'border-amber-500 bg-amber-50/80 text-amber-950 dark:border-amber-500 dark:bg-amber-950/40 dark:text-amber-100 shadow-xs ring-1 ring-amber-500/30'
+                                    : 'border-zinc-200 bg-white text-zinc-900 hover:border-amber-400 hover:bg-amber-50/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-amber-700/60 shadow-2xs'
+                                }`}
+                              >
+                                {/* Custom Styled Check Indicator */}
+                                <div className="pt-0.5 shrink-0">
+                                  <div
+                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
+                                      isFeatured
+                                        ? 'bg-amber-500 text-white shadow-2xs'
+                                        : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-amber-500'
+                                    }`}
+                                  >
+                                    {isFeatured && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                                  </div>
+                                </div>
+
+                                {/* Category Name & Badges */}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex min-w-0 items-start justify-between gap-1.5">
+                                    <span
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
+                                        isFeatured
+                                          ? 'text-amber-900 dark:text-amber-200'
+                                          : 'text-zinc-900 dark:text-zinc-100 group-hover:text-amber-700 dark:group-hover:text-amber-300'
+                                      }`}
+                                    >
+                                      Home / News
+                                    </span>
+
+                                    {/* Badges */}
+                                    <div className="shrink-0 flex items-center gap-1">
+                                      {isFeatured ? (
+                                        <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                                          ⭐ Featured
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-1.5 py-0.5 rounded shadow-2xs">
+                                          Hero Grid
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Gujarati Script Subtitle */}
+                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
+                                    મુખ્ય હોમ પેજ / સમાચાર (Show in Home / News)
+                                  </span>
+                                  <span className="inline-block text-[9.5px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.2 rounded mt-1.5">
+                                    📍 Main Hero Grid
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
                           {gujaratList.map((cat) => renderCategoryCard(cat, isGujaratCat(cat)))}
                         </div>
                       )}
@@ -3313,11 +3425,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                             Main News Sections (મુખ્ય સમાચાર વિભાગો)
                           </span>
                           <span className="text-xs font-bold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 px-2 py-0.5 rounded-full">
-                            {mainNewsList.length}
+                            {mainNewsList.length + 2}
                           </span>
-                          {mainNewsList.some(isSelected) && (
+                          {(mainNewsList.some(isSelected) || isBreaking || isTrending) && (
                             <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.2 rounded-full">
-                              ✓ {mainNewsList.filter(isSelected).length} selected
+                              ✓ {mainNewsList.filter(isSelected).length + (isBreaking ? 1 : 0) + (isTrending ? 1 : 0)} selected
                             </span>
                           )}
                         </div>
@@ -3328,6 +3440,146 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                       {!collapsedSections.news && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+                          {/* 1. TOP BREAKING NEWS CARD (Before National) */}
+                          {(() => {
+                            const q = categorySearch.trim().toLowerCase();
+                            const matchesBreaking = !q || 'breaking'.includes(q) || 'બ્રેકિંગ'.includes(q) || 'તાજા'.includes(q) || 'ticker'.includes(q) || 'flash'.includes(q);
+                            const matchesTab = categoryFilterTab === 'all' || categoryFilterTab === 'news' || (categoryFilterTab === 'selected' && isBreaking);
+
+                            if (!matchesBreaking || !matchesTab) return null;
+
+                            return (
+                              <div
+                                key="__breaking_news_card__"
+                                onClick={() => setIsBreaking(!isBreaking)}
+                                className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                                  isBreaking
+                                    ? 'border-orange-500 bg-orange-50/80 text-orange-950 dark:border-orange-500 dark:bg-orange-950/40 dark:text-orange-100 shadow-xs ring-1 ring-orange-500/30'
+                                    : 'border-zinc-200 bg-white text-zinc-900 hover:border-orange-400 hover:bg-orange-50/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-orange-700/60 shadow-2xs'
+                                }`}
+                              >
+                                {/* Custom Styled Check Indicator */}
+                                <div className="pt-0.5 shrink-0">
+                                  <div
+                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
+                                      isBreaking
+                                        ? 'bg-orange-500 text-white shadow-2xs'
+                                        : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-orange-500'
+                                    }`}
+                                  >
+                                    {isBreaking && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                                  </div>
+                                </div>
+
+                                {/* Card Content */}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex min-w-0 items-start justify-between gap-1.5">
+                                    <span
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
+                                        isBreaking
+                                          ? 'text-orange-900 dark:text-orange-200'
+                                          : 'text-zinc-900 dark:text-zinc-100 group-hover:text-orange-700 dark:group-hover:text-orange-300'
+                                      }`}
+                                    >
+                                      Breaking News
+                                    </span>
+
+                                    {/* Badges */}
+                                    <div className="shrink-0 flex items-center gap-1">
+                                      {isBreaking ? (
+                                        <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                                          ⚡ Flash
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 px-1.5 py-0.5 rounded shadow-2xs">
+                                          Ticker Bar
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Gujarati Script Subtitle */}
+                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
+                                    ટોપ બ્રેકિંગ ન્યૂઝ (Top Breaking)
+                                  </span>
+                                  <span className="inline-block text-[9.5px] font-bold text-orange-700 dark:text-orange-400 bg-orange-100/70 dark:bg-orange-950/60 px-1.5 py-0.2 rounded mt-1.5">
+                                    📍 Header & Top Flashes
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
+                          {/* 2. TRENDING STORY CARD (Before National) */}
+                          {(() => {
+                            const q = categorySearch.trim().toLowerCase();
+                            const matchesTrending = !q || 'trending'.includes(q) || 'ટ્રેન્ડિંગ'.includes(q) || 'વાઈરલ'.includes(q) || 'sidebar'.includes(q);
+                            const matchesTab = categoryFilterTab === 'all' || categoryFilterTab === 'news' || (categoryFilterTab === 'selected' && isTrending);
+
+                            if (!matchesTrending || !matchesTab) return null;
+
+                            return (
+                              <div
+                                key="__trending_story_card__"
+                                onClick={() => setIsTrending(!isTrending)}
+                                className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                                  isTrending
+                                    ? 'border-blue-500 bg-blue-50/80 text-blue-950 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-100 shadow-xs ring-1 ring-blue-500/30'
+                                    : 'border-zinc-200 bg-white text-zinc-900 hover:border-blue-400 hover:bg-blue-50/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-700/60 shadow-2xs'
+                                }`}
+                              >
+                                {/* Custom Styled Check Indicator */}
+                                <div className="pt-0.5 shrink-0">
+                                  <div
+                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
+                                      isTrending
+                                        ? 'bg-blue-600 text-white shadow-2xs'
+                                        : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-blue-500'
+                                    }`}
+                                  >
+                                    {isTrending && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                                  </div>
+                                </div>
+
+                                {/* Card Content */}
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex min-w-0 items-start justify-between gap-1.5">
+                                    <span
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
+                                        isTrending
+                                          ? 'text-blue-900 dark:text-blue-200'
+                                          : 'text-zinc-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-300'
+                                      }`}
+                                    >
+                                      Trending Story
+                                    </span>
+
+                                    {/* Badges */}
+                                    <div className="shrink-0 flex items-center gap-1">
+                                      {isTrending ? (
+                                        <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                                          🔥 Trending
+                                        </span>
+                                      ) : (
+                                        <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-1.5 py-0.5 rounded shadow-2xs">
+                                          Sidebar
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Gujarati Script Subtitle */}
+                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
+                                    ટ્રેન્ડિંગ સમાચાર (Sidebar & List)
+                                  </span>
+                                  <span className="inline-block text-[9.5px] font-bold text-blue-700 dark:text-blue-400 bg-blue-100/70 dark:bg-blue-950/60 px-1.5 py-0.2 rounded mt-1.5">
+                                    📍 Right Sidebar & Feed
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })()}
+
                           {mainNewsList.map((cat) => renderCategoryCard(cat, false))}
                         </div>
                       )}
@@ -3525,15 +3777,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           />
         </div>
 
-        {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video - Multiple Allowed) [Size: 1100px X 541px] */}
+        {/* 🖼️ DISTINCT SECTION 2: Upload Primary Featured Media (Photo / Video - Multiple Allowed) [Size: 1280px X 720px (16:9)] */}
         <div className="space-y-4 rounded-2xl border border-gray-400 bg-zinc-50/50 p-5 dark:border-zinc-700 dark:bg-zinc-950/20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700 gap-3">
             <div>
               <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5 flex-wrap">
                 <Video className="h-4 w-4 text-red-600 shrink-0" />
                 <span>Upload Primary Media (Featured Photo or Video)</span>
-                <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 shadow-2xs">
-                  PNG / JPG / WEBP • Max 10 MB • Size: 1100 × 541 px
+                <span className="rounded-md border border-emerald-400 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-2xs flex items-center gap-1">
+                  ⭐ Perfect Size: 1280 × 720 px (16:9 Ratio)
+                </span>
+                <span className="rounded-md border border-zinc-300 bg-zinc-100 px-2 py-0.5 text-[11px] font-bold text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  PNG / JPG / WEBP • Max 10 MB
                 </span>
                 <span className="text-red-500 font-bold">*</span>
               </label>
@@ -3574,6 +3829,26 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             </div>
           </div>
 
+          {/* 🌟 Prominent Guidance Banner for Perfect Image Size */}
+          <div className="flex items-start gap-3 rounded-xl border-2 border-emerald-400/80 bg-emerald-50/90 p-3.5 text-emerald-950 dark:border-emerald-700/80 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-xs">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-600 text-white font-black text-xs shadow-xs">
+              16:9
+            </div>
+            <div className="space-y-1 text-xs">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-extrabold text-[13px] text-emerald-900 dark:text-emerald-100">
+                  પરફેક્ટ ઇમેજ સાઇઝ: <span className="underline decoration-emerald-500 font-black">1280 × 720 px</span> (16:9 Aspect Ratio)
+                </span>
+                <span className="rounded-full bg-emerald-600 px-2.5 py-0.5 text-[10px] font-black text-white uppercase tracking-wider">
+                  Perfect Fit Everywhere
+                </span>
+              </div>
+              <p className="text-emerald-800 dark:text-emerald-300 leading-relaxed font-medium">
+                આ <strong>1280 × 720 px (16:9)</strong> સાઇઝ વેબસાઇટમાં બધે જ (હોમપેજ હેડલાઇન, કેટેગરી ગ્રીડ, આર્ટિકલ ડિટેલ પેજ અને WhatsApp / Facebook / Twitter શેરિંગ) કોઈપણ કટિંગ કે બ્લેક બોર્ડર વગર 100% પરફેક્ટ ફિટ થશે. (FHD: <strong>1920 × 1080 px</strong> પણ વાપરી શકો છો).
+              </p>
+            </div>
+          </div>
+
           {imageMode === 'upload' ? (
             <div className="space-y-3">
               <div className="relative rounded-2xl border-2 border-dashed border-gray-400 bg-white p-6 dark:border-zinc-600 dark:bg-zinc-900/60 text-center transition-all hover:border-red-500 hover:bg-red-50/20 dark:hover:border-red-500">
@@ -3598,11 +3873,17 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         <UploadCloud className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                        <p className="text-sm font-bold text-gray-900 dark:text-zinc-100">
                           Click to browse or drag & drop multiple Images or Videos from your computer
                         </p>
-                        <p className="text-xs text-gray-600 dark:text-zinc-400 mt-0.5 font-medium">
-                          Supports Photos (JPG, PNG, WebP) & Videos (MP4, WebM, MOV) up to 200MB • Multiple Selection Allowed
+                        <p className="text-xs font-black text-emerald-700 dark:text-emerald-400 mt-1 flex items-center justify-center gap-1.5 flex-wrap">
+                          <span className="rounded-md bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 border border-emerald-300 dark:border-emerald-700">
+                            ⭐ Recommended Perfect Size: 1280 × 720 px (16:9 Ratio)
+                          </span>
+                          <span>(Best fit for Homepage, Category & Article detail)</span>
+                        </p>
+                        <p className="text-[11px] text-gray-500 dark:text-zinc-400 mt-0.5">
+                          Photos (JPG, PNG, WebP) up to 10MB • Videos (MP4, WebM, MOV) up to 200MB
                         </p>
                       </div>
                       <span className="inline-flex items-center gap-1.5 rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-xs">
@@ -3818,8 +4099,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         <ImageIcon className="h-4 w-4 text-red-600" />
                         <span>Image {sectionNum} ({labelSuffix} Story Media)</span>
                       </span>
-                      <span className="rounded-md border border-amber-300 bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/40 dark:text-amber-300 shadow-2xs">
-                        PNG / JPG / WEBP • Max 10 MB • Size: 1100 × 541 px
+                      <span className="rounded-md border border-emerald-400 bg-emerald-50 px-2 py-0.5 text-[11px] font-black text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 shadow-2xs">
+                        ⭐ Perfect Size: 1280 × 720 px (16:9)
+                      </span>
+                      <span className="rounded-md border border-zinc-300 bg-zinc-100 px-1.5 py-0.5 text-[10.5px] font-medium text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
+                        PNG / JPG / WebP • Max 10 MB
                       </span>
                     </div>
 
@@ -4402,8 +4686,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
         {/* 🚀 BOTTOM STICKY ACTION BAR (Save Article, Preview Article, Cancel) */}
         <div className="sticky bottom-3 z-20 grid grid-cols-1 gap-3 rounded-2xl border border-gray-300 bg-white p-4 shadow-xl dark:border-zinc-600 dark:bg-zinc-900 sm:flex sm:flex-wrap sm:items-center sm:justify-between sm:p-5" style={{ fontSize: 14, fontWeight: 700 }}>
-          <button type="button" disabled={loading} onClick={() => router.push('/admin/articles')}
-            className="inline-flex min-h-12 items-center justify-center rounded-xl border border-gray-300 bg-zinc-100 px-5 py-3 text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700">
+          <button
+            type="button"
+            disabled={loading}
+            onClick={() => {
+              if (typeof window !== 'undefined' && window.history.length > 1) {
+                router.back();
+              } else {
+                router.push('/admin/articles');
+              }
+            }}
+            className="inline-flex min-h-12 items-center justify-center rounded-xl border border-gray-300 bg-zinc-100 px-5 py-3 text-zinc-900 transition hover:bg-zinc-200 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700 cursor-pointer"
+          >
             Cancel & Exit
           </button>
           <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 sm:flex sm:flex-wrap">

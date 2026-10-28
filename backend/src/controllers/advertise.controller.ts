@@ -28,11 +28,11 @@ const DEFAULT_ADVERTISE_SETTING = {
   id: 'default',
   pageTitle: 'Advertise With Us',
   description: DEFAULT_DESCRIPTION,
-  officeAddress: 'Gujarat Post Bhavan, S.G. Highway, Prahlad Nagar, Vastrapur, Ahmedabad, Gujarat 380015',
-  locationUrl: 'https://maps.google.com/?q=Gujarat+Post+Bhavan+Ahmedabad',
-  contactPhone: '079 4000 4000 / +91 99099 07237',
+  officeAddress: '',
+  locationUrl: '',
+  contactPhone: '',
   onlineAdsEmail: 'digital.advertising@gujaratpost.in',
-  printAdsEmail: 'advt@gujaratpost.in & epaper@gujaratpost.in',
+  printAdsEmail: '',
   websiteUrl: 'https://gujaratpost.in/',
   socialLinksJson: DEFAULT_SOCIALS,
   appLinksJson: DEFAULT_APP_LINKS,
@@ -54,11 +54,11 @@ function formatAdvertiseSetting(row: any) {
     ...row,
     pageTitle: row.pageTitle || DEFAULT_ADVERTISE_SETTING.pageTitle,
     description: row.description || DEFAULT_ADVERTISE_SETTING.description,
-    officeAddress: row.officeAddress || DEFAULT_ADVERTISE_SETTING.officeAddress,
-    locationUrl: row.locationUrl || DEFAULT_ADVERTISE_SETTING.locationUrl,
-    contactPhone: row.contactPhone || DEFAULT_ADVERTISE_SETTING.contactPhone,
+    officeAddress: '',
+    locationUrl: '',
+    contactPhone: '',
     onlineAdsEmail: row.onlineAdsEmail || DEFAULT_ADVERTISE_SETTING.onlineAdsEmail,
-    printAdsEmail: row.printAdsEmail || DEFAULT_ADVERTISE_SETTING.printAdsEmail,
+    printAdsEmail: '',
     websiteUrl: row.websiteUrl || DEFAULT_ADVERTISE_SETTING.websiteUrl,
     socialLinksJson: parseJsonField(row.socialLinksJson, DEFAULT_SOCIALS),
     appLinksJson: parseJsonField(row.appLinksJson, DEFAULT_APP_LINKS),
@@ -106,11 +106,11 @@ export class AdvertiseController {
 
       const pageTitle = b.pageTitle !== undefined ? b.pageTitle : DEFAULT_ADVERTISE_SETTING.pageTitle;
       const description = b.description !== undefined ? b.description : DEFAULT_ADVERTISE_SETTING.description;
-      const officeAddress = b.officeAddress !== undefined ? b.officeAddress : DEFAULT_ADVERTISE_SETTING.officeAddress;
-      const locationUrl = b.locationUrl !== undefined ? b.locationUrl : DEFAULT_ADVERTISE_SETTING.locationUrl;
-      const contactPhone = b.contactPhone !== undefined ? b.contactPhone : DEFAULT_ADVERTISE_SETTING.contactPhone;
+      const officeAddress = b.officeAddress !== undefined ? b.officeAddress : '';
+      const locationUrl = b.locationUrl !== undefined ? b.locationUrl : '';
+      const contactPhone = b.contactPhone !== undefined ? b.contactPhone : '';
       const onlineAdsEmail = b.onlineAdsEmail !== undefined ? b.onlineAdsEmail : DEFAULT_ADVERTISE_SETTING.onlineAdsEmail;
-      const printAdsEmail = b.printAdsEmail !== undefined ? b.printAdsEmail : DEFAULT_ADVERTISE_SETTING.printAdsEmail;
+      const printAdsEmail = b.printAdsEmail !== undefined ? b.printAdsEmail : '';
       const websiteUrl = b.websiteUrl !== undefined ? b.websiteUrl : DEFAULT_ADVERTISE_SETTING.websiteUrl;
 
       const socialLinksStr = typeof b.socialLinksJson === 'string'
