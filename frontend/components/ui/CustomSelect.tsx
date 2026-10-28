@@ -201,7 +201,7 @@ export default function CustomSelect({
                   const isSelected = opt.value === value;
                   return (
                     <button
-                      key={opt.value}
+                      key={opt.value || '__none__'}
                       type="button"
                       onClick={() => {
                         onChange(opt.value);

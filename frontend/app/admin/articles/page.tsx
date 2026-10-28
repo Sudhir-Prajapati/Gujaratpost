@@ -11,6 +11,9 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
+  ArrowUp,
+  ArrowDown,
   Eye,
   Filter,
   Calendar,
@@ -74,11 +77,23 @@ interface CategoryData {
 export default function ArticleList() {
   const router = useRouter();
 
+  const FILTER_STORAGE_KEY = 'admin_articles_filter_state';
+
+  // Persistence initialization flag to ensure saved state is loaded before fetching/overwriting
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
   // Search & Filter state
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [articles, setArticles] = useState<ArticleData[]>([]);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [totalArticles, setTotalArticles] = useState(0);
 
   const formattedSelectedDate = useMemo(() => {
     if (!selectedDate) return '';
@@ -95,12 +110,88 @@ export default function ArticleList() {
     return selectedDate;
   }, [selectedDate]);
 
-  // Table state
-  const [articles, setArticles] = useState<ArticleData[]>([]);
-  const [categories, setCategories] = useState<CategoryData[]>([]);
-  const [totalArticles, setTotalArticles] = useState(0);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  // Restore saved search and filter state on mount (from URL search params or sessionStorage)
+  useEffect(() => {
+    try {
+      // 1. Check URL query params first
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlQuery = searchParams.get('query');
+      const urlCategory = searchParams.get('category') || searchParams.get('categorySlug');
+      const urlStatus = searchParams.get('status');
+      const urlDate = searchParams.get('date');
+      const urlPage = searchParams.get('page');
+      const urlLimit = searchParams.get('limit') || searchParams.get('pageSize');
+
+      let restoredQuery = '';
+      let restoredCat = '';
+      let restoredStatus = '';
+      let restoredDate = '';
+      let restoredPage = 1;
+      let restoredLimit = 10;
+
+      if (urlQuery !== null || urlCategory !== null || urlStatus !== null || urlDate !== null || urlPage !== null || urlLimit !== null) {
+        restoredQuery = urlQuery || '';
+        restoredCat = urlCategory || '';
+        restoredStatus = urlStatus || '';
+        restoredDate = urlDate || '';
+        restoredPage = urlPage ? Math.max(1, parseInt(urlPage, 10)) : 1;
+        restoredLimit = urlLimit ? parseInt(urlLimit, 10) : 10;
+      } else {
+        // 2. Check sessionStorage
+        const saved = sessionStorage.getItem(FILTER_STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          restoredQuery = parsed.query || '';
+          restoredCat = parsed.category || '';
+          restoredStatus = parsed.status || '';
+          restoredDate = parsed.date || '';
+          restoredPage = typeof parsed.page === 'number' && parsed.page > 0 ? parsed.page : 1;
+          restoredLimit = typeof parsed.pageSize === 'number' && parsed.pageSize > 0 ? parsed.pageSize : 10;
+        }
+      }
+
+      if (restoredQuery) setQuery(restoredQuery);
+      if (restoredCat) setSelectedCategory(restoredCat);
+      if (restoredStatus) setSelectedStatus(restoredStatus);
+      if (restoredDate) setSelectedDate(restoredDate);
+      if (restoredPage > 1) setPage(restoredPage);
+      if (restoredLimit !== 10) setPageSize(restoredLimit);
+    } catch (e) {
+      console.error('Error restoring filter state', e);
+    } finally {
+      setIsInitialized(true);
+    }
+  }, []);
+
+  // Sync active search and filter state to sessionStorage and update the browser address bar
+  useEffect(() => {
+    if (!isInitialized || typeof window === 'undefined') return;
+    try {
+      sessionStorage.setItem(
+        FILTER_STORAGE_KEY,
+        JSON.stringify({
+          query,
+          category: selectedCategory,
+          status: selectedStatus,
+          date: selectedDate,
+          page,
+          pageSize,
+        })
+      );
+
+      const params = new URLSearchParams();
+      if (query.trim()) params.set('query', query.trim());
+      if (selectedCategory) params.set('category', selectedCategory);
+      if (selectedStatus) params.set('status', selectedStatus);
+      if (selectedDate) params.set('date', selectedDate);
+      if (page > 1) params.set('page', String(page));
+      if (pageSize !== 10) params.set('limit', String(pageSize));
+
+      const qs = params.toString();
+      const newUrl = window.location.pathname + (qs ? `?${qs}` : '');
+      window.history.replaceState(null, '', newUrl);
+    } catch (e) { }
+  }, [isInitialized, query, selectedCategory, selectedStatus, selectedDate, page, pageSize]);
 
   // UI indicators
   const [loading, setLoading] = useState(true);
@@ -264,14 +355,16 @@ export default function ArticleList() {
 
   // Fetch Articles
   useEffect(() => {
+    if (!isInitialized) return;
+
     async function loadArticles() {
       setLoading(true);
       setError(null);
       try {
         const params = new URLSearchParams();
         params.set('page', String(page));
-        params.set('limit', '10');
-        if (query.trim()) params.set('query', query);
+        params.set('limit', String(pageSize));
+        if (query.trim()) params.set('query', query.trim());
         if (selectedCategory) params.set('categorySlug', selectedCategory);
         if (selectedStatus) params.set('status', selectedStatus);
         if (selectedDate) params.set('date', selectedDate);
@@ -291,7 +384,34 @@ export default function ArticleList() {
       }
     }
     loadArticles();
-  }, [page, query, selectedCategory, selectedStatus, selectedDate]);
+  }, [isInitialized, page, pageSize, query, selectedCategory, selectedStatus, selectedDate]);
+
+  // Handle page size change
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setPage(1);
+  };
+
+  // Scroll helpers
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    const height = Math.max(
+      document.body.scrollHeight,
+      document.documentElement.scrollHeight,
+      document.body.offsetHeight,
+      document.documentElement.offsetHeight,
+      document.body.clientHeight,
+      document.documentElement.clientHeight
+    );
+    window.scrollTo({ top: height, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: height, behavior: 'smooth' });
+    document.body.scrollTo({ top: height, behavior: 'smooth' });
+  };
 
   // Handle pagination
   const handlePageChange = (newPage: number) => {
@@ -504,98 +624,175 @@ export default function ArticleList() {
         </a>
       </div>
 
-      {/* Language Filter & Search Toolbar */}
-      <div className="flex flex-col gap-4 rounded-2xl border border-black bg-white p-4 dark:border-zinc-600 dark:bg-zinc-900 md:flex-row md:items-center md:justify-between">
-        {/* Search & Category Inputs */}
-        <div className="flex flex-wrap items-center gap-3 flex-1 min-w-0">
-          {/* Search box */}
-          <div className="relative flex-1 min-w-[200px] max-w-md">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400">
-              <Search className="h-4 w-4" />
-            </span>
-            <input
-              type="text"
-              placeholder="Search title, content, or tags..."
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+      {/* Search & Filter Toolbar */}
+      <div className="rounded-2xl border border-black bg-white p-4 dark:border-zinc-600 dark:bg-zinc-900 shadow-xs space-y-3">
+        {/* Row 1: Full-width Prominent Search Bar */}
+        <div className="relative w-full">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-zinc-400 pointer-events-none">
+            <Search className={`h-4 w-4 transition-colors ${isSearchFocused || query ? 'text-[#B3121B]' : 'text-zinc-400'}`} />
+          </span>
+          <input
+            type="text"
+            placeholder="Search by title, content, tags, or article #..."
+            value={query}
+            onFocus={() => setIsSearchFocused(true)}
+            onBlur={() => setIsSearchFocused(false)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            className={`w-full rounded-xl border border-black bg-zinc-50 py-2.5 pl-10 pr-10 text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none transition-all dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white ${
+              isSearchFocused || query
+                ? 'border-black dark:border-white ring-2 ring-black/10 dark:ring-white/20 bg-white dark:bg-zinc-900 shadow-xs'
+                : 'focus:border-black dark:focus:border-white'
+            }`}
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
                 setPage(1);
               }}
-              className="w-full rounded-xl border border-black bg-zinc-50 py-2.5 pl-10 pr-4 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
-            />
-          </div>
-
-          {/* Category Dropdown */}
-          <div className="relative min-w-[150px]">
-            <select
-              value={selectedCategory}
-              onChange={(e) => {
-                setSelectedCategory(e.target.value);
-                setPage(1);
-              }}
-              className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-pointer"
+              title="Clear search"
             >
-              <option value="">All Categories</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.slug}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
-              <Filter className="h-4 w-4" />
-            </span>
-          </div>
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
 
-          {/* Status Dropdown */}
-          <div className="relative min-w-[150px]">
-            <select
-              value={selectedStatus}
-              onChange={(e) => {
-                setSelectedStatus(e.target.value);
-                setPage(1);
-              }}
-              className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2.5 pl-4 pr-10 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
-            >
-              <option value="">All Statuses</option>
-              <option value="PUBLISHED">Published</option>
-              <option value="DRAFT">Draft</option>
-              <option value="SCHEDULED">Scheduled</option>
-              <option value="ARCHIVED">Archived</option>
-            </select>
-            <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
-              <Filter className="h-4 w-4" />
-            </span>
-          </div>
+        {/* Row 2: Perfectly Aligned Filters & Table Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-zinc-150 dark:border-zinc-800">
+          {/* Filters on Left */}
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Category Dropdown */}
+            <div className="relative min-w-[150px]">
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2 pl-3.5 pr-9 text-xs sm:text-sm font-semibold text-zinc-900 focus:border-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white cursor-pointer"
+              >
+                <option value="">All Categories</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
+                <Filter className="h-3.5 w-3.5" />
+              </span>
+            </div>
 
-          {/* Date Filter Input */}
-          <div className="relative min-w-[160px]">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-zinc-400">
-              <Calendar className="h-4 w-4" />
-            </span>
-            <input
-              type="date"
-              value={selectedDate}
-              onChange={(e) => {
-                setSelectedDate(e.target.value);
-                setPage(1);
-              }}
-              className="w-full rounded-xl border border-black bg-zinc-50 py-2.5 pl-10 pr-8 text-sm text-zinc-900 focus:border-black focus:ring-1 focus:ring-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white dark:focus:ring-white"
-              title="Filter articles by date"
-            />
-            {selectedDate && (
+            {/* Status Dropdown */}
+            <div className="relative min-w-[140px]">
+              <select
+                value={selectedStatus}
+                onChange={(e) => {
+                  setSelectedStatus(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2 pl-3.5 pr-9 text-xs sm:text-sm font-semibold text-zinc-900 focus:border-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white cursor-pointer"
+              >
+                <option value="">All Statuses</option>
+                <option value="PUBLISHED">Published</option>
+                <option value="DRAFT">Draft</option>
+                <option value="SCHEDULED">Scheduled</option>
+                <option value="ARCHIVED">Archived</option>
+              </select>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
+                <Filter className="h-3.5 w-3.5" />
+              </span>
+            </div>
+
+            {/* Date Filter Input */}
+            <div className="relative min-w-[155px]">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-zinc-400">
+                <Calendar className="h-3.5 w-3.5" />
+              </span>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => {
+                  setSelectedDate(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full rounded-xl border border-black bg-zinc-50 py-2 pl-9 pr-8 text-xs sm:text-sm font-semibold text-zinc-900 focus:border-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white cursor-pointer"
+                title="Filter articles by date"
+              />
+              {selectedDate && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedDate('');
+                    setPage(1);
+                  }}
+                  className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  title="Clear date filter"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Reset All Filters button */}
+            {(query || selectedCategory || selectedStatus || selectedDate) && (
               <button
                 type="button"
                 onClick={() => {
+                  setQuery('');
+                  setSelectedCategory('');
+                  setSelectedStatus('');
                   setSelectedDate('');
                   setPage(1);
                 }}
-                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-                title="Clear date filter"
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900"
+                title="Reset all filters and search"
               >
-                <X className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5" />
+                <span>Reset</span>
               </button>
             )}
+          </div>
+
+          {/* Controls on Right (Per Page + To Bottom) */}
+          <div className="flex items-center gap-2.5 ml-auto">
+            {/* Per Page Selector in toolbar */}
+            <div className="relative min-w-[130px]">
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10) || 10)}
+                className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2 pl-3.5 pr-8 text-xs sm:text-sm font-semibold text-zinc-900 focus:border-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white cursor-pointer"
+                title="Articles per page"
+              >
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={25}>25 per page</option>
+                <option value={50}>50 per page</option>
+                <option value={100}>100 per page</option>
+                <option value={200}>200 per page</option>
+                <option value={300}>300 per page</option>
+                <option value={500}>500 per page</option>
+              </select>
+              <span className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-zinc-400">
+                <ChevronDown className="h-3.5 w-3.5" />
+              </span>
+            </div>
+
+            {/* Quick Scroll to Bottom Button in toolbar */}
+            <button
+              type="button"
+              onClick={scrollToBottom}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-black bg-zinc-50 dark:bg-zinc-950/40 py-2 px-3 text-xs sm:text-sm font-bold text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
+              title="Come to bottom (પેજના તળિયે જાઓ)"
+            >
+              <ArrowDown className="h-3.5 w-3.5 text-[#B3121B]" />
+              <span>To Bottom</span>
+            </button>
           </div>
         </div>
       </div>
@@ -882,29 +1079,76 @@ export default function ArticleList() {
 
         {/* Pagination bar */}
         {!loading && !error && totalArticles > 0 && (
-          <div className="flex items-center justify-between border-t border-zinc-400 px-6 py-4 dark:border-zinc-700">
-            <span className="text-base font-medium text-slate-600 dark:text-slate-400">
-              Showing {articles.length} of {totalArticles} results
-            </span>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={page === 1}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-550 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-950/40"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-
-              <span className="text-base font-bold text-slate-800 dark:text-slate-100">
-                Page {page} of {totalPages}
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-400 px-6 py-4 dark:border-zinc-700">
+            <div className="flex flex-wrap items-center gap-3.5">
+              <span className="text-base font-medium text-slate-600 dark:text-slate-400">
+                Showing <strong className="text-slate-900 dark:text-white font-bold">{articles.length}</strong> of{' '}
+                <strong className="text-slate-900 dark:text-white font-bold">{totalArticles}</strong> results
               </span>
 
+              <div className="flex items-center gap-2 pl-3 border-l border-zinc-300 dark:border-zinc-700">
+                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  Show:
+                </span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10) || 10)}
+                  className="rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 px-2.5 py-1 text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-black dark:focus:border-white focus:outline-none dark:border-zinc-700 cursor-pointer shadow-2xs"
+                  title="Change number of articles shown per page"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                  <option value={300}>300</option>
+                  <option value={500}>500</option>
+                </select>
+                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                  per page
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 sm:gap-4">
+              {/* Page navigation controls */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  title="Previous page"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+
+                <span className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap px-1">
+                  Page {page} of {totalPages}
+                </span>
+
+                <button
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  title="Next page"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Divider */}
+              <div className="hidden sm:block h-6 w-px bg-zinc-300 dark:bg-zinc-700" />
+
+              {/* Neatly integrated To Top button */}
               <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={page === totalPages}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-550 hover:bg-zinc-50 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:hover:bg-zinc-950/40"
+                type="button"
+                onClick={scrollToTop}
+                className="group inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
+                title="Come to top (ટોચ પર જાઓ)"
               >
-                <ChevronRight className="h-5 w-5" />
+                <ArrowUp className="h-4 w-4 text-[#B3121B] group-hover:text-white transition-colors" />
+                <span>To Top</span>
               </button>
             </div>
           </div>

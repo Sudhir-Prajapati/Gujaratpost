@@ -23,6 +23,7 @@ const LEGACY_MAP: Record<string, string> = {
   'crime': 'crime',
   'video': 'videos',
   'videos': 'videos',
+  'shorts': 'videos',
   'instagram': 'instagram',
   'reels': 'instagram',
   'gallery': 'photos',
