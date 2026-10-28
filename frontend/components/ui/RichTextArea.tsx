@@ -1245,7 +1245,15 @@ export default function RichTextArea({
               </div>
             ) : activeModal === 'image' ? (
               /* DEDICATED IMAGE MODAL (From Device, Image URL, Manage/Remove) */
-              <div className="space-y-4">
+              <div className="space-y-3.5">
+                {/* 🌟 Perfect Image Size Guidance */}
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-400/80 bg-emerald-50/90 px-3 py-2 text-xs text-emerald-950 dark:border-emerald-700/80 dark:bg-emerald-950/40 dark:text-emerald-200 shadow-2xs">
+                  <span className="rounded bg-emerald-600 px-1.5 py-0.5 text-[10px] font-black text-white shrink-0">16:9</span>
+                  <span className="font-medium">
+                    પરફેક્ટ ઇમેજ સાઇઝ: <strong className="font-black text-emerald-900 dark:text-emerald-100">1280 × 720 px</strong> (16:9 Ratio) — આ સાઇઝ વેબસાઇટ અને સોશિયલ મીડિયામાં પરફેક્ટ ફિટ થશે.
+                  </span>
+                </div>
+
                 {/* Navigation Tabs */}
                 <div className="flex border-b border-gray-200 dark:border-zinc-700 -mt-1">
                   <button
@@ -1328,7 +1336,10 @@ export default function RichTextArea({
                           <p className="text-sm font-bold text-zinc-800 dark:text-zinc-200">
                             Click to browse device or drag & drop image here
                           </p>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                          <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                            ⭐ Perfect Size: 1280 × 720 px (16:9 Ratio)
+                          </p>
+                          <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-0.5">
                             Upload photos from your computer, phone, or tablet (JPG, PNG, WebP, GIF)
                           </p>
                         </div>
