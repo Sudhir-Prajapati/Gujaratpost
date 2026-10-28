@@ -201,8 +201,9 @@ export function getBestVoice(lang: Language): SpeechSynthesisVoice | null {
 
 export interface PlayArticleOptions {
   title: string;
-  body?: string;
+  subheading?: string;
   excerpt?: string;
+  body?: string;
   language: Language;
   onStart?: () => void;
   onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number) => void;
@@ -212,8 +213,9 @@ export interface PlayArticleOptions {
 
 export function playArticleAudio({
   title,
-  body,
+  subheading,
   excerpt,
+  body,
   language,
   onStart,
   onChunkChange,
@@ -226,28 +228,49 @@ export function playArticleAudio({
 
   // Immediately kick off asynchronous text preparation & language alignment
   (async () => {
-    // 1. Prepare full speech text: Heading (title) + Full Description (body / excerpt)
+    // 1. Prepare speech text in natural visual reading order:
+    // Heading (title) -> Subheading (subheading / excerpt) -> Body Description (body)
     const cleanTitle = cleanTextForSpeech(title);
-    let cleanBody = cleanTextForSpeech(body || excerpt || '');
+    let cleanSubheading = cleanTextForSpeech(subheading || excerpt || '');
+    let cleanBody = cleanTextForSpeech(body || '');
 
-    // Deduplicate: If body begins with the title (or title begins with the first sentence of body),
-    // remove the duplicated sentence from body so it doesn't get spoken twice!
-    if (cleanTitle && cleanBody) {
-      const normTitle = cleanTitle.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
-      const firstSentenceMatch = cleanBody.match(/^([^.?!।\n]+)/);
-      if (firstSentenceMatch) {
-        const firstSentenceNorm = firstSentenceMatch[1].toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
-        if (
-          firstSentenceNorm === normTitle ||
-          (normTitle.length > 10 && (firstSentenceNorm.startsWith(normTitle) || normTitle.startsWith(firstSentenceNorm)))
-        ) {
-          cleanBody = cleanBody.slice(firstSentenceMatch[0].length).replace(/^[.,?!।\s]+/, '').trim();
-        }
+    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
+    const normTitle = norm(cleanTitle);
+
+    // If subheading is identical to or starts with title, remove duplicate title part
+    if (cleanSubheading && normTitle) {
+      const normSub = norm(cleanSubheading);
+      if (normSub === normTitle) {
+        cleanSubheading = '';
+      } else if (normSub.startsWith(normTitle)) {
+        cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
       }
     }
 
-    // Combine title and body: title first, then body
-    let combinedText = cleanTitle ? (cleanBody ? `${cleanTitle}. ${cleanBody}` : cleanTitle) : cleanBody;
+    // If body begins with the title, remove duplicate title from body
+    if (cleanBody && normTitle) {
+      const normBody = norm(cleanBody);
+      if (normBody.startsWith(normTitle)) {
+        cleanBody = cleanBody.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
+      }
+    }
+
+    // If body begins with the subheading, remove duplicate subheading from body so it's not spoken twice
+    if (cleanBody && cleanSubheading) {
+      const normSub = norm(cleanSubheading);
+      const normBody = norm(cleanBody);
+      if (normBody.startsWith(normSub)) {
+        cleanBody = cleanBody.slice(cleanSubheading.length).replace(/^[.,?!।\s]+/, '').trim();
+      }
+    }
+
+    // Assemble text parts: Title -> Subheading -> Body
+    const parts: string[] = [];
+    if (cleanTitle) parts.push(cleanTitle);
+    if (cleanSubheading) parts.push(cleanSubheading);
+    if (cleanBody) parts.push(cleanBody);
+
+    let combinedText = parts.join('. ');
     if (!combinedText) {
       if (playId === currentPlayId && onError) onError(new Error('No text to read'));
       return;
