@@ -1224,6 +1224,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       title: speechTitle,
       subheading: speechExcerpt,
       excerpt: speechExcerpt,
+      highlights: gistPoints,
       body: speechBody,
       language: langToUse,
       onStart: () => setSpeaking(true),
@@ -1243,7 +1244,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         setActiveSpeechText('');
       },
     });
-  }, [article, language, title, excerpt, body]);
+  }, [article, language, title, excerpt, gistPoints, body]);
 
   const toggleAudio = useCallback(() => {
     if (speaking) {
@@ -1259,7 +1260,11 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   // If user switches language while audio is active, seamlessly re-speak in the new language without reload!
   useEffect(() => {
     if (speaking) {
-      startAudio(language);
+      stopArticleAudio();
+      const timer = setTimeout(() => {
+        startAudio(language);
+      }, 80);
+      return () => clearTimeout(timer);
     } else {
       setActiveSpeechIndex(-1);
       setActiveSpeechText('');
@@ -1311,7 +1316,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     const bodyElems = Array.from(
       root.querySelectorAll<HTMLElement>(
-        '.article-body p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3, [class*="rounded-r-xl"] li, .article-body div, p'
+        '.article-gist-item, .article-body p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3, [class*="rounded-r-xl"] li, .article-body div, p'
       )
     );
 
@@ -1647,14 +1652,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             {/* Gist: એક નજરમાં */}
             {gistPoints.length > 0 && (
-              <div className="my-2 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
+              <div className="article-gist-container my-2 rounded-r-xl border-l-4 border-[#B3121B] bg-neutral-50 dark:bg-neutral-900/60 p-4 shadow-sm">
                 <div className="flex items-center gap-2 font-black text-[#B3121B] text-base mb-3 select-none">
                   <span className="text-[#B3121B] font-bold text-sm">♦</span>
                   <span>{uiLabel(language, { en: 'At a Glance', gu: 'એક નજરમાં', hi: 'एक नजर में' })}</span>
                 </div>
                 <ul className="space-y-2.5 text-[15px] sm:text-[15.5px] font-semibold text-neutral-800 dark:text-neutral-200">
                   {gistPoints.map((point, index) => (
-                    <li key={index} className="flex items-start gap-2.5">
+                    <li key={index} className="article-gist-item flex items-start gap-2.5">
                       <span className="text-[#B3121B] font-bold mt-0.5 shrink-0 select-none">•</span>
                       <span className="leading-relaxed">
                         <TranslatedInlineText text={point} language={language} />

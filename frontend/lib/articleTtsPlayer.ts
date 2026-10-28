@@ -12,9 +12,8 @@ export function cleanTextForSpeech(htmlOrText: string): string {
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
-    // Remove (KEY HIGHLIGHTS) / એક નજરમાં headers
-    .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, ' ')
-    .replace(/(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE)/gi, ' ')
+    // Remove markdown utility lines like "## KEY HIGHLIGHTS"
+    .replace(/^#{1,6}\s*📌?.*(KEY HIGHLIGHTS|AT A GLANCE).*$/gmi, ' ')
     // Replace block tags with period/newline to maintain sentence rhythm
     .replace(/<\/(p|div|h[1-6]|li|blockquote|tr)>/gi, '. ')
     .replace(/<br\s*\/?>/gi, '. ')
@@ -203,6 +202,7 @@ export interface PlayArticleOptions {
   title: string;
   subheading?: string;
   excerpt?: string;
+  highlights?: string[];
   body?: string;
   language: Language;
   onStart?: () => void;
@@ -215,6 +215,7 @@ export function playArticleAudio({
   title,
   subheading,
   excerpt,
+  highlights,
   body,
   language,
   onStart,
@@ -229,12 +230,15 @@ export function playArticleAudio({
   // Immediately kick off asynchronous text preparation & language alignment
   (async () => {
     // 1. Prepare speech text in natural visual reading order:
-    // Heading (title) -> Subheading (subheading / excerpt) -> Body Description (body)
+    // 1) Heading (title)
+    // 2) Subheading (subheading / excerpt)
+    // 3) Key Highlights (highlights / એક નજરમાં points)
+    // 4) Full Article Description (body - all paragraphs first to last)
     const cleanTitle = cleanTextForSpeech(title);
     let cleanSubheading = cleanTextForSpeech(subheading || excerpt || '');
     let cleanBody = cleanTextForSpeech(body || '');
 
-    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—]/g, '');
+    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
     const normTitle = norm(cleanTitle);
 
     // If subheading is identical to or starts with title, remove duplicate title part
@@ -244,6 +248,24 @@ export function playArticleAudio({
         cleanSubheading = '';
       } else if (normSub.startsWith(normTitle)) {
         cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
+      }
+    }
+
+    // Clean and prepare highlights / એક નજરમાં points
+    const cleanHighlights: string[] = [];
+    if (highlights && Array.isArray(highlights) && highlights.length > 0) {
+      const gistHeader = language === 'hi' ? 'एक नजर में' : language === 'en' ? 'At a glance' : 'એક નજરમાં';
+      cleanHighlights.push(gistHeader);
+
+      for (const pt of highlights) {
+        const c = cleanTextForSpeech(pt);
+        if (c && c.length > 3) {
+          const normPt = norm(c);
+          // Avoid duplicate if subheading or title already is this exact point
+          if (normPt !== norm(cleanSubheading) && normPt !== normTitle) {
+            cleanHighlights.push(c);
+          }
+        }
       }
     }
 
@@ -264,10 +286,11 @@ export function playArticleAudio({
       }
     }
 
-    // Assemble text parts: Title -> Subheading -> Body
+    // Assemble text parts: Title -> Subheading -> Highlights -> Body
     const parts: string[] = [];
     if (cleanTitle) parts.push(cleanTitle);
     if (cleanSubheading) parts.push(cleanSubheading);
+    if (cleanHighlights.length > 0) parts.push(...cleanHighlights);
     if (cleanBody) parts.push(cleanBody);
 
     let combinedText = parts.join('. ');
@@ -276,24 +299,7 @@ export function playArticleAudio({
       return;
     }
 
-    // 2. Real-time language check:
-    // If the text passed is NOT yet in the requested language (e.g. user switched language in header without reload),
-    // automatically translate the clean speech text to the target language on the fly in ~100-200ms!
-    if (!isAlreadyTargetLanguage(combinedText, language)) {
-      try {
-        const translated = await translateOnFly(combinedText, language);
-        if (playId !== currentPlayId) return; // user cancelled/switched again
-        if (translated && translated.trim()) {
-          combinedText = translated;
-        }
-      } catch (err) {
-        console.warn('[TTS translateOnFly error]:', err);
-      }
-    }
-
-    if (playId !== currentPlayId) return;
-
-    // 3. Break into natural sentence chunks (approx 60-140 chars)
+    // 2. Break into natural sentence chunks (approx 60-140 chars)
     const chunks = chunkTextIntoSentences(combinedText);
     if (chunks.length === 0) {
       if (playId === currentPlayId && onError) onError(new Error('No readable sentences found'));
@@ -302,8 +308,7 @@ export function playArticleAudio({
 
     if (onStart) onStart();
 
-    // 4. Play via high-quality Google TTS Audio stream (/api/tts)
-    // HTML5 audio stops instantly when paused and works identically across all devices
+    // 3. Play via high-quality Google TTS Audio stream (/api/tts)
     if (!activeAudio && typeof window !== 'undefined') {
       activeAudio = new Audio();
     }
@@ -312,7 +317,7 @@ export function playArticleAudio({
 
     let chunkIndex = 0;
 
-    const playNextAudioChunk = () => {
+    const playNextAudioChunk = async () => {
       if (playId !== currentPlayId) return;
 
       if (chunkIndex >= chunks.length) {
@@ -322,7 +327,34 @@ export function playArticleAudio({
       }
 
       const currentIndex = chunkIndex;
-      const chunkText = chunks[chunkIndex++];
+      let chunkText = chunks[chunkIndex++];
+
+      // Real-time script check: if chunk text does not match target language, translate this chunk in ~20ms
+      const isGujScript = /[\u0A80-\u0AFF]/.test(chunkText);
+      const isDevScript = /[\u0900-\u097F]/.test(chunkText);
+
+      if (language === 'hi' && isGujScript) {
+        try {
+          const tr = await translateOnFly(chunkText, 'hi');
+          if (playId !== currentPlayId) return;
+          if (tr && /[\u0900-\u097F]/.test(tr)) chunkText = tr;
+        } catch {}
+      } else if (language === 'gu' && isDevScript && !isGujScript) {
+        try {
+          const tr = await translateOnFly(chunkText, 'gu');
+          if (playId !== currentPlayId) return;
+          if (tr && /[\u0A80-\u0AFF]/.test(tr)) chunkText = tr;
+        } catch {}
+      } else if (language === 'en' && (isGujScript || isDevScript)) {
+        try {
+          const tr = await translateOnFly(chunkText, 'en');
+          if (playId !== currentPlayId) return;
+          if (tr && /[a-zA-Z]/.test(tr)) chunkText = tr;
+        } catch {}
+      }
+
+      if (playId !== currentPlayId) return;
+
       const audioUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunkText)}`;
 
       // Broadcast active sentence to highlight in RED
@@ -332,7 +364,8 @@ export function playArticleAudio({
 
       // Preload next chunk
       if (chunkIndex < chunks.length) {
-        const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(chunks[chunkIndex])}`;
+        const nextChunk = chunks[chunkIndex];
+        const nextUrl = `/api/tts?lang=${encodeURIComponent(language)}&text=${encodeURIComponent(nextChunk)}`;
         const preloader = new Audio();
         preloader.preload = 'auto';
         preloader.src = nextUrl;
