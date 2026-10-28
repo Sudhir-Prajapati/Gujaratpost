@@ -18,7 +18,7 @@ try {
   nextBin = path.join(realCwd, 'node_modules', 'next', 'dist', 'bin', 'next');
 }
 
-const devArgs = ['dev'];
+const devArgs = ['dev', '--webpack'];
 if (process.env.PORT && !process.argv.includes('-p') && !process.argv.includes('--port')) {
   devArgs.push('-p', process.env.PORT);
 }

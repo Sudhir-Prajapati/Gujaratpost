@@ -3068,3 +3068,52 @@ div[class*="from-red-50"]:has(.gp-pdf-card-v2) {
 .headline-enter-anim {
   animation: singleHeadlineEnter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
 }
+
+
+/* ========================================================
+   Active Text-to-Speech Sentence Highlight (Red Line & Tint)
+   ======================================================== */
+[data-gp-speech-active="true"] {
+  position: relative !important;
+  border-left: 4px solid #B3121B !important;
+  background-color: rgba(179, 18, 27, 0.08) !important;
+  color: #B3121B !important;
+  padding-left: 14px !important;
+  padding-right: 8px !important;
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  border-radius: 0 6px 6px 0 !important;
+  box-shadow: 0 1px 3px rgba(179, 18, 27, 0.12) !important;
+  transition: all 0.22s ease-in-out !important;
+}
+
+[data-gp-speech-active="true"] * {
+  color: #B3121B !important;
+}
+
+/* Heading H1 specific styling: red bottom border instead of left */
+h1[data-gp-speech-active="true"] {
+  border-left: none !important;
+  border-bottom: 4px solid #B3121B !important;
+  padding-left: 0 !important;
+  padding-bottom: 6px !important;
+  background-color: rgba(179, 18, 27, 0.04) !important;
+}
+
+/* Dark mode support */
+.dark [data-gp-speech-active="true"] {
+  border-left-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.16) !important;
+  color: #fca5a5 !important;
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.2) !important;
+}
+
+.dark [data-gp-speech-active="true"] * {
+  color: #fca5a5 !important;
+}
+
+.dark h1[data-gp-speech-active="true"] {
+  border-left-color: transparent !important;
+  border-bottom-color: #ef4444 !important;
+  background-color: rgba(239, 68, 68, 0.08) !important;
+}

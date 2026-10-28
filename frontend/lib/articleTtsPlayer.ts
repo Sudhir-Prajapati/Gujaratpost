@@ -206,7 +206,7 @@ export interface PlayArticleOptions {
   body?: string;
   language: Language;
   onStart?: () => void;
-  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number) => void;
+  onChunkChange?: (chunkIndex: number, chunkText: string, totalChunks: number, rawChunkText?: string) => void;
   onEnd?: () => void;
   onError?: (err?: any) => void;
 }
@@ -259,30 +259,9 @@ export function playArticleAudio({
 
       for (const pt of highlights) {
         const c = cleanTextForSpeech(pt);
-        if (c && c.length > 3) {
-          const normPt = norm(c);
-          // Avoid duplicate if subheading or title already is this exact point
-          if (normPt !== norm(cleanSubheading) && normPt !== normTitle) {
-            cleanHighlights.push(c);
-          }
+        if (c && c.length > 2) {
+          cleanHighlights.push(c);
         }
-      }
-    }
-
-    // If body begins with the title, remove duplicate title from body
-    if (cleanBody && normTitle) {
-      const normBody = norm(cleanBody);
-      if (normBody.startsWith(normTitle)) {
-        cleanBody = cleanBody.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
-      }
-    }
-
-    // If body begins with the subheading, remove duplicate subheading from body so it's not spoken twice
-    if (cleanBody && cleanSubheading) {
-      const normSub = norm(cleanSubheading);
-      const normBody = norm(cleanBody);
-      if (normBody.startsWith(normSub)) {
-        cleanBody = cleanBody.slice(cleanSubheading.length).replace(/^[.,?!।\s]+/, '').trim();
       }
     }
 
@@ -327,29 +306,16 @@ export function playArticleAudio({
       }
 
       const currentIndex = chunkIndex;
-      let chunkText = chunks[chunkIndex++];
+      const rawChunk = chunks[chunkIndex++];
+      let chunkText = rawChunk;
 
-      // Real-time script check: if chunk text does not match target language, translate this chunk in ~20ms
-      const isGujScript = /[\u0A80-\u0AFF]/.test(chunkText);
-      const isDevScript = /[\u0900-\u097F]/.test(chunkText);
-
-      if (language === 'hi' && isGujScript) {
+      // Real-time language check: if chunk text does not match target language, translate this chunk in ~20ms
+      // Universal check works across EN -> HI, EN -> GU, GU -> HI, HI -> GU, etc.
+      if (!isAlreadyTargetLanguage(chunkText, language)) {
         try {
-          const tr = await translateOnFly(chunkText, 'hi');
+          const tr = await translateOnFly(chunkText, language);
           if (playId !== currentPlayId) return;
-          if (tr && /[\u0900-\u097F]/.test(tr)) chunkText = tr;
-        } catch {}
-      } else if (language === 'gu' && isDevScript && !isGujScript) {
-        try {
-          const tr = await translateOnFly(chunkText, 'gu');
-          if (playId !== currentPlayId) return;
-          if (tr && /[\u0A80-\u0AFF]/.test(tr)) chunkText = tr;
-        } catch {}
-      } else if (language === 'en' && (isGujScript || isDevScript)) {
-        try {
-          const tr = await translateOnFly(chunkText, 'en');
-          if (playId !== currentPlayId) return;
-          if (tr && /[a-zA-Z]/.test(tr)) chunkText = tr;
+          if (tr && tr.trim()) chunkText = tr.trim();
         } catch {}
       }
 
@@ -359,7 +325,7 @@ export function playArticleAudio({
 
       // Broadcast active sentence to highlight in RED
       if (onChunkChange) {
-        onChunkChange(currentIndex, chunkText, chunks.length);
+        onChunkChange(currentIndex, chunkText, chunks.length, rawChunk);
       }
 
       // Preload next chunk

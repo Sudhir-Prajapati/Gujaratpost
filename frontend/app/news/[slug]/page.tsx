@@ -96,6 +96,14 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
   if (!article) notFound();
 
+  // Normalize author safely
+  if (!article.author || typeof article.author === 'string') {
+    article.author = {
+      id: 'admin',
+      name: (typeof article.author === 'string' && article.author) ? article.author : 'Gujarat Post'
+    };
+  }
+
   // Dynamically fetch related articles and calculate smart relevance scores
   const categorySlug = (article.category || '').toLowerCase().replace(/\s+/g, '-');
   const [catRes, fallbackRes, trendingRes] = await Promise.all([
@@ -224,7 +232,7 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
     dateModified: article.updatedAt,
     author: {
       "@type": "Person",
-      name: article.author.name,
+      name: typeof article.author === 'string' ? article.author : (article.author?.name || 'Gujarat Post'),
     },
     publisher: {
       "@type": "Organization",
@@ -244,3 +252,4 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
     </>
   );
 }
+
