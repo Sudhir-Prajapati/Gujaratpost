@@ -24,7 +24,7 @@ interface CategoryItem {
 
 const ALL_APP_CATEGORIES: CategoryItem[] = [
   { nameGu: 'હોમ', nameHi: 'होम', nameEn: 'Home', href: '/' },
-  { nameGu: 'સાચવેલા લેખ', nameHi: 'सहेजे गए लेख', nameEn: 'Saved Articles', href: '/saved' },
+  { nameGu: 'સાચવેલા સમાચાર', nameHi: 'सहेजे गए समाचार', nameEn: 'Saved News', href: '/saved' },
   { nameGu: 'ન્યૂઝ બ્રીફ (NEWS BRIEF)', nameHi: 'न्यूज़ ब्रीफ (NEWS BRIEF)', nameEn: 'News Brief', href: '/news-brief' },
   { nameGu: 'હવામાન & AQI', nameHi: 'मौसम & AQI', nameEn: 'Weather & AQI', href: '/aqi' },
   { nameGu: 'વીડિયો', nameHi: 'वीडियो', nameEn: 'Video', href: '/videos' },

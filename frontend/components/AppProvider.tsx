@@ -116,7 +116,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     try {
       savedTheme = localStorage.getItem('gp-theme');
       savedApkTheme = localStorage.getItem('gp-apk-theme');
-      savedLanguage = sessionStorage.getItem('gp-lang'); // session-only: resets each new tab
+      savedLanguage = sessionStorage.getItem('gp-lang') || localStorage.getItem('gp-lang');
       savedFsLevel = localStorage.getItem('gp-fs-level');
     } catch (e) {
       console.warn('LocalStorage not accessible:', e);
@@ -132,6 +132,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // First-time session: no preference saved → persist 'gu' as the session default
       try {
         sessionStorage.setItem('gp-lang', 'gu');
+        localStorage.setItem('gp-lang', 'gu');
       } catch (e) {
         console.warn('Failed to save default language:', e);
       }
@@ -175,9 +176,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     clearGoogleTranslateCookie();
 
     try {
-      sessionStorage.setItem('gp-lang', language); // session-only: resets each new tab
+      sessionStorage.setItem('gp-lang', language);
+      localStorage.setItem('gp-lang', language);
     } catch (e) {
-      console.warn('Failed to save language to sessionStorage:', e);
+      console.warn('Failed to save language to storage:', e);
     }
   }, [language, preferencesReady]);
 
@@ -194,7 +196,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const handleSetLanguage = (nextLanguage: Language) => setLanguage(nextLanguage);
+  const handleSetLanguage = (nextLanguage: Language) => {
+    setLanguage(nextLanguage);
+    try {
+      sessionStorage.setItem('gp-lang', nextLanguage);
+      localStorage.setItem('gp-lang', nextLanguage);
+      window.dispatchEvent(new CustomEvent('gp-language-changed', { detail: nextLanguage }));
+    } catch (e) {
+      console.warn('Failed to persist language:', e);
+    }
+  };
   const incFs = () => setFsLevel((current) => Math.min(current + 1, 3));
   const decFs = () => setFsLevel((current) => Math.max(current - 1, 0));
 
