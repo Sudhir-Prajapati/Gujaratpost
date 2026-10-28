@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import {
+  Bookmark,
   BookOpen,
   ChevronDown,
   ChevronLeft,
@@ -75,7 +76,7 @@ function PlayStoreIcon({ className = 'h-4 w-4' }: { className?: string }) {
 // The 12 flat navigation links shown in the nav bar
 const NAV_LINKS = [
   { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' },
-  { label: 'Videos', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos' },
+  { label: 'Video', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos' },
   { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'गुजरात', href: '/category/gujarat' },
   { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national' },
   { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world' },
@@ -116,7 +117,8 @@ const formatDateShort = (lang: string) => {
 };
 
 const CATEGORY_TRANSLATIONS: Record<string, { en: string; hi: string; gu: string }> = {
-  videos: { en: 'Videos', hi: 'वीडियो', gu: 'વીડિયો' },
+  videos: { en: 'Video', hi: 'वीडियो', gu: 'વીડિયો' },
+  video: { en: 'Video', hi: 'वीडियो', gu: 'વીડિયો' },
   gujarat: { en: 'Gujarat', hi: 'गुजरात', gu: 'ગુજરાત' },
   national: { en: 'National', hi: 'भारत', gu: 'ભારત' },
   india: { en: 'India', hi: 'भारत', gu: 'ભારત' },
@@ -351,7 +353,7 @@ export default function Header() {
       const slugLower = (c.slug || '').toLowerCase();
       let href = `/category/${c.slug}`;
       if (slugLower === 'home' || slugLower === 'main') href = '/';
-      else if (slugLower === 'videos') href = '/videos';
+      else if (slugLower === 'videos' || slugLower === 'video') href = '/videos';
       else if (slugLower === 'photos' || slugLower === 'photo-gallery' || slugLower === 'gallery') href = '/photos';
       else if (slugLower === 'podcasts') href = '/videos?tab=podcast';
       else if (slugLower === 'shorts') href = '/shorts';
@@ -360,7 +362,8 @@ export default function Header() {
       else if (slugLower === 'web-stories' || slugLower === 'webstory') href = '/web-stories';
 
       const staticTrans = CATEGORY_TRANSLATIONS[slugLower];
-      const labelEn = (staticTrans && staticTrans.en) || c.nameEn || c.name;
+      let labelEn = (staticTrans && staticTrans.en) || c.nameEn || c.name;
+      if (labelEn === 'Videos') labelEn = 'Video';
       const labelGu = (staticTrans && staticTrans.gu) || c.nameGu || c.name;
       const labelHi = (staticTrans && staticTrans.hi) || c.nameHi || c.name;
 
@@ -397,6 +400,7 @@ export default function Header() {
   const getNavLabel = (link: { label: string; labelGu?: string; labelHi?: string }) => {
     if (language === 'hi') return link.labelHi || link.label;
     if (language === 'gu') return link.labelGu || link.label;
+    if (link.label === 'Videos') return 'Video';
     return link.label;
   };
 
@@ -744,6 +748,21 @@ export default function Header() {
                 )}
               </button>
 
+              {/* Saved Articles */}
+              <Link
+                href="/saved"
+                className="group relative hidden md:inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+                title={language === 'gu' ? 'સાચવેલા લેખ' : language === 'hi' ? 'सहेजे गए लेख' : 'Saved Articles'}
+                aria-label={language === 'gu' ? 'સાચવેલા લેખ' : language === 'hi' ? 'सहेजे गए लेख' : 'Saved Articles'}
+              >
+                <Bookmark className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
+                {savedCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#B3121B] text-[9.5px] font-black text-white shadow-sm ring-1 ring-white dark:ring-zinc-900 animate-in zoom-in-75 duration-200">
+                    {savedCount > 99 ? '99+' : savedCount}
+                  </span>
+                )}
+              </Link>
+
               {/* User / Login */}
               <button
                 type="button"
@@ -867,6 +886,37 @@ export default function Header() {
                 )}
               </button>
             </div>
+
+            {/* Mobile Saved Articles Banner */}
+            <Link
+              href="/saved"
+              onClick={() => setMenuOpen(false)}
+              className="group flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-red-600/10 via-red-600/5 to-transparent border border-red-600/25 text-foreground hover:bg-red-600/15 hover:border-red-600/40 transition-all shadow-xs"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#e51d28] to-[#960f16] text-white shadow-sm group-hover:scale-105 transition-transform">
+                  <Bookmark className="h-4.5 w-4.5" />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[14px] font-black text-foreground group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
+                    {language === 'gu' ? 'સાચવેલા લેખ' : language === 'hi' ? 'सहेजे गए लेख' : 'Saved Articles'}
+                  </span>
+                  <span className="text-[11.5px] font-medium text-muted-foreground">
+                    {savedCount > 0
+                      ? (language === 'gu' ? `${savedCount} લેખ સાચવેલા છે` : language === 'hi' ? `${savedCount} लेख सहेजे गए हैं` : `${savedCount} articles saved`)
+                      : (language === 'gu' ? 'કોઈ લેખ સાચવેલ નથી' : language === 'hi' ? 'कोई लेख सहेजा नहीं गया' : 'No articles saved yet')}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                {savedCount > 0 && (
+                  <span className="flex h-5.5 min-w-[22px] px-2 items-center justify-center rounded-full bg-[#B3121B] text-[11px] font-black text-white shadow-sm">
+                    {savedCount}
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
             {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
             <div className={`grid ${supportEnabled ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 sm:gap-2.5`}>
               <Link

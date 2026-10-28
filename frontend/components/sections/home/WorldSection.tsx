@@ -21,41 +21,94 @@ const WORLD_CATEGORY_IDS = [
 
 function isWorldArticle(art: Article): boolean {
   if (!art) return false;
-  const catId = (art as any).categoryId || (art as any).category?.id || '';
-  if (WORLD_CATEGORY_IDS.includes(catId)) return true;
 
-  const slug = (
-    (art as any).category?.slug ||
-    (art as any).categorySlug ||
-    (typeof art.category === 'string' ? art.category : '') ||
-    ''
-  ).toLowerCase().trim();
-  const name = (
-    (art as any).category?.name ||
-    (art as any).categoryName ||
-    (typeof art.category === 'string' ? art.category : '') ||
-    ''
-  ).toLowerCase().trim();
-  const nameGu = (
-    (art as any).category?.nameGu ||
-    (art as any).categoryGu ||
-    ''
-  ).toLowerCase().trim();
-  const loc = (art.location || '').toLowerCase().trim();
+  // 1. Check primary category ID
+  const primaryCatId = (art as any).categoryId || (art as any).category?.id || '';
+  if (WORLD_CATEGORY_IDS.includes(primaryCatId)) return true;
 
-  return (
-    WORLD_SLUGS.includes(slug) ||
-    WORLD_SLUGS.includes(name) ||
-    nameGu.includes('વિશ્વ') ||
-    nameGu.includes('વિદેશ') ||
-    name.includes('world') ||
-    name.includes('international') ||
-    loc === 'international' ||
-    loc === 'world' ||
-    loc.includes('international') ||
-    loc.includes('વિદેશ') ||
-    loc.includes('વિશ્વ')
+  // 2. Check additional category IDs
+  if (Array.isArray((art as any).categories)) {
+    for (const item of (art as any).categories) {
+      const id = item?.id || item?.categoryId || item?.category?.id;
+      if (id && WORLD_CATEGORY_IDS.includes(id)) return true;
+    }
+  }
+
+  // 3. Collect all category tokens (slugs, names, locations)
+  const tokens: string[] = [];
+  const add = (val: any) => {
+    if (typeof val === 'string' && val.trim()) tokens.push(val.toLowerCase().trim());
+  };
+
+  add(primaryCatId);
+  add((art as any).categorySlug);
+  if (typeof art.category === 'string') {
+    add(art.category);
+  } else if (art.category && typeof art.category === 'object') {
+    add((art.category as any).id);
+    add((art.category as any).slug);
+    add((art.category as any).name);
+    add((art.category as any).nameGu);
+  }
+  add((art as any).categoryName);
+  add((art as any).categoryGu);
+  add(art.location);
+
+  if (Array.isArray((art as any).categories)) {
+    for (const item of (art as any).categories) {
+      if (!item) continue;
+      add(item.id);
+      add(item.categoryId);
+      add(item.slug);
+      add(item.name);
+      add(item.nameGu);
+      if (item.category && typeof item.category === 'object') {
+        add(item.category.id);
+        add(item.category.slug);
+        add(item.category.name);
+        add(item.category.nameGu);
+      }
+    }
+  }
+
+  return tokens.some((token) =>
+    WORLD_SLUGS.includes(token) ||
+    token.includes('world') ||
+    token.includes('international') ||
+    token.includes('વિશ્વ') ||
+    token.includes('વિદેશ')
   );
+}
+
+function resolveWorldCategoryName(art: any, language: Language = 'gu'): string {
+  if (!art) return language === 'en' ? 'World' : language === 'hi' ? 'विश्व' : 'વિશ્વ';
+
+  // Check additional categories first if primary is not world/international
+  if (Array.isArray(art.categories)) {
+    for (const item of art.categories) {
+      const catObj = item.category || item;
+      const s = (catObj.slug || '').toLowerCase();
+      const n = (catObj.name || '').toLowerCase();
+      const gu = catObj.nameGu || '';
+      if (s === 'world' || n === 'world' || gu.includes('વિશ્વ')) {
+        return language === 'en' ? (catObj.name || 'World') : language === 'hi' ? (catObj.nameHi || 'विश्व') : (gu || 'વિશ્વ');
+      }
+      if (s === 'international' || n === 'international' || gu.includes('આંતરરાષ્ટ્રીય')) {
+        return language === 'en' ? (catObj.name || 'International') : language === 'hi' ? (catObj.nameHi || 'अंतर्राष्ट्रीय') : (gu || 'આંતરરાષ્ટ્રીય');
+      }
+    }
+  }
+
+  const primSlug = (art.categorySlug || art.category?.slug || '').toLowerCase();
+  const primName = (art.categoryName || art.category?.name || (typeof art.category === 'string' ? art.category : '') || '').toLowerCase();
+  if (primSlug === 'world' || primName === 'world') {
+    return language === 'en' ? 'World' : language === 'hi' ? 'विश्व' : 'વિશ્વ';
+  }
+  if (primSlug === 'international' || primName === 'international') {
+    return language === 'en' ? 'International' : language === 'hi' ? 'अंतर्राष्ट्रीय' : 'આંતરરાષ્ટ્રીય';
+  }
+
+  return (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || (language === 'en' ? 'World' : 'વિશ્વ');
 }
 
 function sortWorldArticlesLatest(list: Article[]): Article[] {
@@ -295,10 +348,8 @@ export default function WorldSection({ language, initialArticles }: { language: 
   }, [initialArticles]);
 
   useEffect(() => {
-    // Only fetch from network if initial data was not provided via SSR
-    if (initialWorld.length === 0) {
-      fetchFreshWorldArticles();
-    }
+    // Always fetch fresh latest articles from API on client mount to ensure real-time CMS sync
+    fetchFreshWorldArticles();
 
     const handleSync = () => {
       fetchFreshWorldArticles();
@@ -309,7 +360,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
     return () => {
       window.removeEventListener('gp-articles-updated', handleSync);
     };
-  }, [fetchFreshWorldArticles, initialWorld.length]);
+  }, [fetchFreshWorldArticles]);
 
   const featured = useMemo(() => {
     if (dbWorldArticles.length > 0) {
@@ -318,7 +369,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         id: art.id,
         slug: art.slug,
         image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[0],
-        categoryGu: (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || 'વિશ્વ',
+        categoryGu: resolveWorldCategoryName(art, language),
         article: art as Article,
         titleGu: art.titleGu || art.title,
         excerptGu: art.excerptGu || art.excerpt || '',
@@ -345,7 +396,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         id: art.id,
         slug: art.slug,
         image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[1],
-        categoryGu: (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || 'વિશ્વ',
+        categoryGu: resolveWorldCategoryName(art, language),
         article: art,
         titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),
@@ -377,7 +428,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         id: art.id,
         slug: art.slug,
         image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[1],
-        categoryGu: (art as any).categoryGu || (art as any).category?.nameGu || (art as any).category?.name || art.category || 'વિશ્વ',
+        categoryGu: resolveWorldCategoryName(art, language),
         article: art,
         titleGu: art.titleGu || art.title,
         time: formatTime(art.publishedAt),

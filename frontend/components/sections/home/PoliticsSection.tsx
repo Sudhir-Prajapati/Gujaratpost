@@ -28,6 +28,17 @@ function isPolitics(art: Article): boolean {
   const catId = (art as any).categoryId || (art as any).category?.id || '';
   if (catId === POLITICS_CATEGORY_ID) return true;
 
+  if (Array.isArray((art as any).categories)) {
+    for (const item of (art as any).categories) {
+      const id = item?.id || item?.categoryId || item?.category?.id;
+      if (id === POLITICS_CATEGORY_ID) return true;
+      const s = (item?.slug || item?.category?.slug || '').toLowerCase().trim();
+      const n = (item?.name || item?.category?.name || '').toLowerCase().trim();
+      const gu = (item?.nameGu || item?.category?.nameGu || '').toLowerCase().trim();
+      if (POLITICS_SLUGS.includes(s) || POLITICS_SLUGS.includes(n) || gu.includes('રાજ')) return true;
+    }
+  }
+
   const slug = (
     (art as any).category?.slug ||
     (art as any).categorySlug ||

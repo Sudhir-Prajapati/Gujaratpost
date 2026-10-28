@@ -112,7 +112,7 @@ const DetailSlideVideo = memo(function DetailSlideVideo({
       autoPlay
       muted
       onEnded={onEnded}
-      className="h-full w-full object-cover"
+      className="h-full w-full object-contain bg-black"
       poster="/assets/placeholder.jpg"
     />
   );
@@ -372,7 +372,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
 
-    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-black/5 dark:bg-black/40 shadow-sm"><img src="${sanitizeImageUrl(cleanUrl)}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-cover" /></div>${caption}</figure>`;
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-neutral-950 dark:bg-black shadow-sm"><img src="${sanitizeImageUrl(cleanUrl)}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -1733,7 +1733,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
             )}
 
             <figure className="article-fig mb-3">
-              <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-black/5 dark:bg-black/40 rounded-lg shadow-sm group">
+              <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-neutral-950 dark:bg-black rounded-lg shadow-sm group">
                 {/* Indicator Badge (only if multiple images exist) */}
                 {slideImages.length > 1 && (
                   <div className="absolute top-3.5 left-3.5 z-20 bg-black/75 backdrop-blur-sm text-white font-black text-xs px-2.5 py-1 rounded select-none shadow">
@@ -1787,7 +1787,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                           fill
                           unoptimized={true}
                           sizes="(max-width: 1024px) 100vw, 66vw"
-                          className="object-cover"
+                          className="object-contain"
+                          style={{ objectFit: 'contain', objectPosition: 'center' }}
                           loading={index === 0 ? 'eager' : 'lazy'}
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -2069,13 +2070,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                             <AutoArticleTitle article={item} language={language} />
                           </h3>
                         </div>
-                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-100 dark:bg-neutral-800 shadow-xs self-start">
+                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-xs self-start">
                           <Image
                             src={getCardThumbnail(item, index)}
                             alt={item.title || ''}
                             fill
                             sizes="114px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            className="object-contain transition-transform duration-300 group-hover:scale-105"
+                            style={{ objectFit: 'contain', objectPosition: 'center' }}
                           />
                         </div>
                       </Link>

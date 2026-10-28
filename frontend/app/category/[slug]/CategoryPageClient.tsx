@@ -1170,7 +1170,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-background min-h-0 md:min-h-screen">
       {/* Search Engine Optimization Headings (Crawlable by Googlebot / Bingbot, invisible to users so design remains untouched) */}
       {customSeo && (customSeo.h1 || customSeo.h2) && (
         <div
@@ -1192,7 +1192,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           {customSeo.h2 && <h2>{customSeo.h2}</h2>}
         </div>
       )}
-      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-14 sm:pb-20">
+      <div className="mx-auto max-w-screen-xl px-4 pt-2 pb-2 sm:pb-6 md:pb-20">
 
         {/* ── TOP ROW: Category name ─────────────────────────────── */}
         <div className="flex items-center justify-between border-b border-border pb-2 mb-3">
@@ -1585,7 +1585,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
               {/* View More — page 1 only, before pagination appears */}
               {visibleCount < displayArticles.length && !hasLoadedMore && (
-                <div className="mt-6 flex justify-center">
+                <div className="mt-4 md:mt-6 mb-2 md:mb-0 flex justify-center">
                   <button
                     type="button"
                     onClick={() => {
@@ -1604,7 +1604,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
               {/* Pagination — shown after "View More" or on page 2+ */}
               {activeTab !== 'video' && hasLoadedMore && activeTotalPages > 1 && (
-                <div className="mt-8 flex items-center justify-center gap-1.5 flex-wrap">
+                <div className="mt-4 md:mt-8 mb-2 md:mb-0 flex items-center justify-center gap-1.5 flex-wrap">
                   {/* Prev */}
                   <button
                     type="button"
@@ -1674,7 +1674,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
         {/* ── AE PAN VACHO: Also Read (24 Articles: 12 Crime + 12 Fact-Check) ─────── */}
         {alsoReadArticles.length > 0 && (
-          <div className="mt-8 border-t border-border pt-6">
+          <div className="mt-4 md:mt-8 border-t border-border pt-3 md:pt-6">
             <div className="flex items-center gap-2.5 mb-5">
               <span className="section-heading-badge bg-[#B3121B] text-white px-6 sm:px-7 py-2.5 sm:py-3 text-base sm:text-lg md:text-[20px] font-black rounded-xl select-none leading-none tracking-wide shadow-lg">
                 {getLocalized(language, { en: 'Also Read', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
@@ -1743,7 +1743,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
         {/* ── PHOTO GALLERY (8 Photos with Text Inside, Red Border matching user design) ── */}
         {galleryPhotos.length > 0 && (
-          <div className="mt-10 sm:mt-14 border-t border-border pt-8 pb-8 sm:pb-12">
+          <div className="mt-4 md:mt-14 border-t border-border pt-3 md:pt-8 pb-1 md:pb-12">
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
                 <span className="section-heading-badge bg-[#B3121B] text-white px-4 py-1.5 text-sm md:text-base font-black rounded-lg select-none leading-none tracking-tight">

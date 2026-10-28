@@ -112,13 +112,14 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
               href={`/news/${article.slug}`}
               className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-card shadow-sm hover:shadow-md transition-all duration-200"
             >
-              <div className="relative aspect-[16/9] w-full overflow-hidden">
+              <div className="relative aspect-[16/9] w-full overflow-hidden bg-neutral-950 dark:bg-neutral-900">
                 <Image
                   src={article.image}
                   alt={article.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-cover transition duration-300 group-hover:scale-103"
+                  className="object-contain transition duration-300 group-hover:scale-103"
+                  style={{ objectFit: 'contain', objectPosition: 'center' }}
                 />
                 {article.isBreaking && (
                   <span className="absolute left-2 top-2 rounded bg-accent px-1.5 py-0.5 text-[9px] font-black text-white">

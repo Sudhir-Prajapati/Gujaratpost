@@ -135,13 +135,14 @@ export default function RelatedStoriesSection({
           return (
             <div key={item.id} className="zoomhost relative group flex flex-col">
               <Link href={`/news/${item.slug}`} className="s-standard flex flex-col group">
-                <div className="imgwrap relative aspect-[3/2] overflow-hidden rounded-md mb-2 bg-neutral-100 dark:bg-neutral-800">
+                <div className="imgwrap relative aspect-[3/2] overflow-hidden rounded-md mb-2 bg-neutral-950 dark:bg-neutral-900">
                   <Image
                     src={getCardThumbnail(item, index)}
                     alt={item.title}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover transition duration-300 group-hover:scale-105"
+                    className="object-contain transition duration-300 group-hover:scale-105"
+                    style={{ objectFit: 'contain', objectPosition: 'center' }}
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
                     }}
