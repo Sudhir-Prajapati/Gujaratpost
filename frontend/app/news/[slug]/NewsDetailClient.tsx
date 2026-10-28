@@ -45,7 +45,7 @@ const ArticleContentBody = memo(function ArticleContentBody({
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const cleanHtml = useMemo(() => {
-    return (html || '')
+    const raw = (html || '')
       .replace(/\\r\\n/g, '\n')
       .replace(/\\r/g, '')
       .replace(/\\n/g, '\n')
@@ -54,6 +54,14 @@ const ArticleContentBody = memo(function ArticleContentBody({
         /(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/[^"'\s)]+?\.)(?:jpg|jpeg|png|webp|gif)/gi,
         '$1avif'
       );
+    const blocks = raw.split(/\n\s*\n+/);
+    const wrapped = blocks.map((b) => {
+      const t = b.trim();
+      if (!t) return '';
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(t)) return t;
+      return `<p class="article-para my-3">${t}</p>`;
+    });
+    return wrapped.filter(Boolean).join('\n\n');
   }, [html]);
 
   useEffect(() => {
@@ -626,31 +634,33 @@ function findMatchingCandidate(
 ): HTMLElement | null {
   if (!candidates || candidates.length === 0) return null;
 
-  const norm = (s: string) => (s || '').replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '').toLowerCase();
+  const norm = (s: string) => (s || '').replace(/[\s.,?!।:;'"“”\-–—#*•’‘]/g, '').toLowerCase();
+  const searchNorm = norm(rawChunk || chunkText || '');
 
   // 1. Direct index check first (fastest and most accurate when aligned)
   if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
     const candidate = candidates[activeElemIndex];
     const cNorm = norm(candidate.textContent || '');
-    const sNorm = norm(rawChunk || chunkText || '');
-    if (sNorm && (cNorm.includes(sNorm.slice(0, 15)) || sNorm.includes(cNorm.slice(0, 15)))) {
+    if (searchNorm && (cNorm.includes(searchNorm.slice(0, 10)) || searchNorm.includes(cNorm.slice(0, 10)))) {
       return candidate;
     }
   }
 
   // 2. Search through all candidates for a strong text match
-  const searchNorm = norm(rawChunk || chunkText || '');
   if (searchNorm.length >= 6) {
-    const searchPrefix = searchNorm.slice(0, Math.min(20, searchNorm.length));
+    const p10 = searchNorm.slice(0, Math.min(10, searchNorm.length));
+    const p20 = searchNorm.slice(0, Math.min(20, searchNorm.length));
+    const mid12 = searchNorm.length > 20 ? searchNorm.slice(8, 20) : '';
+
     for (const c of candidates) {
       const cNorm = norm(c.textContent || '');
-      if (cNorm.includes(searchPrefix) || (searchNorm.length >= 12 && cNorm.length >= 12 && searchPrefix.includes(cNorm.slice(0, 12)))) {
+      if (cNorm.includes(p20) || cNorm.includes(p10) || (mid12 && cNorm.includes(mid12))) {
         return c;
       }
     }
   }
 
-  // 3. Safe fallback to activeElemIndex ONLY if within valid bounds (never clamp to end)
+  // 3. Fallback to activeElemIndex ONLY if within valid bounds
   if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
     return candidates[activeElemIndex];
   }
@@ -1111,6 +1121,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
+    // Ensure all plain text paragraphs are properly wrapped in <p> elements
+    const rawBlocks = cleaned.split(/\n\s*\n+/);
+    const wrappedBlocks = rawBlocks.map((block) => {
+      const trimmed = block.trim();
+      if (!trimmed) return '';
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
+        return trimmed;
+      }
+      return `<p class="article-para my-3">${trimmed}</p>`;
+    });
+    cleaned = wrappedBlocks.filter(Boolean).join('\n\n');
     return cleaned;
   }, [body, title, language, article, hasPdfPages]);
 
