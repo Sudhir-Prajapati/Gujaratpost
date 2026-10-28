@@ -294,8 +294,12 @@ interface ChunkEntry {
         });
       }
       if (cleanBody) {
-        const bChunks = chunkTextIntoSentences(cleanBody);
-        bChunks.forEach((c: string) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+        const bodyParas = cleanBody.split(/(?:\r?\n\s*){2,}|(?:\.\s*\n)/).map(p => p.trim()).filter(Boolean);
+        for (const bp of (bodyParas.length > 0 ? bodyParas : [cleanBody])) {
+          const bChunks = chunkTextIntoSentences(bp);
+          bChunks.forEach((c: string) => chunkEntries.push({ chunkText: c, elemIndex: curElemIdx }));
+          curElemIdx++;
+        }
       }
     }
 

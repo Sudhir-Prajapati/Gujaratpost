@@ -75,6 +75,8 @@ const ArticleContentBody = memo(function ArticleContentBody({
   return (
     <div
       ref={bodyRef}
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: cleanHtml }}
       className="article-body text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[17px] sm:[&_p]:text-[18px] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4"
     />
   );
@@ -634,19 +636,14 @@ function findMatchingCandidate(
 ): HTMLElement | null {
   if (!candidates || candidates.length === 0) return null;
 
-  const norm = (s: string) => (s || '').replace(/[\s.,?!।:;'"“”\-–—#*•’‘]/g, '').toLowerCase();
-  const searchNorm = norm(rawChunk || chunkText || '');
-
-  // 1. Direct index check first (fastest and most accurate when aligned)
+  // 1. Direct index check (100% exact since speechItems is built directly in visual document order)
   if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
-    const candidate = candidates[activeElemIndex];
-    const cNorm = norm(candidate.textContent || '');
-    if (searchNorm && (cNorm.includes(searchNorm.slice(0, 10)) || searchNorm.includes(cNorm.slice(0, 10)))) {
-      return candidate;
-    }
+    return candidates[activeElemIndex];
   }
 
-  // 2. Search through all candidates for a strong text match
+  // 2. Text search fallback if activeElemIndex was out of bounds
+  const norm = (s: string) => (s || '').replace(/[\s.,?!।:;'"“”\-–—#*•’‘]/g, '').toLowerCase();
+  const searchNorm = norm(chunkText || rawChunk || '');
   if (searchNorm.length >= 6) {
     const p10 = searchNorm.slice(0, Math.min(10, searchNorm.length));
     const p20 = searchNorm.slice(0, Math.min(20, searchNorm.length));
@@ -658,11 +655,6 @@ function findMatchingCandidate(
         return c;
       }
     }
-  }
-
-  // 3. Fallback to activeElemIndex ONLY if within valid bounds
-  if (activeElemIndex >= 0 && activeElemIndex < candidates.length) {
-    return candidates[activeElemIndex];
   }
 
   return null;
@@ -1329,48 +1321,46 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     // 1: Subheading (Excerpt)
     // 2..K: Highlights (All points)
     // K..N: All Body Paragraphs (First to Last)
+    const root = articleContainerRef.current;
+    const domCandidates = root ? getReadableArticleCandidates(root) : [];
+
     const speechItems: { text: string; elemIndex: number }[] = [];
-    let elemIdxCounter = 0;
 
-    const cleanTitle = cleanTextForSpeech(speechTitle);
-    if (cleanTitle) {
-      speechItems.push({ text: cleanTitle, elemIndex: elemIdxCounter++ });
+    // Prioritize direct DOM candidate elements so speech items match visual elements 1-to-1
+    if (domCandidates.length > 2) {
+      domCandidates.forEach((el, idx) => {
+        const t = cleanTextForSpeech(el.textContent || '');
+        if (t.length > 2) {
+          speechItems.push({ text: t, elemIndex: idx });
+        }
+      });
     }
 
-    const cleanSub = cleanTextForSpeech(speechExcerpt);
-    if (cleanSub && cleanSub !== cleanTitle) {
-      speechItems.push({ text: cleanSub, elemIndex: elemIdxCounter++ });
-    }
+    // Fallback if DOM candidates were not ready yet
+    if (speechItems.length === 0) {
+      let elemIdxCounter = 0;
+      const cleanTitle = cleanTextForSpeech(speechTitle);
+      if (cleanTitle) speechItems.push({ text: cleanTitle, elemIndex: elemIdxCounter++ });
 
-    if (gistPoints && Array.isArray(gistPoints) && gistPoints.length > 0) {
-      for (const pt of gistPoints) {
-        const cleanPt = cleanTextForSpeech(pt);
-        if (cleanPt && cleanPt.length > 2) {
-          speechItems.push({ text: cleanPt, elemIndex: elemIdxCounter++ });
+      const cleanSub = cleanTextForSpeech(speechExcerpt);
+      if (cleanSub && cleanSub !== cleanTitle) speechItems.push({ text: cleanSub, elemIndex: elemIdxCounter++ });
+
+      if (gistPoints && Array.isArray(gistPoints)) {
+        for (const pt of gistPoints) {
+          const cleanPt = cleanTextForSpeech(pt);
+          if (cleanPt && cleanPt.length > 2) speechItems.push({ text: cleanPt, elemIndex: elemIdxCounter++ });
         }
       }
-    }
 
-    // Body: Extract EVERY paragraph so the reader continues reading the body without stopping!
-    const bodyParagraphs = (displayParagraphs && displayParagraphs.length > 0)
-      ? displayParagraphs
-      : parseArticleBodyBlocks(speechBody, langToUse, (article as any)?.pdfUrl || (article as any)?.pdf);
+      const bodyParagraphs = (displayParagraphs && displayParagraphs.length > 0)
+        ? displayParagraphs
+        : parseArticleBodyBlocks(speechBody, langToUse, (article as any)?.pdfUrl || (article as any)?.pdf);
 
-    if (bodyParagraphs && bodyParagraphs.length > 0) {
-      for (const p of bodyParagraphs) {
-        const cleanP = cleanTextForSpeech(p);
-        if (cleanP && cleanP.length > 3) {
-          speechItems.push({ text: cleanP, elemIndex: elemIdxCounter++ });
+      if (bodyParagraphs && bodyParagraphs.length > 0) {
+        for (const p of bodyParagraphs) {
+          const cleanP = cleanTextForSpeech(p);
+          if (cleanP && cleanP.length > 3) speechItems.push({ text: cleanP, elemIndex: elemIdxCounter++ });
         }
-      }
-    } else if (speechBody) {
-      const rawBlocks = speechBody
-        .split(/<\/p>|<\/div>|<\/li>|<\/h[1-6]>|<\/blockquote>|\r?\n\r?\n+/gi)
-        .map((p: string) => cleanTextForSpeech(p))
-        .filter((p: string) => p && p.length > 3);
-
-      for (const p of rawBlocks) {
-        speechItems.push({ text: p, elemIndex: elemIdxCounter++ });
       }
     }
 
@@ -1917,6 +1907,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                 );
               }
 
+              const isExpandedState = isContentExpanded || speaking;
+
               return (
                 <div className="relative">
                   <ArticleContentBody html={topHtml} activeSpeechText={activeSpeechText} />
@@ -1924,7 +1916,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   {/* IN_ARTICLE Ad Banner displayed inside description */}
                   <AdSectionBanner section="IN_ARTICLE" className="my-6" />
 
-                  {!isContentExpanded ? (
+                  {!isExpandedState && (
                     <div className="relative pt-2 pb-2">
                       {/* Smooth gradient fade overlay */}
                       <div className="absolute -top-28 inset-x-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-[#0d1117] dark:via-[#0d1117]/90 dark:to-transparent pointer-events-none" />
@@ -1946,70 +1938,70 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4 transition-all duration-500 ease-in-out">
-                      <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
-
-                      {/* Full PDF Page-by-Page Document Viewer */}
-                      {hasPdfPages && pdfDocumentUrl && (
-                        <ArticlePdfPagesViewer
-                          pdfUrl={pdfDocumentUrl}
-                          language={language}
-                          title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
-                        />
-                      )}
-
-                      {/* Horizontal Ad Banner placed directly after full article description */}
-                      <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
-
-                      {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
-                      {readAlsoPool.length > 0 && (
-                        <AlsoPanVacho
-                          articles={readAlsoPool}
-                          language={language}
-                          getCardThumbnail={getCardThumbnail}
-                          DEMO_THUMBNAILS={DEMO_THUMBNAILS}
-                          uiLabel={uiLabel}
-                        />
-                      )}
-
-                      {/* Topics Tags directly inside article after Aa Pan Vacho */}
-                      {tags.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
-                          <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-                            {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
-                          </span>
-                          {tags.map((tag, tIdx) => (
-                            <Link
-                              key={tIdx}
-                              href={getTopicHref(tag)}
-                              className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-                            >
-                              {normalizeDisplayText(tag)}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Collapse / Read Less Button */}
-                      <div className="flex justify-center pt-6 pb-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsContentExpanded(false);
-                            setSidebarMoreRecommended(false);
-                            window.scrollTo({ top: 380, behavior: 'smooth' });
-                          }}
-                          className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
-                        >
-                          <span className="text-base md:text-lg font-black tracking-wide leading-none">
-                            {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
-                          </span>
-                          <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
-                        </button>
-                      </div>
-                    </div>
                   )}
+
+                  <div className={isExpandedState ? 'space-y-4 transition-all duration-500 ease-in-out' : 'hidden'}>
+                    <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
+
+                    {/* Full PDF Page-by-Page Document Viewer */}
+                    {hasPdfPages && pdfDocumentUrl && (
+                      <ArticlePdfPagesViewer
+                        pdfUrl={pdfDocumentUrl}
+                        language={language}
+                        title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
+                      />
+                    )}
+
+                    {/* Horizontal Ad Banner placed directly after full article description */}
+                    <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
+
+                    {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
+                    {readAlsoPool.length > 0 && (
+                      <AlsoPanVacho
+                        articles={readAlsoPool}
+                        language={language}
+                        getCardThumbnail={getCardThumbnail}
+                        DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+                        uiLabel={uiLabel}
+                      />
+                    )}
+
+                    {/* Topics Tags directly inside article after Aa Pan Vacho */}
+                    {tags.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
+                        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
+                          {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
+                        </span>
+                        {tags.map((tag, tIdx) => (
+                          <Link
+                            key={tIdx}
+                            href={getTopicHref(tag)}
+                            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
+                          >
+                            {normalizeDisplayText(tag)}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Collapse / Read Less Button */}
+                    <div className="flex justify-center pt-6 pb-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsContentExpanded(false);
+                          setSidebarMoreRecommended(false);
+                          window.scrollTo({ top: 380, behavior: 'smooth' });
+                        }}
+                        className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
+                      >
+                        <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                          {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
+                        </span>
+                        <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
               );
             })()}
