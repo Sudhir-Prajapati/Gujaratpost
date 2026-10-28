@@ -45,20 +45,38 @@ const ArticleContentBody = memo(function ArticleContentBody({
   const bodyRef = useRef<HTMLDivElement>(null);
 
   const cleanHtml = useMemo(() => {
-    const raw = (html || '')
+    let raw = (html || '')
       .replace(/\\r\\n/g, '\n')
+      .replace(/\r\n/g, '\n')
       .replace(/\\r/g, '')
+      .replace(/\r/g, '')
       .replace(/\\n/g, '\n')
       .replace(/\\t/g, ' ')
       .replace(
         /(https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\/[^"'\s)]+?\.)(?:jpg|jpeg|png|webp|gif)/gi,
         '$1avif'
       );
+
+    // Remove empty spacer divs and spacer paragraphs
+    raw = raw
+      .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
+      .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
+
+    // Convert paragraph-level <div> to <p class="article-para my-3">
+    raw = raw.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
+      if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
+        return match;
+      }
+      const plain = inner.replace(/<[^>]*>/g, '').trim();
+      if (!plain) return '';
+      return `<p class="article-para my-3"${attrs}>${inner}</p>`;
+    });
+
     const blocks = raw.split(/\n\s*\n+/);
     const wrapped = blocks.map((b) => {
       const t = b.trim();
       if (!t) return '';
-      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(t)) return t;
+      if (/^<(p|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(t)) return t;
       return `<p class="article-para my-3">${t}</p>`;
     });
     return wrapped.filter(Boolean).join('\n\n');
@@ -610,16 +628,28 @@ function getReadableArticleCandidates(root: HTMLElement): HTMLElement[] {
     }
   }
 
+  // Support both p and div paragraphs inside .article-body
   const bodyElems = Array.from(
     root.querySelectorAll<HTMLElement>(
-      '.article-body p, .article-body > div > p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3'
+      '.article-body p, .article-body > div, .article-body > p, .article-body li, .article-body blockquote, .article-body h2, .article-body h3'
     )
   );
 
   for (const el of bodyElems) {
-    if (!candidates.includes(el) && el !== h1Elem && el !== subElem && !subElem?.contains(el)) {
+    if (
+      !candidates.includes(el) &&
+      el !== h1Elem &&
+      el !== subElem &&
+      !subElem?.contains(el) &&
+      !el.closest('.byline') &&
+      !el.closest('.art-kick') &&
+      !el.closest('figure') &&
+      !el.closest('.gp-pdf-card') &&
+      !el.closest('.also-pan-vacho') &&
+      !el.querySelector('p, div, blockquote, figure') // Leaf block elements only
+    ) {
       const text = (el.textContent || '').trim();
-      if (text.length > 3 && !el.closest('.byline') && !el.closest('.art-kick') && !el.closest('figure')) {
+      if (text.length > 3) {
         candidates.push(el);
       }
     }
@@ -1113,12 +1143,27 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
+    // Clean empty spacer divs and empty paragraphs
+    cleaned = cleaned
+      .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
+      .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
+
+    // Convert paragraph-level <div> into proper <p class="article-para my-3"> elements
+    cleaned = cleaned.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
+      if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
+        return match;
+      }
+      const plain = inner.replace(/<[^>]*>/g, '').trim();
+      if (!plain) return '';
+      return `<p class="article-para my-3"${attrs}>${inner}</p>`;
+    });
+
     // Ensure all plain text paragraphs are properly wrapped in <p> elements
     const rawBlocks = cleaned.split(/\n\s*\n+/);
     const wrappedBlocks = rawBlocks.map((block) => {
       const trimmed = block.trim();
       if (!trimmed) return '';
-      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
+      if (/^<(p|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
         return trimmed;
       }
       return `<p class="article-para my-3">${trimmed}</p>`;
@@ -1326,8 +1371,13 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     const speechItems: { text: string; elemIndex: number }[] = [];
 
-    // Prioritize direct DOM candidate elements so speech items match visual elements 1-to-1
-    if (domCandidates.length > 2) {
+    // Count how many readable body candidates exist in the DOM
+    const bodyCandidates = domCandidates.filter(
+      (el) => el.closest('.article-body') || el.classList.contains('article-para')
+    );
+
+    // Prioritize direct DOM candidates if both headings and body candidates are ready
+    if (domCandidates.length > 0 && bodyCandidates.length > 0) {
       domCandidates.forEach((el, idx) => {
         const t = cleanTextForSpeech(el.textContent || '');
         if (t.length > 2) {
