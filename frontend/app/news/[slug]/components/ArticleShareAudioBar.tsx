@@ -13,6 +13,8 @@ import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
 export interface ArticleShareAudioBarProps {
   title: string;
   articleUrl: string;
+  subheading?: string;
+  excerpt?: string;
   body?: string;
   language?: Language;
   copied?: boolean;
@@ -29,6 +31,8 @@ export interface ArticleShareAudioBarProps {
 
 export default function ArticleShareAudioBar({
   title,
+  subheading,
+  excerpt,
   articleUrl,
   body,
   language = 'gu',
@@ -74,6 +78,7 @@ export default function ArticleShareAudioBar({
       stopArticleAudio();
       playArticleAudio({
         title,
+        subheading: subheading || excerpt,
         body: body || audioText,
         language,
         onStart: () => setInternalSpeaking(true),
@@ -81,7 +86,7 @@ export default function ArticleShareAudioBar({
         onError: () => setInternalSpeaking(false),
       });
     }
-  }, [language, internalSpeaking, title, body, audioText, toggleAudio]);
+  }, [language, internalSpeaking, title, subheading, excerpt, body, audioText, toggleAudio]);
 
   const ui = (values: { en: string; gu: string; hi: string }) => {
     if (uiLabel) return uiLabel(language, values);
