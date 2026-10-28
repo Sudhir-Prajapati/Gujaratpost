@@ -621,6 +621,22 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [isBreaking, setIsBreaking] = useState(false);
   const [isFeatured, setIsFeatured] = useState(false);
 
+  const handleToggleTrendingStory = useCallback((explicitValue?: boolean) => {
+    setIsTrending((prev) => {
+      const next = explicitValue !== undefined ? explicitValue : !prev;
+      const tCat = categories.find((c) => c.slug === 'trending' || c.name?.toLowerCase() === 'trending');
+      if (tCat) {
+        if (next) {
+          setAdditionalCategoryIds((old) => Array.from(new Set([...old, tCat.id])));
+        } else {
+          setAdditionalCategoryIds((old) => old.filter((id) => id !== tCat.id));
+          setCategoryId((old) => (old === tCat.id ? '' : old));
+        }
+      }
+      return next;
+    });
+  }, [categories]);
+
   // SEO Fields
   const [seoTitle, setSeoTitle] = useState('');
   const [seoDescription, setSeoDescription] = useState('');
@@ -1612,17 +1628,6 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           setScheduledAt('');
         }
         setPriority(art.priority || 0);
-        setReadingTime(art.readingTime || 3);
-        setIsTrending(art.isTrending || false);
-        setIsBreaking(art.isBreaking || false);
-        setIsFeatured(art.isFeatured || false);
-
-        setSeoTitle(art.seoTitle || '');
-        setSeoDescription(art.seoDescription || '');
-        setSeoKeywords(art.seoKeywords || '');
-        setCanonicalUrl(art.canonicalUrl || '');
-        setMetaRobots(art.metaRobots || 'index, follow');
-
         const primaryCatId = art.categoryId || art.category?.id || '';
         let loadedAddCats: string[] = [];
 
@@ -1631,6 +1636,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .map((pc: any) => pc.categoryId || pc.category?.id || pc.id)
             .filter((id: string) => id && id !== primaryCatId);
         }
+
+        const isTrendingFromCat = Boolean(
+          art.category?.slug === 'trending' ||
+          art.categories?.some((c: any) => (c.category?.slug || c.slug) === 'trending')
+        );
+        setIsTrending(Boolean(art.isTrending || isTrendingFromCat));
+        setIsBreaking(art.isBreaking || false);
+        setIsFeatured(art.isFeatured || false);
+
+        setSeoTitle(art.seoTitle || '');
+        setSeoDescription(art.seoDescription || '');
+        setSeoKeywords(art.seoKeywords || '');
+        setCanonicalUrl(art.canonicalUrl || '');
+        setMetaRobots(art.metaRobots || 'index, follow');
 
         if (art.tags && art.tags.length > 0) {
           const names = art.tags
@@ -2999,7 +3018,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     <span>Trending Story</span>
                     <button
                       type="button"
-                      onClick={() => setIsTrending(false)}
+                      onClick={() => handleToggleTrendingStory(false)}
                       className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20"
                       title="Remove Trending Story promotion"
                     >
@@ -3199,7 +3218,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   <div
                     key={cat.id}
                     onClick={() => {
+                      const isTrendingCat = cat.slug === 'trending' || cat.name?.toLowerCase() === 'trending';
                       if (!isChecked) {
+                        if (isTrendingCat) setIsTrending(true);
                         if (!categoryId) {
                           handleCategorySelect(cat.id);
                         } else {
@@ -3207,6 +3228,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         }
                       } else {
                         // Unchecking
+                        if (isTrendingCat) setIsTrending(false);
                         if (isPrimary) {
                           if (additionalCategoryIds.length > 0) {
                             const nextPrimary = additionalCategoryIds[0];
@@ -3521,7 +3543,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                             return (
                               <div
                                 key="__trending_story_card__"
-                                onClick={() => setIsTrending(!isTrending)}
+                                onClick={() => handleToggleTrendingStory()}
                                 className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
                                   isTrending
                                     ? 'border-blue-500 bg-blue-50/80 text-blue-950 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-100 shadow-xs ring-1 ring-blue-500/30'
@@ -3680,7 +3702,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   <input
                     type="checkbox"
                     checked={isTrending}
-                    onChange={(e) => setIsTrending(e.target.checked)}
+                    onChange={(e) => handleToggleTrendingStory(e.target.checked)}
                     className="h-4 w-4 rounded border-gray-400 text-blue-600 focus:ring-blue-500 cursor-pointer"
                   />
                 </div>

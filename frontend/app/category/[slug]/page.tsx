@@ -82,7 +82,7 @@ export default async function CategoryPage({
 
   // Known categories have local metadata, so only fetch their article feed before rendering.
   // Custom database categories still need the category list for validation and labels.
-  const [dbCategories, catRes, politicsRes] = await Promise.all([
+  const [dbCategories, catRes, politicsRes, trendingRes] = await Promise.all([
     fallbackCat ? Promise.resolve([]) : getPublicCategories().catch(() => []),
     getPublicArticles({
       categorySlug: resolvedSlug === 'trending' ? undefined : resolvedSlug,
@@ -93,6 +93,9 @@ export default async function CategoryPage({
     resolvedSlug === 'trending'
       ? getPublicArticles({ categorySlug: 'politics', limit: 10 }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
       : Promise.resolve({ articles: [], total: 0, totalPages: 1 }),
+    resolvedSlug === 'trending'
+      ? Promise.resolve({ articles: [], total: 0, totalPages: 1 })
+      : getPublicArticles({ isTrending: true, limit: 10 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);
@@ -129,12 +132,13 @@ export default async function CategoryPage({
 
   const articles = sortArticlesByLatest(rawArticles);
   const politicsArticles = sortArticlesByLatest(politicsRes?.articles || []);
+  const trendingArticles = sortArticlesByLatest(trendingRes?.articles || []);
 
   return (
     <CategoryPageClient
       articles={articles}
       category={categoryData}
-      trending={[]}
+      trending={trendingArticles}
       politicsArticles={politicsArticles}
       customSeo={customSeo}
       currentPage={page}

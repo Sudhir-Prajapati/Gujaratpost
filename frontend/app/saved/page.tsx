@@ -122,10 +122,10 @@ export default function SavedPage() {
   const handleClearAll = () => {
     const confirmMsg =
       language === 'gu'
-        ? 'શું તમે બધા સાચવેલા લેખો દૂર કરવા માંગો છો?'
+        ? 'શું તમે બધા સાચવેલા સમાચાર દૂર કરવા માંગો છો?'
         : language === 'hi'
-        ? 'क्या आप सभी सहेजे गए लेख हटाना चाहते हैं?'
-        : 'Are you sure you want to remove all saved articles?';
+        ? 'क्या आप सभी सहेजे गए समाचार हटाना चाहते हैं?'
+        : 'Are you sure you want to remove all saved news?';
     if (window.confirm(confirmMsg)) {
       try {
         localStorage.removeItem('gp-saved-articles');
@@ -137,20 +137,22 @@ export default function SavedPage() {
     }
   };
 
-  const titleText = getLocalized(language, {
-    en: 'Saved Articles',
-    gu: 'સાચવેલા લેખ',
-    hi: 'સહેજે ગયા લેખ',
-  });
+  const titleText =
+    language === 'en'
+      ? 'Saved News'
+      : language === 'hi'
+      ? 'सहेजे गए समाचार'
+      : 'સાચવેલા સમાચાર';
 
-  const emptyText = getLocalized(language, {
-    en: 'No articles saved yet. Click on the 🔖 bookmark icon on any article across the website to save and read it anytime.',
-    gu: 'હજુ સુધી કોઈ લેખ સાચવ્યો નથી. વેબસાઇટ પરના કોઈપણ સમાચાર પર 🔖 બુકમાર્ક આઇકન પર ક્લિક કરીને તેને અહીં સાચવી શકો છો.',
-    hi: 'अभी तक कोई लेख सहेजा नहीं गया है। वेबसाइट पर किसी भी समाचार पर 🔖 बुकमार्क आइकन पर क्लिक करके उसे सहेजें।',
-  });
+  const emptyText =
+    language === 'en'
+      ? 'No news saved yet. Click on the 🔖 bookmark icon on any article across the website to save and read it anytime.'
+      : language === 'hi'
+      ? 'अभी तक कोई समाचार सहेजा नहीं गया है। वेबसाइट पर किसी भी समाचार पर 🔖 बुकमार्क आइकन पर क्लिक करके उसे सहेजें।'
+      : 'હજુ સુધી કોઈ સમાચાર સાચવ્યા નથી. વેબસાઇટ પરના કોઈપણ સમાચાર પર 🔖 બુકમાર્ક આઇકન પર ક્લિક કરીને તેને અહીં સાચવી શકો છો.';
 
   return (
-    <div className="mx-auto max-w-screen-xl px-3 sm:px-4 py-6 sm:py-8">
+    <div className="mx-auto max-w-screen-xl px-3 sm:px-4 py-6 sm:py-8" key={`saved-page-${language}`}>
       {/* Top Header Banner */}
       <div className="relative border-b-2 border-slate-900 pb-2.5 mb-6 flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-3">
@@ -160,7 +162,7 @@ export default function SavedPage() {
           </span>
           {savedArticles.length > 0 && (
             <span className="text-xs sm:text-sm font-black text-muted-foreground bg-muted px-2.5 py-1 rounded-full border border-border">
-              {savedArticles.length} {language === 'gu' ? 'લેખ' : language === 'hi' ? 'लेख' : 'Articles'}
+              {savedArticles.length} {language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News'}
             </span>
           )}
         </div>
@@ -194,7 +196,7 @@ export default function SavedPage() {
             <Bookmark className="h-10 w-10 text-[#B3121B] stroke-[1.8]" />
           </div>
           <h2 className="text-lg sm:text-xl font-black text-foreground mb-2">
-            {language === 'gu' ? 'કોઈ સાચવેલા સમાચાર નથી' : language === 'hi' ? 'कोई सहेजा गया समाचार नहीं' : 'No Saved Articles Yet'}
+            {language === 'gu' ? 'કોઈ સાચવેલા સમાચાર નથી' : language === 'hi' ? 'कोई सहेजा गया समाचार नहीं' : 'No Saved News Yet'}
           </h2>
           <p className="text-muted-foreground text-xs sm:text-sm font-medium max-w-md leading-relaxed mb-6">
             {emptyText}

@@ -24,7 +24,8 @@ const labels: Record<string, Record<Language, string>> = {
   'Home': { gu: 'હોમ', en: 'Home', hi: 'होम' },
   'Back to Home': { gu: 'હોમ પર પાછા જાઓ', en: 'Back to Home', hi: 'होम पर वापस जाएँ' },
   'Open Cookie Settings': { gu: 'કૂકી સેટિંગ્સ ખોલો', en: 'Open Cookie Settings', hi: 'कुकी सेटिंग्स खोलें' },
-  'Saved Articles': { gu: 'સાચવેલા લેખ', en: 'Saved Articles', hi: 'सहेजे गए लेख' },
+  'Saved Articles': { gu: 'સાચવેલા સમાચાર', en: 'Saved News', hi: 'सहेजे गए समाचार' },
+  'Saved News': { gu: 'સાચવેલા સમાચાર', en: 'Saved News', hi: 'सहेजे गए समाचार' },
 };
 
 function knownLabel(text: string, language: Language) {

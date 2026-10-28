@@ -217,8 +217,27 @@ export class ArticleController {
                   { category: { slug: { in: catSlugsToMatch } } },
                   { categories: { some: { category: { slug: { in: catSlugsToMatch } } } } },
                 ]),
+            ...(catSlugLower === 'trending' ? [{ isTrending: true }] : []),
             { location: { contains: catSlugLower } },
             { location: { contains: categorySlug } },
+          ],
+        });
+      }
+
+      if (req.query.isTrending === 'true') {
+        const trendingCat = await prisma.category.findFirst({
+          where: { OR: [{ slug: 'trending' }, { name: 'Trending' }] },
+          select: { id: true },
+        });
+        andConditions.push({
+          OR: [
+            { isTrending: true },
+            ...(trendingCat
+              ? [
+                  { categoryId: trendingCat.id },
+                  { categories: { some: { categoryId: trendingCat.id } } },
+                ]
+              : []),
           ],
         });
       }
@@ -539,6 +558,29 @@ export class ArticleController {
         },
       }));
 
+      // Automatically keep isTrending and trending category in sync
+      const trendingCat = await prisma.category.findFirst({
+        where: {
+          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'ટ્રેન્ડિંગ' }],
+        },
+        select: { id: true },
+      });
+
+      const initialSelectedCatIds = Array.from(
+        new Set([
+          categoryId,
+          ...(Array.isArray(categoryIds) ? categoryIds : []),
+          ...(Array.isArray(additionalCategoryIds) ? additionalCategoryIds : []),
+        ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
+      );
+
+      const hasTrendingCat = Boolean(trendingCat && initialSelectedCatIds.includes(trendingCat.id));
+      const effectiveTrending = Boolean(isTrending || hasTrendingCat);
+
+      if (effectiveTrending && trendingCat && !initialSelectedCatIds.includes(trendingCat.id)) {
+        initialSelectedCatIds.push(trendingCat.id);
+      }
+
       const post = await prisma.post.create({
         data: {
           slug: postSlug,
@@ -561,7 +603,7 @@ export class ArticleController {
           location: location ? String(location).trim() : null,
           priority: priority ? Number(priority) : 0,
           readingTime: readingTime ? Number(readingTime) : 0,
-          isTrending: !!isTrending,
+          isTrending: effectiveTrending,
           isBreaking: !!isBreaking,
           isFeatured: !!isFeatured,
           seoTitle: (seoTitle || '').trim(),
@@ -570,13 +612,7 @@ export class ArticleController {
           canonicalUrl: (canonicalUrl || '').trim(),
           metaRobots: (metaRobots || '').trim(),
           categories: {
-            create: Array.from(
-              new Set([
-                categoryId,
-                ...(Array.isArray(categoryIds) ? categoryIds : []),
-                ...(Array.isArray(additionalCategoryIds) ? additionalCategoryIds : []),
-              ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
-            ).map((cId) => ({ categoryId: cId })),
+            create: initialSelectedCatIds.map((cId) => ({ categoryId: cId })),
           },
           tags: {
             create: tagConnectOrCreate.map((t: any) => ({
@@ -685,11 +721,16 @@ export class ArticleController {
           updateData.scheduledAt = null;
         }
       }
-      if (categoryId !== undefined) updateData.categoryId = categoryId;
+      const trendingCat = await prisma.category.findFirst({
+        where: {
+          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'ટ્રેન્ડિંગ' }],
+        },
+        select: { id: true },
+      });
 
       if (categoryId !== undefined || req.body.categoryIds !== undefined || req.body.additionalCategoryIds !== undefined) {
         const finalPrimaryCatId = categoryId !== undefined ? categoryId : existingPost.categoryId;
-        const allSelectedCatIds = Array.from(
+        let allSelectedCatIds = Array.from(
           new Set([
             finalPrimaryCatId,
             ...(Array.isArray(req.body.categoryIds) ? req.body.categoryIds : []),
@@ -697,12 +738,42 @@ export class ArticleController {
           ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
         );
 
+        const hasTrendingCat = Boolean(trendingCat && allSelectedCatIds.includes(trendingCat.id));
+        let effectiveTrending = isTrending !== undefined ? !!isTrending : existingPost.isTrending;
+
+        if (hasTrendingCat) {
+          effectiveTrending = true;
+        } else if (isTrending === false && trendingCat) {
+          allSelectedCatIds = allSelectedCatIds.filter((cid) => cid !== trendingCat.id);
+        }
+
+        if (effectiveTrending && trendingCat && !allSelectedCatIds.includes(trendingCat.id)) {
+          allSelectedCatIds.push(trendingCat.id);
+        }
+
+        updateData.isTrending = effectiveTrending;
+
         updateData.categories = {
           deleteMany: {},
           create: allSelectedCatIds.map((cId) => ({
             categoryId: cId,
           })),
         };
+      } else if (isTrending !== undefined) {
+        updateData.isTrending = !!isTrending;
+        if (trendingCat) {
+          if (isTrending) {
+            await prisma.postCategory.upsert({
+              where: { postId_categoryId: { postId: id, categoryId: trendingCat.id } },
+              create: { postId: id, categoryId: trendingCat.id },
+              update: {},
+            }).catch(() => {});
+          } else {
+            await prisma.postCategory.deleteMany({
+              where: { postId: id, categoryId: trendingCat.id },
+            }).catch(() => {});
+          }
+        }
       }
 
       if (authorName && typeof authorName === 'string' && authorName.trim() !== '') {
@@ -740,7 +811,7 @@ export class ArticleController {
               image: '/logo.png',
               designation: 'Reporter',
               designationGu: 'રિપોર્ટર',
-              designationHi: 'रिपोर्टर',
+              designationHi: 'रिपोर्टર',
               bio: `Reporter at Gujarat Post`,
               bioGu: `ગુજરાત પોસ્ટ રિપોર્ટર`,
               bioHi: `गुजरात पोस्ट रिपोर्टर`,
@@ -753,7 +824,7 @@ export class ArticleController {
       }
       if (priority !== undefined) updateData.priority = Number(priority);
       if (readingTime !== undefined) updateData.readingTime = Number(readingTime);
-      if (isTrending !== undefined) updateData.isTrending = !!isTrending;
+      if (isTrending !== undefined && updateData.isTrending === undefined) updateData.isTrending = !!isTrending;
       if (isBreaking !== undefined) updateData.isBreaking = !!isBreaking;
       if (isFeatured !== undefined) updateData.isFeatured = !!isFeatured;
       if (articleNumber !== undefined && articleNumber !== null && String(articleNumber).trim() !== '') {
