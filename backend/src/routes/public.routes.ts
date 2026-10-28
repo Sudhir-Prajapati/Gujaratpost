@@ -533,6 +533,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
           where.OR = [
             { categoryId: { in: categoryIds } },
             { categories: { some: { categoryId: { in: categoryIds } } } },
+            ...(slugLower === 'trending' ? [{ isTrending: true }] : []),
           ];
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
@@ -566,7 +567,47 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       }
     }
 
-    if (isTrending) where.isTrending = true;
+    if (isTrending) {
+      const trendingCacheKey = '__trending_cat_ids__';
+      let trendingCatIds: string[] = [];
+      const cached = categoryLookupCache.get(trendingCacheKey);
+      if (cached && Date.now() < cached.expiresAt) {
+        trendingCatIds = cached.ids;
+      } else {
+        const tCats = await withDbRetry(() =>
+          prisma.category.findMany({
+            where: {
+              OR: [
+                { slug: 'trending' },
+                { name: 'Trending' },
+                { nameGu: 'ટ્રેન્ડિંગ' },
+              ],
+            },
+            select: { id: true },
+          })
+        );
+        trendingCatIds = tCats.map((c) => c.id);
+        categoryLookupCache.set(trendingCacheKey, {
+          ids: trendingCatIds,
+          expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
+        });
+      }
+
+      const trendingConditions: any[] = [{ isTrending: true }];
+      if (trendingCatIds.length > 0) {
+        trendingConditions.push(
+          { categoryId: { in: trendingCatIds } },
+          { categories: { some: { categoryId: { in: trendingCatIds } } } }
+        );
+      }
+
+      if (where.OR) {
+        if (!where.AND) where.AND = [];
+        where.AND.push({ OR: trendingConditions });
+      } else {
+        where.OR = trendingConditions;
+      }
+    }
     if (isBreaking) where.isBreaking = true;
     if (isFeatured) where.isFeatured = true;
 

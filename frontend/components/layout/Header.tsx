@@ -748,12 +748,12 @@ export default function Header() {
                 )}
               </button>
 
-              {/* Saved Articles */}
+              {/* Saved News */}
               <Link
                 href="/saved"
                 className="group relative hidden md:inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
-                title={language === 'gu' ? 'સાચવેલા લેખ' : language === 'hi' ? 'सहेजे गए लेख' : 'Saved Articles'}
-                aria-label={language === 'gu' ? 'સાચવેલા લેખ' : language === 'hi' ? 'सहेजे गए लेख' : 'Saved Articles'}
+                title={language === 'gu' ? 'સાચવેલા સમાચાર' : language === 'hi' ? 'सहेजे गए समाचार' : 'Saved News'}
+                aria-label={language === 'gu' ? 'સાચવેલા સમાચાર' : language === 'hi' ? 'सहेजे गए समाचार' : 'Saved News'}
               >
                 <Bookmark className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                 {savedCount > 0 && (
@@ -899,12 +899,12 @@ export default function Header() {
                 </div>
                 <div className="flex flex-col">
                   <span className="text-[14px] font-black text-foreground group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                    {language === 'gu' ? 'સાચવેલા લેખ' : language === 'hi' ? 'सहेजे गए लेख' : 'Saved Articles'}
+                    {language === 'gu' ? 'સાચવેલા સમાચાર' : language === 'hi' ? 'सहेजे गए समाचार' : 'Saved News'}
                   </span>
                   <span className="text-[11.5px] font-medium text-muted-foreground">
                     {savedCount > 0
-                      ? (language === 'gu' ? `${savedCount} લેખ સાચવેલા છે` : language === 'hi' ? `${savedCount} लेख सहेजे गए हैं` : `${savedCount} articles saved`)
-                      : (language === 'gu' ? 'કોઈ લેખ સાચવેલ નથી' : language === 'hi' ? 'कोई लेख सहेजा नहीं गया' : 'No articles saved yet')}
+                      ? (language === 'gu' ? `${savedCount} સમાચાર સાચવેલા છે` : language === 'hi' ? `${savedCount} समाचार सहेजे गए हैं` : `${savedCount} news saved`)
+                      : (language === 'gu' ? 'કોઈ સમાચાર સાચવેલ નથી' : language === 'hi' ? 'कोई समाचार सहेजा नहीं गया' : 'No news saved yet')}
                   </span>
                 </div>
               </div>

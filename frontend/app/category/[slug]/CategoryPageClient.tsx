@@ -657,17 +657,40 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     return () => { active = false; };
   }, [normSlug, politicsStories.length]);
 
+  useEffect(() => {
+    if (trending && trending.length > 0) {
+      setTrendingStories(trending);
+    }
+  }, [trending]);
+
   // Load the sidebar after the main category feed has rendered for other categories.
   useEffect(() => {
     if (normSlug === 'trending') return;
-    if (trendingStories.length > 0) return;
     let active = true;
-    getPublicArticles({ isTrending: true, limit: 10 })
-      .then((res) => {
-        if (active && res?.articles) setTrendingStories(res.articles);
-      })
-      .catch(() => { });
-    return () => { active = false; };
+
+    const fetchTrending = () => {
+      getPublicArticles({ isTrending: true, limit: 10 })
+        .then((res) => {
+          if (active && res?.articles && res.articles.length > 0) {
+            setTrendingStories(res.articles);
+          }
+        })
+        .catch(() => { });
+    };
+
+    if (trendingStories.length === 0) {
+      fetchTrending();
+    }
+
+    const handleArticlesUpdated = () => {
+      fetchTrending();
+    };
+
+    window.addEventListener('gp-articles-updated', handleArticlesUpdated);
+    return () => {
+      active = false;
+      window.removeEventListener('gp-articles-updated', handleArticlesUpdated);
+    };
   }, [normSlug, trendingStories.length]);
 
   // Fetch Photo Gallery
