@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Clock, Eye, Play, Bell, Radio, X, Volume2, VolumeX, Camera, ChevronRight, ChevronDown } from 'lucide-react';
 import { formatViews, getLocalized, getCategoryLabel } from '@/data';
-import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
+import { getPublicVideos, getPublicArticles, getPublicGallery, fetchYouTubeChannelInfo, type YouTubeChannelInfo } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
 import { useApp } from '@/components/AppProvider';
 import { useIsApk } from '@/lib/useIsApk';
@@ -124,6 +124,19 @@ export default function VideosPageClient() {
   const [articlesList, setArticlesList] = useState<Article[]>([]);
   const [visibleLatestNewsCount, setVisibleLatestNewsCount] = useState(8);
   const [galleryList, setGalleryList] = useState<any[]>([]);
+  const [channelInfo, setChannelInfo] = useState<YouTubeChannelInfo>({
+    handle: '@Gujaratpostnews',
+    title: 'Gujarat Post',
+    subscribers: '2.57K',
+    subscribersCount: 2570,
+    videosCount: '554',
+    videosCountNum: 554,
+    avatar: 'https://yt3.googleusercontent.com/qzwNL3_hxc_KE_Y1WjMB4mUraPhWool5jeSwNndMqHK3NoFSKYjcIij-BU1xVXmyz5SNX6jYmA=s900',
+    banner: '',
+    description: 'Gujarat Post – Real Stories. Real Gujarat. Your digital hub for Gujarat news, Indian politics, entertainment, lifestyle, national & international updates, and sharp geopolitical insights.',
+    channelUrl: 'https://www.youtube.com/@Gujaratpostnews',
+    verified: true,
+  });
   const { isApk } = useIsApk();
   const [apkModalVideoId, setApkModalVideoId] = useState<string | null>(null);
   const [apkSelectedVideo, setApkSelectedVideo] = useState<any | null>(null);
@@ -172,6 +185,11 @@ export default function VideosPageClient() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    fetchYouTubeChannelInfo().then((info) => {
+      if (info) {
+        setChannelInfo(info);
+      }
+    });
     getPublicVideos('video').then((res) => {
       setVideoList(res || []);
     });
@@ -516,20 +534,18 @@ export default function VideosPageClient() {
             {/* Left side: Avatar + info */}
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-6 min-w-0">
               {/* White rounded avatar logo */}
-              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white flex items-center justify-center p-1.5 shrink-0 shadow-inner">
-                <div className="relative w-full h-full rounded-full overflow-hidden bg-white">
+              <div className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white flex items-center justify-center p-1 shrink-0 shadow-md border-2 border-white/20 overflow-hidden">
+                <div className="relative w-full h-full rounded-full overflow-hidden bg-[#D31A24] flex items-center justify-center">
                   <Image
-                    src="/assets/demo/logo.png"
+                    src={channelInfo.avatar || 'https://yt3.googleusercontent.com/qzwNL3_hxc_KE_Y1WjMB4mUraPhWool5jeSwNndMqHK3NoFSKYjcIij-BU1xVXmyz5SNX6jYmA=s900'}
                     alt="Gujarat Post Logo"
                     fill
-                    className="object-contain"
+                    unoptimized
+                    className="object-contain p-2.5 md:p-3"
                     onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
+                      (e.target as HTMLImageElement).src = '/GujaratpostFinalLogo.png';
                     }}
                   />
-                  <span className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-red-700 via-rose-600 to-amber-500 text-white font-black text-2xl select-none">
-                    GP
-                  </span>
                 </div>
               </div>
 
@@ -547,9 +563,9 @@ export default function VideosPageClient() {
                 </div>
                 <p className="mt-2 text-xs md:text-[13px] font-semibold opacity-90 leading-none">
                   {getLocalized(language, {
-                    en: '@GujaratPost · 4.2M Subscribers · 3,240 Videos',
-                    gu: '@GujaratPost · 4.2M સબસ્ક્રાઇબર્સ · 3,240 વિડિયો',
-                    hi: '@GujaratPost · 4.2M सब्सक्राइबर्स · 3,240 वीडियो',
+                    en: `${channelInfo.handle} · ${channelInfo.subscribers} Subscribers · ${channelInfo.videosCount} Videos`,
+                    gu: `${channelInfo.handle} · ${channelInfo.subscribers} સબસ્ક્રાઇબર્સ · ${channelInfo.videosCount} વિડિયો`,
+                    hi: `${channelInfo.handle} · ${channelInfo.subscribers} सब्सक्राइबर्स · ${channelInfo.videosCount} वीडियो`,
                   })}
                 </p>
                 <p className="mt-3 text-xs leading-relaxed max-w-xl opacity-80 font-semibold line-clamp-2 md:line-clamp-none">
@@ -565,7 +581,7 @@ export default function VideosPageClient() {
             {/* Right side: Subscribe buttons */}
             <div className="flex flex-row gap-3 shrink-0 self-center mt-2 md:mt-0">
               <a
-                href="https://www.youtube.com/@Gujaratpostnews?sub_confirmation=1"
+                href={`${channelInfo.channelUrl || 'https://www.youtube.com/@Gujaratpostnews'}?sub_confirmation=1`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-white text-black font-black text-xs md:text-sm px-5 py-2.5 rounded-full hover:bg-slate-100 hover:scale-102 transition-all shadow cursor-pointer select-none active:scale-[0.98]"
@@ -574,7 +590,7 @@ export default function VideosPageClient() {
                 <span>{getLocalized(language, { en: 'Subscribe', gu: 'સબસ્ક્રાઇબ કરો', hi: 'सब्सक्राइब करें' })}</span>
               </a>
               <a
-                href="https://www.youtube.com/@Gujaratpostnews"
+                href={channelInfo.channelUrl || 'https://www.youtube.com/@Gujaratpostnews'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-black/20 hover:bg-black/35 border border-white/25 text-white font-black text-xs md:text-sm px-5 py-2.5 rounded-full hover:scale-102 transition-all cursor-pointer select-none active:scale-[0.98]"

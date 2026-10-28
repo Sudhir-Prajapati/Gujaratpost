@@ -10,7 +10,7 @@ import {
   ChevronDown, Loader2
 } from 'lucide-react';
 import { 
-  getLocalized, PHOTOS, formatDate, formatViews, 
+  getLocalized, PHOTOS, formatDate, formatViews, formatArticleDateTime,
   getArticleTitle, getCategoryLabel, getPhotoCategoryBadge 
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
@@ -37,30 +37,6 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
   return <div className="reading-progress" style={{ width: `${progress}%` }} />;
 });
 
-const LiveDateTime = memo(function LiveDateTime({ language }: { language: Language }) {
-  const [dateStr, setDateStr] = useState('');
-
-  useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const options: Intl.DateTimeFormatOptions = {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      };
-      const locale = language === 'en' ? 'en-US' : language === 'hi' ? 'hi-IN' : 'gu-IN';
-      setDateStr(now.toLocaleString(locale, options));
-    };
-    update();
-    const timer = setInterval(update, 60000);
-    return () => clearInterval(timer);
-  }, [language]);
-
-  return <span suppressHydrationWarning>{dateStr}</span>;
-});
 
 function formatTimeAgo(dateString?: string | Date | null, language: string = 'gu'): string {
   if (!dateString) return language === 'gu' ? 'હમણાં જ' : 'Just now';
@@ -330,6 +306,8 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const paragraphs = bodyText.split(/\n\n+/).filter(Boolean);
 
   const authorName = photo?.photographer || (language === 'gu' ? 'ગુજરાત પોસ્ટ' : language === 'hi' ? 'गुजरात पोस्ट' : 'Gujarat Post');
+  const rawDate = photo?.publishedAt || photo?.createdAt || (photo as any)?.date || photo?.updatedAt;
+  const publishedFormatted = formatArticleDateTime(rawDate);
 
   // Build the vertical continuous gallery story items matching the user's reference
   const galleryItems = useMemo(() => {
@@ -618,15 +596,20 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                   GP
                 </div>
                 <div>
-                  <div className="text-[13.5px]">
+                  <div className="text-[13.5px] leading-tight">
                     <span className="text-[var(--ink-2)]">Published by: </span>
                     <span className="font-bold text-[var(--red)]">
                       {authorName}
                     </span>
                   </div>
-                  <div className="text-[12px] text-[var(--ink-3)] mt-[2px]" suppressHydrationWarning>
-                    <LiveDateTime language={language} />
-                  </div>
+                  {publishedFormatted && (
+                    <div className="text-[12px] text-neutral-500 dark:text-neutral-400 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1" suppressHydrationWarning>
+                      <span>
+                        <span className="font-medium text-neutral-600 dark:text-neutral-300">Published on:</span>{' '}
+                        {publishedFormatted}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -895,17 +878,21 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                       type="button"
                       onClick={handleLoadMorePhotos}
                       disabled={loadingMoreGallery}
-                      className="group inline-flex items-center gap-2 px-8 py-3 rounded-full bg-[#B3121B] hover:bg-red-700 text-white font-bold text-[14.5px] shadow-md hover:shadow-xl transition-all duration-200 cursor-pointer active:scale-95 disabled:opacity-60 select-none border border-white/20"
+                      className="group inline-flex items-center justify-center gap-2.5 rounded-full border-2 border-accent px-9 py-3 text-accent hover:bg-accent hover:text-white transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98] disabled:cursor-wait disabled:opacity-60 select-none bg-card"
                     >
                       {loadingMoreGallery ? (
                         <>
-                          <Loader2 className="w-4.5 h-4.5 animate-spin" />
-                          <span>{language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...'}</span>
+                          <Loader2 className="w-5 h-5 animate-spin text-current" />
+                          <span className="text-base sm:text-lg font-black tracking-wide leading-none">
+                            {language === 'gu' ? 'લોડ થઈ રહ્યું છે...' : language === 'hi' ? 'लोड हो रहा है...' : 'Loading...'}
+                          </span>
                         </>
                       ) : (
                         <>
-                          <span>{language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}</span>
-                          <ChevronDown className="w-4.5 h-4.5 stroke-[2.5] transition-transform duration-200 group-hover:translate-y-0.5" />
+                          <span className="text-base sm:text-lg font-black tracking-wide leading-none">
+                            {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View More'}
+                          </span>
+                          <ChevronDown className="w-5 h-5 stroke-[3] transition-transform duration-200 group-hover:translate-y-0.5" />
                         </>
                       )}
                     </button>

@@ -50,19 +50,59 @@ export default async function HomePage() {
   const videos = Array.isArray(videosRes) ? videosRes : [];
   const reels = Array.isArray(reelsRes) ? reelsRes : [];
 
-  const getCatSlug = (a: any): string =>
-    ((a?.category?.slug || a?.categorySlug || (typeof a?.category === 'string' ? a.category : '') || '')).toLowerCase().trim();
+  const getArticleCategoryTokens = (a: any): string[] => {
+    if (!a) return [];
+    const tokens: string[] = [];
+    const add = (v: any) => {
+      if (typeof v === 'string' && v.trim()) tokens.push(v.toLowerCase().trim());
+    };
 
-  const getCatName = (a: any): string => {
-    const name = (a?.category?.name || a?.categoryName || '').toLowerCase().trim();
-    const nameGu = (a?.category?.nameGu || a?.categoryGu || '').toLowerCase().trim();
-    return `${name} ${nameGu}`;
+    // Primary category tokens
+    add(a.categoryId);
+    add(a.categorySlug);
+    if (typeof a.category === 'string') {
+      add(a.category);
+    } else if (a.category && typeof a.category === 'object') {
+      add(a.category.id);
+      add(a.category.slug);
+      add(a.category.name);
+      add(a.category.nameGu);
+      add(a.category.nameHi);
+    }
+    add(a.categoryName);
+    add(a.categoryGu);
+    add(a.categoryHi);
+    add(a.location);
+
+    // Multi-categories array
+    if (Array.isArray(a.categories)) {
+      for (const item of a.categories) {
+        if (!item) continue;
+        add(item.id);
+        add(item.categoryId);
+        add(item.slug);
+        add(item.name);
+        add(item.nameGu);
+        add(item.nameHi);
+        if (item.category && typeof item.category === 'object') {
+          add(item.category.id);
+          add(item.category.slug);
+          add(item.category.name);
+          add(item.category.nameGu);
+          add(item.category.nameHi);
+        }
+      }
+    }
+
+    return tokens;
   };
 
   const isCat = (a: any, ...slugs: string[]): boolean => {
-    const s = getCatSlug(a);
-    const n = getCatName(a);
-    return slugs.some((target) => s === target || s.includes(target) || n.includes(target));
+    const tokens = getArticleCategoryTokens(a);
+    return slugs.some((target) => {
+      const t = target.toLowerCase().trim();
+      return tokens.some((token) => token === t || token.includes(t));
+    });
   };
 
   // Efficiently partition articles by category from the unified query

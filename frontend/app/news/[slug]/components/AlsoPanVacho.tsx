@@ -101,13 +101,14 @@ export default function AlsoPanVacho({
               className="group relative flex items-start gap-3 p-3 rounded-2xl bg-white dark:bg-neutral-900/90 border border-neutral-200/90 dark:border-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:border-[#B3121B]/60 dark:hover:border-red-600/60 hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] hover:-translate-y-0.5 transition-all duration-300 text-left overflow-hidden"
             >
               {/* Thumbnail Image */}
-              <div className="relative w-[92px] h-[72px] sm:w-[105px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-neutral-100 dark:bg-neutral-800 shadow-xs">
+              <div className="relative w-[92px] h-[72px] sm:w-[105px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-neutral-950 dark:bg-neutral-900 shadow-xs">
                 <Image
                   src={thumbSrc}
                   alt={art.title || ''}
                   fill
                   sizes="(max-width: 640px) 92px, 105px"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-contain transition-transform duration-500 group-hover:scale-105"
+                  style={{ objectFit: 'contain', objectPosition: 'center' }}
                   onError={(e) => {
                     if (DEMO_THUMBNAILS.length > 0) {
                       (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];

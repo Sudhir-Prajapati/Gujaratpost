@@ -77,15 +77,17 @@ export default function MainLayoutWrapper({ children }: Props) {
     );
   }
 
-  // STANDARD WEB & MOBILE BROWSER VIEW (100% UNTOUCHED):
+  // STANDARD WEB & MOBILE BROWSER VIEW:
   return (
-    <>
-      {pathname === '/' && <SplashLoader />}
-      <Header />
-      <BreakingTicker />
-      <main className="min-h-[75vh]">{children}</main>
+    <div className="flex min-h-screen min-h-[100dvh] flex-col justify-between bg-background">
+      <div className="flex-shrink-0">
+        {pathname === '/' && <SplashLoader />}
+        <Header />
+        <BreakingTicker />
+      </div>
+      <main className="flex-1 w-full flex flex-col">{children}</main>
       <Footer />
       <TajSamacharDrawer />
-    </>
+    </div>
   );
 }

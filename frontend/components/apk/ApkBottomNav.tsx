@@ -92,7 +92,7 @@ export default function ApkBottomNav() {
                 isVideosActive ? 'font-black text-[#B3121B]' : 'font-bold text-gray-500 dark:text-gray-400'
               }`}
             >
-              {getLabel('વીડિયો', 'वीडियो', 'Videos')}
+              {getLabel('વીડિયો', 'वीडियो', 'Video')}
             </span>
           </Link>
 

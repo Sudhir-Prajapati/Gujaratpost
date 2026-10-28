@@ -46,13 +46,22 @@ export default function ArticleShareAudioBar({
 
   useEffect(() => {
     if (saved === undefined && typeof window !== 'undefined') {
-      try {
-        const stored = localStorage.getItem('gp-saved-articles');
-        const parsed = stored ? JSON.parse(stored) : [];
-        if (Array.isArray(parsed) && parsed.includes(articleUrl)) {
-          setInternalSaved(true);
-        }
-      } catch {}
+      const syncSaved = () => {
+        try {
+          const stored = localStorage.getItem('gp-saved-articles');
+          const parsed = stored ? JSON.parse(stored) : [];
+          if (Array.isArray(parsed)) {
+            const slugFromUrl = articleUrl?.replace(/.*\/news\//, '')?.replace(/\/$/, '')?.split('?')[0];
+            const isMatch = parsed.includes(articleUrl) || (slugFromUrl && parsed.includes(slugFromUrl));
+            setInternalSaved(!!isMatch);
+          } else {
+            setInternalSaved(false);
+          }
+        } catch {}
+      };
+      syncSaved();
+      window.addEventListener('gp-saved-changed', syncSaved);
+      return () => window.removeEventListener('gp-saved-changed', syncSaved);
     }
   }, [articleUrl, saved]);
 
@@ -91,10 +100,12 @@ export default function ArticleShareAudioBar({
       const stored = localStorage.getItem('gp-saved-articles');
       let parsed = stored ? JSON.parse(stored) : [];
       if (!Array.isArray(parsed)) parsed = [];
+      const slugFromUrl = articleUrl?.replace(/.*\/news\//, '')?.replace(/\/$/, '')?.split('?')[0];
+      const saveKey = slugFromUrl || articleUrl;
       if (next) {
-        if (!parsed.includes(articleUrl)) parsed.push(articleUrl);
+        if (!parsed.includes(saveKey) && !parsed.includes(articleUrl)) parsed.push(saveKey);
       } else {
-        parsed = parsed.filter((u: string) => u !== articleUrl);
+        parsed = parsed.filter((u: string) => u !== articleUrl && u !== saveKey && (!slugFromUrl || !u.includes(slugFromUrl)));
       }
       localStorage.setItem('gp-saved-articles', JSON.stringify(parsed));
       window.dispatchEvent(new Event('gp-saved-changed'));
@@ -145,7 +156,7 @@ export default function ArticleShareAudioBar({
       <a
         href={getWhatsAppShareHref(articleUrl, title)}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         title={ui({ en: 'WhatsApp', gu: 'વોટ્સએપ', hi: 'व्हाट्सएप' })}
         aria-label="Share on WhatsApp"
         className="group relative flex items-center justify-center w-[34px] h-[34px] xs:w-[36px] xs:h-[36px] sm:w-[38px] sm:h-[38px] md:w-10 md:h-10 shrink-0 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-200 hover:scale-[1.12] hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:border-[#25D366] hover:shadow-[0_4px_12px_rgba(37,211,102,0.3)]"
@@ -160,7 +171,7 @@ export default function ArticleShareAudioBar({
       <a
         href={getFacebookShareHref(articleUrl)}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         title="Facebook"
         aria-label="Share on Facebook"
         className="group relative flex items-center justify-center w-[34px] h-[34px] xs:w-[36px] xs:h-[36px] sm:w-[38px] sm:h-[38px] md:w-10 md:h-10 shrink-0 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-200 hover:scale-[1.12] hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:border-[#1877F2] hover:shadow-[0_4px_12px_rgba(24,119,242,0.3)]"
@@ -174,7 +185,7 @@ export default function ArticleShareAudioBar({
       <a
         href={getTwitterShareHref(articleUrl, title)}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         title="Share on X"
         aria-label="Share on X"
         className="group relative flex items-center justify-center w-[34px] h-[34px] xs:w-[36px] xs:h-[36px] sm:w-[38px] sm:h-[38px] md:w-10 md:h-10 shrink-0 rounded-full border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 transition-all duration-200 hover:scale-[1.12] hover:-translate-y-0.5 active:scale-95 cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:border-black dark:hover:border-white"

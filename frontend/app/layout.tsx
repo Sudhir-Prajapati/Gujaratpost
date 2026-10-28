@@ -152,7 +152,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
       </head>
-      <body className="antialiased" suppressHydrationWarning>
+      <body className="antialiased min-h-screen min-h-[100dvh] flex flex-col bg-background" suppressHydrationWarning>
         <AppProvider>
           <CookieConsentProvider>
             <MainLayoutWrapper>{children}</MainLayoutWrapper>

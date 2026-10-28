@@ -437,6 +437,56 @@ export async function getPublicAuthors(): Promise<any[]> {
 export const YOUTUBE_CHANNEL_ID = 'UCqQ8YbFSZ4j8J4iVJOHurTw';
 export const YOUTUBE_CHANNEL_HANDLE = '@Gujaratpostnews';
 
+export interface YouTubeChannelInfo {
+  handle: string;
+  title: string;
+  subscribers: string;
+  subscribersCount: number;
+  videosCount: string;
+  videosCountNum: number;
+  avatar: string;
+  banner: string;
+  description: string;
+  channelUrl: string;
+  verified: boolean;
+}
+
+/**
+ * Fetch live YouTube channel metadata (@Gujaratpostnews)
+ */
+export async function fetchYouTubeChannelInfo(): Promise<YouTubeChannelInfo> {
+  const fallback: YouTubeChannelInfo = {
+    handle: '@Gujaratpostnews',
+    title: 'Gujarat Post',
+    subscribers: '2.57K',
+    subscribersCount: 2570,
+    videosCount: '554',
+    videosCountNum: 554,
+    avatar: 'https://yt3.googleusercontent.com/qzwNL3_hxc_KE_Y1WjMB4mUraPhWool5jeSwNndMqHK3NoFSKYjcIij-BU1xVXmyz5SNX6jYmA=s900',
+    banner: '',
+    description: 'Gujarat Post – Real Stories. Real Gujarat. Your digital hub for Gujarat news, Indian politics, entertainment, lifestyle, national & international updates, and sharp geopolitical insights.',
+    channelUrl: 'https://www.youtube.com/@Gujaratpostnews',
+    verified: true,
+  };
+
+  if (typeof window === 'undefined') {
+    return fallback;
+  }
+
+  try {
+    const baseUrl = window.location.origin;
+    const apiUrl = `${baseUrl}/api/youtube-channel`;
+    const res = await fetchCachedJson<any>(apiUrl, 600000); // 10-minute cache
+    if (res?.success && res.data) {
+      return res.data;
+    }
+  } catch (err) {
+    console.warn('Failed to fetch YouTube channel info:', err);
+  }
+
+  return fallback;
+}
+
 /**
  * Fetch live YouTube channel videos & shorts dynamically from YouTube RSS Feed (@Gujaratpostnews)
  */

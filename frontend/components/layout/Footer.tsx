@@ -64,7 +64,7 @@ function PlayStoreIcon({ className = 'h-4 w-4' }: { className?: string }) {
 
 /* ─── Links data ─────────────────────────────────────────────────────────── */
 const topics1Links = [
-    { label: 'Videos', href: '/videos' },
+    { label: 'Video', href: '/videos' },
     { label: 'Gujarat', href: '/category/gujarat' },
     { label: 'Ahmedabad', href: '/category/ahmedabad' },
     { label: 'Surat', href: '/category/surat' },
@@ -82,6 +82,7 @@ const topics2Links = [
     { label: 'Fact Check', href: '/category/fact-check' },
     { label: 'Trending News', href: '/category/trending' },
     { label: 'E-Paper', href: '/epaper' },
+    { label: 'Saved Articles', href: '/saved', localized: true },
 ];
 
 
@@ -178,28 +179,31 @@ function NavColumn({
                 )}
             </div>
             <ul className="space-y-2">
-                {links.map((item) => (
-                    <li key={item.label} className="overflow-hidden">
-                        {item.isSupport ? (
-                            <button
-                                type="button"
-                                onClick={onSupportClick}
-                                className="group text-[15px] font-black text-rose-400 hover:text-rose-300 transition-all duration-200 flex items-center gap-1.5 leading-snug cursor-pointer hover:translate-x-1.5 hover:scale-[1.06] origin-left"
-                            >
-                                <Heart className="h-3.5 w-3.5 fill-current group-hover:scale-110 transition-transform duration-200" />
-                                <span>{item.label}</span>
-                            </button>
-                        ) : (
-                            <Link
-                                href={item.href}
-                                className="group text-[15px] font-semibold text-slate-300 hover:text-white transition-all duration-200 block leading-snug hover:translate-x-1.5 hover:scale-[1.06] origin-left relative pl-0 hover:pl-2"
-                            >
-                                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 group-hover:w-1 h-3.5 bg-red-500 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100" />
-                                {item.localized && !englishOnly ? <LocalizedText text={item.label} /> : item.label}
-                            </Link>
-                        )}
-                    </li>
-                ))}
+                {links.map((item) => {
+                    const displayLabel = item.label === 'Videos' ? 'Video' : item.label;
+                    return (
+                        <li key={item.label} className="overflow-hidden">
+                            {item.isSupport ? (
+                                <button
+                                    type="button"
+                                    onClick={onSupportClick}
+                                    className="group text-[15px] font-black text-rose-400 hover:text-rose-300 transition-all duration-200 flex items-center gap-1.5 leading-snug cursor-pointer hover:translate-x-1.5 hover:scale-[1.06] origin-left"
+                                >
+                                    <Heart className="h-3.5 w-3.5 fill-current group-hover:scale-110 transition-transform duration-200" />
+                                    <span>{displayLabel}</span>
+                                </button>
+                            ) : (
+                                <Link
+                                    href={item.href}
+                                    className="group text-[15px] font-semibold text-slate-300 hover:text-white transition-all duration-200 block leading-snug hover:translate-x-1.5 hover:scale-[1.06] origin-left relative pl-0 hover:pl-2"
+                                >
+                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0 group-hover:w-1 h-3.5 bg-red-500 rounded-full transition-all duration-200 opacity-0 group-hover:opacity-100" />
+                                    {item.localized && !englishOnly ? <LocalizedText text={displayLabel} /> : displayLabel}
+                                </Link>
+                            )}
+                        </li>
+                    );
+                })}
             </ul>
         </div>
     );
@@ -219,10 +223,10 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
     const isFeedPage = pathname === '/watch';
     if (isFeedPage && !isInline) return null;
 
-    const wrap = isInline ? 'pt-2 pb-1.5' : 'pt-4 pb-3';
+    const wrap = isInline ? 'pt-2 pb-1.5' : 'pt-3 pb-2.5';
 
     return (
-        <div className={!isInline ? 'mt-12 sm:mt-16 md:mt-20' : ''}>
+        <div className={!isInline ? 'mt-2 md:mt-8 mt-auto w-full flex-shrink-0' : 'w-full'}>
             <style dangerouslySetInnerHTML={{
                 __html: `
 @keyframes footerTitleShimmer {
@@ -261,12 +265,14 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
             )}
             <footer
                 data-theme="dark"
-                className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative"
+                className="bg-[#050B14] text-white border-t border-slate-900 select-none w-full relative mt-auto pb-[max(1rem,env(safe-area-inset-bottom,1rem))]"
             >
+                {/* Prevent iPhone bounce / overscroll white space below footer */}
+                <div className="absolute top-full left-0 right-0 h-[100vh] bg-[#050B14] pointer-events-none" />
                 <div className={`w-full px-4 sm:px-6 md:px-8 lg:px-10 ${wrap}`}>
 
                     {/* ── MOBILE ONLY FOOTER (Matching website Image 3 layout) ── */}
-                    <div className="md:hidden flex flex-col gap-5 pb-3 pt-1">
+                    <div className="md:hidden flex flex-col gap-5 pb-5 pt-1">
                         {/* Top Branding & Support */}
                         <div className="flex flex-col items-center text-center pb-5 border-b border-slate-800/80">
                             {/* Slogan */}
@@ -353,7 +359,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         {/* Legal Policies */}
                         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[11px] font-extrabold text-slate-400 px-2 text-center">
                             {[
-                                ['Complain Redressal', '/complaign-redressal'],
+                                ['Complaint Redressal', '/complaign-redressal'],
                                 ['Cookie Policy', '/cookie-policy'],
                                 ['Cookie Settings', '/cookie-settings'],
                             ].map(([label, href]) => (
@@ -370,7 +376,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                     }
                                     className="hover:text-white transition-colors duration-200"
                                 >
-                                    <LocalizedText text={label === 'Complaign Redressal' ? 'Complain Redressal' : label} />
+                                    {label}
                                 </Link>
                             ))}
                         </div>
@@ -475,7 +481,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             {/* Policy Links Row */}
                             <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5">
                                 {[
-                                    ['Complaign Redressal', '/complaign-redressal'],
+                                    ['Complaint Redressal', '/complaign-redressal'],
                                     ['Cookie Policy', '/cookie-policy'],
                                     ['Cookie Settings', '/cookie-settings'],
                                 ].map(([label, href]) => (
@@ -492,7 +498,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                                         }
                                         className="hover:text-white transition-colors duration-200"
                                     >
-                                        <LocalizedText text={label === 'Complaign Redressal' ? 'Complain Redressal' : label} />
+                                        {label}
                                     </Link>
                                 ))}
                             </div>
