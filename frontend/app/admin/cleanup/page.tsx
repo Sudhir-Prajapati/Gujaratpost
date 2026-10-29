@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Trash2,
   Database,
@@ -13,6 +13,8 @@ import {
   FileText,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Eye,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
@@ -50,8 +52,13 @@ export default function DataCleanupPage() {
   const [articles, setArticles] = useState<ArticleRow[]>([]);
   const [total, setTotal] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const [pageInput, setPageInput] = useState<string>('1');
   const LIMIT = 20;
   const [listLoading, setListLoading] = useState(false);
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
 
   // Delete state
   const [confirmStep, setConfirmStep] = useState(false);
@@ -325,25 +332,91 @@ export default function DataCleanupPage() {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-5 py-3 border-t border-gray-400 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-800/30">
               <span className="text-xs font-bold text-zinc-500">
-                Page {page} of {totalPages} • {new Intl.NumberFormat('en-IN').format(total!)} articles
+                {new Intl.NumberFormat('en-IN').format(total!)} articles
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <button
+                  type="button"
+                  disabled={page <= 1 || listLoading}
+                  onClick={() => fetchArticles(1)}
+                  className="p-1.5 sm:p-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  title="First page"
+                >
+                  <ChevronsLeft className="h-4 w-4" />
+                </button>
                 <button
                   type="button"
                   disabled={page <= 1 || listLoading}
                   onClick={() => fetchArticles(page - 1)}
-                  className="p-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="p-1.5 sm:p-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  title="Previous page"
                 >
                   <ChevronLeft className="h-4 w-4" />
                 </button>
-                <span className="text-xs font-black px-2">{page} / {totalPages}</span>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const num = parseInt(pageInput, 10);
+                    if (!isNaN(num)) {
+                      const clamped = Math.max(1, Math.min(totalPages, num));
+                      setPageInput(String(clamped));
+                      if (clamped !== page) fetchArticles(clamped);
+                    } else {
+                      setPageInput(String(page));
+                    }
+                  }}
+                  className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200"
+                >
+                  <span>Page</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onBlur={() => {
+                      const num = parseInt(pageInput, 10);
+                      if (!isNaN(num)) {
+                        const clamped = Math.max(1, Math.min(totalPages, num));
+                        setPageInput(String(clamped));
+                        if (clamped !== page) fetchArticles(clamped);
+                      } else {
+                        setPageInput(String(page));
+                      }
+                    }}
+                    onFocus={(e) => e.target.select()}
+                    className="w-12 h-7 px-1 text-center font-bold text-xs sm:text-sm rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    title={`Enter page (1 - ${totalPages}) and press Enter`}
+                  />
+                  <span>of {totalPages}</span>
+                  {pageInput !== String(page) && pageInput.trim() !== '' && (
+                    <button
+                      type="submit"
+                      className="h-6 px-2 rounded bg-[#B3121B] hover:bg-red-700 text-white text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                    >
+                      Go
+                    </button>
+                  )}
+                </form>
+
                 <button
                   type="button"
                   disabled={page >= totalPages || listLoading}
                   onClick={() => fetchArticles(page + 1)}
-                  className="p-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                  className="p-1.5 sm:p-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  title="Next page"
                 >
                   <ChevronRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  disabled={page >= totalPages || listLoading}
+                  onClick={() => fetchArticles(totalPages)}
+                  className="p-1.5 sm:p-2 rounded-xl border border-gray-400 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+                  title="Last page"
+                >
+                  <ChevronsRight className="h-4 w-4" />
                 </button>
               </div>
             </div>

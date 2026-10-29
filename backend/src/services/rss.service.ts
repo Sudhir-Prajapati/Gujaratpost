@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { prisma } from '../config/prisma.js';
-import { wrapCdata, stripHtmlTags, escapeXml } from '../utils/xmlSanitizer.js';
+import { wrapCdata, stripHtmlTags, escapeXml, sanitizeHtmlContent } from '../utils/xmlSanitizer.js';
 
 interface RssFeedOptions {
   categorySlug?: string;
@@ -160,7 +160,8 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
 <rss version="2.0" 
   xmlns:atom="http://www.w3.org/2005/Atom" 
   xmlns:media="http://search.yahoo.com/mrss/" 
-  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>ફોટો ગેલેરી - Gujarat Post</title>
     <link>${baseUrl}</link>
@@ -240,7 +241,8 @@ ${itemsXml}  </channel>
 <rss version="2.0" 
   xmlns:atom="http://www.w3.org/2005/Atom" 
   xmlns:media="http://search.yahoo.com/mrss/" 
-  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>વીડિયો સમાચાર - Gujarat Post</title>
     <link>${baseUrl}</link>
@@ -317,7 +319,8 @@ ${itemsXml}  </channel>
 <rss version="2.0" 
   xmlns:atom="http://www.w3.org/2005/Atom" 
   xmlns:media="http://search.yahoo.com/mrss/" 
-  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>ઇન્સ્ટાગ્રામ રીલ્સ - Gujarat Post</title>
     <link>${baseUrl}</link>
@@ -438,6 +441,8 @@ ${itemsXml}  </channel>
       titleGu: true,
       excerpt: true,
       excerptGu: true,
+      content: true,
+      contentGu: true,
       featuredImage: true,
       createdAt: true,
       updatedAt: true,
@@ -476,11 +481,16 @@ ${itemsXml}  </channel>
     const authorName = art.author?.nameGu || art.author?.name || 'Gujarat Post Team';
     const imageUrl = (art.featuredImage || '').trim();
 
+    // Full article body — prefer Gujarati, fall back to English
+    const rawBody = art.contentGu || art.content || '';
+    const fullHtml = sanitizeHtmlContent(rawBody);
+
     itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>
       <link>${artUrl}</link>
       <guid isPermaLink="true">${artUrl}</guid>
       <description>${wrapCdata(rawExcerpt)}</description>
+      <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
       <category>${wrapCdata(catName)}</category>
       <pubDate>${pubDate}</pubDate>
       <dc:creator>${wrapCdata(authorName)}</dc:creator>
@@ -503,7 +513,8 @@ ${itemsXml}  </channel>
 <rss version="2.0" 
   xmlns:atom="http://www.w3.org/2005/Atom" 
   xmlns:media="http://search.yahoo.com/mrss/" 
-  xmlns:dc="http://purl.org/dc/elements/1.1/">
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>${escapeXml(channelTitle)}</title>
     <link>${baseUrl}</link>

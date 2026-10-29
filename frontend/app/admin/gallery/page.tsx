@@ -17,6 +17,10 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Check,
   ArrowUp,
   ArrowDown
@@ -140,6 +144,11 @@ export default function GalleryPage() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageInput, setPageInput] = useState<string>('1');
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
 
   // Modals state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -776,22 +785,91 @@ export default function GalleryPage() {
       {!loading && !error && photos.length > 0 && totalPages > 1 && (
         <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
           <span className="text-xs font-semibold text-zinc-500">
-            Showing Page {page} of {totalPages}
+            Total {photos.length} photos
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
-              onClick={() => setPage(p => Math.max(1, p - 1))}
+              type="button"
+              onClick={() => setPage(1)}
               disabled={page === 1}
-              className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:text-zinc-400 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              className="rounded-xl border border-gray-400 p-2 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              title="First page"
             >
-              Previous
+              <ChevronsLeft className="h-4 w-4" />
             </button>
             <button
+              type="button"
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-xl border border-gray-400 p-2 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              title="Previous page"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const num = parseInt(pageInput, 10);
+                if (!isNaN(num)) {
+                  const clamped = Math.max(1, Math.min(totalPages, num));
+                  setPageInput(String(clamped));
+                  if (clamped !== page) setPage(clamped);
+                } else {
+                  setPageInput(String(page));
+                }
+              }}
+              className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200"
+            >
+              <span>Page</span>
+              <input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value)}
+                onBlur={() => {
+                  const num = parseInt(pageInput, 10);
+                  if (!isNaN(num)) {
+                    const clamped = Math.max(1, Math.min(totalPages, num));
+                    setPageInput(String(clamped));
+                    if (clamped !== page) setPage(clamped);
+                  } else {
+                    setPageInput(String(page));
+                  }
+                }}
+                onFocus={(e) => e.target.select()}
+                className="w-12 h-7 px-1 text-center font-bold text-xs sm:text-sm rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                title={`Enter page (1 - ${totalPages}) and press Enter`}
+              />
+              <span>of {totalPages}</span>
+              {pageInput !== String(page) && pageInput.trim() !== '' && (
+                <button
+                  type="submit"
+                  className="h-6 px-2 rounded bg-[#B3121B] hover:bg-red-700 text-white text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                >
+                  Go
+                </button>
+              )}
+            </form>
+
+            <button
+              type="button"
               onClick={() => setPage(p => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="rounded-xl border border-gray-400 px-3 py-1.5 text-xs font-semibold text-zinc-500 hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:text-zinc-400 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              className="rounded-xl border border-gray-400 p-2 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              title="Next page"
             >
-              Next
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPage(totalPages)}
+              disabled={page === totalPages}
+              className="rounded-xl border border-gray-400 p-2 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-700 dark:hover:!bg-zinc-800 dark:hover:!text-white cursor-pointer"
+              title="Last page"
+            >
+              <ChevronsRight className="h-4 w-4" />
             </button>
           </div>
         </div>

@@ -218,7 +218,7 @@ export default function InstagramPageClient() {
           </div>
 
           {/* ════ RIGHT COLUMN: SIDEBAR (TRENDING NEWS + PHOTO GALLERY) ════ */}
-          <div className="w-full">
+          <div className="w-full lg:sticky lg:top-20 lg:self-start">
             <MediaSidebar
               type="instagram"
               language={language}

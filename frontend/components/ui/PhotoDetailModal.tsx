@@ -131,13 +131,20 @@ export default function PhotoDetailModal({ photos, activeIndex, onClose, languag
           <div className="lg:col-span-2 flex flex-col overflow-y-auto scrollbar-thin scrollbar-thumb-accent/20 scrollbar-track-transparent">
             
             {/* Image display section */}
-            <div className="group relative aspect-[16/10] bg-muted/40 w-full overflow-hidden flex items-center justify-center">
+            <div className="group relative aspect-[16/10] bg-zinc-100 dark:bg-neutral-950 w-full overflow-hidden flex items-center justify-center">
+              <img
+                src={activePhoto.src}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
+              />
+              <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
               <Image 
                 src={activePhoto.src} 
                 alt={activePhoto.alt} 
                 fill 
                 sizes="(max-width: 1024px) 100vw, 66vw"
-                className="object-contain" 
+                className="relative z-10 object-contain" 
                 priority
               />
               

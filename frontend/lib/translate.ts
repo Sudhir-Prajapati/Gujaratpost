@@ -298,7 +298,7 @@ export function useAutoTranslate(text: string, targetLang: Language): string {
       return mem;
     }
 
-    return '';
+    return text;
   };
 
   const [translatedText, setTranslatedText] = useState<string>(getInitialValue);
@@ -355,7 +355,7 @@ export function useAutoTranslate(text: string, targetLang: Language): string {
 export function useAutoTranslateHtml(html: string, targetLang: Language): string {
   const getInitialValue = (): string => {
     if (!html || typeof html !== 'string' || !html.trim()) return html || '';
-    return isAlreadyTargetLanguage(html, targetLang) ? html : '';
+    return html;
   };
 
   const [translatedHtml, setTranslatedHtml] = useState<string>(getInitialValue);

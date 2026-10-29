@@ -9,6 +9,8 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Filter,
   AlertCircle,
   Loader2,
@@ -103,6 +105,26 @@ export default function UserList() {
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
+    }
+  };
+
+  const [pageInput, setPageInput] = useState<string>('1');
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
+
+  const handlePageInputSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const num = parseInt(pageInput, 10);
+    if (!isNaN(num)) {
+      const clamped = Math.max(1, Math.min(totalPages, num));
+      setPageInput(String(clamped));
+      if (clamped !== page) {
+        handlePageChange(clamped);
+      }
+    } else {
+      setPageInput(String(page));
     }
   };
 
@@ -472,23 +494,70 @@ export default function UserList() {
               <span className="font-bold text-zinc-800 dark:text-zinc-200">{totalUsers}</span> users
             </div>
             
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <button
+                type="button"
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1}
+                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:hover:bg-zinc-900 cursor-pointer"
+                title="First page"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
                 onClick={() => handlePageChange(page - 1)}
                 disabled={page === 1}
-                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-850 dark:hover:bg-zinc-900"
+                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:hover:bg-zinc-900 cursor-pointer"
+                title="Previous page"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
-              <span className="text-xs font-bold text-zinc-800 dark:text-zinc-250">
-                Page {page} of {totalPages}
-              </span>
+
+              <form
+                onSubmit={handlePageInputSubmit}
+                className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-200"
+              >
+                <span>Page</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  onBlur={handlePageInputSubmit}
+                  onFocus={(e) => e.target.select()}
+                  className="w-12 h-7 px-1 text-center font-bold text-xs sm:text-sm rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  title={`Enter page (1 - ${totalPages}) and press Enter`}
+                />
+                <span>of {totalPages}</span>
+                {pageInput !== String(page) && pageInput.trim() !== '' && (
+                  <button
+                    type="submit"
+                    className="h-6 px-2 rounded bg-[#B3121B] hover:bg-red-700 text-white text-[11px] font-bold transition active:scale-95 cursor-pointer"
+                  >
+                    Go
+                  </button>
+                )}
+              </form>
+
               <button
+                type="button"
                 onClick={() => handlePageChange(page + 1)}
                 disabled={page === totalPages}
-                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-50 disabled:opacity-40 dark:border-zinc-850 dark:hover:bg-zinc-900"
+                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:hover:bg-zinc-900 cursor-pointer"
+                title="Next page"
               >
                 <ChevronRight className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages}
+                className="rounded-lg border border-gray-400 p-1.5 text-zinc-500 transition-all hover:bg-zinc-100 disabled:opacity-40 disabled:pointer-events-none dark:border-zinc-800 dark:hover:bg-zinc-900 cursor-pointer"
+                title="Last page"
+              >
+                <ChevronsRight className="h-4 w-4" />
               </button>
             </div>
           </div>

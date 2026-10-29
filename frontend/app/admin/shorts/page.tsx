@@ -59,6 +59,11 @@ export default function ShortsPage() {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageInput, setPageInput] = useState<string>('1');
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
   const [totalShortsCount, setTotalShortsCount] = useState(0);
   const [totalFeaturedCount, setTotalFeaturedCount] = useState(0);
 
@@ -584,10 +589,50 @@ export default function ShortsPage() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
-              <span className="text-xs font-semibold text-zinc-500">
-                Page {page} of {totalPages}
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-400 pt-4 dark:border-zinc-700">
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const num = parseInt(pageInput, 10);
+                  if (!isNaN(num)) {
+                    const clamped = Math.max(1, Math.min(totalPages, num));
+                    setPageInput(String(clamped));
+                    setPage(clamped);
+                  }
+                }}
+                className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-zinc-600 dark:text-zinc-300"
+              >
+                <span>Page</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={totalPages}
+                  value={pageInput}
+                  onChange={(e) => setPageInput(e.target.value)}
+                  onBlur={() => {
+                    const num = parseInt(pageInput, 10);
+                    if (!isNaN(num)) {
+                      const clamped = Math.max(1, Math.min(totalPages, num));
+                      setPageInput(String(clamped));
+                      if (clamped !== page) setPage(clamped);
+                    } else {
+                      setPageInput(String(page));
+                    }
+                  }}
+                  onFocus={(e) => e.target.select()}
+                  className="w-12 h-7 px-1 text-center font-bold text-xs sm:text-sm rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  title={`Enter page (1 - ${totalPages}) and press Enter`}
+                />
+                <span>of {totalPages}</span>
+                {pageInput !== String(page) && pageInput.trim() !== '' && (
+                  <button
+                    type="submit"
+                    className="h-6 px-2 rounded bg-[#B3121B] hover:bg-red-700 text-white text-[11px] font-bold transition active:scale-95"
+                  >
+                    Go
+                  </button>
+                )}
+              </form>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}

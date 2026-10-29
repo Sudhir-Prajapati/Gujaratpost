@@ -36,6 +36,61 @@ const ReadingProgressBar = memo(function ReadingProgressBar() {
   return <div className="reading-progress" style={{ width: `${progress}%` }} />;
 });
 
+function balanceHtmlTags(html: string): string {
+  if (!html || typeof html !== 'string') return '';
+  const voidTags = new Set(['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr']);
+  const tagRegex = /<\/?([a-z0-9]+)(?:\s+[^>]*)?>/gi;
+
+  let result = '';
+  let lastIndex = 0;
+  const stack: string[] = [];
+  let match: RegExpExecArray | null;
+
+  while ((match = tagRegex.exec(html)) !== null) {
+    const fullTag = match[0];
+    const tagName = match[1].toLowerCase();
+    const matchIndex = match.index;
+
+    // Append text content before this tag
+    result += html.slice(lastIndex, matchIndex);
+    lastIndex = matchIndex + fullTag.length;
+
+    if (voidTags.has(tagName) || fullTag.endsWith('/>')) {
+      result += fullTag;
+      continue;
+    }
+
+    if (fullTag.startsWith('</')) {
+      const lastIdx = stack.lastIndexOf(tagName);
+      if (lastIdx !== -1) {
+        // Close any nested open tags that were inside this element
+        while (stack.length > lastIdx + 1) {
+          const popped = stack.pop();
+          result += `</${popped}>`;
+        }
+        stack.pop();
+        result += fullTag;
+      } else {
+        // Stray closing tag with no matching opening tag in this HTML fragment.
+        // Dropping it prevents breaking or prematurely closing ancestor container elements in SSR / DOM tree.
+      }
+    } else {
+      stack.push(tagName);
+      result += fullTag;
+    }
+  }
+
+  result += html.slice(lastIndex);
+
+  // Close any remaining unclosed opening tags in reverse order
+  while (stack.length > 0) {
+    const tag = stack.pop();
+    result += `</${tag}>`;
+  }
+
+  return result;
+}
+
 const ArticleContentBody = memo(function ArticleContentBody({
   html,
 }: {
@@ -58,10 +113,10 @@ const ArticleContentBody = memo(function ArticleContentBody({
     const wrapped = blocks.map((b) => {
       const t = b.trim();
       if (!t) return '';
-      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(t)) return t;
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(t)) return balanceHtmlTags(t);
       return `<p class="article-para my-3">${t}</p>`;
     });
-    return wrapped.filter(Boolean).join('\n\n');
+    return balanceHtmlTags(wrapped.filter(Boolean).join('\n\n'));
   }, [html]);
 
   useEffect(() => {
@@ -372,7 +427,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
 
-    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-neutral-950 dark:bg-black shadow-sm"><img src="${sanitizeImageUrl(cleanUrl)}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
+    const safeImgUrl = sanitizeImageUrl(cleanUrl); return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none" /><div class="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true"></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -555,6 +610,7 @@ interface Props {
   related: Article[];
   trending: Article[];
   articleUrl: string;
+  initialLanguage?: Language;
 }
 
 // Helper: Format Instagram URL or embed code to Embed iframe URL
@@ -660,7 +716,33 @@ function findMatchingCandidate(
   return null;
 }
 
-export default function NewsDetailClient({ article, related, trending, articleUrl }: Props) {
+function splitArticleContent(html: string, atPara = 2): [string, string] {
+  if (!html || typeof html !== 'string') return ['', ''];
+  const trimmed = html.trim();
+  if (trimmed.length < 350) return [trimmed, ''];
+
+  // Look for block-level closing tags, double-newlines, or double-br tags
+  const blockRegex = /(<\/p>|<\/div>|<\/blockquote>|<\/figure>|\n\s*\n+|<br\s*\/?>\s*<br\s*\/?>)/gi;
+  let count = 0;
+  let lastIndex = -1;
+  let match: RegExpExecArray | null;
+
+  while ((match = blockRegex.exec(trimmed)) !== null) {
+    count++;
+    lastIndex = match.index + match[0].length;
+    if (count >= atPara && lastIndex >= 180) {
+      break;
+    }
+  }
+
+  if (count < atPara || lastIndex === -1 || lastIndex >= trimmed.length - 80) {
+    return [balanceHtmlTags(trimmed), ''];
+  }
+
+  return [balanceHtmlTags(trimmed.slice(0, lastIndex).trim()), balanceHtmlTags(trimmed.slice(lastIndex).trim())];
+}
+
+export default function NewsDetailClient({ article, related, trending, articleUrl, initialLanguage }: Props) {
   const { language } = useApp();
   const router = useRouter();
   const { isApk } = useIsApk();
@@ -1128,7 +1210,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   }, [body, title, language, article, hasPdfPages]);
 
   const gistPoints = useMemo(() => {
-    const rawContent = getArticleContent(article, 'gu') || article.content || (article as any).contentGu || (article as any).contentHi || '';
+    const rawContent = getArticleContent(article, language) || article.content || (article as any).contentGu || (article as any).contentHi || '';
     const points: string[] = [];
 
     const cleanStr = (s: string) => {
@@ -1144,6 +1226,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         .replace(/एक नजर में/gi, '')
         .replace(/AT A GLANCE/gi, '')
         .replace(/[*#]/g, '')
+        .replace(/\s+/g, ' ')
         .trim();
     };
 
@@ -1159,47 +1242,59 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         normalizeDisplayText(trimmed).includes('એક નજરમાં') ||
         normalizeDisplayText(trimmed).includes('एक नजर में') ||
         trimmed.includes('AT A GLANCE') ||
-        trimmed.includes('📌') ||
-        trimmed.includes('📌')
+        (trimmed.startsWith('##') && trimmed.includes('📌'))
       ) {
         insideHighlights = true;
         continue;
       }
 
       if (insideHighlights) {
-        if (trimmed.startsWith('---') || trimmed.startsWith('***')) {
+        if (trimmed.startsWith('---') || trimmed.startsWith('***') || /^[-*—_]{3,}$/.test(trimmed)) {
           if (points.length > 0) {
             insideHighlights = false;
-            continue;
+            break;
           }
+          continue;
+        }
+        if (trimmed.startsWith('##') || trimmed.startsWith('<!--') || trimmed.startsWith('>')) {
+          insideHighlights = false;
+          break;
         }
         const cleaned = cleanStr(trimmed);
-        if (cleaned.length > 5 && !points.includes(cleaned)) {
-          points.push(cleaned);
-        }
-      } else if (
-        trimmed.startsWith('•') ||
-        trimmed.startsWith('•') ||
-        trimmed.startsWith('-') ||
-        trimmed.startsWith('*')
-      ) {
-        const cleaned = cleanStr(trimmed);
-        if (cleaned.length > 8 && !points.includes(cleaned)) {
+        if (cleaned.length > 3 && !points.includes(cleaned)) {
           points.push(cleaned);
         }
       }
     }
 
+    // Explicit highlights from article object if not in body markdown
     if (points.length === 0) {
+      const explicitHl = (language === 'gu' ? (article as any).highlightsGu : language === 'hi' ? (article as any).highlightsHi : (article as any).highlights) || (article as any).highlightsGu || (article as any).highlights;
+      if (Array.isArray(explicitHl)) {
+        for (const item of explicitHl) {
+          const c = cleanStr(String(item));
+          if (c.length > 3 && !points.includes(c)) points.push(c);
+        }
+      } else if (typeof explicitHl === 'string' && explicitHl.trim()) {
+        const itemLines = explicitHl.split(/\r?\n/);
+        for (const l of itemLines) {
+          const c = cleanStr(l);
+          if (c.length > 3 && !points.includes(c)) points.push(c);
+        }
+      }
+    }
+
+    // If only 1 point was found and it matches rawExcerpt or rawTitle (legacy fallback artifact), do not show it
+    if (points.length === 1) {
       const cleanTitle = cleanStr(rawTitle);
       const cleanExcerpt = cleanStr(rawExcerpt);
-
-      if (cleanTitle) points.push(cleanTitle);
-      if (cleanExcerpt && cleanExcerpt !== cleanTitle) points.push(cleanExcerpt);
+      if (cleanStr(points[0]) === cleanExcerpt || cleanStr(points[0]) === cleanTitle) {
+        return [];
+      }
     }
 
     return points.slice(0, 10);
-  }, [rawTitle, rawExcerpt, article]);
+  }, [rawTitle, rawExcerpt, article, language]);
 
   const trendingTopics = useMemo(() => {
     if (language === 'gu') {
@@ -1733,7 +1828,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
             )}
 
             <figure className="article-fig mb-3">
-              <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-neutral-950 dark:bg-black rounded-lg shadow-sm group">
+              <div className="imgwrap relative aspect-[16/9] overflow-hidden bg-zinc-100 dark:bg-neutral-950 rounded-lg shadow-sm group">
                 {/* Indicator Badge (only if multiple images exist) */}
                 {slideImages.length > 1 && (
                   <div className="absolute top-3.5 left-3.5 z-20 bg-black/75 backdrop-blur-sm text-white font-black text-xs px-2.5 py-1 rounded select-none shadow">
@@ -1781,22 +1876,34 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                           onEnded={handleNextImage}
                         />
                       ) : (
-                        <Image
-                          src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
-                          alt={`${article.title} slide ${index + 1}`}
-                          fill
-                          unoptimized={true}
-                          sizes="(max-width: 1024px) 100vw, 66vw"
-                          className="object-contain"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
-                          loading={index === 0 ? 'eager' : 'lazy'}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            if (target.src && !target.src.includes('placehold.co')) {
-                              target.src = 'https://placehold.co/800x500/e2e8f0/94a3b8?text=Gujarat+Post';
-                            }
-                          }}
-                        />
+                        <>
+                          {/* Ambient blurred backdrop for letterbox areas */}
+                          <img
+                            src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
+                          />
+                          {/* Light / Dark tint wash overlay */}
+                          <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
+
+                          <Image
+                            src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
+                            alt={`${article.title} slide ${index + 1}`}
+                            fill
+                            unoptimized={true}
+                            sizes="(max-width: 1024px) 100vw, 66vw"
+                            className="relative z-10 object-contain"
+                            style={{ objectFit: 'contain', objectPosition: 'center' }}
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src && !target.src.includes('placehold.co')) {
+                                target.src = 'https://placehold.co/800x500/e2e8f0/94a3b8?text=Gujarat+Post';
+                              }
+                            }}
+                          />
+                        </>
                       )}
                     </div>
                   );
@@ -1840,115 +1947,56 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
             {(() => {
-              const SPLIT_AT = 2;
-              const splitHtml = (html: string, atPara: number): [string, string] => {
-                if (!html) return ['', ''];
-                let count = 0;
-                let idx = -1;
-                let search = 0;
-                while (count < atPara) {
-                  const next = html.indexOf('</p>', search);
-                  if (next === -1) break;
-                  count++;
-                  idx = next + 4;
-                  search = idx;
-                }
-                if (idx === -1 || count < atPara) return [html, ''];
-                return [html.slice(0, idx), html.slice(idx)];
-              };
-              const [topHtml, bottomHtml] = splitHtml(formattedArticleBodyHtml, SPLIT_AT);
-
-              if (!bottomHtml) {
-                return (
-                  <div>
-                    <ArticleContentBody html={formattedArticleBodyHtml} activeSpeechText={activeSpeechText} />
-
-                    {/* Full PDF Page-by-Page Document Viewer */}
-                    {hasPdfPages && pdfDocumentUrl && (
-                      <ArticlePdfPagesViewer
-                        pdfUrl={pdfDocumentUrl}
-                        language={language}
-                        title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
-                      />
-                    )}
-
-                    {/* Horizontal Ad Banner placed directly after article description */}
-                    <AdSectionBanner section="ARTICLE_BOTTOM" className="my-6" />
-
-                    {/* Aa Pan Vacho (Also Read) directly inside article after 2nd Ad */}
-                    {readAlsoPool.length > 0 && (
-                      <AlsoPanVacho
-                        articles={readAlsoPool}
-                        language={language}
-                        getCardThumbnail={getCardThumbnail}
-                        DEMO_THUMBNAILS={DEMO_THUMBNAILS}
-                        uiLabel={uiLabel}
-                      />
-                    )}
-
-                    {/* Topics Tags directly inside article after Aa Pan Vacho */}
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-2 mt-5 mb-4 select-none">
-                        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-                          {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
-                        </span>
-                        {tags.map((tag, tIdx) => (
-                          <Link
-                            key={tIdx}
-                            href={getTopicHref(tag)}
-                            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-                          >
-                            {normalizeDisplayText(tag)}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              }
-
+              const [topHtml, bottomHtml] = splitArticleContent(formattedArticleBodyHtml, 2);
               const isExpandedState = isContentExpanded || speaking;
+              const hasSplit = Boolean(bottomHtml);
 
               return (
-                <div className="relative">
-                  <ArticleContentBody html={topHtml} activeSpeechText={activeSpeechText} />
+                <div className="relative" suppressHydrationWarning>
+                  <ArticleContentBody html={hasSplit ? topHtml : formattedArticleBodyHtml} activeSpeechText={activeSpeechText} />
 
-                  {/* IN_ARTICLE Ad Banner displayed inside description */}
-                  <AdSectionBanner section="IN_ARTICLE" className="my-6" />
+                  {hasSplit && (
+                    <>
+                      {/* IN_ARTICLE Ad Banner displayed inside description */}
+                      <AdSectionBanner section="IN_ARTICLE" className="my-6" />
 
-                  {!isExpandedState && (
-                    <div className="relative pt-2 pb-2">
-                      {/* Smooth gradient fade overlay */}
-                      <div className="absolute -top-28 inset-x-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-[#0d1117] dark:via-[#0d1117]/90 dark:to-transparent pointer-events-none" />
+                      {!isExpandedState && (
+                        <div className="relative pt-2 pb-2" suppressHydrationWarning>
+                          {/* Smooth gradient fade overlay */}
+                          <div className="absolute -top-28 inset-x-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-[#0d1117] dark:via-[#0d1117]/90 dark:to-transparent pointer-events-none" />
 
-                      {/* Vadhu Vacho (Read More) Expand Button */}
-                      <div className="flex flex-col items-center justify-center relative z-20 pt-2 pb-4">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsContentExpanded(true);
-                            setSidebarMoreRecommended(true);
-                          }}
-                          className="group inline-flex items-center gap-2.5 px-9 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
-                        >
-                          <span className="text-lg md:text-xl font-black tracking-wide leading-none">
-                            {uiLabel(language, { en: 'Read More', gu: 'વધુ વાંચો', hi: 'और पढ़ें' })}
-                          </span>
-                          <ChevronDown className="w-5 h-5 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[3]" />
-                        </button>
-                      </div>
-                    </div>
+                          {/* Vadhu Vacho (Read More) Expand Button */}
+                          <div className="flex flex-col items-center justify-center relative z-20 pt-2 pb-4">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIsContentExpanded(true);
+                                setSidebarMoreRecommended(true);
+                              }}
+                              className="group inline-flex items-center gap-2.5 px-9 py-3.5 rounded-full bg-[#B3121B] hover:bg-red-700 text-white shadow-xl shadow-red-900/30 hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer select-none border-2 border-white/20"
+                            >
+                              <span className="text-lg md:text-xl font-black tracking-wide leading-none">
+                                {uiLabel(language, { en: 'Read More', gu: 'વધુ વાંચો', hi: 'और पढ़ें' })}
+                              </span>
+                              <ChevronDown className="w-5 h-5 transition-transform duration-300 group-hover:translate-y-0.5 stroke-[3]" />
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
 
-                  <div className={isExpandedState ? 'space-y-4 transition-all duration-500 ease-in-out' : 'hidden'}>
-                    <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
+                  <div className={hasSplit && !isExpandedState ? 'hidden' : 'space-y-4 transition-all duration-500 ease-in-out'} suppressHydrationWarning>
+                    {hasSplit && (
+                      <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
+                    )}
 
                     {/* Full PDF Page-by-Page Document Viewer */}
                     {hasPdfPages && pdfDocumentUrl && (
                       <ArticlePdfPagesViewer
                         pdfUrl={pdfDocumentUrl}
                         language={language}
-                        title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़' : 'Attached Official Document (PDF)'}
+                        title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिकપીડીએફ દસ્તાવેજ' : 'Attached Official Document (PDF)'}
                       />
                     )}
 
@@ -1985,22 +2033,24 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                     )}
 
                     {/* Collapse / Read Less Button */}
-                    <div className="flex justify-center pt-6 pb-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsContentExpanded(false);
-                          setSidebarMoreRecommended(false);
-                          window.scrollTo({ top: 380, behavior: 'smooth' });
-                        }}
-                        className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
-                      >
-                        <span className="text-base md:text-lg font-black tracking-wide leading-none">
-                          {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
-                        </span>
-                        <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
-                      </button>
-                    </div>
+                    {hasSplit && (
+                      <div className="flex justify-center pt-6 pb-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsContentExpanded(false);
+                            setSidebarMoreRecommended(false);
+                            window.scrollTo({ top: 380, behavior: 'smooth' });
+                          }}
+                          className="group inline-flex items-center gap-2 px-7 py-2.5 rounded-full border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 hover:bg-neutral-200 dark:hover:bg-neutral-700 text-neutral-800 dark:text-neutral-200 transition-all duration-200 cursor-pointer select-none shadow-sm active:scale-95"
+                        >
+                          <span className="text-base md:text-lg font-black tracking-wide leading-none">
+                            {uiLabel(language, { en: 'Read Less', gu: 'ટૂંકમાં વાંચો', hi: 'कम पढ़ें' })}
+                          </span>
+                          <ChevronUp className="w-4.5 h-4.5 transition-transform duration-300 group-hover:-translate-y-0.5 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
@@ -2070,13 +2120,20 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                             <AutoArticleTitle article={item} language={language} />
                           </h3>
                         </div>
-                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-xs self-start">
+                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
+                          <img
+                            src={getCardThumbnail(item, index)}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
+                          />
+                          <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
                           <Image
                             src={getCardThumbnail(item, index)}
                             alt={item.title || ''}
                             fill
                             sizes="114px"
-                            className="object-contain transition-transform duration-300 group-hover:scale-105"
+                            className="relative z-10 object-contain transition-transform duration-300 group-hover:scale-105"
                             style={{ objectFit: 'contain', objectPosition: 'center' }}
                           />
                         </div>

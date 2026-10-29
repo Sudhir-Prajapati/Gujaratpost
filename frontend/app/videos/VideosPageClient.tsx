@@ -968,58 +968,56 @@ export default function VideosPageClient() {
   {/* ── SECTION 2: SHORTS ────────────────────────────────────── */}
   <section id="short" className="order-1 mb-4 pt-0">
     <div className="flex items-center justify-between gap-3 mb-3 pb-1.5 border-b-2 border-border">
-      <div className="flex items-center gap-2.5">
+      <Link href="/shorts" className="group flex items-center gap-2.5">
         <span className="w-2.5 h-5 bg-accent rounded-sm inline-block shrink-0" />
-        <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider">
+        <h3 className="text-base md:text-lg font-black text-foreground uppercase tracking-wider group-hover:text-accent transition-colors">
           {getLocalized(language, { en: 'Shorts', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स' })}
         </h3>
-      </div>
-      {visibleShortsCount < shortsVideos.length && (
-        <button
-          type="button"
-          onClick={() => setVisibleShortsCount((count) => count + 5)}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-bold text-accent hover:bg-accent/10 transition-colors"
-          aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : 'Show more shorts'}
-        >
-          {language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'More videos'}
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      )}
+      </Link>
+      <Link
+        href="/shorts"
+        className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-bold text-accent hover:bg-accent/10 transition-colors"
+        aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : 'Show more shorts'}
+      >
+        <span>{language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View more'}</span>
+        <ChevronRight className="h-4 w-4" />
+      </Link>
     </div>
 
     <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-4">
-      {shortsVideos.slice(0, visibleShortsCount).map((item) => (
-        <a
-          key={item.id}
-          href={`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group relative aspect-[9/16] w-full max-w-[280px] sm:max-w-none mx-auto rounded-xl overflow-hidden bg-black shadow-sm cursor-pointer"
-        >
-          <Image
-            src={item.thumbnail}
-            alt={item.titleGu}
-            fill
-            sizes="(max-width: 768px) 100vw, 15vw"
-            className="object-cover opacity-85 transition-transform duration-300 group-hover:scale-105 group-hover:opacity-95"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-3">
-            <span className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur mb-2 transition-transform group-hover:scale-110 self-start">
-              <Play className="h-4 w-4 sm:h-3 sm:w-3 fill-current ml-0.5" />
-            </span>
-                    <h4 className="text-[13px] sm:text-[11px] font-bold leading-snug text-white line-clamp-2">
-                      <AutoTranslateString text={item.titleGu || item.title || ''} language={language} />
-                    </h4>
-  <span className="text-[10px] sm:text-[9px] font-black text-accent mt-0.5">
-    {item.hash}
-  </span>
-</div>
-                </a >
-              ))}
-            </div >
-          </section >
+      {shortsVideos.slice(0, 5).map((item) => {
+        const ytId = safeYouTubeId(item.youtubeId);
+        return (
+          <Link
+            key={item.id}
+            href={ytId ? `/shorts?v=${ytId}` : '/shorts'}
+            className="group relative aspect-[9/16] w-full max-w-[280px] sm:max-w-none mx-auto rounded-xl overflow-hidden bg-black shadow-sm cursor-pointer block"
+          >
+            <Image
+              src={item.thumbnail}
+              alt={item.titleGu || item.title || 'Short'}
+              fill
+              sizes="(max-width: 768px) 100vw, 15vw"
+              className="object-cover opacity-85 transition-transform duration-300 group-hover:scale-105 group-hover:opacity-95"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-3">
+              <span className="flex h-9 w-9 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur mb-2 transition-transform group-hover:scale-110 self-start">
+                <Play className="h-4 w-4 sm:h-3 sm:w-3 fill-current ml-0.5" />
+              </span>
+              <h4 className="text-[13px] sm:text-[11px] font-bold leading-snug text-white line-clamp-2">
+                <AutoTranslateString text={item.titleGu || item.title || ''} language={language} />
+              </h4>
+              <span className="text-[10px] sm:text-[9px] font-black text-accent mt-0.5">
+                {item.hash}
+              </span>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  </section>
 
-  {/* ── SECTION 3: LATEST NEWS ──────────────────────────────── */ }
+{/* ── SECTION 3: LATEST NEWS ──────────────────────────────── */ }
   < section id = "latest" className = "order-2 mb-5 pt-2" >
             <div className="flex items-center justify-between gap-3 mb-5 pb-2 border-b-2 border-border">
               <div className="flex items-center gap-2.5">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Play, X, ExternalLink } from 'lucide-react';
 import { getPublicVideos, getPublicGallery, getPublicArticles } from '@/lib/api';
@@ -13,6 +14,8 @@ import AePanVachoSection from '@/components/sections/AePanVachoSection';
 
 export default function ShortsPageClient() {
   const { language } = useApp();
+  const searchParams = useSearchParams();
+  const vParam = searchParams ? searchParams.get('v') : null;
   const [shortsList, setShortsList] = useState<any[]>([]);
   const [allVideos, setAllVideos] = useState<any[]>([]);
   const [galleryList, setGalleryList] = useState<any[]>([]);
@@ -71,6 +74,29 @@ export default function ShortsPageClient() {
     return list;
   }, [shortsList]);
 
+  useEffect(() => {
+    if (vParam) {
+      if (cleanShorts.length > 0) {
+        const found = cleanShorts.find((s) => s.youtubeId === vParam || s.id === vParam);
+        if (found) {
+          setSelectedShort(found);
+        } else {
+          setSelectedShort({
+            id: vParam,
+            youtubeId: safeYouTubeId(vParam),
+            title: 'Shorts Video',
+          });
+        }
+      } else {
+        setSelectedShort({
+          id: vParam,
+          youtubeId: safeYouTubeId(vParam),
+          title: 'Shorts Video',
+        });
+      }
+    }
+  }, [vParam, cleanShorts]);
+
   // Sidebar trending items
   const sidebarTrending = useMemo(() => {
     if (allVideos.length > 0) {
@@ -114,7 +140,7 @@ export default function ShortsPageClient() {
                     <div
                       key={item.id}
                       className="group flex flex-col cursor-pointer"
-                      onClick={() => window.open(`https://www.youtube.com/shorts/${safeYouTubeId(item.youtubeId)}`, '_blank', 'noopener,noreferrer')}
+                      onClick={() => setSelectedShort(item)}
                     >
                       {/* Thumbnail Container */}
                       <div className="relative aspect-video w-full rounded-lg overflow-hidden bg-black shadow-xs border border-border/20 group">
@@ -183,7 +209,7 @@ export default function ShortsPageClient() {
           </div>
 
           {/* ════ RIGHT COLUMN: SIDEBAR (TRENDING NEWS + PHOTO GALLERY) ════ */}
-          <div className="w-full">
+          <div className="w-full lg:sticky lg:top-20 lg:self-start">
             <MediaSidebar
               type="shorts"
               language={language}

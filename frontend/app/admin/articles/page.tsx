@@ -11,6 +11,8 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   ChevronDown,
   ArrowUp,
   ArrowDown,
@@ -91,6 +93,11 @@ export default function ArticleList() {
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [pageInput, setPageInput] = useState<string>('1');
+
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
   const [articles, setArticles] = useState<ArticleData[]>([]);
   const [categories, setCategories] = useState<CategoryData[]>([]);
   const [totalArticles, setTotalArticles] = useState(0);
@@ -417,6 +424,21 @@ export default function ArticleList() {
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage);
+      setPageInput(String(newPage));
+    }
+  };
+
+  const handlePageInputSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const num = parseInt(pageInput, 10);
+    if (!isNaN(num)) {
+      const clamped = Math.max(1, Math.min(totalPages, num));
+      setPageInput(String(clamped));
+      if (clamped !== page) {
+        handlePageChange(clamped);
+      }
+    } else {
+      setPageInput(String(page));
     }
   };
 
@@ -1113,7 +1135,18 @@ export default function ArticleList() {
 
             <div className="flex items-center gap-3 sm:gap-4">
               {/* Page navigation controls */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                {/* First page button */}
+                <button
+                  onClick={() => handlePageChange(1)}
+                  disabled={page === 1}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  title="First page (Page 1)"
+                >
+                  <ChevronsLeft className="h-5 w-5" />
+                </button>
+
+                {/* Previous page button */}
                 <button
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 1}
@@ -1123,10 +1156,37 @@ export default function ArticleList() {
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                <span className="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap px-1">
-                  Page {page} of {totalPages}
-                </span>
+                {/* Editable Page Input: Page [ 2 ] of 87 */}
+                <form
+                  onSubmit={handlePageInputSubmit}
+                  className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap px-1"
+                >
+                  <span>Page</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={pageInput}
+                    onChange={(e) => setPageInput(e.target.value)}
+                    onBlur={handlePageInputSubmit}
+                    onFocus={(e) => e.target.select()}
+                    className="w-14 sm:w-16 h-10 px-1 text-center font-black text-sm sm:text-base rounded-xl border-2 border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 shadow-xs transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text hover:border-black dark:hover:border-white"
+                    title={`Type a page number (1 to ${totalPages}) and press Enter to jump`}
+                  />
+                  <span>of {totalPages}</span>
 
+                  {pageInput !== String(page) && pageInput.trim() !== '' && (
+                    <button
+                      type="submit"
+                      className="ml-1 h-8 px-2.5 rounded-lg bg-[#B3121B] hover:bg-red-700 text-white text-xs font-black transition active:scale-95 shadow-sm cursor-pointer"
+                      title="Jump to page"
+                    >
+                      Go
+                    </button>
+                  )}
+                </form>
+
+                {/* Next page button */}
                 <button
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page === totalPages}
@@ -1134,6 +1194,16 @@ export default function ArticleList() {
                   title="Next page"
                 >
                   <ChevronRight className="h-5 w-5" />
+                </button>
+
+                {/* Last page button */}
+                <button
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={page === totalPages}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  title={`Last page (Page ${totalPages})`}
+                >
+                  <ChevronsRight className="h-5 w-5" />
                 </button>
               </div>
 

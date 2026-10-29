@@ -322,14 +322,21 @@ function StreamArticleItem({
 
       <Link
         href={`/news/${streamArticle.slug}`}
-        className="block relative aspect-[16/9] w-full overflow-hidden bg-neutral-950 dark:bg-black rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
+        className="block relative aspect-[16/9] w-full overflow-hidden bg-zinc-100 dark:bg-neutral-950 rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
       >
+        <img
+          src={articleData.image}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
+        />
+        <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
         <Image
           src={articleData.image}
           alt={getArticleTitle(articleData, language)}
           fill
           sizes="(max-width: 1024px) 100vw, 760px"
-          className="object-contain transition-transform duration-500 group-hover:scale-105"
+          className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-105"
           style={{ objectFit: 'contain', objectPosition: 'center' }}
         />
       </Link>
@@ -448,19 +455,26 @@ function StreamArticleItem({
                   href={`/news/${raArt.slug}`}
                   className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
                 >
-                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-sm">
+                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-sm">
+                    <img
+                      src={getCardThumbnail(raArt, index)}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
+                    />
+                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
                     <Image
                       src={getCardThumbnail(raArt, index)}
                       alt={getArticleTitle(raArt, language)}
                       fill
                       sizes="90px"
-                      className="object-contain transition-transform duration-500 group-hover:scale-110"
+                      className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-110"
                       style={{ objectFit: 'contain', objectPosition: 'center' }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
                       }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </div>
                   <div className="min-w-0 flex-1 flex flex-col gap-1">
                     <span className="block text-[10.5px] font-black uppercase tracking-wider text-[#B3121B] opacity-85">{raCat}</span>
@@ -681,13 +695,20 @@ export default function ArticleInfiniteStream({
                     <AutoArticleTitle article={item} language={language} />
                   </h3>
                 </div>
-                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-neutral-950 dark:bg-neutral-900 shadow-xs self-start">
+                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
+                  <img
+                    src={getCardThumbnail(item, index)}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
+                  />
+                  <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
                   <Image
                     src={getCardThumbnail(item, index)}
                     alt={item.title || ''}
                     fill
                     sizes="114px"
-                    className="object-contain transition-transform duration-300 group-hover:scale-105"
+                    className="relative z-10 object-contain transition-transform duration-300 group-hover:scale-105"
                     style={{ objectFit: 'contain', objectPosition: 'center' }}
                   />
                 </div>

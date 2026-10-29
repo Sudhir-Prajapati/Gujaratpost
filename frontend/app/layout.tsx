@@ -132,6 +132,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="dns-prefetch" href="https://i.ytimg.com" />
         <link rel="dns-prefetch" href="https://img.youtube.com" />
 
+        {/* Global NewsMediaOrganization Structured Data */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'NewsMediaOrganization',
+              name: 'Gujarat Post',
+              alternateName: 'ગુજરાત પોસ્ટ',
+              url: 'https://gujaratpost.in',
+              logo: 'https://gujaratpost.in/logo.png',
+              sameAs: [
+                'https://www.facebook.com/gujaratpostin',
+                'https://x.com/gujaratpostin',
+                'https://www.instagram.com/gujaratpostin',
+              ],
+            }).replace(/</g, '\\u003c'),
+          }}
+        />
+
         {/* Google Analytics (GA4) — Direct in <head> like FinTrade */}
         {process.env.NEXT_PUBLIC_GA_ID && (
           <>

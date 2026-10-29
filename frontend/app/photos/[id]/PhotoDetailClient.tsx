@@ -668,14 +668,17 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 {/* Image display: Single main photo stage with Prev/Next slider controls and thumbnail bar */}
                 <div className="p-1 sm:p-2 flex flex-col justify-center">
                   <div
-                    className="relative group overflow-hidden rounded-xl sm:rounded-2xl bg-neutral-950 cursor-pointer w-full flex items-center justify-center min-h-[360px] sm:min-h-[460px] max-h-[82vh] shadow-inner select-none"
+                    className="relative group overflow-hidden rounded-xl sm:rounded-2xl bg-zinc-100 dark:bg-neutral-950 cursor-pointer w-full flex items-center justify-center min-h-[360px] sm:min-h-[460px] max-h-[82vh] shadow-inner select-none"
                     onClick={() => { setActiveLightboxIndex(activeSlideIndex); setIsLightboxOpen(true); }}
                   >
                     {/* Ambient blur backdrop for rich presentation without blank voids */}
-                    <div
-                      className="absolute inset-0 bg-cover bg-center blur-2xl opacity-35 scale-110 pointer-events-none transition-all duration-700"
-                      style={{ backgroundImage: `url(${galleryItems[activeSlideIndex]?.src || mainFallback})` }}
+                    <img
+                      src={galleryItems[activeSlideIndex]?.src || mainFallback}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
                     />
+                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
 
                     {/* Complete uncropped photo centered with natural proportions */}
                     <img
