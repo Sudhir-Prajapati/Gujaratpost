@@ -125,9 +125,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (savedTheme === 'light' || savedTheme === 'dark') setTheme(savedTheme);
     if (savedApkTheme === 'light' || savedApkTheme === 'dark') setApkTheme(savedApkTheme);
 
-    if (savedLanguage === 'gu' || savedLanguage === 'en' || savedLanguage === 'hi') {
-      // User has an explicit saved preference — honour it
-      setLanguage(savedLanguage as Language);
+    // Check if URL has an explicit lang parameter (e.g. from Facebook, X, WhatsApp share)
+    let urlLang: string | null = null;
+    try {
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const l = params.get('lang');
+        if (l === 'gu' || l === 'hi' || l === 'en') {
+          urlLang = l;
+        }
+      }
+    } catch {}
+
+    const effectiveLanguage = urlLang || savedLanguage;
+
+    if (effectiveLanguage === 'gu' || effectiveLanguage === 'en' || effectiveLanguage === 'hi') {
+      setLanguage(effectiveLanguage as Language);
+      if (urlLang) {
+        try {
+          sessionStorage.setItem('gp-lang', urlLang);
+          localStorage.setItem('gp-lang', urlLang);
+        } catch {}
+      }
     } else {
       // First-time session: no preference saved → persist 'gu' as the session default
       try {

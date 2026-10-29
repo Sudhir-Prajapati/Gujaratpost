@@ -554,6 +554,25 @@ function HeroStorySlider({
 }) {
   const [slideIndex, setSlideIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX.current - touchEndX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        setSlideIndex((prev) => (prev + 1) % total);
+      } else {
+        setSlideIndex((prev) => (prev - 1 + total) % total);
+      }
+    }
+    touchStartX.current = null;
+  };
 
   const total = articles.length;
 
@@ -625,7 +644,11 @@ function HeroStorySlider({
         </Link>
 
         {/* 2. Image in the Middle with Slider Controls */}
-        <div className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[16/10] bg-muted">
+        <div
+          className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[16/10] bg-muted"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <Link href={`/news/${current.slug}`} className="block w-full h-full">
             <ArticleMedia
               key={`mob-${current.id || slideIndex}`}
@@ -638,6 +661,26 @@ function HeroStorySlider({
           {/* Controls (if total > 1) */}
           {total > 1 && (
             <>
+              {/* Prev Arrow */}
+              <button
+                type="button"
+                onClick={handlePrev}
+                aria-label="Previous story"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-black/60 text-white hover:bg-black/90 flex items-center justify-center backdrop-blur-sm transition-all active:scale-90 cursor-pointer shadow-md border border-white/20"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
+              {/* Next Arrow */}
+              <button
+                type="button"
+                onClick={handleNext}
+                aria-label="Next story"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 z-20 h-8 w-8 rounded-full bg-black/60 text-white hover:bg-black/90 flex items-center justify-center backdrop-blur-sm transition-all active:scale-90 cursor-pointer shadow-md border border-white/20"
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+
               {/* Dots Progress Indicator */}
               <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-1.5 bg-black/55 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 pointer-events-auto">
                 {articles.map((_, idx) => (
@@ -1046,8 +1089,8 @@ export default function HeroSection({
   );
   const [dynamicTrendingTopics, setDynamicTrendingTopics] = useState<string[]>(initialHeroSettings?.trendingTopics || initialHeroSettings?.setting?.trendingTopics || []);
   const [marketRates, setMarketRates] = useState<any>(initialMarketRates || {
-    gold: { price: '₹74,850', change: '▲ ₹450', purity: '24 Karat', unit: '10 Grams' },
-    silver: { price: '₹84,200', change: '— Stable', purity: '999 Fine', unit: '1 Kg' },
+    gold: { price: '₹1,44,000', change: '▲ ₹660', purity: '24 Karat', unit: '10 Grams' },
+    silver: { price: '₹2,15,000', change: '▼ ₹5,000', purity: '999 Fine', unit: '1 Kg' },
   });
   const [weatherData, setWeatherData] = useState<any>(initialWeatherData || {
     city: 'અમદાવાદ',
@@ -1276,6 +1319,36 @@ export default function HeroSection({
     return () => clearTimeout(safetyTimer);
   }, []);
 
+  // Auto-refresh live market rates every 60 seconds and immediately on tab visibility change
+  useEffect(() => {
+    let isMounted = true;
+
+    const refreshLiveRates = () => {
+      getMarketRates(true)
+        .then((fresh) => {
+          if (isMounted && fresh && fresh.gold?.price) {
+            setMarketRates(fresh);
+          }
+        })
+        .catch(() => {});
+    };
+
+    const intervalId = setInterval(refreshLiveRates, 60 * 1000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshLiveRates();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   // Sidebar auto-changing video state (cycles every 10s)
   const featuredSidebar = videosList.filter(v => v.isFeatured && (v.type === 'video' || !v.type));
   const sidebarVideos = featuredSidebar.length > 0
@@ -1424,11 +1497,22 @@ export default function HeroSection({
             </div>
             <div className="flex flex-col gap-6 sticky top-20 select-none">
               <div>
-                <div className="flex items-end gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
-                  <span className="text-[#B3121B] text-[17px] md:text-[18px] font-black leading-none pb-0.5">♦</span>
-                  <h3 className="text-[17px] md:text-[18px] font-black text-foreground leading-none pb-0.5">
-                    {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : 'Gold & Silver Rates'}
-                  </h3>
+                <div className="flex items-end justify-between gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
+                  <div className="flex items-end gap-1.5">
+                    <span className="text-[#B3121B] text-[17px] md:text-[18px] font-black leading-none pb-0.5">♦</span>
+                    <h3 className="text-[17px] md:text-[18px] font-black text-foreground leading-none pb-0.5">
+                      {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : 'Gold & Silver Rates'}
+                    </h3>
+                  </div>
+                  <div className="flex items-center gap-1.5 pb-0.5">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    <span className="text-[11px] font-black tracking-wider text-emerald-600 dark:text-emerald-400 uppercase">
+                      LIVE
+                    </span>
+                  </div>
                 </div>
 
                 <div className="border border-border/80 rounded-sm bg-card py-2 px-3 space-y-2 shadow-sm">
@@ -1448,11 +1532,19 @@ export default function HeroSection({
                     </div>
                     <div className="text-right">
                       <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                        {marketRates?.gold?.price || '₹74,850'}
+                        {marketRates?.gold?.price || '₹1,44,000'}
                       </p>
-                      <p className="text-[13px] md:text-[13.5px] font-black text-emerald-600 flex items-center justify-end gap-0.5 mt-0.5 select-none">
-                        {marketRates?.gold?.change || '▲ ₹450'}
-                      </p>
+                      {(() => {
+                        const ch = marketRates?.gold?.change || '▲ ₹660';
+                        const isUp = ch.includes('▲') || ch.includes('+');
+                        const isDown = ch.includes('▼') || ch.includes('-');
+                        const color = isUp ? 'text-emerald-600 dark:text-emerald-400' : isDown ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground';
+                        return (
+                          <p className={`text-[13px] md:text-[13.5px] font-black flex items-center justify-end gap-0.5 mt-0.5 select-none ${color}`}>
+                            {ch}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -1474,11 +1566,19 @@ export default function HeroSection({
                     </div>
                     <div className="text-right">
                       <p className="text-[20px] md:text-[21px] text-foreground leading-none font-black tracking-tight" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                        {marketRates?.silver?.price || '₹84,200'}
+                        {marketRates?.silver?.price || '₹2,15,000'}
                       </p>
-                      <p className="text-[13px] md:text-[13.5px] font-black text-muted-foreground flex items-center justify-end gap-0.5 mt-0.5 select-none">
-                        {marketRates?.silver?.change || '— Stable'}
-                      </p>
+                      {(() => {
+                        const ch = marketRates?.silver?.change || '▼ ₹5,000';
+                        const isUp = ch.includes('▲') || ch.includes('+');
+                        const isDown = ch.includes('▼') || ch.includes('-');
+                        const color = isUp ? 'text-emerald-600 dark:text-emerald-400' : isDown ? 'text-rose-600 dark:text-rose-400' : 'text-muted-foreground';
+                        return (
+                          <p className={`text-[13px] md:text-[13.5px] font-black flex items-center justify-end gap-0.5 mt-0.5 select-none ${color}`}>
+                            {ch}
+                          </p>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

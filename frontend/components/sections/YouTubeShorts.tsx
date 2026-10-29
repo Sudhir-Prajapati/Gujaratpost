@@ -321,12 +321,14 @@ export default function YouTubeShorts() {
                 <div key={i} className="flex-shrink-0 w-[185px] sm:w-[205px] aspect-[9/16] rounded-2xl bg-white/10 animate-pulse border border-white/20" />
               ))
             ) : (
-              displayList.map((short, index) => (
-                <article
-                  key={`${short.id}-${index}`}
-                  onClick={() => window.open(`https://www.youtube.com/shorts/${safeYouTubeId(short.youtubeId || short.id)}`, '_blank', 'noopener,noreferrer')}
-                  className="group relative flex-shrink-0 w-[185px] sm:w-[205px] cursor-pointer select-none"
-                >
+              displayList.map((short, index) => {
+                const shortYtId = safeYouTubeId(short.youtubeId || short.id);
+                return (
+                  <Link
+                    key={`${short.id}-${index}`}
+                    href={shortYtId ? `/shorts?v=${shortYtId}` : '/shorts'}
+                    className="group relative flex-shrink-0 w-[185px] sm:w-[205px] cursor-pointer select-none block"
+                  >
                   <div
                     className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-white/20 bg-black shadow-md transition-transform duration-300 group-hover:scale-[1.02]"
                     style={{
@@ -366,8 +368,9 @@ export default function YouTubeShorts() {
                       <div className="h-1 w-4 bg-[#B3121B] rounded-full mt-1" />
                     </div>
                   </div>
-                </article>
-              ))
+                  </Link>
+                );
+              })
             )}
           </div>
         </div>

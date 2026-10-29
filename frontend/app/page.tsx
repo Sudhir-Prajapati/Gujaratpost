@@ -26,8 +26,8 @@ export default async function HomePage() {
     getHeroSettings().catch(() => null),
     getPublicCategories({ showInHome: true }).catch(() => []),
     getPublicVideos('video').catch(() => []),
-    withTimeout(getMarketRates().catch(() => null), 150, null),
-    withTimeout(getPublicWeather('ahmedabad').catch(() => null), 150, null),
+    withTimeout(getMarketRates().catch(() => null), 1500, null),
+    withTimeout(getPublicWeather('ahmedabad').catch(() => null), 1500, null),
     getPublicReels().catch(() => []),
   ]);
 

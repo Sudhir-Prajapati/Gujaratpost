@@ -67,7 +67,7 @@ export default function AlsoPanVacho({
   };
 
   return (
-    <section className="also-pan-vacho select-none w-full my-6 pt-2">
+    <section className="also-pan-vacho select-none w-full my-6 pt-2" suppressHydrationWarning>
       {/* Header matching Gujarat Post visual design */}
       <div className="flex items-center gap-2.5 mb-4 pb-2 border-b border-neutral-200 dark:border-neutral-800">
         <span className="block w-[5px] h-6 rounded-full bg-[#B3121B]" />
@@ -102,13 +102,20 @@ export default function AlsoPanVacho({
               className="group relative flex items-start gap-3 p-3 rounded-2xl bg-white dark:bg-neutral-900/90 border border-neutral-200/90 dark:border-neutral-800 shadow-[0_2px_10px_rgba(0,0,0,0.03)] hover:border-[#B3121B]/60 dark:hover:border-red-600/60 hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] hover:-translate-y-0.5 transition-all duration-300 text-left overflow-hidden"
             >
               {/* Thumbnail Image */}
-              <div className="relative w-[92px] h-[72px] sm:w-[105px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-neutral-950 dark:bg-neutral-900 shadow-xs">
+              <div className="relative w-[92px] h-[72px] sm:w-[105px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-xs">
+                <img
+                  src={thumbSrc}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
                 <Image
                   src={thumbSrc}
                   alt={art.title || ''}
                   fill
                   sizes="(max-width: 640px) 92px, 105px"
-                  className="object-contain transition-transform duration-500 group-hover:scale-105"
+                  className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-105"
                   style={{ objectFit: 'contain', objectPosition: 'center' }}
                   onError={(e) => {
                     if (DEMO_THUMBNAILS.length > 0) {
@@ -116,7 +123,7 @@ export default function AlsoPanVacho({
                     }
                   }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/25 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </div>
 
               {/* Text & Metadata */}

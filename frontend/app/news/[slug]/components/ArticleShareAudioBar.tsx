@@ -6,7 +6,8 @@ import {
   getFacebookShareHref, 
   getTwitterShareHref, 
   getWhatsAppShareHref, 
-  getPublicShareUrl 
+  getPublicShareUrl,
+  buildLocalizedShareUrl
 } from '@/lib/facebookShare';
 import { playArticleAudio, stopArticleAudio } from '@/lib/articleTtsPlayer';
 
@@ -111,7 +112,7 @@ export default function ArticleShareAudioBar({
       copyUrl();
       return;
     }
-    const publicUrl = getPublicShareUrl(articleUrl);
+    const publicUrl = buildLocalizedShareUrl(articleUrl, language);
     try {
       await navigator.clipboard.writeText(publicUrl);
       setInternalCopied(true);
@@ -185,7 +186,7 @@ export default function ArticleShareAudioBar({
 
       {/* WhatsApp */}
       <a
-        href={getWhatsAppShareHref(articleUrl, title)}
+        href={getWhatsAppShareHref(articleUrl, title, language)}
         target="_blank"
         rel="noopener noreferrer"
         title={ui({ en: 'WhatsApp', gu: 'વોટ્સએપ', hi: 'व्हाट्सएप' })}
@@ -200,7 +201,7 @@ export default function ArticleShareAudioBar({
 
       {/* Facebook */}
       <a
-        href={getFacebookShareHref(articleUrl)}
+        href={getFacebookShareHref(articleUrl, language)}
         target="_blank"
         rel="noopener noreferrer"
         title="Facebook"
@@ -214,7 +215,7 @@ export default function ArticleShareAudioBar({
 
       {/* X */}
       <a
-        href={getTwitterShareHref(articleUrl, title)}
+        href={getTwitterShareHref(articleUrl, title, language)}
         target="_blank"
         rel="noopener noreferrer"
         title="Share on X"

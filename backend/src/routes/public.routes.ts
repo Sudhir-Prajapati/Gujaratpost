@@ -21,6 +21,7 @@ import { LegalController } from '../controllers/legal.controller.js';
 import { FeedbackController } from '../controllers/feedback.controller.js';
 import { RssController } from '../controllers/rss.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
+import { getLiveMarketRates } from '../services/marketRates.service.js';
 import { redisClient } from '../config/redis.js';
 
 const router = Router();
@@ -1144,61 +1145,20 @@ router.get('/webstories', cacheResponse(300), async (req, res, next) => {
   }
 });
 
-let marketRatesCache: { data: any; timestamp: number } | null = null;
-
 /**
  * GET /api/public/market-rates
  * Fetch live Gold & Silver market rates in INR
  */
 router.get('/market-rates', async (req, res) => {
-  const NOW = Date.now();
-  if (marketRatesCache && NOW - marketRatesCache.timestamp < 10 * 60 * 1000) {
-    return sendSuccess(res, marketRatesCache.data, 'Market rates retrieved from cache');
-  }
-
   try {
-    const [goldRes, silverRes, exRes]: any[] = await Promise.all([
-      fetch('https://api.gold-api.com/price/XAU').then((r) => r.json()).catch(() => null),
-      fetch('https://api.gold-api.com/price/XAG').then((r) => r.json()).catch(() => null),
-      fetch('https://open.er-api.com/v6/latest/USD').then((r) => r.json()).catch(() => null),
-    ]);
-
-    const inrRate = exRes?.rates?.INR || 95.35;
-    let goldPrice10g = 74850;
-    let silverPrice1kg = 84200;
-
-    if (goldRes?.price) {
-      goldPrice10g = Math.round((goldRes.price / 31.1034768) * 10 * inrRate * 0.535);
-    }
-    if (silverRes?.price) {
-      silverPrice1kg = Math.round((silverRes.price / 31.1034768) * 1000 * inrRate * 0.40);
-    }
-
-    const payload = {
-      gold: {
-        price: `₹${goldPrice10g.toLocaleString('en-IN')}`,
-        priceNumber: goldPrice10g,
-        change: '▲ ₹450',
-        purity: '24 Karat',
-        unit: '10 Grams',
-      },
-      silver: {
-        price: `₹${silverPrice1kg.toLocaleString('en-IN')}`,
-        priceNumber: silverPrice1kg,
-        change: '— Stable',
-        purity: '999 Fine',
-        unit: '1 Kg',
-      },
-      updatedAt: new Date().toISOString(),
-    };
-
-    marketRatesCache = { data: payload, timestamp: NOW };
-    return sendSuccess(res, payload, 'Live market rates retrieved');
+    const data = await getLiveMarketRates();
+    return sendSuccess(res, data, 'Live market rates retrieved');
   } catch {
     const fallbackPayload = {
-      gold: { price: '₹74,850', priceNumber: 74850, change: '▲ ₹450', purity: '24 Karat', unit: '10 Grams' },
-      silver: { price: '₹84,200', priceNumber: 84200, change: '— Stable', purity: '999 Fine', unit: '1 Kg' },
+      gold: { price: '₹1,44,000', priceNumber: 144000, change: '▲ ₹660', purity: '24 Karat', unit: '10 Grams' },
+      silver: { price: '₹2,15,000', priceNumber: 215000, change: '▼ ₹5,000', purity: '999 Fine', unit: '1 Kg' },
       updatedAt: new Date().toISOString(),
+      source: 'fallback',
     };
     return sendSuccess(res, fallbackPayload, 'Fallback market rates retrieved');
   }

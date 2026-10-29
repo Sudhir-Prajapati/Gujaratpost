@@ -304,7 +304,7 @@ export default function EntertainTechLifeSection({
     c: ColourScheme,
     uid: string           // unique id so CSS selectors don't bleed between cards
   ) => (
-    <div className={`cat-card-${uid} bg-card border border-border/80 rounded-xl p-3.5 sm:p-5 shadow-sm flex flex-col justify-between min-w-0`}>
+    <div className={`cat-card-${uid} bg-card border-[1.5px] border-zinc-300 dark:border-zinc-700 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md flex flex-col justify-between min-w-0 h-full transition-all duration-300`}>
       <style>{`
         @keyframes ring-spin-${uid} {
           from { transform: rotate(0deg); }
@@ -485,7 +485,7 @@ export default function EntertainTechLifeSection({
         </div>
 
         {/* Article rows */}
-        <div className="flex flex-col divide-y divide-border/40">
+        <div className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800/80">
           {items.map((a, i) => (
             <Link
               key={a.id || a.slug || `art-${i}`}

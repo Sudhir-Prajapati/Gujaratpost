@@ -1,3 +1,5 @@
+import type { Language } from '@/types';
+
 const PUBLIC_SITE_ORIGIN = new URL('https://gujaratpost.in');
 
 /**
@@ -19,6 +21,23 @@ export function getPublicShareUrl(rawUrl: string): string {
       return `https://gujaratpost.in${rawUrl}`;
     }
     return rawUrl;
+  }
+}
+
+/**
+ * Builds a localized share URL with language parameter (e.g. ?lang=gu, ?lang=hi, ?lang=en).
+ * Defaults to 'gu' if not specified or if language is 'gu'.
+ */
+export function buildLocalizedShareUrl(rawUrl: string, language?: Language): string {
+  const publicUrl = getPublicShareUrl(rawUrl);
+  const lang = (language === 'hi' || language === 'en' || language === 'gu') ? language : 'gu';
+  try {
+    const url = new URL(publicUrl);
+    url.searchParams.set('lang', lang);
+    return url.toString();
+  } catch {
+    const separator = publicUrl.includes('?') ? '&' : '?';
+    return `${publicUrl}${separator}lang=${lang}`;
   }
 }
 
@@ -58,26 +77,26 @@ export function getOpenGraphImageUrl(rawUrl?: string): string {
   return url;
 }
 
-export function getFacebookShareHref(articleUrl: string): string {
-  const publicUrl = getPublicShareUrl(articleUrl);
+export function getFacebookShareHref(articleUrl: string, language?: Language): string {
+  const publicUrl = buildLocalizedShareUrl(articleUrl, language);
   return `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(publicUrl)}`;
 }
 
-export function getTwitterShareHref(articleUrl: string, title: string = ''): string {
-  const publicUrl = getPublicShareUrl(articleUrl);
+export function getTwitterShareHref(articleUrl: string, title: string = '', language?: Language): string {
+  const publicUrl = buildLocalizedShareUrl(articleUrl, language);
   const cleanTitle = title ? title.replace(/<[^>]*>/g, '').trim() : '';
   const text = cleanTitle ? `${cleanTitle}\n\n` : '';
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(publicUrl)}`;
 }
 
-export function getWhatsAppShareHref(articleUrl: string, title: string = ''): string {
-  const publicUrl = getPublicShareUrl(articleUrl);
+export function getWhatsAppShareHref(articleUrl: string, title: string = '', language?: Language): string {
+  const publicUrl = buildLocalizedShareUrl(articleUrl, language);
   const cleanTitle = title ? title.replace(/<[^>]*>/g, '').trim() : '';
   const text = cleanTitle ? `${cleanTitle}\n\n${publicUrl}` : publicUrl;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
-export function getLinkedInShareHref(articleUrl: string): string {
-  const publicUrl = getPublicShareUrl(articleUrl);
+export function getLinkedInShareHref(articleUrl: string, language?: Language): string {
+  const publicUrl = buildLocalizedShareUrl(articleUrl, language);
   return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(publicUrl)}`;
 }

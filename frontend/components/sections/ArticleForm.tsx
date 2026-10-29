@@ -1453,7 +1453,6 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .join('\n');
         };
 
-        // Fallback extraction matching NewsDetailClient (if no explicit header in content)
         const cleanGistText = (s: string) => {
           return (s || '')
             .replace(/<[^>]*>/g, '')
@@ -1464,21 +1463,32 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .replace(/એક નજરમાં/gi, '')
             .replace(/एक नजर में/gi, '')
             .replace(/AT A GLANCE/gi, '')
+            .replace(/\s+/g, ' ')
             .trim();
         };
 
-        const excerptGuGist = cleanGistText(art.excerptGu || art.excerpt || '');
-        const fallbackGu = excerptGuGist && excerptGuGist.length > 8 ? `• ${excerptGuGist}` : '';
+        const excerptGuClean = cleanGistText(art.excerptGu || art.excerpt || '');
+        const excerptEnClean = cleanGistText(art.excerpt || art.excerptGu || '');
+        const excerptHiClean = cleanGistText(art.excerptHi || art.excerpt || '');
 
-        const excerptEnGist = cleanGistText(art.excerpt || art.excerptGu || '');
-        const fallbackEn = excerptEnGist && excerptEnGist.length > 8 ? `• ${excerptEnGist}` : '';
+        let rawHlGu = art.highlightsGu || parsedGu.hl || '';
+        let rawHlEn = art.highlights || parsedEn.hl || '';
+        let rawHlHi = art.highlightsHi || parsedHi.hl || '';
 
-        const excerptHiGist = cleanGistText(art.excerptHi || art.excerpt || '');
-        const fallbackHi = excerptHiGist && excerptHiGist.length > 8 ? `• ${excerptHiGist}` : '';
+        // If parsed highlight was just an auto-injected copy of the excerpt from the old fallback bug, treat as empty
+        if (cleanGistText(rawHlGu) && cleanGistText(rawHlGu) === excerptGuClean) {
+          rawHlGu = '';
+        }
+        if (cleanGistText(rawHlEn) && cleanGistText(rawHlEn) === excerptEnClean) {
+          rawHlEn = '';
+        }
+        if (cleanGistText(rawHlHi) && cleanGistText(rawHlHi) === excerptHiClean) {
+          rawHlHi = '';
+        }
 
-        const hlGu = formatHlBullets(art.highlightsGu || parsedGu.hl || art.highlights || parsedEn.hl || fallbackGu);
-        const hlEn = formatHlBullets(art.highlights || parsedEn.hl || (parsedGu.hl && lang === 'en' ? parsedGu.hl : '') || fallbackEn);
-        const hlHi = formatHlBullets(art.highlightsHi || parsedHi.hl || (parsedGu.hl && lang === 'hi' ? parsedGu.hl : '') || fallbackHi);
+        const hlGu = formatHlBullets(rawHlGu);
+        const hlEn = formatHlBullets(rawHlEn);
+        const hlHi = formatHlBullets(rawHlHi);
 
         setHighlights(hlEn);
         setDesc1(parsedEn.d1Str || '');
@@ -1865,9 +1875,17 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl }));
     const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl }));
 
-    const compiledEn = compileStructuredContent(highlights.trim() || effectiveHighlights, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, 'en');
-    const compiledGu = compileStructuredContent(highlightsGu.trim() || effectiveHighlights, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, 'gu');
-    const compiledHi = compileStructuredContent(highlightsHi.trim() || effectiveHighlights, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, 'hi');
+    // Language-specific highlights: do NOT inject highlights if the admin left them blank!
+    // If the primary language has no highlights, NO language gets highlights.
+    const primaryHl = articleLanguage === 'gu' ? highlightsGu.trim() : articleLanguage === 'hi' ? highlightsHi.trim() : highlights.trim();
+
+    const finalHlEn = primaryHl ? (highlights.trim() || primaryHl) : "";
+    const finalHlGu = primaryHl ? (highlightsGu.trim() || primaryHl) : "";
+    const finalHlHi = primaryHl ? (highlightsHi.trim() || primaryHl) : "";
+
+    const compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, 'en');
+    const compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, 'gu');
+    const compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, 'hi');
 
     const extraPrimary = primaryMediaList.slice(1).map((u) => u.trim()).filter(Boolean);
     const storySectionImgs = storySections.map((slot) => slot.imageUrl.trim()).filter(Boolean);

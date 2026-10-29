@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { SITE_URL, cleanArticlePlainText } from "@/data";
+import { SITE_URL, cleanArticlePlainText, getArticleTitle, getArticleExcerpt, getArticleContent } from "@/data";
+import type { Language } from "@/types";
 import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
@@ -24,15 +25,81 @@ export async function generateStaticParams() {
   return [];
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
+async function serverTranslateText(text: string, targetLang: 'gu' | 'hi' | 'en'): Promise<string> {
+  if (!text || !text.trim()) return '';
+  const trimmed = text.trim();
+  const hasDevanagari = /[\u0900-\u097F]/.test(trimmed);
+  const hasGujarati = /[\u0A80-\u0AFF]/.test(trimmed);
+  const hasLatin = /[A-Za-z]/.test(trimmed) && !hasGujarati && !hasDevanagari;
+
+  if (targetLang === 'hi' && hasDevanagari && !hasGujarati) return trimmed;
+  if (targetLang === 'gu' && hasGujarati) return trimmed;
+  if (targetLang === 'en' && hasLatin) return trimmed;
+
+  try {
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${encodeURIComponent(trimmed)}`;
+    const res = await fetch(url, { next: { revalidate: 86400 } });
+    if (!res.ok) return trimmed;
+    const data = await res.json();
+    if (Array.isArray(data) && Array.isArray(data[0])) {
+      const translated = data[0].map((item: any) => item[0]).join('');
+      if (translated && translated.trim()) return translated.trim();
+    }
+  } catch {}
+  return trimmed;
+}
+
+export async function generateMetadata(
+  props: {
+    params: Promise<{ slug: string }>;
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+): Promise<Metadata> {
+  const { slug } = await props.params;
+  const search = props.searchParams ? await props.searchParams : {};
+  const rawLang = typeof search?.lang === 'string' ? search.lang.toLowerCase() : '';
+  const lang: Language = (rawLang === 'en' || rawLang === 'hi' || rawLang === 'gu') ? (rawLang as Language) : 'gu';
+
   try {
     const article = await getPublicArticleBySlug(slug);
     if (!article) return {};
-    const canonicalUrl = `https://gujaratpost.in/news/${article.slug}`;
+    const canonicalUrl = `https://gujaratpost.in/news/${article.slug}${lang !== 'gu' ? `?lang=${lang}` : ''}`;
     const authorName = typeof article.author === 'string' ? article.author : article.author?.name || 'Gujarat Post';
-    const cleanTitle = cleanArticlePlainText(article.title) || 'Gujarat Post';
-    let cleanDesc = cleanArticlePlainText(article.excerpt || article.content || '');
+
+    // Raw candidate title based on language
+    const rawCandidateTitle = (lang === 'hi' && article.titleHi && /[\u0900-\u097F]/.test(article.titleHi))
+      ? article.titleHi
+      : (lang === 'gu' && article.titleGu)
+      ? article.titleGu
+      : (lang === 'en' && article.title)
+      ? article.title
+      : (article.titleGu || article.title || 'Gujarat Post');
+
+    // Guarantee translation if database record does not have the target script
+    const translatedTitle = await serverTranslateText(cleanArticlePlainText(rawCandidateTitle), lang);
+    const cleanTitle = cleanArticlePlainText(translatedTitle) || 'Gujarat Post';
+
+    // Localized description: Gujarati by default, or specific selected language (hi / en)
+    const rawCandidateExcerpt = (lang === 'hi' && article.excerptHi && /[\u0900-\u097F]/.test(article.excerptHi))
+      ? article.excerptHi
+      : (lang === 'gu' && article.excerptGu)
+      ? article.excerptGu
+      : (lang === 'en' && article.excerpt)
+      ? article.excerpt
+      : (article.excerptGu || article.excerpt || article.contentGu || article.content || '');
+
+    let cleanDesc = cleanArticlePlainText(rawCandidateExcerpt);
+    cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
+    cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
+    if (cleanDesc.length > 170) {
+      const slice = cleanDesc.slice(0, 170);
+      const lastSpace = slice.lastIndexOf(' ');
+      cleanDesc = (lastSpace > 110 ? slice.slice(0, lastSpace) : slice).trim() + '...';
+    }
+    if (cleanDesc) {
+      cleanDesc = cleanArticlePlainText(await serverTranslateText(cleanDesc, lang));
+    }
+
     // Strip any residual breadcrumbs or category/city prefixes
     cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
     cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
@@ -42,9 +109,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       cleanDesc = (lastSpace > 110 ? slice.slice(0, lastSpace) : slice).trim() + '...';
     }
     if (!cleanDesc || cleanDesc.length < 20) {
-      cleanDesc = `${cleanTitle} - ગુજરાત અને દેશ-દુનિયાના તમામ મહત્વપૂર્ણ સમાચાર વાંચો ગુજરાત પોસ્ટ પર.`;
+      cleanDesc = lang === 'en'
+        ? `${cleanTitle} - Read all latest and breaking news on Gujarat Post.`
+        : lang === 'hi'
+        ? `${cleanTitle} - गुजरात और देश-दुनिया की सभी महत्वपूर्ण खबरें पढ़ें गुजरात पोस्ट पर.`
+        : `${cleanTitle} - ગુજરાત અને દેશ-દુનિયાના તમામ મહત્વપૂર્ણ સમાચાર વાંચો ગુજરાત પોસ્ટ પર.`;
     }
     const imageUrl = getOpenGraphImageUrl(article.image);
+    const locale = lang === 'gu' ? 'gu_IN' : lang === 'hi' ? 'hi_IN' : 'en_US';
 
     return {
       title: cleanTitle,
@@ -56,7 +128,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         description: cleanDesc,
         url: canonicalUrl,
         siteName: "Gujarat Post",
-        locale: "gu_IN",
+        locale,
         images: [
           {
             url: imageUrl,
@@ -87,8 +159,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   }
 }
 
-export default async function NewsDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+export default async function NewsDetailPage(
+  props: {
+    params: Promise<{ slug: string }>;
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+  }
+) {
+  const { slug } = await props.params;
+  const search = props.searchParams ? await props.searchParams : {};
+  const rawLang = typeof search?.lang === 'string' ? search.lang.toLowerCase() : '';
+  const initialLang: Language = (rawLang === 'en' || rawLang === 'hi' || rawLang === 'gu') ? (rawLang as Language) : 'gu';
   let article = await getPublicArticleBySlug(slug);
   if (!article) {
     const decoded = decodeURIComponent(slug);
@@ -224,12 +304,25 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
   const related = scoredRelated.map((entry) => entry.item);
 
   const articleUrl = `${SITE_URL}/news/${article.slug}`;
+  const rawCandidateHeadline = (initialLang === 'hi' && article.titleHi && /[\u0900-\u097F]/.test(article.titleHi))
+    ? article.titleHi
+    : (initialLang === 'gu' && article.titleGu)
+    ? article.titleGu
+    : (initialLang === 'en' && article.title)
+    ? article.title
+    : (article.titleGu || article.title || 'Gujarat Post');
+  const cleanHeadline = cleanArticlePlainText(await serverTranslateText(cleanArticlePlainText(rawCandidateHeadline), initialLang)) || article.title;
+
+  const localizedExcerpt = getArticleExcerpt(article, initialLang);
+  const cleanExcerpt = cleanArticlePlainText(localizedExcerpt) || article.excerpt;
+
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
-    headline: article.title,
-    alternativeHeadline: article.titleGu,
-    description: article.excerpt,
+    headline: cleanHeadline,
+    alternativeHeadline: article.titleGu || article.title,
+    description: cleanExcerpt,
+    inLanguage: initialLang === 'gu' ? 'gu-IN' : initialLang === 'hi' ? 'hi-IN' : 'en-US',
     image: [article.image],
     datePublished: article.publishedAt,
     dateModified: article.updatedAt,
@@ -250,8 +343,14 @@ export default async function NewsDetailPage({ params }: { params: Promise<{ slu
 
   return (
     <>
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
-      <NewsDetailClient article={article} related={related} trending={trending} articleUrl={articleUrl} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, '\\u003c') }} />
+      <NewsDetailClient
+        article={article}
+        related={related}
+        trending={trending}
+        articleUrl={articleUrl}
+        initialLanguage={initialLang}
+      />
     </>
   );
 }

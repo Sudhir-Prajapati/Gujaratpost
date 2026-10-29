@@ -7,6 +7,7 @@ import {
   getTwitterShareHref,
   getWhatsAppShareHref,
   getPublicShareUrl,
+  buildLocalizedShareUrl,
 } from '@/lib/facebookShare';
 
 interface ArticleShareBarProps {
@@ -35,7 +36,7 @@ export default function ArticleShareBar({
     }
   }, []);
 
-  const publicShareUrl = getPublicShareUrl(articleUrl);
+  const publicShareUrl = buildLocalizedShareUrl(articleUrl, language);
 
   const handleCopy = async () => {
     try {
@@ -85,7 +86,7 @@ export default function ArticleShareBar({
       <div className="flex items-center gap-1.5 sm:gap-2 w-full sm:w-auto [&>*]:flex-1 sm:[&>*]:flex-none">
         {/* WhatsApp */}
         <a
-          href={getWhatsAppShareHref(articleUrl, title)}
+          href={getWhatsAppShareHref(articleUrl, title, language)}
           target="_blank"
           rel="noopener noreferrer"
           title={uiLabel(language, { en: 'Share on WhatsApp', gu: 'વોટ્સએપ પર શેર કરો', hi: 'व्हाट्सएप પર શેર करें' })}
@@ -100,7 +101,7 @@ export default function ArticleShareBar({
 
         {/* Facebook */}
         <a
-          href={getFacebookShareHref(articleUrl)}
+          href={getFacebookShareHref(articleUrl, language)}
           target="_blank"
           rel="noopener noreferrer"
           title={uiLabel(language, { en: 'Share on Facebook', gu: 'ફેસબુક પર શેર કરો', hi: 'ફેસબુક પર શેર करें' })}
@@ -114,7 +115,7 @@ export default function ArticleShareBar({
 
         {/* X / Twitter */}
         <a
-          href={getTwitterShareHref(articleUrl, title)}
+          href={getTwitterShareHref(articleUrl, title, language)}
           target="_blank"
           rel="noopener noreferrer"
           title={uiLabel(language, { en: 'Share on X', gu: 'X પર શેર કરો', hi: 'X પર શેર करें' })}
