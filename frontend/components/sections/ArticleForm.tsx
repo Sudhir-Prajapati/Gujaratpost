@@ -812,10 +812,16 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       parts.push(`> "${qT.trim()}"${citeStr}`);
     }
 
-    parts.push(buildArticleEmbedHtml(youtubeUrl, 'youtube'));
-    parts.push(buildArticleEmbedHtml(twitterUrl, 'twitter'));
-    parts.push(buildArticleEmbedHtml(instagramUrl, 'instagram'));
-    parts.push(buildArticleEmbedHtml(facebookUrl, 'facebook'));
+    // Guard bottom standalone embeds: do NOT append duplicate if already embedded in Description 1 or continuation sections
+    const hasInlineEmbed = (platform: string) => {
+      const re = new RegExp(`data-article-social-platform=["']${platform}["']`, 'i');
+      return re.test(d1Str) || pairedSections.some((s) => re.test(s.desc));
+    };
+
+    if (youtubeUrl && !hasInlineEmbed('youtube')) parts.push(buildArticleEmbedHtml(youtubeUrl, 'youtube'));
+    if (twitterUrl && !hasInlineEmbed('twitter')) parts.push(buildArticleEmbedHtml(twitterUrl, 'twitter'));
+    if (instagramUrl && !hasInlineEmbed('instagram')) parts.push(buildArticleEmbedHtml(instagramUrl, 'instagram'));
+    if (facebookUrl && !hasInlineEmbed('facebook')) parts.push(buildArticleEmbedHtml(facebookUrl, 'facebook'));
 
     if (pdfUrl && pdfUrl.trim()) {
       const cleanPdf = pdfUrl.trim();
@@ -1122,28 +1128,6 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
     if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages };
 
-    // Extract embed URLs before parsing paragraphs
-    const ytMatch =
-      raw.match(/iframe[^>]+src=["'](https?:\/\/[^"']*(?:youtube|youtu\.be)[^"']*)["']/i) ||
-      raw.match(/(https?:\/\/(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s"<]+)/i);
-    if (ytMatch && ytMatch[1]) extractedYt = ytMatch[1];
-
-    const twMatch =
-      raw.match(/gp-x-card[\s\S]*?href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i) ||
-      raw.match(/href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i) ||
-      raw.match(/(https?:\/\/(?:www\.)?(?:twitter\.com|x\.com)\/[^\s"<]+)/i);
-    if (twMatch && twMatch[1]) extractedTw = twMatch[1];
-
-    const igMatch =
-      raw.match(/iframe[^>]+src=["'](https?:\/\/[^"']*(?:instagram\.com|instagr\.am)[^"']*)["']/i) ||
-      raw.match(/(https?:\/\/(?:www\.)?(?:instagram\.com|instagr\.am)\/(?:p|reel|reels|tv)\/[^\s"<]+)/i);
-    if (igMatch && igMatch[1]) extractedIg = igMatch[1];
-
-    const fbMatch =
-      raw.match(/iframe[^>]+src=["'](https?:\/\/[^"']*(?:facebook\.com\/plugins)[^"']*)["']/i) ||
-      raw.match(/(https?:\/\/(?:www\.)?(?:facebook\.com|fb\.watch)\/[^\s"<]+)/i);
-    if (fbMatch && fbMatch[1]) extractedFb = fbMatch[1];
-
     const pdfMatch =
       raw.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
       raw.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
@@ -1155,20 +1139,40 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     // Extract all gallery images with their numbers (e.g. ![Gallery Image 2](...))
-    const galleryMatches = [...raw.matchAll(/!\[Gallery Image (\d+)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi)];
-    for (const match of galleryMatches) {
-      if (match[2]) {
-        const num = parseInt(match[1], 10) || 2;
-        extractedImgs.push({ index: num, url: match[2] });
+    const galleryRegex = /!\[Gallery Image (\d+)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi;
+    let gMatch: RegExpExecArray | null;
+    while ((gMatch = galleryRegex.exec(raw)) !== null) {
+      if (gMatch[2]) {
+        const num = parseInt(gMatch[1], 10) || 2;
+        extractedImgs.push({ index: num, url: gMatch[2] });
       }
     }
 
-    // Strip embed blocks and all PDF markup from working string
-    let workingRaw = purgePdfFromText(raw)
-      .replace(/<figure\b[^>]*data-article-social-platform=["'][^"']+["'][\s\S]*?<\/figure>/gi, '')
-      .replace(/<div[^>]*class=["'][^"']*gp-x-card[^"']*["'][\s\S]*?<\/div>/gi, '')
-      .replace(/<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>/gi, '')
-      .replace(/<div[^>]*max-w-\[540px\][^"']*["'][\s\S]*?<\/iframe>\s*<\/div>/gi, '');
+    // Purge PDF markup from working string
+    let workingRaw = purgePdfFromText(raw).trim();
+
+    // Strip and extract ONLY trailing standalone embeds from the very end of the content.
+    // In-body embeds (inside Description 1 or continuation sections) are preserved untouched.
+    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>\s*)*(?:<figure\b[^>]*data-article-social-platform=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-x-card)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>)*\s*$/i;
+
+    while (true) {
+      const match = workingRaw.match(trailingEmbedPattern);
+      if (!match) break;
+      const platMatch = match[0].match(/data-article-social-platform=["']([^"']+)["']/i);
+      const urlMatch = match[0].match(/data-article-social-url=["']([^"']+)["']/i) || match[0].match(/href=["']([^"']+)["']/i);
+      const plat = platMatch ? platMatch[1].toLowerCase() : '';
+      const u = urlMatch ? urlMatch[1] : '';
+      if (plat === 'twitter' || (!plat && match[0].includes('gp-x-card'))) {
+        if (!extractedTw) extractedTw = u;
+      } else if (plat === 'youtube' || (!plat && match[0].includes('youtube'))) {
+        if (!extractedYt) extractedYt = u;
+      } else if (plat === 'instagram' || (!plat && match[0].includes('instagram'))) {
+        if (!extractedIg) extractedIg = u;
+      } else if (plat === 'facebook' || (!plat && match[0].includes('facebook'))) {
+        if (!extractedFb) extractedFb = u;
+      }
+      workingRaw = workingRaw.slice(0, match.index).trim();
+    }
 
     // Extract quote block
     const quoteRegex = /(?:^|\n)(>[^\n]*(?:\n>[^\n]*)*)/;
@@ -1600,10 +1604,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         } else {
           setImageMode('upload');
         }
-        setYoutubeUrl([art.content, art.contentGu, art.contentHi].map((body) => getSavedArticleEmbedInput(body || '', 'youtube')).find(Boolean) || art.youtubeUrl || art.youtube || parsedEn.extractedYt || parsedGu.extractedYt || parsedHi.extractedYt || '');
-        setTwitterUrl([art.content, art.contentGu, art.contentHi].map((body) => getSavedArticleEmbedInput(body || '', 'twitter')).find(Boolean) || art.twitterUrl || art.twitter || parsedEn.extractedTw || parsedGu.extractedTw || parsedHi.extractedTw || '');
-        setInstagramUrl([art.content, art.contentGu, art.contentHi].map((body) => getSavedArticleEmbedInput(body || '', 'instagram')).find(Boolean) || art.instagramUrl || art.instagram || parsedEn.extractedIg || parsedGu.extractedIg || parsedHi.extractedIg || '');
-        setFacebookUrl([art.content, art.contentGu, art.contentHi].map((body) => getSavedArticleEmbedInput(body || '', 'facebook')).find(Boolean) || art.facebookUrl || art.facebook || parsedEn.extractedFb || parsedGu.extractedFb || parsedHi.extractedFb || '');
+        const hasBodyTw = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']twitter["']/i.test(t || ''));
+        const hasBodyYt = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']youtube["']/i.test(t || ''));
+        const hasBodyIg = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']instagram["']/i.test(t || ''));
+        const hasBodyFb = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']facebook["']/i.test(t || ''));
+
+        setYoutubeUrl(hasBodyYt ? '' : (parsedEn.extractedYt || parsedGu.extractedYt || parsedHi.extractedYt || art.youtubeUrl || art.youtube || ''));
+        setTwitterUrl(hasBodyTw ? '' : (parsedEn.extractedTw || parsedGu.extractedTw || parsedHi.extractedTw || art.twitterUrl || art.twitter || ''));
+        setInstagramUrl(hasBodyIg ? '' : (parsedEn.extractedIg || parsedGu.extractedIg || parsedHi.extractedIg || art.instagramUrl || art.instagram || ''));
+        setFacebookUrl(hasBodyFb ? '' : (parsedEn.extractedFb || parsedGu.extractedFb || parsedHi.extractedFb || art.facebookUrl || art.facebook || ''));
         setPdfUrl(art.pdfUrl || art.pdf || parsedEn.extractedPdfUrl || parsedGu.extractedPdfUrl || parsedHi.extractedPdfUrl || '');
         setShowPdfPages(
           Boolean(
@@ -3777,6 +3786,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             }}
             placeholder="Brief news hook overview summary..."
             rows={3}
+            hideEmbed={true}
           />
         </div>
 

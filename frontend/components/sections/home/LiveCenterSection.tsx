@@ -181,10 +181,10 @@ const FootballWatermark = (
 );
 
 const FUEL_PRICE_CITY_MAP: Record<string, { petrol: string; diesel: string; cng: string }> = {
-  Ahmedabad: { petrol: '96.42', diesel: '92.17', cng: '76.00' },
-  Vadodara: { petrol: '96.08', diesel: '91.83', cng: '75.50' },
-  Surat: { petrol: '96.31', diesel: '92.06', cng: '76.20' },
-  Rajkot: { petrol: '96.15', diesel: '91.90', cng: '75.80' },
+  Ahmedabad: { petrol: '102.15', diesel: '98.27', cng: '76.00' },
+  Vadodara: { petrol: '101.46', diesel: '97.57', cng: '75.50' },
+  Surat: { petrol: '101.82', diesel: '97.95', cng: '76.20' },
+  Rajkot: { petrol: '101.85', diesel: '97.99', cng: '75.80' },
 };
 
 export default function LiveCenterSection({ language }: { language: Language }) {
@@ -215,51 +215,62 @@ export default function LiveCenterSection({ language }: { language: Language }) 
     { league: 'La Liga', statusType: 'time', statusText: '23:00', homeTeam: 'Real Madrid', homeScore: '—', awayTeam: 'Barcelona', awayScore: '—' }
   ]);
 
-  // Fetch live center data from API
+  // Fetch live center data from API with periodic real refresh every 2.5 minutes
   useEffect(() => {
-    getLiveCenterData().then((data) => {
-      if (data) {
-        if (data.fuelPrices) setFuelPrices(data.fuelPrices);
-        if (data.stocks) setStocks(data.stocks);
-        if (data.usdRate) setUsdRate(data.usdRate);
-        if (data.cricketMatches) setCricketMatches(data.cricketMatches);
-        if (data.footballMatches) setFootballMatches(data.footballMatches);
+    let isMounted = true;
+
+    const loadLiveCenterData = async () => {
+      try {
+        const data = await getLiveCenterData();
+        if (data && isMounted) {
+          if (data.fuelPrices) setFuelPrices(data.fuelPrices);
+          if (data.stocks) setStocks(data.stocks);
+          if (data.usdRate) setUsdRate(data.usdRate);
+          if (Array.isArray(data.cricketMatches) && data.cricketMatches.length > 0) {
+            setCricketMatches(data.cricketMatches.filter((m: any) => m.team1 !== 'Team 1' && m.title !== 'Cricket Match'));
+          }
+          if (Array.isArray(data.footballMatches) && data.footballMatches.length > 0) {
+            setFootballMatches(data.footballMatches);
+          }
+        }
+      } catch (e) {
+        // preserve existing
       }
-    });
+    };
+
+    // Initial load
+    loadLiveCenterData();
 
     // Live USD/INR Exchange Rate fetch
     fetch('https://open.er-api.com/v6/latest/USD')
       .then((res) => res.json())
       .then((data) => {
-        if (data && data.rates && data.rates.INR) {
-          const inrVal = data.rates.INR.toFixed(2);
+        if (isMounted && data && data.rates && data.rates.INR) {
+          const inrVal = Number(data.rates.INR).toFixed(2);
           setUsdRate({ rate: inrVal, change: '-0.12' });
         }
       })
       .catch(() => { });
 
-    // Periodic live simulation timer for market and sports ticks every 15s
-    const timer = setInterval(() => {
-      setStocks((prev) =>
-        prev.map((st) => {
-          const delta = (Math.random() - 0.48) * 14;
-          const newVal = Math.round((st.value + delta) * 10) / 10;
-          const newChange = Math.round((st.change + delta) * 10) / 10;
-          const newPct = Math.round((newChange / (newVal - newChange)) * 10000) / 100;
-          return {
-            ...st,
-            value: newVal,
-            change: newChange,
-            changePercent: newPct
-          };
-        })
-      );
-    }, 15000);
+    // Real refresh interval matching the section header (2.5 min = 150,000 ms)
+    const intervalId = setInterval(loadLiveCenterData, 150000);
 
-    return () => clearInterval(timer);
+    // Refresh immediately when tab gains focus
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        loadLiveCenterData();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
-  const activeFuel = fuelPrices[fuelCity] || fuelPrices.Ahmedabad || FUEL_PRICE_CITY_MAP.Ahmedabad;
+  const activeFuel = fuelPrices[fuelCity] || Object.entries(fuelPrices).find(([k]) => k.toLowerCase() === fuelCity.toLowerCase())?.[1] || FUEL_PRICE_CITY_MAP[fuelCity] || FUEL_PRICE_CITY_MAP.Ahmedabad;
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-2.5 mb-2 sm:mb-2.5 relative">
@@ -301,7 +312,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             title="Fuel Price"
             variant="red"
             watermark={FuelWatermark}
-            sourceText="Source: IOC / HPCL"
+            sourceText="Source: API Mitra & IOCL"
             rightElement={
               <div className="flex items-center gap-1 text-[12px] font-extrabold text-white select-none">
                 <div className="relative">
@@ -362,7 +373,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             title="Stock Market"
             variant="black"
             watermark={MarketWatermark}
-            sourceText="Source: Yahoo Finance"
+            sourceText="Source: BharatStock & Yahoo Finance"
             rightElement={
               <span className="text-[12px] sm:text-[11px] font-black text-neutral-300 leading-none whitespace-nowrap px-2.5 py-1 rounded-full bg-white/10 border border-white/10">
                 India ₹ INR
@@ -370,7 +381,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             }
             icon={<TrendingUp className="h-5 w-5 text-white" />}
           >
-            {stocks.map((item) => (
+            {stocks.slice(0, 3).map((item) => (
               <div
                 key={item.name}
                 className="rounded-xl bg-[#14181D] hover:bg-[#1A2027] p-3.5 border border-[#222933] hover:border-[#384353] hover:border-l-4 hover:border-l-emerald-500 shadow-sm transition-all duration-200 hover:scale-[1.025] hover:shadow-lg cursor-pointer select-none group/stock active:scale-[0.99]"
@@ -399,10 +410,10 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             title="Cricket"
             variant="red"
             watermark={CricketWatermark}
-            sourceText="Source: ESPN"
+            sourceText="Source: Cricket Database & ESPN"
             icon={<Trophy className="h-5 w-5 text-white" />}
           >
-            {cricketMatches.map((match, i) => (
+            {cricketMatches.filter(m => m.team1 !== 'Team 1' && m.title !== 'Cricket Match').map((match, i) => (
               <div
                 key={i}
                 className="rounded-xl bg-white p-3.5 shadow-sm border border-neutral-300/80 hover:border-red-400 hover:border-l-4 hover:border-l-red-600 transition-all duration-200 hover:scale-[1.025] hover:shadow-lg hover:bg-neutral-50/90 cursor-pointer select-none group/cricket active:scale-[0.99]"
@@ -446,7 +457,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             title="Football"
             variant="black"
             watermark={FootballWatermark}
-            sourceText="Source: ESPN"
+            sourceText="Source: API-Sports & ESPN"
             icon={<Shield className="h-5 w-5 text-white" />}
           >
             {footballMatches.map((match, i) => (
@@ -477,11 +488,11 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-[14px] sm:text-[12.5px] font-bold text-neutral-300">
                     <span className="group-hover/football:text-white transition-colors">{match.homeTeam}</span>
-                    <span className="font-black text-white text-[15px] sm:text-[12.5px]">{match.homeScore}</span>
+                    <span className="font-black text-white text-[15px] sm:text-[12.5px]">{match.statusType === 'time' || match.statusText?.toLowerCase().includes('scheduled') ? '—' : match.homeScore}</span>
                   </div>
                   <div className="flex justify-between items-center text-[14px] sm:text-[12.5px] font-bold text-neutral-300">
                     <span className="group-hover/football:text-white transition-colors">{match.awayTeam}</span>
-                    <span className="font-black text-white text-[15px] sm:text-[12.5px]">{match.awayScore}</span>
+                    <span className="font-black text-white text-[15px] sm:text-[12.5px]">{match.statusType === 'time' || match.statusText?.toLowerCase().includes('scheduled') ? '—' : match.awayScore}</span>
                   </div>
                 </div>
               </div>

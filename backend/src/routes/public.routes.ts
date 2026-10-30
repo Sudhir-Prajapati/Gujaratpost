@@ -757,6 +757,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       } else {
         if (targetCategoryIds && targetCategoryIds.length > 0 && !query && !locationParam && !isTrending && !isBreaking && !isFeatured) {
           total = await withDbRetry(() => prisma.postCategory.count({ where: { categoryId: { in: targetCategoryIds } } }));
+        } else if (isTrending && !query && !locationParam && !categorySlug && !isBreaking && !isFeatured) {
+          total = await withDbRetry(() => prisma.post.count({ where: { status: 'PUBLISHED', isTrending: true } }));
         } else {
           total = await withDbRetry(() => prisma.post.count({ where }));
         }
@@ -1167,25 +1169,65 @@ router.get('/market-rates', async (req, res) => {
 let liveCenterCache: { data: any; timestamp: number } | null = null;
 let isLiveCenterUpdating = false;
 
-async function fetchFreshLiveCenterData() {
+const CRICKET_API_KEY = process.env.CRICKET_API_KEY || 'cdb_live_0a0b359fd448729b5be23b1d06e8578b';
+const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY || 'e29314e3ccb62a64d975fcc74be9c72a';
+const BHARAT_STOCK_API_KEY = process.env.BHARAT_STOCK_API_KEY || 'bsk_live_EEEX8WGUN2cov0fBnPHZy5RiTW8DsfMuYLDeKBLVQsQ';
+const APIMITRA_KEY = process.env.APIMITRA_KEY || 'apk_dcfb55ba4dd2646324eeeab3637752f2897f';
+
+export async function fetchFreshLiveCenterData(force = false) {
   if (isLiveCenterUpdating) return;
   isLiveCenterUpdating = true;
   try {
     const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    const [exRes, niftyRes, bseRes, bankRes, espnSoccerRes] = await Promise.all([
-      fetch('https://open.er-api.com/v6/latest/USD').then((r) => r.json()).catch(() => null),
+    const [
+      exRes,
+      niftyRes,
+      bseRes,
+      bankRes,
+      bharatStocksRes,
+      cricketDbRes,
+      footballRes,
+      espnSoccerRes,
+      apimitraCitiesRes,
+      apimitraFuelRes,
+      livePetrolHtml,
+      liveDieselHtml
+    ] = await Promise.all([
+      fetch('https://open.er-api.com/v6/latest/USD', { headers }).then((r) => r.json()).catch(() => null),
       fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI', { headers }).then((r) => r.json()).catch(() => null),
       fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN', { headers }).then((r) => r.json()).catch(() => null),
       fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK', { headers }).then((r) => r.json()).catch(() => null),
-      fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard').then((r) => r.json()).catch(() => null),
+      fetch('https://bharatstockapi.com/v1/stocks/quotes?symbols=RELIANCE,TCS,HDFCBANK', {
+        headers: { 'X-API-Key': BHARAT_STOCK_API_KEY }
+      }).then((r) => r.json()).catch(() => null),
+      fetch('https://api.cricketdatabase.com/v1/results/yesterday', {
+        headers: { Authorization: `Bearer ${CRICKET_API_KEY}`, Accept: 'application/json' }
+      }).then((r) => r.json()).catch(() => null),
+      fetch(`https://v3.football.api-sports.io/fixtures?date=${todayStr}&timezone=Asia/Kolkata`, {
+        headers: { 'x-apisports-key': FOOTBALL_API_KEY }
+      }).then((r) => r.json()).catch(() => null),
+      fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard', { headers }).then((r) => r.json()).catch(() => null),
+      fetch('https://api.apimitra.in/fuel/cities', {
+        headers: { 'x-api-key': APIMITRA_KEY, Accept: 'application/json' }
+      }).then((r) => r.json()).catch(() => null),
+      fetch('https://api.apimitra.in/fuel?state=gujarat', {
+        headers: { 'x-api-key': APIMITRA_KEY, Accept: 'application/json' }
+      }).then((r) => r.json()).catch(() => null),
+      fetch('https://www.goodreturns.in/petrol-price-in-gujarat-s12.html', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      }).then((r) => r.text()).catch(() => null),
+      fetch('https://www.goodreturns.in/diesel-price-in-gujarat-s12.html', {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+      }).then((r) => r.text()).catch(() => null),
     ]);
 
-    // Parse Live USD/INR Rate
-    const inrRate = (exRes as any)?.rates?.INR ? (exRes as any).rates.INR.toFixed(2) : '83.92';
+    // 1. Live USD/INR Rate
+    const inrRate = (exRes as any)?.rates?.INR ? Number((exRes as any).rates.INR).toFixed(2) : '84.05';
 
-    // Parse Live Yahoo Finance Stock Tickers
-    const parseStock = (json: any, defaultName: string, defaultEx: string, defVal: number, defCh: number, defPct: number) => {
+    // 2. Live Stock Market Tickers (Yahoo Finance Real Indices + BharatStock Top Equities)
+    const parseYahooStock = (json: any, defaultName: string, defaultEx: string, defVal: number, defCh: number, defPct: number) => {
       try {
         const meta = json?.chart?.result?.[0]?.meta;
         if (meta && meta.regularMarketPrice) {
@@ -1199,172 +1241,222 @@ async function fetchFreshLiveCenterData() {
       return { name: defaultName, exchange: defaultEx, value: defVal, change: defCh, changePercent: defPct };
     };
 
-    const stocks = [
-      parseStock(niftyRes, 'Nifty 50', 'NSE', 23442.6, 174.8, 0.75),
-      parseStock(bseRes, 'BSE Sensex', 'BSE', 80304.6, 421.1, 0.53),
-      parseStock(bankRes, 'Nifty Bank', 'NSE', 49659.8, -105.1, -0.21),
+    const stocks: any[] = [
+      parseYahooStock(niftyRes, 'Nifty 50', 'NSE', 22972.5, 35.8, 0.16),
+      parseYahooStock(bseRes, 'BSE Sensex', 'BSE', 74190.8, 39.8, 0.05),
+      parseYahooStock(bankRes, 'Nifty Bank', 'NSE', 54740.4, -169.3, -0.31),
     ];
 
-    // Parse Live Football Scores from ESPN
-    let footballMatches = [
-      { league: 'ISL', statusType: 'live', statusText: "75'", homeTeam: 'Mumbai City FC', homeScore: '2', awayTeam: 'Mohun Bagan', awayScore: '1' },
-      { league: 'EPL', statusType: 'time', statusText: '22:00', homeTeam: 'Man City', homeScore: '—', awayTeam: 'Arsenal', awayScore: '—' },
-      { league: 'La Liga', statusType: 'time', statusText: '23:00', homeTeam: 'Real Madrid', homeScore: '—', awayTeam: 'Barcelona', awayScore: '—' }
-    ];
-
-    try {
-      const events = (espnSoccerRes as any)?.events;
-      if (Array.isArray(events) && events.length > 0) {
-        const parsed = events.map((evt: any) => {
-          const comp = evt.competitions?.[0];
-          const home = comp?.competitors?.find((c: any) => c.homeAway === 'home') || comp?.competitors?.[0];
-          const away = comp?.competitors?.find((c: any) => c.homeAway === 'away') || comp?.competitors?.[1];
-          const status = evt.status?.type;
-          const state = status?.state; // 'in' = live, 'post' = completed/last match, 'pre' = scheduled
-
-          let statusType = 'time';
-          let statusText = status?.shortDetail || 'Scheduled';
-          if (state === 'in') {
-            statusType = 'live';
-            statusText = status?.detail || 'LIVE';
-          } else if (state === 'post') {
-            statusType = 'result';
-            statusText = 'FT';
-          }
-
-          return {
-            league: evt.season?.type === 1 ? 'EPL' : (evt.name ? 'Football' : 'Soccer'),
-            statusType,
-            statusText,
-            homeTeam: home?.team?.shortDisplayName || home?.team?.name || 'Home',
-            homeScore: home?.score !== undefined ? String(home.score) : '—',
-            awayTeam: away?.team?.shortDisplayName || away?.team?.name || 'Away',
-            awayScore: away?.score !== undefined ? String(away.score) : '—',
-            order: state === 'in' ? 0 : state === 'post' ? 1 : 2
-          };
-        });
-        if (parsed.length > 0) {
-          parsed.sort((a: any, b: any) => a.order - b.order);
-          footballMatches = parsed.slice(0, 3);
-        }
+    // If BharatStock API returned live equity quotes, add or supplement
+    if (Array.isArray(bharatStocksRes) && bharatStocksRes.length > 0) {
+      const topEquities = bharatStocksRes.filter((s: any) => s && s.found !== false && s.close).map((s: any) => {
+        const ch = Math.round(((s.close || 0) - (s.prev_close || s.close || 0)) * 10) / 10;
+        return {
+          name: s.symbol,
+          exchange: 'NSE',
+          value: s.close,
+          change: ch,
+          changePercent: s.change_pct !== undefined ? s.change_pct : (s.prev_close ? Math.round((ch / s.prev_close) * 10000) / 100 : 0)
+        };
+      });
+      if (topEquities.length > 0 && stocks.length <= 3) {
+        stocks.push(...topEquities.slice(0, 3));
       }
-    } catch (e) { }
+    }
 
-    // Parse Live / Last Match Cricket Scores (CricAPI + ESPN Cricket APIs)
-    let cricketMatches = [
-      { title: 'India vs England', statusType: 'live', statusText: 'LIVE', team1: 'India', team1Score: '168/8 (20)', team2: 'England', team2Score: '185/9 (19.2)' },
-      { title: 'IPL Final (Last Match)', statusType: 'result', statusText: 'Result', team1: 'RCB', team1Score: '161/5', team2: 'Gujarat Titans', team2Score: '155/8' },
-      { title: 'Ranji Trophy', statusType: 'day', statusText: 'Day 3', team1: 'Gujarat', team1Score: '284/6', team2: 'Mumbai', team2Score: '322/10' }
-    ];
+    // 3. Football Scores from API-Sports (with ESPN EPL fallback)
+    let footballMatches: any[] = [];
+    if (Array.isArray((footballRes as any)?.response) && (footballRes as any).response.length > 0) {
+      const list = (footballRes as any).response;
+      for (const f of list) {
+        if (footballMatches.length >= 3) break;
+        const hName = f.teams?.home?.name;
+        const aName = f.teams?.away?.name;
+        if (!hName || !aName) continue;
+        const statusShort = f.fixture?.status?.short;
+        const isLive = ['1H', '2H', 'HT', 'ET', 'P', 'LIVE'].includes(statusShort);
+        const isPost = ['FT', 'AET', 'PEN'].includes(statusShort);
+        const isPre = !isLive && !isPost;
+        footballMatches.push({
+          league: f.league?.name || 'Football',
+          statusType: isLive ? 'live' : isPost ? 'result' : 'time',
+          statusText: isLive ? (f.fixture?.status?.elapsed ? `${f.fixture.status.elapsed}'` : 'LIVE') : isPost ? 'FT' : (f.fixture?.status?.short || 'Scheduled'),
+          homeTeam: hName,
+          homeScore: isPre ? '—' : (f.goals?.home !== null && f.goals?.home !== undefined ? String(f.goals.home) : '—'),
+          awayTeam: aName,
+          awayScore: isPre ? '—' : (f.goals?.away !== null && f.goals?.away !== undefined ? String(f.goals.away) : '—'),
+          order: isLive ? 0 : isPost ? 1 : 2
+        });
+      }
+    }
 
-    try {
-      const cricApiKey = process.env.CRICAPI_KEY || process.env.CRICKET_API_KEY;
-      let fetchedCricket: any[] = [];
-
-      // 1. Try CricAPI / CricketData.org if an API Key is set in .env
-      if (cricApiKey) {
-        try {
-          const cricRes = (await fetch(`https://api.cricapi.com/v1/currentMatches?apikey=${cricApiKey}&offset=0`, { headers }).then(r => r.json()).catch(() => null)) as any;
-          if (cricRes?.status === 'success' && Array.isArray(cricRes?.data) && cricRes.data.length > 0) {
-            fetchedCricket = cricRes.data.map((m: any) => {
-              const isLive = m.matchStarted && !m.matchEnded;
-              const isResult = m.matchEnded;
-              const t1 = m.teamInfo?.[0]?.shortname || m.teams?.[0] || 'Team 1';
-              const t2 = m.teamInfo?.[1]?.shortname || m.teams?.[1] || 'Team 2';
-              const s1 = m.score?.[0] ? `${m.score[0].r}/${m.score[0].w} (${m.score[0].o})` : '—';
-              const s2 = m.score?.[1] ? `${m.score[1].r}/${m.score[1].w} (${m.score[1].o})` : '—';
-
-              return {
-                title: m.name || `${t1} vs ${t2}`,
-                statusType: isLive ? 'live' : isResult ? 'result' : 'time',
-                statusText: isLive ? 'LIVE' : isResult ? 'Result' : (m.status || 'Scheduled'),
-                team1: t1,
-                team1Score: s1,
-                team2: t2,
-                team2Score: s2,
-                order: isLive ? 0 : isResult ? 1 : 2
-              };
+    // Fallback to ESPN soccer if API-Sports returned 0 fixtures
+    if (footballMatches.length === 0) {
+      try {
+        const events = (espnSoccerRes as any)?.events;
+        if (Array.isArray(events) && events.length > 0) {
+          for (const evt of events) {
+            if (footballMatches.length >= 3) break;
+            const comp = evt.competitions?.[0];
+            const home = comp?.competitors?.find((c: any) => c.homeAway === 'home') || comp?.competitors?.[0];
+            const away = comp?.competitors?.find((c: any) => c.homeAway === 'away') || comp?.competitors?.[1];
+            const status = evt.status?.type;
+            const state = status?.state;
+            const isLive = state === 'in';
+            const isPost = state === 'post';
+            const isPre = state === 'pre' || (!isLive && !isPost);
+            const homeName = home?.team?.shortDisplayName || home?.team?.name;
+            const awayName = away?.team?.shortDisplayName || away?.team?.name;
+            if (!homeName || !awayName) continue;
+            footballMatches.push({
+              league: 'Football',
+              statusType: isLive ? 'live' : isPost ? 'result' : 'time',
+              statusText: isLive ? (status?.detail || 'LIVE') : isPost ? 'FT' : (status?.shortDetail || 'Scheduled'),
+              homeTeam: homeName,
+              homeScore: isPre ? '—' : (home?.score !== undefined ? String(home.score) : '—'),
+              awayTeam: awayName,
+              awayScore: isPre ? '—' : (away?.score !== undefined ? String(away.score) : '—'),
+              order: isLive ? 0 : isPost ? 1 : 2
             });
           }
-        } catch (e) { }
-      }
-
-      // 2. Query ESPN Cricket public scoreboards (IPL, ICC, Bilateral series)
-      if (fetchedCricket.length === 0) {
-        const espnCricketEndpoints = [
-          'https://site.api.espn.com/apis/site/v2/sports/cricket/8048/scoreboard',  // IPL
-          'https://site.api.espn.com/apis/site/v2/sports/cricket/19430/scoreboard', // ICC WTC
-        ];
-
-        for (const ep of espnCricketEndpoints) {
-          try {
-            const espnRes = (await fetch(ep, { headers }).then(r => r.json()).catch(() => null)) as any;
-            if (Array.isArray(espnRes?.events)) {
-              for (const evt of espnRes.events) {
-                const comp = evt.competitions?.[0];
-                const home = comp?.competitors?.find((c: any) => c.homeAway === 'home') || comp?.competitors?.[0];
-                const away = comp?.competitors?.find((c: any) => c.homeAway === 'away') || comp?.competitors?.[1];
-                const status = comp?.status?.type;
-                const state = status?.state; // 'in' = live, 'post' = completed/last match, 'pre' = scheduled
-
-                let statusType = 'time';
-                let statusText = status?.shortDetail || 'Scheduled';
-                if (state === 'in') {
-                  statusType = 'live';
-                  statusText = 'LIVE';
-                } else if (state === 'post') {
-                  statusType = 'result';
-                  statusText = 'Result';
-                }
-
-                const cleanScore = (raw: string | undefined) => {
-                  if (!raw) return '—';
-                  return raw.replace(/\(target [^)]+\)/gi, '').trim();
-                };
-
-                fetchedCricket.push({
-                  title: evt.name || evt.shortName || 'Cricket Match',
-                  statusType,
-                  statusText,
-                  team1: home?.team?.shortDisplayName || home?.team?.name || 'Team 1',
-                  team1Score: cleanScore(home?.score),
-                  team2: away?.team?.shortDisplayName || away?.team?.name || 'Team 2',
-                  team2Score: cleanScore(away?.score),
-                  order: state === 'in' ? 0 : state === 'post' ? 1 : 2
-                });
-              }
-            }
-          } catch (e) { }
         }
-      }
+      } catch (e) { }
+    }
 
-      // If live matches exist, show live match at the top.
-      // If NO live match, show the last completed match at the top.
-      if (fetchedCricket.length > 0) {
-        fetchedCricket.sort((a, b) => a.order - b.order);
-        if (fetchedCricket.length >= 3) {
-          cricketMatches = fetchedCricket.slice(0, 3);
-        } else {
-          // Fill remaining slots from fallback so 3 cards always display
-          const combined = [...fetchedCricket];
-          for (const item of cricketMatches) {
-            if (combined.length >= 3) break;
-            if (!combined.some(c => c.title === item.title)) {
-              combined.push(item);
+    if (footballMatches.length === 0) {
+      footballMatches = [
+        { league: 'Football', statusType: 'time', statusText: 'Scheduled', homeTeam: 'Chelsea', homeScore: '—', awayTeam: 'Man Utd', awayScore: '—' },
+        { league: 'Football', statusType: 'time', statusText: 'Scheduled', homeTeam: 'Bournemouth', homeScore: '—', awayTeam: 'Leeds', awayScore: '—' },
+        { league: 'Football', statusType: 'time', statusText: 'Scheduled', homeTeam: 'Brentford', homeScore: '—', awayTeam: 'Nottm Forest', awayScore: '—' }
+      ];
+    }
+
+    // 4. Cricket Scores from Cricket Database API (with ESPN Live fallback)
+    let cricketMatches: any[] = [];
+    if (Array.isArray((cricketDbRes as any)?.data?.results) && (cricketDbRes as any).data.results.length > 0) {
+      for (const r of (cricketDbRes as any).data.results) {
+        if (cricketMatches.length >= 3) break;
+        const t1 = r.teams?.[0];
+        const t2 = r.teams?.[1];
+        if (!t1?.name || !t2?.name) continue;
+        const t1Score = t1.score ? `${t1.score}${t1.overs ? ` (${t1.overs} ov)` : ''}` : '—';
+        const t2Score = t2.score ? `${t2.score}${t2.overs ? ` (${t2.overs} ov)` : ''}` : '—';
+        cricketMatches.push({
+          title: r.competition ? `${r.competition}: ${t1.name} vs ${t2.name}` : `${t1.name} vs ${t2.name}`,
+          statusType: 'result',
+          statusText: 'Result',
+          team1: t1.name,
+          team1Score: t1Score,
+          team2: t2.name,
+          team2Score: t2Score,
+          order: 1
+        });
+      }
+    }
+
+    // Supplement with ESPN Cricket for active live matches
+    if (cricketMatches.length < 3) {
+      try {
+        const seriesIds = [19430, 14389, 20353, 21504, 8040, 8053];
+        for (const sId of seriesIds) {
+          if (cricketMatches.length >= 3) break;
+          const espnRes = (await fetch(`https://site.api.espn.com/apis/site/v2/sports/cricket/${sId}/scoreboard`, { headers }).then(r => r.json()).catch(() => null)) as any;
+          if (Array.isArray(espnRes?.events)) {
+            for (const evt of espnRes.events) {
+              if (cricketMatches.length >= 3) break;
+              if (!evt || !evt.name || evt.name.includes('undefined')) continue;
+              const comp = evt.competitions?.[0];
+              if (!comp || !Array.isArray(comp.competitors) || comp.competitors.length < 2) continue;
+              const home = comp.competitors.find((c: any) => c.homeAway === 'home') || comp.competitors[0];
+              const away = comp.competitors.find((c: any) => c.homeAway === 'away') || comp.competitors[1];
+              const t1 = home?.team?.shortDisplayName || home?.team?.name;
+              const t2 = away?.team?.shortDisplayName || away?.team?.name;
+              if (!t1 || !t2 || t1 === 'Team 1' || t2 === 'Team 2') continue;
+              const status = comp?.status?.type;
+              const state = status?.state;
+              const isLive = state === 'in';
+              const isPost = state === 'post';
+              cricketMatches.push({
+                title: evt.name || `${t1} vs ${t2}`,
+                statusType: isLive ? 'live' : isPost ? 'result' : 'time',
+                statusText: isLive ? 'LIVE' : isPost ? 'Result' : (status?.shortDetail || 'Scheduled'),
+                team1: t1,
+                team1Score: home?.score ? String(home.score).replace(/\(target [^)]+\)/gi, '').trim() : '—',
+                team2: t2,
+                team2Score: away?.score ? String(away.score).replace(/\(target [^)]+\)/gi, '').trim() : '—',
+                order: isLive ? 0 : 1
+              });
             }
           }
-          cricketMatches = combined.slice(0, 3);
+        }
+      } catch (e) { }
+    }
+
+    if (cricketMatches.length === 0) {
+      cricketMatches = [
+        { title: 'South Africa v Australia', statusType: 'live', statusText: 'LIVE', team1: 'SA', team1Score: '329 & 140/4 (47 ov)', team2: 'AUS', team2Score: '429' },
+        { title: 'Bangladesh v West Indies', statusType: 'live', statusText: 'LIVE', team1: 'BAN', team1Score: '272', team2: 'WI', team2Score: '212/5 (73.4 ov)' },
+        { title: 'India vs England', statusType: 'result', statusText: 'Result', team1: 'IND', team1Score: '298/7', team2: 'ENG', team2Score: '246' }
+      ];
+    }
+
+    // 5. Fuel Prices: APIMitra API + Live Gujarat Rates with IOC/HPCL benchmark fallbacks
+    const fuelPrices: Record<string, { petrol: string; diesel: string; cng: string }> = {
+      Ahmedabad: { petrol: '102.15', diesel: '98.27', cng: '76.00' },
+      Vadodara: { petrol: '101.46', diesel: '97.57', cng: '75.50' },
+      Surat: { petrol: '101.82', diesel: '97.95', cng: '76.20' },
+      Rajkot: { petrol: '101.85', diesel: '97.99', cng: '75.80' },
+    };
+
+    try {
+      // Parse Live Gujarat fuel prices table
+      const parsePortalRows = (html: string | null, fuelType: 'petrol' | 'diesel') => {
+        if (!html) return;
+        const rows = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
+        for (const r of rows) {
+          const text = r.replace(/<[^>]+>/g, ' ').replace(/&#x20b9;/g, '₹').replace(/\s+/g, ' ').trim();
+          for (const cityKey of ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot']) {
+            if (new RegExp('\\b' + cityKey + '\\b', 'i').test(text)) {
+              const m = text.match(/₹\s*([0-9]+\.[0-9]+)/);
+              if (m && m[1]) {
+                fuelPrices[cityKey][fuelType] = Number(m[1]).toFixed(2);
+              }
+            }
+          }
+        }
+      };
+      parsePortalRows(livePetrolHtml, 'petrol');
+      parsePortalRows(liveDieselHtml, 'diesel');
+
+      // Parse APIMitra API if active or approved for key
+      const apimitraCandidates = [
+        ...(Array.isArray((apimitraCitiesRes as any)?.cities) ? (apimitraCitiesRes as any).cities : []),
+        ...(Array.isArray((apimitraCitiesRes as any)?.data) ? (apimitraCitiesRes as any).data : Array.isArray(apimitraCitiesRes) ? apimitraCitiesRes : []),
+        ...(Array.isArray((apimitraFuelRes as any)?.cities) ? (apimitraFuelRes as any).cities : []),
+        ...(Array.isArray((apimitraFuelRes as any)?.data) ? (apimitraFuelRes as any).data : Array.isArray(apimitraFuelRes) ? apimitraFuelRes : [])
+      ];
+
+      for (const item of apimitraCandidates) {
+        if (!item) continue;
+        const cName = (item.city || item.district || item.name || '').toLowerCase();
+        for (const cityKey of ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot']) {
+          if (cName.includes(cityKey.toLowerCase())) {
+            if (item.petrol) fuelPrices[cityKey].petrol = Number(item.petrol).toFixed(2);
+            if (item.diesel) fuelPrices[cityKey].diesel = Number(item.diesel).toFixed(2);
+            if (item.cng) fuelPrices[cityKey].cng = Number(item.cng).toFixed(2);
+            if (item.fuel && item.price) {
+              const fType = String(item.fuel).toLowerCase();
+              if (fType.includes('petrol')) fuelPrices[cityKey].petrol = Number(item.price).toFixed(2);
+              if (fType.includes('diesel')) fuelPrices[cityKey].diesel = Number(item.price).toFixed(2);
+              if (fType.includes('cng')) fuelPrices[cityKey].cng = Number(item.price).toFixed(2);
+            }
+          }
         }
       }
     } catch (e) { }
 
     const payload = {
-      fuelPrices: {
-        Ahmedabad: { petrol: '96.42', diesel: '92.17', cng: '76.00' },
-        Vadodara: { petrol: '96.08', diesel: '91.83', cng: '75.50' },
-        Surat: { petrol: '96.31', diesel: '92.06', cng: '76.20' },
-        Rajkot: { petrol: '96.15', diesel: '91.90', cng: '75.80' },
-      },
+      fuelPrices,
       stocks,
       usdRate: { rate: inrRate, change: '-0.12' },
       cricketMatches,
@@ -1373,8 +1465,18 @@ async function fetchFreshLiveCenterData() {
     };
 
     liveCenterCache = { data: payload, timestamp: Date.now() };
+
+    // 6. PERSIST TO MYSQL DATABASE: hero_settings.liveCenterJson
+    await prisma.$executeRawUnsafe(
+      'UPDATE hero_settings SET liveCenterJson = ?, updatedAt = NOW() WHERE id = ?',
+      JSON.stringify(payload),
+      'default'
+    ).catch((err: any) => {
+      console.warn('Could not persist liveCenterJson to DB:', err?.message || err);
+    });
+
   } catch (err: any) {
-    // Keep existing cache on fetch error if available
+    console.warn('fetchFreshLiveCenterData error:', err?.message || err);
   } finally {
     isLiveCenterUpdating = false;
   }
@@ -1383,29 +1485,50 @@ async function fetchFreshLiveCenterData() {
 /**
  * GET /api/public/live-center
  * Fetch real live Stock Market, Fuel Prices, Exchange Rates, and Sports Scores via public APIs
+ * Persisted in MySQL DB and served with fail-safe caching.
  */
-router.get('/live-center', cacheResponse(120), async (req, res) => {
+router.get('/live-center', async (req, res) => {
   const NOW = Date.now();
+  const forceRefresh = req.query.refresh === 'true';
+
+  // If force refresh requested
+  if (forceRefresh) {
+    await fetchFreshLiveCenterData(true);
+    if (liveCenterCache) {
+      return sendSuccess(res, liveCenterCache.data, 'Fresh live center data retrieved');
+    }
+  }
+
+  // If memory cache exists
   if (liveCenterCache) {
-    const isStale = NOW - liveCenterCache.timestamp >= 2 * 60 * 1000;
+    const isStale = NOW - liveCenterCache.timestamp >= 15 * 60 * 1000; // 15 mins
     if (isStale) {
       fetchFreshLiveCenterData().catch(() => { });
     }
     return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
   }
 
+  // If memory cache is null (e.g. server restart), first read from DB snapshot immediately
+  try {
+    const row: any = await prisma.$queryRawUnsafe("SELECT liveCenterJson FROM hero_settings WHERE id = 'default' LIMIT 1").catch(() => null);
+    if (Array.isArray(row) && row[0]?.liveCenterJson) {
+      const parsed = JSON.parse(row[0].liveCenterJson);
+      liveCenterCache = { data: parsed, timestamp: NOW };
+      // Background refresh if older than 15 mins
+      fetchFreshLiveCenterData().catch(() => { });
+      return sendSuccess(res, parsed, 'Live center data retrieved from database snapshot');
+    }
+  } catch (e) { }
+
+  // Otherwise, fetch fresh and save to DB
   await fetchFreshLiveCenterData();
   const freshCache = liveCenterCache as { data: any; timestamp: number } | null;
   if (freshCache) {
-    return sendSuccess(res, freshCache.data, 'Real live market and sports data retrieved via public APIs');
+    return sendSuccess(res, freshCache.data, 'Real live market and sports data retrieved via public APIs and saved to DB');
   }
   return sendSuccess(res, null, 'Fallback live center data');
 });
 
-/**
- * GET /api/public/tickers
- * Fetch breaking ticker items
- */
 router.get('/tickers', async (req, res, next) => {
   try {
     const [customTickers, heroSettingRow]: any[] = await Promise.all([

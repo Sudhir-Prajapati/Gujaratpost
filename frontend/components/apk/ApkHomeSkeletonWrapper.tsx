@@ -2,6 +2,7 @@
 
 import { useIsApk } from '@/lib/useIsApk';
 import ApkHomeSkeleton from './ApkHomeSkeleton';
+import { HomePageSkeleton } from '@/components/ui/PageSkeleton';
 
 export default function ApkHomeSkeletonWrapper() {
   const { isApk } = useIsApk();
@@ -10,5 +11,5 @@ export default function ApkHomeSkeletonWrapper() {
     return <ApkHomeSkeleton />;
   }
 
-  return null;
+  return <HomePageSkeleton />;
 }

@@ -820,11 +820,12 @@ export async function updateAdminAstrologySign(slug: string, payload: any): Prom
  * Fetch Hero section settings and slot articles from Express Backend API.
  * TTL = 0 so the user-facing homepage always gets fresh hero data with no delay.
  */
-export async function getHeroSettings(): Promise<{ slots: (Article | null)[]; setting: any }> {
+export async function getHeroSettings(bypassCache = false): Promise<{ slots: (Article | null)[]; setting: any }> {
   try {
-    const url = `${API_BASE_URL}/hero-settings`;
+    const query = bypassCache ? `?t=${Date.now()}` : '';
+    const url = `${API_BASE_URL}/hero-settings${query}`;
     // 15s cache TTL prevents concurrent SSR fetches from hammering the backend; admin saves immediately invalidate via clearApiCacheAndBroadcast()
-    const json = await fetchCachedJson<any>(url, 15 * 1000);
+    const json = await fetchCachedJson<any>(url, bypassCache ? 0 : 15 * 1000);
     if (json?.success && json.data?.slots) {
       return json.data;
     }
@@ -853,6 +854,8 @@ export async function updateHeroSettings(payload: {
   heroSliderMode?: 'auto' | 'manual';
   heroSliderIds?: string[];
   tickerLabel?: string | Record<string, string> | null;
+  electionBannerEnabled?: boolean;
+  electionBannerJson?: any;
 }): Promise<any> {
   const res = await authFetch('/api/admin/hero-settings', {
     method: 'PUT',

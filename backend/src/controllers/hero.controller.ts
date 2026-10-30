@@ -253,12 +253,12 @@ export class HeroController {
             })
           ).catch(() => []),
 
-          // Query C: Active featured posts
+          // Query C: Active featured posts (marked Home / News)
           withDbRetry(() =>
             prisma.post.findMany({
               where: { isFeatured: true, status: 'PUBLISHED' },
               orderBy: [{ articleNumber: 'desc' }],
-              take: 6,
+              take: 20,
               select: heroPostSelect,
             })
           ).catch(() => []),
@@ -393,7 +393,13 @@ export class HeroController {
               .slice(0, 9);
           }
         } else {
-          heroGridArticles = fallbackFormatted.slice(0, 9);
+          // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true)
+          const featuredFormatted = (activeFeaturedRes || []).map(formatPost);
+          if (featuredFormatted.length > 0) {
+            heroGridArticles = featuredFormatted.slice(0, 9);
+          } else {
+            heroGridArticles = fallbackFormatted.slice(0, 9);
+          }
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }
 
@@ -460,6 +466,8 @@ export class HeroController {
             heroGridMode,
             heroSliderMode,
             heroSliderIds: parsedHeroSliderIds,
+            electionBannerEnabled: (heroSetting as any)?.electionBannerEnabled ?? false,
+            electionBannerJson: (heroSetting as any)?.electionBannerJson || null,
           },
           slots,
           tickerLabel: (heroSetting as any)?.tickerLabel || null,
@@ -478,6 +486,8 @@ export class HeroController {
           heroSliderMode,
           heroSliderIds: parsedHeroSliderIds,
           heroSliderArticles,
+          electionBannerEnabled: (heroSetting as any)?.electionBannerEnabled ?? false,
+          electionBannerJson: (heroSetting as any)?.electionBannerJson || null,
         };
       })();
 
@@ -504,7 +514,7 @@ export class HeroController {
    */
   static async updateHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
-      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds } = req.body;
+      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds, electionBannerEnabled, electionBannerJson } = req.body;
 
       const tickerLabelStr = tickerLabel !== undefined
         ? (typeof tickerLabel === 'object' ? JSON.stringify(tickerLabel) : String(tickerLabel))
@@ -558,6 +568,8 @@ export class HeroController {
       if (tickerLabelStr !== undefined) updateData.tickerLabel = tickerLabelStr;
       if (heroSliderMode !== undefined) updateData.heroSliderMode = heroSliderMode || 'auto';
       if (heroSliderIds !== undefined) updateData.heroSliderIds = heroSliderIdsStr;
+      if (electionBannerEnabled !== undefined) updateData.electionBannerEnabled = Boolean(electionBannerEnabled);
+      if (electionBannerJson !== undefined) updateData.electionBannerJson = typeof electionBannerJson === 'object' ? JSON.stringify(electionBannerJson) : (electionBannerJson || null);
 
       const updatedSetting = await prisma.heroSetting.upsert({
         where: { id: 'default' },
@@ -797,12 +809,21 @@ export class HeroController {
             .slice(0, 9);
         }
       } else {
-        const posts = await prisma.post.findMany({
-          where: { status: 'PUBLISHED' },
+        // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true)
+        let posts = await prisma.post.findMany({
+          where: { isFeatured: true, status: 'PUBLISHED' },
           orderBy: { articleNumber: 'desc' },
           take: 9,
           select: heroPostSelect,
         });
+        if (posts.length === 0) {
+          posts = await prisma.post.findMany({
+            where: { status: 'PUBLISHED' },
+            orderBy: { articleNumber: 'desc' },
+            take: 9,
+            select: heroPostSelect,
+          });
+        }
         heroGridArticles = posts.map(formatPost);
         parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
       }
@@ -863,6 +884,8 @@ export class HeroController {
         heroSliderMode: finalHeroSliderMode,
         heroSliderIds: parsedHeroSliderIds,
         heroSliderArticles,
+        electionBannerEnabled: (updatedSetting as any)?.electionBannerEnabled ?? false,
+        electionBannerJson: (updatedSetting as any)?.electionBannerJson || null,
       }, 'Hero section settings updated successfully.');
     } catch (error) {
       next(error);

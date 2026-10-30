@@ -42,8 +42,13 @@ import {
   Loader2,
   Check,
   AlertCircle,
+  Film,
+  ExternalLink,
+  Video,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
+import { escapeEmbedAttribute } from '@/lib/article-embed-input';
+import { getSocialEmbed } from '@/lib/social-embeds';
 
 interface RichTextAreaProps {
   value: string;
@@ -52,6 +57,115 @@ interface RichTextAreaProps {
   rows?: number;
   label?: string;
   required?: boolean;
+  hideEmbed?: boolean;
+}
+
+
+// ── Helper to parse and convert video / social media / iframe embed codes ────
+export function parseEmbedToHtml(
+  input: string,
+  aspect: string = '16/9',
+  caption: string = ''
+): { html: string; platform: string; previewSrc?: string } | null {
+  const trimmed = (input || '').trim();
+  if (!trimmed) return null;
+
+  const aspectClass =
+    aspect === '9/16'
+      ? 'aspect-[9/16] max-w-[360px] mx-auto'
+      : aspect === '1/1'
+      ? 'aspect-square max-w-[480px] mx-auto'
+      : 'aspect-video w-full';
+
+  // 1. Twitter / X post / status / embed code check
+  const twMatch = trimmed.match(/(?:twitter\.com|x\.com)\/(?:[a-zA-Z0-9_]+\/status|i\/web\/status|i\/status)\/(\d+)/i);
+  if (twMatch && twMatch[1]) {
+    const statusId = twMatch[1];
+    const tweetUrl = `https://x.com/i/status/${statusId}`;
+    const srcdocHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}.twitter-tweet{margin:0 auto!important}</style></head><body><blockquote class="twitter-tweet" data-dnt="true"><a href="${tweetUrl}">View post on X</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script><script>(function(){function n(){var t=document.querySelector('.twitter-tweet-rendered')||document.querySelector('.twitter-tweet');var h=t?(t.offsetHeight||t.getBoundingClientRect().height):0;if(!h||h<80){h=document.body.scrollHeight||document.documentElement.scrollHeight||0;}if(h>50){window.parent.postMessage({type:'gp-embed-resize',url:'${tweetUrl}',height:Math.ceil(h)},'*');}}if(window.ResizeObserver){new ResizeObserver(n).observe(document.body);}if(window.twttr&&window.twttr.events){window.twttr.events.bind('rendered',n);}var c=0;var i=setInterval(function(){c++;n();if(c>35)clearInterval(i);},120);window.addEventListener('load',n);window.addEventListener('resize',n);})();</script></body></html>`;
+
+    const html = `<figure data-article-social-platform="twitter" data-article-social-mode="embed" data-article-social-url="${tweetUrl}" class="my-4 flex justify-center w-full overflow-hidden" contenteditable="false"><iframe srcdoc="${escapeEmbedAttribute(srcdocHtml)}" title="X (Twitter) embedded post" data-social-platform="twitter" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="display:block;width:100%;max-width:550px;margin:0 auto;height:480px;border:0;aspect-ratio:auto"></iframe>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</figure><p><br></p>`;
+
+    return { html, platform: 'X (Twitter) Post' };
+  }
+
+  // 2. YouTube regular, shorts, live, or embed
+  const ytMatch = trimmed.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i);
+  if (ytMatch && ytMatch[1]) {
+    const videoId = ytMatch[1];
+    const isShorts = trimmed.includes('/shorts/');
+    const chosenAspect = isShorts || aspect === '9/16' ? 'aspect-[9/16] max-w-[360px] mx-auto' : 'aspect-video w-full';
+    const embedSrc = `https://www.youtube.com/embed/${videoId}?rel=0`;
+
+    const html = `<figure data-article-social-platform="youtube" data-article-social-mode="embed" data-article-social-url="https://www.youtube.com/watch?v=${videoId}" class="my-4 flex justify-center w-full overflow-hidden" contenteditable="false"><div class="${chosenAspect} rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-black/5 dark:bg-black/30 w-full"><iframe src="${embedSrc}" title="YouTube video player" class="w-full h-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</figure><p><br></p>`;
+
+    return { html, platform: isShorts ? 'YouTube Shorts' : 'YouTube Video', previewSrc: embedSrc };
+  }
+
+  // 3. Instagram post / reel / tv
+  const instaSocial = getSocialEmbed(trimmed, 'instagram');
+  const instaRegexMatch = trimmed.match(/instagram\.com\/(?:p|reel|reels|tv)\/([^/?#&]+)/i);
+  if (instaSocial || (instaRegexMatch && instaRegexMatch[1])) {
+    const postCode = instaRegexMatch ? instaRegexMatch[1] : (instaSocial?.url.match(/\/(?:p|reel|tv)\/([^/?#&]+)/)?.[1] || '');
+    const isReel = trimmed.includes('/reel') || trimmed.includes('/reels');
+    const instagramUrl = instaSocial?.url || `https://www.instagram.com/p/${postCode}/`;
+    const embedSrc = `https://www.instagram.com/p/${postCode}/embed`;
+    const chosenAspect = isReel || aspect === '9/16' ? 'aspect-[9/16] max-w-[360px] mx-auto' : (aspect === '1/1' ? 'aspect-square max-w-[480px] mx-auto' : 'w-full max-w-[500px] mx-auto');
+
+    const html = `<figure data-article-social-platform="instagram" data-article-social-mode="embed" data-article-social-url="${instagramUrl}" class="my-4 flex justify-center w-full overflow-hidden" contenteditable="false"><div class="${chosenAspect} min-h-[480px] w-full rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-black/5 dark:bg-black/30"><iframe src="${embedSrc}" title="Instagram post" class="w-full h-full border-0" allowtransparency="true" allowfullscreen loading="lazy"></iframe></div>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</figure><p><br></p>`;
+
+    return { html, platform: isReel ? 'Instagram Reel' : 'Instagram Post', previewSrc: embedSrc };
+  }
+
+  // 4. Facebook post / video / reel
+  const fbSocial = getSocialEmbed(trimmed, 'facebook');
+  if (fbSocial) {
+    const isVideo = /video\.php|plugins\/video|watch\?v=|\/videos\/|\/reel\//i.test(fbSocial.src) || /videos|reel|watch/i.test(trimmed);
+    const chosenAspect = isVideo ? 'aspect-video w-full' : 'w-full max-w-[500px] mx-auto';
+    const html = `<figure data-article-social-platform="facebook" data-article-social-mode="embed" data-article-social-url="${fbSocial.url}" class="my-4 flex justify-center w-full overflow-hidden" contenteditable="false"><div class="${chosenAspect} rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 w-full"><iframe src="${fbSocial.src}" title="Facebook post" class="w-full h-full border-0" style="min-height:${isVideo ? '360px' : '520px'}" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share" allowfullscreen loading="lazy"></iframe></div>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</figure><p><br></p>`;
+
+    return { html, platform: isVideo ? 'Facebook Video' : 'Facebook Post', previewSrc: fbSocial.src };
+  }
+
+  // 5. Raw iframe check: <iframe ...>
+  if (/<iframe\b[^>]*>/i.test(trimmed)) {
+    let safeIframe = trimmed;
+    if (!safeIframe.includes('loading=')) safeIframe = safeIframe.replace('<iframe', '<iframe loading="lazy"');
+    if (!safeIframe.includes('allowfullscreen')) safeIframe = safeIframe.replace('<iframe', '<iframe allowfullscreen');
+
+    const srcMatch = trimmed.match(/src=["']([^"']+)["']/i);
+    const previewSrc = srcMatch ? srcMatch[1] : undefined;
+
+    const html = `<div class="embedded-media-block my-4" contenteditable="false"><div class="${aspectClass} rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-black/5 dark:bg-black/30 flex items-center justify-center">${safeIframe.replace(/<iframe\b([^>]*)>/i, '<iframe$1 class="w-full h-full border-0">')}</div>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</div><p><br></p>`;
+
+    return { html, platform: 'Custom Iframe', previewSrc };
+  }
+
+  // 6. Vimeo video
+  const vimeoMatch = trimmed.match(/vimeo\.com\/(?:video\/)?([0-9]+)/i);
+  if (vimeoMatch && vimeoMatch[1]) {
+    const vimeoId = vimeoMatch[1];
+    const embedSrc = `https://player.vimeo.com/video/${vimeoId}`;
+    const html = `<div class="embedded-media-block my-4" contenteditable="false"><div class="aspect-video w-full rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-black/5 dark:bg-black/30"><iframe src="${embedSrc}" title="Vimeo video" class="w-full h-full border-0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</div><p><br></p>`;
+
+    return { html, platform: 'Vimeo Video', previewSrc: embedSrc };
+  }
+
+  // 7. Direct Video file (.mp4, .webm, .ogg)
+  if (/\.(mp4|webm|ogg)(\?.*)?$/i.test(trimmed)) {
+    const html = `<div class="embedded-media-block my-4" contenteditable="false"><video src="${trimmed}" controls class="w-full rounded-2xl shadow-md aspect-video bg-black"></video>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</div><p><br></p>`;
+
+    return { html, platform: 'Direct Video Player' };
+  }
+
+  // 8. Generic web URL as responsive iframe embed
+  if (/^https?:\/\//i.test(trimmed)) {
+    const html = `<div class="embedded-media-block my-4" contenteditable="false"><div class="${aspectClass} rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-black/5 dark:bg-black/30"><iframe src="${trimmed}" class="w-full h-full border-0" allowfullscreen loading="lazy"></iframe></div>${caption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${caption}</div>` : ''}</div><p><br></p>`;
+
+    return { html, platform: 'Web Embed Link', previewSrc: trimmed };
+  }
+
+  return null;
 }
 
 export default function RichTextArea({
@@ -61,7 +175,9 @@ export default function RichTextArea({
   rows = 5,
   label,
   required = false,
+  hideEmbed: hideEmbedProp = false,
 }: RichTextAreaProps) {
+  const hideEmbed = Boolean(hideEmbedProp || (label && /short description|excerpt/i.test(label)));
   const [showSource, setShowSource] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [textColor, setTextColor] = useState('#000000');
@@ -70,6 +186,15 @@ export default function RichTextArea({
   // Custom modal dialog states (Anchor, Link, Image, SpecialChar, Help)
   const [activeModal, setActiveModal] = useState<'anchor' | 'link' | 'image' | 'specialChar' | 'help' | null>(null);
   const [modalInputVal, setModalInputVal] = useState('');
+  // Link & Embed modal state
+  const [linkTab, setLinkTab] = useState<'link' | 'embed'>('link');
+  const [linkTextVal, setLinkTextVal] = useState('');
+  const [linkOpenNewTab, setLinkOpenNewTab] = useState(true);
+  const [embedInputVal, setEmbedInputVal] = useState('');
+  const [embedAspect, setEmbedAspect] = useState<'16/9' | '9/16' | '1/1' | 'auto'>('16/9');
+  const [embedCaption, setEmbedCaption] = useState('');
+  const [selectedEmbedPlatform, setSelectedEmbedPlatform] = useState<'all' | 'youtube' | 'instagram' | 'facebook' | 'twitter'>('all');
+
 
   // Image insertion & management states
   const [imageTab, setImageTab] = useState<'device' | 'url' | 'manage'>('device');
@@ -116,9 +241,17 @@ export default function RichTextArea({
   // Convert markdown image notation ![alt](url) to HTML figure img tag inside editor
   const formatValueToHtml = (val: string) => {
     if (!val) return '';
-    return val.replace(/!\[(.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, (match, alt, url) => {
+    let formatted = val.replace(/!\[(.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, (match, alt, url) => {
       return `<figure class="my-4 text-center"><img src="${url}" alt="${alt || 'Article Image'}" class="max-w-full h-auto rounded-xl mx-auto border border-gray-400 dark:border-zinc-700 shadow-sm" /></figure>`;
     });
+    // Ensure all social embed figures have contenteditable="false" so they act as non-editable blocks
+    formatted = formatted.replace(/<figure\b([^>]*data-article-social-platform=["'][^"']+["'][^>]*)>/gi, (match, attrs) => {
+      if (!attrs.includes('contenteditable=')) {
+        return `<figure ${attrs} contenteditable="false">`;
+      }
+      return match;
+    });
+    return formatted;
   };
 
   // Sync internal HTML content with prop value when value changes externally
@@ -130,6 +263,51 @@ export default function RichTextArea({
       }
     }
   }, [value, showSource]);
+
+  // Listen for iframe postMessage resize events from embeds (e.g. Twitter / X embed)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.data &&
+        (event.data.type === 'gp-embed-resize' || event.data.type === 'gp-twitter-resize') &&
+        typeof event.data.height === 'number' &&
+        editorRef.current
+      ) {
+        const h = event.data.height;
+        if (h < 50) return;
+        const iframes = editorRef.current.querySelectorAll<HTMLIFrameElement>('iframe');
+        iframes.forEach((iframe) => {
+          let match = false;
+          try {
+            if (iframe.contentWindow === event.source) match = true;
+          } catch {
+            // cross-origin
+          }
+          if (!match && event.data.url) {
+            const srcdoc = iframe.getAttribute('srcdoc') || '';
+            if (srcdoc.includes(event.data.url)) match = true;
+          }
+          if (match) {
+            iframe.style.setProperty('height', `${h}px`, 'important');
+            iframe.style.setProperty('min-height', `${h}px`, 'important');
+            iframe.style.setProperty('max-height', `${h}px`, 'important');
+            iframe.style.setProperty('aspect-ratio', 'auto', 'important');
+            iframe.style.setProperty('overflow', 'hidden', 'important');
+            const fig = iframe.closest('figure');
+            if (fig) {
+              fig.style.setProperty('height', 'auto', 'important');
+              fig.style.setProperty('margin-bottom', '0.75rem', 'important');
+            }
+          }
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, []);
 
   // Lock background body and html scroll when any modal in RichTextArea is open
   useEffect(() => {
@@ -177,10 +355,23 @@ export default function RichTextArea({
     setActiveModal('anchor');
   };
 
-  // Open Link Dialog
-  const openLinkModal = () => {
+  // Open Link & Embedded Media Dialog
+  const openLinkModal = (initialTab: 'link' | 'embed' = 'link') => {
     saveSelection();
-    setModalInputVal('https://');
+    const sel = typeof window !== 'undefined' ? window.getSelection() : null;
+    const selectedText = sel?.toString() || '';
+    setLinkTab(hideEmbed ? 'link' : initialTab);
+    setSelectedEmbedPlatform('all');
+    setLinkTextVal(selectedText);
+    if (selectedText.startsWith('http://') || selectedText.startsWith('https://')) {
+      setModalInputVal(selectedText);
+      setEmbedInputVal(selectedText);
+    } else {
+      setModalInputVal('https://');
+      setEmbedInputVal('');
+    }
+    setEmbedCaption('');
+    setEmbedAspect('16/9');
     setActiveModal('link');
   };
 
@@ -565,24 +756,70 @@ export default function RichTextArea({
     };
   }, [selectedImgEl]);
 
-  // Submit Modal Action (for Anchor & Link)
+  // Submit Modal Action (for Anchor, Link & Embed)
   const handleModalSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    const val = modalInputVal.trim();
 
     if (activeModal === 'anchor') {
+      const val = modalInputVal.trim();
       if (val) {
-        const anchorHTML = `<a id="${val}" name="${val}" class="inline-inline-block align-middle px-1.5 py-0.5 mx-0.5 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-400 dark:border-red-800 rounded-md text-xs font-bold cursor-default select-none" title="Anchor: ${val}">🚩 ${val}</a>&nbsp;`;
+        const anchorHTML = `<a id="${val}" name="${val}" class="inline-block align-middle px-1.5 py-0.5 mx-0.5 bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 border border-red-400 dark:border-red-800 rounded-md text-xs font-bold cursor-default select-none" title="Anchor: ${val}">🚩 ${val}</a>&nbsp;`;
         execCmd('insertHTML', anchorHTML);
       }
     } else if (activeModal === 'link') {
-      if (val) {
-        const selection = window.getSelection();
-        const selectedText = selection?.toString() || '';
-        if (selectedText.trim()) {
-          execCmd('createLink', val);
+      if (linkTab === 'embed') {
+        const embedVal = embedInputVal.trim();
+        if (!embedVal) return;
+
+        // If cursor is inside an <a> tag, break out of it before inserting embed block
+        if (typeof window !== 'undefined') {
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount > 0) {
+            let node: Node | null = sel.getRangeAt(0).startContainer;
+            while (node && node !== editorRef.current) {
+              if (node.nodeName === 'A') {
+                const range = document.createRange();
+                range.setStartAfter(node);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                break;
+              }
+              node = node.parentNode;
+            }
+          }
+        }
+
+        const parsed = parseEmbedToHtml(embedVal, embedAspect, embedCaption);
+        if (parsed) {
+          execCmd('insertHTML', parsed.html);
         } else {
-          const linkHTML = `<a href="${val}" target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 font-bold underline hover:underline break-all">${val}</a>&nbsp;`;
+          const basicUrl = embedVal.startsWith('http') ? embedVal : `https://${embedVal}`;
+          const aspectClass =
+            embedAspect === '9/16'
+              ? 'aspect-[9/16] max-w-[360px] mx-auto'
+              : embedAspect === '1/1'
+              ? 'aspect-square max-w-[480px] mx-auto'
+              : 'aspect-video w-full';
+          const fallbackHtml = `<div class="embedded-media-block my-4" contenteditable="false"><div class="${aspectClass} rounded-2xl overflow-hidden shadow-md border border-gray-200 dark:border-zinc-800 bg-black/5 dark:bg-black/30"><iframe src="${basicUrl}" class="w-full h-full border-0" allowfullscreen loading="lazy"></iframe></div>${embedCaption ? `<div class="text-xs text-center text-gray-500 dark:text-zinc-400 mt-1.5 italic">${embedCaption}</div>` : ''}</div><p><br></p>`;
+          execCmd('insertHTML', fallbackHtml);
+        }
+      } else {
+        const urlVal = modalInputVal.trim();
+        if (urlVal) {
+          // If user pasted an iframe tag into the link tab, intelligently embed it
+          if (/<iframe\b/i.test(urlVal)) {
+            const parsed = parseEmbedToHtml(urlVal, '16/9');
+            if (parsed) {
+              execCmd('insertHTML', parsed.html);
+              setActiveModal(null);
+              return;
+            }
+          }
+
+          const targetAttr = linkOpenNewTab ? ' target="_blank" rel="noopener noreferrer"' : '';
+          const displayText = linkTextVal.trim() || urlVal;
+          const linkHTML = `<a href="${urlVal}"${targetAttr} class="text-blue-600 dark:text-blue-400 font-bold underline hover:underline break-all">${displayText}</a>&nbsp;`;
           execCmd('insertHTML', linkHTML);
         }
       }
@@ -747,12 +984,22 @@ export default function RichTextArea({
             <div className="flex items-center rounded-xl bg-white p-1 border border-gray-400 dark:bg-zinc-900 dark:border-zinc-700 shadow-2xs">
               <button
                 type="button"
-                onClick={openLinkModal}
+                onClick={() => openLinkModal('link')}
                 title="Add Website Link (Ctrl+K)"
                 className="rounded-lg p-1.5 hover:bg-blue-50 text-blue-600 dark:hover:bg-blue-950/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
               >
                 <LinkIcon className="h-4 w-4" />
               </button>
+              {!hideEmbed && (
+                <button
+                  type="button"
+                  onClick={() => openLinkModal('embed')}
+                  title="Embed Video / Social / Iframe (YouTube, Insta Reels, Vimeo)"
+                  className="rounded-lg p-1.5 hover:bg-rose-50 text-rose-600 dark:hover:bg-rose-950/40 cursor-pointer flex items-center gap-1 text-xs font-bold"
+                >
+                  <Film className="h-4 w-4" />
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => execCmd('unlink')}
@@ -1158,13 +1405,19 @@ export default function RichTextArea({
             <div className="flex items-center justify-between border-b border-gray-400 pb-3 dark:border-zinc-700">
               <h3 className="text-sm font-extrabold text-zinc-900 dark:text-white flex items-center gap-2">
                 {activeModal === 'anchor' && <Flag className="h-4 w-4 text-emerald-600" />}
-                {activeModal === 'link' && <LinkIcon className="h-4 w-4 text-blue-600" />}
+                {activeModal === 'link' && (
+                  linkTab === 'embed' ? (
+                    <Film className="h-4 w-4 text-rose-600" />
+                  ) : (
+                    <LinkIcon className="h-4 w-4 text-blue-600" />
+                  )
+                )}
                 {activeModal === 'image' && <ImageIcon className="h-4 w-4 text-purple-600" />}
                 {activeModal === 'specialChar' && <Sparkles className="h-4 w-4 text-amber-500" />}
                 {activeModal === 'help' && <HelpCircle className="h-4 w-4 text-blue-600" />}
                 <span>
-                  {activeModal === 'anchor' && 'Anchor Properties'}
-                  {activeModal === 'link' && 'Link Properties'}
+                  {activeModal === 'anchor' && 'Anchor Properties (એન્કર ગુણધર્મો)'}
+                  {activeModal === 'link' && (linkTab === 'embed' ? 'Embed Media Properties (વિડીયો / આઈફ્રેમ)' : 'Link Properties (લિંક ગુણધર્મો)')}
                   {activeModal === 'image' && 'Image Properties'}
                   {activeModal === 'specialChar' && 'Insert Special Symbol'}
                   {activeModal === 'help' && 'Rich Text Editor Guide & Shortcuts'}
@@ -1563,13 +1816,313 @@ export default function RichTextArea({
                   </div>
                 )}
               </div>
+            ) : activeModal === 'link' ? (
+              /* DEDICATED LINK & EMBED MODAL */
+              <div className="space-y-4">
+                {/* Segmented Tab Switcher */}
+                <div className="flex rounded-xl bg-zinc-100 dark:bg-zinc-800 p-1 border border-gray-300 dark:border-zinc-700">
+                  <button
+                    type="button"
+                    onClick={() => setLinkTab('link')}
+                    className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                      linkTab === 'link'
+                        ? 'bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 shadow-sm'
+                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    <LinkIcon className="h-4 w-4" />
+                    <span>🔗 Web Link (વેબ લિંક)</span>
+                  </button>
+                  {!hideEmbed && (
+                    <button
+                      type="button"
+                      onClick={() => setLinkTab('embed')}
+                      className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-extrabold transition-all cursor-pointer ${
+                        linkTab === 'embed'
+                          ? 'bg-white dark:bg-zinc-900 text-rose-600 dark:text-rose-400 shadow-sm'
+                          : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                      }`}
+                    >
+                      <Film className="h-4 w-4" />
+                      <span>🎬 Embedded Link (વિડીયો / આઈફ્રેમ)</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* TAB 1: STANDARD WEB LINK */}
+                {linkTab === 'link' ? (
+                  <div className="space-y-3.5">
+                    <div>
+                      <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
+                        LINK URL ADDRESS (લિંકનું URL)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="url"
+                          value={modalInputVal}
+                          onChange={(e) => setModalInputVal(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleModalSubmit();
+                            }
+                          }}
+                          placeholder="https://example.com/article"
+                          className="w-full rounded-xl border border-gray-400 bg-white px-3.5 py-2.5 text-sm font-medium text-zinc-900 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
+                        DISPLAY TEXT (લિંક પર દેખાતું લખાણ - વૈકલ્પિક)
+                      </label>
+                      <input
+                        type="text"
+                        value={linkTextVal}
+                        onChange={(e) => setLinkTextVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleModalSubmit();
+                          }
+                        }}
+                        placeholder="e.g. અહીં વાંચો / Click here to read full story"
+                        className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-zinc-900 placeholder:text-gray-400 focus:border-blue-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                      />
+                      <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                        ખાલી રાખશો તો લિંકનું URL સીધું દેખાશે.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="linkNewTabCheck"
+                        checked={linkOpenNewTab}
+                        onChange={(e) => setLinkOpenNewTab(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                      <label htmlFor="linkNewTabCheck" className="text-xs font-bold text-zinc-700 dark:text-zinc-300 cursor-pointer select-none">
+                        નવી વિન્ડો / ટેબમાં ખોલો (Open in new window: target="_blank")
+                      </label>
+                    </div>
+
+                    <div className="rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40 p-2.5 text-[11px] text-blue-800 dark:text-blue-300 flex items-start gap-2">
+                      <ExternalLink className="h-4 w-4 shrink-0 mt-0.5" />
+                      <span>
+                        કોઈપણ ન્યૂઝ આર્ટિકલ કે વેબસાઇટ લિંક માટે વાપરો. જો વિડીયો કે રીલ એમ્બેડ કરવી હોય તો ઉપર <strong>🎬 Embedded Link</strong> ટેબ પસંદ કરો.
+                      </span>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-300 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal(null)}
+                        className="rounded-xl border border-gray-300 bg-zinc-100 px-4 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleModalSubmit()}
+                        className="rounded-xl bg-blue-600 px-5 py-2 text-xs font-extrabold text-white hover:bg-blue-700 shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Check className="h-4 w-4" />
+                        <span>Insert Link (લિંક ઉમેરો)</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* TAB 2: EMBEDDED MEDIA (YouTube, Instagram, Facebook, Twitter, Iframe) */
+                  <div className="space-y-3.5">
+                    {/* Platform Selector Pills */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300">
+                          PLATFORM / પ્લેટફોર્મ પસંદ કરો
+                        </label>
+                        {(() => {
+                          const parsed = parseEmbedToHtml(embedInputVal, embedAspect, embedCaption);
+                          if (!parsed) return null;
+                          return (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-[10px] font-black border border-rose-300 dark:border-rose-800 animate-in fade-in">
+                              <Video className="h-3 w-3" />
+                              <span>{parsed.platform} Detected</span>
+                            </span>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[
+                          { id: 'all', label: '⚡ Auto-Detect', icon: '🌐' },
+                          { id: 'youtube', label: 'YouTube', icon: '🔴' },
+                          { id: 'instagram', label: 'Instagram', icon: '📸' },
+                          { id: 'facebook', label: 'Facebook', icon: '🔵' },
+                          { id: 'twitter', label: 'Twitter / X', icon: '𝕏' },
+                        ].map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedEmbedPlatform(p.id as any);
+                              if (p.id === 'youtube' && !embedInputVal) setEmbedAspect('16/9');
+                              if (p.id === 'instagram' && !embedInputVal) setEmbedAspect('1/1');
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+                              selectedEmbedPlatform === p.id
+                                ? 'bg-rose-600 text-white shadow-xs'
+                                : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700 border border-gray-200 dark:border-zinc-700'
+                            }`}
+                          >
+                            <span>{p.icon}</span>
+                            <span>{p.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
+                        VIDEO URL OR &lt;IFRAME&gt; EMBED CODE (લિંક અથવા આઈફ્રેમ કોડ)
+                      </label>
+                      <textarea
+                        value={embedInputVal}
+                        onChange={(e) => setEmbedInputVal(e.target.value)}
+                        rows={3}
+                        placeholder={
+                          selectedEmbedPlatform === 'youtube'
+                            ? 'Paste YouTube URL (watch?v=...), Shorts (/shorts/...), or <iframe ...> embed code...'
+                            : selectedEmbedPlatform === 'instagram'
+                            ? 'Paste Instagram Reel (/reel/...), Post (/p/...), or embed code...'
+                            : selectedEmbedPlatform === 'facebook'
+                            ? 'Paste Facebook Video, Reel, Post link, or <iframe src="...plugins/post.php..."> code...'
+                            : selectedEmbedPlatform === 'twitter'
+                            ? 'Paste X / Twitter post URL (https://x.com/.../status/...) or embed code...'
+                            : 'Paste YouTube, Instagram Reel/Post, Facebook, Twitter (X) link, or raw <iframe ...> embed code here...'
+                        }
+                        className="w-full rounded-xl border border-gray-400 bg-white px-3.5 py-2 text-xs font-mono text-zinc-900 placeholder:text-gray-400 focus:border-rose-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Aspect Ratio Selector */}
+                    <div>
+                      <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
+                        ASPECT RATIO (સાઇઝ પ્રમાણ)
+                      </label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {[
+                          { id: '16/9', label: '16:9 Landscape', desc: 'YouTube / Video' },
+                          { id: '9/16', label: '9:16 Vertical', desc: 'Shorts / Reels' },
+                          { id: '1/1', label: '1:1 Square', desc: 'Insta / FB Post' },
+                        ].map((asp) => (
+                          <button
+                            key={asp.id}
+                            type="button"
+                            onClick={() => setEmbedAspect(asp.id as any)}
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                              embedAspect === asp.id
+                                ? 'border-rose-600 bg-rose-50/70 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 shadow-xs'
+                                : 'border-gray-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 text-zinc-700 dark:text-zinc-300 hover:border-gray-400'
+                            }`}
+                          >
+                            <p className="text-xs font-extrabold">{asp.label}</p>
+                            <p className="text-[10px] opacity-75">{asp.desc}</p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Caption / Source input */}
+                    <div>
+                      <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
+                        CAPTION / CREDIT (કેપ્શન અથવા ક્રેડિટ - વૈકલ્પિક)
+                      </label>
+                      <input
+                        type="text"
+                        value={embedCaption}
+                        onChange={(e) => setEmbedCaption(e.target.value)}
+                        placeholder="e.g. Source: Gujarat Post Special Ground Report"
+                        className="w-full rounded-xl border border-gray-300 bg-white px-3.5 py-2 text-xs font-medium text-zinc-900 placeholder:text-gray-400 focus:border-rose-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Live Preview Box */}
+                    {(() => {
+                      const parsed = parseEmbedToHtml(embedInputVal, embedAspect, embedCaption);
+                      if (!parsed) return null;
+                      return (
+                        <div className="p-3 rounded-2xl bg-zinc-900 text-white space-y-2 border border-zinc-700 shadow-inner">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-zinc-300">
+                            <span className="flex items-center gap-1.5">
+                              <Film className="h-3.5 w-3.5 text-rose-400" />
+                              <span>Live Embed Preview</span>
+                            </span>
+                            <span className="bg-rose-600/80 text-white px-2 py-0.5 rounded-full text-[10px]">
+                              {parsed.platform}
+                            </span>
+                          </div>
+                          {parsed.previewSrc ? (
+                            <div className="relative rounded-xl overflow-hidden bg-black/60 aspect-video max-h-40 flex items-center justify-center border border-zinc-700">
+                              <iframe
+                                src={parsed.previewSrc}
+                                title="Embed Preview"
+                                className="w-full h-full border-0 pointer-events-none"
+                              />
+                            </div>
+                          ) : (
+                            <div className="p-2.5 rounded-xl bg-zinc-800 text-[11px] font-mono text-zinc-300 truncate">
+                              ✓ Ready to embed securely into story
+                            </div>
+                          )}
+                          {embedCaption && (
+                            <p className="text-[11px] text-zinc-400 italic text-center">{embedCaption}</p>
+                          )}
+                        </div>
+                      );
+                    })()}
+
+                    {/* Supported Formats Guidance */}
+                    <div className="rounded-xl bg-zinc-50 dark:bg-zinc-800/40 border border-gray-200 dark:border-zinc-700 p-2.5 text-[11px] text-zinc-600 dark:text-zinc-300 space-y-1">
+                      <p className="font-bold text-zinc-800 dark:text-zinc-200">✅ Supported Formats (લિંક અથવા એમ્બેડ કોડ):</p>
+                      <p>• <strong>🔴 YouTube:</strong> Standard videos (<code className="text-rose-600 dark:text-rose-400">watch?v=...</code>), Shorts (<code className="text-rose-600 dark:text-rose-400">/shorts/...</code>) and Live</p>
+                      <p>• <strong>📸 Instagram:</strong> Public Reels (<code className="text-rose-600 dark:text-rose-400">/reel/...</code>) and Posts (<code className="text-rose-600 dark:text-rose-400">/p/...</code>)</p>
+                      <p>• <strong>🔵 Facebook:</strong> Posts, Videos, Reels, and Watch links (<code className="text-rose-600 dark:text-rose-400">facebook.com/...</code>)</p>
+                      <p>• <strong>𝕏 Twitter / X:</strong> Tweets, status links, and threads (<code className="text-rose-600 dark:text-rose-400">x.com/.../status/...</code>)</p>
+                      <p>• <strong>🌐 Custom Embed & Video:</strong> Full <code className="text-rose-600 dark:text-rose-400">&lt;iframe ...&gt;&lt;/iframe&gt;</code> code or direct <code className="text-rose-600 dark:text-rose-400">.mp4</code> URLs</p>
+                    </div>
+                    
+                    {/* Footer */}
+                    <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-gray-300 dark:border-zinc-700">
+                      <button
+                        type="button"
+                        onClick={() => setActiveModal(null)}
+                        className="rounded-xl border border-gray-300 bg-zinc-100 px-4 py-2 text-xs font-extrabold text-zinc-700 hover:bg-zinc-200 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700 transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!embedInputVal.trim()}
+                        onClick={() => handleModalSubmit()}
+                        className="rounded-xl bg-rose-600 disabled:opacity-50 px-5 py-2 text-xs font-extrabold text-white hover:bg-rose-700 shadow-sm transition-all cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Check className="h-4 w-4" />
+                        <span>Insert Embed (એમ્બેડ કરો)</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
-              /* Input Form (Anchor & Link) */
+              /* Input Form (Anchor only) */
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-extrabold text-zinc-700 uppercase tracking-wider dark:text-zinc-300 mb-1.5">
-                    {activeModal === 'anchor' && 'Anchor Name'}
-                    {activeModal === 'link' && 'Link URL Address'}
+                    Anchor Name (એન્કર નામ)
                   </label>
                   <input
                     type="text"
@@ -1581,11 +2134,7 @@ export default function RichTextArea({
                         handleModalSubmit();
                       }
                     }}
-                    placeholder={
-                      activeModal === 'anchor'
-                        ? 'e.g. section-1'
-                        : 'https://...'
-                    }
+                    placeholder="e.g. section-1"
                     className="w-full rounded-xl border border-gray-400 bg-white px-3.5 py-2.5 text-base font-medium text-zinc-900 placeholder:text-gray-500 focus:border-emerald-600 focus:outline-none dark:border-zinc-700 dark:bg-zinc-800 dark:text-white"
                     autoFocus
                   />

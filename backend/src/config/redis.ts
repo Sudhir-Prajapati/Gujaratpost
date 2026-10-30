@@ -61,6 +61,9 @@ export const connectRedis = async (): Promise<void> => {
         new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connection timed out after 3s')), 3000)),
       ]);
     } catch (error: any) {
+      try {
+        await redisClient.disconnect();
+      } catch {}
       console.warn('Could not establish initial connection to Redis. Running in database-only mode:', error?.message || error);
     }
   }

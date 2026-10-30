@@ -12,6 +12,7 @@ import masterRouter from './routes/index.js';
 import { errorHandler } from './middleware/error.middleware.js';
 import { autoPublishDueArticles } from './controllers/article.controller.js';
 import { RssController } from './controllers/rss.controller.js';
+import { fetchFreshLiveCenterData } from './routes/public.routes.js';
 
 
 
@@ -227,6 +228,23 @@ autoPublishDueArticles().catch((err: any) => {
 
 
 
+
+// ── Background: Live Center external API refresh every 30 minutes ────────────
+// Persists live data to MySQL hero_settings without exceeding daily rate limits (100 req/day).
+setInterval(async () => {
+  try {
+    await fetchFreshLiveCenterData();
+  } catch (err: any) {
+    console.warn('Background liveCenter error (non-fatal):', err?.message || err);
+  }
+}, 30 * 60 * 1000); // every 30 minutes
+
+// Run once 10 seconds after boot so initial DB snapshot is updated with live data
+setTimeout(() => {
+  fetchFreshLiveCenterData().catch((err: any) => {
+    console.warn('Startup liveCenter error (non-fatal):', err?.message || err);
+  });
+}, 10000);
 
 // Graceful shutdown handling — MUST close HTTP server first to release the port
 const gracefulShutdown = async (signal: string) => {
