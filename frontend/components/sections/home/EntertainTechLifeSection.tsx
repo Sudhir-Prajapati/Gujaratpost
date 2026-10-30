@@ -131,30 +131,77 @@ const sortByPublishDate = (list: Article[]) =>
   );
 
 const articleMatchesCategory = (article: Article, categorySlug: string) => {
+  if (!article) return false;
   const articleCategory = (article as any).category;
-  const categoryValues = [
+  const categoryValues: string[] = [
+    articleCategory?.id,
     articleCategory?.slug,
     articleCategory?.name,
     articleCategory?.nameGu,
+    articleCategory?.nameHi,
+    (article as any).categoryId,
     (article as any).categorySlug,
     (article as any).categoryName,
+    (article as any).categoryGu,
+    (article as any).categoryHi,
     typeof articleCategory === 'string' ? articleCategory : '',
-  ].map((value) => String(value || '').trim().toLowerCase());
+  ].filter(Boolean).map((value) => String(value || '').trim().toLowerCase());
+
+  // Also include all categories from multi-categories array
+  if (Array.isArray((article as any).categories)) {
+    for (const item of (article as any).categories) {
+      if (!item) continue;
+      if (typeof item === 'string') {
+        categoryValues.push(item.trim().toLowerCase());
+      } else {
+        if (item.id) categoryValues.push(String(item.id).trim().toLowerCase());
+        if (item.categoryId) categoryValues.push(String(item.categoryId).trim().toLowerCase());
+        if (item.slug) categoryValues.push(String(item.slug).trim().toLowerCase());
+        if (item.name) categoryValues.push(String(item.name).trim().toLowerCase());
+        if (item.nameGu) categoryValues.push(String(item.nameGu).trim().toLowerCase());
+        if (item.nameHi) categoryValues.push(String(item.nameHi).trim().toLowerCase());
+        if (item.category && typeof item.category === 'object') {
+          if (item.category.id) categoryValues.push(String(item.category.id).trim().toLowerCase());
+          if (item.category.slug) categoryValues.push(String(item.category.slug).trim().toLowerCase());
+          if (item.category.name) categoryValues.push(String(item.category.name).trim().toLowerCase());
+          if (item.category.nameGu) categoryValues.push(String(item.category.nameGu).trim().toLowerCase());
+          if (item.category.nameHi) categoryValues.push(String(item.category.nameHi).trim().toLowerCase());
+        }
+      }
+    }
+  }
+
+  // Also include tag tokens
+  if (Array.isArray((article as any).tags)) {
+    for (const t of (article as any).tags) {
+      if (!t) continue;
+      if (typeof t === 'string') categoryValues.push(t.trim().toLowerCase());
+      else {
+        if (t.name) categoryValues.push(String(t.name).trim().toLowerCase());
+        if (t.slug) categoryValues.push(String(t.slug).trim().toLowerCase());
+        if (t.tag?.name) categoryValues.push(String(t.tag.name).trim().toLowerCase());
+        if (t.tag?.slug) categoryValues.push(String(t.tag.slug).trim().toLowerCase());
+      }
+    }
+  }
 
   const hasCategory = (...values: string[]) =>
-    values.some((value) => categoryValues.includes(value));
+    values.some((value) => {
+      const v = value.toLowerCase().trim();
+      return categoryValues.some((cv) => cv === v || cv.includes(v));
+    });
 
-  if (categorySlug === 'manoranjan') {
+  if (categorySlug === 'manoranjan' || categorySlug === 'entertainment') {
     return hasCategory('manoranjan', 'entertainment', 'entertainment-life-style', 'મનોરંજન');
   }
 
   if (categorySlug === 'technology') {
     const title = String((article as any).titleGu || article.title || '').toLowerCase();
-    return hasCategory('technology', 'tech', 'ટેકનોલોજી') && !title.includes('gst');
+    return hasCategory('technology', 'tech', 'ટેકનોલોજી', 'ટેક્નોલોજી') && !title.includes('gst');
   }
 
   if (categorySlug === 'health') {
-    return hasCategory('health', 'helth', 'હેલ્થ', 'આરોગ્ય');
+    return hasCategory('health', 'helth', 'હેલ્થ', 'આરોગ્ય', 'તંદુરસ્તી');
   }
 
   return hasCategory(categorySlug);
@@ -172,10 +219,16 @@ export default function EntertainTechLifeSection({
 }) {
   const buildInitialMap = (): Record<string, Article[]> => {
     const map: Record<string, Article[]> = {};
-    if (initialCategoryArticles['health']?.length) map['health'] = sortLatest(initialCategoryArticles['health'].filter((article) => articleMatchesCategory(article, 'health'))).slice(0, 4);
+    if (initialCategoryArticles['health']?.length) {
+      map['health'] = sortLatest(initialCategoryArticles['health'].filter((article) => articleMatchesCategory(article, 'health'))).slice(0, 4);
+    }
     const entertainmentKey = initialCategoryArticles['manoranjan']?.length ? 'manoranjan' : 'entertainment';
-    if (initialCategoryArticles[entertainmentKey]?.length) map['manoranjan'] = sortByPublishDate(initialCategoryArticles[entertainmentKey].filter((article) => articleMatchesCategory(article, 'manoranjan'))).slice(0, 4);
-    if (initialCategoryArticles['technology']?.length) map['technology'] = sortLatest(initialCategoryArticles['technology'].filter((article) => articleMatchesCategory(article, 'technology'))).slice(0, 4);
+    if (initialCategoryArticles[entertainmentKey]?.length) {
+      map['manoranjan'] = sortByPublishDate(initialCategoryArticles[entertainmentKey].filter((article) => articleMatchesCategory(article, 'manoranjan'))).slice(0, 4);
+    }
+    if (initialCategoryArticles['technology']?.length) {
+      map['technology'] = sortLatest(initialCategoryArticles['technology'].filter((article) => articleMatchesCategory(article, 'technology'))).slice(0, 4);
+    }
     return map;
   };
 
@@ -185,9 +238,9 @@ export default function EntertainTechLifeSection({
 
   useEffect(() => {
     const existingMap = categoryArticlesMap;
-    const needsHealth = !existingMap['health'] || existingMap['health'].length < 2;
-    const needsEntertain = !existingMap['manoranjan'] || existingMap['manoranjan'].length < 2;
-    const needsTech = !existingMap['technology'] || existingMap['technology'].length < 2;
+    const needsHealth = !existingMap['health'] || existingMap['health'].length < 4;
+    const needsEntertain = !existingMap['manoranjan'] || existingMap['manoranjan'].length < 4;
+    const needsTech = !existingMap['technology'] || existingMap['technology'].length < 4;
 
     getPublicCategories()
       .then(async (cats) => {
@@ -199,7 +252,7 @@ export default function EntertainTechLifeSection({
         const fallbackCats = [
           { id: 'health',       slug: 'health',      name: 'Health',        nameGu: 'હેલ્થ',     nameHi: 'स्वास्थ्य' },
           { id: 'entertainment',slug: 'manoranjan',  name: 'Entertainment', nameGu: 'મનોરંજન',   nameHi: 'मनोरंजन' },
-          { id: 'technology',   slug: 'technology',  name: 'Technology',    nameGu: 'ટેકનોલોજી', nameHi: 'टेक्नोलॉजी' },
+          { id: 'technology',   slug: 'technology',  name: 'Technology',    nameGu: 'ટેકનોલોજી', nameHi: 'ટેક્નોલોજી' },
         ];
 
         const finalCats: any[] = [];
@@ -222,34 +275,45 @@ export default function EntertainTechLifeSection({
             : (targetSlug === 'manoranjan' || targetSlug === 'entertainment') ? needsEntertain
             : needsTech;
 
-          if (!needsThis) {
-            const key = targetSlug === 'entertainment' ? 'manoranjan' : targetSlug;
-            return { slug: targetSlug, articles: existingMap[key] || [] };
+          const key = targetSlug === 'entertainment' ? 'manoranjan' : targetSlug;
+          const currentList = existingMap[key] || [];
+
+          if (!needsThis && currentList.length >= 4) {
+            return { slug: targetSlug, articles: currentList.slice(0, 4) };
           }
 
-          const sortLatest = (list: Article[]) =>
-            [...(list || [])].sort((a: any, b: any) => {
-              const aNum = a?.articleNumber || 0;
-              const bNum = b?.articleNumber || 0;
-              if (bNum !== aNum) return bNum - aNum;
-              return new Date(b.publishedAt || b.createdAt || 0).getTime() - new Date(a.publishedAt || a.createdAt || 0).getTime();
-            });
           const sortCategoryArticles = (list: Article[]) =>
             targetSlug === 'manoranjan' || targetSlug === 'entertainment'
               ? sortByPublishDate(list)
               : sortLatest(list);
 
+          let combinedPool: Article[] = [...currentList];
+
+          // Check if initialArticles has more matching articles
           if (initialArticles?.length) {
-            const matched = initialArticles.filter((article) => articleMatchesCategory(article, targetSlug));
-            if (matched.length >= 2) return { slug: targetSlug, articles: sortCategoryArticles(matched).slice(0, 4) };
+            const matchedInitial = initialArticles.filter((article) => articleMatchesCategory(article, targetSlug));
+            combinedPool = [...combinedPool, ...matchedInitial];
           }
+
+          // Fetch from category endpoint if we still need more articles
           try {
-            const res = await getPublicArticles({ categorySlug: cat.slug, limit: 4, sort: 'latest' });
+            const res = await getPublicArticles({ categorySlug: cat.slug, limit: 12, sort: 'latest' });
             const matchingArticles = (res.articles || []).filter((article: Article) => articleMatchesCategory(article, targetSlug));
-            return { slug: cat.slug, articles: sortCategoryArticles(matchingArticles) };
-          } catch {
-            return { slug: cat.slug, articles: [] };
+            combinedPool = [...combinedPool, ...matchingArticles];
+          } catch {}
+
+          // Deduplicate by ID or slug
+          const seen = new Set<string>();
+          const deduplicated: Article[] = [];
+          for (const a of combinedPool) {
+            const idKey = a.id || a.slug;
+            if (idKey && !seen.has(idKey)) {
+              seen.add(idKey);
+              deduplicated.push(a);
+            }
           }
+
+          return { slug: targetSlug, articles: sortCategoryArticles(deduplicated).slice(0, 4) };
         });
 
         const results = await Promise.all(articlePromises);

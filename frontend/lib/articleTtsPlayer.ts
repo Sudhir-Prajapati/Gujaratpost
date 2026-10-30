@@ -13,6 +13,8 @@ export function cleanTextForSpeech(htmlOrText: string): string {
     .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, ' ')
     // Remove markdown utility lines like "## KEY HIGHLIGHTS"
+    // Remove full highlights block if embedded in body markdown
+    .replace(/(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi, ' ')
     .replace(/^#{1,6}\s*📌?.*(KEY HIGHLIGHTS|AT A GLANCE).*$/gmi, ' ')
     // Replace block tags with period/newline to maintain sentence rhythm
     .replace(/<\/(p|div|h[1-6]|li|blockquote|tr)>/gi, '. ')

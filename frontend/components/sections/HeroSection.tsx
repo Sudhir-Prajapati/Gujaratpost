@@ -42,6 +42,7 @@ import VideoSection from '@/components/sections/VideoSection';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkHomeFeed from '@/components/apk/ApkHomeFeed';
 import ApkHomeSkeleton from '@/components/apk/ApkHomeSkeleton';
+import { HomePageSkeleton } from '@/components/ui/PageSkeleton';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 
@@ -479,33 +480,7 @@ function MobileHorizontalCardStrip({
                   <span>{getCategoryLabel(art, language)}</span>
                 </div>
 
-                {/* Left Floating Arrow */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scrollToIndex((activeIndex - 1 + displayCards.length) % displayCards.length);
-                  }}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 dark:bg-black/70 shadow-md text-foreground hover:bg-white transition-all cursor-pointer"
-                  aria-label="Previous slide"
-                >
-                  <ChevronLeft className="h-4 w-4 stroke-[3]" />
-                </button>
-
-                {/* Right Floating Arrow */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    scrollToIndex((activeIndex + 1) % displayCards.length);
-                  }}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 z-20 flex h-7 w-7 items-center justify-center rounded-full bg-white/80 dark:bg-black/70 shadow-md text-foreground hover:bg-white transition-all cursor-pointer"
-                  aria-label="Next slide"
-                >
-                  <ChevronRight className="h-4 w-4 stroke-[3]" />
-                </button>
+                
               </div>
 
               {/* Bottom Content Container */}
@@ -649,7 +624,7 @@ function HeroStorySlider({
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          <Link href={`/news/${current.slug}`} className="block w-full h-full">
+          <Link href={`/news/${current.slug}`} className="block w-full h-full relative">
             <ArticleMedia
               key={`mob-${current.id || slideIndex}`}
               src={current.image || (current as any).featuredImage}
@@ -979,6 +954,12 @@ export default function HeroSection({
       const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
       return bTime - aTime;
     });
+
+    const featuredOnly = sortedLatest.filter((a) => a.isFeatured === true);
+    if (featuredOnly.length > 0) {
+      const nonFeatured = sortedLatest.filter((a) => !a.isFeatured);
+      return [...featuredOnly, ...nonFeatured];
+    }
 
     return sortedLatest;
   };
@@ -1862,24 +1843,25 @@ export default function HeroSection({
               let heroSliderArticlesToDisplay: Article[] = [];
               let afterTop3News: Article[] = [];
 
-              if (gridMode === 'manual' && manualGridArts.length > 0) {
-                // MANUAL MODE: Strictly 9 articles for this section
-                // 1 article => ONLY 1 spotlight card (standard 9-story column space, not full space), middle column hidden
-                // 2 to 7 articles => Position #1 in Spotlight, positions #2 to #7 in Middle Column (up to 6 cards)
-                // 8 articles => 2 slides in Spotlight (#1 and #8), 6 cards in Middle Column (#2 to #7)
-                // 9 articles => 3 slides in Spotlight (#1, #8, #9), 6 cards in Middle Column (#2 to #7)
-                if (manualGridArts.length === 1) {
-                  heroSliderArticlesToDisplay = [manualGridArts[0]];
+              // Prioritize articles where admin selected "Home / News" (isFeatured = true)
+              const homeNewsArticles: Article[] = manualGridArts.length > 0
+                ? manualGridArts
+                : articlesList.filter((a: Article) => a.isFeatured === true).slice(0, 9);
+
+              if (homeNewsArticles.length > 0) {
+                // Strictly show ONLY articles where admin checked "Home / News"
+                if (homeNewsArticles.length === 1) {
+                  heroSliderArticlesToDisplay = [homeNewsArticles[0]];
                   afterTop3News = [];
-                } else if (manualGridArts.length >= 2 && manualGridArts.length <= 7) {
-                  heroSliderArticlesToDisplay = [manualGridArts[0]];
-                  afterTop3News = manualGridArts.slice(1, manualGridArts.length);
-                } else if (manualGridArts.length === 8) {
-                  heroSliderArticlesToDisplay = [manualGridArts[0], manualGridArts[7]];
-                  afterTop3News = manualGridArts.slice(1, 7);
+                } else if (homeNewsArticles.length >= 2 && homeNewsArticles.length <= 7) {
+                  heroSliderArticlesToDisplay = [homeNewsArticles[0]];
+                  afterTop3News = homeNewsArticles.slice(1, homeNewsArticles.length);
+                } else if (homeNewsArticles.length === 8) {
+                  heroSliderArticlesToDisplay = [homeNewsArticles[0], homeNewsArticles[7]];
+                  afterTop3News = homeNewsArticles.slice(1, 7);
                 } else {
-                  heroSliderArticlesToDisplay = [manualGridArts[0], manualGridArts[7], manualGridArts[8]];
-                  afterTop3News = manualGridArts.slice(1, 7);
+                  heroSliderArticlesToDisplay = [homeNewsArticles[0], homeNewsArticles[7], homeNewsArticles[8]];
+                  afterTop3News = homeNewsArticles.slice(1, 7);
                 }
               } else {
                 // AUTOMATIC MODE: Strictly 9 articles for this section
@@ -1973,7 +1955,7 @@ export default function HeroSection({
                           ))}
                         </div>
 
-                        {/* ─── MOBILE VIEW (< md): Clean Compact Cards matching Image 4 ─── */}
+                        {/* ─── MOBILE VIEW (< md): Clean Compact Cards with Category Pill & WhatsApp Share (Matching Image 2) ─── */}
                         <div className="flex flex-col gap-2.5 md:hidden">
                           {afterTop3News.slice(0, 6).map((story, idx) => {
                             const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
@@ -1981,41 +1963,78 @@ export default function HeroSection({
                             const hasPrefix = colonIdx > 3 && colonIdx <= 48;
                             const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
                             const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
+                            const catSlug = (story as any).category?.slug || (story as any).categorySlug || 'news';
+                            const catLabel = getCategoryLabel(story, language);
 
                             return (
-                              <Link
+                              <div
                                 key={story.id || story.slug || idx}
-                                href={`/news/${story.slug}`}
-                                className="group flex flex-row items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl bg-card/75 dark:bg-card/60 hover:bg-card/90 border border-border/60 hover:border-border transition-all min-w-0 shadow-2xs"
+                                className="group flex flex-col p-3 sm:p-3.5 rounded-2xl bg-card/75 dark:bg-card/60 hover:bg-card/90 border border-border/60 hover:border-border transition-all min-w-0 shadow-2xs"
                               >
-                                {/* Left: Category name on top in red + Headline below (Matching Image 2) */}
-                                <div className="flex flex-col flex-1 min-w-0 pr-1">
-                                  <span className="text-[#B3121B] font-black text-[12px] sm:text-[13px] uppercase tracking-wide mb-1 leading-none select-none">
-                                    {getCategoryLabel(story, language)}
-                                  </span>
-                                  <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                                    {hasPrefix ? (
-                                      <>
-                                        <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
-                                          {prefixText}
-                                        </span>
-                                        <span>{restText}</span>
-                                      </>
-                                    ) : (
-                                      <AutoArticleTitle article={story} language={language} />
-                                    )}
-                                  </h3>
+                                <div className="flex flex-row items-center justify-between gap-3 min-w-0">
+                                  {/* Left: Headline */}
+                                  <Link href={`/news/${story.slug}`} className="flex flex-col flex-1 min-w-0 pr-1">
+                                    <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                                      {hasPrefix ? (
+                                        <>
+                                          <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
+                                            {prefixText}
+                                          </span>
+                                          <span>{restText}</span>
+                                        </>
+                                      ) : (
+                                        <AutoArticleTitle article={story} language={language} />
+                                      )}
+                                    </h3>
+                                  </Link>
+
+                                  {/* Right: Thumbnail */}
+                                  <Link
+                                    href={`/news/${story.slug}`}
+                                    className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted"
+                                  >
+                                    <ArticleMedia
+                                      src={story.image || (story as any).featuredImage || getArticleImage(story)}
+                                      alt={story.title || ''}
+                                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+                                    />
+                                  </Link>
                                 </div>
 
-                                {/* Right: Thumbnail */}
-                                <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                                  <ArticleMedia
-                                    src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                                    alt={story.title || ''}
-                                    className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                                  />
+                                {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) matching Image 2 */}
+                                <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border/50">
+                                  <Link
+                                    href={`/category/${catSlug}`}
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs select-none"
+                                  >
+                                    <span>{catLabel}</span>
+                                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                                  </Link>
+
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const title = getArticleTitle(story, language);
+                                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
+                                      const text = `${title}\n\n${url}`;
+                                      if (typeof navigator !== 'undefined' && navigator.share) {
+                                        navigator.share({ title, url, text }).catch(() => {
+                                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                        });
+                                      } else {
+                                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                      }
+                                    }}
+                                    className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
+                                    aria-label="Share"
+                                  >
+                                    <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
+                                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                                  </button>
                                 </div>
-                              </Link>
+                              </div>
                             );
                           })}
                         </div>
@@ -2321,162 +2340,7 @@ export default function HeroSection({
 
 /* --- Hero Section Skeleton Loader ------------------------------------------- */
 function HeroSectionSkeleton({ language }: { language: Language }) {
-  const labelTopNews = language === 'gu' ? 'મુખ્ય સમાચાર' : language === 'hi' ? 'शीर्ष समाचार' : 'Top News';
-  const labelTopStories = language === 'gu' ? 'ટૉપ સ્ટોરી' : language === 'hi' ? 'मुख्य कहानियां' : 'Top Stories';
-  const labelTrending = language === 'gu' ? 'ટ્રેન્ડિંગ સમાચાર' : language === 'hi' ? 'ट्रेंडિંગ समाचार' : 'Trending News';
-  const labelStateNews = language === 'gu' ? 'રાજ્ય સમાચાર' : language === 'hi' ? 'રાજ્ય સમાચાર' : 'State News';
-  const labelLiveTV = language === 'gu' ? 'લાઈવ ટીવી' : language === 'hi' ? 'लाइव टीवी' : 'Live TV';
-  const labelWeather = language === 'gu' ? 'હવામાન' : language === 'hi' ? 'मौसम' : 'Weather';
-  const labelEPaper = language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper';
-
-  return (
-    <div className="mx-auto max-w-screen-xl px-4 pb-4 space-y-3 md:space-y-4 animate-pulse">
-      {/* ROW 1: 3-column main section */}
-      <div className="grid grid-cols-1 gap-1 lg:grid-cols-[minmax(0,1fr)_280px] items-start">
-        <div className="min-w-0">
-          {/* ── REDESIGNED HERO NEWS SECTION SKELETON ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start animate-pulse">
-
-            {/* LEFT COLUMN (Featured News + 3 Horizontal Cards Skeleton) */}
-            <div className="w-full flex flex-col gap-6">
-              <div className="w-full">
-                <div className="relative aspect-[16/9] w-full rounded-lg bg-muted" />
-                <div className="h-3.5 w-16 bg-muted rounded mt-3" />
-                <div className="h-8 w-full bg-muted rounded mt-2" />
-                <div className="h-8 w-3/4 bg-muted rounded mt-2" />
-              </div>
-              <div className="flex flex-col gap-5 border-t border-border/80 pt-5">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex gap-4 items-start">
-                    <div className="flex-1 space-y-1.5 py-1">
-                      <div className="h-3 w-16 bg-muted rounded" />
-                      <div className="h-4.5 w-full bg-muted rounded" />
-                      <div className="h-4.5 w-5/6 bg-muted rounded" />
-                    </div>
-                    <div className="relative w-[88px] h-[58px] rounded-lg bg-muted shrink-0" />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* RIGHT SIDE (2-Column Grid of 6 Small Cards Skeleton) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-6">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="flex flex-col w-full">
-                  <div className="relative aspect-[2/1] w-full rounded-lg bg-muted" />
-                  <div className="h-3 w-16 bg-muted rounded mt-2" />
-                  <div className="h-4.5 w-full bg-muted rounded mt-2" />
-                  <div className="h-4.5 w-5/6 bg-muted rounded mt-1.5" />
-                </div>
-              ))}
-            </div>
-
-          </div>
-
-          {/* Trending Bar skeleton */}
-          <div className="min-w-0 mt-2">
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border bg-slate-50 px-3 py-2">
-                <div className="flex items-center gap-1.5">
-                  <Flame className="h-[18px] w-[18px] text-accent/20 fill-current" />
-                  <span className="text-[15px] font-black leading-tight text-muted-foreground/35">{labelTrending}</span>
-                </div>
-                <div className="flex gap-1">
-                  <div className="h-6 w-6 rounded-full bg-muted" />
-                  <div className="h-6 w-6 rounded-full bg-muted" />
-                </div>
-              </div>
-              <div className="flex divide-x divide-border px-1 py-2">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3.5 py-1 shrink-0 w-[240px] md:w-[280px]">
-                    <div className="h-8 w-4 rounded bg-muted" />
-                    <div className="h-[40px] w-[56px] shrink-0 rounded-lg bg-muted" />
-                    <div className="flex-1 space-y-1.5">
-                      <div className="h-3 w-full rounded bg-muted" />
-                      <div className="h-3 w-3/4 rounded bg-muted" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Rajya Samachar / State News skeleton */}
-          <div className="min-w-0 mt-2">
-            <div className="flex items-center justify-between mb-1 border-b border-border pb-1">
-              <span className="text-[18px] md:text-[20px] font-black leading-tight text-muted-foreground/35">{labelStateNews}</span>
-              <div className="h-4 w-16 rounded bg-muted" />
-            </div>
-            <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-4">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex h-[98px] gap-2 rounded border border-border bg-card p-1.5 shadow-sm">
-                  <div className="h-full w-[82px] shrink-0 rounded bg-muted" />
-                  <div className="flex-1 space-y-2 py-1">
-                    <div className="h-4 w-full rounded bg-muted" />
-                    <div className="h-3 w-5/6 rounded bg-muted" />
-                    <div className="h-3 w-1/2 rounded bg-muted mt-2" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT WIDGETS skeleton */}
-        <div className="flex flex-col gap-1.5 w-full lg:w-[280px]">
-          {/* Live TV Widget Skeleton */}
-          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-            <div className="flex items-center justify-between bg-accent/20 px-3 py-1.5">
-              <span className="text-xs md:text-sm font-black text-muted-foreground/30 uppercase tracking-wide">{labelLiveTV}</span>
-              <div className="h-4 w-12 rounded bg-muted" />
-            </div>
-            <div className="relative aspect-[4/3] bg-muted" />
-            <div className="flex items-center justify-between gap-2 px-3 py-2">
-              <div className="h-6 w-24 rounded bg-muted" />
-              <div className="h-6 w-16 rounded bg-muted" />
-            </div>
-          </div>
-
-          {/* Weather Widget Skeleton */}
-          <div className="rounded-lg border border-border bg-card p-3 space-y-3">
-            <div className="flex items-center justify-between border-b border-border pb-2 mb-1">
-              <span className="text-xs md:text-sm font-black text-muted-foreground/30">{labelWeather}</span>
-            </div>
-            <div className="rounded-2xl border border-border/80 bg-card p-3 shadow-sm space-y-3">
-              <div className="flex justify-between items-center">
-                <div className="space-y-1.5 flex-1">
-                  <div className="h-4 w-20 rounded bg-muted" />
-                  <div className="h-3 w-16 rounded bg-muted" />
-                </div>
-                <div className="h-8 w-12 rounded bg-muted" />
-              </div>
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                <div className="h-8 rounded-xl bg-muted" />
-                <div className="h-8 rounded-xl bg-muted" />
-                <div className="h-8 rounded-xl bg-muted" />
-              </div>
-            </div>
-          </div>
-
-          {/* EPaper Widget Skeleton */}
-          <div className="rounded-lg border border-border bg-card p-3 space-y-2">
-            <div className="flex items-center justify-between border-b border-border pb-1 mb-1">
-              <span className="text-xs md:text-sm font-black text-muted-foreground/30">{labelEPaper}</span>
-              <div className="h-3 w-16 rounded bg-muted" />
-            </div>
-            <div className="flex gap-3">
-              <div className="h-[90px] w-[80px] shrink-0 rounded bg-muted" />
-              <div className="flex-1 space-y-2 py-1">
-                <div className="h-4 w-20 rounded bg-muted" />
-                <div className="h-3 w-16 rounded bg-muted" />
-                <div className="h-6 w-24 rounded bg-muted mt-2" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  return <HomePageSkeleton />;
 }
 
 export {

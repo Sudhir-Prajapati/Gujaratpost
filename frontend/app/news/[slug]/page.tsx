@@ -190,9 +190,9 @@ export default async function NewsDetailPage(
   // Dynamically fetch related articles and calculate smart relevance scores
   const categorySlug = (article.category || '').toLowerCase().replace(/\s+/g, '-');
   const [catRes, fallbackRes, trendingRes] = await Promise.all([
-    getPublicArticles({ categorySlug, limit: 20, includeContent: true }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ limit: 50, includeContent: true }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ isTrending: true, limit: 20, includeContent: true }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ categorySlug, limit: 12 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ limit: 15 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ isTrending: true, limit: 10 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const categoryArticles = catRes?.articles || [];

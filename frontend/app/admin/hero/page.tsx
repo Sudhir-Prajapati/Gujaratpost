@@ -7,6 +7,7 @@ import {
   Calendar, User, Tag, X, ImageIcon, GripVertical, ChevronLeft, ChevronRight,
   Layers, MoveHorizontal, ArrowUp, ArrowDown, Clock, Sparkles, Check,
   Plus, PenLine, Pencil, FileText, Link as LinkIcon,
+  Upload, UploadCloud, Users,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -310,6 +311,74 @@ function SlotCard({
   );
 }
 
+/* ─── Election Banner Helper Icons for Admin Preview ───────────────── */
+function renderAdminPartyLogo(party: { name?: string; nameGu?: string; logoUrl?: string; id?: string }) {
+  const nameLower = ((party.name || party.nameGu || '') + '').toLowerCase();
+  const idLower = ((party.id || '') + '').toLowerCase();
+
+  // 1. BJP Lotus Symbol - Orange Rounded Square
+  if (nameLower.includes('bjp') || nameLower.includes('ભાજપ') || idLower.includes('bjp')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#FF7A00] to-[#E65100] flex items-center justify-center shadow-2xs p-1.5 shrink-0">
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xs" xmlns="http://www.w3.org/2000/svg">
+          <path d="M50 15 C45 30 38 48 38 65 C44 68 56 68 62 65 C62 48 55 30 50 15 Z" fill="#FF5500" stroke="#000" strokeWidth="2.5" />
+          <path d="M35 30 C28 42 22 55 24 66 C30 68 36 67 40 64 C38 52 36 40 35 30 Z" fill="#FF6B00" stroke="#000" strokeWidth="2.5" />
+          <path d="M65 30 C72 42 78 55 76 66 C70 68 64 67 60 64 C62 52 64 40 65 30 Z" fill="#FF6B00" stroke="#000" strokeWidth="2.5" />
+          <path d="M22 45 C15 55 12 65 16 72 C22 73 28 71 31 66 C27 58 24 51 22 45 Z" fill="#FF7700" stroke="#000" strokeWidth="2.5" />
+          <path d="M78 45 C85 55 88 65 84 72 C78 73 72 71 69 66 C73 58 76 51 78 45 Z" fill="#FF7700" stroke="#000" strokeWidth="2.5" />
+          <path d="M22 74 C35 81 65 81 78 74 C72 70 28 70 22 74 Z" fill="#138808" stroke="#000" strokeWidth="2" />
+          <path d="M48 76 L48 88 L52 88 L52 76 Z" fill="#000" />
+        </svg>
+      </div>
+    );
+  }
+
+  // 2. Congress Hand Symbol - Blue Rounded Square
+  if (nameLower.includes('cong') || nameLower.includes('કોંગ્રેસ') || nameLower.includes('inc') || idLower.includes('cong')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#0084FF] to-[#0055D4] flex items-center justify-center shadow-2xs p-1.5 shrink-0">
+        <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xs" xmlns="http://www.w3.org/2000/svg">
+          <path d="M48 8 C45 8 43 10 43 14 L43 42 C41 42 39 43 38 45 L38 20 C38 16 36 14 34 14 C32 14 30 16 30 20 L30 48 C28 48 27 50 26 51 L26 28 C26 24 24 22 22 22 C20 22 18 24 18 28 L18 60 C18 78 30 92 48 92 C66 92 76 78 76 60 L76 34 C76 30 74 28 72 28 C70 28 68 30 68 34 L68 48 C66 48 64 46 64 44 L64 14 C64 10 62 8 60 8 C58 8 56 10 56 14 L56 42 C54 42 51 42 49 42 L49 14 C49 10 47 8 48 8 Z" fill="#FFFFFF" stroke="#000000" strokeWidth="2.5" />
+          <rect x="25" y="53" width="44" height="6.5" fill="#FF9933" rx="1" />
+          <rect x="23" y="62" width="48" height="6.5" fill="#FFFFFF" rx="1" />
+          <rect x="25" y="71" width="44" height="6.5" fill="#138808" rx="1" />
+        </svg>
+      </div>
+    );
+  }
+
+  // 3. AAP Broom & Text Symbol - Golden Yellow Rounded Square
+  if (nameLower.includes('aap') || nameLower.includes('આપ') || idLower.includes('aap')) {
+    return (
+      <div className="w-10 h-10 rounded-xl bg-gradient-to-b from-[#FFBE00] to-[#E5A800] flex flex-col items-center justify-center shadow-2xs p-1 shrink-0 text-[#004B87]">
+        <span className="text-[12px] font-black tracking-tight leading-none">aap</span>
+        <div className="w-6 h-1.5 bg-[#004B87] rounded-xs mt-1"></div>
+      </div>
+    );
+  }
+
+  // 4. Other / Group Symbol - Slate Rounded Square
+  return (
+    <div className="w-10 h-10 rounded-xl bg-[#475569] flex items-center justify-center text-white shadow-2xs shrink-0">
+      <Users className="w-5 h-5" />
+    </div>
+  );
+}
+
+function renderAdminGujaratMap() {
+  return (
+    <div className="w-9 h-9 flex items-center justify-center shrink-0">
+      <svg
+        viewBox="0 0 100 100"
+        className="w-8 h-8 fill-[#DC2626] drop-shadow-sm"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path d="M48,15 C56,16 63,14 69,18 C75,23 83,24 87,30 C89,35 86,42 83,46 C80,51 77,59 78,66 C79,71 74,74 69,73 C62,72 57,67 52,69 C45,71 39,66 35,61 C30,56 25,55 21,48 C18,41 21,34 28,31 C34,28 39,20 44,15 Z M26,42 C29,45 34,47 39,45 C44,43 49,47 50,51 C46,54 39,56 33,52 C28,49 25,45 26,42 Z" />
+      </svg>
+    </div>
+  );
+}
+
 /* ─── Main Page ───────────────────────────────────────────────────────── */
 export default function HeroManagerPage() {
   const [allArticles, setAllArticles] = useState<Article[]>([]);
@@ -332,6 +401,24 @@ export default function HeroManagerPage() {
   const [draggedPopularIndex, setDraggedPopularIndex] = useState<number | null>(null);
 
   const [mostReadArticles, setMostReadArticles] = useState<Article[]>([]);
+
+  // ─── ELECTION BANNER STATES ──────────────────────────────────────────
+  const [electionBannerEnabled, setElectionBannerEnabled] = useState(false);
+  const [electionBannerTitle, setElectionBannerTitle] = useState('ગુજરાત ચૂંટણી 2026');
+  const [electionBannerLive, setElectionBannerLive] = useState(true);
+  const [electionBannerMapUrl, setElectionBannerMapUrl] = useState('');
+  const [electionBannerTotalSeats, setElectionBannerTotalSeats] = useState<number | string>(182);
+  const [electionBannerMajority, setElectionBannerMajority] = useState<number | string>(92);
+  const [electionBannerShowAllPages, setElectionBannerShowAllPages] = useState(false);
+  const [electionParties, setElectionParties] = useState<any[]>([
+    { id: 'bjp', name: 'BJP', nameGu: 'BJP', logoUrl: '', seats: 100, won: 82, leads: 18, trailing: 0, color: '#FF6B00' },
+    { id: 'cong', name: 'Congress', nameGu: 'Congress', logoUrl: '', seats: 55, won: 38, leads: 17, trailing: 0, color: '#19AAED' },
+    { id: 'aap', name: 'AAP', nameGu: 'AAP', logoUrl: '', seats: 15, won: 8, leads: 7, trailing: 0, color: '#0066CC' },
+    { id: 'oth', name: 'અન્ય', nameGu: 'અન્ય', logoUrl: '', seats: 12, won: 6, leads: 6, trailing: 0, color: '#6B7280' },
+  ]);
+  const [savingElectionBanner, setSavingElectionBanner] = useState(false);
+  const [uploadingPartyLogoIdx, setUploadingPartyLogoIdx] = useState<number | null>(null);
+  const [uploadingMapIcon, setUploadingMapIcon] = useState(false);
   const [mostReadMode, setMostReadMode] = useState<'auto' | 'manual'>('auto');
   const [autoMostReadArticles, setAutoMostReadArticles] = useState<Article[]>([]);
   const [savingMostRead, setSavingMostRead] = useState(false);
@@ -385,7 +472,7 @@ export default function HeroManagerPage() {
       clearApiCache();
       const [pubRes, heroRes] = await Promise.all([
         getPublicArticles({ limit: 300 }),
-        getHeroSettings(),
+        getHeroSettings(true),
       ]);
 
       const arts = (pubRes.articles || []) as unknown as Article[];
@@ -439,6 +526,56 @@ export default function HeroManagerPage() {
             setTickerBadgeText(rawLabel);
           }
         }
+      }
+
+      // Populate Election Banner
+      const bannerEnabled = (heroRes as any)?.electionBannerEnabled ?? heroRes?.setting?.electionBannerEnabled ?? false;
+      setElectionBannerEnabled(Boolean(bannerEnabled));
+
+      const rawBannerJson = (heroRes as any)?.electionBannerJson || heroRes?.setting?.electionBannerJson;
+      if (rawBannerJson) {
+        try {
+          const parsed = typeof rawBannerJson === 'string' ? JSON.parse(rawBannerJson) : rawBannerJson;
+          if (parsed && typeof parsed === 'object') {
+            if (parsed.title) setElectionBannerTitle(parsed.title);
+            if (parsed.showLive !== undefined) setElectionBannerLive(Boolean(parsed.showLive));
+            if (parsed.mapIconUrl !== undefined) setElectionBannerMapUrl(parsed.mapIconUrl || '');
+            if (parsed.totalSeats !== undefined) setElectionBannerTotalSeats(parsed.totalSeats);
+            if (parsed.majorityTarget !== undefined) setElectionBannerMajority(parsed.majorityTarget);
+            if (parsed.showOnAllPages !== undefined) setElectionBannerShowAllPages(Boolean(parsed.showOnAllPages));
+            if (Array.isArray(parsed.parties) && parsed.parties.length > 0) {
+              setElectionParties(parsed.parties.map((p: any) => {
+                const nameLower = ((p.name || p.nameGu || '') + '').toLowerCase();
+                const seatsNum = Number(p.seats) || 0;
+                let won = p.won;
+                let leads = p.leads;
+                let trailing = p.trailing !== undefined && p.trailing !== '' ? p.trailing : 0;
+                if (won === undefined || won === '' || leads === undefined || leads === '') {
+                  if (nameLower.includes('bjp') || nameLower.includes('ભાજપ')) {
+                    won = 82; leads = 18; trailing = 0;
+                  } else if (nameLower.includes('cong') || nameLower.includes('કોંગ્રેસ')) {
+                    won = 38; leads = 17; trailing = 0;
+                  } else if (nameLower.includes('aap') || nameLower.includes('આપ')) {
+                    won = 8; leads = 7; trailing = 0;
+                  } else if (nameLower.includes('અન્ય') || nameLower.includes('oth')) {
+                    won = 6; leads = 6; trailing = 0;
+                  } else {
+                    won = Math.round(seatsNum * 0.7);
+                    leads = Math.max(0, seatsNum - Number(won));
+                    trailing = 0;
+                  }
+                }
+                return {
+                  ...p,
+                  won: Number(won) || 0,
+                  leads: Number(leads) || 0,
+                  trailing: Number(trailing) || 0,
+                  logoUrl: p.logoUrl && p.logoUrl.includes('wikimedia.org') ? '' : (p.logoUrl || ''),
+                };
+              }));
+            }
+          }
+        } catch {}
       }
 
       const serverGridMode = (heroRes as any)?.heroGridMode || heroRes?.setting?.heroGridMode || 'auto';
@@ -664,6 +801,136 @@ export default function HeroManagerPage() {
     } catch (err) {
       console.error('Failed to auto-save ticker visibility:', err);
     }
+  };
+
+  // ─── ELECTION BANNER HANDLERS ───────────────────────────────────────
+  const handleSaveElectionBanner = async () => {
+    setSavingElectionBanner(true);
+    try {
+      const bannerPayload = {
+        title: electionBannerTitle.trim() || 'ગુજરાત ચૂંટણી 2026',
+        showLive: electionBannerLive,
+        mapIconUrl: electionBannerMapUrl.trim(),
+        totalSeats: electionBannerTotalSeats,
+        majorityTarget: electionBannerMajority,
+        showOnAllPages: electionBannerShowAllPages,
+        parties: electionParties,
+      };
+
+      const res = await updateHeroSettings({
+        electionBannerEnabled,
+        electionBannerJson: JSON.stringify(bannerPayload),
+      });
+
+      if (res && res.success) {
+        clearApiCacheAndBroadcast({
+          type: 'ELECTION_BANNER_UPDATED',
+          enabled: electionBannerEnabled,
+        });
+        triggerOnDemandRevalidate();
+        showToast(
+          electionBannerEnabled
+            ? '✅ Saved! Election Banner is now LIVE on homepage.'
+            : '✅ Saved! Election Banner is DISABLED (hidden).',
+          true
+        );
+      } else {
+        showToast('Failed to save Election Banner settings. Please try again.', false);
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error saving election banner settings.', false);
+    } finally {
+      setSavingElectionBanner(false);
+    }
+  };
+
+  const handleUploadPartyLogo = async (file: File, index: number) => {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, SVG, WebP)', false);
+      return;
+    }
+    setUploadingPartyLogoIdx(index);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      const rawUrl = data.url || data.data?.url || data.secure_url || '';
+      const url = rawUrl.includes('res.cloudinary.com') ? rawUrl.replace(/\.avif(\?.*)?$/i, '.png$1') : rawUrl;
+      if (url) {
+        setElectionParties(prev => {
+          const next = [...prev];
+          next[index] = { ...next[index], logoUrl: url };
+          return next;
+        });
+        showToast('Party logo uploaded successfully!', true);
+      } else {
+        showToast('Upload succeeded but no image URL was returned.', false);
+      }
+    } catch (e: any) {
+      showToast(e?.message || 'Error uploading party logo', false);
+    } finally {
+      setUploadingPartyLogoIdx(null);
+    }
+  };
+
+  const handleUploadMapIcon = async (file: File) => {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('Please select a valid image file', false);
+      return;
+    }
+    setUploadingMapIcon(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      const rawUrl = data.url || data.data?.url || data.secure_url || '';
+      const url = rawUrl.includes('res.cloudinary.com') ? rawUrl.replace(/\.avif(\?.*)?$/i, '.png$1') : rawUrl;
+      if (url) {
+        setElectionBannerMapUrl(url);
+        showToast('Election map / header logo uploaded successfully!', true);
+      }
+    } catch (e: any) {
+      showToast(e?.message || 'Error uploading map logo', false);
+    } finally {
+      setUploadingMapIcon(false);
+    }
+  };
+
+  const handleAddParty = () => {
+    setElectionParties(prev => [
+      ...prev,
+      {
+        id: 'party-' + Date.now(),
+        name: 'નવો પક્ષ',
+        nameGu: 'નવો પક્ષ',
+        logoUrl: '',
+        seats: 0,
+        won: 0,
+        leads: 0,
+        trailing: 0,
+        color: '#6B7280',
+      },
+    ]);
+  };
+
+  const handleRemoveParty = (index: number) => {
+    setElectionParties(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handlePartyChange = (index: number, field: string, value: any) => {
+    setElectionParties(prev => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
   };
 
   const handleSaveTickerBadge = async () => {
@@ -2094,6 +2361,576 @@ export default function HeroManagerPage() {
                   </button>
                 </div>
               </>
+            )}
+          </div>
+
+          {/* ════════════════════════════════════════════════════════════════
+             ELECTION LIVE BANNER WIDGET MANAGEMENT (ચૂંટણી પરિણામ બેનર)
+             ════════════════════════════════════════════════════════════════ */}
+          <div className="mb-8 rounded-2xl border border-red-300/80 bg-white p-4 sm:p-6 shadow-sm dark:border-red-950 dark:bg-zinc-900 transition-all">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 dark:border-zinc-800 mb-6 gap-4">
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                  <span className="text-2xl">🗳️</span>
+                  <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
+                    Election Live Results Banner (ચૂંટણી પરિણામ લાઈવ બેનર)
+                  </h3>
+                  {electionBannerEnabled ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-700 dark:text-emerald-400 shrink-0">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      🟢 LIVE ON HOMEPAGE
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full border bg-zinc-100 text-zinc-600 border-gray-400 dark:bg-zinc-800 dark:text-zinc-400 shrink-0">
+                      ⚪ DISABLED (HIDDEN)
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-500 mt-1">
+                  Placed between the Breaking News Ticker and Top Hero Section. Manage party seat counts, party logos, title, and live indicators.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                {/* Toggle Enable/Disable Button */}
+                <button
+                  type="button"
+                  onClick={() => setElectionBannerEnabled(!electionBannerEnabled)}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${
+                    electionBannerEnabled
+                      ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                  }`}
+                >
+                  {electionBannerEnabled ? (
+                    <>
+                      <EyeOff className="h-4 w-4" />
+                      Disable Banner (Hide)
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4" />
+                      Enable Banner (Show)
+                    </>
+                  )}
+                </button>
+
+                {/* Prominent Save button visible when disabled to confirm disable in DB */}
+                {!electionBannerEnabled && (
+                  <button
+                    type="button"
+                    onClick={handleSaveElectionBanner}
+                    disabled={savingElectionBanner}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#B3121B] hover:bg-[#8E0E15] text-white shadow-md shadow-[#B3121B]/20 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {savingElectionBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {savingElectionBanner ? 'Saving...' : 'Save (Confirm Disable)'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* If Disabled: Show Informative Card with Save Button to Confirm Disable */}
+            {!electionBannerEnabled && (
+              <div className="mt-4 p-5 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400">
+                    <EyeOff className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-red-950 dark:text-red-200">
+                      Election Banner Status: Disabled (Hidden from Homepage)
+                    </h4>
+                    <p className="text-xs text-red-700/80 dark:text-red-400/90 mt-0.5">
+                      Click the Save button to confirm and save this setting so the election banner is hidden from all users on the homepage.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveElectionBanner}
+                  disabled={savingElectionBanner}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  {savingElectionBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {savingElectionBanner ? 'Saving...' : 'Save & Confirm Disable (સાચવો)'}
+                </button>
+              </div>
+            )}
+
+            {/* Banner Config Body */}
+            {electionBannerEnabled && (
+              <div className="space-y-6">
+                {/* 1. General Info & Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                  {/* Title */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Banner Title (શીર્ષક)
+                    </label>
+                    <input
+                      type="text"
+                      value={electionBannerTitle}
+                      onChange={(e) => setElectionBannerTitle(e.target.value)}
+                      placeholder="ગુજરાત ચૂંટણી 2026"
+                      className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm font-semibold"
+                    />
+                  </div>
+
+                  {/* Total Seats */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Total Seats (કુલ બેઠકો 🪑)
+                    </label>
+                    <input
+                      type="number"
+                      value={electionBannerTotalSeats}
+                      onChange={(e) => setElectionBannerTotalSeats(e.target.value)}
+                      placeholder="182"
+                      className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm font-semibold"
+                    />
+                  </div>
+
+                  {/* Majority Target */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Majority Target (બહુમતી માટે 🎯)
+                    </label>
+                    <input
+                      type="number"
+                      value={electionBannerMajority}
+                      onChange={(e) => setElectionBannerMajority(e.target.value)}
+                      placeholder="92"
+                      className="w-full px-3 py-2 rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm font-semibold"
+                    />
+                  </div>
+
+                  {/* Toggles */}
+                  <div className="space-y-2 pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={electionBannerLive}
+                        onChange={(e) => setElectionBannerLive(e.target.checked)}
+                        className="rounded text-red-600 focus:ring-red-500 h-4 w-4"
+                      />
+                      <span>Show LIVE Red Pulsing Badge</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={electionBannerShowAllPages}
+                        onChange={(e) => setElectionBannerShowAllPages(e.target.checked)}
+                        className="rounded text-red-600 focus:ring-red-500 h-4 w-4"
+                      />
+                      <span>Show on All Pages (default: Homepage only)</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* 2. Map / Header Logo Upload */}
+                <div className="p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                      <h4 className="text-sm font-black text-zinc-900 dark:text-white flex items-center gap-2">
+                        <span>Header Map / Icon Logo (વૈકલ્પિક નકશો / લોગો)</span>
+                        {electionBannerMapUrl ? (
+                          <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                            Custom Uploaded
+                          </span>
+                        ) : (
+                          <span className="text-[9px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                            Default Gujarat Map Active
+                          </span>
+                        )}
+                      </h4>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        Upload your custom logo/map from your device, or leave default to use the clean red Gujarat state silhouette.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                      {electionBannerMapUrl ? (
+                        <div className="relative w-12 h-12 rounded-xl border border-zinc-300 dark:border-zinc-600 overflow-hidden shrink-0 bg-white shadow-xs">
+                          <Image src={electionBannerMapUrl} alt="Map" fill className="object-contain p-0.5" unoptimized />
+                        </div>
+                      ) : (
+                        <div className="w-12 h-12 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-xs">
+                          {renderAdminGujaratMap()}
+                        </div>
+                      )}
+
+                      <div className="flex flex-col gap-1 w-full sm:w-auto">
+                        <label className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 dark:bg-white dark:hover:bg-zinc-100 text-white dark:text-zinc-900 text-xs font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]">
+                          <Upload className="w-3.5 h-3.5" />
+                          {uploadingMapIcon ? 'Uploading...' : '📁 Upload Map from Device'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={uploadingMapIcon}
+                            onChange={(e) => {
+                              const f = e.target.files?.[0];
+                              if (f) handleUploadMapIcon(f);
+                              e.target.value = '';
+                            }}
+                          />
+                        </label>
+
+                        {electionBannerMapUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setElectionBannerMapUrl('')}
+                            className="text-xs text-red-600 hover:underline font-bold text-center"
+                          >
+                            Reset to Default Gujarat Map
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Optional Manual Map URL input */}
+                  <details className="mt-3 pt-2 border-t border-zinc-200 dark:border-zinc-700/60 text-[11px] text-zinc-500">
+                    <summary className="cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 font-semibold select-none">
+                      🔗 Or enter map image URL manually (વૈકલ્પિક URL)
+                    </summary>
+                    <div className="mt-1.5">
+                      <input
+                        type="text"
+                        value={electionBannerMapUrl || ''}
+                        onChange={(e) => setElectionBannerMapUrl(e.target.value)}
+                        placeholder="https://example.com/map.png"
+                        className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 font-mono"
+                      />
+                    </div>
+                  </details>
+                </div>
+
+                {/* 3. Parties & Seats Counters */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-base font-black text-zinc-900 dark:text-white">
+                        Parties & Seat Counts (રાજકીય પક્ષો અને બેઠકોની સંખ્યા)
+                      </h4>
+                      <p className="text-xs text-zinc-500">
+                        Upload custom logos directly from your mobile/PC device or use built-in party symbols. All updates appear immediately on the homepage.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddParty}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 text-xs font-bold shadow-xs hover:opacity-90 cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Party (નવો પક્ષ)
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                    {electionParties.map((party, idx) => (
+                      <div
+                        key={party.id || idx}
+                        className="p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 shadow-xs space-y-3"
+                      >
+                        {/* Header: Party Index & Delete */}
+                        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-700/60 pb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 text-[10px] font-black flex items-center justify-center">
+                              {idx + 1}
+                            </span>
+                            <span className="text-xs font-black text-zinc-900 dark:text-white truncate">
+                              {party.nameGu || party.name || `Party #${idx + 1}`}
+                            </span>
+                          </div>
+
+                          {electionParties.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveParty(idx)}
+                              className="text-zinc-400 hover:text-red-600 transition-colors p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/40"
+                              title="Delete Party"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Party Logo Box: Prominent Device Upload */}
+                        <div className="p-2.5 rounded-lg bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/80 dark:border-zinc-700 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-black text-zinc-500 uppercase tracking-wide">
+                              Party Logo
+                            </label>
+                            {party.logoUrl ? (
+                              <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
+                                Uploaded
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                                Built-in Logo
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2.5">
+                            {/* Visual Logo Preview */}
+                            <div className="relative w-12 h-12 rounded-lg border border-zinc-200 dark:border-zinc-700 overflow-hidden bg-white dark:bg-zinc-800 flex items-center justify-center shrink-0 shadow-xs">
+                              {party.logoUrl ? (
+                                <Image src={party.logoUrl.replace(/\.avif(\?.*)?$/i, '.png$1')} alt={party.name} fill className="object-contain p-1" unoptimized />
+                              ) : (
+                                renderAdminPartyLogo(party)
+                              )}
+                            </div>
+
+                            {/* Prominent Upload from Device Button */}
+                            <div className="flex-1 space-y-1">
+                              <label className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-[11px] font-bold shadow-xs cursor-pointer transition-all active:scale-[0.98]">
+                                <Upload className="w-3.5 h-3.5" />
+                                {uploadingPartyLogoIdx === idx ? 'Uploading...' : 'Upload from Device'}
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  disabled={uploadingPartyLogoIdx === idx}
+                                  onChange={(e) => {
+                                    const f = e.target.files?.[0];
+                                    if (f) handleUploadPartyLogo(f, idx);
+                                    e.target.value = '';
+                                  }}
+                                />
+                              </label>
+
+                              {party.logoUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => handlePartyChange(idx, 'logoUrl', '')}
+                                  className="w-full text-center text-[10px] text-zinc-500 hover:text-red-600 font-semibold py-0.5 transition-colors"
+                                >
+                                  Reset to built-in logo
+                                </button>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Optional manual URL input (collapsed by default) */}
+                          <details className="pt-1 text-[10px] text-zinc-500">
+                            <summary className="cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 font-semibold select-none flex items-center gap-1">
+                              <span>🔗 Or enter image URL manually</span>
+                            </summary>
+                            <div className="mt-1.5">
+                              <input
+                                type="text"
+                                value={party.logoUrl || ''}
+                                onChange={(e) => handlePartyChange(idx, 'logoUrl', e.target.value)}
+                                placeholder="https://example.com/logo.png"
+                                className="w-full px-2 py-1 rounded border border-zinc-200 dark:border-zinc-700 text-[10px] text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 font-mono truncate"
+                              />
+                            </div>
+                          </details>
+                        </div>
+
+                        {/* Party Name */}
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase">Party Name</label>
+                          <input
+                            type="text"
+                            value={party.nameGu || party.name}
+                            onChange={(e) => handlePartyChange(idx, 'name', e.target.value)}
+                            placeholder="BJP"
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-xs font-bold bg-zinc-50 dark:bg-zinc-900 focus:bg-white focus:border-red-500 transition-colors"
+                          />
+                        </div>
+
+                        {/* Seats Count */}
+                        <div>
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase">Seats Count (બેઠકો)</label>
+                          <input
+                            type="number"
+                            value={party.seats}
+                            onChange={(e) => handlePartyChange(idx, 'seats', Number(e.target.value))}
+                            placeholder="100"
+                            className="w-full px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 text-sm font-black text-zinc-900 dark:text-white bg-zinc-50 dark:bg-zinc-900 focus:bg-white focus:border-red-500 transition-colors"
+                          />
+                        </div>
+
+                        {/* Live Details (જીત / આગે / પાછળ) */}
+                        <div className="pt-1 border-t border-zinc-100 dark:border-zinc-800 mt-2">
+                          <label className="text-[10px] font-bold text-zinc-500 uppercase flex items-center justify-between">
+                            <span>Live Details</span>
+                            <span className="text-[9px] text-zinc-400 font-normal">જીત / આગે / પાછળ</span>
+                          </label>
+                          <div className="grid grid-cols-3 gap-1.5 mt-1">
+                            <div>
+                              <span className="text-[9px] font-bold text-zinc-400 block text-center">જીત</span>
+                              <input
+                                type="number"
+                                value={party.won !== undefined ? party.won : ''}
+                                onChange={(e) => handlePartyChange(idx, 'won', e.target.value === '' ? '' : Number(e.target.value))}
+                                placeholder="82"
+                                className="w-full px-1.5 py-1 text-center rounded border border-zinc-200 dark:border-zinc-700 text-xs font-bold bg-zinc-50 dark:bg-zinc-900 focus:bg-white focus:border-red-500"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[9px] font-bold text-zinc-400 block text-center">આગે</span>
+                              <input
+                                type="number"
+                                value={party.leads !== undefined ? party.leads : ''}
+                                onChange={(e) => handlePartyChange(idx, 'leads', e.target.value === '' ? '' : Number(e.target.value))}
+                                placeholder="18"
+                                className="w-full px-1.5 py-1 text-center rounded border border-zinc-200 dark:border-zinc-700 text-xs font-bold bg-zinc-50 dark:bg-zinc-900 focus:bg-white focus:border-red-500"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[9px] font-bold text-zinc-400 block text-center">પાછળ</span>
+                              <input
+                                type="number"
+                                value={party.trailing !== undefined ? party.trailing : ''}
+                                onChange={(e) => handlePartyChange(idx, 'trailing', e.target.value === '' ? '' : Number(e.target.value))}
+                                placeholder="0"
+                                className="w-full px-1.5 py-1 text-center rounded border border-zinc-200 dark:border-zinc-700 text-xs font-bold bg-zinc-50 dark:bg-zinc-900 focus:bg-white focus:border-red-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 4. Live Visual Preview */}
+                <div className="p-4 rounded-xl bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 space-y-2">
+                  <div className="text-xs font-bold text-gray-500 uppercase tracking-wider flex items-center justify-between">
+                    <span>Live Preview (કેવું દેખાશે):</span>
+                    <span className="text-[10px] text-zinc-400 font-normal">Real-time simulation of user homepage</span>
+                  </div>
+                  <div className="w-full bg-white dark:bg-zinc-950 border border-red-200 dark:border-red-950/60 rounded-2xl p-3 shadow-xs overflow-x-auto">
+                    <div className="flex items-center gap-4 min-w-max">
+                      {/* Left: Map + Title */}
+                      <div className="flex items-center gap-3 pr-4 border-r-2 border-red-200 dark:border-red-950">
+                        {electionBannerMapUrl ? (
+                          <div className="relative w-9 h-9">
+                            <Image src={electionBannerMapUrl} alt="Map" fill className="object-contain" unoptimized />
+                          </div>
+                        ) : (
+                          renderAdminGujaratMap()
+                        )}
+                        <div>
+                          <div className="text-xs font-black text-gray-900 dark:text-gray-100">{electionBannerTitle}</div>
+                          {electionBannerLive && (
+                            <span className="inline-block bg-red-600 text-white px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                              ● LIVE
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Parties */}
+                      <div className="flex items-center gap-2.5">
+                        {electionParties.map((p, i) => {
+                          const nameLower = ((p.name || p.nameGu || '') + '').toLowerCase();
+                          const seatsNum = Number(p.seats) || 0;
+                          let won = p.won;
+                          let leads = p.leads;
+                          let trailing = p.trailing !== undefined && p.trailing !== '' ? p.trailing : 0;
+                          if (won === undefined || won === '' || leads === undefined || leads === '') {
+                            if (nameLower.includes('bjp') || nameLower.includes('ભાજપ')) {
+                              won = 82; leads = 18; trailing = 0;
+                            } else if (nameLower.includes('cong') || nameLower.includes('કોંગ્રેસ')) {
+                              won = 38; leads = 17; trailing = 0;
+                            } else if (nameLower.includes('aap') || nameLower.includes('આપ')) {
+                              won = 8; leads = 7; trailing = 0;
+                            } else if (nameLower.includes('અન્ય') || nameLower.includes('oth')) {
+                              won = 6; leads = 6; trailing = 0;
+                            } else {
+                              won = Math.round(seatsNum * 0.7);
+                              leads = Math.max(0, seatsNum - Number(won));
+                              trailing = 0;
+                            }
+                          }
+                          const isBjp = nameLower.includes('bjp') || nameLower.includes('ભાજપ');
+                          const wonColor = isBjp ? 'text-red-600' : 'text-blue-600';
+
+                          return (
+                            <div key={i} className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 rounded-xl p-2.5 shadow-2xs min-w-[130px] flex flex-col justify-between">
+                              <div className="flex items-center gap-2">
+                                {p.logoUrl ? (
+                                  <div className="relative w-8 h-8 rounded-lg border border-gray-200 dark:border-zinc-700 overflow-hidden shrink-0">
+                                    <Image src={p.logoUrl.replace(/\.avif(\?.*)?$/i, '.png$1')} alt={p.name} fill className="object-contain p-0.5" unoptimized />
+                                  </div>
+                                ) : (
+                                  <div className="scale-90 origin-center shrink-0">
+                                    {renderAdminPartyLogo(p)}
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="text-[11px] text-gray-700 dark:text-zinc-300 font-bold leading-tight">{p.nameGu || p.name}</div>
+                                  <div className="text-base font-black text-gray-950 dark:text-gray-100 leading-none mt-0.5">{p.seats}</div>
+                                </div>
+                              </div>
+                              <div className="border-t border-gray-100 dark:border-zinc-800 my-1.5" />
+                              <div className="grid grid-cols-3 text-center text-[10px]">
+                                <div>
+                                  <span className="text-gray-500 block text-[9px] font-bold">જીત</span>
+                                  <span className={`font-black ${wonColor}`}>{won}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 block text-[9px] font-bold">આગે</span>
+                                  <span className="font-black text-blue-600">{leads}</span>
+                                </div>
+                                <div>
+                                  <span className="text-gray-500 block text-[9px] font-bold">પાછળ</span>
+                                  <span className="font-black text-red-500">{trailing}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="h-6 w-px bg-gray-200 dark:bg-zinc-800"></div>
+
+                      {/* Total */}
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-base">🪑</span>
+                        <div>
+                          <div className="text-[9px] text-gray-500 dark:text-zinc-400 font-bold">કુલ બેઠકો</div>
+                          <div className="text-xs font-black text-gray-900 dark:text-gray-100">{electionBannerTotalSeats}</div>
+                        </div>
+                      </div>
+
+                      {/* Majority */}
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <span className="text-base">🎯</span>
+                        <div>
+                          <div className="text-[9px] text-gray-500 dark:text-zinc-400 font-bold">બહુમતી માટે</div>
+                          <div className="text-xs font-black text-gray-900 dark:text-gray-100">{electionBannerMajority}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 5. Bottom Save Action Bar */}
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <span className="text-xs sm:text-sm text-zinc-500 font-semibold text-center sm:text-left">
+                    Click Save to immediately publish all election counts and settings live to the user homepage.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSaveElectionBanner}
+                    disabled={savingElectionBanner}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-8 py-3 text-sm sm:text-base font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingElectionBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {savingElectionBanner ? 'Saving Election Banner...' : 'Save Election Banner'}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
 

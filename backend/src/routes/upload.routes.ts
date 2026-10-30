@@ -129,7 +129,7 @@ const handleUpload = (req: any, res: any) => {
 
         // When uploading any image type (JPG, PNG, WebP, etc.), convert directly to AVIF format in Cloudinary
         if (resourceType === 'image') {
-          uploadOptions.format = 'avif';
+          uploadOptions.format = 'webp';
         }
 
         result = await cloudinary.uploader.upload(filePath, uploadOptions);
@@ -151,8 +151,8 @@ const handleUpload = (req: any, res: any) => {
         fileUrl = `/uploads/${localFilename}`;
       } else if (fileUrl && fileUrl.includes('res.cloudinary.com')) {
         fileUrl = fileUrl.replace('/raw/upload/', '/image/upload/');
-        if (resourceType === 'image' && !fileUrl.toLowerCase().endsWith('.avif')) {
-          fileUrl = fileUrl.replace(/\.[a-zA-Z0-9]+$/, '.avif');
+        if (resourceType === 'image' && !fileUrl.toLowerCase().endsWith('.webp')) {
+          fileUrl = fileUrl.replace(/\.[a-zA-Z0-9]+$/, '.webp');
         }
       }
       console.log(`✅ Upload Success: ${fileUrl}`);

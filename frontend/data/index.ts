@@ -73,16 +73,30 @@ export function cleanLiteralEscapeSequences(text?: string | null): string {
 }
 
 export function decodeHtmlEntities(value?: string | null): string {
-  return cleanLiteralEscapeSequences(normalizeDisplayText(value))
+  if (!value) return '';
+  // Preserve srcdoc attributes so iframe embeds inside HTML never get their internal quotes & tags decoded
+  const srcdocs: string[] = [];
+  let protectedStr = value.replace(/\bsrcdoc=(["'])([\s\S]*?)\1/gi, (match) => {
+    const idx = srcdocs.length;
+    srcdocs.push(match);
+    return `__GP_SRCDOC_PRESERVE_${idx}__`;
+  });
+
+  let decoded = cleanLiteralEscapeSequences(normalizeDisplayText(protectedStr))
     .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCharCode(parseInt(code, 16)))
-    .replace(/&nbsp;/gi, ' ')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
     .replace(/&gt;/gi, '>')
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'");
+
+  srcdocs.forEach((originalMatch, idx) => {
+    decoded = decoded.replace(`__GP_SRCDOC_PRESERVE_${idx}__`, originalMatch);
+  });
+
+  return decoded;
 }
 
 export function cleanArticlePlainText(value?: string | null): string {
@@ -770,7 +784,17 @@ export const getArticleExcerpt = (article: Article, language: Language) => {
 
 export const getArticleExcerptHtml = (article: Article, language: Language) => {
   const raw = getLocalized(language, { en: article?.excerpt || '', gu: article?.excerptGu || '', hi: article?.excerptHi || '' });
-  return decodeHtmlEntities(raw).replace(/!\[.*?\]\(.*?\)/g, '').trim();
+  let text = decodeHtmlEntities(raw).replace(/!\[.*?\]\(.*?\)/g, '').trim();
+
+  // If a block/embed (figure, iframe, div) was accidentally enclosed inside an <a> tag, safely unwrap it
+  text = text.replace(/<a\b([^>]*)>([\s\S]*?)(<(figure|div|iframe)\b[\s\S]*?<\/\4>)([\s\S]*?)<\/a>/gi, (match, attrs, before, media, _tag, after) => {
+    const p1 = before.trim() ? `<a${attrs}>${before}</a>` : '';
+    const cleanAfter = (after || '').replace(/^(?:<p>\s*<br\s*\/?>\s*<\/p>)+/gi, '').trim();
+    const p2 = cleanAfter ? `<a${attrs}>${cleanAfter}</a>` : '';
+    return `${p1}${media}${p2}`;
+  });
+
+  return text;
 };
 
 const getContentScore = (value?: string) => {

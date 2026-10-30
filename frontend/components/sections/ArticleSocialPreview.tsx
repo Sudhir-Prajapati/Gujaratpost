@@ -1,8 +1,28 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { parseArticleEmbedInput, type ArticleSocialPlatform } from '@/lib/article-embed-input';
 
 export default function ArticleSocialPreview({ input, platform }: { input: string; platform: ArticleSocialPlatform }) {
+  const [embedHeight, setEmbedHeight] = useState<number | null>(null);
+
+  useEffect(() => {
+    const handleMsg = (event: MessageEvent) => {
+      if (
+        event.data &&
+        (event.data.type === 'gp-embed-resize' || event.data.type === 'gp-twitter-resize') &&
+        typeof event.data.height === 'number' &&
+        platform === 'twitter'
+      ) {
+        if (event.data.height > 50) {
+          setEmbedHeight(event.data.height);
+        }
+      }
+    };
+    window.addEventListener('message', handleMsg);
+    return () => window.removeEventListener('message', handleMsg);
+  }, [platform]);
+
   if (!input.trim()) return null;
   const media = parseArticleEmbedInput(input, platform);
   const label = { youtube: 'YouTube', twitter: 'X (Twitter)', instagram: 'Instagram', facebook: 'Facebook' }[platform];
@@ -10,13 +30,16 @@ export default function ArticleSocialPreview({ input, platform }: { input: strin
   if (media.mode === 'link') return (
     <div className="py-3"><a href={media.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center rounded-xl bg-black px-5 py-3 font-bold text-white" style={{ color: '#fff' }}>Open on {label} ↗</a></div>
   );
+
+  const initialHeight = platform === 'youtube' ? '100%' : platform === 'twitter' ? (embedHeight || 480) : 650;
+
   return (
     <section className="space-y-2 pt-3" aria-label={`${label} embedded preview`}>
       <h4 className="text-xs font-bold uppercase text-neutral-700 dark:text-neutral-200">{label} Preview</h4>
       <div className={`mx-auto overflow-hidden rounded-xl border border-neutral-300 bg-white dark:border-neutral-700 ${platform === 'youtube' ? 'aspect-video w-full' : 'w-full max-w-[540px]'}`}>
         <iframe key={media.src || media.document} title={`${label} embedded preview`} src={media.src} srcDoc={media.document}
           sandbox={media.document ? 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox' : undefined}
-          className="block w-full border-0" style={{ height: platform === 'youtube' ? '100%' : 720 }}
+          className="block w-full border-0" style={{ height: initialHeight }}
           allow="encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
       </div>
       <p className="text-xs text-neutral-500 dark:text-neutral-400">If the provider cannot display this post, <a href={media.url} target="_blank" rel="noopener noreferrer" className="underline">open the original on {label}</a>.</p>

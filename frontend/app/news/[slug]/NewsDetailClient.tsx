@@ -91,6 +91,40 @@ function balanceHtmlTags(html: string): string {
   return result;
 }
 
+export function stripHighlightsBlock(text: string): string {
+  if (!text) return '';
+  let out = text;
+
+  // 1. Matches ## (or HTML) header down to closing dashes (with optional <p> wrappers)
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi,
+    ''
+  );
+
+  // 2. Matches header down to next section, standard HTML tag, or blank line followed by non-bullet text
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\S]*?(?=(?:<h[1-6]|<div|<p(?:\s+[^>]*>|(?!\s*•|\s*&bull;))|<!-- gp-section|\n\s*\n\s*[^\s•*\-#<]))/gi,
+    ''
+  );
+
+  // 3. Fallback for standalone header line
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?/gi,
+    ''
+  );
+
+  // 4. Dashed line block at the beginning without header: ----- text -----
+  out = out.replace(
+    /^[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/i,
+    ''
+  );
+
+  // 5. Strip leftover delimiter dashes
+  out = out.replace(/(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi, '');
+
+  return out.trim();
+}
+
 const ArticleContentBody = memo(function ArticleContentBody({
   html,
 }: {
@@ -98,9 +132,10 @@ const ArticleContentBody = memo(function ArticleContentBody({
   activeSpeechText?: string;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
+  const lastHtmlRef = useRef<string>('');
 
   const cleanHtml = useMemo(() => {
-    let raw = (html || '')
+    let raw = stripHighlightsBlock(html || '')
       .replace(/\\r\\n/g, '\n')
       .replace(/\r\n/g, '\n')
       .replace(/\\r/g, '')
@@ -116,6 +151,33 @@ const ArticleContentBody = memo(function ArticleContentBody({
     raw = raw
       .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
       .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
+
+    // Transform any Twitter embed (figure with iframe, raw iframe, or blockquote) into a clean native Twitter blockquote
+    raw = raw.replace(
+      /<figure[^>]*data-article-social-platform=["']twitter["'][^>]*>[\s\S]*?<\/figure>/gi,
+      (match) => {
+        const urlMatch =
+          match.match(/data-article-social-url=["']([^"']+)["']/i) ||
+          match.match(/href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i) ||
+          match.match(/https?:\/\/(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/i);
+        const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
+        if (!tweetUrl) return match;
+        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+      }
+    );
+
+    // Also transform any standalone Twitter iframes
+    raw = raw.replace(
+      /<iframe[^>]*(?:data-social-platform=["']twitter["']|srcdoc=["'][^"']*twitter\.com\/widgets\.js)[^>]*>[\s\S]*?<\/iframe>/gi,
+      (match) => {
+        const urlMatch =
+          match.match(/(?:href=|data-article-social-url=)["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i) ||
+          match.match(/https?:\/\/(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/i);
+        const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
+        if (!tweetUrl) return '';
+        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+      }
+    );
 
     // Convert paragraph-level <div> to <p class="article-para my-3">
     raw = raw.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
@@ -138,9 +200,156 @@ const ArticleContentBody = memo(function ArticleContentBody({
   }, [html]);
 
   useEffect(() => {
-    if (bodyRef.current) {
+    if (bodyRef.current && lastHtmlRef.current !== cleanHtml) {
+      lastHtmlRef.current = cleanHtml;
       bodyRef.current.innerHTML = cleanHtml;
     }
+
+    let pollTimer: any = null;
+
+    // 1. Render Twitter widgets natively on the page (safely deduplicated & throttled)
+    const renderTwitter = () => {
+      if (typeof window === 'undefined' || !bodyRef.current) return;
+
+      // Find all twitter-tweet blockquotes that have NOT yet been rendered or initiated
+      const pendingTweets = bodyRef.current.querySelectorAll<HTMLElement>(
+        'blockquote.twitter-tweet:not(.twitter-tweet-rendered):not([data-gp-loading="true"])'
+      );
+      if (pendingTweets.length === 0) return;
+
+      // Mark all pending tweets immediately so subsequent calls or re-renders NEVER trigger duplicate network calls
+      pendingTweets.forEach((el) => el.setAttribute('data-gp-loading', 'true'));
+
+      const triggerLoad = () => {
+        if (typeof window !== 'undefined' && bodyRef.current) {
+          const tw = (window as any).twttr;
+          if (tw && tw.widgets && typeof tw.widgets.load === 'function') {
+            tw.widgets.load(bodyRef.current);
+          }
+        }
+      };
+
+      const tw = (window as any).twttr;
+      if (tw && tw.widgets && typeof tw.widgets.load === 'function') {
+        triggerLoad();
+      } else {
+        let script = document.getElementById('gp-twitter-widgets-js') as HTMLScriptElement | null;
+        if (!script) {
+          script = document.createElement('script');
+          script.id = 'gp-twitter-widgets-js';
+          script.src = 'https://platform.twitter.com/widgets.js';
+          script.async = true;
+          script.charset = 'utf-8';
+          script.onload = () => {
+            triggerLoad();
+          };
+          document.body.appendChild(script);
+        } else {
+          // If script is already downloading, poll briefly until twttr.widgets is ready, then stop
+          let tries = 0;
+          pollTimer = setInterval(() => {
+            tries++;
+            if ((window as any).twttr?.widgets?.load) {
+              clearInterval(pollTimer);
+              triggerLoad();
+            } else if (tries > 25) {
+              clearInterval(pollTimer);
+            }
+          }, 100);
+        }
+      }
+    };
+    renderTwitter();
+
+    // 2. Render Instagram embeds if present
+    if (typeof window !== 'undefined' && (window as any).instgrm?.Embeds?.process) {
+      (window as any).instgrm.Embeds.process();
+    }
+
+    // 3. Auto-adjust Twitter / Social iframes to their exact content height and eliminate extra whitespace
+    const adjustIframes = () => {
+      const iframes = document.querySelectorAll<HTMLIFrameElement>(
+        'figure[data-article-social-platform="twitter"] iframe, iframe[data-social-platform="twitter"], iframe[srcdoc*="twitter"]'
+      );
+      iframes.forEach((iframe) => {
+        try {
+          const doc = iframe.contentDocument || iframe.contentWindow?.document;
+          if (doc) {
+            const tweet = doc.querySelector('.twitter-tweet-rendered') || doc.querySelector('.twitter-tweet');
+            if (tweet) {
+              const h = Math.ceil(tweet.getBoundingClientRect().height || (tweet as HTMLElement).offsetHeight);
+              if (h > 50) {
+                iframe.style.setProperty('height', `${h}px`, 'important');
+                iframe.style.setProperty('min-height', `${h}px`, 'important');
+                iframe.style.setProperty('max-height', `${h}px`, 'important');
+                iframe.style.setProperty('aspect-ratio', 'auto', 'important');
+                const fig = iframe.closest('figure');
+                if (fig) {
+                  fig.style.setProperty('height', 'auto', 'important');
+                  fig.style.setProperty('margin-bottom', '0.75rem', 'important');
+                }
+              }
+            } else {
+              const scrollH = Math.ceil(doc.body?.scrollHeight || doc.documentElement?.scrollHeight || 0);
+              if (scrollH > 100 && scrollH < 720) {
+                iframe.style.setProperty('height', `${scrollH}px`, 'important');
+                iframe.style.setProperty('aspect-ratio', 'auto', 'important');
+              }
+            }
+          }
+        } catch {
+          // Handled via postMessage
+        }
+      });
+    };
+
+    adjustIframes();
+    const interval = setInterval(adjustIframes, 200);
+    const timeout = setTimeout(() => clearInterval(interval), 4000);
+
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.data &&
+        (event.data.type === 'gp-embed-resize' || event.data.type === 'gp-twitter-resize') &&
+        typeof event.data.height === 'number'
+      ) {
+        const h = event.data.height;
+        if (h < 50) return;
+        const iframes = document.querySelectorAll<HTMLIFrameElement>('iframe');
+        iframes?.forEach((iframe) => {
+          let match = false;
+          try {
+            if (iframe.contentWindow === event.source) match = true;
+          } catch {
+            // cross origin
+          }
+          if (!match && event.data.url) {
+            const srcdoc = iframe.getAttribute('srcdoc') || '';
+            if (srcdoc.includes(event.data.url)) match = true;
+          }
+          if (match) {
+            iframe.style.setProperty('height', `${h}px`, 'important');
+            iframe.style.setProperty('min-height', `${h}px`, 'important');
+            iframe.style.setProperty('max-height', `${h}px`, 'important');
+            iframe.style.setProperty('aspect-ratio', 'auto', 'important');
+            iframe.style.setProperty('overflow', 'hidden', 'important');
+            const fig = iframe.closest('figure');
+            if (fig) {
+              fig.style.setProperty('height', 'auto', 'important');
+              fig.style.setProperty('margin-bottom', '0.75rem', 'important');
+            }
+          }
+        });
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+      window.removeEventListener('message', handleMessage);
+    };
   }, [cleanHtml]);
 
   // Both SSR and client initial render produce identical empty <div>
@@ -150,7 +359,7 @@ const ArticleContentBody = memo(function ArticleContentBody({
       ref={bodyRef}
       suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: cleanHtml }}
-      className="article-body text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[17px] sm:[&_p]:text-[18px] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4"
+      className="article-body text-[17px] sm:text-[18px] leading-[1.8] sm:leading-[1.85] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[17px] sm:[&_p]:text-[18px] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4 [&_figure[data-article-social-platform]]:my-3 [&_figure[data-article-social-platform]]:w-full [&_figure[data-article-social-platform]]:flex [&_figure[data-article-social-platform]]:justify-center [&_iframe]:w-full [&_iframe:not([data-social-platform]):not([srcdoc])]:aspect-video [&_figure[data-article-social-platform]_iframe]:aspect-auto [&_figure[data-article-social-platform]_iframe]:max-w-[550px] [&_figure[data-article-social-platform]_iframe]:mx-auto [&_iframe[srcdoc]]:aspect-auto [&_iframe[srcdoc]]:max-w-[550px] [&_iframe[srcdoc]]:mx-auto [&_iframe]:rounded-xl [&_iframe]:shadow-md [&_video]:w-full [&_video]:rounded-xl"
     />
   );
 });
@@ -403,7 +612,9 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
 }
 
 function stripArticleUtilityLines(rawHtml: string): string {
-  return (rawHtml || '')
+  if (!rawHtml) return '';
+  const withoutHighlights = stripHighlightsBlock(rawHtml);
+  return withoutHighlights
     .replace(/^#{1,6}\s*(?:[\u{1F4CC}\uFE0F]\s*)?.*(?:KEY\s*HIGHLIGHTS|AT\s*A\s*GLANCE).*$/gimu, '')
     .replace(/^#{1,6}\s*[\u{1F4CC}\uFE0F]\s*.*$/gmu, '');
 }
@@ -452,7 +663,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
 function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUrl?: string): string[] {
   if (!rawBody) return [];
 
-  let cleaned = normalizeArticleMarkdown(upgradeEmbedCards(rawBody, language, articlePdfUrl))
+  let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(rawBody, language, articlePdfUrl)))
     .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
     .replace(/----------------+/g, '')
     .replace(/\s*data-start="[^"]*"/gi, '')
@@ -1152,7 +1363,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const formattedArticleBodyHtml = useMemo(() => {
     if (!body) return '';
 
-    let cleaned = normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages))
+    let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages)))
       .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
@@ -1203,7 +1414,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
     // Append Twitter card if set on article object and not already present in body HTML
     const twUrl = (article as any).twitterUrl || (article as any).twitter;
-    if (twUrl && twUrl.trim() && !cleaned.includes('data-gp-x-link')) {
+    if (twUrl && twUrl.trim() && !cleaned.includes('data-gp-x-link') && !cleaned.includes('data-article-social-platform="twitter"') && !cleaned.includes('x.com/') && !cleaned.includes('twitter.com/')) {
       cleaned += buildTwitterCardHtml(twUrl.trim(), language);
     }
 
@@ -1802,7 +2013,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               {title}
             </h1>
             <div
-              className="article-sub [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through"
+              className="article-sub [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-md [&_video]:w-full [&_video]:rounded-xl [&_figure]:my-4 [&_figure]:w-full [&_figure]:flex [&_figure]:justify-center"
               suppressHydrationWarning
               dangerouslySetInnerHTML={{ __html: excerpt }}
             />
@@ -2037,7 +2248,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   )}
 
                   <div className={hasSplit && !isExpandedState ? 'hidden' : 'space-y-4 transition-all duration-500 ease-in-out'} suppressHydrationWarning>
-                    {hasSplit && (
+                    {hasSplit && isExpandedState && (
                       <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
                     )}
 

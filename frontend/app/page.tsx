@@ -1,4 +1,5 @@
 import HeroSection from "@/components/sections/HeroSection";
+import ElectionBanner from "@/components/layout/ElectionBanner";
 import { getPublicArticles, getHeroSettings, getPublicCategories, getPublicVideos, getMarketRates, getPublicWeather, getPublicReels } from "@/lib/api";
 
 // Next.js ISR cache revalidation interval (30 seconds)
@@ -15,6 +16,7 @@ export default async function HomePage() {
   // This eliminates 11 redundant database queries and prevents backend connection timeouts.
   const [
     articlesRes,
+    techArticlesRes,
     heroSettings,
     categories,
     videosRes,
@@ -23,6 +25,7 @@ export default async function HomePage() {
     reelsRes,
   ] = await Promise.all([
     getPublicArticles({ limit: 80, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ categorySlug: 'technology', limit: 12, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     getHeroSettings().catch(() => null),
     getPublicCategories({ showInHome: true }).catch(() => []),
     getPublicVideos('video').catch(() => []),
@@ -114,7 +117,10 @@ export default async function HomePage() {
     manoranjan: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
     entertainment: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
     health: sortByLatest(articles.filter((a) => isCat(a, 'health', 'હેલ્થ', 'આરોગ્ય'))),
-    technology: sortByLatest(articles.filter((a) => isCat(a, 'technology', 'tech', 'ટેકનોલોજી'))),
+    technology: sortByLatest([
+      ...articles.filter((a) => isCat(a, 'technology', 'tech', 'ટેકનોલોજી')),
+      ...(((techArticlesRes as any)?.articles) || [])
+    ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
     factcheck: sortByLatest(articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'))),
     'fact-check': sortByLatest(articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'))),
     sports: sortByLatest(articles.filter((a) => isCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત'))),
@@ -122,8 +128,39 @@ export default async function HomePage() {
     business: sortByLatest(articles.filter((a) => isCat(a, 'business', 'વેપાર', 'બિઝનેસ'))),
   };
 
+  let electionBannerInitial: any = null;
+  if (heroSettings) {
+    const isEnabled = (heroSettings as any)?.electionBannerEnabled ?? (heroSettings as any)?.setting?.electionBannerEnabled ?? false;
+    const rawJson = (heroSettings as any)?.electionBannerJson || (heroSettings as any)?.setting?.electionBannerJson;
+    let parsed: any = {};
+    if (typeof rawJson === 'string' && rawJson.trim()) {
+      try { parsed = JSON.parse(rawJson); } catch {}
+    } else if (typeof rawJson === 'object' && rawJson !== null) {
+      parsed = rawJson;
+    }
+    electionBannerInitial = {
+      enabled: Boolean(isEnabled),
+      title: parsed.title || 'ગુજરાત ચૂંટણી 2026',
+      showLive: parsed.showLive !== undefined ? Boolean(parsed.showLive) : true,
+      mapIconUrl: parsed.mapIconUrl || '',
+      totalSeats: parsed.totalSeats !== undefined ? parsed.totalSeats : 182,
+      majorityTarget: parsed.majorityTarget !== undefined ? parsed.majorityTarget : 92,
+      showOnAllPages: Boolean(parsed.showOnAllPages),
+      parties: (Array.isArray(parsed.parties) && parsed.parties.length > 0 ? parsed.parties : [
+        { id: 'bjp', name: 'BJP', nameGu: 'BJP', logoUrl: '', seats: 100, color: '#FF6B00' },
+        { id: 'cong', name: 'Congress', nameGu: 'Congress', logoUrl: '', seats: 55, color: '#19AAED' },
+        { id: 'aap', name: 'AAP', nameGu: 'AAP', logoUrl: '', seats: 15, color: '#0066CC' },
+        { id: 'oth', name: 'અન્ય', nameGu: 'અન્ય', logoUrl: '', seats: 12, color: '#6B7280' },
+      ]).map((p: any) => ({
+        ...p,
+        logoUrl: p.logoUrl && p.logoUrl.includes('wikimedia.org') ? '' : (p.logoUrl || ''),
+      })),
+    };
+  }
+
   return (
     <div>
+      <ElectionBanner initialConfig={electionBannerInitial} />
       {/* Main 3-column portal layout containing all active sections */}
       <HeroSection
         initialArticles={articles}

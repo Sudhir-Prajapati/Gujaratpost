@@ -17,6 +17,15 @@ export function buildTwitterPostButton(url: string, language?: string): string {
 
 /** Remove legacy cards and orphan buttons, keeping one valid link per post. */
 export function normalizeTwitterPostLinks(html: string, language?: string): string {
+  if (!html) return '';
+
+  // If the article already contains an embedded Twitter post (figure, blockquote, or wrapper),
+  // leave it alone and do NOT append duplicate buttons at the bottom of the article.
+  const hasTwitterEmbed = /data-article-social-platform=["']twitter["']|class=["'][^"']*twitter-tweet|gp-twitter-embed-wrap|data-social-platform=["']twitter["']/i.test(html);
+  if (hasTwitterEmbed) {
+    return html.replace(/<div\b[^>]*data-gp-x-link[^>]*>[\s\S]*?<\/div>/gi, '');
+  }
+
   const posts = new Map<string, string>();
   const remember = (value: string) => {
     const url = postUrl(value);
