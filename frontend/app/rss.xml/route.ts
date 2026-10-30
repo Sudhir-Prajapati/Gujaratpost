@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const backendUrl = getBackendApiUrl('/api/public/rss');
+    const backendUrl = getBackendApiUrl('/api/public/rss' + request.nextUrl.search);
     const headers: Record<string, string> = {};
 
     const ifNoneMatch = request.headers.get('if-none-match');

@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {
-    const backendUrl = getBackendApiUrl('/api/public/rss-feed-gallery.php');
+    const backendUrl = getBackendApiUrl('/api/public/rss-feed-gallery.php' + request.nextUrl.search);
     const headers: Record<string, string> = {};
 
     const ifNoneMatch = request.headers.get('if-none-match');

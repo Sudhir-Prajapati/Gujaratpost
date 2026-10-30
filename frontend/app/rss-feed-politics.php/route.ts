@@ -37,8 +37,10 @@ export async function GET(request: NextRequest) {
     const rawName = (searchParams.get('name') || '').trim().toLowerCase();
     const mappedCategory = rawName ? (LEGACY_MAP[rawName] || rawName) : 'politics';
 
+    const lang = (searchParams.get('lang') || searchParams.get('language') || '').trim();
+    const langQuery = lang ? `&lang=${encodeURIComponent(lang)}` : '';
     const backendUrl = getBackendApiUrl(
-      `/api/public/rss-feed-politics.php?name=${encodeURIComponent(mappedCategory)}`
+      `/api/public/rss-feed-politics.php?name=${encodeURIComponent(mappedCategory)}${langQuery}`
     );
     const headers: Record<string, string> = {};
 

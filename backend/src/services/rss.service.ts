@@ -5,6 +5,7 @@ import { wrapCdata, stripHtmlTags, escapeXml, sanitizeHtmlContent } from '../uti
 interface RssFeedOptions {
   categorySlug?: string;
   limit?: number;
+  lang?: string;
 }
 
 export interface GeneratedFeedResult {
@@ -79,7 +80,8 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
   const rawCategorySlug = (options.categorySlug || '').trim().toLowerCase().replace(/\.xml$/, '');
   const categorySlug = rawCategorySlug === 'all' || rawCategorySlug === 'home' ? '' : rawCategorySlug;
-  const cacheKey = `rss:${categorySlug || 'home'}:${limit}`;
+  const lang = (options.lang || 'gu').toLowerCase().trim();
+  const cacheKey = `rss:${categorySlug || 'home'}:${limit}:${lang}`;
 
   const cached = feedCache.get(cacheKey);
   const nowMs = Date.now();
@@ -119,9 +121,9 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     for (const photo of photos) {
       const photoUrl = `${baseUrl}/photos/${photo.id}`;
       const pubDate = new Date(photo.createdAt).toUTCString();
-      const rawTitle = photo.captionGu || photo.caption || photo.alt || 'Gujarat Post Photo Gallery';
-      const rawDesc = stripHtmlTags(photo.caption || photo.captionGu || photo.alt || rawTitle);
-      const catName = photo.category || 'ફોટો ગેલેરી';
+      const rawTitle = lang === 'en' ? (photo.caption || photo.captionGu || photo.alt || 'Gujarat Post Photo Gallery') : lang === 'hi' ? (photo.caption || photo.captionGu || photo.alt || 'गुजरात पोस्ट फोटो गैलरी') : (photo.captionGu || photo.caption || photo.alt || 'Gujarat Post Photo Gallery');
+      const rawDesc = stripHtmlTags(rawTitle);
+      const catName = lang === 'en' ? 'Photo Gallery' : lang === 'hi' ? 'फोटो गैलरी' : (photo.category || 'ફોટો ગેલેરી');
       const authorName = photo.photographer || 'Gujarat Post Team';
       let imageUrl = (photo.src || '').trim();
       if (imageUrl.startsWith('[')) {
@@ -163,10 +165,10 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   xmlns:dc="http://purl.org/dc/elements/1.1/"
   xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>ફોટો ગેલેરી - Gujarat Post</title>
+    <title>${lang === 'en' ? 'Photo Gallery - Gujarat Post' : lang === 'hi' ? 'फोटो गैलरी - गुजरात पोस्ट' : 'ફોટો ગેલેરી - Gujarat Post'}</title>
     <link>${baseUrl}</link>
-    <description>Latest Gujarat and National News Photo Gallery from Gujarat Post</description>
-    <language>gu-IN</language>
+    <description>${lang === 'en' ? 'Latest Gujarat and National News Photo Gallery from Gujarat Post' : lang === 'hi' ? 'गुजरात पोस्ट से नवीनतम फोटो गैलरी और दृश्य समाचार' : 'Latest Gujarat and National News Photo Gallery from Gujarat Post'}</description>
+    <language>${lang === 'en' ? 'en-US' : lang === 'hi' ? 'hi-IN' : 'gu-IN'}</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${baseUrl}/rss/photos.xml" rel="self" type="application/rss+xml" />
 ${itemsXml}  </channel>
@@ -244,10 +246,10 @@ ${itemsXml}  </channel>
   xmlns:dc="http://purl.org/dc/elements/1.1/"
   xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>વીડિયો સમાચાર - Gujarat Post</title>
+    <title>${lang === 'en' ? 'Video News - Gujarat Post' : lang === 'hi' ? 'वीडियो समाचार - गुजरात पोस्ट' : 'વીડિયો સમાચાર - Gujarat Post'}</title>
     <link>${baseUrl}</link>
-    <description>Latest Gujarat News Videos, Interviews, and Ground Reports from Gujarat Post</description>
-    <language>gu-IN</language>
+    <description>${lang === 'en' ? 'Latest Gujarat News Videos, Interviews, and Ground Reports from Gujarat Post' : lang === 'hi' ? 'गुजरात पोस्ट से नवीनतम वीडियो रिपोर्ट और ग्राउंड रिपोर्ट' : 'Latest Gujarat News Videos, Interviews, and Ground Reports from Gujarat Post'}</description>
+    <language>${lang === 'en' ? 'en-US' : lang === 'hi' ? 'hi-IN' : 'gu-IN'}</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${baseUrl}/rss/videos.xml" rel="self" type="application/rss+xml" />
 ${itemsXml}  </channel>
@@ -322,10 +324,10 @@ ${itemsXml}  </channel>
   xmlns:dc="http://purl.org/dc/elements/1.1/"
   xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
-    <title>ઇન્સ્ટાગ્રામ રીલ્સ - Gujarat Post</title>
+    <title>${lang === 'en' ? 'Instagram Reels - Gujarat Post' : lang === 'hi' ? 'इंस्टाग्राम रील्स - गुजरात पोस्ट' : 'ઇન્સ્ટાગ્રામ રીલ્સ - Gujarat Post'}</title>
     <link>${baseUrl}</link>
-    <description>Latest Instagram Reels and Visual Stories from Gujarat Post</description>
-    <language>gu-IN</language>
+    <description>${lang === 'en' ? 'Latest Instagram Reels and Visual Stories from Gujarat Post' : lang === 'hi' ? 'गुजरात पोस्ट से नवीनतम इंस्टाग्राम रील्स और विजुअल स्टोरीज' : 'Latest Instagram Reels and Visual Stories from Gujarat Post'}</description>
+    <language>${lang === 'en' ? 'en-US' : lang === 'hi' ? 'hi-IN' : 'gu-IN'}</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${baseUrl}/rss/instagram.xml" rel="self" type="application/rss+xml" />
 ${itemsXml}  </channel>
@@ -349,8 +351,16 @@ ${itemsXml}  </channel>
     ],
   };
 
-  let channelTitle = 'Gujarat Post - ગુજરાત સમાચાર';
-  let channelDescription = 'Latest Gujarati Breaking News, Politics, Crime, Business, Sports, and Entertainment';
+  let channelTitle = lang === 'en'
+    ? 'Gujarat Post - Top News & Breaking Headlines'
+    : lang === 'hi'
+    ? 'गुजरात पोस्ट - ताजा और मुख्य समाचार'
+    : 'Gujarat Post - ગુજરાત સમાચાર';
+  let channelDescription = lang === 'en'
+    ? 'Latest Breaking News, State, Politics, Crime, Business, Sports, and Entertainment from Gujarat Post'
+    : lang === 'hi'
+    ? 'गुजरात पोस्ट से राजनीति, अपराध, व्यापार, खेल और मनोरंजन के ताजा समाचार'
+    : 'Latest Gujarati Breaking News, Politics, Crime, Business, Sports, and Entertainment';
   let selfRoute = '/api/public/rss';
 
   if (categorySlug) {
@@ -421,9 +431,17 @@ ${itemsXml}  </channel>
 
       const primaryCat = categoryRecords[0];
       if (primaryCat) {
-        const catName = primaryCat.nameGu || primaryCat.name;
-        channelTitle = `${catName} સમાચાર - Gujarat Post`;
-        channelDescription = primaryCat.descriptionGu || `Latest ${primaryCat.name} news from Gujarat Post`;
+        const catName = lang === 'en' ? primaryCat.name : lang === 'hi' ? (primaryCat.nameHi || primaryCat.name) : (primaryCat.nameGu || primaryCat.name);
+        channelTitle = lang === 'en'
+          ? `${primaryCat.name} News - Gujarat Post`
+          : lang === 'hi'
+          ? `${catName} समाचार - गुजरात पोस्ट`
+          : `${catName} સમાચાર - Gujarat Post`;
+        channelDescription = lang === 'en'
+          ? (primaryCat.description || `Latest ${primaryCat.name} news from Gujarat Post`)
+          : lang === 'hi'
+          ? (primaryCat.descriptionHi || `गुजरात पोस्ट से ${catName} के ताजा समाचार`)
+          : (primaryCat.descriptionGu || `Latest ${primaryCat.name} news from Gujarat Post`);
       } else {
         channelTitle = `${categorySlug.toUpperCase()} News - Gujarat Post`;
       }
@@ -439,10 +457,13 @@ ${itemsXml}  </channel>
       slug: true,
       title: true,
       titleGu: true,
+      titleHi: true,
       excerpt: true,
       excerptGu: true,
+      excerptHi: true,
       content: true,
       contentGu: true,
+      contentHi: true,
       featuredImage: true,
       createdAt: true,
       updatedAt: true,
@@ -451,6 +472,7 @@ ${itemsXml}  </channel>
           slug: true,
           name: true,
           nameGu: true,
+          nameHi: true,
         },
       },
       author: {
@@ -475,14 +497,28 @@ ${itemsXml}  </channel>
   for (const art of articles) {
     const artUrl = `${baseUrl}/news/${art.slug}`;
     const pubDate = new Date(art.createdAt).toUTCString();
-    const rawTitle = art.titleGu || art.title || 'Gujarat Post Samachar';
-    const rawExcerpt = stripHtmlTags(art.excerptGu || art.excerpt || art.titleGu || art.title || '');
-    const catName = art.category?.nameGu || art.category?.name || 'સમાચાર';
-    const authorName = art.author?.nameGu || art.author?.name || 'Gujarat Post Team';
-    const imageUrl = (art.featuredImage || '').trim();
 
-    // Full article body — prefer Gujarati, fall back to English
-    const rawBody = art.contentGu || art.content || '';
+    let rawTitle = art.titleGu || art.title || 'Gujarat Post Samachar';
+    let rawExcerpt = stripHtmlTags(art.excerptGu || art.excerpt || art.titleGu || art.title || '');
+    let catName = art.category?.nameGu || art.category?.name || 'સમાચાર';
+    let authorName = art.author?.nameGu || art.author?.name || 'Gujarat Post Team';
+    let rawBody = art.contentGu || art.content || '';
+
+    if (lang === 'en') {
+      rawTitle = art.title || art.titleGu || 'Gujarat Post News';
+      rawExcerpt = stripHtmlTags(art.excerpt || art.excerptGu || rawTitle);
+      catName = art.category?.name || art.category?.nameGu || 'News';
+      authorName = art.author?.name || art.author?.nameGu || 'Gujarat Post Team';
+      rawBody = art.content || art.contentGu || '';
+    } else if (lang === 'hi') {
+      rawTitle = art.titleHi || art.titleGu || art.title || 'गुजरात पोस्ट समाचार';
+      rawExcerpt = stripHtmlTags(art.excerptHi || art.excerptGu || art.excerpt || rawTitle);
+      catName = art.category?.nameHi || art.category?.name || art.category?.nameGu || 'समाचार';
+      authorName = art.author?.name || art.author?.nameGu || 'Gujarat Post Team';
+      rawBody = art.contentHi || art.contentGu || art.content || '';
+    }
+
+    const imageUrl = (art.featuredImage || '').trim();
     const fullHtml = sanitizeHtmlContent(rawBody);
 
     itemsXml += `    <item>
@@ -519,7 +555,7 @@ ${itemsXml}  </channel>
     <title>${escapeXml(channelTitle)}</title>
     <link>${baseUrl}</link>
     <description>${escapeXml(channelDescription)}</description>
-    <language>gu-IN</language>
+    <language>${lang === 'en' ? 'en-US' : lang === 'hi' ? 'hi-IN' : 'gu-IN'}</language>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     <atom:link href="${baseUrl}${selfRoute}" rel="self" type="application/rss+xml" />
 ${itemsXml}  </channel>
