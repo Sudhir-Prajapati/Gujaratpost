@@ -320,6 +320,9 @@ const CATEGORY_ALIASES: Record<string, string> = {
   gunha: 'crime',
   'entertainment-life-style': 'entertainment',
   manoranjan: 'entertainment',
+  tech: 'technology',
+  helth: 'health',
+  aarogya: 'health',
   'web-stories': 'webstory',
   webstories: 'webstory',
   rain: 'weather',
@@ -510,6 +513,12 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
                     : []),
                   ...(slugLower === 'entertainment' || slugLower === 'entertainment-life-style' || slugLower === 'manoranjan'
                     ? [{ slug: 'entertainment' }, { slug: 'entertainment-life-style' }, { name: 'Entertainment' }, { nameGu: 'મનોરંજન' }]
+                    : []),
+                  ...(slugLower === 'technology' || slugLower === 'tech'
+                    ? [{ slug: 'technology' }, { name: 'Technology' }, { nameGu: 'ટેકનોલોજી' }]
+                    : []),
+                  ...(slugLower === 'health' || slugLower === 'helth' || slugLower === 'aarogya'
+                    ? [{ slug: 'health' }, { name: 'Health' }, { nameGu: 'હેલ્થ' }, { nameGu: 'આરોગ્ય' }]
                     : []),
                   ...(slugLower === 'fact-check' || slugLower === 'factcheck'
                     ? [{ slug: 'fact-check' }, { slug: 'factcheck' }, { name: 'Fact Check' }, { nameGu: 'ફેક્ટ ચેક' }]
