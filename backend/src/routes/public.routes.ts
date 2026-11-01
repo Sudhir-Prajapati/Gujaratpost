@@ -306,6 +306,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
   'state-news': 'gujarat',
   factcheck: 'fact-check',
   'fact check': 'fact-check',
+  'ફેક્ટ ચેક': 'fact-check',
   'all-cities': 'all-cities',
   allcities: 'all-cities',
   'all-city': 'all-cities',
@@ -544,6 +545,14 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
             { categoryId: { in: categoryIds } },
             { categories: { some: { categoryId: { in: categoryIds } } } },
             ...(slugLower === 'trending' ? [{ isTrending: true }] : []),
+            ...(slugLower === 'fact-check' || slugLower === 'factcheck'
+              ? [
+                  { title: { contains: 'Fact Check' } },
+                  { title: { contains: 'FactCheck' } },
+                  { titleGu: { contains: 'ફેક્ટ ચેક' } },
+                  { titleGu: { contains: 'Fact Check' } },
+                ]
+              : []),
           ];
         } else {
           // 2. Direct Tag check (e.g. topic/tag clicked)
@@ -571,7 +580,16 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
             where.id = { in: postTags.map((pt) => pt.postId) };
           } else {
             // 3. Fallback to location match
-            where.location = { contains: slugLower };
+            if (slugLower === 'fact-check' || slugLower === 'factcheck') {
+              where.OR = [
+                { title: { contains: 'Fact Check' } },
+                { title: { contains: 'FactCheck' } },
+                { titleGu: { contains: 'ફેક્ટ ચેક' } },
+                { titleGu: { contains: 'Fact Check' } },
+              ];
+            } else {
+              where.location = { contains: slugLower };
+            }
           }
         }
       }

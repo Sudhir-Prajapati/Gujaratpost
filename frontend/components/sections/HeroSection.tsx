@@ -1056,7 +1056,7 @@ export default function HeroSection({
       ? initialCategoryArticles['fact-check']
       : (initialCategoryArticles['factcheck'] && initialCategoryArticles['factcheck'].length > 0)
         ? initialCategoryArticles['factcheck']
-        : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 10)
+        : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 15)
   );
   const [businessArtDB, setBusinessArtDB] = useState<Article[]>(
     (initialCategoryArticles['business'] && initialCategoryArticles['business'].length > 0)
@@ -1136,7 +1136,7 @@ export default function HeroSection({
           setNationalArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'national', 'india', 'ભારત')).slice(0, 16));
           setWorldArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ')).slice(0, 10));
           setPoliticsArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'politics', 'rajkaran', 'રાજકારણ')).slice(0, 16));
-          setFactCheckArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 10));
+          setFactCheckArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 15));
           setBusinessArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'business', 'વેપાર', 'બિઝનેસ')).slice(0, 4));
           setSportsArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત')).slice(0, 7));
         }
@@ -1271,7 +1271,7 @@ export default function HeroSection({
         setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16));
         setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
         setPoliticsArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16));
-        setFactCheckArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck'; }).slice(0, 10));
+        setFactCheckArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck' || articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'); }).slice(0, 15));
         setBusinessArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));
         setSportsArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'sports').slice(0, 7));
       }

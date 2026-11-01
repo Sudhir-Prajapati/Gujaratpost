@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+﻿import { Request, Response, NextFunction } from 'express';
 import { randomUUID } from 'crypto';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
@@ -464,11 +464,11 @@ export class ArticleController {
               nameHi: trimmedAuthorName,
               image: '/logo.png',
               designation: 'Reporter',
-              designationGu: 'રિપોર્ટર',
-              designationHi: 'रिपोर्टर',
+              designationGu: 'àª°àª¿àªªà«‹àª°à«àªŸàª°',
+              designationHi: 'à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿà¤°',
               bio: `Reporter at Gujarat Post`,
-              bioGu: `ગુજરાત પોસ્ટ રિપોર્ટર`,
-              bioHi: `गुजरात पोस्ट रिपोर्टर`,
+              bioGu: `àª—à«àªœàª°àª¾àª¤ àªªà«‹àª¸à«àªŸ àª°àª¿àªªà«‹àª°à«àªŸàª°`,
+              bioHi: `à¤—à¥à¤œà¤°à¤¾à¤¤ à¤ªà¥‹à¤¸à¥à¤Ÿ à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿà¤°`,
             },
           });
           finalAuthorId = newAuthor.id;
@@ -561,7 +561,7 @@ export class ArticleController {
       // Automatically keep isTrending and trending category in sync
       const trendingCat = await prisma.category.findFirst({
         where: {
-          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'ટ્રેન્ડિંગ' }],
+          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'àªŸà«àª°à«‡àª¨à«àª¡àª¿àª‚àª—' }],
         },
         select: { id: true },
       });
@@ -723,13 +723,19 @@ export class ArticleController {
       }
       const trendingCat = await prisma.category.findFirst({
         where: {
-          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'ટ્રેન્ડિંગ' }],
+          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'àªŸà«àª°à«‡àª¨à«àª¡àª¿àª‚àª—' }],
         },
         select: { id: true },
       });
 
       if (categoryId !== undefined || req.body.categoryIds !== undefined || req.body.additionalCategoryIds !== undefined) {
-        const finalPrimaryCatId = categoryId !== undefined ? categoryId : existingPost.categoryId;
+        // Resolve primary category: prefer explicit categoryId, then first of categoryIds, then fall back to existing
+        let finalPrimaryCatId: string = (typeof categoryId === 'string' && categoryId.trim() !== '')
+          ? categoryId.trim()
+          : (Array.isArray(req.body.categoryIds) && req.body.categoryIds.length > 0
+            ? (req.body.categoryIds.find((id: any) => typeof id === 'string' && id.trim() !== '') || '').trim()
+            : '');
+        if (!finalPrimaryCatId) finalPrimaryCatId = existingPost.categoryId;
         let allSelectedCatIds = Array.from(
           new Set([
             finalPrimaryCatId,
@@ -751,6 +757,7 @@ export class ArticleController {
           allSelectedCatIds.push(trendingCat.id);
         }
 
+        updateData.categoryId = finalPrimaryCatId;
         updateData.isTrending = effectiveTrending;
 
         updateData.categories = {
@@ -810,11 +817,11 @@ export class ArticleController {
               nameHi: trimmedAuthorName,
               image: '/logo.png',
               designation: 'Reporter',
-              designationGu: 'રિપોર્ટર',
-              designationHi: 'रिपोर्टર',
+              designationGu: 'àª°àª¿àªªà«‹àª°à«àªŸàª°',
+              designationHi: 'à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿàª°',
               bio: `Reporter at Gujarat Post`,
-              bioGu: `ગુજરાત પોસ્ટ રિપોર્ટર`,
-              bioHi: `गुजरात पोस्ट रिपोर्टर`,
+              bioGu: `àª—à«àªœàª°àª¾àª¤ àªªà«‹àª¸à«àªŸ àª°àª¿àªªà«‹àª°à«àªŸàª°`,
+              bioHi: `à¤—à¥à¤œà¤°à¤¾à¤¤ à¤ªà¥‹à¤¸à¥à¤Ÿ à¤°à¤¿à¤ªà¥‹à¤°à¥à¤Ÿà¤°`,
             },
           });
           updateData.authorId = newAuthor.id;
