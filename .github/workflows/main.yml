@@ -41,7 +41,9 @@ jobs:
             cd /var/app/Gujarat-Post-Website
 
             echo "---------- Pulling Latest Code ----------"
-            git pull origin main
+            git fetch origin main
+            git checkout -f main
+            git reset --hard origin/main
 
             echo "========== BACKEND DEPLOYMENT =========="
 
