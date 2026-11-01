@@ -18,7 +18,7 @@ export async function GET(
     const endpoint = cleanCategory.toLowerCase() === 'home'
       ? '/api/public/rss'
       : `/api/public/rss/${encodeURIComponent(cleanCategory)}`;
-    const backendUrl = getBackendApiUrl(endpoint);
+    const backendUrl = getBackendApiUrl(endpoint + request.nextUrl.search);
     const headers: Record<string, string> = {};
 
 

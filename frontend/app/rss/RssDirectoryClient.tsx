@@ -9,17 +9,18 @@ import {
   Search,
   Radio,
   Layers,
-  Sparkles,
-  FileCode,
-  Globe,
 } from 'lucide-react';
+import { useApp } from '@/components/AppProvider';
 
 interface CategoryItem {
   id: string;
   name: string;
   nameGu: string;
+  nameHi?: string;
   slug: string;
   descriptionGu?: string;
+  descriptionHi?: string;
+  descriptionEn?: string;
 }
 
 interface Props {
@@ -27,10 +28,99 @@ interface Props {
   siteUrl: string;
 }
 
-function getLegacyFeedPath(slug: string): string {
+const RSS_STRINGS = {
+  gu: {
+    badge: 'RSS 2.0 & Dailyhunt ફીડ્સ ડિરેક્ટરી',
+    title: 'ગુજરાત પોસ્ટ RSS ફીડ્સ ડિરેક્ટરી',
+    subtitle:
+      'તમારી પસંદગીની કેટેગરીના New RSS URLs અથવા Old Link URLs બંને સરળતાથી કૉપિ કરો અને તમારા ફીડ રીડરમાં સેટ કરો.',
+    searchPlaceholder: 'કેટેગરી શોધો (Search Category)...',
+    mainFeedTitle: 'સંપૂર્ણ ગુજરાત પોસ્ટ ફીડ (તમામ સમાચારો — All Stories)',
+    mainFeedDesc: 'વેબસાઇટના તમામ લેટેસ્ટ પબ્લિશ્ડ સમાચારો આ બંને ફીડ્સમાં સતત અપડેટ થાય છે.',
+    mainFeedBadge: 'Main Feed',
+    newFormatBadge: 'New Modern Format',
+    oldLinkBadge: 'OLD LINK',
+    copyNew: 'Copy New URL',
+    copyOld: 'Copy Old Link URL',
+    copied: 'કૉપિ થઈ ગયું!',
+    copiedShort: 'કૉપિ થઈ!',
+    openXml: 'XML ફીડ ખોલો',
+    openOld: 'જૂની લિંક ફીડ ખોલો',
+    categoryFeedsTitle: 'કેટેગરી RSS ફીડ્સ',
+    filterBoth: 'બંને URLs (Both)',
+    filterNew: 'New XML',
+    filterOld: 'Old Link',
+    showAll: 'બધા બતાવો',
+    noCategoryTitle: (q: string) => `"${q}" માટે કોઈ કેટેગરી મળી નથી`,
+    noCategoryDesc: 'બીજો શબ્દ શોધો અથવા સર્ચ ક્લિયર કરો.',
+    clearSearch: 'સર્ચ ક્લિયર કરો',
+    copyNewShort: 'Copy New',
+    copyOldShort: 'Copy Old Link',
+  },
+  hi: {
+    badge: 'RSS 2.0 और Dailyhunt फीड्स डायरेक्टरी',
+    title: 'गुजरात पोस्ट RSS फीड्स डायरेक्टरी',
+    subtitle:
+      'अपनी पसंदीदा कैटेगरी के New RSS URLs या Old Link URLs दोनों आसानी से कॉपी करें और अपने फीड रीडर में सेट करें।',
+    searchPlaceholder: 'कैटेगरी खोजें (Search Category)...',
+    mainFeedTitle: 'संपूर्ण गुजरात पोस्ट फीड (सभी समाचार — All Stories)',
+    mainFeedDesc: 'वेबसाइट के सभी नवीनतम प्रकाशित समाचार इन दोनों फीड्स में लगातार अपडेट होते हैं।',
+    mainFeedBadge: 'Main Feed',
+    newFormatBadge: 'नया आधुनिक फॉर्मेट',
+    oldLinkBadge: 'OLD LINK',
+    copyNew: 'Copy New URL',
+    copyOld: 'Copy Old Link URL',
+    copied: 'कॉपी हो गया!',
+    copiedShort: 'कॉपी हुआ!',
+    openXml: 'XML फीड खोलें',
+    openOld: 'पुरानी लिंक फीड खोलें',
+    categoryFeedsTitle: 'कैटेगरी RSS फीड्स',
+    filterBoth: 'दोनों URLs (Both)',
+    filterNew: 'New XML',
+    filterOld: 'Old Link',
+    showAll: 'सभी दिखाएं',
+    noCategoryTitle: (q: string) => `"${q}" के लिए कोई कैटेगरी नहीं मिली`,
+    noCategoryDesc: 'दूसरा शब्द खोजें या खोज साफ़ करें।',
+    clearSearch: 'खोज साफ़ करें',
+    copyNewShort: 'Copy New',
+    copyOldShort: 'Copy Old Link',
+  },
+  en: {
+    badge: 'RSS 2.0 & Dailyhunt Feeds Directory',
+    title: 'Gujarat Post RSS Feeds Directory',
+    subtitle:
+      'Easily copy both New RSS URLs or Old Link URLs for your preferred categories and configure them in your feed reader.',
+    searchPlaceholder: 'Search category...',
+    mainFeedTitle: 'Complete Gujarat Post Feed (All Stories)',
+    mainFeedDesc: 'All latest published articles across the website are updated continuously in both feeds.',
+    mainFeedBadge: 'Main Feed',
+    newFormatBadge: 'New Modern Format',
+    oldLinkBadge: 'OLD LINK',
+    copyNew: 'Copy New URL',
+    copyOld: 'Copy Old Link URL',
+    copied: 'Copied!',
+    copiedShort: 'Copied!',
+    openXml: 'Open XML Feed',
+    openOld: 'Open Old Link Feed',
+    categoryFeedsTitle: 'Category RSS Feeds',
+    filterBoth: 'Both URLs',
+    filterNew: 'New XML',
+    filterOld: 'Old Link',
+    showAll: 'Show All',
+    noCategoryTitle: (q: string) => `No categories found for "${q}"`,
+    noCategoryDesc: 'Try searching for a different keyword or clear your search.',
+    clearSearch: 'Clear Search',
+    copyNewShort: 'Copy New',
+    copyOldShort: 'Copy Old Link',
+  },
+};
+
+function getLegacyFeedPath(slug: string, lang?: string): string {
   const s = (slug || '').trim().toLowerCase();
+  const langQuery = lang && lang !== 'gu' ? `lang=${encodeURIComponent(lang)}` : '';
+
   if (s === 'photos' || s === 'gallery') {
-    return '/rss-feed-gallery.php';
+    return langQuery ? `/rss-feed-gallery.php?${langQuery}` : '/rss-feed-gallery.php';
   }
 
   const map: Record<string, string> = {
@@ -65,10 +155,14 @@ function getLegacyFeedPath(slug: string): string {
   };
 
   const nameParam = map[s] || s;
-  return `/rss-feed-politics.php?name=${encodeURIComponent(nameParam)}`;
+  const base = `/rss-feed-politics.php?name=${encodeURIComponent(nameParam)}`;
+  return langQuery ? `${base}&${langQuery}` : base;
 }
 
 export default function RssDirectoryClient({ categories, siteUrl }: Props) {
+  const { language } = useApp();
+  const t = RSS_STRINGS[language] || RSS_STRINGS.gu;
+
   const [search, setSearch] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [formatFilter, setFormatFilter] = useState<'both' | 'new' | 'old'>('both');
@@ -105,7 +199,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
     }
   };
 
-  // Filter categories by search input (matches Gujarati name, English name, or slug)
+  // Filter categories by search input (matches English name, Gujarati name, Hindi name, or slug)
   const filteredCategories = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return categories;
@@ -113,12 +207,17 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
       (cat) =>
         (cat.name && cat.name.toLowerCase().includes(q)) ||
         (cat.nameGu && cat.nameGu.toLowerCase().includes(q)) ||
+        (cat.nameHi && cat.nameHi.toLowerCase().includes(q)) ||
         (cat.slug && cat.slug.toLowerCase().includes(q))
     );
   }, [categories, search]);
 
-  const mainNewFeedUrl = `${cleanSiteUrl}/rss.xml`;
-  const mainOldFeedUrl = `${cleanSiteUrl}/rss-feed-politics.php?name=news`;
+  const langQuery = language !== 'gu' ? `?lang=${language}` : '';
+  const mainNewFeedPath = `/rss.xml${langQuery}`;
+  const mainNewFeedUrl = `${cleanSiteUrl}${mainNewFeedPath}`;
+
+  const mainOldFeedPath = getLegacyFeedPath('home', language);
+  const mainOldFeedUrl = `${cleanSiteUrl}${mainOldFeedPath}`;
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
@@ -129,14 +228,13 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 mb-3">
                 <Radio className="w-3.5 h-3.5 text-orange-500" />
-                <span>RSS 2.0 & Dailyhunt ફીડ્સ ડિરેક્ટરી</span>
+                <span>{t.badge}</span>
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                ગુજરાત પોસ્ટ RSS ફીડ્સ ડિરેક્ટરી
+                {t.title}
               </h1>
               <p className="mt-1.5 text-sm sm:text-base text-zinc-600 dark:text-zinc-400 max-w-2xl">
-                તમારી પસંદગીની કેટેગરીના <strong>New RSS URLs</strong> અથવા <strong>Old Link URLs</strong> બંને
-                સરળતાથી કૉપિ કરો અને તમારા ફીડ રીડરમાં સેટ કરો.
+                {t.subtitle}
               </p>
             </div>
 
@@ -146,7 +244,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                 <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
                 <input
                   type="text"
-                  placeholder="કેટેગરી શોધો (Search Category)..."
+                  placeholder={t.searchPlaceholder}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="w-full pl-10 pr-9 py-2.5 text-sm bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 transition"
@@ -176,14 +274,14 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="font-bold text-base sm:text-lg text-zinc-900 dark:text-zinc-100">
-                    સંપૂર્ણ ગુજરાત પોસ્ટ ફીડ (તમામ સમાચારો — All Stories)
+                    {t.mainFeedTitle}
                   </h2>
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-300">
-                    Main Feed
+                    {t.mainFeedBadge}
                   </span>
                 </div>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                  વેબસાઇટના તમામ લેટેસ્ટ પબ્લિશ્ડ સમાચારો આ બંને ફીડ્સમાં સતત અપડેટ થાય છે.
+                  {t.mainFeedDesc}
                 </p>
               </div>
             </div>
@@ -194,10 +292,10 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-orange-500 text-white">
-                      New Modern Format
+                      {t.newFormatBadge}
                     </span>
                     <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      /rss.xml
+                      {mainNewFeedPath}
                     </span>
                   </div>
                   <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400 truncate">
@@ -217,21 +315,21 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     {copiedKey === '__main_new__' ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        <span>કૉપિ થઈ ગયું!</span>
+                        <span>{t.copied}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy New URL</span>
+                        <span>{t.copyNew}</span>
                       </>
                     )}
                   </button>
                   <a
-                    href="/rss.xml"
+                    href={mainNewFeedPath}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 rounded-lg border border-orange-300 dark:border-orange-800 bg-white dark:bg-zinc-800 text-orange-600 hover:bg-orange-100 dark:hover:bg-zinc-700 transition flex items-center justify-center cursor-pointer"
-                    title="Open XML Feed"
+                    title={t.openXml}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -243,10 +341,10 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-blue-600 text-white">
-                      OLD LINK
+                      {t.oldLinkBadge}
                     </span>
                     <span className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                      /rss-feed-politics.php?name=news
+                      {mainOldFeedPath}
                     </span>
                   </div>
                   <p className="font-mono text-xs text-zinc-600 dark:text-zinc-400 truncate">
@@ -266,21 +364,21 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     {copiedKey === '__main_old__' ? (
                       <>
                         <Check className="w-3.5 h-3.5" />
-                        <span>કૉપિ થઈ ગયું!</span>
+                        <span>{t.copied}</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3.5 h-3.5" />
-                        <span>Copy Old Link URL</span>
+                        <span>{t.copyOld}</span>
                       </>
                     )}
                   </button>
                   <a
-                    href="/rss-feed-politics.php?name=news"
+                    href={mainOldFeedPath}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-800 text-blue-600 hover:bg-blue-100 dark:hover:bg-zinc-700 transition flex items-center justify-center cursor-pointer"
-                    title="Open Old Link Feed"
+                    title={t.openOld}
                   >
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
@@ -295,7 +393,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
           <div className="flex items-center gap-2">
             <Layers className="w-4 h-4 text-orange-600 dark:text-orange-400" />
             <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-              કેટેગરી RSS ફીડ્સ
+              {t.categoryFeedsTitle}
             </h3>
             <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
               {filteredCategories.length}
@@ -313,7 +411,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
                 }`}
               >
-                બંને URLs (Both)
+                {t.filterBoth}
               </button>
               <button
                 onClick={() => setFormatFilter('new')}
@@ -323,7 +421,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
                 }`}
               >
-                New XML
+                {t.filterNew}
               </button>
               <button
                 onClick={() => setFormatFilter('old')}
@@ -333,7 +431,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900'
                 }`}
               >
-                Old Link
+                {t.filterOld}
               </button>
             </div>
 
@@ -342,7 +440,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                 onClick={() => setSearch('')}
                 className="text-xs text-orange-600 dark:text-orange-400 hover:underline cursor-pointer ml-2"
               >
-                બધા બતાવો
+                {t.showAll}
               </button>
             )}
           </div>
@@ -353,23 +451,37 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
           <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl py-12 px-4 text-center">
             <Search className="w-8 h-8 mx-auto text-zinc-400 mb-2" />
             <p className="font-semibold text-zinc-800 dark:text-zinc-200">
-              "{search}" માટે કોઈ કેટેગરી મળી નથી
+              {t.noCategoryTitle(search)}
             </p>
-            <p className="text-xs text-zinc-500 mt-1">બીજો શબ્દ શોધો અથવા સર્ચ ક્લિયર કરો.</p>
+            <p className="text-xs text-zinc-500 mt-1">{t.noCategoryDesc}</p>
             <button
               onClick={() => setSearch('')}
               className="mt-3 px-3.5 py-1.5 text-xs font-medium bg-zinc-100 dark:bg-zinc-800 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-700 transition cursor-pointer"
             >
-              સર્ચ ક્લિયર કરો
+              {t.clearSearch}
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredCategories.map((cat) => {
-              const newFeedPath = `/rss/${cat.slug}.xml`;
+              const catName =
+                language === 'en'
+                  ? cat.name
+                  : language === 'hi'
+                  ? cat.nameHi || cat.name
+                  : cat.nameGu || cat.name;
+
+              const catDesc =
+                language === 'en'
+                  ? cat.descriptionEn || cat.descriptionGu
+                  : language === 'hi'
+                  ? cat.descriptionHi || cat.descriptionGu
+                  : cat.descriptionGu || cat.descriptionEn;
+
+              const newFeedPath = `/rss/${cat.slug}.xml${langQuery}`;
               const newFeedUrl = `${cleanSiteUrl}${newFeedPath}`;
 
-              const legacyPath = getLegacyFeedPath(cat.slug);
+              const legacyPath = getLegacyFeedPath(cat.slug, language);
               const legacyUrl = `${cleanSiteUrl}${legacyPath}`;
 
               const isCopiedNew = copiedKey === `new-${cat.slug}`;
@@ -392,11 +504,11 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                     </div>
 
                     <h4 className="text-lg font-bold text-zinc-900 dark:text-zinc-100">
-                      {cat.nameGu || cat.name}
+                      {catName}
                     </h4>
-                    {cat.descriptionGu && (
+                    {catDesc && (
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 line-clamp-1">
-                        {cat.descriptionGu}
+                        {catDesc}
                       </p>
                     )}
                   </div>
@@ -409,7 +521,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-orange-500 text-white leading-none">
-                              New XML
+                              {t.filterNew}
                             </span>
                             <span className="font-mono text-xs text-zinc-700 dark:text-zinc-300 truncate">
                               {newFeedPath}
@@ -430,12 +542,12 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                             {isCopiedNew ? (
                               <>
                                 <Check className="w-3 h-3" />
-                                <span>કૉપિ થઈ!</span>
+                                <span>{t.copiedShort}</span>
                               </>
                             ) : (
                               <>
                                 <Copy className="w-3 h-3" />
-                                <span>Copy New</span>
+                                <span>{t.copyNewShort}</span>
                               </>
                             )}
                           </button>
@@ -445,7 +557,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 hover:text-orange-600 hover:border-orange-300 transition flex items-center justify-center cursor-pointer"
-                            title="Open New XML Feed"
+                            title={t.openXml}
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>
@@ -459,7 +571,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-blue-600 text-white leading-none">
-                              OLD LINK
+                              {t.oldLinkBadge}
                             </span>
                             <span className="font-mono text-xs text-blue-900 dark:text-blue-300 truncate">
                               {legacyPath}
@@ -480,12 +592,12 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                             {isCopiedOld ? (
                               <>
                                 <Check className="w-3 h-3" />
-                                <span>કૉપિ થઈ!</span>
+                                <span>{t.copiedShort}</span>
                               </>
                             ) : (
                               <>
                                 <Copy className="w-3 h-3" />
-                                <span>Copy Old Link</span>
+                                <span>{t.copyOldShort}</span>
                               </>
                             )}
                           </button>
@@ -495,7 +607,7 @@ export default function RssDirectoryClient({ categories, siteUrl }: Props) {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="p-1 rounded-lg border border-blue-300 dark:border-blue-800 bg-white dark:bg-zinc-900 text-blue-600 dark:text-blue-400 hover:bg-blue-100 transition flex items-center justify-center cursor-pointer"
-                            title="Open Old Link Feed"
+                            title={t.openOld}
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
                           </a>

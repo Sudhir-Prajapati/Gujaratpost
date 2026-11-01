@@ -181,10 +181,10 @@ const FootballWatermark = (
 );
 
 const FUEL_PRICE_CITY_MAP: Record<string, { petrol: string; diesel: string; cng: string }> = {
-  Ahmedabad: { petrol: '102.15', diesel: '98.27', cng: '76.00' },
-  Vadodara: { petrol: '101.46', diesel: '97.57', cng: '75.50' },
-  Surat: { petrol: '101.82', diesel: '97.95', cng: '76.20' },
-  Rajkot: { petrol: '101.85', diesel: '97.99', cng: '75.80' },
+  Ahmedabad: { petrol: '101.83', diesel: '97.92', cng: '98.47' },
+  Vadodara: { petrol: '101.46', diesel: '97.57', cng: '96.55' },
+  Surat: { petrol: '101.82', diesel: '97.95', cng: '88.76' },
+  Rajkot: { petrol: '101.85', diesel: '97.99', cng: '88.76' },
 };
 
 export default function LiveCenterSection({ language }: { language: Language }) {

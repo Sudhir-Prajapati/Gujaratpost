@@ -882,7 +882,7 @@ export default function GalleryPage() {
           onClick={() => setUploadModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-400 bg-white p-7 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 space-y-5 cursor-default animate-in zoom-in-95 duration-200"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border border-gray-400 bg-white p-7 shadow-2xl dark:border-zinc-700 dark:bg-zinc-900 space-y-5 cursor-default animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -1018,11 +1018,11 @@ export default function GalleryPage() {
                   </span>
                 </div>
                 <textarea
-                  rows={3}
+                  rows={10}
                   placeholder="સ્ટોરીનું વર્ણન લખો (દા.ત. રકુલ પ્રીત સિંહ સોશિયલ મીડિયા પર ખૂબ જ એક્ટિવ રહે છે...)"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-2.5 text-sm font-semibold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm resize-none"
+                  className="w-full min-h-[220px] rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3.5 text-sm font-medium leading-relaxed text-zinc-900 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 dark:border-zinc-700 dark:bg-zinc-950/30 dark:text-white transition-all shadow-sm resize-y"
                 />
               </div>
 
@@ -1191,14 +1191,14 @@ export default function GalleryPage() {
                     {/* Optional custom description for this photo */}
                     <div>
                       <textarea
-                        rows={2}
+                        rows={4}
                         placeholder={`આ તસવીરનું વિશેષ વર્ણન (ખાલી રાખશો તો મુખ્ય સ્ટોરી વર્ણન આપમેળે વપરાશે)`}
                         value={extra.description}
                         onChange={(e) => {
                           const val = e.target.value;
                           setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
                         }}
-                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white resize-none"
+                        className="w-full min-h-[110px] rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium leading-relaxed focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white resize-y shadow-xs"
                       />
                     </div>
                   </div>
@@ -1233,7 +1233,7 @@ export default function GalleryPage() {
           onClick={() => setEditModalOpen(false)}
         >
           <div
-            className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-400 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4 cursor-default"
+            className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-gray-400 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900 space-y-4 cursor-default"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b pb-3 border-zinc-150 dark:border-zinc-850">
@@ -1313,11 +1313,11 @@ export default function GalleryPage() {
                   </span>
                 </div>
                 <textarea
-                  rows={3}
+                  rows={10}
                   placeholder="સ્ટોરીનું વર્ણન લખો (દા.ત. રકુલ પ્રીત સિંહ સોશિયલ મીડિયા પર ખૂબ જ એક્ટિવ રહે છે...)"
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
-                  className="w-full rounded-xl border border-gray-400 bg-zinc-50 px-3.5 py-2 text-sm font-semibold text-foreground focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white resize-none"
+                  className="w-full min-h-[220px] rounded-xl border border-gray-400 bg-zinc-50 px-4 py-3.5 text-sm font-medium leading-relaxed text-foreground focus:outline-none dark:border-zinc-700 dark:bg-zinc-950/20 dark:text-white transition-all shadow-sm resize-y"
                 />
               </div>
 
@@ -1485,14 +1485,14 @@ export default function GalleryPage() {
                     {/* Optional custom description for this photo */}
                     <div>
                       <textarea
-                        rows={2}
+                        rows={4}
                         placeholder={`આ તસવીરનું વિશેષ વર્ણન (ખાલી રાખશો તો મુખ્ય સ્ટોરી વર્ણન આપમેળે વપરાશે)`}
                         value={extra.description}
                         onChange={(e) => {
                           const val = e.target.value;
                           setExtraImages(prev => prev.map((item, idx) => idx === eIdx ? { ...item, description: val } : item));
                         }}
-                        className="w-full rounded-xl border border-zinc-300 bg-white px-3 py-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white resize-none"
+                        className="w-full min-h-[110px] rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-medium leading-relaxed focus:outline-none focus:ring-1 focus:ring-red-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-white resize-y shadow-xs"
                       />
                     </div>
                   </div>

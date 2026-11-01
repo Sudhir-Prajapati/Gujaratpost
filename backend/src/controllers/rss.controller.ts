@@ -26,9 +26,11 @@ export class RssController {
       const categorySlug = req.params.category;
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
 
+      const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
       const feed = await generatePublicRssFeed({
         categorySlug,
         limit,
+        lang,
       });
 
       // Handle conditional HTTP requests (ETag & Last-Modified)
@@ -100,10 +102,12 @@ export class RssController {
 
       const categorySlug = rawName ? (LEGACY_MAP[rawName] || rawName) : 'politics';
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+      const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
 
       const feed = await generatePublicRssFeed({
         categorySlug,
         limit,
+        lang,
       });
 
       const ifNoneMatch = req.headers['if-none-match'];
@@ -144,9 +148,11 @@ export class RssController {
   static async getLegacyGalleryRss(req: Request, res: Response, next: NextFunction) {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+      const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
       const feed = await generatePublicRssFeed({
         categorySlug: 'photos',
         limit,
+        lang,
       });
 
       const ifNoneMatch = req.headers['if-none-match'];
