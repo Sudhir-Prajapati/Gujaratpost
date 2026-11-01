@@ -658,9 +658,32 @@ export default function ArticleInfiniteStream({
         </div>
       </article>
 
-      <aside className="select-none h-fit sticky top-[100px] w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
-        {/* Heading and recommended stories stick together below header */}
-        <div className="wtitle mb-3">
+      <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
+        <div className="side-sticky sticky top-[96px] transition-all duration-300">
+          {/* Most Read widget */}
+          {mostReadArticles && mostReadArticles.length > 0 && (
+            <div className="mostread">
+              <div className="wtitle">
+                <span className="d"></span>
+                <span>{uiLabel(language, { en: 'Most Read', gu: 'સૌથી વધુ વંચાયેલા', hi: 'सबसे अधिक पढ़े गए' })}</span>
+              </div>
+              <div className="space-y-0 mt-3">
+                {mostReadArticles.slice(0, 3).map((item, index) => {
+                  const rankNum = String(index + 1);
+                  return (
+                    <Link key={item.id} href={`/news/${item.slug}`} className="s-rank hover:opacity-85 transition-opacity">
+                      <span className="n">{rankNum}</span>
+                      <h3><AutoArticleTitle article={item} language={language} /></h3>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Heading and recommended stories stick together below header */}
+          <div>
+            <div className="wtitle mb-3">
           <span className="d"></span>
           <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
         </div>
@@ -715,6 +738,8 @@ export default function ArticleInfiniteStream({
               </Link>
             );
           })}
+        </div>
+          </div>
         </div>
       </aside>
     </div>

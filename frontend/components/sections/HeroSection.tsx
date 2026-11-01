@@ -1476,7 +1476,7 @@ export default function HeroSection({
             <div className="flex flex-col gap-4 md:gap-8 min-w-0">
               <CrimeSection language={language} view="content" initialArticles={(crimeArtDB && crimeArtDB.length > 0) ? crimeArtDB : ((initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0) ? initialCategoryArticles['crime'] : publishedInitialArticles.filter((a) => getCatSlug(a) === 'crime'))} initialWeather={weatherData} initialAstrology={astrologySignsDB} />
             </div>
-            <div className="flex flex-col gap-6 sticky top-20 select-none">
+            <div className="flex flex-col gap-6 sticky top-[96px] select-none">
               <div>
                 <div className="flex items-end justify-between gap-1.5 h-[46px] border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-4">
                   <div className="flex items-end gap-1.5">

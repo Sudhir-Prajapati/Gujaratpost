@@ -764,7 +764,7 @@ export default function VideosPageClient() {
 
           {/* ── RIGHT COLUMN: Sidebar (Flexible to match left column height) ── */}
           <div
-            className="sticky top-4 self-start"
+            className="sticky top-[96px] self-start"
           >
 
             <div className="group rounded-xl border border-red-100 dark:border-red-950/20 bg-gradient-to-br from-red-50/10 to-red-50/30 dark:from-red-950/5 dark:to-red-950/10 p-5 mb-6 text-center shadow-sm hover:shadow transition-all duration-300">
