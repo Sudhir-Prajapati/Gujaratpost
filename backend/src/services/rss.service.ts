@@ -369,7 +369,7 @@ ${itemsXml}  </channel>
 
     const categoryRecords = await prisma.category.findMany({
       where: { slug: { in: searchSlugs } },
-      select: { id: true, name: true, nameGu: true, slug: true, descriptionGu: true },
+      select: { id: true, name: true, nameGu: true, nameHi: true, slug: true, description: true, descriptionGu: true, descriptionHi: true },
     });
     const catIds = categoryRecords.map((c) => c.id);
 
