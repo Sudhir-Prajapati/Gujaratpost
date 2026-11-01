@@ -13,6 +13,7 @@ import { errorHandler } from './middleware/error.middleware.js';
 import { autoPublishDueArticles } from './controllers/article.controller.js';
 import { RssController } from './controllers/rss.controller.js';
 import { fetchFreshLiveCenterData } from './routes/public.routes.js';
+import { ensureHeroSettingsTableColumns } from './controllers/hero.controller.js';
 
 
 
@@ -188,6 +189,7 @@ const bootstrap = async () => {
       try {
         await prisma.$connect();
         console.log('Successfully connected to MySQL database via Prisma.');
+        ensureHeroSettingsTableColumns().catch(() => {});
       } catch (dbErr: any) {
         if (attempt < maxAttempts) {
           setTimeout(() => connectPrismaWithRetry(attempt + 1, maxAttempts), 1500);

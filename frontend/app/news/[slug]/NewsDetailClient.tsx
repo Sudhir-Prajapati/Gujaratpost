@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState, useCallback, memo, useRef } from 'react';
+import { useEffect, useMemo, useState, useCallback, memo, useRef, Fragment } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -585,14 +585,64 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
     if (pdfMatch && pdfMatch[1]) detectedPdf = pdfMatch[1];
   }
 
-  // Strip ALL PDF cards, fragments, and legacy boxes completely from the body paragraphs
-  cleaned = cleaned
-    .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
-    .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '')
-    .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
-    .replace(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][\s\S]*?<\/div>/gi, '')
-    .replace(/<div[^>]*class=["'][^"']*gp-pdf-inner[^"']*["'][\s\S]*?<\/div>/gi, '')
-    .replace(/<a[^>]*class=["'][^"']*gp-pdf-btn[^"']*["'][\s\S]*?<\/a>/gi, '');
+  const cleanPdf = detectedPdf ? detectedPdf.trim() : '';
+
+  if (cleanPdf && cleanPdf !== '#') {
+    if (hasPdfPages) {
+      // FULL PDF PAGE-BY-PAGE VIEWER MODE:
+      // Strip any static download cards, but preserve gp-pdf-pages-viewer at its exact chosen position
+      cleaned = cleaned
+        .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
+        .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '')
+        .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '');
+
+      const hasViewerMarker = /<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["']/i.test(cleaned);
+      if (!hasViewerMarker) {
+        // Fallback for legacy articles without explicit inline marker: append at the end
+        cleaned += `\n\n<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`;
+      }
+    } else {
+      // PDF DOWNLOAD CARD MODE:
+      // Strip any page-by-page viewer placeholder
+      cleaned = cleaned.replace(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][\s\S]*?<\/div>/gi, '');
+
+      // Check if a gp-pdf-card already exists in the body
+      const cardPattern = /<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/i;
+      const placeholderPattern = /<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/i;
+
+      if (cardPattern.test(cleaned)) {
+        let replaced = false;
+        cleaned = cleaned.replace(new RegExp(cardPattern.source, 'gi'), () => {
+          if (!replaced) {
+            replaced = true;
+            return buildPdfCardHtml(cleanPdf, language);
+          }
+          return '';
+        });
+      } else if (placeholderPattern.test(cleaned)) {
+        let replaced = false;
+        cleaned = cleaned.replace(new RegExp(placeholderPattern.source, 'gi'), () => {
+          if (!replaced) {
+            replaced = true;
+            return buildPdfCardHtml(cleanPdf, language);
+          }
+          return '';
+        });
+      } else {
+        // Fallback for legacy articles without inline card: append at the end
+        cleaned += '\n\n' + buildPdfCardHtml(cleanPdf, language);
+      }
+    }
+  } else {
+    // No PDF attached: strip all residual PDF tags
+    cleaned = cleaned
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*gp-pdf-inner[^"']*["'][\s\S]*?<\/div>/gi, '')
+      .replace(/<a[^>]*class=["'][^"']*gp-pdf-btn[^"']*["'][\s\S]*?<\/a>/gi, '');
+  }
 
   // Strip orphan standalone buttons
   cleaned = cleaned.replace(/<a[^>]*>[\s\S]*?(?:Download\s*PDF|Attached Official Document|Official Document \(PDF\)|Attached PDF|ડાઉનલોડ\s*PDF|ડાઉનલોડ|Download)[\s\S]*?<\/a>/gi, (match) => {
@@ -602,11 +652,6 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
 
   // Remove any leftover empty container divs
   cleaned = cleaned.replace(/<div[^>]*class=["'][^"']*(?:border-red-200|border-red-900|from-red-50|via-rose-50|gp-pdf-card)[^"']*["']>\s*<\/div>/gi, '');
-
-  // If a PDF is attached AND the full page-by-page reader is NOT active, append EXACTLY ONE clean PDF card
-  if (detectedPdf && detectedPdf.trim() && detectedPdf !== '#' && !hasPdfPages) {
-    cleaned += '\n\n' + buildPdfCardHtml(detectedPdf.trim(), language);
-  }
 
   return cleaned.trim();
 }
@@ -2212,9 +2257,41 @@ export default function NewsDetailClient({ article, related, trending, articleUr
               const isExpandedState = isContentExpanded || speaking;
               const hasSplit = Boolean(bottomHtml);
 
+              // Render HTML block with inline ArticlePdfPagesViewer wherever gp-pdf-pages-viewer marker appears
+              const renderContentSection = (htmlBlock: string) => {
+                if (!htmlBlock) return null;
+                if (!hasPdfPages || !pdfDocumentUrl || !htmlBlock.includes('gp-pdf-pages-viewer')) {
+                  return <ArticleContentBody html={htmlBlock} activeSpeechText={activeSpeechText} />;
+                }
+
+                const parts = htmlBlock.split(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>/i);
+                if (parts.length <= 1) {
+                  return <ArticleContentBody html={htmlBlock} activeSpeechText={activeSpeechText} />;
+                }
+
+                return (
+                  <>
+                    {parts.map((part, pIdx) => (
+                      <Fragment key={pIdx}>
+                        {part && part.trim() ? (
+                          <ArticleContentBody html={part} activeSpeechText={activeSpeechText} />
+                        ) : null}
+                        {pIdx < parts.length - 1 && (
+                          <ArticlePdfPagesViewer
+                            pdfUrl={pdfDocumentUrl}
+                            language={language}
+                            title={language === 'gu' ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ' : language === 'hi' ? 'संलग्न आधिकारिकપીડીએફ દસ્તાવેજ' : 'Attached Official Document (PDF)'}
+                          />
+                        )}
+                      </Fragment>
+                    ))}
+                  </>
+                );
+              };
+
               return (
                 <div className="relative" suppressHydrationWarning>
-                  <ArticleContentBody html={hasSplit ? topHtml : formattedArticleBodyHtml} activeSpeechText={activeSpeechText} />
+                  {renderContentSection(hasSplit ? topHtml : formattedArticleBodyHtml)}
 
                   {hasSplit && (
                     <>
@@ -2249,11 +2326,11 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
                   <div className={hasSplit && !isExpandedState ? 'hidden' : 'space-y-4 transition-all duration-500 ease-in-out'} suppressHydrationWarning>
                     {hasSplit && isExpandedState && (
-                      <ArticleContentBody html={bottomHtml} activeSpeechText={activeSpeechText} />
+                      renderContentSection(bottomHtml)
                     )}
 
-                    {/* Full PDF Page-by-Page Document Viewer */}
-                    {hasPdfPages && pdfDocumentUrl && (
+                    {/* Full PDF Page-by-Page Document Viewer (fallback if marker was not inside the body html) */}
+                    {hasPdfPages && pdfDocumentUrl && !formattedArticleBodyHtml.includes('gp-pdf-pages-viewer') && (
                       <ArticlePdfPagesViewer
                         pdfUrl={pdfDocumentUrl}
                         language={language}

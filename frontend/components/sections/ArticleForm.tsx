@@ -522,6 +522,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [facebookUrl, setFacebookUrl] = useState('');
   const [pdfUrl, setPdfUrl] = useState('');
   const [showPdfPages, setShowPdfPages] = useState(false);
+  const [pdfPosition, setPdfPosition] = useState<string>('end');
   const [uploadingPdf, setUploadingPdf] = useState(false);
 
   // Helper: Format YouTube URL or embed code to Embed URL or ID
@@ -778,24 +779,72 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   ) => {
     const parts: string[] = [];
     if (hl.trim()) {
-      const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 एक नजर में (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
+      const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 એક નજર મેં (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
       parts.push(`${header}\n--------------------------------------------------\n${hl.trim()}\n--------------------------------------------------`);
     }
-    const cleanD1 = purgePdfFromText(d1Str)
+
+    // Build the compiled PDF card & viewer slot block if attached
+    let pdfBlockHtml = '';
+    if (pdfUrl && pdfUrl.trim()) {
+      const cleanPdf = pdfUrl.trim();
+      const showPagesAttr = showPdfPages ? 'data-show-pages="true"' : 'data-show-pages="false"';
+      const posAttr = `data-pdf-position="${pdfPosition || 'end'}"`;
+      const pdfTitle = lang === 'gu'
+        ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ'
+        : lang === 'hi'
+          ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़'
+          : 'Attached Official Document (PDF)';
+      const pdfSub = lang === 'gu'
+        ? 'ચકાસાયેલ સત્તાવાર સરકારી / પ્રેસ દસ્તાવેજ'
+        : lang === 'hi'
+          ? 'सत्यापित आधिकारिक दस्तावेज़'
+          : 'Verified Official Document';
+      const pdfBtn = lang === 'gu' ? 'ડાઉનલોડ PDF' : lang === 'hi' ? 'डाउनलोड पीडीएफ' : 'Download PDF';
+
+      const cardHtml = `<div class="gp-pdf-card" ${showPagesAttr} ${posAttr} data-pdf-url="${cleanPdf}"><div class="gp-pdf-inner"><div class="gp-pdf-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="gp-pdf-text"><span class="gp-pdf-title">${pdfTitle}</span><span class="gp-pdf-sub">${pdfSub}</span></div></div><a href="${cleanPdf}" target="_blank" rel="noopener noreferrer" download class="gp-pdf-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${pdfBtn}</span></a></div>`;
+
+      if (showPdfPages) {
+        pdfBlockHtml = `<div class="gp-pdf-pages-viewer" ${posAttr} data-pdf-url="${cleanPdf}"></div>`;
+      } else {
+        pdfBlockHtml = cardHtml;
+      }
+    }
+
+    let pdfPlaced = false;
+
+    // Description 1
+    let cleanD1 = purgePdfFromText(d1Str)
       .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
       .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
       .trim();
+
+    if (pdfBlockHtml && /\[PDF_DOCUMENT\]/i.test(cleanD1)) {
+      cleanD1 = cleanD1.replace(/\[PDF_DOCUMENT\]/gi, `\n\n${pdfBlockHtml}\n\n`);
+      pdfPlaced = true;
+    }
+
     if (cleanD1) {
       parts.push(cleanD1);
+    }
+
+    if (!pdfPlaced && pdfBlockHtml && pdfPosition === 'after_desc_1') {
+      parts.push(pdfBlockHtml);
+      pdfPlaced = true;
     }
 
     // Story continuation sections: Description N then Image N
     pairedSections.forEach((sec, idx) => {
       const sectionNum = idx + 2;
-      const cleanDesc = purgePdfFromText(sec.desc)
+      let cleanDesc = purgePdfFromText(sec.desc)
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
+
+      if (pdfBlockHtml && !pdfPlaced && /\[PDF_DOCUMENT\]/i.test(cleanDesc)) {
+        cleanDesc = cleanDesc.replace(/\[PDF_DOCUMENT\]/gi, `\n\n${pdfBlockHtml}\n\n`);
+        pdfPlaced = true;
+      }
+
       if (cleanDesc || (sec.imageUrl && sec.imageUrl.trim())) {
         parts.push(`<!-- gp-section-${sectionNum} -->`);
       }
@@ -804,6 +853,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       }
       if (sec.imageUrl && sec.imageUrl.trim()) {
         parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
+      }
+
+      if (!pdfPlaced && pdfBlockHtml && pdfPosition === `after_desc_${sectionNum}`) {
+        parts.push(pdfBlockHtml);
+        pdfPlaced = true;
       }
     });
 
@@ -823,25 +877,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     if (instagramUrl && !hasInlineEmbed('instagram')) parts.push(buildArticleEmbedHtml(instagramUrl, 'instagram'));
     if (facebookUrl && !hasInlineEmbed('facebook')) parts.push(buildArticleEmbedHtml(facebookUrl, 'facebook'));
 
-    if (pdfUrl && pdfUrl.trim()) {
-      const cleanPdf = pdfUrl.trim();
-      const showPagesAttr = showPdfPages ? 'data-show-pages="true"' : 'data-show-pages="false"';
-      const pdfTitle = lang === 'gu'
-        ? 'સંદર્ભિત સત્તાવાર PDF દસ્તાવેજ'
-        : lang === 'hi'
-          ? 'संलग्न आधिकारिक पीडीएफ दस्तावेज़'
-          : 'Attached Official Document (PDF)';
-      const pdfSub = lang === 'gu'
-        ? 'ચકાસાયેલ સત્તાવાર સરકારી / પ્રેસ દસ્તાવેજ'
-        : lang === 'hi'
-          ? 'सत्यापित आधिकारिक दस्तावेज़'
-          : 'Verified Official Document';
-      const pdfBtn = lang === 'gu' ? 'ડાઉનલોડ PDF' : lang === 'hi' ? 'डाउनलोड पीडीएफ' : 'Download PDF';
-
-      parts.push(`<div class="gp-pdf-card" ${showPagesAttr} data-pdf-url="${cleanPdf}"><div class="gp-pdf-inner"><div class="gp-pdf-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="gp-pdf-text"><span class="gp-pdf-title">${pdfTitle}</span><span class="gp-pdf-sub">${pdfSub}</span></div></div><a href="${cleanPdf}" target="_blank" rel="noopener noreferrer" download class="gp-pdf-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${pdfBtn}</span></a></div>`);
-      if (showPdfPages) {
-        parts.push(`<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`);
-      }
+    // If PDF was not placed after description 1 or continuation sections, append it at the end (Default)
+    if (!pdfPlaced && pdfBlockHtml) {
+      parts.push(pdfBlockHtml);
+      pdfPlaced = true;
     }
 
     return parts.join('\n\n');
@@ -1123,10 +1162,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     let extractedFb = '';
     let extractedPdfUrl = '';
     let hasPdfPages = false;
+    let extractedPdfPosition = 'end';
     const extractedImgs: { index: number; url: string }[] = [];
     const extractedDescsMap: { index: number; text: string }[] = [];
 
-    if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages };
+    if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages, extractedPdfPosition };
 
     const pdfMatch =
       raw.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
@@ -1136,6 +1176,23 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
     if (raw.includes('data-show-pages="true"') || raw.includes('gp-pdf-pages-viewer')) {
       hasPdfPages = true;
+    }
+
+    extractedPdfPosition = 'end';
+    const posAttrMatch = raw.match(/data-pdf-position=["']([^"']+)["']/i);
+    if (posAttrMatch && posAttrMatch[1]) {
+      extractedPdfPosition = posAttrMatch[1];
+    } else if (extractedPdfUrl) {
+      const pdfIdx = raw.search(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["']/i);
+      const sec2Idx = raw.search(/<!--\s*gp-section-2\s*-->/i);
+      if (pdfIdx !== -1 && sec2Idx !== -1 && pdfIdx < sec2Idx) {
+        extractedPdfPosition = 'after_desc_1';
+      } else if (pdfIdx !== -1 && sec2Idx !== -1 && pdfIdx > sec2Idx) {
+        const sec3Idx = raw.search(/<!--\s*gp-section-3\s*-->/i);
+        if (sec3Idx !== -1 && pdfIdx < sec3Idx) {
+          extractedPdfPosition = 'after_desc_2';
+        }
+      }
     }
 
     // Extract all gallery images with their numbers (e.g. ![Gallery Image 2](...))
@@ -1370,6 +1427,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       extractedFb,
       extractedPdfUrl,
       hasPdfPages,
+      extractedPdfPosition,
     };
   };
 
@@ -1621,6 +1679,13 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             parsedGu.hasPdfPages ||
             parsedHi.hasPdfPages
           )
+        );
+        setPdfPosition(
+          (art as any).pdfPosition ||
+          parsedGu.extractedPdfPosition ||
+          parsedEn.extractedPdfPosition ||
+          parsedHi.extractedPdfPosition ||
+          'end'
         );
         setCategoryId(art.categoryId || art.category?.id || '');
         setLocation(art.location || '');
@@ -1967,6 +2032,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       facebookUrl: facebookUrl.trim() || undefined,
       pdfUrl: pdfUrl.trim() || undefined,
       showPdfPages: Boolean(pdfUrl.trim() && showPdfPages),
+      pdfPosition: pdfUrl.trim() ? pdfPosition : undefined,
       location: location || null,
       authorId: authorInputMode === 'select' ? safeAuthor : (authors.find(a => a.name.toLowerCase() === safeCustomAuthor.toLowerCase())?.id || authors[0]?.id || safeAuthor || ''),
       authorName: authorInputMode === 'custom' ? safeCustomAuthor : (authors.find(a => a.id === safeAuthor)?.name || safeCustomAuthor || undefined),
@@ -2431,6 +2497,33 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       </div>
     );
   }
+
+  const renderLivePreviewPdf = () => {
+    if (!pdfUrl || !pdfUrl.trim()) return null;
+    return showPdfPages ? (
+      <ArticlePdfPagesViewer
+        pdfUrl={pdfUrl}
+        title="Attached Official Document (Live Preview)"
+        language={articleLanguage}
+      />
+    ) : (
+      <div className="gp-pdf-card my-4">
+        <div className="gp-pdf-inner">
+          <div className="gp-pdf-icon-wrap">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+          </div>
+          <div className="gp-pdf-text">
+            <span className="gp-pdf-title">Attached Official Document (PDF)</span>
+            <span className="gp-pdf-sub">Verified Official Document</span>
+          </div>
+        </div>
+        <a href={pdfUrl} target="_blank" rel="noopener noreferrer" download className="gp-pdf-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+          <span>Download PDF</span>
+        </a>
+      </div>
+    );
+  };
 
   const renderFormattedPreviewContent = (rawText: string) => {
     if (!rawText || !rawText.trim()) return null;
@@ -4477,51 +4570,88 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
           {/* Full-Width PDF Page-by-Page Document Reader Toggle Banner */}
           {pdfUrl && pdfUrl.trim() && (
-            <div className={`rounded-xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${showPdfPages
-                ? 'border-blue-300 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 dark:border-blue-800/80 dark:from-blue-950/40 dark:via-zinc-900 dark:to-blue-950/40 ring-1 ring-blue-500/20'
-                : 'border-gray-300 bg-zinc-50/70 dark:border-zinc-700/80 dark:bg-zinc-950/40'
-              }`}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3 min-w-0">
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors shadow-xs ${showPdfPages
-                      ? 'bg-blue-600 text-white shadow-blue-600/30'
-                      : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
-                    }`}>
-                    <BookOpen className="h-5 w-5 stroke-[2.2]" />
+            <>
+              <div className={`rounded-xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${showPdfPages
+                  ? 'border-blue-300 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 dark:border-blue-800/80 dark:from-blue-950/40 dark:via-zinc-900 dark:to-blue-950/40 ring-1 ring-blue-500/20'
+                  : 'border-gray-300 bg-zinc-50/70 dark:border-zinc-700/80 dark:bg-zinc-950/40'
+                }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors shadow-xs ${showPdfPages
+                        ? 'bg-blue-600 text-white shadow-blue-600/30'
+                        : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                      }`}>
+                      <BookOpen className="h-5 w-5 stroke-[2.2]" />
+                    </div>
+
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-extrabold text-slate-900 dark:text-white">
+                          Show Full PDF Page-by-Page in Article
+                        </span>
+                        <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
+                          (પસંદ કરેલા સ્થાને આખું PDF પાનાવાર દર્શાવો)
+                        </span>
+                        {showPdfPages && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                            ✓ Reader Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                        Displays every page of the document sequentially like images at the selected position, allowing readers to read the full document directly without downloading.
+                      </p>
+                    </div>
                   </div>
 
+                  {/* Modern Switch Toggle */}
+                  <label className="relative inline-flex items-center cursor-pointer shrink-0 self-end sm:self-center">
+                    <input
+                      type="checkbox"
+                      checked={showPdfPages}
+                      onChange={(e) => setShowPdfPages(e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-12 h-6.5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5.5 after:w-5.5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
+                  </label>
+                </div>
+              </div>
+
+              {/* PDF Position Selector inside Article */}
+              <div className="rounded-xl border border-gray-300 bg-white p-3.5 sm:p-4 dark:border-zinc-700/80 dark:bg-zinc-900/60 shadow-xs space-y-2 mt-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="space-y-0.5 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-extrabold text-slate-900 dark:text-white">
-                        Show Full PDF Page-by-Page in Article
-                      </span>
-                      <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                        (આર્ટિકલના અંતે આખું PDF પાનાવાર દર્શાવો)
-                      </span>
-                      {showPdfPages && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
-                          ✓ Reader Active
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                      Displays every page of the document sequentially like images at the end of the article, allowing readers to read the full document directly without downloading.
+                    <label className="block text-xs font-black uppercase tracking-wider text-slate-800 dark:text-zinc-200 flex items-center gap-1.5">
+                      <span>આર્ટિકલમાં PDF નું સ્થાન (PDF Position in Article)</span>
+                    </label>
+                    <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                      પસંદ કરો કે આર્ટિકલમાં PDF ક્યાં દર્શાવવું છે (વર્ણન ૧ પછી, વર્ણન ૨ પછી, અથવા આર્ટિકલના અંતે).
                     </p>
                   </div>
+                  <div className="w-full sm:w-72 shrink-0">
+                    <select
+                      value={pdfPosition}
+                      onChange={(e) => setPdfPosition(e.target.value)}
+                      className="w-full rounded-xl border-2 border-red-200 dark:border-red-900/60 bg-red-50/50 dark:bg-red-950/20 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:text-zinc-100 shadow-xs focus:border-red-600 focus:outline-none focus:ring-1 focus:ring-red-600 transition-all cursor-pointer"
+                    >
+                      <option value="end">આર્ટિકલના અંતે (At the End of Article) — Default</option>
+                      <option value="after_desc_1">વર્ણન ૧ પછી (After Description 1)</option>
+                      {storySections.map((sec, idx) => {
+                        const secNum = idx + 2;
+                        const label = secNum === 2
+                          ? 'બીજું વર્ણન (વર્ણન ૨) પછી (After Description 2)'
+                          : `વિભાગ ${secNum} (વર્ણન ${secNum}) પછી (After Description ${secNum})`;
+                        return (
+                          <option key={`pdf-pos-${secNum}`} value={`after_desc_${secNum}`}>
+                            {label}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
                 </div>
-
-                {/* Modern Switch Toggle */}
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 self-end sm:self-center">
-                  <input
-                    type="checkbox"
-                    checked={showPdfPages}
-                    onChange={(e) => setShowPdfPages(e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-12 h-6.5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[3px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5.5 after:w-5.5 after:transition-all peer-checked:bg-blue-600 shadow-inner"></div>
-                </label>
               </div>
-            </div>
+            </>
           )}
         </div>
 
@@ -4894,6 +5024,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                 renderFormattedPreviewContent(contentLang === 'gu' ? desc1Gu : contentLang === 'hi' ? desc1Hi : desc1)
               )}
 
+              {/* PDF Preview after Desc 1 */}
+              {pdfPosition === 'after_desc_1' && renderLivePreviewPdf()}
+
               {/* Quote Box Preview */}
               {((contentLang === 'gu' ? quoteTextGu : contentLang === 'hi' ? quoteTextHi : quoteText) || '').trim() && (
                 <blockquote className="my-6 border-l-[3px] border-red-600 pl-4 py-1 font-sans">
@@ -4931,6 +5064,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         />
                       </div>
                     )}
+
+                    {/* PDF Preview after this Story Section */}
+                    {pdfPosition === `after_desc_${idx + 2}` && renderLivePreviewPdf()}
                   </div>
                 );
               })}
@@ -4940,32 +5076,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
               <ArticleSocialPreview input={instagramUrl} platform="instagram" />
               <ArticleSocialPreview input={facebookUrl} platform="facebook" />
 
-              {/* PDF Document Attachment Preview */}
-              {pdfUrl && pdfUrl.trim() && (
-                showPdfPages ? (
-                  <ArticlePdfPagesViewer
-                    pdfUrl={pdfUrl}
-                    title="Attached Official Document (Live Preview)"
-                    language={articleLanguage}
-                  />
-                ) : (
-                  <div className="gp-pdf-card my-4">
-                    <div className="gp-pdf-inner">
-                      <div className="gp-pdf-icon-wrap">
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
-                      </div>
-                      <div className="gp-pdf-text">
-                        <span className="gp-pdf-title">Attached Official Document (PDF)</span>
-                        <span className="gp-pdf-sub">Verified Official Document</span>
-                      </div>
-                    </div>
-                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" download className="gp-pdf-btn">
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-                      <span>Download PDF</span>
-                    </a>
-                  </div>
-                )
-              )}
+              {/* PDF Document Attachment Preview (At End of Article) */}
+              {(pdfPosition === 'end' || !pdfPosition) && renderLivePreviewPdf()}
 
             </div>
 

@@ -82,6 +82,48 @@ let heroSettingsMemCache: { timestamp: number; data: any } | null = null;
 let heroSettingsInFlightPromise: Promise<any> | null = null;
 const HERO_CACHE_TTL_MS = 10 * 1000; // 10s in-memory TTL — fast enough for near-instant admin updates
 
+let heroColumnsEnsured = false;
+export async function ensureHeroSettingsTableColumns() {
+  if (heroColumnsEnsured) return;
+  try {
+    const columns: any = await prisma.$queryRawUnsafe(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_NAME = 'hero_settings' 
+        AND TABLE_SCHEMA = DATABASE()
+    `);
+    const colNames = new Set((columns || []).map((c: any) => (c.COLUMN_NAME || c.column_name || '').toLowerCase()));
+
+    if (!colNames.has('electionbannerenabled')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN electionBannerEnabled TINYINT(1) NOT NULL DEFAULT 0`).catch(() => {});
+      console.log('✅ Added missing electionBannerEnabled column to hero_settings');
+    }
+    if (!colNames.has('electionbannerjson')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN electionBannerJson LONGTEXT NULL`).catch(() => {});
+      console.log('✅ Added missing electionBannerJson column to hero_settings');
+    }
+    if (!colNames.has('livecenterjson')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN liveCenterJson LONGTEXT NULL`).catch(() => {});
+      console.log('✅ Added missing liveCenterJson column to hero_settings');
+    }
+    if (!colNames.has('heroslidermode')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN heroSliderMode VARCHAR(50) DEFAULT 'auto'`).catch(() => {});
+    }
+    if (!colNames.has('herosliderids')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN heroSliderIds TEXT NULL`).catch(() => {});
+    }
+    if (!colNames.has('herogridmode')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN heroGridMode VARCHAR(50) DEFAULT 'auto'`).catch(() => {});
+    }
+    if (!colNames.has('mostreadmode')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN mostReadMode VARCHAR(50) DEFAULT 'auto'`).catch(() => {});
+    }
+    heroColumnsEnsured = true;
+  } catch (err: any) {
+    console.warn('⚠️ ensureHeroSettingsTableColumns notice:', err?.message || err);
+  }
+}
+
 export function invalidateHeroSettingsCache() {
   heroSettingsMemCache = null;
   heroSettingsInFlightPromise = null;
@@ -133,6 +175,17 @@ export class HeroController {
         } catch (err: any) {
           console.warn('Warning: heroSetting query error, using fallback:', err?.message);
           heroSetting = null;
+        }
+
+        if (!heroSetting) {
+          try {
+            const rawRows: any = await prisma.$queryRawUnsafe(`SELECT * FROM hero_settings WHERE id = 'default' LIMIT 1`);
+            if (rawRows && rawRows.length > 0) {
+              heroSetting = rawRows[0];
+            }
+          } catch (rawErr: any) {
+            console.warn('Warning: raw hero_settings query error:', rawErr?.message);
+          }
         }
 
         // 1. Parse all IDs from heroSetting
@@ -571,24 +624,69 @@ export class HeroController {
       if (electionBannerEnabled !== undefined) updateData.electionBannerEnabled = Boolean(electionBannerEnabled);
       if (electionBannerJson !== undefined) updateData.electionBannerJson = typeof electionBannerJson === 'object' ? JSON.stringify(electionBannerJson) : (electionBannerJson || null);
 
-      const updatedSetting = await prisma.heroSetting.upsert({
-        where: { id: 'default' },
-        update: updateData,
-        create: {
-          id: 'default',
-          slot1Id: slot1Id || null,
-          slot2Id: slot2Id || null,
-          slot3Id: slot3Id || null,
-          trendingTopics: topicsStr,
-          trendingNewsIds: newsIdsStr,
-          popularNewsIds: popularIdsStr,
-          mostReadIds: mostReadIdsStr,
-          heroGridIds: heroGridIdsStr,
-          tickerLabel: tickerLabelStr || null,
-          heroSliderMode: heroSliderMode || 'auto',
-          heroSliderIds: heroSliderIdsStr,
-        } as any,
-      });
+      await ensureHeroSettingsTableColumns().catch(() => {});
+
+      let updatedSetting: any = null;
+      try {
+        updatedSetting = await prisma.heroSetting.upsert({
+          where: { id: 'default' },
+          update: updateData,
+          create: {
+            id: 'default',
+            slot1Id: slot1Id || null,
+            slot2Id: slot2Id || null,
+            slot3Id: slot3Id || null,
+            trendingTopics: topicsStr,
+            trendingNewsIds: newsIdsStr,
+            popularNewsIds: popularIdsStr,
+            mostReadIds: mostReadIdsStr,
+            heroGridIds: heroGridIdsStr,
+            tickerLabel: tickerLabelStr || null,
+            heroSliderMode: heroSliderMode || 'auto',
+            heroSliderIds: heroSliderIdsStr,
+            electionBannerEnabled: Boolean(electionBannerEnabled),
+            electionBannerJson: typeof electionBannerJson === 'object' ? JSON.stringify(electionBannerJson) : (electionBannerJson || null),
+          } as any,
+        });
+      } catch (upsertErr: any) {
+        console.warn('prisma.heroSetting.upsert error, using resilient SQL update:', upsertErr?.message);
+        const keys = Object.keys(updateData);
+        if (keys.length > 0) {
+          try {
+            const sets = keys.map((k) => `\`${k}\` = ?`).join(', ');
+            const values = keys.map((k) => updateData[k]);
+            await prisma.$executeRawUnsafe(
+              `UPDATE hero_settings SET ${sets}, updatedAt = NOW() WHERE id = 'default'`,
+              ...values
+            );
+          } catch (sqlErr: any) {
+            console.warn('Batch SQL update failed, updating individually:', sqlErr?.message);
+            for (const key of keys) {
+              try {
+                await prisma.$executeRawUnsafe(
+                  `UPDATE hero_settings SET \`${key}\` = ?, updatedAt = NOW() WHERE id = 'default'`,
+                  updateData[key]
+                );
+              } catch { }
+            }
+          }
+        }
+        try {
+          const rows: any = await prisma.$queryRawUnsafe(`SELECT * FROM hero_settings WHERE id = 'default' LIMIT 1`);
+          updatedSetting = rows?.[0] || { id: 'default', ...updateData };
+        } catch {
+          updatedSetting = { id: 'default', ...updateData };
+        }
+      }
+
+      if (!updatedSetting) {
+        try {
+          const rows: any = await prisma.$queryRawUnsafe(`SELECT * FROM hero_settings WHERE id = 'default' LIMIT 1`);
+          updatedSetting = rows?.[0] || { id: 'default', ...updateData };
+        } catch {
+          updatedSetting = { id: 'default', ...updateData };
+        }
+      }
 
       if (heroGridMode !== undefined) {
         try {
@@ -662,28 +760,35 @@ export class HeroController {
         }
       }
 
-      const featuredIds = [slot1Id, slot2Id, slot3Id].filter((id): id is string => Boolean(id));
+      const activeSlot1Id = slot1Id !== undefined ? slot1Id : (updatedSetting?.slot1Id || null);
+      const activeSlot2Id = slot2Id !== undefined ? slot2Id : (updatedSetting?.slot2Id || null);
+      const activeSlot3Id = slot3Id !== undefined ? slot3Id : (updatedSetting?.slot3Id || null);
+      const featuredIds = [activeSlot1Id, activeSlot2Id, activeSlot3Id].filter((id): id is string => Boolean(id));
       const postsMap = new Map<string, any>();
       if (featuredIds.length > 0) {
-        const posts = await prisma.post.findMany({
-          where: { id: { in: featuredIds } },
-          select: heroPostSelect,
-        });
+        const posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { id: { in: featuredIds } },
+            select: heroPostSelect,
+          })
+        ).catch(() => []);
         posts.forEach((p) => postsMap.set(p.id, formatPost(p)));
       }
 
       const slots = [
-        slot1Id ? postsMap.get(slot1Id) || null : null,
-        slot2Id ? postsMap.get(slot2Id) || null : null,
-        slot3Id ? postsMap.get(slot3Id) || null : null,
+        activeSlot1Id ? postsMap.get(activeSlot1Id) || null : null,
+        activeSlot2Id ? postsMap.get(activeSlot2Id) || null : null,
+        activeSlot3Id ? postsMap.get(activeSlot3Id) || null : null,
       ];
 
       let trendingNewsArticles: any[] = [];
       if (parsedTrendingNewsIds.length > 0) {
-        const posts = await prisma.post.findMany({
-          where: { id: { in: parsedTrendingNewsIds }, status: 'PUBLISHED' },
-          select: heroPostSelect,
-        });
+        const posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { id: { in: parsedTrendingNewsIds }, status: 'PUBLISHED' },
+            select: heroPostSelect,
+          })
+        ).catch(() => []);
         const map = new Map<string, any>();
         posts.forEach((p) => map.set(p.id, formatPost(p)));
         trendingNewsArticles = parsedTrendingNewsIds
@@ -693,10 +798,12 @@ export class HeroController {
 
       let popularNewsArticles: any[] = [];
       if (parsedPopularNewsIds.length > 0) {
-        const posts = await prisma.post.findMany({
-          where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
-          select: heroPostSelect,
-        });
+        const posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
+            select: heroPostSelect,
+          })
+        ).catch(() => []);
         const map = new Map<string, any>();
         posts.forEach((p) => map.set(p.id, formatPost(p)));
         popularNewsArticles = parsedPopularNewsIds
@@ -717,30 +824,34 @@ export class HeroController {
 
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      const autoTopPosts = await prisma.post.findMany({
-        where: {
-          status: 'PUBLISHED',
-          createdAt: { gte: sevenDaysAgo },
-        },
-        orderBy: [
-          { views: 'desc' },
-          { articleNumber: 'desc' },
-        ],
-        take: 10,
-        select: heroPostSelect,
-      });
-
-      let autoPool = [...autoTopPosts];
-      if (autoPool.length < 10) {
-        const extraPosts = await prisma.post.findMany({
-          where: { status: 'PUBLISHED' },
+      const autoTopPosts = await withDbRetry(() =>
+        prisma.post.findMany({
+          where: {
+            status: 'PUBLISHED',
+            createdAt: { gte: sevenDaysAgo },
+          },
           orderBy: [
             { views: 'desc' },
             { articleNumber: 'desc' },
           ],
           take: 10,
           select: heroPostSelect,
-        });
+        })
+      ).catch(() => []);
+
+      let autoPool = [...autoTopPosts];
+      if (autoPool.length < 10) {
+        const extraPosts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { status: 'PUBLISHED' },
+            orderBy: [
+              { views: 'desc' },
+              { articleNumber: 'desc' },
+            ],
+            take: 10,
+            select: heroPostSelect,
+          })
+        ).catch(() => []);
         const seenIds = new Set(autoPool.map((p) => p.id));
         for (const ep of extraPosts) {
           if (autoPool.length >= 10) break;
@@ -758,10 +869,12 @@ export class HeroController {
       let mostReadArticles: any[] = [];
       if (finalMostReadMode === 'manual') {
         if (parsedMostReadIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: parsedMostReadIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
+          const posts = await withDbRetry(() =>
+            prisma.post.findMany({
+              where: { id: { in: parsedMostReadIds }, status: 'PUBLISHED' },
+              select: heroPostSelect,
+            })
+          ).catch(() => []);
           const map = new Map<string, any>();
           posts.forEach((p) => map.set(p.id, formatPost(p)));
           mostReadArticles = parsedMostReadIds
@@ -797,10 +910,12 @@ export class HeroController {
       let heroGridArticles: any[] = [];
       if (finalHeroGridMode === 'manual') {
         if (parsedHeroGridIds.length > 0) {
-          const posts = await prisma.post.findMany({
-            where: { id: { in: parsedHeroGridIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          });
+          const posts = await withDbRetry(() =>
+            prisma.post.findMany({
+              where: { id: { in: parsedHeroGridIds }, status: 'PUBLISHED' },
+              select: heroPostSelect,
+            })
+          ).catch(() => []);
           const map = new Map<string, any>();
           posts.forEach((p) => map.set(p.id, formatPost(p)));
           heroGridArticles = parsedHeroGridIds
@@ -810,19 +925,23 @@ export class HeroController {
         }
       } else {
         // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true)
-        let posts = await prisma.post.findMany({
-          where: { isFeatured: true, status: 'PUBLISHED' },
-          orderBy: { articleNumber: 'desc' },
-          take: 9,
-          select: heroPostSelect,
-        });
-        if (posts.length === 0) {
-          posts = await prisma.post.findMany({
-            where: { status: 'PUBLISHED' },
+        let posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { isFeatured: true, status: 'PUBLISHED' },
             orderBy: { articleNumber: 'desc' },
             take: 9,
             select: heroPostSelect,
-          });
+          })
+        ).catch(() => []);
+        if (posts.length === 0) {
+          posts = await withDbRetry(() =>
+            prisma.post.findMany({
+              where: { status: 'PUBLISHED' },
+              orderBy: { articleNumber: 'desc' },
+              take: 9,
+              select: heroPostSelect,
+            })
+          ).catch(() => []);
         }
         heroGridArticles = posts.map(formatPost);
         parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
@@ -840,10 +959,12 @@ export class HeroController {
 
       let heroSliderArticles: any[] = [];
       if (parsedHeroSliderIds.length > 0) {
-        const posts = await prisma.post.findMany({
-          where: { id: { in: parsedHeroSliderIds }, status: 'PUBLISHED' },
-          select: heroPostSelect,
-        });
+        const posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { id: { in: parsedHeroSliderIds }, status: 'PUBLISHED' },
+            select: heroPostSelect,
+          })
+        ).catch(() => []);
         const map = new Map<string, any>();
         posts.forEach((p) => map.set(p.id, formatPost(p)));
         heroSliderArticles = parsedHeroSliderIds
