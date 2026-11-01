@@ -78,6 +78,14 @@ const mockFactCheckList = [
   }
 ];
 
+function getArticleImage(art: any, fallback = '/assets/demo/2.jpg'): string {
+  const raw = art?.featuredImage || art?.image || (art?.media && art.media[0]?.url) || '';
+  if (raw && typeof raw === 'string' && raw.trim() !== '') {
+    return raw.trim();
+  }
+  return fallback;
+}
+
 /* --- Fact Check Section ("ફેક્ટ ચેક" Zone) ----------------------------- */
 export default function FactCheckSection({ language, initialArticles }: { language: Language; initialArticles?: Article[] }) {
   const sortFactCheckLatest = useCallback((list: Article[]) => {
@@ -110,8 +118,8 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   const fetchFreshFactCheckArticles = useCallback(async () => {
     try {
       const [res1, res2] = await Promise.all([
-        getPublicArticles({ categorySlug: 'fact-check', limit: 12, sort: 'latest' }).catch(() => null),
-        getPublicArticles({ categorySlug: 'factcheck', limit: 12, sort: 'latest' }).catch(() => null),
+        getPublicArticles({ categorySlug: 'fact-check', limit: 15, sort: 'latest' }).catch(() => null),
+        getPublicArticles({ categorySlug: 'factcheck', limit: 15, sort: 'latest' }).catch(() => null),
       ]);
       const fetched = [
         ...(res1?.articles || []),
@@ -132,8 +140,8 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   }, [initialArticles, sortFactCheckLatest]);
 
   useEffect(() => {
-    // Only fetch from network if initial data was not provided via SSR
-    if (!initialArticles || initialArticles.length === 0) {
+    // Always ensure full fact check articles list (at least 7 items for featured + 6 grid cards)
+    if (!initialArticles || initialArticles.length < 7) {
       fetchFreshFactCheckArticles();
     }
 
@@ -179,7 +187,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
       : 'Gujarat Post investigation revealed that the viral circular is fake – the education department has made no such announcement.'
   );
   const featSlug = featArt ? featArt.slug : 'fake-news-alert-free-laptop-scheme-circular-busted-520';
-  const featImage = featArt?.image || '/assets/demo/5.jpg';
+  const featImage = getArticleImage(featArt, '/assets/demo/5.jpg');
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-2" suppressHydrationWarning>
@@ -275,11 +283,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     {/* Image on Right */}
                     <div className="relative aspect-[16/10] w-[130px] h-[88px] sm:w-[140px] sm:h-[94px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
                       <Image
-                        src={item.image || '/assets/demo/2.jpg'}
-                        alt={item.titleGu || item.title}
+                        src={getArticleImage(item, '/assets/demo/2.jpg')}
+                        alt={item.titleGu || item.title || 'Fact Check'}
                         fill
                         sizes="(max-width: 640px) 130px, 140px"
-                        className="object-contain transition-transform duration-300"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
                   </Link>
@@ -340,11 +348,11 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     {/* Image Left */}
                     <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
                       <Image
-                        src={item.image || '/assets/demo/2.jpg'}
-                        alt={item.titleGu || item.title}
+                        src={getArticleImage(item, '/assets/demo/2.jpg')}
+                        alt={item.titleGu || item.title || 'Fact Check'}
                         fill
                         sizes="(max-width: 1024px) 155px, 170px"
-                        className="object-contain transition-transform duration-300"
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
 

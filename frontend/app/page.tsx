@@ -17,6 +17,7 @@ export default async function HomePage() {
   const [
     articlesRes,
     techArticlesRes,
+    factCheckArticlesRes,
     heroSettings,
     categories,
     videosRes,
@@ -26,6 +27,7 @@ export default async function HomePage() {
   ] = await Promise.all([
     getPublicArticles({ limit: 80, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     getPublicArticles({ categorySlug: 'technology', limit: 12, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ categorySlug: 'fact-check', limit: 15, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     getHeroSettings().catch(() => null),
     getPublicCategories({ showInHome: true }).catch(() => []),
     getPublicVideos('video').catch(() => []),
@@ -121,8 +123,14 @@ export default async function HomePage() {
       ...articles.filter((a) => isCat(a, 'technology', 'tech', 'ટેકનોલોજી')),
       ...(((techArticlesRes as any)?.articles) || [])
     ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
-    factcheck: sortByLatest(articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'))),
-    'fact-check': sortByLatest(articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'))),
+    factcheck: sortByLatest([
+      ...articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')),
+      ...(((factCheckArticlesRes as any)?.articles) || [])
+    ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
+    'fact-check': sortByLatest([
+      ...articles.filter((a) => isCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')),
+      ...(((factCheckArticlesRes as any)?.articles) || [])
+    ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
     sports: sortByLatest(articles.filter((a) => isCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત'))),
     politics: sortByLatest(articles.filter((a) => isCat(a, 'politics', 'rajkaran', 'રાજકારણ'))),
     business: sortByLatest(articles.filter((a) => isCat(a, 'business', 'વેપાર', 'બિઝનેસ'))),

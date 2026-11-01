@@ -106,7 +106,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
   useEffect(() => {
     // Only fetch from network if initial data was not provided via SSR
     const valid = (initialArticles || []).filter(isFactCheckArticle);
-    if (valid.length === 0) {
+    if (valid.length < 5) {
       fetchFreshTrendingArticles();
     }
 
