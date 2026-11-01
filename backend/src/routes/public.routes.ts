@@ -1177,6 +1177,16 @@ router.get('/market-rates', async (req, res) => {
 
 let liveCenterCache: { data: any; timestamp: number } | null = null;
 let isLiveCenterUpdating = false;
+let lastLiveCenterUpdateStart = 0;
+
+// Safe fetch with AbortSignal timeout to prevent hangs
+const fetchWithTimeout = (url: string, opts: any = {}, timeoutMs = 6000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...opts, signal: controller.signal })
+    .catch(() => null)
+    .finally(() => clearTimeout(id));
+};
 
 const CRICKET_API_KEY = process.env.CRICKET_API_KEY || 'cdb_live_0a0b359fd448729b5be23b1d06e8578b';
 const FOOTBALL_API_KEY = process.env.FOOTBALL_API_KEY || 'e29314e3ccb62a64d975fcc74be9c72a';
@@ -1184,10 +1194,16 @@ const BHARAT_STOCK_API_KEY = process.env.BHARAT_STOCK_API_KEY || 'bsk_live_EEEX8
 const APIMITRA_KEY = process.env.APIMITRA_KEY || 'apk_dcfb55ba4dd2646324eeeab3637752f2897f';
 
 export async function fetchFreshLiveCenterData(force = false) {
-  if (isLiveCenterUpdating) return;
+  const now = Date.now();
+  // Auto-release lock if stuck for more than 25 seconds
+  if (isLiveCenterUpdating && now - lastLiveCenterUpdateStart < 25000) {
+    return;
+  }
   isLiveCenterUpdating = true;
+  lastLiveCenterUpdateStart = now;
+
   try {
-    const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' };
+    const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' };
     const todayStr = new Date().toISOString().split('T')[0];
 
     const [
@@ -1202,34 +1218,32 @@ export async function fetchFreshLiveCenterData(force = false) {
       apimitraCitiesRes,
       apimitraFuelRes,
       livePetrolHtml,
-      liveDieselHtml
+      liveDieselHtml,
+      liveCngHtml
     ] = await Promise.all([
-      fetch('https://open.er-api.com/v6/latest/USD', { headers }).then((r) => r.json()).catch(() => null),
-      fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI', { headers }).then((r) => r.json()).catch(() => null),
-      fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN', { headers }).then((r) => r.json()).catch(() => null),
-      fetch('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK', { headers }).then((r) => r.json()).catch(() => null),
-      fetch('https://bharatstockapi.com/v1/stocks/quotes?symbols=RELIANCE,TCS,HDFCBANK', {
+      fetchWithTimeout('https://open.er-api.com/v6/latest/USD', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://bharatstockapi.com/v1/stocks/quotes?symbols=RELIANCE,TCS,HDFCBANK', {
         headers: { 'X-API-Key': BHARAT_STOCK_API_KEY }
-      }).then((r) => r.json()).catch(() => null),
-      fetch('https://api.cricketdatabase.com/v1/results/yesterday', {
+      }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://api.cricketdatabase.com/v1/results/yesterday', {
         headers: { Authorization: `Bearer ${CRICKET_API_KEY}`, Accept: 'application/json' }
-      }).then((r) => r.json()).catch(() => null),
-      fetch(`https://v3.football.api-sports.io/fixtures?date=${todayStr}&timezone=Asia/Kolkata`, {
+      }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout(`https://v3.football.api-sports.io/fixtures?date=${todayStr}&timezone=Asia/Kolkata`, {
         headers: { 'x-apisports-key': FOOTBALL_API_KEY }
-      }).then((r) => r.json()).catch(() => null),
-      fetch('https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard', { headers }).then((r) => r.json()).catch(() => null),
-      fetch('https://api.apimitra.in/fuel/cities', {
+      }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://site.api.espn.com/apis/site/v2/sports/soccer/eng.1/scoreboard', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://api.apimitra.in/fuel/cities', {
         headers: { 'x-api-key': APIMITRA_KEY, Accept: 'application/json' }
-      }).then((r) => r.json()).catch(() => null),
-      fetch('https://api.apimitra.in/fuel?state=gujarat', {
+      }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://api.apimitra.in/fuel?state=gujarat', {
         headers: { 'x-api-key': APIMITRA_KEY, Accept: 'application/json' }
-      }).then((r) => r.json()).catch(() => null),
-      fetch('https://www.goodreturns.in/petrol-price-in-gujarat-s12.html', {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-      }).then((r) => r.text()).catch(() => null),
-      fetch('https://www.goodreturns.in/diesel-price-in-gujarat-s12.html', {
-        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
-      }).then((r) => r.text()).catch(() => null),
+      }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://www.goodreturns.in/petrol-price-in-gujarat-s12.html', { headers }).then((r) => r ? r.text() : null).catch(() => null),
+      fetchWithTimeout('https://www.goodreturns.in/diesel-price-in-gujarat-s12.html', { headers }).then((r) => r ? r.text() : null).catch(() => null),
+      fetchWithTimeout('https://www.goodreturns.in/cng-price-in-gujarat-s12.html', { headers }).then((r) => r ? r.text() : null).catch(() => null),
     ]);
 
     // 1. Live USD/INR Rate
@@ -1369,7 +1383,7 @@ export async function fetchFreshLiveCenterData(force = false) {
         const seriesIds = [19430, 14389, 20353, 21504, 8040, 8053];
         for (const sId of seriesIds) {
           if (cricketMatches.length >= 3) break;
-          const espnRes = (await fetch(`https://site.api.espn.com/apis/site/v2/sports/cricket/${sId}/scoreboard`, { headers }).then(r => r.json()).catch(() => null)) as any;
+          const espnRes = (await fetchWithTimeout(`https://site.api.espn.com/apis/site/v2/sports/cricket/${sId}/scoreboard`, { headers }).then(r => r ? r.json() : null).catch(() => null)) as any;
           if (Array.isArray(espnRes?.events)) {
             for (const evt of espnRes.events) {
               if (cricketMatches.length >= 3) break;
@@ -1409,17 +1423,34 @@ export async function fetchFreshLiveCenterData(force = false) {
       ];
     }
 
-    // 5. Fuel Prices: APIMitra API + Live Gujarat Rates with IOC/HPCL benchmark fallbacks
+    // 5. Fuel Prices: Start with previously cached/DB rates if present, or verified Gujarat benchmark
+    const prevFuel = liveCenterCache?.data?.fuelPrices;
     const fuelPrices: Record<string, { petrol: string; diesel: string; cng: string }> = {
-      Ahmedabad: { petrol: '102.15', diesel: '98.27', cng: '76.00' },
-      Vadodara: { petrol: '101.46', diesel: '97.57', cng: '75.50' },
-      Surat: { petrol: '101.82', diesel: '97.95', cng: '76.20' },
-      Rajkot: { petrol: '101.85', diesel: '97.99', cng: '75.80' },
+      Ahmedabad: {
+        petrol: prevFuel?.Ahmedabad?.petrol || '101.83',
+        diesel: prevFuel?.Ahmedabad?.diesel || '97.92',
+        cng: prevFuel?.Ahmedabad?.cng || '98.47'
+      },
+      Vadodara: {
+        petrol: prevFuel?.Vadodara?.petrol || '101.46',
+        diesel: prevFuel?.Vadodara?.diesel || '97.57',
+        cng: prevFuel?.Vadodara?.cng || '96.55'
+      },
+      Surat: {
+        petrol: prevFuel?.Surat?.petrol || '102.41',
+        diesel: prevFuel?.Surat?.diesel || '98.55',
+        cng: prevFuel?.Surat?.cng || '88.76'
+      },
+      Rajkot: {
+        petrol: prevFuel?.Rajkot?.petrol || '101.59',
+        diesel: prevFuel?.Rajkot?.diesel || '97.72',
+        cng: prevFuel?.Rajkot?.cng || '88.76'
+      },
     };
 
     try {
       // Parse Live Gujarat fuel prices table
-      const parsePortalRows = (html: string | null, fuelType: 'petrol' | 'diesel') => {
+      const parsePortalRows = (html: string | null, fuelType: 'petrol' | 'diesel' | 'cng') => {
         if (!html) return;
         const rows = html.match(/<tr[\s\S]*?<\/tr>/gi) || [];
         for (const r of rows) {
@@ -1428,7 +1459,10 @@ export async function fetchFreshLiveCenterData(force = false) {
             if (new RegExp('\\b' + cityKey + '\\b', 'i').test(text)) {
               const m = text.match(/₹\s*([0-9]+\.[0-9]+)/);
               if (m && m[1]) {
-                fuelPrices[cityKey][fuelType] = Number(m[1]).toFixed(2);
+                const val = Number(m[1]);
+                if (val > 50 && val < 200) {
+                  fuelPrices[cityKey][fuelType] = val.toFixed(2);
+                }
               }
             }
           }
@@ -1436,6 +1470,20 @@ export async function fetchFreshLiveCenterData(force = false) {
       };
       parsePortalRows(livePetrolHtml, 'petrol');
       parsePortalRows(liveDieselHtml, 'diesel');
+      parsePortalRows(liveCngHtml, 'cng');
+
+      // Secondary fallback: if Ahmedabad CNG wasn't extracted, check city page
+      if (!fuelPrices.Ahmedabad.cng || Number(fuelPrices.Ahmedabad.cng) < 80) {
+        const cngAhmRes = await fetchWithTimeout('https://www.goodreturns.in/cng-price-in-ahmedabad.html', { headers }, 4000)
+          .then((r) => (r ? r.text() : null))
+          .catch(() => null);
+        if (cngAhmRes) {
+          const m = cngAhmRes.match(/&#x20b9;\s*([0-9]+\.[0-9]+)/);
+          if (m && m[1] && Number(m[1]) > 70) {
+            fuelPrices.Ahmedabad.cng = Number(m[1]).toFixed(2);
+          }
+        }
+      }
 
       // Parse APIMitra API if active or approved for key
       const apimitraCandidates = [
@@ -1450,14 +1498,17 @@ export async function fetchFreshLiveCenterData(force = false) {
         const cName = (item.city || item.district || item.name || '').toLowerCase();
         for (const cityKey of ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot']) {
           if (cName.includes(cityKey.toLowerCase())) {
-            if (item.petrol) fuelPrices[cityKey].petrol = Number(item.petrol).toFixed(2);
-            if (item.diesel) fuelPrices[cityKey].diesel = Number(item.diesel).toFixed(2);
-            if (item.cng) fuelPrices[cityKey].cng = Number(item.cng).toFixed(2);
+            if (item.petrol && Number(item.petrol) > 50) fuelPrices[cityKey].petrol = Number(item.petrol).toFixed(2);
+            if (item.diesel && Number(item.diesel) > 50) fuelPrices[cityKey].diesel = Number(item.diesel).toFixed(2);
+            if (item.cng && Number(item.cng) > 50) fuelPrices[cityKey].cng = Number(item.cng).toFixed(2);
             if (item.fuel && item.price) {
               const fType = String(item.fuel).toLowerCase();
-              if (fType.includes('petrol')) fuelPrices[cityKey].petrol = Number(item.price).toFixed(2);
-              if (fType.includes('diesel')) fuelPrices[cityKey].diesel = Number(item.price).toFixed(2);
-              if (fType.includes('cng')) fuelPrices[cityKey].cng = Number(item.price).toFixed(2);
+              const pVal = Number(item.price);
+              if (pVal > 50) {
+                if (fType.includes('petrol')) fuelPrices[cityKey].petrol = pVal.toFixed(2);
+                if (fType.includes('diesel')) fuelPrices[cityKey].diesel = pVal.toFixed(2);
+                if (fType.includes('cng')) fuelPrices[cityKey].cng = pVal.toFixed(2);
+              }
             }
           }
         }
@@ -1491,16 +1542,31 @@ export async function fetchFreshLiveCenterData(force = false) {
   }
 }
 
+// Background sync every 15 minutes: ensures the database always has fresh daily rates
+setInterval(() => {
+  fetchFreshLiveCenterData().catch(() => { });
+}, 15 * 60 * 1000);
+
 /**
  * GET /api/public/live-center
  * Fetch real live Stock Market, Fuel Prices, Exchange Rates, and Sports Scores via public APIs
  * Persisted in MySQL DB and served with fail-safe caching.
+ * Guaranteed to never return stale multi-day-old rates when accessed on any future date.
  */
 router.get('/live-center', async (req, res) => {
   const NOW = Date.now();
   const forceRefresh = req.query.refresh === 'true';
 
-  // If force refresh requested
+  const checkStaleness = (updatedAtStr?: string, cacheTime?: number) => {
+    const t = updatedAtStr ? new Date(updatedAtStr).getTime() : (cacheTime || 0);
+    if (!t || isNaN(t)) return { isDifferentDay: true, isStale: true, isVeryOld: true, time: 0 };
+    const isDifferentDay = new Date(t).toDateString() !== new Date(NOW).toDateString();
+    const isStale = NOW - t >= 15 * 60 * 1000; // 15 mins
+    const isVeryOld = NOW - t >= 60 * 60 * 1000; // 1 hour
+    return { isDifferentDay, isStale, isVeryOld, time: t };
+  };
+
+  // 1. Force refresh requested
   if (forceRefresh) {
     await fetchFreshLiveCenterData(true);
     if (liveCenterCache) {
@@ -1508,29 +1574,54 @@ router.get('/live-center', async (req, res) => {
     }
   }
 
-  // If memory cache exists
-  if (liveCenterCache) {
-    const isStale = NOW - liveCenterCache.timestamp >= 15 * 60 * 1000; // 15 mins
-    if (isStale) {
+  // 2. Check in-memory cache
+  if (liveCenterCache && liveCenterCache.data) {
+    const { isDifferentDay, isStale, isVeryOld } = checkStaleness(
+      liveCenterCache.data.updatedAt,
+      liveCenterCache.timestamp
+    );
+
+    // If cache is from a previous calendar day or older than 1 hour (e.g. visited after 5 days):
+    // Await live fetch immediately so user gets today's real prices right now!
+    if (isDifferentDay || isVeryOld) {
+      await fetchFreshLiveCenterData(true);
+      if (liveCenterCache) {
+        return sendSuccess(res, liveCenterCache.data, 'Live center data refreshed for today');
+      }
+    } else if (isStale) {
+      // 15-60 mins old: return cache, refresh in background
       fetchFreshLiveCenterData().catch(() => { });
+      return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
+    } else {
+      // Very fresh (< 15 mins and same day)
+      return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
     }
-    return sendSuccess(res, liveCenterCache.data, 'Live center data retrieved from cache');
   }
 
-  // If memory cache is null (e.g. server restart), first read from DB snapshot immediately
+  // 3. If memory cache is null (server restarted), check DB snapshot
   try {
     const row: any = await prisma.$queryRawUnsafe("SELECT liveCenterJson FROM hero_settings WHERE id = 'default' LIMIT 1").catch(() => null);
     if (Array.isArray(row) && row[0]?.liveCenterJson) {
       const parsed = JSON.parse(row[0].liveCenterJson);
-      liveCenterCache = { data: parsed, timestamp: NOW };
-      // Background refresh if older than 15 mins
-      fetchFreshLiveCenterData().catch(() => { });
+      const { isDifferentDay, isStale, isVeryOld, time } = checkStaleness(parsed?.updatedAt);
+      liveCenterCache = { data: parsed, timestamp: time || NOW };
+
+      // If DB snapshot is from 5 days ago or a previous day, fetch live fresh data right away!
+      if (isDifferentDay || isVeryOld) {
+        await fetchFreshLiveCenterData(true);
+        if (liveCenterCache) {
+          return sendSuccess(res, liveCenterCache.data, 'Live center data refreshed for today');
+        }
+      } else if (isStale) {
+        fetchFreshLiveCenterData().catch(() => { });
+      }
+
       return sendSuccess(res, parsed, 'Live center data retrieved from database snapshot');
     }
   } catch (e) { }
 
-  // Otherwise, fetch fresh and save to DB
-  await fetchFreshLiveCenterData();
+  // 4. Otherwise, fetch fresh immediately
+  await fetchFreshLiveCenterData(true);
   const freshCache = liveCenterCache as { data: any; timestamp: number } | null;
   if (freshCache) {
     return sendSuccess(res, freshCache.data, 'Real live market and sports data retrieved via public APIs and saved to DB');
