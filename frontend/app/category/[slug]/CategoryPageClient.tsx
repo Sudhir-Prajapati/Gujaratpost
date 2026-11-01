@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight, ChevronLeft } from 'lucide-react';
+import { Eye, Play, Video as VideoIcon, ChevronDown, ChevronRight, ChevronLeft , Camera } from 'lucide-react';
 import { Article } from '@/types';
 import { useApp } from '@/components/AppProvider';
 import {
@@ -1799,6 +1799,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
+                const photoCount = Array.isArray(photo.images) && photo.images.length > 1
+                  ? photo.images.length
+                  : (photo.imageCount && photo.imageCount > 1 ? photo.imageCount : 0);
 
                 return (
                   <Link
@@ -1806,25 +1809,45 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     href={`/photos/${photo.id || ''}`}
                     className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-black shadow-md transition-all duration-300 active:scale-[0.99]"
                   >
+                    {/* Ambient blurred backdrop so portrait images gracefully fill the box without being cropped */}
+                    <img
+                      src={photoSrc}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
+                    />
+                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
+
+                    {/* Main image - object-contain matching Photo Gallery */}
                     <img
                       src={photoSrc}
                       alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      className="transition-transform duration-500 group-hover:scale-105"
+                      className="relative z-10 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                       loading="lazy"
                     />
 
-                    {/* Dark gradient overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent pointer-events-none" />
+                    {/* Top ambient gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none z-10" />
 
-                    {/* Category pill badge top-left */}
-                    <span className="absolute top-3.5 left-3.5 z-10 bg-[#b31217] text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-sm pointer-events-none">
-                      <AutoTranslateString text={photoCategory} language={language as any} />
-                    </span>
+                    {/* Dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none z-10" />
+
+                    {/* Top badges: Category & Photo count */}
+                    <div className="absolute top-3.5 inset-x-3.5 z-20 flex items-center justify-between pointer-events-none">
+                      <span className="bg-[#b31217] text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">
+                        <AutoTranslateString text={photoCategory} language={language as any} />
+                      </span>
+                      {photoCount > 1 && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[11px] font-black text-white shadow-md border border-white/20">
+                          <Camera className="w-3 h-3 text-red-400" />
+                          <span>{photoCount}</span>
+                        </span>
+                      )}
+                    </div>
 
                     {/* Title inside card at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 z-10 pointer-events-none">
+                    <div className="absolute bottom-0 left-0 right-0 p-4 z-20 pointer-events-none">
                       <p className="text-white text-[16px] sm:text-[17px] font-black leading-snug line-clamp-2 drop-shadow-md">
                         <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
@@ -1845,6 +1868,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                 const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
+                const photoCount = Array.isArray(photo.images) && photo.images.length > 1
+                  ? photo.images.length
+                  : (photo.imageCount && photo.imageCount > 1 ? photo.imageCount : 0);
 
                 return (
                   <Link
@@ -1853,24 +1879,45 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     className="group relative block overflow-hidden rounded-2xl border-2 border-[#b31217] bg-black shadow-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                     style={{ aspectRatio: '1/1' }}
                   >
+                    {/* Ambient blurred backdrop so portrait images gracefully fill the box without being cropped */}
+                    <img
+                      src={photoSrc}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
+                    />
+                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
+
+                    {/* Main image - object-contain matching Photo Gallery */}
                     <img
                       src={photoSrc}
                       alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                      style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                      className="transition-transform duration-500 group-hover:scale-105"
+                      className="relative z-10 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                       loading="lazy"
                     />
-                    {/* Dark gradient overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none" />
 
-                    {/* Category pill badge top-left */}
-                    <span className="absolute top-2.5 left-2.5 z-10 bg-[#b31217] text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-sm pointer-events-none">
-                      <AutoTranslateString text={photoCategory} language={language as any} />
-                    </span>
+                    {/* Top ambient gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none z-10" />
+
+                    {/* Dark gradient overlay for text readability */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none z-10" />
+
+                    {/* Top badges: Category & Photo count */}
+                    <div className="absolute top-2.5 inset-x-2.5 z-20 flex items-center justify-between pointer-events-none">
+                      <span className="bg-[#b31217] text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-sm">
+                        <AutoTranslateString text={photoCategory} language={language as any} />
+                      </span>
+                      {photoCount > 1 && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[10.5px] font-black text-white shadow-md border border-white/20">
+                          <Camera className="w-3 h-3 text-red-400" />
+                          <span>{photoCount}</span>
+                        </span>
+                      )}
+                    </div>
 
                     {/* Title + "― ફોટો જુઓ >" inside the card at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 z-10 flex flex-col pointer-events-none">
+                    <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex flex-col pointer-events-none">
                       <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md mb-2">
                         <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
