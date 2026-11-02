@@ -196,6 +196,24 @@ const ArticleContentBody = memo(function ArticleContentBody({
       }
     );
 
+    // Handle raw blockquote.twitter-tweet pasted directly inside description content
+    // Strip inline <script> (doesn't execute via innerHTML) and wrap in gp-twitter-embed-wrap so twttr.widgets.load() picks it up
+    raw = raw.replace(
+      /(<blockquote\b[^>]*class=["'][^"']*twitter-tweet[^"']*["'][^>]*>[\s\S]*?<\/blockquote>)(?:\s*<script\b[^>]*platform\.twitter\.com\/widgets\.js[^>]*><\/script>)?/gi,
+      (match, bq) => {
+        // Extract tweet URL from the blockquote <a href>
+        const urlMatch = bq.match(/href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i);
+        const tweetUrl = urlMatch ? urlMatch[1].replace(/&amp;/g, '&') : '';
+        // Only if not already inside a gp-twitter-embed-wrap
+        if (match.includes('gp-twitter-embed-wrap')) return match;
+        if (tweetUrl) {
+          // Clean any existing href in the blockquote and rebuild as native embed
+          return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}">${bq}</div>`;
+        }
+        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full">${bq}</div>`;
+      }
+    );
+
     // Convert paragraph-level <div> to <p class="article-para my-3">
     raw = raw.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
       if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
@@ -683,11 +701,12 @@ function stripArticleUtilityLines(rawHtml: string): string {
 }
 
 function normalizeArticleMarkdown(rawHtml: string): string {
-  const clean = (rawHtml || '')
+  let clean = (rawHtml || '')
     .replace(/\\r\\n/g, '\n')
     .replace(/\\r/g, '')
     .replace(/\\n/g, '\n')
     .replace(/\\t/g, ' ');
+  clean = clean.replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '');
   return stripArticleUtilityLines(clean)
     .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
     .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
@@ -1296,6 +1315,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const rawContent = `${article.content || ''}\n${(article as any).contentGu || ''}\n${(article as any).contentHi || ''}`;
     const matches = rawContent.matchAll(/!\[(?:Gallery Image \d+|.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi);
     for (const match of matches) {
+      if (match[1]) {
+        const clean = sanitizeImageUrl(match[1]);
+        if (!images.includes(clean)) images.push(clean);
+      }
+    }
+
+    const hiddenImgMatches = rawContent.matchAll(/<!--\s*gp-section-\d+-hidden-image:\s*([^\s>]+)\s*-->/gi);
+    for (const match of hiddenImgMatches) {
       if (match[1]) {
         const clean = sanitizeImageUrl(match[1]);
         if (!images.includes(clean)) images.push(clean);

@@ -372,6 +372,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     imageUrl: string;
     imageMode: 'upload' | 'url';
     imageUploading: boolean;
+    showImageAfterDesc?: boolean;
   }
 
   // Paired story continuation sections (Section 2 to Section 10: Description N & Image N together)
@@ -759,13 +760,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   // Helper to thoroughly purge any embedded social media figures, cards, blockquotes, and iframes from description text
   const purgeEmbedsFromText = (text: string) => {
     if (!text) return '';
+    // Preserve all inline user embeds (Twitter, YouTube, Instagram, Facebook, figures, blockquotes, iframes) inside descriptions
     return text
-      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["'][^"']+["'][^>]*>[\s\S]*?<\/figure>/gi, '')
       .replace(/<div[^>]*class=["'][^"']*(?:gp-x-card)[^"']*["']>[\s\S]*?<\/div>/gi, '')
-      .replace(/<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*platform\.twitter\.com\/widgets\.js[^>]*><\/script>)?/gi, '')
-      .replace(/<blockquote[^>]*class=["'][^"']*instagram-media[^"']*["'][^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*instagram\.com\/embed\.js[^>]*><\/script>)?/gi, '')
-      .replace(/(?:<div[^>]*aspect-video[^>]*>\s*)?<iframe\b[^>]*src=["'](?:https?:)?\/\/(?:www\.)?(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})[^"']*["'][^>]*>[\s\S]*?<\/iframe>(?:\s*<\/div>)?/gi, '')
-      .replace(/(?:<div[^>]*max-w-\[540px\][^>]*>\s*)?<iframe\b[^>]*src=["'](https?:\/\/(?:www\.)?facebook\.com\/plugins\/(?:post|video)\.php\?[^"']+)["'][^>]*>[\s\S]*?<\/iframe>(?:\s*<\/div>)?/gi, '')
       .trim();
   };
 
@@ -775,7 +772,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     d1Str: string,
     qT: string,
     qC: string,
-    pairedSections: { desc: string; imageUrl: string }[],
+    pairedSections: { desc: string; imageUrl: string; showImageAfterDesc?: boolean }[],
     lang: 'en' | 'gu' | 'hi'
   ) => {
     const parts: string[] = [];
@@ -853,7 +850,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         parts.push(cleanDesc);
       }
       if (sec.imageUrl && sec.imageUrl.trim()) {
-        parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
+        if (sec.showImageAfterDesc === false) {
+          parts.push(`<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`);
+        } else {
+          parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
+        }
       }
 
       if (!pdfPlaced && pdfBlockHtml && pdfPosition === `after_desc_${sectionNum}`) {
@@ -1159,7 +1160,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     let extractedPdfUrl = '';
     let hasPdfPages = false;
     let extractedPdfPosition = 'end';
-    const extractedImgs: { index: number; url: string }[] = [];
+    const extractedImgs: { index: number; url: string; showImageAfterDesc?: boolean }[] = [];
     const extractedDescsMap: { index: number; text: string }[] = [];
 
     if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages, extractedPdfPosition };
@@ -1212,8 +1213,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     while ((gMatch = galleryRegex.exec(raw)) !== null) {
       if (gMatch[2]) {
         const num = parseInt(gMatch[1], 10) || 2;
-        extractedImgs.push({ index: num, url: gMatch[2] });
+        extractedImgs.push({ index: num, url: gMatch[2], showImageAfterDesc: true });
       }
+
+        // Extract hidden section images (showImageAfterDesc = false)
+        const hiddenImgRegex = /<!--\s*gp-section-(\d+)-hidden-image:\s*([^\s>]+)\s*-->/gi;
+        let hMatch: RegExpExecArray | null;
+        while ((hMatch = hiddenImgRegex.exec(raw)) !== null) {
+          if (hMatch[2]) {
+            const num = parseInt(hMatch[1], 10) || 2;
+            extractedImgs.push({ index: num, url: hMatch[2], showImageAfterDesc: false });
+          }
+        }
     }
 
     // Purge PDF markup from working string
@@ -1374,14 +1385,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     // Check if new structured section delimiters <!-- gp-section-N --> exist
     if (/<!--\s*gp-section-\d+\s*-->/.test(workingRaw)) {
       const parts = workingRaw.split(/<!--\s*gp-section-(\d+)\s*-->/);
-      d1Str = purgePdfFromText(parts[0].replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').trim())
+      d1Str = purgePdfFromText(parts[0].replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
       for (let i = 1; i < parts.length; i += 2) {
         const secNum = parseInt(parts[i], 10);
         const secContent = parts[i + 1] || '';
-        const cleanSecText = purgePdfFromText(secContent.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').trim())
+        const cleanSecText = purgePdfFromText(secContent.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
           .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
           .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
           .trim();
@@ -2017,9 +2028,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     // Compile distinct input sections into complete article content strings
-    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl }));
-    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl }));
-    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl }));
+    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
+    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
+    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
 
     // Language-specific highlights: do NOT inject highlights if the admin left them blank!
     // If the primary language has no highlights, NO language gets highlights.
@@ -4447,6 +4458,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   )}
 
                   {slot.imageUrl && (
+                    <>
                     <div className="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-zinc-700/60">
                       <div className="flex items-center gap-3">
                         <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
@@ -4473,6 +4485,31 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         Clear Image {sectionNum}
                       </button>
                     </div>
+
+                    {/* Toggle: Show Image After Description N in Article */}
+                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-dashed border-gray-300 dark:border-zinc-700/60 bg-gray-50/80 dark:bg-zinc-800/40 px-3.5 py-2.5 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-emerald-600" />
+                        <span className="text-xs font-bold text-gray-800 dark:text-zinc-200">
+                          {sectionNum === 2
+                            ? 'વર્ણન ૨ પછી આર્ટિકલમાં આ ફોટો દર્શાવો (Show Image After Description 2)'
+                            : `વિભાગ ${sectionNum} (વર્ણન ${sectionNum}) પછી આ ફોટો દર્શાવો (Show Image After Desc ${sectionNum})`}
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={slot.showImageAfterDesc !== false}
+                          onChange={(e) => updateStorySection(idx, { showImageAfterDesc: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
+                        <span className="ml-2.5 text-xs font-extrabold text-gray-700 dark:text-zinc-300 min-w-[55px]">
+                          {slot.showImageAfterDesc !== false ? '✓ હા (Show)' : '✕ ના (Hide)'}
+                        </span>
+                      </label>
+                    </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -5195,7 +5232,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         {renderFormattedPreviewContent(descVal)}
                       </div>
                     )}
-                    {hasImg && (
+                    {hasImg && sec.showImageAfterDesc !== false && (
                       <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
                         <img
                           src={sanitizeImageUrl(sec.imageUrl)}
