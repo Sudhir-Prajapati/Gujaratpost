@@ -159,8 +159,8 @@ const ArticleContentBody = memo(function ArticleContentBody({
         const urlMatch =
           match.match(/data-article-social-url=["']([^"']+)["']/i) ||
           match.match(/href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i) ||
-          match.match(/https?:\/\/(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/i);
-        const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
+          match.match(/https?:\/\/(?:twitter\.com|x\.com)\/(?:[a-zA-Z0-9_]+\/status|i\/status)\/\d+/i);
+        const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]).replace(/&amp;/g, '&') : '';
         if (!tweetUrl) return match;
         return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
       }
@@ -1436,13 +1436,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     // Convert markdown images after translation as labels may no longer be English.
     cleaned = convertMarkdownImagesToFigures(cleaned, title);
 
-    // Collapse multiple nested blockquotes
+    // Collapse multiple nested generic blockquotes (preserve twitter-tweet and instagram-media embeds)
     cleaned = cleaned
-      .replace(/(<blockquote[^>]*>\s*)+/gi, '<blockquote class="my-6 border-l-[3px] border-[#B3121B] pl-4 py-1 font-sans font-bold text-neutral-900 dark:text-white">')
-      .replace(/(\s*<\/blockquote>)+/gi, '</blockquote>');
+      .replace(/(<blockquote(?![^>]*class=["'][^"']*(?:twitter-tweet|instagram-media)[^"']*)[^>]*>\s*)+/gi, '<blockquote class="my-6 border-l-[3px] border-[#B3121B] pl-4 py-1 font-sans font-bold text-neutral-900 dark:text-white">')
+      .replace(/(?<!<blockquote[^>]*>)(\s*<\/blockquote>)+/gi, '</blockquote>');
 
-    // Auto-link plain URLs that are not inside href="..."
-    cleaned = cleaned.replace(/(^|[\s>(])(https?:\/\/[^\s<"']+)/g, (match, prefix, url) => {
+    // Auto-link standalone plain URLs in text (safely skipping HTML tags, attributes, and existing <a> tags)
+    cleaned = cleaned.replace(/(<a\b[^>]*>[\s\S]*?<\/a>)|(<[^>]+>)|(^|[\s(])(https?:\/\/[^\s<"']+)/gi, (match, aTag, anyTag, prefix, url) => {
+      if (aTag || anyTag) return match;
       return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#B3121B] font-bold underline hover:text-[#8E0E15] break-all">${url}</a>`;
     });
 

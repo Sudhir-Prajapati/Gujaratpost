@@ -756,6 +756,19 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       .trim();
   };
 
+  // Helper to thoroughly purge any embedded social media figures, cards, blockquotes, and iframes from description text
+  const purgeEmbedsFromText = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["'][^"']+["'][^>]*>[\s\S]*?<\/figure>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-x-card)[^"']*["']>[\s\S]*?<\/div>/gi, '')
+      .replace(/<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*platform\.twitter\.com\/widgets\.js[^>]*><\/script>)?/gi, '')
+      .replace(/<blockquote[^>]*class=["'][^"']*instagram-media[^"']*["'][^>]*>[\s\S]*?<\/blockquote>(?:\s*<script[^>]*instagram\.com\/embed\.js[^>]*><\/script>)?/gi, '')
+      .replace(/(?:<div[^>]*aspect-video[^>]*>\s*)?<iframe\b[^>]*src=["'](?:https?:)?\/\/(?:www\.)?(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})[^"']*["'][^>]*>[\s\S]*?<\/iframe>(?:\s*<\/div>)?/gi, '')
+      .replace(/(?:<div[^>]*max-w-\[540px\][^>]*>\s*)?<iframe\b[^>]*src=["'](https?:\/\/(?:www\.)?facebook\.com\/plugins\/(?:post|video)\.php\?[^"']+)["'][^>]*>[\s\S]*?<\/iframe>(?:\s*<\/div>)?/gi, '')
+      .trim();
+  };
+
   // Helper to compile separate section fields into full article body
   const compileStructuredContent = (
     hl: string,
@@ -823,7 +836,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     // Story continuation sections: Description N then Image N
     pairedSections.forEach((sec, idx) => {
       const sectionNum = idx + 2;
-      let cleanDesc = purgePdfFromText(sec.desc)
+      let cleanDesc = purgeEmbedsFromText(purgePdfFromText(sec.desc))
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
