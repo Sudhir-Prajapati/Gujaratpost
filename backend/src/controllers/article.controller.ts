@@ -218,6 +218,7 @@ export class ArticleController {
                   { categories: { some: { category: { slug: { in: catSlugsToMatch } } } } },
                 ]),
             ...(catSlugLower === 'trending' ? [{ isTrending: true }] : []),
+            ...(catSlugLower === 'home' || catSlugLower === 'featured' || catSlugLower === 'home-news' ? [{ isFeatured: true }] : []),
             { location: { contains: catSlugLower } },
             { location: { contains: categorySlug } },
           ],
