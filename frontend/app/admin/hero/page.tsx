@@ -3122,21 +3122,19 @@ export default function HeroManagerPage() {
                   <div>
                     <p className="text-sm font-black">
                       {heroGridArticles.length === 0 && 'No Articles Added Yet (કૃપા કરીને નીચેથી આર્ટિકલ ઉમેરો)'}
-                      {heroGridArticles.length === 1 && 'Single Article Mode (માત્ર 1 આર્ટિકલ મોડ - સંપૂર્ણ હેરોમાં માત્ર 1 આર્ટિકલ દેખાશે)'}
-                      {heroGridArticles.length === 2 && '2 Articles Mode (2 આર્ટિકલ્સ મોડ - સ્પોટલાઇટ + 1 મિડલ કાર્ડ)'}
-                      {heroGridArticles.length === 3 && '3 Articles Mode (3 આર્ટિકલ્સ મોડ - સ્પોટલાઇટ + 2 મિડલ કાર્ડ્સ)'}
-                      {heroGridArticles.length >= 4 && heroGridArticles.length <= 7 && `${heroGridArticles.length} Articles Mode (${heroGridArticles.length} આર્ટિકલ્સ મોડ - સ્પોટલાઇટ + ${heroGridArticles.length - 1} મિડલ કાર્ડ્સ)`}
-                      {heroGridArticles.length === 8 && '8 Articles Mode (8 આર્ટિકલ્સ મોડ - 2 સ્પોટલાઇટ સ્લાઇડ્સ + 6 મિડલ કાર્ડ્સ)'}
+                      {heroGridArticles.length === 1 && 'Single Article Mode (માત્ર 1 આર્ટિકલ મોડ - સ્પોટલાઇટ સ્લાઇડ 1)'}
+                      {heroGridArticles.length === 2 && '2 Articles Mode (2 આર્ટિકલ્સ મોડ - 2 સ્પોટલાઇટ સ્લાઇડ્સ)'}
+                      {heroGridArticles.length === 3 && '3 Articles Mode (3 આર્ટિકલ્સ મોડ - 3 સ્પોટલાઇટ સ્લાઇડ્સ)'}
+                      {heroGridArticles.length >= 4 && heroGridArticles.length <= 8 && `${heroGridArticles.length} Articles Mode (3 સ્પોટલાઇટ સ્લાઇડ્સ + ${heroGridArticles.length - 3} મિડલ કાર્ડ્સ)`}
                       {heroGridArticles.length === 9 && 'Full 9 Articles Mode (સંપૂર્ણ 9 આર્ટિકલ્સ મોડ - 3 સ્પોટલાઇટ સ્લાઇડ્સ + 6 મિડલ કાર્ડ્સ)'}
                     </p>
                     <p className="text-xs mt-1 font-medium leading-relaxed">
                       {heroGridArticles.length === 0 && 'Automatic articles are hidden. Add 1, 2, 3, or more articles below (maximum 9). If saved with 0 articles, it safely falls back to latest news.'}
-                      {heroGridArticles.length === 1 && 'Automatic articles are completely hidden. The homepage hero section will display ONLY this 1 article in its standard spotlight card (preserving the clean 9-story height and layout, not blowing up into full width/space). Middle column is hidden.'}
-                      {heroGridArticles.length === 2 && 'Automatic articles are completely hidden. The homepage hero section will display Position #1 (Spotlight Banner) and Position #2 (Middle Column Card #1). Positions #3 to #9 are hidden.'}
-                      {heroGridArticles.length === 3 && 'Automatic articles are completely hidden. The homepage hero section will display Position #1 (Spotlight Banner) and Positions #2 & #3 (Middle Column Cards #1 & #2). Positions #4 to #9 are hidden.'}
-                      {heroGridArticles.length >= 4 && heroGridArticles.length <= 7 && `Automatic articles are completely hidden. The homepage hero section displays Position #1 in the Spotlight Banner and Positions #2 to #${heroGridArticles.length} in the Middle Column.`}
-                      {heroGridArticles.length === 8 && 'Automatic articles are completely hidden. Displays Position #1 and #8 as 2 rotating slides in the Spotlight Slider, and Positions #2 to #7 as all 6 Middle Column image cards.'}
-                      {heroGridArticles.length === 9 && 'Automatic articles are completely hidden. Displays Positions #1, #8, #9 as 3 rotating slides in the Spotlight Slider (with 1/3 badge), and Positions #2 to #7 as all 6 Middle Column image cards.'}
+                      {heroGridArticles.length === 1 && 'The homepage hero section displays Position #1 in the Spotlight Slider. Middle column is hidden.'}
+                      {heroGridArticles.length === 2 && 'The homepage hero section displays Positions #1 and #2 as 2 rotating slides in the Spotlight Slider.'}
+                      {heroGridArticles.length === 3 && 'The homepage hero section displays Positions #1, #2, and #3 as 3 rotating slides in the Spotlight Slider.'}
+                      {heroGridArticles.length >= 4 && heroGridArticles.length <= 8 && `Displays Positions #1, #2, #3 in the Spotlight Slider, and Positions #4 to #${heroGridArticles.length} in the Middle Column.`}
+                      {heroGridArticles.length === 9 && 'Displays Positions #1, #2, #3 as 3 rotating slides in the Spotlight Slider (in exact latest order: 1, 2, 3), and Positions #4 to #9 as all 6 Middle Column image cards.'}
                     </p>
                   </div>
                 </div>
@@ -3189,17 +3187,14 @@ export default function HeroManagerPage() {
                 ) : (
                   <div className="space-y-3">
                     {heroGridArticles.map((art, index) => {
-                      const isSpotlightMain = index === 0;
-                      const isMiddleCard = index >= 1 && index <= 6;
-                      const isSpotlightExtra = index === 7 || index === 8;
+                      const isSpotlightSlide = index < 3;
+                      const isMiddleCard = index >= 3 && index < 9;
 
-                      const slotTitle = isSpotlightMain
-                        ? '🌟 Main Hero Spotlight (#1 Big Card / Slide #1)'
+                      const slotTitle = isSpotlightSlide
+                        ? `🌟 Spotlight Slider (Slide #${index + 1} of 3)`
                         : isMiddleCard
-                          ? `🖼️ Middle Column - Card #${index} of 6`
-                          : isSpotlightExtra
-                            ? `🌟 Spotlight Slider (Slide #${index === 7 ? '2' : '3'} of 3)`
-                            : `📰 Position #${index + 1}`;
+                          ? `🖼️ Middle Column - Card #${index - 2} of 6`
+                          : `📰 Position #${index + 1}`;
 
                       const isDragging = draggedHeroIndex === index;
 
@@ -3213,11 +3208,9 @@ export default function HeroManagerPage() {
                           className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${
                             isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
                           } ${
-                            isSpotlightMain
+                            isSpotlightSlide
                               ? 'border-[#B3121B]/40 bg-red-50/40 dark:bg-red-950/10'
-                              : isMiddleCard
-                                ? 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
-                                : 'border-purple-400 bg-purple-50/20 dark:border-purple-900/40 dark:bg-purple-950/10'
+                              : 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
                           } hover:shadow-md`}
                         >
                           {/* Left Info */}
@@ -3225,7 +3218,7 @@ export default function HeroManagerPage() {
                             <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder position">
                               <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
                               <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${
-                                isSpotlightMain ? 'bg-[#B3121B]' : isMiddleCard ? 'bg-blue-600' : 'bg-purple-600'
+                                isSpotlightSlide ? 'bg-[#B3121B]' : 'bg-blue-600'
                               }`}>
                                 #{index + 1}
                               </span>
@@ -3238,11 +3231,9 @@ export default function HeroManagerPage() {
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
                                 <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
-                                  isSpotlightMain
+                                  isSpotlightSlide
                                     ? 'bg-red-100 text-[#B3121B]'
-                                    : isMiddleCard
-                                      ? 'bg-blue-100 text-blue-700'
-                                      : 'bg-purple-100 text-purple-700'
+                                    : 'bg-blue-100 text-blue-700'
                                 }`}>
                                   {slotTitle}
                                 </span>

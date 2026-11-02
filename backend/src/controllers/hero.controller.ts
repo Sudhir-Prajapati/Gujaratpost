@@ -446,13 +446,12 @@ export class HeroController {
               .slice(0, 9);
           }
         } else {
-          // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true)
+          // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true), followed by latest published
           const featuredFormatted = (activeFeaturedRes || []).map(formatPost);
-          if (featuredFormatted.length > 0) {
-            heroGridArticles = featuredFormatted.slice(0, 9);
-          } else {
-            heroGridArticles = fallbackFormatted.slice(0, 9);
-          }
+          const combined = [...featuredFormatted, ...fallbackFormatted].filter(
+            (art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx
+          );
+          heroGridArticles = combined.slice(0, 9);
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }
 
@@ -924,26 +923,29 @@ export class HeroController {
             .slice(0, 9);
         }
       } else {
-        // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true)
-        let posts = await withDbRetry(() =>
-          prisma.post.findMany({
-            where: { isFeatured: true, status: 'PUBLISHED' },
-            orderBy: { articleNumber: 'desc' },
-            take: 9,
-            select: heroPostSelect,
-          })
-        ).catch(() => []);
-        if (posts.length === 0) {
-          posts = await withDbRetry(() =>
+        // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true), followed by latest published
+        const [featuredPosts, fallbackPosts] = await Promise.all([
+          withDbRetry(() =>
             prisma.post.findMany({
-              where: { status: 'PUBLISHED' },
+              where: { isFeatured: true, status: 'PUBLISHED' },
               orderBy: { articleNumber: 'desc' },
               take: 9,
               select: heroPostSelect,
             })
-          ).catch(() => []);
-        }
-        heroGridArticles = posts.map(formatPost);
+          ).catch(() => []),
+          withDbRetry(() =>
+            prisma.post.findMany({
+              where: { status: 'PUBLISHED' },
+              orderBy: { articleNumber: 'desc' },
+              take: 16,
+              select: heroPostSelect,
+            })
+          ).catch(() => []),
+        ]);
+        const combined = [...featuredPosts, ...fallbackPosts].filter(
+          (p, idx, arr) => p && arr.findIndex((x) => x?.id === p.id) === idx
+        );
+        heroGridArticles = combined.slice(0, 9).map(formatPost);
         parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
       }
 
