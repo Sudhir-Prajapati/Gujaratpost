@@ -152,7 +152,7 @@ const ArticleContentBody = memo(function ArticleContentBody({
       .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
       .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
 
-    // Transform any Twitter embed (figure with iframe, raw iframe, or blockquote) into a clean native Twitter blockquote
+    // Transform any Twitter embed (figure with iframe, raw iframe, or blockquote) into a clean native Twitter blockquote or styled button
     raw = raw.replace(
       /<figure[^>]*data-article-social-platform=["']twitter["'][^>]*>[\s\S]*?<\/figure>/gi,
       (match) => {
@@ -162,7 +162,20 @@ const ArticleContentBody = memo(function ArticleContentBody({
           match.match(/https?:\/\/(?:twitter\.com|x\.com)\/(?:[a-zA-Z0-9_]+\/status|i\/status)\/\d+/i);
         const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]).replace(/&amp;/g, '&') : '';
         if (!tweetUrl) return match;
-        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+
+        const isStatus = /\/(?:status|i\/status)\/\d+/i.test(tweetUrl);
+        if (isStatus) {
+          return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+        }
+
+        const isBroadcast = tweetUrl.includes('/broadcasts/');
+        const isSpace = tweetUrl.includes('/spaces/');
+        const btnLabel = isBroadcast
+          ? 'Watch Live Broadcast on X ↗'
+          : isSpace
+            ? 'Listen on Spaces on X ↗'
+            : 'View on X (Twitter) ↗';
+        return `<div class="my-6 flex justify-center w-full" data-gp-x-link><a href="${tweetUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border-radius:12px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.15)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>${btnLabel}</span></a></div>`;
       }
     );
 
@@ -175,7 +188,11 @@ const ArticleContentBody = memo(function ArticleContentBody({
           match.match(/https?:\/\/(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/i);
         const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
         if (!tweetUrl) return '';
-        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+        const isStatus = /\/(?:status|i\/status)\/\d+/i.test(tweetUrl);
+        if (isStatus) {
+          return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+        }
+        return '';
       }
     );
 
@@ -684,17 +701,10 @@ function isGalleryImageAlt(alt: string): boolean {
 }
 
 function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, includeCaption = false): string {
-  let galleryCount = 0;
-
   return (rawHtml || '').replace(MARKDOWN_IMAGE_RE, (match, alt, url) => {
     const cleanAlt = (alt || '').trim();
     const cleanUrl = (url || '').replace(/\s+/g, '').trim();
     const isGallery = isGalleryImageAlt(cleanAlt);
-
-    if (isGallery) {
-      galleryCount++;
-      if (galleryCount > 1) return '';
-    }
 
     const caption = includeCaption
       ? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>તસવીર: ગુજરાત પોસ્ટ</span></figcaption>`
@@ -702,7 +712,8 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
 
-    const safeImgUrl = sanitizeImageUrl(cleanUrl); return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none" /><div class="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true"></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
+    const safeImgUrl = sanitizeImageUrl(cleanUrl);
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none" /><div class="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true"></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -830,8 +841,9 @@ function sanitizeParagraphHtml(html: string, language?: string): string {
   cleaned = upgradeMarkdownQuotes(cleaned);
   cleaned = convertMarkdownImagesToFigures(cleaned, 'Gujarat Post Image', true);
 
-  // Convert plain URLs to styled clickable links if not inside HTML attributes
-  cleaned = cleaned.replace(/(^|[\s>(])(https?:\/\/[^\s<"']+)/g, (match, prefix, url) => {
+  // Convert plain URLs to styled clickable links safely (skipping existing HTML tags and attributes)
+  cleaned = cleaned.replace(/(<a\b[^>]*>[\s\S]*?<\/a>)|(<[^>]+>)|(^|[\s(])(https?:\/\/[^\s<"']+)/gi, (match, aTag, anyTag, prefix, url) => {
+    if (aTag || anyTag) return match;
     return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#B3121B] font-bold underline hover:text-red-700 break-all">${url}</a>`;
   });
 
@@ -1003,10 +1015,10 @@ function findMatchingCandidate(
   return null;
 }
 
-function splitArticleContent(html: string, atPara = 2): [string, string] {
+function splitArticleContent(html: string, atPara = 4): [string, string] {
   if (!html || typeof html !== 'string') return ['', ''];
   const trimmed = html.trim();
-  if (trimmed.length < 350) return [trimmed, ''];
+  if (trimmed.length < 500) return [trimmed, ''];
 
   let count = 0;
   let splitIndex = -1;
@@ -1031,7 +1043,7 @@ function splitArticleContent(html: string, atPara = 2): [string, string] {
         if (depth === 0) {
           count++;
           lastBlockEnd = tagEnd;
-          if (count >= atPara && tagEnd >= 180) {
+          if (count >= atPara && tagEnd >= 450) {
             splitIndex = tagEnd;
             break;
           }
@@ -1043,7 +1055,7 @@ function splitArticleContent(html: string, atPara = 2): [string, string] {
       if (isClosing && depth === 0) {
         count++;
         lastBlockEnd = tagEnd;
-        if (count >= atPara && tagEnd >= 180) {
+        if (count >= atPara && tagEnd >= 450) {
           splitIndex = tagEnd;
           break;
         }
@@ -1052,11 +1064,18 @@ function splitArticleContent(html: string, atPara = 2): [string, string] {
   }
 
   if (splitIndex === -1) {
-    if (count >= atPara && lastBlockEnd > 0 && lastBlockEnd < trimmed.length - 80) {
+    if (count >= atPara && lastBlockEnd > 0 && lastBlockEnd < trimmed.length - 120) {
       splitIndex = lastBlockEnd;
     } else {
       return [balanceHtmlTags(trimmed), ''];
     }
+  }
+
+  // If a figure or image is right around the split point, include it in topHtml so it stays visible
+  const nextSlice = trimmed.slice(splitIndex, splitIndex + 400);
+  const figureMatch = nextSlice.match(/^[\s\r\n]*<figure\b[\s\S]*?<\/figure>/i);
+  if (figureMatch) {
+    splitIndex += figureMatch[0].length;
   }
 
   return [balanceHtmlTags(trimmed.slice(0, splitIndex).trim()), balanceHtmlTags(trimmed.slice(splitIndex).trim())];
@@ -2364,7 +2383,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
             {(() => {
-              const [topHtml, bottomHtml] = splitArticleContent(formattedArticleBodyHtml, 2);
+              const [topHtml, bottomHtml] = splitArticleContent(formattedArticleBodyHtml, 4);
               const isExpandedState = isContentExpanded || speaking;
               const hasSplit = Boolean(bottomHtml);
 

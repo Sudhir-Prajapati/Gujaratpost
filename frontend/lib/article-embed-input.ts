@@ -53,10 +53,17 @@ export function parseArticleEmbedInput(input: string, platform: ArticleSocialPla
 
       if (platform === 'twitter' && ['twitter.com', 'x.com', 'mobile.twitter.com'].includes(host)) {
         const match = url.pathname.match(/^\/(?:[^/]+\/status|i\/web\/status|i\/status)\/(\d+)/);
-        if (!match) continue;
-        const link = `https://x.com${match[0]}`;
-        const document = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}.twitter-tweet{margin:0 auto!important}</style></head><body><blockquote class="twitter-tweet" data-dnt="true"><a href="${link}">View post on X</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script><script>(function(){function n(){var t=document.querySelector('.twitter-tweet-rendered')||document.querySelector('.twitter-tweet');var h=t?(t.offsetHeight||t.getBoundingClientRect().height):0;if(!h||h<80){h=document.body.scrollHeight||document.documentElement.scrollHeight||0;}if(h>50){window.parent.postMessage({type:'gp-embed-resize',url:'${link}',height:Math.ceil(h)},'*');}}if(window.ResizeObserver){new ResizeObserver(n).observe(document.body);}if(window.twttr&&window.twttr.events){window.twttr.events.bind('rendered',n);}var c=0;var i=setInterval(function(){c++;n();if(c>35)clearInterval(i);},120);window.addEventListener('load',n);window.addEventListener('resize',n);})();</script></body></html>`;
-        return { platform, mode: 'embed', url: link, document };
+        if (match) {
+          const link = `https://x.com${match[0]}`;
+          const document = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}.twitter-tweet{margin:0 auto!important}</style></head><body><blockquote class="twitter-tweet" data-dnt="true"><a href="${link}">View post on X</a></blockquote><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script><script>(function(){function n(){var t=document.querySelector('.twitter-tweet-rendered')||document.querySelector('.twitter-tweet');var h=t?(t.offsetHeight||t.getBoundingClientRect().height):0;if(!h||h<80){h=document.body.scrollHeight||document.documentElement.scrollHeight||0;}if(h>50){window.parent.postMessage({type:'gp-embed-resize',url:'${link}',height:Math.ceil(h)},'*');}}if(window.ResizeObserver){new ResizeObserver(n).observe(document.body);}if(window.twttr&&window.twttr.events){window.twttr.events.bind('rendered',n);}var c=0;var i=setInterval(function(){c++;n();if(c>35)clearInterval(i);},120);window.addEventListener('load',n);window.addEventListener('resize',n);})();</script></body></html>`;
+          return { platform, mode: 'embed', url: link, document };
+        }
+        // General Twitter / X link fallback (broadcasts, spaces, live, profile, etc.)
+        return {
+          platform,
+          mode: 'link',
+          url: url.toString(),
+        };
       }
 
       if (platform === 'facebook' && ['facebook.com', 'm.facebook.com', 'fb.watch', 'web.facebook.com'].includes(host)) {
@@ -86,7 +93,15 @@ export function buildArticleEmbedHtml(input: string, platform: ArticleSocialPlat
   const media = parseArticleEmbedInput(input, platform);
   if (!media) return '';
   const label = { youtube: 'YouTube', twitter: 'X (Twitter)', instagram: 'Instagram', facebook: 'Facebook' }[platform];
-  const link = `<a href="${escapeEmbedAttribute(media.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;padding:12px 20px;border-radius:12px;background:#000;color:white;text-decoration:none;font-weight:700">Open on ${label} ↗</a>`;
+
+  let buttonText = `Open on ${label} ↗`;
+  if (platform === 'twitter') {
+    if (media.url.includes('/broadcasts/')) buttonText = 'Watch Live Broadcast on X ↗';
+    else if (media.url.includes('/spaces/')) buttonText = 'Listen on Spaces on X ↗';
+    else buttonText = 'View on X (Twitter) ↗';
+  }
+
+  const link = `<a href="${escapeEmbedAttribute(media.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border-radius:12px;background:#000;color:white;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.15)">${platform === 'twitter' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' : ''}<span>${buttonText}</span></a>`;
 
   let frameStyle = 'display:block;width:100%;border:0;';
   if (platform === 'twitter') {
@@ -117,13 +132,29 @@ export function getSavedArticleEmbedInput(body: string, platform: ArticleSocialP
   const url2 = tag2?.match(/data-social-url="([^"]+)"/)?.[1]?.replace(/&amp;/g, '&');
   if (url2) return url2;
 
-  // 3. Fallbacks for legacy article markup without data attributes
+  // 3. Match on data-tweet-url if platform is twitter
+  if (platform === 'twitter') {
+    const tweetWrap = body.match(/data-tweet-url="([^"]+)"/i);
+    if (tweetWrap && tweetWrap[1]) return tweetWrap[1].replace(/&amp;/g, '&');
+  }
+
+  // 4. Fallbacks for legacy article markup without data attributes
   if (platform === 'youtube') {
-    const m = body.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:embed\/|watch\?v=)|youtu\.be\/)([\w-]{11})/i);
+    const m = body.match(/https?:\/\/(?:www\.)?(?:youtube\.com\/(?:embed\/|watch\?v=|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/i);
     if (m && m[1]) return `https://www.youtube.com/watch?v=${m[1]}`;
   } else if (platform === 'twitter') {
+    // Check blockquote link or any twitter/x URL
+    const bqMatch = body.match(/<blockquote[^>]*class=["'][^"']*twitter-tweet[\s\S]*?href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i);
+    if (bqMatch && bqMatch[1]) return bqMatch[1].replace(/&amp;/g, '&');
+
     const m = body.match(/https?:\/\/(?:twitter\.com|x\.com)\/(?:[^\s"'<>]+\/status|i\/status)\/(\d+)/i);
     if (m) return m[0];
+
+    const broadcastMatch = body.match(/https?:\/\/(?:twitter\.com|x\.com)\/i\/(?:broadcasts|spaces)\/[^\s"'<>]+/i);
+    if (broadcastMatch) return broadcastMatch[0];
+
+    const genericTwMatch = body.match(/https?:\/\/(?:twitter\.com|x\.com)\/[^\s"'<>]+/i);
+    if (genericTwMatch && !genericTwMatch[0].includes('widgets.js')) return genericTwMatch[0];
   } else if (platform === 'instagram') {
     const m = body.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|tv)\/([\w-]+)/i);
     if (m) return m[0];

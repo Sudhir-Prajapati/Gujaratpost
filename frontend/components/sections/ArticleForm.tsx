@@ -867,16 +867,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       parts.push(`> "${qT.trim()}"${citeStr}`);
     }
 
-    // Guard bottom standalone embeds: do NOT append duplicate if already embedded in Description 1 or continuation sections
-    const hasInlineEmbed = (platform: string) => {
-      const re = new RegExp(`data-article-social-platform=["']${platform}["']`, 'i');
-      return re.test(d1Str) || pairedSections.some((s) => re.test(s.desc));
-    };
-
-    if (youtubeUrl && !hasInlineEmbed('youtube')) parts.push(buildArticleEmbedHtml(youtubeUrl, 'youtube'));
-    if (twitterUrl && !hasInlineEmbed('twitter')) parts.push(buildArticleEmbedHtml(twitterUrl, 'twitter'));
-    if (instagramUrl && !hasInlineEmbed('instagram')) parts.push(buildArticleEmbedHtml(instagramUrl, 'instagram'));
-    if (facebookUrl && !hasInlineEmbed('facebook')) parts.push(buildArticleEmbedHtml(facebookUrl, 'facebook'));
+    // Append social media embeds if provided in form
+    if (youtubeUrl && youtubeUrl.trim()) parts.push(buildArticleEmbedHtml(youtubeUrl.trim(), 'youtube'));
+    if (twitterUrl && twitterUrl.trim()) parts.push(buildArticleEmbedHtml(twitterUrl.trim(), 'twitter'));
+    if (instagramUrl && instagramUrl.trim()) parts.push(buildArticleEmbedHtml(instagramUrl.trim(), 'instagram'));
+    if (facebookUrl && facebookUrl.trim()) parts.push(buildArticleEmbedHtml(facebookUrl.trim(), 'facebook'));
 
     // If PDF was not placed after description 1 or continuation sections, append it at the end (Default)
     if (!pdfPlaced && pdfBlockHtml) {
@@ -1226,16 +1221,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
     // Strip and extract ONLY trailing standalone embeds from the very end of the content.
     // In-body embeds (inside Description 1 or continuation sections) are preserved untouched.
-    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>\s*)*(?:<figure\b[^>]*data-article-social-platform=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-x-card)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>)*\s*$/i;
+    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>\s*)*(?:<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-twitter-embed-wrap|gp-x-card|gp-x-link)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?|<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>)*\s*$/i;
 
     while (true) {
       const match = workingRaw.match(trailingEmbedPattern);
       if (!match) break;
-      const platMatch = match[0].match(/data-article-social-platform=["']([^"']+)["']/i);
-      const urlMatch = match[0].match(/data-article-social-url=["']([^"']+)["']/i) || match[0].match(/href=["']([^"']+)["']/i);
+      const platMatch = match[0].match(/(?:data-article-social-platform|data-social-platform)=["']([^"']+)["']/i);
+      const urlMatch =
+        match[0].match(/(?:data-article-social-url|data-social-url|data-tweet-url)=["']([^"']+)["']/i) ||
+        match[0].match(/href=["']([^"']+)["']/i);
       const plat = platMatch ? platMatch[1].toLowerCase() : '';
       const u = urlMatch ? urlMatch[1] : '';
-      if (plat === 'twitter' || (!plat && match[0].includes('gp-x-card'))) {
+      if (plat === 'twitter' || (!plat && (match[0].includes('twitter') || match[0].includes('x.com') || match[0].includes('gp-x')))) {
         if (!extractedTw) extractedTw = u;
       } else if (plat === 'youtube' || (!plat && match[0].includes('youtube'))) {
         if (!extractedYt) extractedYt = u;
@@ -1678,16 +1675,45 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         } else {
           setImageMode('upload');
         }
-        const hasBodyTw = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']twitter["']/i.test(t || ''));
-        const hasBodyYt = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']youtube["']/i.test(t || ''));
-        const hasBodyIg = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']instagram["']/i.test(t || ''));
-        const hasBodyFb = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']facebook["']/i.test(t || ''));
-
-        setYoutubeUrl(hasBodyYt ? '' : (parsedEn.extractedYt || parsedGu.extractedYt || parsedHi.extractedYt || art.youtubeUrl || art.youtube || ''));
-        setTwitterUrl(hasBodyTw ? '' : (parsedEn.extractedTw || parsedGu.extractedTw || parsedHi.extractedTw || art.twitterUrl || art.twitter || ''));
-        setInstagramUrl(hasBodyIg ? '' : (parsedEn.extractedIg || parsedGu.extractedIg || parsedHi.extractedIg || art.instagramUrl || art.instagram || ''));
-        setFacebookUrl(hasBodyFb ? '' : (parsedEn.extractedFb || parsedGu.extractedFb || parsedHi.extractedFb || art.facebookUrl || art.facebook || ''));
         const rawCombinedContent = [art.content, art.contentGu, art.contentHi, primaryContent].filter(Boolean).join('\n\n');
+
+        const resolvedYt =
+          getSavedArticleEmbedInput(rawCombinedContent, 'youtube') ||
+          parsedGu.extractedYt ||
+          parsedEn.extractedYt ||
+          parsedHi.extractedYt ||
+          art.youtubeUrl ||
+          art.youtube ||
+          '';
+        const resolvedTw =
+          getSavedArticleEmbedInput(rawCombinedContent, 'twitter') ||
+          parsedGu.extractedTw ||
+          parsedEn.extractedTw ||
+          parsedHi.extractedTw ||
+          art.twitterUrl ||
+          art.twitter ||
+          '';
+        const resolvedIg =
+          getSavedArticleEmbedInput(rawCombinedContent, 'instagram') ||
+          parsedGu.extractedIg ||
+          parsedEn.extractedIg ||
+          parsedHi.extractedIg ||
+          art.instagramUrl ||
+          art.instagram ||
+          '';
+        const resolvedFb =
+          getSavedArticleEmbedInput(rawCombinedContent, 'facebook') ||
+          parsedGu.extractedFb ||
+          parsedEn.extractedFb ||
+          parsedHi.extractedFb ||
+          art.facebookUrl ||
+          art.facebook ||
+          '';
+
+        setYoutubeUrl(resolvedYt);
+        setTwitterUrl(resolvedTw);
+        setInstagramUrl(resolvedIg);
+        setFacebookUrl(resolvedFb);
         const fallbackPdfMatch =
           rawCombinedContent.match(/data-pdf-url=["']([^"']+)["']/i) ||
           rawCombinedContent.match(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][^>]*data-pdf-url=["']([^"']+)["']/i) ||
