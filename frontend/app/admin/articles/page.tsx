@@ -54,6 +54,9 @@ interface ArticleData {
     id: string;
     name: string;
   };
+  isFeatured?: boolean;
+  isTrending?: boolean;
+  isBreaking?: boolean;
   category: {
     id?: string;
     name: string;
@@ -699,6 +702,7 @@ export default function ArticleList() {
                 className="w-full appearance-none rounded-xl border border-black bg-zinc-50 py-2 pl-3.5 pr-9 text-xs sm:text-sm font-semibold text-zinc-900 focus:border-black focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-white dark:focus:border-white cursor-pointer"
               >
                 <option value="">All Categories</option>
+                <option value="home">Home / News</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.slug}>
                     {cat.name}
@@ -964,22 +968,30 @@ export default function ArticleList() {
                           {art.category.name}
                         </span>
                         {(() => {
-                          const additional = (art.categories || [])
-                            .filter((c) => c.category?.name && c.category.name.toLowerCase() !== art.category.name.toLowerCase());
-                          if (additional.length === 0) return null;
+                          const catItems: string[] = [];
+                          if (art.isFeatured && art.category?.name?.toLowerCase() !== 'home') {
+                            catItems.push('Home');
+                          }
+                          (art.categories || []).forEach((c) => {
+                            const name = c.category?.name;
+                            if (name && name.toLowerCase() !== art.category?.name?.toLowerCase() && !catItems.includes(name)) {
+                              catItems.push(name);
+                            }
+                          });
+                          if (catItems.length === 0) return null;
                           return (
-                            <div className="flex flex-wrap items-center justify-center gap-1 max-w-[200px]" title={additional.map((c) => c.category.name).join(', ')}>
-                              {additional.slice(0, 2).map((c) => (
+                            <div className="flex flex-wrap items-center justify-center gap-1 max-w-[200px]" title={catItems.join(', ')}>
+                              {catItems.slice(0, 3).map((catName, idx) => (
                                 <span
-                                  key={c.categoryId || c.category?.id}
+                                  key={idx}
                                   className="inline-flex items-center px-1.5 py-0.5 rounded text-[10.5px] font-medium bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/50 dark:text-blue-300"
                                 >
-                                  {c.category.name}
+                                  {catName}
                                 </span>
                               ))}
-                              {additional.length > 2 && (
+                              {catItems.length > 3 && (
                                 <span className="inline-flex items-center px-1 py-0.5 rounded text-[9.5px] font-bold text-zinc-500 bg-zinc-100 dark:bg-zinc-800 dark:text-zinc-400">
-                                  +{additional.length - 2}
+                                  +{catItems.length - 3}
                                 </span>
                               )}
                             </div>
@@ -1349,9 +1361,19 @@ export default function ArticleList() {
                       </span>
                       {(() => {
                         const rawCats = reviewModal.fullData?.categories || reviewModal.article.categories || [];
-                        const additional = rawCats
-                          .map((c: any) => c.category?.name || c.name)
-                          .filter((name: string) => name && name.toLowerCase() !== reviewModal.article?.category?.name?.toLowerCase());
+                        const additional: string[] = [];
+                        if (
+                          (reviewModal.fullData?.isFeatured || reviewModal.article.isFeatured) &&
+                          reviewModal.article?.category?.name?.toLowerCase() !== 'home'
+                        ) {
+                          additional.push('Home');
+                        }
+                        rawCats.forEach((c: any) => {
+                          const name = c.category?.name || c.name;
+                          if (name && name.toLowerCase() !== reviewModal.article?.category?.name?.toLowerCase() && !additional.includes(name)) {
+                            additional.push(name);
+                          }
+                        });
                         if (additional.length === 0) return null;
                         return (
                           <div className="flex items-center gap-1.5 flex-wrap">

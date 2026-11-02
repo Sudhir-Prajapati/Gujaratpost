@@ -1,18 +1,26 @@
 function postUrl(value: string): string | null {
   try {
     const url = new URL(value.replace(/&amp;/g, '&').trim());
-    if (url.protocol !== 'https:' || url.username || url.password) return null;
-    if (!['x.com', 'www.x.com', 'twitter.com', 'www.twitter.com', 'mobile.twitter.com'].includes(url.hostname)) return null;
-    if (!/^\/(?:[^/]+\/status|i\/web\/status)\/\d+\/?$/.test(url.pathname)) return null;
-    return `https://x.com${url.pathname.replace(/\/$/, '')}`;
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    if (url.username || url.password) return null;
+    const host = url.hostname.replace(/^www\./, '').toLowerCase();
+    if (!['x.com', 'twitter.com', 'mobile.twitter.com'].includes(host)) return null;
+    return url.toString();
   } catch { return null; }
 }
 
 export function buildTwitterPostButton(url: string, language?: string): string {
   const href = postUrl(url);
   if (!href) return '';
-  const label = language === 'gu' ? 'ટ્વીટ જુઓ ↗' : language === 'hi' ? 'ट्वीट देखें ↗' : 'View Post on X ↗';
-  return `<div class="my-6" data-gp-x-link><a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;padding:12px 20px;border-radius:12px;background:#000;color:#fff;text-decoration:none;font-weight:700">${label}</a></div>`;
+  const isBroadcast = href.includes('/broadcasts/');
+  const isSpace = href.includes('/spaces/');
+  const label = isBroadcast
+    ? (language === 'gu' ? 'X પર લાઈવ બ્રોડકાસ્ટ જુઓ ↗' : language === 'hi' ? 'X पर लाइव प्रसारण देखें ↗' : 'Watch Live Broadcast on X ↗')
+    : isSpace
+      ? (language === 'gu' ? 'X Spaces સાંભળો ↗' : language === 'hi' ? 'X Spaces सुनें ↗' : 'Listen to X Space ↗')
+      : (language === 'gu' ? 'X (Twitter) પર જુઓ ↗' : language === 'hi' ? 'X पर देखें ↗' : 'View on X (Twitter) ↗');
+
+  return `<div class="my-6 flex justify-center w-full" data-gp-x-link><a href="${href}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border-radius:12px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.15)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>${label}</span></a></div>`;
 }
 
 /** Remove legacy cards and orphan buttons, keeping one valid link per post. */

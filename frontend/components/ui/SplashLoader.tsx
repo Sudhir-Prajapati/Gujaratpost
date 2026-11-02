@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 
 import { useApp } from '@/components/AppProvider';
@@ -9,8 +10,11 @@ export default function SplashLoader() {
   const { language } = useApp();
   const [visible, setVisible] = useState(true);
   const [shouldRender, setShouldRender] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
+
     // Check if splash loader has already been shown in this browser session
     try {
       if (typeof window !== 'undefined' && sessionStorage.getItem('gp_splash_shown') === 'true') {
@@ -19,12 +23,24 @@ export default function SplashLoader() {
       }
     } catch { }
 
-    // Lock both html and body scrolling so no vertical scrollbar or scrolling occurs during loader
+    // Lock both html and body scrolling and match background so no white peek/gap occurs on mobile Safari
     const prevHtmlOverflow = document.documentElement.style.overflow;
     const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlBg = document.documentElement.style.backgroundColor;
+    const prevBodyBg = document.body.style.backgroundColor;
 
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.backgroundColor = '#040810';
+    document.body.style.backgroundColor = '#040810';
+
+    // Intercept touchmove and wheel on iOS Safari so rubber-banding cannot reveal page below
+    const preventScroll = (e: TouchEvent | WheelEvent) => {
+      e.preventDefault();
+    };
+
+    window.addEventListener('touchmove', preventScroll, { passive: false });
+    window.addEventListener('wheel', preventScroll, { passive: false });
 
     let minTimePassed = false;
     let dataReady = typeof window !== 'undefined' && (window as any).__gpDataReady === true;
@@ -38,6 +54,10 @@ export default function SplashLoader() {
       } catch { }
       document.documentElement.style.overflow = prevHtmlOverflow;
       document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+      window.removeEventListener('touchmove', preventScroll);
+      window.removeEventListener('wheel', preventScroll);
       setTimeout(() => {
         setShouldRender(false);
       }, 500);
@@ -75,15 +95,32 @@ export default function SplashLoader() {
       }
       document.documentElement.style.overflow = prevHtmlOverflow;
       document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.backgroundColor = prevHtmlBg;
+      document.body.style.backgroundColor = prevBodyBg;
+      window.removeEventListener('touchmove', preventScroll);
+      window.removeEventListener('wheel', preventScroll);
     };
   }, []);
 
   if (!shouldRender) return null;
 
-  return (
+  const content = (
     <div
-      className={`fixed inset-0 z-[9999999] flex flex-col items-center justify-center bg-[#040810] transition-opacity duration-500 ease-in-out select-none overflow-hidden h-screen w-screen ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
+      className={`fixed inset-0 z-[2147483647] flex flex-col items-center justify-center bg-[#040810] transition-opacity duration-500 ease-in-out select-none overflow-hidden touch-none overscroll-none ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        minWidth: '100vw',
+        height: '100%',
+        minHeight: '100dvh',
+        backgroundColor: '#040810',
+        zIndex: 2147483647,
+      }}
     >
       <style>{`
         .perspective-container {
@@ -391,4 +428,10 @@ export default function SplashLoader() {
       </div>
     </div>
   );
+
+  if (mounted && typeof document !== 'undefined') {
+    return createPortal(content, document.body);
+  }
+
+  return content;
 }

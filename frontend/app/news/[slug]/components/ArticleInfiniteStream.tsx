@@ -30,7 +30,8 @@ interface ArticleInfiniteStreamProps {
   getTopicHref: (tag: string) => string;
   TranslatedInlineText: React.ComponentType<{ text: string; language: Language }>;
   TranslatedParagraph: React.ComponentType<{ rawHtml: string; language: Language }>;
-  sidebarRecommendedPool: Article[];
+  sidebarRecommendedPool?: Article[];
+  streamSidebarRecommendedPool?: Article[];
 }
 
 function buildFallbackNewsParagraphs(article: Article, language: Language): string[] {
@@ -529,6 +530,7 @@ export default function ArticleInfiniteStream({
   TranslatedInlineText,
   TranslatedParagraph,
   sidebarRecommendedPool,
+  streamSidebarRecommendedPool,
 }: ArticleInfiniteStreamProps) {
   return (
     <div className="article-grid mt-3.5 border-t border-neutral-200 dark:border-neutral-800 !pt-3.5" suppressHydrationWarning>
@@ -658,65 +660,77 @@ export default function ArticleInfiniteStream({
         </div>
       </article>
 
-      <aside className="select-none h-fit sticky top-[100px] w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
-        {/* Heading and recommended stories stick together below header */}
-        <div className="wtitle mb-3">
-          <span className="d"></span>
-          <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
-        </div>
+      {(() => {
+        const streamPool = (streamSidebarRecommendedPool && streamSidebarRecommendedPool.length > 0)
+          ? streamSidebarRecommendedPool
+          : (sidebarRecommendedPool && sidebarRecommendedPool.length > 8)
+          ? sidebarRecommendedPool.slice(8)
+          : [];
 
-        {/* Mobile View (< md): Hero Section style list (7 items) */}
-        <div className="flex flex-col divide-y divide-border/60 md:hidden">
-          {sidebarRecommendedPool.slice(0, 7).map((item, index) => (
-            <MobileHeroArticleCard
-              key={`stream-rec-mob-${item.id || index}`}
-              article={item}
-              language={language}
-              index={index}
-            />
-          ))}
-        </div>
+        if (streamPool.length === 0) return null;
 
-        {/* Desktop View (>= md): existing */}
-        <div className="hidden md:block space-y-0">
-          {sidebarRecommendedPool.slice(0, 6).map((item, index) => {
-            const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
-            return (
-              <Link
-                key={item.id}
-                href={`/news/${item.slug}`}
-                className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
-              >
-                <div className="min-w-0 flex-1 pr-1">
-                  <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
-                    {itemCategory}
-                  </span>
-                  <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
-                    <AutoArticleTitle article={item} language={language} />
-                  </h3>
-                </div>
-                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
-                  <img
-                    src={getCardThumbnail(item, index)}
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
-                  />
-                  <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                  <Image
-                    src={getCardThumbnail(item, index)}
-                    alt={item.title || ''}
-                    fill
-                    sizes="114px"
-                    className="relative z-10 object-contain transition-transform duration-300 group-hover:scale-105"
-                    style={{ objectFit: 'contain', objectPosition: 'center' }}
-                  />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </aside>
+        return (
+          <aside className="select-none h-fit sticky top-[100px] w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
+            {/* Heading and fresh recommended stories stick together below header */}
+            <div className="wtitle mb-3">
+              <span className="d"></span>
+              <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
+            </div>
+
+            {/* Mobile View (< md): Hero Section style list */}
+            <div className="flex flex-col divide-y divide-border/60 md:hidden">
+              {streamPool.slice(0, 7).map((item, index) => (
+                <MobileHeroArticleCard
+                  key={`stream-rec-mob-${item.id || index}`}
+                  article={item}
+                  language={language}
+                  index={index}
+                />
+              ))}
+            </div>
+
+            {/* Desktop View (>= md): completely unique articles without repeating top sidebar */}
+            <div className="hidden md:block space-y-0">
+              {streamPool.slice(0, 6).map((item, index) => {
+                const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+                return (
+                  <Link
+                    key={item.id}
+                    href={`/news/${item.slug}`}
+                    className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
+                  >
+                    <div className="min-w-0 flex-1 pr-1">
+                      <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
+                        {itemCategory}
+                      </span>
+                      <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
+                        <AutoArticleTitle article={item} language={language} />
+                      </h3>
+                    </div>
+                    <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
+                      <img
+                        src={getCardThumbnail(item, index)}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
+                      />
+                      <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
+                      <Image
+                        src={getCardThumbnail(item, index)}
+                        alt={item.title || ''}
+                        fill
+                        sizes="114px"
+                        className="relative z-10 object-contain transition-transform duration-300 group-hover:scale-105"
+                        style={{ objectFit: 'contain', objectPosition: 'center' }}
+                      />
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </aside>
+        );
+      })()}
     </div>
   );
 }

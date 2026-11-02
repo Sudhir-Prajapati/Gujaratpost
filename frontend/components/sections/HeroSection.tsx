@@ -1848,25 +1848,19 @@ export default function HeroSection({
                 ? manualGridArts
                 : articlesList.filter((a: Article) => a.isFeatured === true).slice(0, 9);
 
-              if (homeNewsArticles.length > 0) {
-                // Strictly show ONLY articles where admin checked "Home / News"
-                if (homeNewsArticles.length === 1) {
-                  heroSliderArticlesToDisplay = [homeNewsArticles[0]];
-                  afterTop3News = [];
-                } else if (homeNewsArticles.length >= 2 && homeNewsArticles.length <= 7) {
-                  heroSliderArticlesToDisplay = [homeNewsArticles[0]];
-                  afterTop3News = homeNewsArticles.slice(1, homeNewsArticles.length);
-                } else if (homeNewsArticles.length === 8) {
-                  heroSliderArticlesToDisplay = [homeNewsArticles[0], homeNewsArticles[7]];
-                  afterTop3News = homeNewsArticles.slice(1, 7);
-                } else {
-                  heroSliderArticlesToDisplay = [homeNewsArticles[0], homeNewsArticles[7], homeNewsArticles[8]];
-                  afterTop3News = homeNewsArticles.slice(1, 7);
-                }
+              if (homeNewsArticles.length > 0 && gridMode === 'manual') {
+                // Strictly sequential: First up to 3 articles in Spotlight Slider (Slide 1, Slide 2, Slide 3 in latest order)
+                heroSliderArticlesToDisplay = homeNewsArticles.slice(0, Math.min(3, homeNewsArticles.length));
+                // Next articles (indices 3 to 8) in Middle Column (up to 6 cards)
+                afterTop3News = homeNewsArticles.slice(3, 9);
               } else {
-                // AUTOMATIC MODE: Strictly 9 articles for this section
-                // Top 3 latest articles in Spotlight Slider
-                heroSliderArticlesToDisplay = uniqueTopStories.slice(0, 3);
+                // AUTOMATIC MODE: Strictly sequential 9 articles for this section
+                const baseArticles = homeNewsArticles.length >= 9
+                  ? homeNewsArticles
+                  : uniqueTopStories;
+
+                // Top 3 latest articles in Spotlight Slider (Slide 1, Slide 2, Slide 3 in sequential order)
+                heroSliderArticlesToDisplay = baseArticles.slice(0, Math.min(3, baseArticles.length));
 
                 const activeSliderIds = new Set(heroSliderArticlesToDisplay.map((a) => a.id).filter(Boolean));
                 const customSlotIds = new Set(
@@ -1886,10 +1880,20 @@ export default function HeroSection({
                   ].filter(Boolean)
                 );
 
-                // Next 6 articles in Middle Column
+                // If baseArticles has articles at indices 3..8, take them first for the 6 Middle Column cards:
+                if (baseArticles.length > 3) {
+                  for (const art of baseArticles.slice(3, 9)) {
+                    if (afterTop3News.length >= 6) break;
+                    if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                      afterTop3News.push(art);
+                    }
+                  }
+                }
+
+                // Next 6 articles in Middle Column from uniqueTopStories if needed
                 for (const art of uniqueTopStories) {
                   if (afterTop3News.length >= 6) break;
-                  if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id)) {
+                  if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
                     afterTop3News.push(art);
                   }
                 }
