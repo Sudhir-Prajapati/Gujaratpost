@@ -222,7 +222,7 @@ export function ArticleSkeleton() {
         </div>
 
         {/* ── Sidebar ── */}
-        <div className="hidden lg:flex flex-col gap-6 sticky top-20">
+        <div className="hidden lg:flex flex-col gap-6 sticky top-4">
           {/* Ad placeholder */}
           <div className="sk-bar h-[250px] w-full rounded-xl" />
 

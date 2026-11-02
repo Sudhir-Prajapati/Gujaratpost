@@ -209,7 +209,7 @@ export default function ShortsPageClient() {
           </div>
 
           {/* ════ RIGHT COLUMN: SIDEBAR (TRENDING NEWS + PHOTO GALLERY) ════ */}
-          <div className="w-full lg:sticky lg:top-20 lg:self-start">
+          <div className="w-full lg:sticky lg:top-4 lg:self-start">
             <MediaSidebar
               type="shorts"
               language={language}
