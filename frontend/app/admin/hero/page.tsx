@@ -786,8 +786,8 @@ export default function HeroManagerPage() {
         mode: tickerMode,
         speed: tickerSpeed,
         sourceType: tickerSourceType,
-        articleIds: tickerMode === 'single' && tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
-        customHeadlines: tickerMode === 'single' && tickerSourceType === 'custom' ? customTickerHeadlines : [],
+        articleIds: tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
+        customHeadlines: tickerSourceType === 'custom' ? customTickerHeadlines : [],
         hidden: hide,
       };
       const payload = {
@@ -934,13 +934,13 @@ export default function HeroManagerPage() {
   };
 
   const handleSaveTickerBadge = async () => {
-    if (!tickerHidden && tickerMode === 'single') {
+    if (!tickerHidden) {
       if (tickerSourceType === 'articles' && selectedTickerArticles.length === 0) {
-        showToast('⚠️ Please select at least 1 article for the Single Headline slider.', false);
+        showToast('⚠️ Please select at least 1 article for the ticker.', false);
         return;
       }
       if (tickerSourceType === 'custom' && customTickerHeadlines.length === 0) {
-        showToast('⚠️ Please enter at least 1 headline with link for the Single Headline slider.', false);
+        showToast('⚠️ Please enter at least 1 headline with link for the ticker.', false);
         return;
       }
     }
@@ -951,8 +951,8 @@ export default function HeroManagerPage() {
         mode: tickerMode,
         speed: tickerSpeed,
         sourceType: tickerSourceType,
-        articleIds: tickerMode === 'single' && tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
-        customHeadlines: tickerMode === 'single' && tickerSourceType === 'custom' ? customTickerHeadlines : [],
+        articleIds: tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
+        customHeadlines: tickerSourceType === 'custom' ? customTickerHeadlines : [],
         hidden: tickerHidden,
       };
       const payload = {
@@ -1950,18 +1950,17 @@ export default function HeroManagerPage() {
                   </div>
                 </div>
 
-                {/* 3. Slider Content Source (FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
-                {tickerMode === 'single' ? (
-                  <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                      <div>
-                        <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
-                          3. Content for Single Headline Slider (સ્લાઇડર માટે લખાણ અને લિંક પસંદ કરો)
-                        </label>
-                        <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
-                          Choose whether to select existing news articles or manually type custom breaking headlines with links.
-                        </p>
-                      </div>
+                {/* 3. Ticker Content Source (FOR BOTH CONTINUOUS MARQUEE & SINGLE HEADLINE) */}
+                <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div>
+                      <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
+                        3. Ticker Content Source (ટીકર માટે લખાણ અને લિંક પસંદ કરો)
+                      </label>
+                      <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
+                        Choose whether to select existing news articles or manually type custom breaking headlines with links (applies to {tickerMode === 'scroll' ? 'Continuous Marquee Scroll' : 'Single Headline Slider'}).
+                      </p>
+                    </div>
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
                         {tickerSourceType === 'custom'
                           ? `${customTickerHeadlines.length} headlines added`
@@ -1981,7 +1980,7 @@ export default function HeroManagerPage() {
                         }`}
                       >
                         <FileText className="h-4 w-4" />
-                        <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles)</span>
+                        <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles / Selected by Admin)</span>
                       </button>
                       <button
                         type="button"
@@ -2327,23 +2326,7 @@ export default function HeroManagerPage() {
                         )}
                       </div>
                     )}
-                  </div>
-                ) : (
-                  /* Informative Banner for Option 1: Continuous Marquee Scroll */
-                  <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
-                    <div className="p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
-                          Continuous Marquee Scroll uses Automatic Breaking News (ઓટોમેટિક બ્રેકિંગ ન્યૂઝ)
-                        </p>
-                        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                          આ મોડમાં અલગથી આર્ટિકલ સિલેક્ટ કરવાનો કોઈ ઓપ્શન નથી. જ્યારે પણ તમે નવી ન્યૂઝ બનાવો અથવા એડિટ કરો અને તેમાં <strong>&quot;Breaking News&quot;</strong> ઓપ્શન પસંદ કરો, ત્યારે તે આપમેળે આ સ્ક્રોલિંગ પટ્ટીમાં લાઈવ સ્ટ્રીમ થશે.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 {/* Bottom Save Action Bar */}
                 <div className="mt-6 pt-4 border-t border-gray-300 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">

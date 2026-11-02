@@ -1704,52 +1704,50 @@ router.get('/tickers', async (req, res, next) => {
 
     let articleTickers: any[] = [];
 
-    // 1. If Option 2 (Single Headline One-by-One) is chosen
-    if (tickerMode === 'single') {
-      const isCustomMode = parsedConfig?.sourceType === 'custom' && Array.isArray(parsedConfig?.customHeadlines) && parsedConfig.customHeadlines.length > 0;
+    // 1. Content for ticker (applies to both Continuous Marquee Scroll and Single Headline Slider)
+    const isCustomMode = parsedConfig?.sourceType === 'custom' && Array.isArray(parsedConfig?.customHeadlines) && parsedConfig.customHeadlines.length > 0;
 
-      if (isCustomMode) {
-        articleTickers = parsedConfig.customHeadlines
-          .filter((h: any) => h && (h.heading || h.title))
-          .map((h: any, idx: number) => ({
-            id: h.id || `custom-${idx}`,
-            en: h.heading || h.title,
-            gu: h.heading || h.title,
-            hi: h.heading || h.title,
-            title: h.heading || h.title,
-            titleGu: h.heading || h.title,
-            titleHi: h.heading || h.title,
-            slug: (h.link || h.url || '').trim(),
-            link: (h.link || h.url || '').trim(),
-            isCustom: true,
-          }));
-      } else if (selectedArticleIds.length > 0) {
-        const selectedPosts = await prisma.post.findMany({
-          where: { id: { in: selectedArticleIds }, status: 'PUBLISHED' },
-          select: {
-            id: true,
-            title: true,
-            titleGu: true,
-            titleHi: true,
-            slug: true,
-          },
-        });
-        const postMap = new Map<string, any>();
-        selectedPosts.forEach((p) => postMap.set(p.id, p));
-        articleTickers = selectedArticleIds
-          .map((id) => postMap.get(id))
-          .filter(Boolean)
-          .map((a) => ({
-            id: a.id,
-            en: a.title,
-            gu: a.titleGu || a.title,
-            hi: a.titleHi || a.title,
-            title: a.title,
-            titleGu: a.titleGu,
-            titleHi: a.titleHi,
-            slug: a.slug,
-          }));
-      }
+    if (isCustomMode) {
+      articleTickers = parsedConfig.customHeadlines
+        .filter((h: any) => h && (h.heading || h.title))
+        .map((h: any, idx: number) => ({
+          id: h.id || `custom-${idx}`,
+          en: h.heading || h.title,
+          gu: h.heading || h.title,
+          hi: h.heading || h.title,
+          title: h.heading || h.title,
+          titleGu: h.heading || h.title,
+          titleHi: h.heading || h.title,
+          slug: (h.link || h.url || '').trim(),
+          link: (h.link || h.url || '').trim(),
+          isCustom: true,
+        }));
+    } else if (selectedArticleIds.length > 0) {
+      const selectedPosts = await prisma.post.findMany({
+        where: { id: { in: selectedArticleIds }, status: 'PUBLISHED' },
+        select: {
+          id: true,
+          title: true,
+          titleGu: true,
+          titleHi: true,
+          slug: true,
+        },
+      });
+      const postMap = new Map<string, any>();
+      selectedPosts.forEach((p) => postMap.set(p.id, p));
+      articleTickers = selectedArticleIds
+        .map((id) => postMap.get(id))
+        .filter(Boolean)
+        .map((a) => ({
+          id: a.id,
+          en: a.title,
+          gu: a.titleGu || a.title,
+          hi: a.titleHi || a.title,
+          title: a.title,
+          titleGu: a.titleGu,
+          titleHi: a.titleHi,
+          slug: a.slug,
+        }));
     }
 
     // 2. If no custom articles selected, auto-fetch breaking news articles
