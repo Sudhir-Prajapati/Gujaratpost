@@ -39,7 +39,8 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const rawName = (searchParams.get('name') || '').trim().toLowerCase();
-    const mappedCategory = rawName ? (LEGACY_MAP[rawName] || rawName) : 'home';
+    const isHomePattern = !rawName || rawName.includes('home') || rawName.includes('update') || rawName.includes('gujpost') || ['news', 'main', 'top', 'all'].includes(rawName);
+    const mappedCategory = isHomePattern ? 'home' : (LEGACY_MAP[rawName] || rawName);
 
     const lang = (searchParams.get('lang') || searchParams.get('language') || '').trim();
     const langQuery = lang ? `&lang=${encodeURIComponent(lang)}` : '';
