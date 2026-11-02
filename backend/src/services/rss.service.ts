@@ -79,7 +79,8 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
 export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promise<GeneratedFeedResult> {
   const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
   const rawCategorySlug = (options.categorySlug || '').trim().toLowerCase().replace(/\.xml$/, '');
-  const categorySlug = rawCategorySlug === 'all' || rawCategorySlug === 'home' ? '' : rawCategorySlug;
+  const isHomeSlug = !rawCategorySlug || ['all', 'home', 'homepage', 'news', 'main', 'top'].includes(rawCategorySlug);
+  const categorySlug = isHomeSlug ? '' : rawCategorySlug;
   const lang = (options.lang || 'gu').toLowerCase().trim();
   const cacheKey = `rss:${categorySlug || 'home'}:${limit}:${lang}`;
 
@@ -423,9 +424,14 @@ ${itemsXml}  </channel>
       const orConditions: any[] = [];
       if (catIds.length > 0) {
         orConditions.push({ categoryId: { in: catIds } });
+        orConditions.push({ categories: { some: { categoryId: { in: catIds } } } });
       }
-      orConditions.push({ tags: { some: { tag: { slug: { in: searchSlugs } } } } });
       orConditions.push({ category: { slug: { in: searchSlugs } } });
+      orConditions.push({ categories: { some: { category: { slug: { in: searchSlugs } } } } });
+
+      if (categorySlug === 'trending' || categorySlug === 'popular-stories') {
+        orConditions.push({ isTrending: true });
+      }
 
       where.AND.push({ OR: orConditions });
 
