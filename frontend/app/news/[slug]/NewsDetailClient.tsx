@@ -1390,7 +1390,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const tags = (language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)) || article.tags || [];
 
   const readAlsoPool = useMemo(() => {
-    const seen = new Set<string>([String(article?.id || '')]);
+    const topMostReadIds = new Set((mostReadArticles || []).slice(0, 3).map((a) => String(a.id || '')));
+    const seen = new Set<string>([String(article?.id || ''), ...topMostReadIds]);
     const list: Article[] = [];
     const pool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
     for (const item of pool) {
@@ -1661,77 +1662,57 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     return 5;
   }, [article, isContentExpanded]);
 
-  const streamList = useMemo(() => {
-    const mainId = String(article.id);
-    const alreadyShownIds = new Set<string>([
-      mainId,
-      ...readAlsoPool.map((a) => String(a.id)),
-    ]);
+  // 1. Helper to identify health category articles (strictly excluded from Recommended sidebars)
+  const isHealthArticle = (cand: any): boolean => {
+    if (!cand) return false;
+    const catSlug = String(
+      cand.category ||
+      cand.categorySlug ||
+      cand.category?.slug ||
+      cand.category?.name ||
+      ''
+    ).toLowerCase().trim();
 
-    // Also exclude articles that are displayed in RelatedStoriesSection (up to relatedLimit)
-    const remainingRelated = (related || []).filter((item) => !alreadyShownIds.has(String(item.id)));
-    const shownInRelated = remainingRelated.slice(0, relatedLimit);
-    shownInRelated.forEach((a) => alreadyShownIds.add(String(a.id)));
+    if (catSlug === 'health' || catSlug.includes('health') || catSlug.includes('હેલ્થ') || catSlug.includes('સ્વાસ્થ્ય')) {
+      return true;
+    }
 
-    // Stream list should continue with the next related articles, then trending if needed, without repeating
-    const pool = [...remainingRelated.slice(relatedLimit), ...(trending || [])];
-    return pool
-      .filter((item, index, self) => !alreadyShownIds.has(String(item.id)) && self.findIndex(t => String(t.id) === String(item.id)) === index)
-      .slice(0, 8);
-  }, [related, trending, article.id, readAlsoPool, relatedLimit]);
-
-  const sidebarRecommendedPool = useMemo(() => {
-    const mainId = String(article.id);
-    const excludeIds = new Set([mainId, ...streamList.map(a => String(a.id))]);
-
-    // Priority State & National top headline categories
-    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
-
-    // Helper to identify health category articles (strictly excluded ONLY from this right sidebar)
-    const isHealthArticle = (cand: any): boolean => {
-      if (!cand) return false;
-      const catSlug = String(
-        cand.category ||
-        cand.categorySlug ||
-        cand.category?.slug ||
-        cand.category?.name ||
-        ''
-      ).toLowerCase().trim();
-
-      if (catSlug === 'health' || catSlug.includes('health') || catSlug.includes('હેલ્થ') || catSlug.includes('સ્વાસ્થ્ય')) {
-        return true;
-      }
-
-      if (Array.isArray(cand.categories)) {
-        for (const c of cand.categories) {
-          const cSlug = String(c?.category?.slug || c?.category?.name || c?.slug || c?.name || '').toLowerCase().trim();
-          if (cSlug === 'health' || cSlug.includes('health') || cSlug.includes('હેલ્થ') || cSlug.includes('સ્વાસ્થ્ય')) {
-            return true;
-          }
+    if (Array.isArray(cand.categories)) {
+      for (const c of cand.categories) {
+        const cSlug = String(c?.category?.slug || c?.category?.name || c?.slug || c?.name || '').toLowerCase().trim();
+        if (cSlug === 'health' || cSlug.includes('health') || cSlug.includes('હેલ્થ') || cSlug.includes('સ્વાસ્થ્ય')) {
+          return true;
         }
       }
+    }
 
-      return false;
-    };
+    return false;
+  };
 
-    // Gather candidate articles excluding main article, all stream articles, and health category articles
+  // 2. Top Sidebar Recommended Pool (For Main Article Sidebar)
+  // Strictly excludes main article, Most Read top 3 articles, and Also Read articles
+  const sidebarRecommendedPool = useMemo(() => {
+    const mainId = String(article.id);
+    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
+    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
+    const excludeIds = new Set([mainId, ...mostReadIds, ...readAlsoIds]);
+
+    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
+
     const pool = [...trending, ...related, ...mostReadArticles].filter(
       (item, index, self) =>
         !excludeIds.has(String(item.id)) &&
         !isHealthArticle(item) &&
-        self.findIndex(t => String(t.id) === String(item.id)) === index
+        self.findIndex((t) => String(t.id) === String(item.id)) === index
     );
 
-    // Filter for State & National top headlines first
-    const stateNationalCandidates = pool.filter(cand => {
+    const stateNationalCandidates = pool.filter((cand) => {
       const cat = String(cand.category || '').toLowerCase().trim();
-      return priorityCatKeywords.some(kw => cat.includes(kw) || kw.includes(cat));
+      return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
     });
 
-    // Combine priority State & National candidates first, filled with other articles from pool
-    const poolToUse = [...stateNationalCandidates, ...pool.filter(cand => !stateNationalCandidates.includes(cand))];
+    const poolToUse = [...stateNationalCandidates, ...pool.filter((cand) => !stateNationalCandidates.includes(cand))];
 
-    // Group by category to favor category variety in sidebar
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
       const cat = String(cand.category || '').toLowerCase().trim();
@@ -1741,9 +1722,71 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     }
 
     const distinctCatArts = Array.from(byCategory.values());
-    const combinedPool = [...distinctCatArts, ...poolToUse.filter(a => !distinctCatArts.includes(a))];
-    return combinedPool.slice(0, 10);
-  }, [article.id, streamList, trending, related, mostReadArticles]);
+    const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
+    return combinedPool.slice(0, 8);
+  }, [article.id, trending, related, mostReadArticles, trendingLimit, readAlsoPool]);
+
+  // 3. Stream Continuation Articles (For Infinite Stream below main article)
+  // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
+  const streamList = useMemo(() => {
+    const mainId = String(article.id);
+    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
+    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
+    const topSidebarIds = new Set(sidebarRecommendedPool.map((a) => String(a.id || '')));
+    const alreadyShownIds = new Set<string>([
+      mainId,
+      ...mostReadIds,
+      ...readAlsoIds,
+      ...topSidebarIds,
+    ]);
+
+    const remainingRelated = (related || []).filter((item) => !alreadyShownIds.has(String(item.id)));
+    const shownInRelated = remainingRelated.slice(0, relatedLimit);
+    shownInRelated.forEach((a) => alreadyShownIds.add(String(a.id)));
+
+    const pool = [...remainingRelated.slice(relatedLimit), ...(trending || []), ...(related || [])];
+    return pool
+      .filter((item, index, self) => !alreadyShownIds.has(String(item.id)) && self.findIndex((t) => String(t.id) === String(item.id)) === index)
+      .slice(0, 8);
+  }, [related, trending, article.id, readAlsoPool, relatedLimit, mostReadArticles, trendingLimit, sidebarRecommendedPool]);
+
+  // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
+  // Strictly excludes ALL articles already displayed anywhere on the page!
+  const streamSidebarRecommendedPool = useMemo(() => {
+    const mainId = String(article.id);
+    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
+    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
+    const topSidebarIds = new Set(sidebarRecommendedPool.map((a) => String(a.id || '')));
+    const streamIds = new Set(streamList.map((a) => String(a.id || '')));
+    const excludeIds = new Set([mainId, ...mostReadIds, ...readAlsoIds, ...topSidebarIds, ...streamIds]);
+
+    const pool = [...trending, ...related, ...mostReadArticles].filter(
+      (item, index, self) =>
+        !excludeIds.has(String(item.id)) &&
+        !isHealthArticle(item) &&
+        self.findIndex((t) => String(t.id) === String(item.id)) === index
+    );
+
+    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
+    const stateNationalCandidates = pool.filter((cand) => {
+      const cat = String(cand.category || '').toLowerCase().trim();
+      return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
+    });
+
+    const poolToUse = [...stateNationalCandidates, ...pool.filter((cand) => !stateNationalCandidates.includes(cand))];
+
+    const byCategory = new Map<string, Article>();
+    for (const cand of poolToUse) {
+      const cat = String(cand.category || '').toLowerCase().trim();
+      if (!byCategory.has(cat)) {
+        byCategory.set(cat, cand);
+      }
+    }
+
+    const distinctCatArts = Array.from(byCategory.values());
+    const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
+    return combinedPool.slice(0, 8);
+  }, [article.id, trending, related, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -2629,7 +2672,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         <RelatedStoriesSection
           article={article}
           related={related}
-          excludeArticles={readAlsoPool}
+          excludeArticles={[...readAlsoPool, ...sidebarRecommendedPool]}
           fallbackArticles={trending}
           language={language}
           savedIds={savedIds}
@@ -2660,6 +2703,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           TranslatedInlineText={TranslatedInlineText}
           TranslatedParagraph={TranslatedParagraph}
           sidebarRecommendedPool={sidebarRecommendedPool}
+          streamSidebarRecommendedPool={streamSidebarRecommendedPool}
         /></div>
       <div style={{ height: '50px' }} />
       {/* APK Swipe Floating Notification / Indicator */}
