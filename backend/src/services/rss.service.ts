@@ -41,6 +41,19 @@ export function getSiteBaseUrl(): string {
 /**
  * Category alias mappings to bridge legacy PHP slugs and modern Next.js slugs.
  */
+/**
+ * Cleans excerpts for RSS descriptions by stripping markdown highlights, divider lines, and bullets.
+ */
+function cleanRssExcerpt(text?: string | null): string {
+  if (!text) return '';
+  return stripHtmlTags(text)
+    .replace(/(?:^|\n)\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n-]*/gi, ' ')
+    .replace(/[-—_=]{3,}/g, ' ')
+    .replace(/^[#\s*•\-–—]+/gm, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const CATEGORY_ALIASES: Record<string, string[]> = {
   'other-cities': ['other-cities', 'others'],
   'others': ['others', 'other-cities'],
@@ -79,7 +92,7 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
 export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promise<GeneratedFeedResult> {
   const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
   const rawCategorySlug = (options.categorySlug || '').trim().toLowerCase().replace(/\.xml$/, '');
-  const isHomeSlug = !rawCategorySlug || ['all', 'home', 'homepage', 'news', 'main', 'top'].includes(rawCategorySlug);
+  const isHomeSlug = !rawCategorySlug || rawCategorySlug.includes('home') || rawCategorySlug.includes('update') || rawCategorySlug.includes('gujpost') || ['all', 'homepage', 'news', 'main', 'top'].includes(rawCategorySlug);
   const categorySlug = isHomeSlug ? '' : rawCategorySlug;
   const lang = (options.lang || 'gu').toLowerCase().trim();
   const cacheKey = `rss:${categorySlug || 'home'}:${limit}:${lang}`;
@@ -505,20 +518,20 @@ ${itemsXml}  </channel>
     const pubDate = new Date(art.createdAt).toUTCString();
 
     let rawTitle = art.titleGu || art.title || 'Gujarat Post Samachar';
-    let rawExcerpt = stripHtmlTags(art.excerptGu || art.excerpt || art.titleGu || art.title || '');
+    let rawExcerpt = cleanRssExcerpt(art.excerptGu || art.excerpt || art.titleGu || art.title || '');
     let catName = art.category?.nameGu || art.category?.name || 'સમાચાર';
     let authorName = art.author?.nameGu || art.author?.name || 'Gujarat Post Team';
     let rawBody = art.contentGu || art.content || '';
 
     if (lang === 'en') {
       rawTitle = art.title || art.titleGu || 'Gujarat Post News';
-      rawExcerpt = stripHtmlTags(art.excerpt || art.excerptGu || rawTitle);
+      rawExcerpt = cleanRssExcerpt(art.excerpt || art.excerptGu || rawTitle);
       catName = art.category?.name || art.category?.nameGu || 'News';
       authorName = art.author?.name || art.author?.nameGu || 'Gujarat Post Team';
       rawBody = art.content || art.contentGu || '';
     } else if (lang === 'hi') {
       rawTitle = art.titleHi || art.titleGu || art.title || 'गुजरात पोस्ट समाचार';
-      rawExcerpt = stripHtmlTags(art.excerptHi || art.excerptGu || art.excerpt || rawTitle);
+      rawExcerpt = cleanRssExcerpt(art.excerptHi || art.excerptGu || art.excerpt || rawTitle);
       catName = art.category?.nameHi || art.category?.name || art.category?.nameGu || 'समाचार';
       authorName = art.author?.name || art.author?.nameGu || 'Gujarat Post Team';
       rawBody = art.contentHi || art.contentGu || art.content || '';
