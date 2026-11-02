@@ -1649,14 +1649,44 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     // Priority State & National top headline categories
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
 
-    // Gather candidate articles excluding main article & all stream articles
+    // Helper to identify health category articles (strictly excluded ONLY from this right sidebar)
+    const isHealthArticle = (cand: any): boolean => {
+      if (!cand) return false;
+      const catSlug = String(
+        cand.category ||
+        cand.categorySlug ||
+        cand.category?.slug ||
+        cand.category?.name ||
+        ''
+      ).toLowerCase().trim();
+
+      if (catSlug === 'health' || catSlug.includes('health') || catSlug.includes('હેલ્થ') || catSlug.includes('સ્વાસ્થ્ય')) {
+        return true;
+      }
+
+      if (Array.isArray(cand.categories)) {
+        for (const c of cand.categories) {
+          const cSlug = String(c?.category?.slug || c?.category?.name || c?.slug || c?.name || '').toLowerCase().trim();
+          if (cSlug === 'health' || cSlug.includes('health') || cSlug.includes('હેલ્થ') || cSlug.includes('સ્વાસ્થ્ય')) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
+    // Gather candidate articles excluding main article, all stream articles, and health category articles
     const pool = [...trending, ...related, ...mostReadArticles].filter(
-      (item, index, self) => !excludeIds.has(String(item.id)) && self.findIndex(t => String(t.id) === String(item.id)) === index
+      (item, index, self) =>
+        !excludeIds.has(String(item.id)) &&
+        !isHealthArticle(item) &&
+        self.findIndex(t => String(t.id) === String(item.id)) === index
     );
 
     // Filter for State & National top headlines first
     const stateNationalCandidates = pool.filter(cand => {
-      const cat = (cand.category || '').toLowerCase().trim();
+      const cat = String(cand.category || '').toLowerCase().trim();
       return priorityCatKeywords.some(kw => cat.includes(kw) || kw.includes(cat));
     });
 
@@ -1666,7 +1696,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     // Group by category to favor category variety in sidebar
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
-      const cat = (cand.category || '').toLowerCase().trim();
+      const cat = String(cand.category || '').toLowerCase().trim();
       if (!byCategory.has(cat)) {
         byCategory.set(cat, cand);
       }
