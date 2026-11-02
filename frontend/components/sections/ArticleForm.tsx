@@ -2125,11 +2125,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: '/', slug: result.article?.slug || result.slug || slug }),
+        keepalive: true,
       }).catch(() => { });
 
-      // Route back to list
-      router.push('/admin/articles');
-      router.refresh();
+      // Route cleanly back to list with full fresh stylesheet & state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/admin/articles';
+      } else {
+        router.push('/admin/articles');
+      }
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
