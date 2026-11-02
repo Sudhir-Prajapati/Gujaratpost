@@ -479,7 +479,7 @@ export default function LatestUpdatesSection({
   );
 
   const sidebarContent = (
-    <div className="flex flex-col gap-6 sticky top-[96px] select-none">
+    <div className="flex flex-col gap-6 sticky top-20 select-none">
       {/* ── 1. MOST READ SECTION (સૌથી વધુ વંચાયેલા) ── */}
       {/* ─── MOBILE VIEW (< md): Modern Card UI matching Image 2 ─── */}
       <div className="md:hidden overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">

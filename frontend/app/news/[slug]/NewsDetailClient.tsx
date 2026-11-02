@@ -2023,7 +2023,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   return (
     <>
       <ReadingProgressBar />
-      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2">
+      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2 overflow-x-clip">
         <div key={`${article.id}-${language}`} className="article-grid" suppressHydrationWarning>
           <article ref={articleContainerRef} suppressHydrationWarning>
             <nav data-nosnippet="true" className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium">
@@ -2396,8 +2396,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
           </article>
 
-          <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
-            <div className="side-sticky sticky top-[96px] transition-all duration-300">
+          <aside className="side select-none w-full max-w-[340px] min-w-0" suppressHydrationWarning>
+            <div className="side-sticky sticky top-20 transition-all duration-300">
               {/* Most Read widget */}
               <div className="mostread">
                 <div className="wtitle">

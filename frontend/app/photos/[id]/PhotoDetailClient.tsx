@@ -552,7 +552,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
         </div>
       )}
 
-      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-6">
+      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-6 overflow-x-clip">
         <div className="article-grid" suppressHydrationWarning>
           <article suppressHydrationWarning>
             
@@ -906,8 +906,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
           </article>
 
           {/* Sidebar - Latest News */}
-          <aside className="select-none w-full max-w-[336px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
-            <div className="sticky top-[96px] transition-all duration-300">
+          <aside className="select-none h-fit sticky top-[100px]" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
             {/* Header: Rounded red capsule + લેટેસ્ટ સમાચાર + વધુ જુઓ → */}
             <div className="flex items-center justify-between pb-3 mb-1 border-b border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center gap-2">
@@ -960,7 +959,6 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                   </Link>
                 );
               })}
-            </div>
             </div>
           </aside>
         </div>

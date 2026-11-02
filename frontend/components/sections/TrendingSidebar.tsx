@@ -21,7 +21,7 @@ export default function TrendingSidebar() {
   }, []);
 
   return (
-    <aside className="space-y-6 lg:sticky lg:top-[96px] lg:self-start">
+    <aside className="space-y-6 lg:sticky lg:top-40 lg:self-start">
       <Advertisement position="sidebar" />
       <section className="overflow-hidden rounded-lg border border-border bg-card">
         <div className="bg-accent px-4 py-3">
