@@ -72,7 +72,18 @@ export class RssController {
    */
   static async getLegacyPoliticsRss(req: Request, res: Response, next: NextFunction) {
     try {
-      const rawName = (req.query.name as string || '').trim().toLowerCase();
+            const rawName = (req.query.name as string || '').trim().toLowerCase();
+      let cleanTopic = rawName;
+      if (cleanTopic.includes('-updates-')) {
+        cleanTopic = cleanTopic.split('-updates-')[0].trim();
+      } else if (cleanTopic.includes('_updates_')) {
+        cleanTopic = cleanTopic.split('_updates_')[0].trim();
+      } else if (cleanTopic.startsWith('updates-')) {
+        cleanTopic = cleanTopic.replace(/^updates-/, '').trim();
+      } else if (cleanTopic.endsWith('-updates')) {
+        cleanTopic = cleanTopic.replace(/-updates$/, '').trim();
+      }
+
       const LEGACY_MAP: Record<string, string> = {
         'news': 'home',
         'homepage': 'home',
@@ -80,6 +91,7 @@ export class RssController {
         'main': 'home',
         'top': 'home',
         'all': 'home',
+        'gujpost': 'home',
         'gujarat': 'gujarat',
         'gandhinagar': 'gandhinagar',
         'ahmedabad': 'ahmedabad',
@@ -87,25 +99,35 @@ export class RssController {
         'vadodara': 'vadodara',
         'rajkot': 'rajkot',
         'others': 'other-cities',
+        'other-cities': 'other-cities',
         'national': 'national',
+        'india': 'national',
         'international': 'world',
-        'entertainment-life-style': 'entertainment-life-style',
+        'world': 'world',
+        'entertainment': 'entertainment',
+        'entertainment-life-style': 'entertainment',
+        'lifestyle': 'lifestyle',
         'popular-stories': 'trending',
+        'trending': 'trending',
         'politics': 'politics',
         'fact-check': 'fact-check',
+        'factcheck': 'fact-check',
         'health': 'health',
         'technology': 'technology',
+        'tech': 'technology',
         'crime': 'crime',
         'video': 'videos',
         'videos': 'videos',
+        'shorts': 'videos',
         'instagram': 'instagram',
         'reels': 'instagram',
         'gallery': 'photos',
         'photos': 'photos',
+        'photo': 'photos',
       };
 
-      const isHomePattern = !rawName || rawName.includes('home') || rawName.includes('update') || rawName.includes('gujpost') || ['news', 'main', 'top', 'all'].includes(rawName);
-      const categorySlug = isHomePattern ? 'home' : (LEGACY_MAP[rawName] || rawName);
+      const isHome = !cleanTopic || ['home', 'homepage', 'news', 'main', 'top', 'all', 'gujpost'].includes(cleanTopic);
+      const categorySlug = isHome ? 'home' : (LEGACY_MAP[cleanTopic] || cleanTopic);
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
       const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
 
