@@ -287,7 +287,7 @@ export default function BreakingTicker() {
     const targetUrl = getTargetUrl(item);
 
     return (
-      <span key={`${keyPrefix}-${item.link || item.slug || index}`} className="inline-flex items-center shrink-0">
+      <span key={`${keyPrefix}-${item.id || item.slug || item.link || 'item'}-${index}`} className="inline-flex items-center shrink-0">
         {targetUrl ? (
           targetUrl.startsWith('http://') || targetUrl.startsWith('https://') ? (
             <a
