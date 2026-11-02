@@ -906,7 +906,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
           </article>
 
           {/* Sidebar - Latest News */}
-          <aside className="select-none h-fit sticky top-[100px]" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
+          <aside className="select-none h-fit sticky top-4" style={{ width: '100%', maxWidth: '336px' }} suppressHydrationWarning>
             {/* Header: Rounded red capsule + લેટેસ્ટ સમાચાર + વધુ જુઓ → */}
             <div className="flex items-center justify-between pb-3 mb-1 border-b border-neutral-200 dark:border-neutral-800">
               <div className="flex items-center gap-2">

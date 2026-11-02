@@ -670,7 +670,7 @@ export default function ArticleInfiniteStream({
         if (streamPool.length === 0) return null;
 
         return (
-          <aside className="select-none h-fit sticky top-[100px] w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
+          <aside className="select-none h-fit sticky top-4 w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
             {/* Heading and fresh recommended stories stick together below header */}
             <div className="wtitle mb-3">
               <span className="d"></span>
