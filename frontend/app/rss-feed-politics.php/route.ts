@@ -5,6 +5,11 @@ export const dynamic = 'force-dynamic';
 
 const LEGACY_MAP: Record<string, string> = {
   'news': 'home',
+  'homepage': 'home',
+  'home': 'home',
+  'main': 'home',
+  'top': 'home',
+  'all': 'home',
   'gujarat': 'gujarat',
   'gandhinagar': 'gandhinagar',
   'ahmedabad': 'ahmedabad',
@@ -28,14 +33,13 @@ const LEGACY_MAP: Record<string, string> = {
   'reels': 'instagram',
   'gallery': 'photos',
   'photos': 'photos',
-  'home': 'home',
 };
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const rawName = (searchParams.get('name') || '').trim().toLowerCase();
-    const mappedCategory = rawName ? (LEGACY_MAP[rawName] || rawName) : 'politics';
+    const mappedCategory = rawName ? (LEGACY_MAP[rawName] || rawName) : 'home';
 
     const lang = (searchParams.get('lang') || searchParams.get('language') || '').trim();
     const langQuery = lang ? `&lang=${encodeURIComponent(lang)}` : '';

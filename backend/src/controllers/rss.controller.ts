@@ -75,6 +75,11 @@ export class RssController {
       const rawName = (req.query.name as string || '').trim().toLowerCase();
       const LEGACY_MAP: Record<string, string> = {
         'news': 'home',
+        'homepage': 'home',
+        'home': 'home',
+        'main': 'home',
+        'top': 'home',
+        'all': 'home',
         'gujarat': 'gujarat',
         'gandhinagar': 'gandhinagar',
         'ahmedabad': 'ahmedabad',
@@ -97,10 +102,9 @@ export class RssController {
         'reels': 'instagram',
         'gallery': 'photos',
         'photos': 'photos',
-        'home': 'home',
       };
 
-      const categorySlug = rawName ? (LEGACY_MAP[rawName] || rawName) : 'politics';
+      const categorySlug = rawName ? (LEGACY_MAP[rawName] || rawName) : 'home';
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
       const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
 
@@ -171,6 +175,7 @@ export class RssController {
           res.setHeader('Last-Modified', feed.lastModified.toUTCString());
           return res.status(304).end();
         }
+
       }
 
       res.set({
