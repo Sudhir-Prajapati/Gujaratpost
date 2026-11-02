@@ -2396,7 +2396,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
           </article>
 
-          <aside className="side select-none w-full max-w-[340px] min-w-0" suppressHydrationWarning>
+          <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
             <div className="side-sticky sticky top-20 transition-all duration-300">
               {/* Most Read widget */}
               <div className="mostread">
