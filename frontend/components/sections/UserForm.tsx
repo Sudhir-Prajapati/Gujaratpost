@@ -239,8 +239,11 @@ export default function UserForm({ userId }: UserFormProps) {
         throw new Error(json.message || 'Operation failed');
       }
 
-      router.push('/admin/users');
-      router.refresh();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/admin/users';
+      } else {
+        router.push('/admin/users');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -152,17 +152,30 @@ const ArticleContentBody = memo(function ArticleContentBody({
       .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
       .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
 
-    // Transform any Twitter embed (figure with iframe, raw iframe, or blockquote) into a clean native Twitter blockquote
+    // Transform any Twitter embed (figure with iframe, raw iframe, or blockquote) into a clean native Twitter blockquote or styled button
     raw = raw.replace(
       /<figure[^>]*data-article-social-platform=["']twitter["'][^>]*>[\s\S]*?<\/figure>/gi,
       (match) => {
         const urlMatch =
           match.match(/data-article-social-url=["']([^"']+)["']/i) ||
           match.match(/href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i) ||
-          match.match(/https?:\/\/(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/i);
-        const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
+          match.match(/https?:\/\/(?:twitter\.com|x\.com)\/(?:[a-zA-Z0-9_]+\/status|i\/status)\/\d+/i);
+        const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]).replace(/&amp;/g, '&') : '';
         if (!tweetUrl) return match;
-        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+
+        const isStatus = /\/(?:status|i\/status)\/\d+/i.test(tweetUrl);
+        if (isStatus) {
+          return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+        }
+
+        const isBroadcast = tweetUrl.includes('/broadcasts/');
+        const isSpace = tweetUrl.includes('/spaces/');
+        const btnLabel = isBroadcast
+          ? 'Watch Live Broadcast on X ↗'
+          : isSpace
+            ? 'Listen on Spaces on X ↗'
+            : 'View on X (Twitter) ↗';
+        return `<div class="my-6 flex justify-center w-full" data-gp-x-link><a href="${tweetUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border-radius:12px;background:#000;color:#fff;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.15)"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg><span>${btnLabel}</span></a></div>`;
       }
     );
 
@@ -175,7 +188,29 @@ const ArticleContentBody = memo(function ArticleContentBody({
           match.match(/https?:\/\/(?:twitter\.com|x\.com)\/[a-zA-Z0-9_]+\/status\/\d+/i);
         const tweetUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
         if (!tweetUrl) return '';
-        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+        const isStatus = /\/(?:status|i\/status)\/\d+/i.test(tweetUrl);
+        if (isStatus) {
+          return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${tweetUrl}">View post on X</a></blockquote></div>`;
+        }
+        return '';
+      }
+    );
+
+    // Handle raw blockquote.twitter-tweet pasted directly inside description content
+    // Strip inline <script> (doesn't execute via innerHTML) and wrap in gp-twitter-embed-wrap so twttr.widgets.load() picks it up
+    raw = raw.replace(
+      /(<blockquote\b[^>]*class=["'][^"']*twitter-tweet[^"']*["'][^>]*>[\s\S]*?<\/blockquote>)(?:\s*<script\b[^>]*platform\.twitter\.com\/widgets\.js[^>]*><\/script>)?/gi,
+      (match, bq) => {
+        // Extract tweet URL from the blockquote <a href>
+        const urlMatch = bq.match(/href=["'](https?:\/\/(?:twitter\.com|x\.com)\/[^"']+)["']/i);
+        const tweetUrl = urlMatch ? urlMatch[1].replace(/&amp;/g, '&') : '';
+        // Only if not already inside a gp-twitter-embed-wrap
+        if (match.includes('gp-twitter-embed-wrap')) return match;
+        if (tweetUrl) {
+          // Clean any existing href in the blockquote and rebuild as native embed
+          return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${tweetUrl}">${bq}</div>`;
+        }
+        return `<div class="gp-twitter-embed-wrap my-4 flex justify-center w-full">${bq}</div>`;
       }
     );
 
@@ -564,7 +599,7 @@ function buildPdfCardHtml(url: string, language?: string): string {
   </div>`;
 }
 
-function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: string, hasPdfPages?: boolean): string {
+function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: string, hasPdfPages?: boolean, pdfPosition?: string): string {
   if (!rawHtml && !articlePdfUrl) return '';
 
   let cleaned = rawHtml || '';
@@ -588,50 +623,51 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
   const cleanPdf = detectedPdf ? detectedPdf.trim() : '';
 
   if (cleanPdf && cleanPdf !== '#') {
+    const targetPdfBlock = hasPdfPages
+      ? `<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`
+      : buildPdfCardHtml(cleanPdf, language);
+
+    // 1. Check for any existing inline PDF marker (viewer, card, placeholder, or token)
+    const inlineMarkerPattern = /(?:<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/a>\s*<\/div>|<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>|<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>|\[PDF_DOCUMENT\])/i;
+
+    if (inlineMarkerPattern.test(cleaned)) {
+      let replaced = false;
+      cleaned = cleaned.replace(new RegExp(inlineMarkerPattern.source, 'gi'), () => {
+        if (!replaced) {
+          replaced = true;
+          return targetPdfBlock;
+        }
+        return '';
+      });
+    } else {
+      // 2. No inline marker found, place accurately according to specified position
+      const desiredPos = pdfPosition || cleaned.match(/data-pdf-position=["']([^"']+)["']/i)?.[1] || 'end';
+      if (desiredPos === 'after_desc_1' && /<!--\s*gp-section-2\s*-->/i.test(cleaned)) {
+        cleaned = cleaned.replace(/<!--\s*gp-section-2\s*-->/i, `${targetPdfBlock}\n\n<!-- gp-section-2 -->`);
+      } else if (desiredPos === 'after_desc_2' && /<!--\s*gp-section-3\s*-->/i.test(cleaned)) {
+        cleaned = cleaned.replace(/<!--\s*gp-section-3\s*-->/i, `${targetPdfBlock}\n\n<!-- gp-section-3 -->`);
+      } else if (desiredPos.startsWith('after_desc_') && /<!--\s*gp-section-\d+\s*-->/i.test(cleaned)) {
+        const targetNum = parseInt(desiredPos.replace('after_desc_', ''), 10);
+        const nextSecNum = targetNum + 1;
+        const nextSecRegex = new RegExp(`<!--\\s*gp-section-${nextSecNum}\\s*-->`, 'i');
+        if (nextSecRegex.test(cleaned)) {
+          cleaned = cleaned.replace(nextSecRegex, `${targetPdfBlock}\n\n<!-- gp-section-${nextSecNum} -->`);
+        } else {
+          cleaned += `\n\n${targetPdfBlock}`;
+        }
+      } else {
+        // Default: at the end of the article
+        cleaned += `\n\n${targetPdfBlock}`;
+      }
+    }
+
+    // 3. Clean up any leftover duplicate PDF elements to ensure PDF only appears ONCE
     if (hasPdfPages) {
-      // FULL PDF PAGE-BY-PAGE VIEWER MODE:
-      // Strip any static download cards, but preserve gp-pdf-pages-viewer at its exact chosen position
       cleaned = cleaned
         .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
-        .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '')
-        .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '');
-
-      const hasViewerMarker = /<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["']/i.test(cleaned);
-      if (!hasViewerMarker) {
-        // Fallback for legacy articles without explicit inline marker: append at the end
-        cleaned += `\n\n<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`;
-      }
+        .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '');
     } else {
-      // PDF DOWNLOAD CARD MODE:
-      // Strip any page-by-page viewer placeholder
       cleaned = cleaned.replace(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][\s\S]*?<\/div>/gi, '');
-
-      // Check if a gp-pdf-card already exists in the body
-      const cardPattern = /<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/i;
-      const placeholderPattern = /<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/i;
-
-      if (cardPattern.test(cleaned)) {
-        let replaced = false;
-        cleaned = cleaned.replace(new RegExp(cardPattern.source, 'gi'), () => {
-          if (!replaced) {
-            replaced = true;
-            return buildPdfCardHtml(cleanPdf, language);
-          }
-          return '';
-        });
-      } else if (placeholderPattern.test(cleaned)) {
-        let replaced = false;
-        cleaned = cleaned.replace(new RegExp(placeholderPattern.source, 'gi'), () => {
-          if (!replaced) {
-            replaced = true;
-            return buildPdfCardHtml(cleanPdf, language);
-          }
-          return '';
-        });
-      } else {
-        // Fallback for legacy articles without inline card: append at the end
-        cleaned += '\n\n' + buildPdfCardHtml(cleanPdf, language);
-      }
     }
   } else {
     // No PDF attached: strip all residual PDF tags
@@ -665,11 +701,12 @@ function stripArticleUtilityLines(rawHtml: string): string {
 }
 
 function normalizeArticleMarkdown(rawHtml: string): string {
-  const clean = (rawHtml || '')
+  let clean = (rawHtml || '')
     .replace(/\\r\\n/g, '\n')
     .replace(/\\r/g, '')
     .replace(/\\n/g, '\n')
     .replace(/\\t/g, ' ');
+  clean = clean.replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '');
   return stripArticleUtilityLines(clean)
     .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
     .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
@@ -683,17 +720,10 @@ function isGalleryImageAlt(alt: string): boolean {
 }
 
 function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, includeCaption = false): string {
-  let galleryCount = 0;
-
   return (rawHtml || '').replace(MARKDOWN_IMAGE_RE, (match, alt, url) => {
     const cleanAlt = (alt || '').trim();
     const cleanUrl = (url || '').replace(/\s+/g, '').trim();
     const isGallery = isGalleryImageAlt(cleanAlt);
-
-    if (isGallery) {
-      galleryCount++;
-      if (galleryCount > 1) return '';
-    }
 
     const caption = includeCaption
       ? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>તસવીર: ગુજરાત પોસ્ટ</span></figcaption>`
@@ -701,7 +731,8 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
 
-    const safeImgUrl = sanitizeImageUrl(cleanUrl); return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none" /><div class="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true"></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
+    const safeImgUrl = sanitizeImageUrl(cleanUrl);
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none" /><div class="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true"></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -829,8 +860,9 @@ function sanitizeParagraphHtml(html: string, language?: string): string {
   cleaned = upgradeMarkdownQuotes(cleaned);
   cleaned = convertMarkdownImagesToFigures(cleaned, 'Gujarat Post Image', true);
 
-  // Convert plain URLs to styled clickable links if not inside HTML attributes
-  cleaned = cleaned.replace(/(^|[\s>(])(https?:\/\/[^\s<"']+)/g, (match, prefix, url) => {
+  // Convert plain URLs to styled clickable links safely (skipping existing HTML tags and attributes)
+  cleaned = cleaned.replace(/(<a\b[^>]*>[\s\S]*?<\/a>)|(<[^>]+>)|(^|[\s(])(https?:\/\/[^\s<"']+)/gi, (match, aTag, anyTag, prefix, url) => {
+    if (aTag || anyTag) return match;
     return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#B3121B] font-bold underline hover:text-red-700 break-all">${url}</a>`;
   });
 
@@ -1002,30 +1034,70 @@ function findMatchingCandidate(
   return null;
 }
 
-function splitArticleContent(html: string, atPara = 2): [string, string] {
+function splitArticleContent(html: string, atPara = 4): [string, string] {
   if (!html || typeof html !== 'string') return ['', ''];
   const trimmed = html.trim();
-  if (trimmed.length < 350) return [trimmed, ''];
+  if (trimmed.length < 500) return [trimmed, ''];
 
-  // Look for block-level closing tags, double-newlines, or double-br tags
-  const blockRegex = /(<\/p>|<\/div>|<\/blockquote>|<\/figure>|\n\s*\n+|<br\s*\/?>\s*<br\s*\/?>)/gi;
   let count = 0;
-  let lastIndex = -1;
+  let splitIndex = -1;
+  let depth = 0;
+
+  const tagRegex = /<(\/)?([a-z0-9]+)(?:\s+[^>]*)?>/gi;
+  let lastBlockEnd = -1;
   let match: RegExpExecArray | null;
 
-  while ((match = blockRegex.exec(trimmed)) !== null) {
-    count++;
-    lastIndex = match.index + match[0].length;
-    if (count >= atPara && lastIndex >= 180) {
-      break;
+  while ((match = tagRegex.exec(trimmed)) !== null) {
+    const isClosing = Boolean(match[1]);
+    const tagName = match[2].toLowerCase();
+    const tagEnd = match.index + match[0].length;
+
+    if (['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName)) {
+      continue;
+    }
+
+    if (['div', 'blockquote', 'figure', 'table', 'ul', 'ol', 'section'].includes(tagName)) {
+      if (isClosing) {
+        if (depth > 0) depth--;
+        if (depth === 0) {
+          count++;
+          lastBlockEnd = tagEnd;
+          if (count >= atPara && tagEnd >= 450) {
+            splitIndex = tagEnd;
+            break;
+          }
+        }
+      } else {
+        depth++;
+      }
+    } else if (tagName === 'p') {
+      if (isClosing && depth === 0) {
+        count++;
+        lastBlockEnd = tagEnd;
+        if (count >= atPara && tagEnd >= 450) {
+          splitIndex = tagEnd;
+          break;
+        }
+      }
     }
   }
 
-  if (count < atPara || lastIndex === -1 || lastIndex >= trimmed.length - 80) {
-    return [balanceHtmlTags(trimmed), ''];
+  if (splitIndex === -1) {
+    if (count >= atPara && lastBlockEnd > 0 && lastBlockEnd < trimmed.length - 120) {
+      splitIndex = lastBlockEnd;
+    } else {
+      return [balanceHtmlTags(trimmed), ''];
+    }
   }
 
-  return [balanceHtmlTags(trimmed.slice(0, lastIndex).trim()), balanceHtmlTags(trimmed.slice(lastIndex).trim())];
+  // If a figure or image is right around the split point, include it in topHtml so it stays visible
+  const nextSlice = trimmed.slice(splitIndex, splitIndex + 400);
+  const figureMatch = nextSlice.match(/^[\s\r\n]*<figure\b[\s\S]*?<\/figure>/i);
+  if (figureMatch) {
+    splitIndex += figureMatch[0].length;
+  }
+
+  return [balanceHtmlTags(trimmed.slice(0, splitIndex).trim()), balanceHtmlTags(trimmed.slice(splitIndex).trim())];
 }
 
 export default function NewsDetailClient({ article, related, trending, articleUrl, initialLanguage }: Props) {
@@ -1249,6 +1321,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
+    const hiddenImgMatches = rawContent.matchAll(/<!--\s*gp-section-\d+-hidden-image:\s*([^\s>]+)\s*-->/gi);
+    for (const match of hiddenImgMatches) {
+      if (match[1]) {
+        const clean = sanitizeImageUrl(match[1]);
+        if (!images.includes(clean)) images.push(clean);
+      }
+    }
+
     const extraImages = (article as any).images || (article as any).gallery || (article as any).galleryImages || [];
     if (Array.isArray(extraImages)) {
       extraImages.forEach((img) => {
@@ -1356,7 +1436,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const tags = (language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)) || article.tags || [];
 
   const readAlsoPool = useMemo(() => {
-    const seen = new Set<string>([String(article?.id || '')]);
+    const topMostReadIds = new Set((mostReadArticles || []).slice(0, 3).map((a) => String(a.id || '')));
+    const seen = new Set<string>([String(article?.id || ''), ...topMostReadIds]);
     const list: Article[] = [];
     const pool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
     for (const item of pool) {
@@ -1408,7 +1489,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const formattedArticleBodyHtml = useMemo(() => {
     if (!body) return '';
 
-    let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages)))
+    let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages, (article as any)?.pdfPosition)))
       .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
@@ -1436,13 +1517,14 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     // Convert markdown images after translation as labels may no longer be English.
     cleaned = convertMarkdownImagesToFigures(cleaned, title);
 
-    // Collapse multiple nested blockquotes
+    // Collapse multiple nested generic blockquotes (preserve twitter-tweet and instagram-media embeds)
     cleaned = cleaned
-      .replace(/(<blockquote[^>]*>\s*)+/gi, '<blockquote class="my-6 border-l-[3px] border-[#B3121B] pl-4 py-1 font-sans font-bold text-neutral-900 dark:text-white">')
-      .replace(/(\s*<\/blockquote>)+/gi, '</blockquote>');
+      .replace(/(<blockquote(?![^>]*class=["'][^"']*(?:twitter-tweet|instagram-media)[^"']*)[^>]*>\s*)+/gi, '<blockquote class="my-6 border-l-[3px] border-[#B3121B] pl-4 py-1 font-sans font-bold text-neutral-900 dark:text-white">')
+      .replace(/(?<!<blockquote[^>]*>)(\s*<\/blockquote>)+/gi, '</blockquote>');
 
-    // Auto-link plain URLs that are not inside href="..."
-    cleaned = cleaned.replace(/(^|[\s>(])(https?:\/\/[^\s<"']+)/g, (match, prefix, url) => {
+    // Auto-link standalone plain URLs in text (safely skipping HTML tags, attributes, and existing <a> tags)
+    cleaned = cleaned.replace(/(<a\b[^>]*>[\s\S]*?<\/a>)|(<[^>]+>)|(^|[\s(])(https?:\/\/[^\s<"']+)/gi, (match, aTag, anyTag, prefix, url) => {
+      if (aTag || anyTag) return match;
       return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#B3121B] font-bold underline hover:text-[#8E0E15] break-all">${url}</a>`;
     });
 
@@ -1481,14 +1563,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
-    // Clean empty spacer divs and empty paragraphs
+    // Clean empty spacer divs and empty paragraphs (safely preserving gp-pdf-pages-viewer and embed containers)
     cleaned = cleaned
-      .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
+      .replace(/<div\b(?![^>]*(?:gp-pdf-pages-viewer|data-pdf-url))[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
       .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
 
-    // Convert paragraph-level <div> into proper <p class="article-para my-3"> elements
+    // Convert paragraph-level <div> into proper <p class="article-para my-3"> elements (excluding special widgets)
     cleaned = cleaned.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
       if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
+        return match;
+      }
+      if (/class=["'][^"']*(?:gp-pdf|twitter|instagram|facebook|aspect-video)/i.test(attrs) || /data-pdf-url/i.test(attrs)) {
         return match;
       }
       const plain = inner.replace(/<[^>]*>/g, '').trim();
@@ -1501,7 +1586,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const wrappedBlocks = rawBlocks.map((block) => {
       const trimmed = block.trim();
       if (!trimmed) return '';
-      if (/^<(p|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
         return trimmed;
       }
       return `<p class="article-para my-3">${trimmed}</p>`;
@@ -1623,59 +1708,131 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     return 5;
   }, [article, isContentExpanded]);
 
-  const streamList = useMemo(() => {
-    const mainId = String(article.id);
-    const alreadyShownIds = new Set<string>([
-      mainId,
-      ...readAlsoPool.map((a) => String(a.id)),
-    ]);
+  // 1. Helper to identify health category articles (strictly excluded from Recommended sidebars)
+  const isHealthArticle = (cand: any): boolean => {
+    if (!cand) return false;
+    const catSlug = String(
+      cand.category ||
+      cand.categorySlug ||
+      cand.category?.slug ||
+      cand.category?.name ||
+      ''
+    ).toLowerCase().trim();
 
-    // Also exclude articles that are displayed in RelatedStoriesSection (up to relatedLimit)
-    const remainingRelated = (related || []).filter((item) => !alreadyShownIds.has(String(item.id)));
-    const shownInRelated = remainingRelated.slice(0, relatedLimit);
-    shownInRelated.forEach((a) => alreadyShownIds.add(String(a.id)));
+    if (catSlug === 'health' || catSlug.includes('health') || catSlug.includes('હેલ્થ') || catSlug.includes('સ્વાસ્થ્ય')) {
+      return true;
+    }
 
-    // Stream list should continue with the next related articles, then trending if needed, without repeating
-    const pool = [...remainingRelated.slice(relatedLimit), ...(trending || [])];
-    return pool
-      .filter((item, index, self) => !alreadyShownIds.has(String(item.id)) && self.findIndex(t => String(t.id) === String(item.id)) === index)
-      .slice(0, 8);
-  }, [related, trending, article.id, readAlsoPool, relatedLimit]);
+    if (Array.isArray(cand.categories)) {
+      for (const c of cand.categories) {
+        const cSlug = String(c?.category?.slug || c?.category?.name || c?.slug || c?.name || '').toLowerCase().trim();
+        if (cSlug === 'health' || cSlug.includes('health') || cSlug.includes('હેલ્થ') || cSlug.includes('સ્વાસ્થ્ય')) {
+          return true;
+        }
+      }
+    }
 
+    return false;
+  };
+
+  // 2. Top Sidebar Recommended Pool (For Main Article Sidebar)
+  // Strictly excludes main article, Most Read top 3 articles, and Also Read articles
   const sidebarRecommendedPool = useMemo(() => {
     const mainId = String(article.id);
-    const excludeIds = new Set([mainId, ...streamList.map(a => String(a.id))]);
+    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
+    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
+    const excludeIds = new Set([mainId, ...mostReadIds, ...readAlsoIds]);
 
-    // Priority State & National top headline categories
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
 
-    // Gather candidate articles excluding main article & all stream articles
     const pool = [...trending, ...related, ...mostReadArticles].filter(
-      (item, index, self) => !excludeIds.has(String(item.id)) && self.findIndex(t => String(t.id) === String(item.id)) === index
+      (item, index, self) =>
+        !excludeIds.has(String(item.id)) &&
+        !isHealthArticle(item) &&
+        self.findIndex((t) => String(t.id) === String(item.id)) === index
     );
 
-    // Filter for State & National top headlines first
-    const stateNationalCandidates = pool.filter(cand => {
-      const cat = (cand.category || '').toLowerCase().trim();
-      return priorityCatKeywords.some(kw => cat.includes(kw) || kw.includes(cat));
+    const stateNationalCandidates = pool.filter((cand) => {
+      const cat = String(cand.category || '').toLowerCase().trim();
+      return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
     });
 
-    // Combine priority State & National candidates first, filled with other articles from pool
-    const poolToUse = [...stateNationalCandidates, ...pool.filter(cand => !stateNationalCandidates.includes(cand))];
+    const poolToUse = [...stateNationalCandidates, ...pool.filter((cand) => !stateNationalCandidates.includes(cand))];
 
-    // Group by category to favor category variety in sidebar
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
-      const cat = (cand.category || '').toLowerCase().trim();
+      const cat = String(cand.category || '').toLowerCase().trim();
       if (!byCategory.has(cat)) {
         byCategory.set(cat, cand);
       }
     }
 
     const distinctCatArts = Array.from(byCategory.values());
-    const combinedPool = [...distinctCatArts, ...poolToUse.filter(a => !distinctCatArts.includes(a))];
-    return combinedPool.slice(0, 10);
-  }, [article.id, streamList, trending, related, mostReadArticles]);
+    const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
+    return combinedPool.slice(0, 8);
+  }, [article.id, trending, related, mostReadArticles, trendingLimit, readAlsoPool]);
+
+  // 3. Stream Continuation Articles (For Infinite Stream below main article)
+  // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
+  const streamList = useMemo(() => {
+    const mainId = String(article.id);
+    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
+    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
+    const topSidebarIds = new Set(sidebarRecommendedPool.map((a) => String(a.id || '')));
+    const alreadyShownIds = new Set<string>([
+      mainId,
+      ...mostReadIds,
+      ...readAlsoIds,
+      ...topSidebarIds,
+    ]);
+
+    const remainingRelated = (related || []).filter((item) => !alreadyShownIds.has(String(item.id)));
+    const shownInRelated = remainingRelated.slice(0, relatedLimit);
+    shownInRelated.forEach((a) => alreadyShownIds.add(String(a.id)));
+
+    const pool = [...remainingRelated.slice(relatedLimit), ...(trending || []), ...(related || [])];
+    return pool
+      .filter((item, index, self) => !alreadyShownIds.has(String(item.id)) && self.findIndex((t) => String(t.id) === String(item.id)) === index)
+      .slice(0, 8);
+  }, [related, trending, article.id, readAlsoPool, relatedLimit, mostReadArticles, trendingLimit, sidebarRecommendedPool]);
+
+  // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
+  // Strictly excludes ALL articles already displayed anywhere on the page!
+  const streamSidebarRecommendedPool = useMemo(() => {
+    const mainId = String(article.id);
+    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
+    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
+    const topSidebarIds = new Set(sidebarRecommendedPool.map((a) => String(a.id || '')));
+    const streamIds = new Set(streamList.map((a) => String(a.id || '')));
+    const excludeIds = new Set([mainId, ...mostReadIds, ...readAlsoIds, ...topSidebarIds, ...streamIds]);
+
+    const pool = [...trending, ...related, ...mostReadArticles].filter(
+      (item, index, self) =>
+        !excludeIds.has(String(item.id)) &&
+        !isHealthArticle(item) &&
+        self.findIndex((t) => String(t.id) === String(item.id)) === index
+    );
+
+    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
+    const stateNationalCandidates = pool.filter((cand) => {
+      const cat = String(cand.category || '').toLowerCase().trim();
+      return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
+    });
+
+    const poolToUse = [...stateNationalCandidates, ...pool.filter((cand) => !stateNationalCandidates.includes(cand))];
+
+    const byCategory = new Map<string, Article>();
+    for (const cand of poolToUse) {
+      const cat = String(cand.category || '').toLowerCase().trim();
+      if (!byCategory.has(cat)) {
+        byCategory.set(cat, cand);
+      }
+    }
+
+    const distinctCatArts = Array.from(byCategory.values());
+    const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
+    return combinedPool.slice(0, 8);
+  }, [article.id, trending, related, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -2253,7 +2410,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
             {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
             {(() => {
-              const [topHtml, bottomHtml] = splitArticleContent(formattedArticleBodyHtml, 2);
+              const [topHtml, bottomHtml] = splitArticleContent(formattedArticleBodyHtml, 4);
               const isExpandedState = isContentExpanded || speaking;
               const hasSplit = Boolean(bottomHtml);
 
@@ -2264,7 +2421,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   return <ArticleContentBody html={htmlBlock} activeSpeechText={activeSpeechText} />;
                 }
 
-                const parts = htmlBlock.split(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>/i);
+                const parts = htmlBlock.split(/(?:<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>|<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*\/>)/i);
                 if (parts.length <= 1) {
                   return <ArticleContentBody html={htmlBlock} activeSpeechText={activeSpeechText} />;
                 }
@@ -2561,7 +2718,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         <RelatedStoriesSection
           article={article}
           related={related}
-          excludeArticles={readAlsoPool}
+          excludeArticles={[...readAlsoPool, ...sidebarRecommendedPool]}
           fallbackArticles={trending}
           language={language}
           savedIds={savedIds}
@@ -2592,6 +2749,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           TranslatedInlineText={TranslatedInlineText}
           TranslatedParagraph={TranslatedParagraph}
           sidebarRecommendedPool={sidebarRecommendedPool}
+          streamSidebarRecommendedPool={streamSidebarRecommendedPool}
         /></div>
       <div style={{ height: '50px' }} />
       {/* APK Swipe Floating Notification / Indicator */}

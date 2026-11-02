@@ -86,8 +86,8 @@ export default function MainLayoutWrapper({ children }: Props) {
   // STANDARD WEB & MOBILE BROWSER VIEW:
   return (
     <div className="flex min-h-screen min-h-[100dvh] flex-col justify-between bg-background">
+      {pathname === '/' && <SplashLoader />}
       <div className="flex-shrink-0">
-        {pathname === '/' && <SplashLoader />}
         <Header />
         <BreakingTicker />
       </div>

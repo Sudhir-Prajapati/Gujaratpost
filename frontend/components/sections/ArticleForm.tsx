@@ -372,6 +372,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     imageUrl: string;
     imageMode: 'upload' | 'url';
     imageUploading: boolean;
+    showImageAfterDesc?: boolean;
   }
 
   // Paired story continuation sections (Section 2 to Section 10: Description N & Image N together)
@@ -623,20 +624,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [isFeatured, setIsFeatured] = useState(false);
 
   const handleToggleTrendingStory = useCallback((explicitValue?: boolean) => {
-    setIsTrending((prev) => {
-      const next = explicitValue !== undefined ? explicitValue : !prev;
-      const tCat = categories.find((c) => c.slug === 'trending' || c.name?.toLowerCase() === 'trending');
-      if (tCat) {
-        if (next) {
-          setAdditionalCategoryIds((old) => Array.from(new Set([...old, tCat.id])));
-        } else {
-          setAdditionalCategoryIds((old) => old.filter((id) => id !== tCat.id));
-          setCategoryId((old) => (old === tCat.id ? '' : old));
-        }
-      }
-      return next;
-    });
-  }, [categories]);
+    setIsTrending((prev) => (explicitValue !== undefined ? explicitValue : !prev));
+  }, []);
 
   // SEO Fields
   const [seoTitle, setSeoTitle] = useState('');
@@ -768,13 +757,22 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       .trim();
   };
 
+  // Helper to thoroughly purge any embedded social media figures, cards, blockquotes, and iframes from description text
+  const purgeEmbedsFromText = (text: string) => {
+    if (!text) return '';
+    // Preserve all inline user embeds (Twitter, YouTube, Instagram, Facebook, figures, blockquotes, iframes) inside descriptions
+    return text
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-x-card)[^"']*["']>[\s\S]*?<\/div>/gi, '')
+      .trim();
+  };
+
   // Helper to compile separate section fields into full article body
   const compileStructuredContent = (
     hl: string,
     d1Str: string,
     qT: string,
     qC: string,
-    pairedSections: { desc: string; imageUrl: string }[],
+    pairedSections: { desc: string; imageUrl: string; showImageAfterDesc?: boolean }[],
     lang: 'en' | 'gu' | 'hi'
   ) => {
     const parts: string[] = [];
@@ -804,7 +802,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       const cardHtml = `<div class="gp-pdf-card" ${showPagesAttr} ${posAttr} data-pdf-url="${cleanPdf}"><div class="gp-pdf-inner"><div class="gp-pdf-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="gp-pdf-text"><span class="gp-pdf-title">${pdfTitle}</span><span class="gp-pdf-sub">${pdfSub}</span></div></div><a href="${cleanPdf}" target="_blank" rel="noopener noreferrer" download class="gp-pdf-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${pdfBtn}</span></a></div>`;
 
       if (showPdfPages) {
-        pdfBlockHtml = `<div class="gp-pdf-pages-viewer" ${posAttr} data-pdf-url="${cleanPdf}"></div>`;
+        pdfBlockHtml = `<div class="gp-pdf-pages-viewer" ${showPagesAttr} ${posAttr} data-pdf-url="${cleanPdf}"></div>`;
       } else {
         pdfBlockHtml = cardHtml;
       }
@@ -813,7 +811,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     let pdfPlaced = false;
 
     // Description 1
-    let cleanD1 = purgePdfFromText(d1Str)
+    let cleanD1 = purgeEmbedsFromText(purgePdfFromText(d1Str))
       .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
       .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
       .trim();
@@ -835,7 +833,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     // Story continuation sections: Description N then Image N
     pairedSections.forEach((sec, idx) => {
       const sectionNum = idx + 2;
-      let cleanDesc = purgePdfFromText(sec.desc)
+      let cleanDesc = purgeEmbedsFromText(purgePdfFromText(sec.desc))
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
@@ -852,7 +850,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         parts.push(cleanDesc);
       }
       if (sec.imageUrl && sec.imageUrl.trim()) {
-        parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
+        if (sec.showImageAfterDesc === false) {
+          parts.push(`<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`);
+        } else {
+          parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
+        }
       }
 
       if (!pdfPlaced && pdfBlockHtml && pdfPosition === `after_desc_${sectionNum}`) {
@@ -866,16 +868,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       parts.push(`> "${qT.trim()}"${citeStr}`);
     }
 
-    // Guard bottom standalone embeds: do NOT append duplicate if already embedded in Description 1 or continuation sections
-    const hasInlineEmbed = (platform: string) => {
-      const re = new RegExp(`data-article-social-platform=["']${platform}["']`, 'i');
-      return re.test(d1Str) || pairedSections.some((s) => re.test(s.desc));
-    };
-
-    if (youtubeUrl && !hasInlineEmbed('youtube')) parts.push(buildArticleEmbedHtml(youtubeUrl, 'youtube'));
-    if (twitterUrl && !hasInlineEmbed('twitter')) parts.push(buildArticleEmbedHtml(twitterUrl, 'twitter'));
-    if (instagramUrl && !hasInlineEmbed('instagram')) parts.push(buildArticleEmbedHtml(instagramUrl, 'instagram'));
-    if (facebookUrl && !hasInlineEmbed('facebook')) parts.push(buildArticleEmbedHtml(facebookUrl, 'facebook'));
+    // Append social media embeds if provided in form
+    if (youtubeUrl && youtubeUrl.trim()) parts.push(buildArticleEmbedHtml(youtubeUrl.trim(), 'youtube'));
+    if (twitterUrl && twitterUrl.trim()) parts.push(buildArticleEmbedHtml(twitterUrl.trim(), 'twitter'));
+    if (instagramUrl && instagramUrl.trim()) parts.push(buildArticleEmbedHtml(instagramUrl.trim(), 'instagram'));
+    if (facebookUrl && facebookUrl.trim()) parts.push(buildArticleEmbedHtml(facebookUrl.trim(), 'facebook'));
 
     // If PDF was not placed after description 1 or continuation sections, append it at the end (Default)
     if (!pdfPlaced && pdfBlockHtml) {
@@ -1163,15 +1160,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     let extractedPdfUrl = '';
     let hasPdfPages = false;
     let extractedPdfPosition = 'end';
-    const extractedImgs: { index: number; url: string }[] = [];
+    const extractedImgs: { index: number; url: string; showImageAfterDesc?: boolean }[] = [];
     const extractedDescsMap: { index: number; text: string }[] = [];
 
     if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages, extractedPdfPosition };
 
     const pdfMatch =
+      raw.match(/data-pdf-url=["']([^"']+)["']/i) ||
+      raw.match(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][^>]*data-pdf-url=["']([^"']+)["']/i) ||
       raw.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
       raw.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
-      raw.match(/href=["']([^"']+)["'][^>]*download/i);
+      raw.match(/href=["']([^"']+)["'][^>]*download/i) ||
+      raw.match(/download[^>]*href=["']([^"']+)["']/i) ||
+      raw.match(/src=["']([^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
+      raw.match(/(https?:\/\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?|\/uploads\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?)/i);
     if (pdfMatch && pdfMatch[1]) extractedPdfUrl = pdfMatch[1];
 
     if (raw.includes('data-show-pages="true"') || raw.includes('gp-pdf-pages-viewer')) {
@@ -1182,15 +1184,25 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const posAttrMatch = raw.match(/data-pdf-position=["']([^"']+)["']/i);
     if (posAttrMatch && posAttrMatch[1]) {
       extractedPdfPosition = posAttrMatch[1];
+    } else if (/\[PDF_DOCUMENT\]/i.test(raw)) {
+      extractedPdfPosition = 'custom';
     } else if (extractedPdfUrl) {
       const pdfIdx = raw.search(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["']/i);
-      const sec2Idx = raw.search(/<!--\s*gp-section-2\s*-->/i);
-      if (pdfIdx !== -1 && sec2Idx !== -1 && pdfIdx < sec2Idx) {
-        extractedPdfPosition = 'after_desc_1';
-      } else if (pdfIdx !== -1 && sec2Idx !== -1 && pdfIdx > sec2Idx) {
-        const sec3Idx = raw.search(/<!--\s*gp-section-3\s*-->/i);
-        if (sec3Idx !== -1 && pdfIdx < sec3Idx) {
-          extractedPdfPosition = 'after_desc_2';
+      if (pdfIdx !== -1) {
+        const secMatches = [...raw.matchAll(/<!--\s*gp-section-(\d+)\s*-->/gi)];
+        if (secMatches.length > 0) {
+          if (pdfIdx < secMatches[0].index) {
+            extractedPdfPosition = 'after_desc_1';
+          } else {
+            for (let i = 0; i < secMatches.length; i++) {
+              const currentSecNum = parseInt(secMatches[i][1], 10);
+              const nextSecIdx = i < secMatches.length - 1 ? secMatches[i + 1].index : Infinity;
+              if (pdfIdx > secMatches[i].index && pdfIdx < nextSecIdx) {
+                extractedPdfPosition = `after_desc_${currentSecNum}`;
+                break;
+              }
+            }
+          }
         }
       }
     }
@@ -1201,8 +1213,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     while ((gMatch = galleryRegex.exec(raw)) !== null) {
       if (gMatch[2]) {
         const num = parseInt(gMatch[1], 10) || 2;
-        extractedImgs.push({ index: num, url: gMatch[2] });
+        extractedImgs.push({ index: num, url: gMatch[2], showImageAfterDesc: true });
       }
+
+        // Extract hidden section images (showImageAfterDesc = false)
+        const hiddenImgRegex = /<!--\s*gp-section-(\d+)-hidden-image:\s*([^\s>]+)\s*-->/gi;
+        let hMatch: RegExpExecArray | null;
+        while ((hMatch = hiddenImgRegex.exec(raw)) !== null) {
+          if (hMatch[2]) {
+            const num = parseInt(hMatch[1], 10) || 2;
+            extractedImgs.push({ index: num, url: hMatch[2], showImageAfterDesc: false });
+          }
+        }
     }
 
     // Purge PDF markup from working string
@@ -1210,16 +1232,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
     // Strip and extract ONLY trailing standalone embeds from the very end of the content.
     // In-body embeds (inside Description 1 or continuation sections) are preserved untouched.
-    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>\s*)*(?:<figure\b[^>]*data-article-social-platform=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-x-card)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>)*\s*$/i;
+    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>\s*)*(?:<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-twitter-embed-wrap|gp-x-card|gp-x-link)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?|<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>)*\s*$/i;
 
     while (true) {
       const match = workingRaw.match(trailingEmbedPattern);
       if (!match) break;
-      const platMatch = match[0].match(/data-article-social-platform=["']([^"']+)["']/i);
-      const urlMatch = match[0].match(/data-article-social-url=["']([^"']+)["']/i) || match[0].match(/href=["']([^"']+)["']/i);
+      const platMatch = match[0].match(/(?:data-article-social-platform|data-social-platform)=["']([^"']+)["']/i);
+      const urlMatch =
+        match[0].match(/(?:data-article-social-url|data-social-url|data-tweet-url)=["']([^"']+)["']/i) ||
+        match[0].match(/href=["']([^"']+)["']/i);
       const plat = platMatch ? platMatch[1].toLowerCase() : '';
       const u = urlMatch ? urlMatch[1] : '';
-      if (plat === 'twitter' || (!plat && match[0].includes('gp-x-card'))) {
+      if (plat === 'twitter' || (!plat && (match[0].includes('twitter') || match[0].includes('x.com') || match[0].includes('gp-x')))) {
         if (!extractedTw) extractedTw = u;
       } else if (plat === 'youtube' || (!plat && match[0].includes('youtube'))) {
         if (!extractedYt) extractedYt = u;
@@ -1361,14 +1385,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     // Check if new structured section delimiters <!-- gp-section-N --> exist
     if (/<!--\s*gp-section-\d+\s*-->/.test(workingRaw)) {
       const parts = workingRaw.split(/<!--\s*gp-section-(\d+)\s*-->/);
-      d1Str = purgePdfFromText(parts[0].replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').trim())
+      d1Str = purgePdfFromText(parts[0].replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
       for (let i = 1; i < parts.length; i += 2) {
         const secNum = parseInt(parts[i], 10);
         const secContent = parts[i + 1] || '';
-        const cleanSecText = purgePdfFromText(secContent.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').trim())
+        const cleanSecText = purgePdfFromText(secContent.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
           .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
           .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
           .trim();
@@ -1662,29 +1686,92 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         } else {
           setImageMode('upload');
         }
-        const hasBodyTw = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']twitter["']/i.test(t || ''));
-        const hasBodyYt = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']youtube["']/i.test(t || ''));
-        const hasBodyIg = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']instagram["']/i.test(t || ''));
-        const hasBodyFb = [parsedGu.d1Str, parsedEn.d1Str, parsedHi.d1Str, ...allParsedDescsGu.map((d) => d.text), ...allParsedDescsEn.map((d) => d.text), ...allParsedDescsHi.map((d) => d.text)].some((t) => /data-article-social-platform=["']facebook["']/i.test(t || ''));
+        const rawCombinedContent = [art.content, art.contentGu, art.contentHi, primaryContent].filter(Boolean).join('\n\n');
 
-        setYoutubeUrl(hasBodyYt ? '' : (parsedEn.extractedYt || parsedGu.extractedYt || parsedHi.extractedYt || art.youtubeUrl || art.youtube || ''));
-        setTwitterUrl(hasBodyTw ? '' : (parsedEn.extractedTw || parsedGu.extractedTw || parsedHi.extractedTw || art.twitterUrl || art.twitter || ''));
-        setInstagramUrl(hasBodyIg ? '' : (parsedEn.extractedIg || parsedGu.extractedIg || parsedHi.extractedIg || art.instagramUrl || art.instagram || ''));
-        setFacebookUrl(hasBodyFb ? '' : (parsedEn.extractedFb || parsedGu.extractedFb || parsedHi.extractedFb || art.facebookUrl || art.facebook || ''));
-        setPdfUrl(art.pdfUrl || art.pdf || parsedEn.extractedPdfUrl || parsedGu.extractedPdfUrl || parsedHi.extractedPdfUrl || '');
+        const resolvedYt =
+          getSavedArticleEmbedInput(rawCombinedContent, 'youtube') ||
+          parsedGu.extractedYt ||
+          parsedEn.extractedYt ||
+          parsedHi.extractedYt ||
+          art.youtubeUrl ||
+          art.youtube ||
+          '';
+        const resolvedTw =
+          getSavedArticleEmbedInput(rawCombinedContent, 'twitter') ||
+          parsedGu.extractedTw ||
+          parsedEn.extractedTw ||
+          parsedHi.extractedTw ||
+          art.twitterUrl ||
+          art.twitter ||
+          '';
+        const resolvedIg =
+          getSavedArticleEmbedInput(rawCombinedContent, 'instagram') ||
+          parsedGu.extractedIg ||
+          parsedEn.extractedIg ||
+          parsedHi.extractedIg ||
+          art.instagramUrl ||
+          art.instagram ||
+          '';
+        const resolvedFb =
+          getSavedArticleEmbedInput(rawCombinedContent, 'facebook') ||
+          parsedGu.extractedFb ||
+          parsedEn.extractedFb ||
+          parsedHi.extractedFb ||
+          art.facebookUrl ||
+          art.facebook ||
+          '';
+
+        setYoutubeUrl(resolvedYt);
+        setTwitterUrl(resolvedTw);
+        setInstagramUrl(resolvedIg);
+        setFacebookUrl(resolvedFb);
+        const fallbackPdfMatch =
+          rawCombinedContent.match(/data-pdf-url=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][^>]*data-pdf-url=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
+          rawCombinedContent.match(/href=["']([^"']+)["'][^>]*download/i) ||
+          rawCombinedContent.match(/download[^>]*href=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/src=["']([^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
+          rawCombinedContent.match(/(https?:\/\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?|\/uploads\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?)/i);
+        const fallbackPdfUrl = fallbackPdfMatch ? fallbackPdfMatch[1] : '';
+
+        const resolvedPdfUrl =
+          art.pdfUrl ||
+          art.pdf ||
+          parsedGu.extractedPdfUrl ||
+          parsedEn.extractedPdfUrl ||
+          parsedHi.extractedPdfUrl ||
+          fallbackPdfUrl ||
+          '';
+
+        setPdfUrl(resolvedPdfUrl);
+
+        const fallbackHasPdfPages = Boolean(
+          rawCombinedContent.includes('data-show-pages="true"') ||
+          rawCombinedContent.includes('gp-pdf-pages-viewer')
+        );
+
         setShowPdfPages(
           Boolean(
             (art as any).showPdfPages ||
-            parsedEn.hasPdfPages ||
             parsedGu.hasPdfPages ||
-            parsedHi.hasPdfPages
+            parsedEn.hasPdfPages ||
+            parsedHi.hasPdfPages ||
+            fallbackHasPdfPages
           )
         );
+
+        const fallbackPdfPosition =
+          rawCombinedContent.match(/data-pdf-position=["']([^"']+)["']/i)?.[1] ||
+          (/[PDF_DOCUMENT]/i.test(rawCombinedContent) ? 'custom' : 'end');
+
         setPdfPosition(
           (art as any).pdfPosition ||
           parsedGu.extractedPdfPosition ||
           parsedEn.extractedPdfPosition ||
           parsedHi.extractedPdfPosition ||
+          fallbackPdfPosition ||
           'end'
         );
         setCategoryId(art.categoryId || art.category?.id || '');
@@ -1721,11 +1808,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .filter((id: string) => id && id !== primaryCatId);
         }
 
-        const isTrendingFromCat = Boolean(
-          art.category?.slug === 'trending' ||
-          art.categories?.some((c: any) => (c.category?.slug || c.slug) === 'trending')
-        );
-        setIsTrending(Boolean(art.isTrending || isTrendingFromCat));
+        setIsTrending(Boolean(art.isTrending));
         setIsBreaking(art.isBreaking || false);
         setIsFeatured(art.isFeatured || false);
 
@@ -1945,9 +2028,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     // Compile distinct input sections into complete article content strings
-    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl }));
-    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl }));
-    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl }));
+    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
+    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
+    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
 
     // Language-specific highlights: do NOT inject highlights if the admin left them blank!
     // If the primary language has no highlights, NO language gets highlights.
@@ -2023,9 +2106,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       desc2Gu: storySections[0]?.descGu?.trim() || undefined,
       desc2Hi: storySections[0]?.descHi?.trim() || undefined,
       galleryImages: galleryPayload,
-      categoryId,
-      additionalCategoryIds,
-      categoryIds: Array.from(new Set([categoryId, ...additionalCategoryIds])).filter(Boolean),
+      categoryId: (categoryId || '').trim(),
+      additionalCategoryIds: additionalCategoryIds.filter((id) => id && id.trim() !== '' && id !== categoryId),
+      categoryIds: Array.from(
+        new Set([
+          categoryId,
+          ...additionalCategoryIds.filter((id) => id && id.trim() !== '' && id !== categoryId),
+        ].filter(Boolean))
+      ),
       youtubeUrl: youtubeUrl.trim() || undefined,
       twitterUrl: twitterUrl.trim() || undefined,
       instagramUrl: instagramUrl.trim() || undefined,
@@ -2074,11 +2162,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ path: '/', slug: result.article?.slug || result.slug || slug }),
+        keepalive: true,
       }).catch(() => { });
 
-      // Route back to list
-      router.push('/admin/articles');
-      router.refresh();
+      // Route cleanly back to list with full fresh stylesheet & state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/admin/articles';
+      } else {
+        router.push('/admin/articles');
+      }
     } catch (err: any) {
       setError(err.message);
       setLoading(false);
@@ -3063,6 +3155,24 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                       {primaryCat.nameGu && primaryCat.nameGu !== primaryCat.name && (
                         <span className="text-[11px] opacity-85 font-normal">({primaryCat.nameGu})</span>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cleanRemaining = additionalCategoryIds.filter((id) => id !== primaryCat.id);
+                          if (cleanRemaining.length > 0) {
+                            const nextPrimary = cleanRemaining[0];
+                            setCategoryId(nextPrimary);
+                            setAdditionalCategoryIds(cleanRemaining.filter((id) => id !== nextPrimary));
+                          } else {
+                            setCategoryId('');
+                            setAdditionalCategoryIds([]);
+                          }
+                        }}
+                        className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20 ml-0.5"
+                        title="Remove primary category"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </span>
                   );
                 })()}
@@ -3338,9 +3448,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   <div
                     key={cat.id}
                     onClick={() => {
-                      const isTrendingCat = cat.slug === 'trending' || cat.name?.toLowerCase() === 'trending';
                       if (!isChecked) {
-                        if (isTrendingCat) setIsTrending(true);
                         if (!categoryId) {
                           handleCategorySelect(cat.id);
                         } else {
@@ -3348,17 +3456,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         }
                       } else {
                         // Unchecking
-                        if (isTrendingCat) setIsTrending(false);
+                        const cleanRemaining = additionalCategoryIds.filter((id) => id !== cat.id);
                         if (isPrimary) {
-                          if (additionalCategoryIds.length > 0) {
-                            const nextPrimary = additionalCategoryIds[0];
+                          if (cleanRemaining.length > 0) {
+                            const nextPrimary = cleanRemaining[0];
                             setCategoryId(nextPrimary);
-                            setAdditionalCategoryIds((prev) => prev.filter((id) => id !== nextPrimary));
+                            setAdditionalCategoryIds(cleanRemaining.filter((id) => id !== nextPrimary));
                           } else {
                             setCategoryId('');
+                            setAdditionalCategoryIds([]);
                           }
                         } else {
-                          setAdditionalCategoryIds((prev) => prev.filter((id) => id !== cat.id));
+                          setAdditionalCategoryIds(cleanRemaining);
                         }
                       }
                     }}
@@ -4154,6 +4263,25 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
         {/* 📰 DISTINCT SECTION 3: Description 1 (*) / Main Content Body */}
         <div>
+          {pdfUrl && pdfUrl.trim() && (
+            <div className="mb-2 flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+                📄 PDF Attachment Ready:
+              </span>
+              <button
+                type="button"
+                onClick={() => setPdfPosition(pdfPosition === 'after_desc_1' ? 'end' : 'after_desc_1')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  pdfPosition === 'after_desc_1'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>{pdfPosition === 'after_desc_1' ? '✓ PDF Placed After Description 1' : 'Place PDF After Description 1 (વર્ણન ૧ પછી)'}</span>
+              </button>
+            </div>
+          )}
           <RichTextArea
             label="Description 1 (*) / Main Content Body"
             required
@@ -4201,7 +4329,21 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {pdfUrl && pdfUrl.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setPdfPosition(pdfPosition === `after_desc_${sectionNum}` ? 'end' : `after_desc_${sectionNum}`)}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          pdfPosition === `after_desc_${sectionNum}`
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        <FileText className="h-3 w-3" />
+                        <span>{pdfPosition === `after_desc_${sectionNum}` ? `✓ PDF Placed After Desc ${sectionNum}` : `Place PDF After Desc ${sectionNum}`}</span>
+                      </button>
+                    )}
                     <span className="text-xs font-bold text-blue-700 bg-blue-50 dark:bg-blue-950/50 dark:text-blue-300 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-900/50">
                       {guSectionTitle}
                     </span>
@@ -4316,6 +4458,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   )}
 
                   {slot.imageUrl && (
+                    <>
                     <div className="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-zinc-700/60">
                       <div className="flex items-center gap-3">
                         <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
@@ -4342,6 +4485,31 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         Clear Image {sectionNum}
                       </button>
                     </div>
+
+                    {/* Toggle: Show Image After Description N in Article */}
+                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-dashed border-gray-300 dark:border-zinc-700/60 bg-gray-50/80 dark:bg-zinc-800/40 px-3.5 py-2.5 rounded-xl">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-emerald-600" />
+                        <span className="text-xs font-bold text-gray-800 dark:text-zinc-200">
+                          {sectionNum === 2
+                            ? 'વર્ણન ૨ પછી આર્ટિકલમાં આ ફોટો દર્શાવો (Show Image After Description 2)'
+                            : `વિભાગ ${sectionNum} (વર્ણન ${sectionNum}) પછી આ ફોટો દર્શાવો (Show Image After Desc ${sectionNum})`}
+                        </span>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={slot.showImageAfterDesc !== false}
+                          onChange={(e) => updateStorySection(idx, { showImageAfterDesc: e.target.checked })}
+                          className="sr-only peer"
+                        />
+                        <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
+                        <span className="ml-2.5 text-xs font-extrabold text-gray-700 dark:text-zinc-300 min-w-[55px]">
+                          {slot.showImageAfterDesc !== false ? '✓ હા (Show)' : '✕ ના (Hide)'}
+                        </span>
+                      </label>
+                    </div>
+                    </>
                   )}
                 </div>
               </div>
@@ -4590,7 +4758,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                           Show Full PDF Page-by-Page in Article
                         </span>
                         <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                          (પસંદ કરેલા સ્થાને આખું PDF પાનાવાર દર્શાવો)
+                          {pdfPosition === 'after_desc_1'
+                            ? '(વર્ણન ૧ પછી આખું PDF પાનાવાર દર્શાવો)'
+                            : pdfPosition === 'after_desc_2'
+                            ? '(વર્ણન ૨ પછી આખું PDF પાનાવાર દર્શાવો)'
+                            : pdfPosition.startsWith('after_desc_')
+                            ? `(વિભાગ ${pdfPosition.replace('after_desc_', '')} પછી આખું PDF પાનાવાર દર્શાવો)`
+                            : pdfPosition === 'custom'
+                            ? '(કસ્ટમ સ્થાને આખું PDF પાનાવાર દર્શાવો)'
+                            : '(આર્ટિકલના અંતે આખું PDF પાનાવાર દર્શાવો)'}
                         </span>
                         {showPdfPages && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
@@ -4647,6 +4823,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                           </option>
                         );
                       })}
+                      <option value="custom">કસ્ટમ સ્થાન (Inside Description via [PDF_DOCUMENT])</option>
                     </select>
                   </div>
                 </div>
@@ -5055,7 +5232,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         {renderFormattedPreviewContent(descVal)}
                       </div>
                     )}
-                    {hasImg && (
+                    {hasImg && sec.showImageAfterDesc !== false && (
                       <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
                         <img
                           src={sanitizeImageUrl(sec.imageUrl)}
