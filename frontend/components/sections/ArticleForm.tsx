@@ -814,7 +814,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     let pdfPlaced = false;
 
     // Description 1
-    let cleanD1 = purgePdfFromText(d1Str)
+    let cleanD1 = purgeEmbedsFromText(purgePdfFromText(d1Str))
       .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
       .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
       .trim();
@@ -1183,15 +1183,25 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const posAttrMatch = raw.match(/data-pdf-position=["']([^"']+)["']/i);
     if (posAttrMatch && posAttrMatch[1]) {
       extractedPdfPosition = posAttrMatch[1];
+    } else if (/\[PDF_DOCUMENT\]/i.test(raw)) {
+      extractedPdfPosition = 'custom';
     } else if (extractedPdfUrl) {
       const pdfIdx = raw.search(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["']/i);
-      const sec2Idx = raw.search(/<!--\s*gp-section-2\s*-->/i);
-      if (pdfIdx !== -1 && sec2Idx !== -1 && pdfIdx < sec2Idx) {
-        extractedPdfPosition = 'after_desc_1';
-      } else if (pdfIdx !== -1 && sec2Idx !== -1 && pdfIdx > sec2Idx) {
-        const sec3Idx = raw.search(/<!--\s*gp-section-3\s*-->/i);
-        if (sec3Idx !== -1 && pdfIdx < sec3Idx) {
-          extractedPdfPosition = 'after_desc_2';
+      if (pdfIdx !== -1) {
+        const secMatches = [...raw.matchAll(/<!--\s*gp-section-(\d+)\s*-->/gi)];
+        if (secMatches.length > 0) {
+          if (pdfIdx < secMatches[0].index) {
+            extractedPdfPosition = 'after_desc_1';
+          } else {
+            for (let i = 0; i < secMatches.length; i++) {
+              const currentSecNum = parseInt(secMatches[i][1], 10);
+              const nextSecIdx = i < secMatches.length - 1 ? secMatches[i + 1].index : Infinity;
+              if (pdfIdx > secMatches[i].index && pdfIdx < nextSecIdx) {
+                extractedPdfPosition = `after_desc_${currentSecNum}`;
+                break;
+              }
+            }
+          }
         }
       }
     }
@@ -4173,6 +4183,25 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
         {/* 📰 DISTINCT SECTION 3: Description 1 (*) / Main Content Body */}
         <div>
+          {pdfUrl && pdfUrl.trim() && (
+            <div className="mb-2 flex items-center justify-between gap-2 flex-wrap">
+              <span className="text-xs font-bold text-slate-700 dark:text-zinc-300">
+                📄 PDF Attachment Ready:
+              </span>
+              <button
+                type="button"
+                onClick={() => setPdfPosition(pdfPosition === 'after_desc_1' ? 'end' : 'after_desc_1')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                  pdfPosition === 'after_desc_1'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                    : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+                }`}
+              >
+                <FileText className="h-3.5 w-3.5" />
+                <span>{pdfPosition === 'after_desc_1' ? '✓ PDF Placed After Description 1' : 'Place PDF After Description 1 (વર્ણન ૧ પછી)'}</span>
+              </button>
+            </div>
+          )}
           <RichTextArea
             label="Description 1 (*) / Main Content Body"
             required
@@ -4220,7 +4249,21 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {pdfUrl && pdfUrl.trim() && (
+                      <button
+                        type="button"
+                        onClick={() => setPdfPosition(pdfPosition === `after_desc_${sectionNum}` ? 'end' : `after_desc_${sectionNum}`)}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
+                          pdfPosition === `after_desc_${sectionNum}`
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                            : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+                        }`}
+                      >
+                        <FileText className="h-3 w-3" />
+                        <span>{pdfPosition === `after_desc_${sectionNum}` ? `✓ PDF Placed After Desc ${sectionNum}` : `Place PDF After Desc ${sectionNum}`}</span>
+                      </button>
+                    )}
                     <span className="text-xs font-bold text-blue-700 bg-blue-50 dark:bg-blue-950/50 dark:text-blue-300 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-900/50">
                       {guSectionTitle}
                     </span>
@@ -4609,7 +4652,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                           Show Full PDF Page-by-Page in Article
                         </span>
                         <span className="text-xs font-bold text-blue-700 dark:text-blue-300">
-                          (પસંદ કરેલા સ્થાને આખું PDF પાનાવાર દર્શાવો)
+                          {pdfPosition === 'after_desc_1'
+                            ? '(વર્ણન ૧ પછી આખું PDF પાનાવાર દર્શાવો)'
+                            : pdfPosition === 'after_desc_2'
+                            ? '(વર્ણન ૨ પછી આખું PDF પાનાવાર દર્શાવો)'
+                            : pdfPosition.startsWith('after_desc_')
+                            ? `(વિભાગ ${pdfPosition.replace('after_desc_', '')} પછી આખું PDF પાનાવાર દર્શાવો)`
+                            : pdfPosition === 'custom'
+                            ? '(કસ્ટમ સ્થાને આખું PDF પાનાવાર દર્શાવો)'
+                            : '(આર્ટિકલના અંતે આખું PDF પાનાવાર દર્શાવો)'}
                         </span>
                         {showPdfPages && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
@@ -4666,6 +4717,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                           </option>
                         );
                       })}
+                      <option value="custom">કસ્ટમ સ્થાન (Inside Description via [PDF_DOCUMENT])</option>
                     </select>
                   </div>
                 </div>

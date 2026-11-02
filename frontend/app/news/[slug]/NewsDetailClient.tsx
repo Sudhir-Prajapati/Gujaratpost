@@ -564,7 +564,7 @@ function buildPdfCardHtml(url: string, language?: string): string {
   </div>`;
 }
 
-function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: string, hasPdfPages?: boolean): string {
+function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: string, hasPdfPages?: boolean, pdfPosition?: string): string {
   if (!rawHtml && !articlePdfUrl) return '';
 
   let cleaned = rawHtml || '';
@@ -588,50 +588,51 @@ function upgradeEmbedCards(rawHtml: string, language?: string, articlePdfUrl?: s
   const cleanPdf = detectedPdf ? detectedPdf.trim() : '';
 
   if (cleanPdf && cleanPdf !== '#') {
+    const targetPdfBlock = hasPdfPages
+      ? `<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`
+      : buildPdfCardHtml(cleanPdf, language);
+
+    // 1. Check for any existing inline PDF marker (viewer, card, placeholder, or token)
+    const inlineMarkerPattern = /(?:<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/a>\s*<\/div>|<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>|<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>|\[PDF_DOCUMENT\])/i;
+
+    if (inlineMarkerPattern.test(cleaned)) {
+      let replaced = false;
+      cleaned = cleaned.replace(new RegExp(inlineMarkerPattern.source, 'gi'), () => {
+        if (!replaced) {
+          replaced = true;
+          return targetPdfBlock;
+        }
+        return '';
+      });
+    } else {
+      // 2. No inline marker found, place accurately according to specified position
+      const desiredPos = pdfPosition || cleaned.match(/data-pdf-position=["']([^"']+)["']/i)?.[1] || 'end';
+      if (desiredPos === 'after_desc_1' && /<!--\s*gp-section-2\s*-->/i.test(cleaned)) {
+        cleaned = cleaned.replace(/<!--\s*gp-section-2\s*-->/i, `${targetPdfBlock}\n\n<!-- gp-section-2 -->`);
+      } else if (desiredPos === 'after_desc_2' && /<!--\s*gp-section-3\s*-->/i.test(cleaned)) {
+        cleaned = cleaned.replace(/<!--\s*gp-section-3\s*-->/i, `${targetPdfBlock}\n\n<!-- gp-section-3 -->`);
+      } else if (desiredPos.startsWith('after_desc_') && /<!--\s*gp-section-\d+\s*-->/i.test(cleaned)) {
+        const targetNum = parseInt(desiredPos.replace('after_desc_', ''), 10);
+        const nextSecNum = targetNum + 1;
+        const nextSecRegex = new RegExp(`<!--\\s*gp-section-${nextSecNum}\\s*-->`, 'i');
+        if (nextSecRegex.test(cleaned)) {
+          cleaned = cleaned.replace(nextSecRegex, `${targetPdfBlock}\n\n<!-- gp-section-${nextSecNum} -->`);
+        } else {
+          cleaned += `\n\n${targetPdfBlock}`;
+        }
+      } else {
+        // Default: at the end of the article
+        cleaned += `\n\n${targetPdfBlock}`;
+      }
+    }
+
+    // 3. Clean up any leftover duplicate PDF elements to ensure PDF only appears ONCE
     if (hasPdfPages) {
-      // FULL PDF PAGE-BY-PAGE VIEWER MODE:
-      // Strip any static download cards, but preserve gp-pdf-pages-viewer at its exact chosen position
       cleaned = cleaned
         .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2|border-red-200|border-red-900|from-red-50|via-rose-50)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/gi, '')
-        .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '')
-        .replace(/<div[^>]*data-show-pages=["'][^"']*["'][\s\S]*?<\/div>/gi, '');
-
-      const hasViewerMarker = /<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["']/i.test(cleaned);
-      if (!hasViewerMarker) {
-        // Fallback for legacy articles without explicit inline marker: append at the end
-        cleaned += `\n\n<div class="gp-pdf-pages-viewer" data-pdf-url="${cleanPdf}"></div>`;
-      }
+        .replace(/<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/div>/gi, '');
     } else {
-      // PDF DOWNLOAD CARD MODE:
-      // Strip any page-by-page viewer placeholder
       cleaned = cleaned.replace(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][\s\S]*?<\/div>/gi, '');
-
-      // Check if a gp-pdf-card already exists in the body
-      const cardPattern = /<div[^>]*class=["'][^"']*(?:gp-pdf-card|gp-pdf-card-v2)[^"']*["'][\s\S]*?<\/a>\s*<\/div>/i;
-      const placeholderPattern = /<div[^>]*data-pdf-url=["'][^"']*["'][\s\S]*?<\/div>/i;
-
-      if (cardPattern.test(cleaned)) {
-        let replaced = false;
-        cleaned = cleaned.replace(new RegExp(cardPattern.source, 'gi'), () => {
-          if (!replaced) {
-            replaced = true;
-            return buildPdfCardHtml(cleanPdf, language);
-          }
-          return '';
-        });
-      } else if (placeholderPattern.test(cleaned)) {
-        let replaced = false;
-        cleaned = cleaned.replace(new RegExp(placeholderPattern.source, 'gi'), () => {
-          if (!replaced) {
-            replaced = true;
-            return buildPdfCardHtml(cleanPdf, language);
-          }
-          return '';
-        });
-      } else {
-        // Fallback for legacy articles without inline card: append at the end
-        cleaned += '\n\n' + buildPdfCardHtml(cleanPdf, language);
-      }
     }
   } else {
     // No PDF attached: strip all residual PDF tags
@@ -1007,25 +1008,58 @@ function splitArticleContent(html: string, atPara = 2): [string, string] {
   const trimmed = html.trim();
   if (trimmed.length < 350) return [trimmed, ''];
 
-  // Look for block-level closing tags, double-newlines, or double-br tags
-  const blockRegex = /(<\/p>|<\/div>|<\/blockquote>|<\/figure>|\n\s*\n+|<br\s*\/?>\s*<br\s*\/?>)/gi;
   let count = 0;
-  let lastIndex = -1;
+  let splitIndex = -1;
+  let depth = 0;
+
+  const tagRegex = /<(\/)?([a-z0-9]+)(?:\s+[^>]*)?>/gi;
+  let lastBlockEnd = -1;
   let match: RegExpExecArray | null;
 
-  while ((match = blockRegex.exec(trimmed)) !== null) {
-    count++;
-    lastIndex = match.index + match[0].length;
-    if (count >= atPara && lastIndex >= 180) {
-      break;
+  while ((match = tagRegex.exec(trimmed)) !== null) {
+    const isClosing = Boolean(match[1]);
+    const tagName = match[2].toLowerCase();
+    const tagEnd = match.index + match[0].length;
+
+    if (['img', 'br', 'hr', 'input', 'meta', 'link'].includes(tagName)) {
+      continue;
+    }
+
+    if (['div', 'blockquote', 'figure', 'table', 'ul', 'ol', 'section'].includes(tagName)) {
+      if (isClosing) {
+        if (depth > 0) depth--;
+        if (depth === 0) {
+          count++;
+          lastBlockEnd = tagEnd;
+          if (count >= atPara && tagEnd >= 180) {
+            splitIndex = tagEnd;
+            break;
+          }
+        }
+      } else {
+        depth++;
+      }
+    } else if (tagName === 'p') {
+      if (isClosing && depth === 0) {
+        count++;
+        lastBlockEnd = tagEnd;
+        if (count >= atPara && tagEnd >= 180) {
+          splitIndex = tagEnd;
+          break;
+        }
+      }
     }
   }
 
-  if (count < atPara || lastIndex === -1 || lastIndex >= trimmed.length - 80) {
-    return [balanceHtmlTags(trimmed), ''];
+  if (splitIndex === -1) {
+    if (count >= atPara && lastBlockEnd > 0 && lastBlockEnd < trimmed.length - 80) {
+      splitIndex = lastBlockEnd;
+    } else {
+      return [balanceHtmlTags(trimmed), ''];
+    }
   }
 
-  return [balanceHtmlTags(trimmed.slice(0, lastIndex).trim()), balanceHtmlTags(trimmed.slice(lastIndex).trim())];
+  return [balanceHtmlTags(trimmed.slice(0, splitIndex).trim()), balanceHtmlTags(trimmed.slice(splitIndex).trim())];
 }
 
 export default function NewsDetailClient({ article, related, trending, articleUrl, initialLanguage }: Props) {
@@ -1408,7 +1442,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const formattedArticleBodyHtml = useMemo(() => {
     if (!body) return '';
 
-    let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages)))
+    let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages, (article as any)?.pdfPosition)))
       .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
@@ -1482,14 +1516,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       }
     }
 
-    // Clean empty spacer divs and empty paragraphs
+    // Clean empty spacer divs and empty paragraphs (safely preserving gp-pdf-pages-viewer and embed containers)
     cleaned = cleaned
-      .replace(/<div\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
+      .replace(/<div\b(?![^>]*(?:gp-pdf-pages-viewer|data-pdf-url))[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
       .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
 
-    // Convert paragraph-level <div> into proper <p class="article-para my-3"> elements
+    // Convert paragraph-level <div> into proper <p class="article-para my-3"> elements (excluding special widgets)
     cleaned = cleaned.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
       if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
+        return match;
+      }
+      if (/class=["'][^"']*(?:gp-pdf|twitter|instagram|facebook|aspect-video)/i.test(attrs) || /data-pdf-url/i.test(attrs)) {
         return match;
       }
       const plain = inner.replace(/<[^>]*>/g, '').trim();
@@ -1502,7 +1539,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const wrappedBlocks = rawBlocks.map((block) => {
       const trimmed = block.trim();
       if (!trimmed) return '';
-      if (/^<(p|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
         return trimmed;
       }
       return `<p class="article-para my-3">${trimmed}</p>`;
@@ -2295,7 +2332,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   return <ArticleContentBody html={htmlBlock} activeSpeechText={activeSpeechText} />;
                 }
 
-                const parts = htmlBlock.split(/<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>/i);
+                const parts = htmlBlock.split(/(?:<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*>\s*<\/div>|<div[^>]*class=["'][^"']*gp-pdf-pages-viewer[^"']*["'][^>]*\/>)/i);
                 if (parts.length <= 1) {
                   return <ArticleContentBody html={htmlBlock} activeSpeechText={activeSpeechText} />;
                 }
