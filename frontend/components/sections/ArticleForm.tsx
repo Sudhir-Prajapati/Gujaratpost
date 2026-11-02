@@ -623,20 +623,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [isFeatured, setIsFeatured] = useState(false);
 
   const handleToggleTrendingStory = useCallback((explicitValue?: boolean) => {
-    setIsTrending((prev) => {
-      const next = explicitValue !== undefined ? explicitValue : !prev;
-      const tCat = categories.find((c) => c.slug === 'trending' || c.name?.toLowerCase() === 'trending');
-      if (tCat) {
-        if (next) {
-          setAdditionalCategoryIds((old) => Array.from(new Set([...old, tCat.id])));
-        } else {
-          setAdditionalCategoryIds((old) => old.filter((id) => id !== tCat.id));
-          setCategoryId((old) => (old === tCat.id ? '' : old));
-        }
-      }
-      return next;
-    });
-  }, [categories]);
+    setIsTrending((prev) => (explicitValue !== undefined ? explicitValue : !prev));
+  }, []);
 
   // SEO Fields
   const [seoTitle, setSeoTitle] = useState('');
@@ -1721,11 +1709,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .filter((id: string) => id && id !== primaryCatId);
         }
 
-        const isTrendingFromCat = Boolean(
-          art.category?.slug === 'trending' ||
-          art.categories?.some((c: any) => (c.category?.slug || c.slug) === 'trending')
-        );
-        setIsTrending(Boolean(art.isTrending || isTrendingFromCat));
+        setIsTrending(Boolean(art.isTrending));
         setIsBreaking(art.isBreaking || false);
         setIsFeatured(art.isFeatured || false);
 
@@ -2023,9 +2007,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       desc2Gu: storySections[0]?.descGu?.trim() || undefined,
       desc2Hi: storySections[0]?.descHi?.trim() || undefined,
       galleryImages: galleryPayload,
-      categoryId,
-      additionalCategoryIds,
-      categoryIds: Array.from(new Set([categoryId, ...additionalCategoryIds])).filter(Boolean),
+      categoryId: (categoryId || '').trim(),
+      additionalCategoryIds: additionalCategoryIds.filter((id) => id && id.trim() !== '' && id !== categoryId),
+      categoryIds: Array.from(
+        new Set([
+          categoryId,
+          ...additionalCategoryIds.filter((id) => id && id.trim() !== '' && id !== categoryId),
+        ].filter(Boolean))
+      ),
       youtubeUrl: youtubeUrl.trim() || undefined,
       twitterUrl: twitterUrl.trim() || undefined,
       instagramUrl: instagramUrl.trim() || undefined,
@@ -3063,6 +3052,24 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                       {primaryCat.nameGu && primaryCat.nameGu !== primaryCat.name && (
                         <span className="text-[11px] opacity-85 font-normal">({primaryCat.nameGu})</span>
                       )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cleanRemaining = additionalCategoryIds.filter((id) => id !== primaryCat.id);
+                          if (cleanRemaining.length > 0) {
+                            const nextPrimary = cleanRemaining[0];
+                            setCategoryId(nextPrimary);
+                            setAdditionalCategoryIds(cleanRemaining.filter((id) => id !== nextPrimary));
+                          } else {
+                            setCategoryId('');
+                            setAdditionalCategoryIds([]);
+                          }
+                        }}
+                        className="text-white/80 hover:text-white transition-colors cursor-pointer p-0.5 rounded-full hover:bg-white/20 ml-0.5"
+                        title="Remove primary category"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
                     </span>
                   );
                 })()}
@@ -3338,9 +3345,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   <div
                     key={cat.id}
                     onClick={() => {
-                      const isTrendingCat = cat.slug === 'trending' || cat.name?.toLowerCase() === 'trending';
                       if (!isChecked) {
-                        if (isTrendingCat) setIsTrending(true);
                         if (!categoryId) {
                           handleCategorySelect(cat.id);
                         } else {
@@ -3348,17 +3353,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         }
                       } else {
                         // Unchecking
-                        if (isTrendingCat) setIsTrending(false);
+                        const cleanRemaining = additionalCategoryIds.filter((id) => id !== cat.id);
                         if (isPrimary) {
-                          if (additionalCategoryIds.length > 0) {
-                            const nextPrimary = additionalCategoryIds[0];
+                          if (cleanRemaining.length > 0) {
+                            const nextPrimary = cleanRemaining[0];
                             setCategoryId(nextPrimary);
-                            setAdditionalCategoryIds((prev) => prev.filter((id) => id !== nextPrimary));
+                            setAdditionalCategoryIds(cleanRemaining.filter((id) => id !== nextPrimary));
                           } else {
                             setCategoryId('');
+                            setAdditionalCategoryIds([]);
                           }
                         } else {
-                          setAdditionalCategoryIds((prev) => prev.filter((id) => id !== cat.id));
+                          setAdditionalCategoryIds(cleanRemaining);
                         }
                       }
                     }}

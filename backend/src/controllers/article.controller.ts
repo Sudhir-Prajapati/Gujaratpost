@@ -558,28 +558,21 @@ export class ArticleController {
         },
       }));
 
-      // Automatically keep isTrending and trending category in sync
-      const trendingCat = await prisma.category.findFirst({
-        where: {
-          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'àªŸà«àª°à«‡àª¨à«àª¡àª¿àª‚àª—' }],
-        },
-        select: { id: true },
-      });
-
-      const initialSelectedCatIds = Array.from(
-        new Set([
-          categoryId,
-          ...(Array.isArray(categoryIds) ? categoryIds : []),
-          ...(Array.isArray(additionalCategoryIds) ? additionalCategoryIds : []),
-        ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
-      );
-
-      const hasTrendingCat = Boolean(trendingCat && initialSelectedCatIds.includes(trendingCat.id));
-      const effectiveTrending = Boolean(isTrending || hasTrendingCat);
-
-      if (effectiveTrending && trendingCat && !initialSelectedCatIds.includes(trendingCat.id)) {
-        initialSelectedCatIds.push(trendingCat.id);
+      const rawCreateIds: string[] = [];
+      if (categoryId && typeof categoryId === 'string' && categoryId.trim() !== '') {
+        rawCreateIds.push(categoryId.trim());
       }
+      if (Array.isArray(categoryIds)) {
+        for (const cId of categoryIds) {
+          if (typeof cId === 'string' && cId.trim() !== '') rawCreateIds.push(cId.trim());
+        }
+      }
+      if (Array.isArray(additionalCategoryIds)) {
+        for (const cId of additionalCategoryIds) {
+          if (typeof cId === 'string' && cId.trim() !== '') rawCreateIds.push(cId.trim());
+        }
+      }
+      const initialSelectedCatIds = Array.from(new Set(rawCreateIds));
 
       const post = await prisma.post.create({
         data: {
@@ -603,7 +596,7 @@ export class ArticleController {
           location: location ? String(location).trim() : null,
           priority: priority ? Number(priority) : 0,
           readingTime: readingTime ? Number(readingTime) : 0,
-          isTrending: effectiveTrending,
+          isTrending: !!isTrending,
           isBreaking: !!isBreaking,
           isFeatured: !!isFeatured,
           seoTitle: (seoTitle || '').trim(),
@@ -721,12 +714,9 @@ export class ArticleController {
           updateData.scheduledAt = null;
         }
       }
-      const trendingCat = await prisma.category.findFirst({
-        where: {
-          OR: [{ slug: 'trending' }, { name: 'Trending' }, { nameGu: 'àªŸà«àª°à«‡àª¨à«àª¡àª¿àª‚àª—' }],
-        },
-        select: { id: true },
-      });
+      if (isTrending !== undefined) {
+        updateData.isTrending = !!isTrending;
+      }
 
       if (categoryId !== undefined || req.body.categoryIds !== undefined || req.body.additionalCategoryIds !== undefined) {
         // Resolve primary category: prefer explicit categoryId, then first of categoryIds, then fall back to existing
@@ -736,29 +726,23 @@ export class ArticleController {
             ? (req.body.categoryIds.find((id: any) => typeof id === 'string' && id.trim() !== '') || '').trim()
             : '');
         if (!finalPrimaryCatId) finalPrimaryCatId = existingPost.categoryId;
-        let allSelectedCatIds = Array.from(
-          new Set([
-            finalPrimaryCatId,
-            ...(Array.isArray(req.body.categoryIds) ? req.body.categoryIds : []),
-            ...(Array.isArray(req.body.additionalCategoryIds) ? req.body.additionalCategoryIds : []),
-          ].filter((id): id is string => typeof id === 'string' && id.trim() !== ''))
-        );
 
-        const hasTrendingCat = Boolean(trendingCat && allSelectedCatIds.includes(trendingCat.id));
-        let effectiveTrending = isTrending !== undefined ? !!isTrending : existingPost.isTrending;
-
-        if (hasTrendingCat) {
-          effectiveTrending = true;
-        } else if (isTrending === false && trendingCat) {
-          allSelectedCatIds = allSelectedCatIds.filter((cid) => cid !== trendingCat.id);
+        const rawUpdateIds: string[] = [];
+        if (finalPrimaryCatId) rawUpdateIds.push(finalPrimaryCatId);
+        if (Array.isArray(req.body.categoryIds)) {
+          for (const cId of req.body.categoryIds) {
+            if (typeof cId === 'string' && cId.trim() !== '') rawUpdateIds.push(cId.trim());
+          }
+        }
+        if (Array.isArray(req.body.additionalCategoryIds)) {
+          for (const cId of req.body.additionalCategoryIds) {
+            if (typeof cId === 'string' && cId.trim() !== '') rawUpdateIds.push(cId.trim());
+          }
         }
 
-        if (effectiveTrending && trendingCat && !allSelectedCatIds.includes(trendingCat.id)) {
-          allSelectedCatIds.push(trendingCat.id);
-        }
+        const allSelectedCatIds = Array.from(new Set(rawUpdateIds));
 
         updateData.categoryId = finalPrimaryCatId;
-        updateData.isTrending = effectiveTrending;
 
         updateData.categories = {
           deleteMany: {},
@@ -766,21 +750,6 @@ export class ArticleController {
             categoryId: cId,
           })),
         };
-      } else if (isTrending !== undefined) {
-        updateData.isTrending = !!isTrending;
-        if (trendingCat) {
-          if (isTrending) {
-            await prisma.postCategory.upsert({
-              where: { postId_categoryId: { postId: id, categoryId: trendingCat.id } },
-              create: { postId: id, categoryId: trendingCat.id },
-              update: {},
-            }).catch(() => {});
-          } else {
-            await prisma.postCategory.deleteMany({
-              where: { postId: id, categoryId: trendingCat.id },
-            }).catch(() => {});
-          }
-        }
       }
 
       if (authorName && typeof authorName === 'string' && authorName.trim() !== '') {
