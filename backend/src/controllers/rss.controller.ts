@@ -104,7 +104,8 @@ export class RssController {
         'photos': 'photos',
       };
 
-      const categorySlug = rawName ? (LEGACY_MAP[rawName] || rawName) : 'home';
+      const isHomePattern = !rawName || rawName.includes('home') || rawName.includes('update') || rawName.includes('gujpost') || ['news', 'main', 'top', 'all'].includes(rawName);
+      const categorySlug = isHomePattern ? 'home' : (LEGACY_MAP[rawName] || rawName);
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
       const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
 
