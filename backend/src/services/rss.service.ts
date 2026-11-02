@@ -92,8 +92,19 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
 export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promise<GeneratedFeedResult> {
   const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
   const rawCategorySlug = (options.categorySlug || '').trim().toLowerCase().replace(/\.xml$/, '');
-  const isHomeSlug = !rawCategorySlug || rawCategorySlug.includes('home') || rawCategorySlug.includes('update') || rawCategorySlug.includes('gujpost') || ['all', 'homepage', 'news', 'main', 'top'].includes(rawCategorySlug);
-  const categorySlug = isHomeSlug ? '' : rawCategorySlug;
+  let cleanTopic = rawCategorySlug;
+  if (cleanTopic.includes('-updates-')) {
+    cleanTopic = cleanTopic.split('-updates-')[0].trim();
+  } else if (cleanTopic.includes('_updates_')) {
+    cleanTopic = cleanTopic.split('_updates_')[0].trim();
+  } else if (cleanTopic.startsWith('updates-')) {
+    cleanTopic = cleanTopic.replace(/^updates-/, '').trim();
+  } else if (cleanTopic.endsWith('-updates')) {
+    cleanTopic = cleanTopic.replace(/-updates$/, '').trim();
+  }
+
+  const isHomeSlug = !cleanTopic || ['all', 'home', 'homepage', 'news', 'main', 'top', 'gujpost'].includes(cleanTopic);
+  const categorySlug = isHomeSlug ? '' : cleanTopic;
   const lang = (options.lang || 'gu').toLowerCase().trim();
   const cacheKey = `rss:${categorySlug || 'home'}:${limit}:${lang}`;
 
