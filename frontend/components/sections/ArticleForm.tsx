@@ -805,7 +805,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       const cardHtml = `<div class="gp-pdf-card" ${showPagesAttr} ${posAttr} data-pdf-url="${cleanPdf}"><div class="gp-pdf-inner"><div class="gp-pdf-icon-wrap"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div><div class="gp-pdf-text"><span class="gp-pdf-title">${pdfTitle}</span><span class="gp-pdf-sub">${pdfSub}</span></div></div><a href="${cleanPdf}" target="_blank" rel="noopener noreferrer" download class="gp-pdf-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>${pdfBtn}</span></a></div>`;
 
       if (showPdfPages) {
-        pdfBlockHtml = `<div class="gp-pdf-pages-viewer" ${posAttr} data-pdf-url="${cleanPdf}"></div>`;
+        pdfBlockHtml = `<div class="gp-pdf-pages-viewer" ${showPagesAttr} ${posAttr} data-pdf-url="${cleanPdf}"></div>`;
       } else {
         pdfBlockHtml = cardHtml;
       }
@@ -1170,9 +1170,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages, extractedPdfPosition };
 
     const pdfMatch =
+      raw.match(/data-pdf-url=["']([^"']+)["']/i) ||
+      raw.match(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][^>]*data-pdf-url=["']([^"']+)["']/i) ||
       raw.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
       raw.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
-      raw.match(/href=["']([^"']+)["'][^>]*download/i);
+      raw.match(/href=["']([^"']+)["'][^>]*download/i) ||
+      raw.match(/download[^>]*href=["']([^"']+)["']/i) ||
+      raw.match(/src=["']([^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
+      raw.match(/(https?:\/\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?|\/uploads\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?)/i);
     if (pdfMatch && pdfMatch[1]) extractedPdfUrl = pdfMatch[1];
 
     if (raw.includes('data-show-pages="true"') || raw.includes('gp-pdf-pages-viewer')) {
@@ -1682,20 +1687,54 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         setTwitterUrl(hasBodyTw ? '' : (parsedEn.extractedTw || parsedGu.extractedTw || parsedHi.extractedTw || art.twitterUrl || art.twitter || ''));
         setInstagramUrl(hasBodyIg ? '' : (parsedEn.extractedIg || parsedGu.extractedIg || parsedHi.extractedIg || art.instagramUrl || art.instagram || ''));
         setFacebookUrl(hasBodyFb ? '' : (parsedEn.extractedFb || parsedGu.extractedFb || parsedHi.extractedFb || art.facebookUrl || art.facebook || ''));
-        setPdfUrl(art.pdfUrl || art.pdf || parsedEn.extractedPdfUrl || parsedGu.extractedPdfUrl || parsedHi.extractedPdfUrl || '');
+        const rawCombinedContent = [art.content, art.contentGu, art.contentHi, primaryContent].filter(Boolean).join('\n\n');
+        const fallbackPdfMatch =
+          rawCombinedContent.match(/data-pdf-url=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/class=["'][^"']*(?:gp-pdf-card|gp-pdf-pages-viewer)[^"']*["'][^>]*data-pdf-url=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/gp-pdf-card[\s\S]*?href=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/href=["']([^"']+\.pdf(?:\?[^"']*)?|\/uploads\/[^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
+          rawCombinedContent.match(/href=["']([^"']+)["'][^>]*download/i) ||
+          rawCombinedContent.match(/download[^>]*href=["']([^"']+)["']/i) ||
+          rawCombinedContent.match(/src=["']([^"']+\.pdf(?:\?[^"']*)?)["']/i) ||
+          rawCombinedContent.match(/(https?:\/\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?|\/uploads\/[^\s"'<>]+\.pdf(?:\?[^\s"'<>]*)?)/i);
+        const fallbackPdfUrl = fallbackPdfMatch ? fallbackPdfMatch[1] : '';
+
+        const resolvedPdfUrl =
+          art.pdfUrl ||
+          art.pdf ||
+          parsedGu.extractedPdfUrl ||
+          parsedEn.extractedPdfUrl ||
+          parsedHi.extractedPdfUrl ||
+          fallbackPdfUrl ||
+          '';
+
+        setPdfUrl(resolvedPdfUrl);
+
+        const fallbackHasPdfPages = Boolean(
+          rawCombinedContent.includes('data-show-pages="true"') ||
+          rawCombinedContent.includes('gp-pdf-pages-viewer')
+        );
+
         setShowPdfPages(
           Boolean(
             (art as any).showPdfPages ||
-            parsedEn.hasPdfPages ||
             parsedGu.hasPdfPages ||
-            parsedHi.hasPdfPages
+            parsedEn.hasPdfPages ||
+            parsedHi.hasPdfPages ||
+            fallbackHasPdfPages
           )
         );
+
+        const fallbackPdfPosition =
+          rawCombinedContent.match(/data-pdf-position=["']([^"']+)["']/i)?.[1] ||
+          (/[PDF_DOCUMENT]/i.test(rawCombinedContent) ? 'custom' : 'end');
+
         setPdfPosition(
           (art as any).pdfPosition ||
           parsedGu.extractedPdfPosition ||
           parsedEn.extractedPdfPosition ||
           parsedHi.extractedPdfPosition ||
+          fallbackPdfPosition ||
           'end'
         );
         setCategoryId(art.categoryId || art.category?.id || '');
