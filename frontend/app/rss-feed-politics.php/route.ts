@@ -5,6 +5,13 @@ export const dynamic = 'force-dynamic';
 
 const LEGACY_MAP: Record<string, string> = {
   'news': 'home',
+  'gujpost': 'home',
+  'entertainment': 'entertainment',
+  'factcheck': 'fact-check',
+  'other-cities': 'other-cities',
+  'india': 'national',
+  'world': 'world',
+  'photo': 'photos',
   'homepage': 'home',
   'home': 'home',
   'main': 'home',
@@ -19,7 +26,9 @@ const LEGACY_MAP: Record<string, string> = {
   'others': 'other-cities',
   'national': 'national',
   'international': 'world',
-  'entertainment-life-style': 'entertainment-life-style',
+  'entertainment-life-style': 'entertainment',
+  'entertainmentlifestyle': 'entertainment',
+  'entertainment-lifestyle': 'entertainment',
   'popular-stories': 'trending',
   'politics': 'politics',
   'fact-check': 'fact-check',
@@ -37,10 +46,21 @@ const LEGACY_MAP: Record<string, string> = {
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+        const { searchParams } = new URL(request.url);
     const rawName = (searchParams.get('name') || '').trim().toLowerCase();
-    const isHomePattern = !rawName || rawName.includes('home') || rawName.includes('update') || rawName.includes('gujpost') || ['news', 'main', 'top', 'all'].includes(rawName);
-    const mappedCategory = isHomePattern ? 'home' : (LEGACY_MAP[rawName] || rawName);
+    let cleanTopic = rawName;
+    if (cleanTopic.includes('-updates-')) {
+      cleanTopic = cleanTopic.split('-updates-')[0].trim();
+    } else if (cleanTopic.includes('_updates_')) {
+      cleanTopic = cleanTopic.split('_updates_')[0].trim();
+    } else if (cleanTopic.startsWith('updates-')) {
+      cleanTopic = cleanTopic.replace(/^updates-/, '').trim();
+    } else if (cleanTopic.endsWith('-updates')) {
+      cleanTopic = cleanTopic.replace(/-updates$/, '').trim();
+    }
+
+    const isHome = !cleanTopic || ['home', 'homepage', 'news', 'main', 'top', 'all', 'gujpost'].includes(cleanTopic);
+    const mappedCategory = isHome ? 'home' : (LEGACY_MAP[cleanTopic] || cleanTopic);
 
     const lang = (searchParams.get('lang') || searchParams.get('language') || '').trim();
     const langQuery = lang ? `&lang=${encodeURIComponent(lang)}` : '';
