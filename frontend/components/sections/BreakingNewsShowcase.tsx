@@ -433,11 +433,11 @@ export default function BreakingNewsShowcase({
 
         {/* ── Inner Showcase Container with White Border Framing (Framing Image Box & Headline Box) ── */}
         <div className="p-1.5 sm:p-2 md:p-2.5 bg-gradient-to-b from-[#8B0B00] via-[#520700] to-[#1A0200]">
-          <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl border-2 sm:border-[2.5px] border-white/90 shadow-2xl flex flex-col md:flex-row min-h-[220px] sm:min-h-[245px] md:min-h-[270px] lg:min-h-[295px] bg-black">
+          <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl border-2 sm:border-[2.5px] border-white/90 shadow-2xl flex flex-col md:flex-row min-h-[240px] sm:min-h-[270px] md:min-h-[300px] lg:min-h-[330px] bg-black">
             {/* ── Left Side: Visual Image Box with Defined Border ── */}
             {hasImage && (
-              <div className="relative w-full md:w-[48%] lg:w-[46%] xl:w-[45%] shrink-0 overflow-hidden bg-[#09090b] border-b-2 md:border-b-0 md:border-r-2 border-white/40">
-                <div className="relative h-56 sm:h-64 md:h-full min-h-[210px] w-full overflow-hidden">
+              <div className="relative w-full md:w-[48%] lg:w-[46%] xl:w-[45%] shrink-0 overflow-hidden bg-[#09090b]">
+                <div className="relative h-56 sm:h-64 md:h-full min-h-[220px] sm:min-h-[250px] md:min-h-[280px] lg:min-h-[310px] w-full overflow-hidden">
                   {activeSlides.map((slide, sIdx) => {
                     const isActive = sIdx === slideIndex;
                     return (
@@ -468,23 +468,36 @@ export default function BreakingNewsShowcase({
                   <div className="pointer-events-none absolute inset-0 z-15 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/40" />
 
                   {/* TV Badge on bottom left of image: [ ▶ વિઝ્યુઅલ રિપોર્ટ ] (Matching Logo Red: #CC1D0C) */}
-                  <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-full bg-black/85 px-3 py-1 text-xs font-bold text-white backdrop-blur-sm border border-white/30 shadow-md">
-                    <span className="flex items-center justify-center w-4 h-4 rounded-full bg-[#CC1D0C] text-white">
-                      <Play className="w-2.5 h-2.5 fill-current ml-0.5" />
+                  <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-full bg-black/85 px-3 py-1 sm:px-3.5 sm:py-1.5 text-xs sm:text-sm font-black text-white backdrop-blur-sm border border-white/40 shadow-lg">
+                    <span className="flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-[#CC1D0C] text-white">
+                      <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current ml-0.5" />
                     </span>
                     <span>{BREAKING_I18N.visualReport[language] || 'વિઝ્યુઅલ રિપોર્ટ'}</span>
                   </div>
                 </div>
-
-                {/* Angled Golden Divider Bar between Image & Red Headline on Desktop */}
-                <div className="hidden md:block pointer-events-none absolute -right-2 top-0 bottom-0 w-4 bg-gradient-to-b from-amber-400 via-yellow-300 to-amber-500 transform -skew-x-12 z-25 shadow-lg shadow-yellow-500/50 border-l border-r border-amber-200" />
               </div>
+            )}
+
+            {/* ── High-Contrast Broadcast Divider Border Between Left (Image) and Right (Text) Sections ── */}
+            {hasImage && (
+              <>
+                {/* Desktop: Vertical 2px-3px Glowing White & Gold Divider Bar */}
+                <div
+                  className="hidden md:flex flex-col shrink-0 w-1.5 self-stretch bg-gradient-to-b from-white via-amber-300 to-white shadow-[0_0_10px_rgba(255,255,255,0.7)] z-20 relative"
+                  aria-hidden="true"
+                />
+                {/* Mobile: Horizontal 2px-3px Glowing White & Gold Divider Bar */}
+                <div
+                  className="block md:hidden h-1.5 w-full bg-gradient-to-r from-white via-amber-300 to-white shadow-[0_0_10px_rgba(255,255,255,0.7)] z-20 relative"
+                  aria-hidden="true"
+                />
+              </>
             )}
 
           {/* ── Headline Card: Gujarat Post Signature Logo Red (#CC1D0C) ── */}
           <div className={`relative flex-1 flex flex-col justify-between bg-gradient-to-br from-[#A00E02] via-[#CC1D0C] to-[#520700] ${
             hasImage
-              ? 'p-5 sm:p-6 md:p-7 lg:p-8'
+              ? 'p-5 sm:p-6 md:p-8 lg:p-9'
               : 'p-6 sm:p-8 md:p-10 lg:p-12'
           } text-white overflow-hidden transition-all duration-300`}>
 
@@ -571,14 +584,14 @@ export default function BreakingNewsShowcase({
             {/* 5. Pulsing Atmospheric Red Glow */}
             <div className="pointer-events-none absolute -left-16 top-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#CC1D0C]/40 blur-3xl animate-[broadcast_pulse_glow_5s_ease-in-out_infinite]" />
 
-            {/* Large Bold Gujarati Headline (Matching Image 1: Clean, Bold, Sans-serif) */}
-            <div className="relative z-10 my-auto min-h-[80px] sm:min-h-[95px] md:min-h-[110px] flex items-center py-2 sm:py-3 overflow-hidden">
+            {/* Large Bold Gujarati Headline (Increased Text Size for Maximum Broadcast Impact) */}
+            <div className="relative z-10 my-auto min-h-[95px] sm:min-h-[115px] md:min-h-[135px] lg:min-h-[150px] flex items-center py-2 sm:py-3 overflow-hidden">
               <h2
                 className={`${
                   hasImage
-                    ? 'text-xl sm:text-2xl md:text-3xl lg:text-[32px] xl:text-[34px]'
-                    : 'text-2xl sm:text-3xl md:text-4xl lg:text-[40px] xl:text-[44px]'
-                } font-black leading-snug md:leading-normal text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.95)] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                    ? 'text-2xl sm:text-3xl md:text-[34px] lg:text-[38px] xl:text-[42px]'
+                    : 'text-3xl sm:text-4xl md:text-[42px] lg:text-[48px] xl:text-[54px]'
+                } font-black leading-snug md:leading-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.95)] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
                   isTextExiting
                     ? 'opacity-0 -translate-y-3 scale-[0.98]'
                     : 'opacity-100 translate-y-0 scale-100'
@@ -588,26 +601,26 @@ export default function BreakingNewsShowcase({
               </h2>
             </div>
 
-            {/* Bottom Meta Bar: ((•)) લાઇવ અપડેટ્સ  |  ✒ ગુજરાત પોસ્ટ (Matching Image 1) */}
-            <div className="relative z-10 mt-3 sm:mt-4 flex items-center justify-between gap-3 pt-2.5 sm:pt-3 border-t border-white/20">
-              <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-white">
-                <Radio className="h-4 w-4 text-red-400 animate-pulse" />
+            {/* Bottom Meta Bar: ((•)) લાઇવ અપડેટ્સ  |  ✒ ગુજરાત પોસ્ટ (Clean, Bold, Polished) */}
+            <div className="relative z-10 mt-4 sm:mt-5 flex items-center justify-between gap-3 pt-3 sm:pt-3.5 border-t-2 border-white/30">
+              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-white">
+                <Radio className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-red-300 animate-pulse shrink-0" />
                 <span>{BREAKING_I18N.liveUpdate[language] || 'લાઇવ અપડેટ્સ'}</span>
               </div>
 
-              <span className="text-white/40 font-light select-none">|</span>
+              <span className="text-white/60 font-semibold text-base sm:text-lg select-none">|</span>
 
               {currentSlide?.link ? (
                 <Link
                   href={currentSlide.link}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 text-xs sm:text-sm font-black text-[#CC1D0C] shadow-sm hover:bg-zinc-100 transition active:scale-95"
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-black text-[#CC1D0C] shadow-md hover:bg-zinc-100 transition active:scale-95 shrink-0"
                 >
                   <span>{BREAKING_I18N.readFull[language] || 'સંપૂર્ણ વાંચો'}</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-4 w-4" />
                 </Link>
               ) : (
-                <div className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-white">
-                  <PenTool className="h-4 w-4 text-yellow-400" />
+                <div className="inline-flex items-center gap-1.5 text-sm sm:text-base font-black text-white">
+                  <PenTool className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-yellow-300 shrink-0" />
                   <span>{BREAKING_I18N.brandName[language] || 'ગુજરાત પોસ્ટ'}</span>
                 </div>
               )}
