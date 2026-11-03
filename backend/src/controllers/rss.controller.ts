@@ -105,6 +105,8 @@ export class RssController {
         'international': 'world',
         'world': 'world',
         'entertainment': 'entertainment',
+        'entertainmentlifestyle': 'entertainment',
+        'entertainment-lifestyle': 'entertainment',
         'entertainment-life-style': 'entertainment',
         'lifestyle': 'lifestyle',
         'popular-stories': 'trending',
