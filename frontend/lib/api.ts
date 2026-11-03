@@ -93,6 +93,7 @@ export async function authFetch(url: string, options: RequestInit = {}): Promise
   }
 
   return fetch(url, {
+    cache: options.cache || 'no-store',
     ...options,
     headers,
     credentials: 'include',
@@ -825,8 +826,8 @@ export async function getHeroSettings(bypassCache = false): Promise<{ slots: (Ar
     const query = bypassCache ? `?t=${Date.now()}` : '';
     const url = `${API_BASE_URL}/hero-settings${query}`;
     // 15s cache TTL prevents concurrent SSR fetches from hammering the backend; admin saves immediately invalidate via clearApiCacheAndBroadcast()
-    const json = await fetchCachedJson<any>(url, bypassCache ? 0 : 15 * 1000);
-    if (json?.success && json.data?.slots) {
+    const json = await fetchCachedJson<any>(url, bypassCache ? 0 : 5 * 1000);
+    if (json?.success && json.data) {
       return json.data;
     }
   } catch (error: any) {
@@ -856,6 +857,8 @@ export async function updateHeroSettings(payload: {
   tickerLabel?: string | Record<string, string> | null;
   electionBannerEnabled?: boolean;
   electionBannerJson?: any;
+  breakingBannerEnabled?: boolean;
+  breakingBannerJson?: any;
 }): Promise<any> {
   const res = await authFetch('/api/admin/hero-settings', {
     method: 'PUT',
@@ -867,6 +870,13 @@ export async function updateHeroSettings(payload: {
   }
   // Clear local cache AND broadcast to all open tabs (user-facing pages) to re-fetch immediately
   clearApiCacheAndBroadcast();
+  if (typeof window !== 'undefined') {
+    fetch('/api/revalidate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: '/' }),
+    }).catch(() => {});
+  }
   return res.json();
 }
 

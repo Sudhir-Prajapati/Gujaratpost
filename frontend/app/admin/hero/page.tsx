@@ -1,5 +1,7 @@
 'use client';
 
+
+
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Search, RefreshCw, Eye, EyeOff, AlertTriangle, CheckCircle2, XCircle,
@@ -13,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache, clearApiCacheAndBroadcast, getHeroSettings, updateHeroSettings } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import BreakingNewsShowcase, { type BreakingSlide } from '@/components/sections/BreakingNewsShowcase';
 
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
@@ -419,6 +422,34 @@ export default function HeroManagerPage() {
   const [savingElectionBanner, setSavingElectionBanner] = useState(false);
   const [uploadingPartyLogoIdx, setUploadingPartyLogoIdx] = useState<number | null>(null);
   const [uploadingMapIcon, setUploadingMapIcon] = useState(false);
+
+  // ── TV BREAKING NEWS SHOWCASE BANNER STATES ──
+  const [breakingBannerEnabled, setBreakingBannerEnabled] = useState(false);
+  const [breakingBannerBadgeText, setBreakingBannerBadgeText] = useState('BREAKING NEWS');
+  const [breakingBannerInterval, setBreakingBannerInterval] = useState<number>(4);
+  const [breakingSlides, setBreakingSlides] = useState<BreakingSlide[]>([
+    {
+      id: 'slide-1',
+      image: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80',
+      link: '',
+      texts: [
+        'વિશાખાપટ્ટનમની ઓઇલ રિફાઇનરીમાં ભીષણ વિસ્ફોટ',
+        'વિસ્ફોટ બાદ આકાશમાં ધુમાડાના ગોટેગોટા છવાયા, ફાયર બ્રિગેડની ૧૦ ગાડીઓ પહોંચી',
+        'તમામ કર્મચારીઓને તાત્કાલિક સુરક્ષિત સ્થળે ખસેડાયા, કોઈ જાનહાનિના અહેવાલ નથી',
+      ],
+    },
+    {
+      id: 'slide-2',
+      image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+      link: '',
+      texts: [
+        'ગુજરાતમાં આગામી ૪૮ કલાક ભારેથી અતિભારે વરસાદની હવામાન વિભાગની આગાહી',
+        'દક્ષિણ ગુજરાત અને સૌરાષ્ટ્રના દરિયાકાંઠાના વિસ્તારોમાં યલો એલર્ટ જાહેર કરાયું',
+      ],
+    },
+  ]);
+  const [savingBreakingBanner, setSavingBreakingBanner] = useState(false);
+  const [uploadingSlideImgIdx, setUploadingSlideImgIdx] = useState<number | null>(null);
   const [mostReadMode, setMostReadMode] = useState<'auto' | 'manual'>('auto');
   const [autoMostReadArticles, setAutoMostReadArticles] = useState<Article[]>([]);
   const [savingMostRead, setSavingMostRead] = useState(false);
@@ -526,6 +557,24 @@ export default function HeroManagerPage() {
             setTickerBadgeText(rawLabel);
           }
         }
+      }
+
+      // Populate TV Breaking News Showcase Banner
+      const bBannerEnabled = (heroRes as any)?.breakingBannerEnabled ?? heroRes?.setting?.breakingBannerEnabled ?? false;
+      setBreakingBannerEnabled(Boolean(bBannerEnabled));
+
+      const rawBreakingJson = (heroRes as any)?.breakingBannerJson || heroRes?.setting?.breakingBannerJson;
+      if (rawBreakingJson) {
+        try {
+          const parsed = typeof rawBreakingJson === 'string' ? JSON.parse(rawBreakingJson) : rawBreakingJson;
+          if (parsed && typeof parsed === 'object') {
+            if (parsed.badgeText) setBreakingBannerBadgeText(parsed.badgeText);
+            if (parsed.intervalSeconds) setBreakingBannerInterval(Number(parsed.intervalSeconds) || 4);
+            if (Array.isArray(parsed.slides) && parsed.slides.length > 0) {
+              setBreakingSlides(parsed.slides);
+            }
+          }
+        } catch {}
       }
 
       // Populate Election Banner
@@ -786,8 +835,8 @@ export default function HeroManagerPage() {
         mode: tickerMode,
         speed: tickerSpeed,
         sourceType: tickerSourceType,
-        articleIds: tickerMode === 'single' && tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
-        customHeadlines: tickerMode === 'single' && tickerSourceType === 'custom' ? customTickerHeadlines : [],
+        articleIds: tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
+        customHeadlines: tickerSourceType === 'custom' ? customTickerHeadlines : [],
         hidden: hide,
       };
       const payload = {
@@ -804,6 +853,244 @@ export default function HeroManagerPage() {
   };
 
   // ─── ELECTION BANNER HANDLERS ───────────────────────────────────────
+  const handleUploadSlideImage = async (file: File, slideIdx: number) => {
+    if (!file || !file.type.startsWith('image/')) {
+      showToast('Please select a valid image file (PNG, JPG, WebP)', false);
+      return;
+    }
+    setUploadingSlideImgIdx(slideIdx);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      const url = data?.data?.url || data?.url;
+      if (url) {
+        setBreakingSlides(prev => {
+          const next = [...prev];
+          next[slideIdx] = { ...next[slideIdx], image: url };
+          return next;
+        });
+        showToast('Slide image uploaded successfully!', true);
+      } else {
+        showToast('Upload succeeded but no image URL was returned.', false);
+      }
+    } catch (e: any) {
+      showToast(e?.message || 'Error uploading slide image', false);
+    } finally {
+      setUploadingSlideImgIdx(null);
+    }
+  };
+
+  const handleAddBreakingSlide = () => {
+    setBreakingSlides(prev => [
+      ...prev,
+      {
+        id: 'slide-' + Date.now(),
+        image: '',
+        link: '',
+        texts: ['નવી બ્રેકિંગ ન્યૂઝ હેડલાઇન લખો...'],
+      },
+    ]);
+  };
+
+  const handleRemoveBreakingSlide = (idx: number) => {
+    setBreakingSlides(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleMoveBreakingSlide = (idx: number, direction: 'up' | 'down') => {
+    setBreakingSlides(prev => {
+      const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+      if (targetIdx < 0 || targetIdx >= prev.length) return prev;
+      const next = [...prev];
+      const temp = next[idx];
+      next[idx] = next[targetIdx];
+      next[targetIdx] = temp;
+      return next;
+    });
+  };
+
+  const handleSlideChange = (idx: number, field: string, value: string) => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      next[idx] = { ...next[idx], [field]: value };
+      return next;
+    });
+  };
+
+  const handleAddSlideText = (slideIdx: number) => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const currentTexts = next[slideIdx]?.texts || [];
+      next[slideIdx] = {
+        ...next[slideIdx],
+        texts: [...currentTexts, 'નવો મુદ્દો...'],
+      };
+      return next;
+    });
+  };
+
+  const handleRemoveSlideText = (slideIdx: number, textIdx: number) => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const currentTexts = (next[slideIdx]?.texts || []).filter((_, i) => i !== textIdx);
+      next[slideIdx] = {
+        ...next[slideIdx],
+        texts: currentTexts.length > 0 ? currentTexts : ['મુદ્દો ૧'],
+      };
+      return next;
+    });
+  };
+
+  const handleSlideTextChange = (slideIdx: number, textIdx: number, value: string) => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const currentTexts = [...(next[slideIdx]?.texts || [])];
+      currentTexts[textIdx] = value;
+      next[slideIdx] = {
+        ...next[slideIdx],
+        texts: currentTexts,
+      };
+      return next;
+    });
+  };
+
+  const handleMoveSlideText = (slideIdx: number, textIdx: number, direction: 'up' | 'down') => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const currentTexts = [...(next[slideIdx]?.texts || [])];
+      const targetIdx = direction === 'up' ? textIdx - 1 : textIdx + 1;
+      if (targetIdx < 0 || targetIdx >= currentTexts.length) return prev;
+      const temp = currentTexts[textIdx];
+      currentTexts[textIdx] = currentTexts[targetIdx];
+      currentTexts[targetIdx] = temp;
+      next[slideIdx] = {
+        ...next[slideIdx],
+        texts: currentTexts,
+      };
+      return next;
+    });
+  };
+
+  const handleSaveBreakingBanner = async () => {
+    setSavingBreakingBanner(true);
+    try {
+      const bannerPayload = {
+        badgeText: breakingBannerBadgeText.trim() || 'BREAKING NEWS',
+        intervalSeconds: Number(breakingBannerInterval) || 4,
+        slides: breakingSlides,
+      };
+
+      const res = await updateHeroSettings({
+        breakingBannerEnabled,
+        breakingBannerJson: JSON.stringify(bannerPayload),
+      });
+
+      if (res && res.success) {
+        clearApiCacheAndBroadcast({
+          type: 'BREAKING_BANNER_UPDATED',
+          enabled: breakingBannerEnabled,
+          config: bannerPayload,
+        });
+        triggerOnDemandRevalidate();
+        showToast(
+          breakingBannerEnabled
+            ? '✅ Saved! TV Breaking News Showcase Banner is now LIVE on homepage.'
+            : '✅ Saved! TV Breaking News Showcase Banner is now DISABLED (hidden).',
+          true
+        );
+      } else {
+        showToast('Failed to save Breaking News Banner. Please try again.', false);
+      }
+    } catch {
+      showToast('Save failed. Please try again.', false);
+    } finally {
+      setSavingBreakingBanner(false);
+    }
+  };
+
+  const handleToggleElectionBanner = async (targetState: boolean) => {
+    setElectionBannerEnabled(targetState);
+    setSavingElectionBanner(true);
+    try {
+      const bannerPayload = {
+        title: electionBannerTitle.trim() || 'ગુજરાત ચૂંટણી 2026',
+        showLive: electionBannerLive,
+        mapIconUrl: electionBannerMapUrl.trim(),
+        totalSeats: electionBannerTotalSeats,
+        majorityTarget: electionBannerMajority,
+        showOnAllPages: electionBannerShowAllPages,
+        parties: electionParties,
+      };
+
+      const res = await updateHeroSettings({
+        electionBannerEnabled: targetState,
+        electionBannerJson: JSON.stringify(bannerPayload),
+      });
+
+      if (res && res.success) {
+        clearApiCacheAndBroadcast({
+          type: 'ELECTION_BANNER_UPDATED',
+          enabled: targetState,
+        });
+        triggerOnDemandRevalidate();
+        showToast(
+          targetState
+            ? '✅ Saved! Election Banner is now LIVE on homepage.'
+            : '✅ Saved! Election Banner is DISABLED (hidden from homepage).',
+          true
+        );
+      } else {
+        showToast('Failed to save Election Banner status.', false);
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error saving Election Banner status.', false);
+    } finally {
+      setSavingElectionBanner(false);
+    }
+  };
+
+  const handleToggleBreakingBanner = async (targetState: boolean) => {
+    setBreakingBannerEnabled(targetState);
+    setSavingBreakingBanner(true);
+    try {
+      const bannerPayload = {
+        badgeText: breakingBannerBadgeText.trim() || 'BREAKING NEWS',
+        intervalSeconds: breakingBannerInterval,
+        slides: breakingSlides,
+      };
+
+      const res = await updateHeroSettings({
+        breakingBannerEnabled: targetState,
+        breakingBannerJson: JSON.stringify(bannerPayload),
+      });
+
+      if (res && res.success) {
+        clearApiCacheAndBroadcast({
+          type: 'BREAKING_BANNER_UPDATED',
+          enabled: targetState,
+          config: bannerPayload,
+        });
+        triggerOnDemandRevalidate();
+        showToast(
+          targetState
+            ? '✅ Saved! TV Breaking News Showcase is now LIVE on homepage.'
+            : '✅ Saved! TV Breaking News Showcase is DISABLED (hidden from homepage).',
+          true
+        );
+      } else {
+        showToast('Failed to save TV Breaking News Showcase status.', false);
+      }
+    } catch (err: any) {
+      showToast(err?.message || 'Error saving TV Breaking News Showcase status.', false);
+    } finally {
+      setSavingBreakingBanner(false);
+    }
+  };
+
   const handleSaveElectionBanner = async () => {
     setSavingElectionBanner(true);
     try {
@@ -934,13 +1221,13 @@ export default function HeroManagerPage() {
   };
 
   const handleSaveTickerBadge = async () => {
-    if (!tickerHidden && tickerMode === 'single') {
+    if (!tickerHidden) {
       if (tickerSourceType === 'articles' && selectedTickerArticles.length === 0) {
-        showToast('⚠️ Please select at least 1 article for the Single Headline slider.', false);
+        showToast('⚠️ Please select at least 1 article for the ticker.', false);
         return;
       }
       if (tickerSourceType === 'custom' && customTickerHeadlines.length === 0) {
-        showToast('⚠️ Please enter at least 1 headline with link for the Single Headline slider.', false);
+        showToast('⚠️ Please enter at least 1 headline with link for the ticker.', false);
         return;
       }
     }
@@ -951,8 +1238,8 @@ export default function HeroManagerPage() {
         mode: tickerMode,
         speed: tickerSpeed,
         sourceType: tickerSourceType,
-        articleIds: tickerMode === 'single' && tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
-        customHeadlines: tickerMode === 'single' && tickerSourceType === 'custom' ? customTickerHeadlines : [],
+        articleIds: tickerSourceType === 'articles' ? selectedTickerArticles.map((a) => a.id) : [],
+        customHeadlines: tickerSourceType === 'custom' ? customTickerHeadlines : [],
         hidden: tickerHidden,
       };
       const payload = {
@@ -1950,18 +2237,17 @@ export default function HeroManagerPage() {
                   </div>
                 </div>
 
-                {/* 3. Slider Content Source (FOR OPTION 2: SINGLE HEADLINE SLIDER) */}
-                {tickerMode === 'single' ? (
-                  <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                      <div>
-                        <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
-                          3. Content for Single Headline Slider (સ્લાઇડર માટે લખાણ અને લિંક પસંદ કરો)
-                        </label>
-                        <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
-                          Choose whether to select existing news articles or manually type custom breaking headlines with links.
-                        </p>
-                      </div>
+                {/* 3. Ticker Content Source (FOR BOTH CONTINUOUS MARQUEE & SINGLE HEADLINE) */}
+                <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div>
+                      <label className="block text-sm sm:text-base font-bold text-zinc-900 dark:text-white">
+                        3. Ticker Content Source (ટીકર માટે લખાણ અને લિંક પસંદ કરો)
+                      </label>
+                      <p className="text-xs sm:text-sm text-zinc-500 font-medium mt-0.5">
+                        Choose whether to select existing news articles or manually type custom breaking headlines with links (applies to {tickerMode === 'scroll' ? 'Continuous Marquee Scroll' : 'Single Headline Slider'}).
+                      </p>
+                    </div>
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
                         {tickerSourceType === 'custom'
                           ? `${customTickerHeadlines.length} headlines added`
@@ -1981,7 +2267,7 @@ export default function HeroManagerPage() {
                         }`}
                       >
                         <FileText className="h-4 w-4" />
-                        <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles)</span>
+                        <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles / Selected by Admin)</span>
                       </button>
                       <button
                         type="button"
@@ -2327,23 +2613,7 @@ export default function HeroManagerPage() {
                         )}
                       </div>
                     )}
-                  </div>
-                ) : (
-                  /* Informative Banner for Option 1: Continuous Marquee Scroll */
-                  <div className="pt-4 border-t border-gray-300 dark:border-zinc-800">
-                    <div className="p-4 sm:p-5 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm sm:text-base font-bold text-zinc-900 dark:text-zinc-100">
-                          Continuous Marquee Scroll uses Automatic Breaking News (ઓટોમેટિક બ્રેકિંગ ન્યૂઝ)
-                        </p>
-                        <p className="text-xs sm:text-sm text-zinc-600 dark:text-zinc-400 mt-1 leading-relaxed">
-                          આ મોડમાં અલગથી આર્ટિકલ સિલેક્ટ કરવાનો કોઈ ઓપ્શન નથી. જ્યારે પણ તમે નવી ન્યૂઝ બનાવો અથવા એડિટ કરો અને તેમાં <strong>&quot;Breaking News&quot;</strong> ઓપ્શન પસંદ કરો, ત્યારે તે આપમેળે આ સ્ક્રોલિંગ પટ્ટીમાં લાઈવ સ્ટ્રીમ થશે.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
+                </div>
 
                 {/* Bottom Save Action Bar */}
                 <div className="mt-6 pt-4 border-t border-gray-300 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -2396,7 +2666,8 @@ export default function HeroManagerPage() {
                 {/* Toggle Enable/Disable Button */}
                 <button
                   type="button"
-                  onClick={() => setElectionBannerEnabled(!electionBannerEnabled)}
+                  onClick={() => handleToggleElectionBanner(!electionBannerEnabled)}
+                  disabled={savingElectionBanner}
                   className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${
                     electionBannerEnabled
                       ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
@@ -2928,6 +3199,427 @@ export default function HeroManagerPage() {
                   >
                     {savingElectionBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                     {savingElectionBanner ? 'Saving Election Banner...' : 'Save Election Banner'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ════════════════════════════════════════════════════════════════
+             TV BREAKING NEWS SHOWCASE BANNER (ટીવી બ્રેકિંગ ન્યૂઝ બેનર)
+             ════════════════════════════════════════════════════════════════ */}
+          <div className="mb-8 rounded-2xl border-2 border-red-500/80 bg-white p-4 sm:p-6 shadow-sm dark:border-red-600 dark:bg-zinc-900 transition-all">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-200 pb-4 dark:border-zinc-800 mb-6 gap-4">
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                  <span className="text-2xl">🚨</span>
+                  <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
+                    TV Breaking News Showcase (ટીવી બ્રેકિંગ ન્યૂઝ બેનર)
+                  </h3>
+                  {breakingBannerEnabled ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-black px-3 py-1 rounded-full border bg-red-50 text-red-700 border-red-400 dark:bg-red-950/40 dark:border-red-700 dark:text-red-400 shrink-0">
+                      <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                      🔴 LIVE ON HOMEPAGE
+                    </span>
+                  ) : (
+                    <span className="text-xs font-bold px-3 py-1 rounded-full border bg-zinc-100 text-zinc-600 border-gray-400 dark:bg-zinc-800 dark:text-zinc-400 shrink-0">
+                      ⚪ DISABLED (HIDDEN)
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs sm:text-sm text-zinc-500 mt-1">
+                  Placed between Election Banner and Hero Section. Displays an image on the left with sequentially transitioning headlines on the right (Text 1 → Text 2 → Text 3 → Next Image).
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+                {/* Toggle Button */}
+                <button
+                  type="button"
+                  onClick={() => handleToggleBreakingBanner(!breakingBannerEnabled)}
+                  disabled={savingBreakingBanner}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${
+                    breakingBannerEnabled
+                      ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
+                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                  }`}
+                >
+                  {breakingBannerEnabled ? (
+                    <>
+                      <EyeOff className="h-4 w-4" />
+                      Disable Showcase (Hide)
+                    </>
+                  ) : (
+                    <>
+                      <Eye className="h-4 w-4" />
+                      Enable Showcase (Show)
+                    </>
+                  )}
+                </button>
+
+                {!breakingBannerEnabled && (
+                  <button
+                    type="button"
+                    onClick={handleSaveBreakingBanner}
+                    disabled={savingBreakingBanner}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#B3121B] hover:bg-[#8E0E15] text-white shadow-md shadow-[#B3121B]/20 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {savingBreakingBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {savingBreakingBanner ? 'Saving...' : 'Save (Confirm Disable)'}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* If Disabled */}
+            {!breakingBannerEnabled && (
+              <div className="mt-4 p-5 rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400">
+                    <EyeOff className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-red-950 dark:text-red-200">
+                      TV Breaking News Showcase: Disabled (Hidden from Homepage)
+                    </h4>
+                    <p className="text-xs text-red-700/80 dark:text-red-400/90 mt-0.5">
+                      Enable this feature to display high-impact TV broadcast style breaking news with sequential multi-text animation above the Hero section.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleSaveBreakingBanner}
+                  disabled={savingBreakingBanner}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer shrink-0"
+                >
+                  {savingBreakingBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  {savingBreakingBanner ? 'Saving...' : 'Save & Confirm (સાચવો)'}
+                </button>
+              </div>
+            )}
+
+            {/* If Enabled */}
+            {breakingBannerEnabled && (
+              <div className="space-y-6">
+                {/* 1. Badge Text & Speed Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Badge Label / Header (હેડર બેજ લખાણ)
+                    </label>
+                    <input
+                      type="text"
+                      value={breakingBannerBadgeText}
+                      onChange={(e) => setBreakingBannerBadgeText(e.target.value)}
+                      placeholder="દા.ત. BREAKING NEWS અથવા બ્રેકિંગ ન્યૂઝ"
+                      className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-2 text-sm font-bold text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                    />
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {['BREAKING NEWS', 'બ્રેકિંગ ન્યૂઝ', 'લાઈવ સમાચાર', 'ખાસ અહેવાલ', 'LIVE UPDATES'].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setBreakingBannerBadgeText(s)}
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border transition cursor-pointer ${
+                            breakingBannerBadgeText === s
+                              ? 'bg-red-600 text-white border-red-600'
+                              : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-red-400'
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Headline Transition Speed (દરેક મુદ્દાનો સમયગાળો)
+                    </label>
+                    <select
+                      value={breakingBannerInterval}
+                      onChange={(e) => setBreakingBannerInterval(Number(e.target.value))}
+                      className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-2 text-sm font-bold text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                    >
+                      <option value={3}>3 સેકન્ડ (ઝડપી સ્પીડ - 3 Seconds)</option>
+                      <option value={4}>4 સેકન્ડ (સામાન્ય ભલામણ - 4 Seconds Recommended)</option>
+                      <option value={5}>5 સેકન્ડ (મધ્યમ સ્પીડ - 5 Seconds)</option>
+                      <option value={6}>6 સેકન્ડ (ધીમી સ્પીડ - 6 Seconds)</option>
+                    </select>
+                    <p className="text-[11px] text-zinc-500 mt-1">
+                      દરેક લાઈન આટલા સમય માટે સ્ક્રીન પર રહેશે અને પછી આપમેળે આગળનો મુદ્દો / સ્લાઇડ આવશે.
+                    </p>
+                  </div>
+                </div>
+
+                {/* 2. Slides Management */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-base font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                        <span>🖼️</span> Breaking News Slides (સ્લાઇડ્સ અને મુદ્દાઓનું લિસ્ટ)
+                      </h4>
+                      <p className="text-xs text-zinc-500 mt-0.5">
+                        દરેક સ્લાઇડમાં ૧ તસવીર (ડાબી બાજુ) અને ૧ થી વધુ મુદ્દા/હેડલાઇન્સ (જમણી બાજુ) સેટ કરો.
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleAddBreakingSlide}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs sm:text-sm shadow-sm transition active:scale-95 cursor-pointer"
+                    >
+                      <Plus className="h-4 w-4" />
+                      નવી સ્લાઇડ ઉમેરો (Add Slide)
+                    </button>
+                  </div>
+
+                  {/* List of slides */}
+                  <div className="space-y-4">
+                    {breakingSlides.map((slide, sIdx) => (
+                      <div
+                        key={slide.id || sIdx}
+                        className="p-4 sm:p-5 rounded-2xl border border-gray-200 dark:border-zinc-800 bg-zinc-50/70 dark:bg-zinc-900/60 space-y-4"
+                      >
+                        {/* Slide Top Bar */}
+                        <div className="flex items-center justify-between border-b border-gray-200/80 dark:border-zinc-800 pb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white text-xs font-black">
+                              {sIdx + 1}
+                            </span>
+                            <span className="text-sm font-bold text-zinc-900 dark:text-white">
+                              સ્લાઇડ #{sIdx + 1}
+                            </span>
+                            <span className="text-xs text-zinc-500">
+                              ({(slide.texts || []).length} મુદ્દાઓ)
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleMoveBreakingSlide(sIdx, 'up')}
+                              disabled={sIdx === 0}
+                              title="Move up"
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveBreakingSlide(sIdx, 'down')}
+                              disabled={sIdx === breakingSlides.length - 1}
+                              title="Move down"
+                              className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
+                            >
+                              <ArrowDown className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveBreakingSlide(sIdx)}
+                              disabled={breakingSlides.length <= 1}
+                              title="Delete slide"
+                              className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-30 cursor-pointer transition"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Image & Link configuration */}
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                          {/* Image Box (Left) */}
+                          <div className="lg:col-span-5 space-y-2">
+                            <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+                              <span>તસવીર (Slide Image)</span>
+                              {slide.image && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSlideChange(sIdx, 'image', '')}
+                                  className="text-[10px] text-red-600 hover:underline cursor-pointer"
+                                >
+                                  હટાવો (Remove)
+                                </button>
+                              )}
+                            </label>
+
+                            <div className="flex items-center gap-3">
+                              {/* Thumbnail preview */}
+                              <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-gray-300 dark:border-zinc-700 bg-black flex items-center justify-center">
+                                {slide.image ? (
+                                  <Image
+                                    src={slide.image}
+                                    alt="Slide preview"
+                                    fill
+                                    className="object-cover"
+                                    unoptimized
+                                  />
+                                ) : (
+                                  <div className="text-center p-1">
+                                    <ImageIcon className="h-6 w-6 text-zinc-500 mx-auto" />
+                                    <span className="text-[9px] text-zinc-500">No Image</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex-1 space-y-1.5">
+                                {/* Upload button */}
+                                <label className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700 active:scale-95 transition cursor-pointer shadow-xs">
+                                  <Upload className="h-3.5 w-3.5" />
+                                  <span>{uploadingSlideImgIdx === sIdx ? 'અપલોડ થઈ રહ્યું છે...' : 'તસવીર અપલોડ કરો'}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    disabled={uploadingSlideImgIdx === sIdx}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0];
+                                      if (f) handleUploadSlideImage(f, sIdx);
+                                      e.target.value = '';
+                                    }}
+                                  />
+                                </label>
+
+                                <input
+                                  type="text"
+                                  value={slide.image || ''}
+                                  onChange={(e) => handleSlideChange(sIdx, 'image', e.target.value)}
+                                  placeholder="અથવા Image URL પેસ્ટ કરો"
+                                  className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Optional link */}
+                            <div className="pt-1 space-y-1">
+                              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+                                <LinkIcon className="h-3 w-3" />
+                                <span>આર્ટિકલ લિંક / URL (વૈકલ્પિક - Optional Link)</span>
+                              </label>
+                              <input
+                                type="text"
+                                value={slide.link || ''}
+                                onChange={(e) => handleSlideChange(sIdx, 'link', e.target.value)}
+                                placeholder="દા.ત. /news/article-slug અથવા https://..."
+                                className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Multi-Headline Texts (Right) */}
+                          <div className="lg:col-span-7 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                                હેડલાઇન લખાણ / મુદ્દાઓ (Sequential Headline Texts)
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => handleAddSlideText(sIdx)}
+                                className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-700 cursor-pointer"
+                              >
+                                <Plus className="h-3 w-3" />
+                                <span>નવો મુદ્દો ઉમેરો (Add Text Point)</span>
+                              </button>
+                            </div>
+
+                            <div className="space-y-2">
+                              {(slide.texts || []).map((txt, tIdx) => (
+                                <div key={tIdx} className="flex items-center gap-2">
+                                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-zinc-200 dark:bg-zinc-700 text-[11px] font-black text-zinc-700 dark:text-zinc-300">
+                                    {tIdx + 1}
+                                  </span>
+
+                                  <input
+                                    type="text"
+                                    value={txt}
+                                    onChange={(e) => handleSlideTextChange(sIdx, tIdx, e.target.value)}
+                                    placeholder={`મુદ્દો #${tIdx + 1} નું લખાણ લખો...`}
+                                    className="flex-1 rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs sm:text-sm font-semibold text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                                  />
+
+                                  <div className="flex items-center gap-0.5">
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveSlideText(sIdx, tIdx, 'up')}
+                                      disabled={tIdx === 0}
+                                      className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-white disabled:opacity-20 cursor-pointer"
+                                      title="Up"
+                                    >
+                                      <ArrowUp className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleMoveSlideText(sIdx, tIdx, 'down')}
+                                      disabled={tIdx === (slide.texts || []).length - 1}
+                                      className="p-1 rounded text-zinc-400 hover:text-zinc-700 dark:hover:text-white disabled:opacity-20 cursor-pointer"
+                                      title="Down"
+                                    >
+                                      <ArrowDown className="h-3.5 w-3.5" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveSlideText(sIdx, tIdx)}
+                                      disabled={(slide.texts || []).length <= 1}
+                                      className="p-1 rounded text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-20 cursor-pointer"
+                                      title="Remove text"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Live Interactive Admin Preview */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between border-b border-gray-200 dark:border-zinc-800 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📺</span>
+                      <h4 className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">
+                        Live Admin Preview (યુઝર સાઇડ કેવું દેખાશે તેનું લાઈવ પ્રિવ્યુ)
+                      </h4>
+                    </div>
+                    <span className="text-xs text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                      લાઈવ એનિમેશન ચાલુ છે
+                    </span>
+                  </div>
+
+                  <div className="rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-zinc-100/70 dark:bg-black/40 p-2 sm:p-4">
+                    <BreakingNewsShowcase
+                      previewMode={true}
+                      previewConfig={{
+                        enabled: true,
+                        badgeText: breakingBannerBadgeText,
+                        intervalSeconds: breakingBannerInterval,
+                        slides: breakingSlides,
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Bottom Save Action Bar */}
+                <div className="pt-4 border-t border-gray-200 dark:border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <span className="text-xs sm:text-sm text-zinc-500 font-semibold text-center sm:text-left">
+                    Click Save to immediately publish the TV Breaking News Showcase Banner live to the user homepage.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleSaveBreakingBanner}
+                    disabled={savingBreakingBanner}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-[#B3121B] px-8 py-3 text-sm sm:text-base font-bold text-white hover:bg-[#8E0E15] transition shadow-md shadow-[#B3121B]/25 disabled:opacity-50 cursor-pointer"
+                  >
+                    {savingBreakingBanner ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                    {savingBreakingBanner ? 'Saving Breaking Banner...' : 'Save Breaking News Banner (સાચવો)'}
                   </button>
                 </div>
               </div>
