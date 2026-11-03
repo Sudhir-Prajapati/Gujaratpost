@@ -1,5 +1,7 @@
 'use client';
 
+
+
 import { useState, useEffect } from 'react';
 import { getBackendApiUrl, authFetch, getPublicCategories } from '@/lib/api';
 import { clearApiCache } from '@/lib/api';

@@ -106,6 +106,14 @@ export async function ensureHeroSettingsTableColumns() {
       await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN liveCenterJson LONGTEXT NULL`).catch(() => {});
       console.log('✅ Added missing liveCenterJson column to hero_settings');
     }
+    if (!colNames.has('breakingbannerenabled')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN breakingBannerEnabled TINYINT(1) NOT NULL DEFAULT 0`).catch(() => {});
+      console.log('✅ Added missing breakingBannerEnabled column to hero_settings');
+    }
+    if (!colNames.has('breakingbannerjson')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN breakingBannerJson LONGTEXT NULL`).catch(() => {});
+      console.log('✅ Added missing breakingBannerJson column to hero_settings');
+    }
     if (!colNames.has('heroslidermode')) {
       await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN heroSliderMode VARCHAR(50) DEFAULT 'auto'`).catch(() => {});
     }
@@ -141,12 +149,23 @@ export class HeroController {
    */
   static async getHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      const bypassCache = Boolean(
+        req.query.bypassCache === 'true' ||
+        req.query.bypassCache === '1' ||
+        req.query.t ||
+        req.headers['cache-control']?.includes('no-cache')
+      );
+
       const now = Date.now();
-      if (heroSettingsMemCache && now - heroSettingsMemCache.timestamp < HERO_CACHE_TTL_MS) {
+      if (!bypassCache && heroSettingsMemCache && now - heroSettingsMemCache.timestamp < HERO_CACHE_TTL_MS) {
         return sendSuccess(res, heroSettingsMemCache.data, 'Hero section settings retrieved successfully.');
       }
 
-      if (redisClient.isOpen) {
+      if (!bypassCache && redisClient.isOpen) {
         try {
           const cached = await redisClient.get('cache:hero_settings');
           if (cached) {
@@ -520,6 +539,8 @@ export class HeroController {
             heroSliderIds: parsedHeroSliderIds,
             electionBannerEnabled: (heroSetting as any)?.electionBannerEnabled ?? false,
             electionBannerJson: (heroSetting as any)?.electionBannerJson || null,
+            breakingBannerEnabled: (heroSetting as any)?.breakingBannerEnabled ?? false,
+            breakingBannerJson: (heroSetting as any)?.breakingBannerJson || null,
           },
           slots,
           tickerLabel: (heroSetting as any)?.tickerLabel || null,
@@ -540,6 +561,8 @@ export class HeroController {
           heroSliderArticles,
           electionBannerEnabled: (heroSetting as any)?.electionBannerEnabled ?? false,
           electionBannerJson: (heroSetting as any)?.electionBannerJson || null,
+          breakingBannerEnabled: (heroSetting as any)?.breakingBannerEnabled ?? false,
+          breakingBannerJson: (heroSetting as any)?.breakingBannerJson || null,
         };
       })();
 
@@ -566,7 +589,7 @@ export class HeroController {
    */
   static async updateHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
-      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds, electionBannerEnabled, electionBannerJson } = req.body;
+      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds, electionBannerEnabled, electionBannerJson, breakingBannerEnabled, breakingBannerJson } = req.body;
 
       const tickerLabelStr = tickerLabel !== undefined
         ? (typeof tickerLabel === 'object' ? JSON.stringify(tickerLabel) : String(tickerLabel))
@@ -622,6 +645,8 @@ export class HeroController {
       if (heroSliderIds !== undefined) updateData.heroSliderIds = heroSliderIdsStr;
       if (electionBannerEnabled !== undefined) updateData.electionBannerEnabled = Boolean(electionBannerEnabled);
       if (electionBannerJson !== undefined) updateData.electionBannerJson = typeof electionBannerJson === 'object' ? JSON.stringify(electionBannerJson) : (electionBannerJson || null);
+      if (breakingBannerEnabled !== undefined) updateData.breakingBannerEnabled = Boolean(breakingBannerEnabled);
+      if (breakingBannerJson !== undefined) updateData.breakingBannerJson = typeof breakingBannerJson === 'object' ? JSON.stringify(breakingBannerJson) : (breakingBannerJson || null);
 
       await ensureHeroSettingsTableColumns().catch(() => {});
 
@@ -645,6 +670,8 @@ export class HeroController {
             heroSliderIds: heroSliderIdsStr,
             electionBannerEnabled: Boolean(electionBannerEnabled),
             electionBannerJson: typeof electionBannerJson === 'object' ? JSON.stringify(electionBannerJson) : (electionBannerJson || null),
+            breakingBannerEnabled: Boolean(breakingBannerEnabled),
+            breakingBannerJson: typeof breakingBannerJson === 'object' ? JSON.stringify(breakingBannerJson) : (breakingBannerJson || null),
           } as any,
         });
       } catch (upsertErr: any) {
@@ -1009,6 +1036,8 @@ export class HeroController {
         heroSliderArticles,
         electionBannerEnabled: (updatedSetting as any)?.electionBannerEnabled ?? false,
         electionBannerJson: (updatedSetting as any)?.electionBannerJson || null,
+        breakingBannerEnabled: (updatedSetting as any)?.breakingBannerEnabled ?? false,
+        breakingBannerJson: (updatedSetting as any)?.breakingBannerJson || null,
       }, 'Hero section settings updated successfully.');
     } catch (error) {
       next(error);

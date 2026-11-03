@@ -1336,15 +1336,14 @@ export default function HeroSection({
     ? featuredSidebar
     : videosList.filter(v => v.type === 'video' || !v.type).slice(0, 6);
   const [activeSidebarVideoIndex, setActiveSidebarVideoIndex] = useState(0);
-  const [isSidebarVideoPlaying, setIsSidebarVideoPlaying] = useState(false);
 
   useEffect(() => {
-    if (sidebarVideos.length === 0 || isSidebarVideoPlaying) return;
+    if (sidebarVideos.length === 0) return;
     const interval = setInterval(() => {
       setActiveSidebarVideoIndex((prev) => (prev + 1) % sidebarVideos.length);
-    }, 2000); // 2 seconds rotation
+    }, 2500); // 2.5 seconds rotation
     return () => clearInterval(interval);
-  }, [sidebarVideos.length, isSidebarVideoPlaying]);
+  }, [sidebarVideos.length]);
 
   const isCategoryVisible = (slug: string) => {
     if (!allCategoriesDB || !Array.isArray(allCategoriesDB) || allCategoriesDB.length === 0) {
@@ -2129,55 +2128,56 @@ export default function HeroSection({
                 </span>
               </div>
 
-              <div
-                className="relative w-full overflow-hidden rounded-sm border border-slate-400/60 bg-black shadow-inner cursor-pointer group"
+              <a
+                href={`https://www.youtube.com/watch?v=${safeYouTubeId(currentSidebarVideo.youtubeId)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative w-full overflow-hidden rounded-sm border border-slate-400/60 bg-black shadow-inner cursor-pointer group block"
                 style={{ aspectRatio: '16/9' }}
-                onClick={() => setIsSidebarVideoPlaying(true)}
-              >
-                {isSidebarVideoPlaying ? (
-                  <iframe
-                    src={`https://www.youtube.com/embed/${safeYouTubeId(currentSidebarVideo.youtubeId)}?autoplay=1&rel=0&modestbranding=1&controls=1`}
-                    title="Gujarat Post Video"
-                    className="absolute inset-0 h-full w-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                ) : (
-                  <>
-                    <Image
-                      src={currentSidebarVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(currentSidebarVideo.youtubeId)}/hqdefault.jpg`}
-                      alt={currentSidebarVideo.title || 'Video'}
-                      fill
-                      priority
-                      loading="eager"
-                      className="object-contain transition-transform duration-500"
-                      sizes="(max-width: 768px) 100vw, 350px"
-                    />
-                    <div className="absolute inset-0 bg-black/40 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition-transform duration-300 group-hover:scale-110 border-2 border-white/80">
-                        <Play className="h-6 w-6 fill-current ml-0.5" />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-
-              <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground pt-1 border-t border-border/40 mt-1 gap-2">
-                <span className="line-clamp-1 max-w-[170px]" title={getLocalized(language, {
+                title={getLocalized(language, {
                   en: currentSidebarVideo.title,
                   gu: currentSidebarVideo.titleGu,
                   hi: currentSidebarVideo.titleHi,
-                })}>
+                })}
+              >
+                <Image
+                  src={currentSidebarVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(currentSidebarVideo.youtubeId)}/hqdefault.jpg`}
+                  alt={currentSidebarVideo.title || 'Video'}
+                  fill
+                  priority
+                  loading="eager"
+                  className="object-contain transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 350px"
+                />
+                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition-transform duration-300 group-hover:scale-110 border-2 border-white/80">
+                    <Play className="h-6 w-6 fill-current ml-0.5" />
+                  </div>
+                </div>
+              </a>
+
+              <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground pt-1 border-t border-border/40 mt-1 gap-2">
+                <a
+                  href={`https://www.youtube.com/watch?v=${safeYouTubeId(currentSidebarVideo.youtubeId)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="line-clamp-1 max-w-[170px] hover:text-[#B3121B] transition-colors"
+                  title={getLocalized(language, {
+                    en: currentSidebarVideo.title,
+                    gu: currentSidebarVideo.titleGu,
+                    hi: currentSidebarVideo.titleHi,
+                  })}
+                >
                   {getLocalized(language, {
                     en: currentSidebarVideo.title,
                     gu: currentSidebarVideo.titleGu,
                     hi: currentSidebarVideo.titleHi,
                   })}
-                </span>
+                </a>
                 <a
-                  href={`https://www.youtube.com/watch?v=${currentSidebarVideo.youtubeId}`}
+                  href={`https://www.youtube.com/watch?v=${safeYouTubeId(currentSidebarVideo.youtubeId)}`}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   className="text-[#B3121B] hover:underline flex items-center gap-0.5 font-black shrink-0"
                 >
                   {language === 'gu' ? 'યુટ્યુબ પર જુઓ ↗' : 'Watch on YouTube ↗'}

@@ -1,5 +1,7 @@
 'use client';
 
+
+
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { Heart, QrCode, Building2, Upload, Check, Copy, ShieldAlert, Save, Loader2, Sparkles, RefreshCw } from 'lucide-react';

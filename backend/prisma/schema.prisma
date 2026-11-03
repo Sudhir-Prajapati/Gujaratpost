@@ -312,6 +312,8 @@ model HeroSetting {
   mostReadMode           String?  @default("auto") @db.VarChar(50)
   electionBannerEnabled  Boolean  @default(false)
   electionBannerJson     String?  @db.LongText
+  breakingBannerEnabled  Boolean  @default(false)
+  breakingBannerJson     String?  @db.LongText
   liveCenterJson         String?  @db.LongText
   updatedAt              DateTime @updatedAt
 

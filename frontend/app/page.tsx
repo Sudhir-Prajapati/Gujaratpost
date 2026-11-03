@@ -1,5 +1,6 @@
 import HeroSection from "@/components/sections/HeroSection";
 import ElectionBanner from "@/components/layout/ElectionBanner";
+import BreakingNewsShowcase from "@/components/sections/BreakingNewsShowcase";
 import { getPublicArticles, getHeroSettings, getPublicCategories, getPublicVideos, getMarketRates, getPublicWeather, getPublicReels } from "@/lib/api";
 
 // Next.js ISR cache revalidation interval (30 seconds)
@@ -26,9 +27,9 @@ export default async function HomePage() {
     reelsRes,
   ] = await Promise.all([
     getPublicArticles({ limit: 80, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ categorySlug: 'technology', limit: 12, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ categorySlug: 'fact-check', limit: 15, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getHeroSettings().catch(() => null),
+    withTimeout(getPublicArticles({ categorySlug: 'technology', limit: 12, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
+    withTimeout(getPublicArticles({ categorySlug: 'fact-check', limit: 15, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
+    getHeroSettings(true).catch(() => null),
     getPublicCategories({ showInHome: true }).catch(() => []),
     getPublicVideos('video').catch(() => []),
     withTimeout(getMarketRates().catch(() => null), 1500, null),
@@ -137,6 +138,7 @@ export default async function HomePage() {
   };
 
   let electionBannerInitial: any = null;
+  let breakingBannerInitial: any = null;
   if (heroSettings) {
     const isEnabled = (heroSettings as any)?.electionBannerEnabled ?? (heroSettings as any)?.setting?.electionBannerEnabled ?? false;
     const rawJson = (heroSettings as any)?.electionBannerJson || (heroSettings as any)?.setting?.electionBannerJson;
@@ -164,11 +166,51 @@ export default async function HomePage() {
         logoUrl: p.logoUrl && p.logoUrl.includes('wikimedia.org') ? '' : (p.logoUrl || ''),
       })),
     };
+
+    // TV Breaking News Showcase Banner (Populated directly from admin hero settings)
+    const isBreakingEnabled = (heroSettings as any)?.breakingBannerEnabled ?? (heroSettings as any)?.setting?.breakingBannerEnabled ?? false;
+    const rawBreakingJson = (heroSettings as any)?.breakingBannerJson || (heroSettings as any)?.setting?.breakingBannerJson;
+    let parsedBreaking: any = {};
+    if (typeof rawBreakingJson === 'string' && rawBreakingJson.trim()) {
+      try { parsedBreaking = JSON.parse(rawBreakingJson); } catch {}
+    } else if (typeof rawBreakingJson === 'object' && rawBreakingJson !== null) {
+      parsedBreaking = rawBreakingJson;
+    }
+
+    breakingBannerInitial = {
+      enabled: Boolean(isBreakingEnabled),
+      badgeText: parsedBreaking?.badgeText || 'BREAKING NEWS',
+      intervalSeconds: Number(parsedBreaking?.intervalSeconds) || 4,
+      slides: Array.isArray(parsedBreaking?.slides) && parsedBreaking.slides.length > 0
+        ? parsedBreaking.slides
+        : [
+            {
+              id: 'slide-1',
+              image: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80',
+              link: '',
+              texts: [
+                'ગુજરાતમાં આગામી ૪૮ કલાક ભારે વરસાદની હવામાન વિભાગની આગાહી',
+                'દિલ્હીમાં પ્રદૂષણનો સ્તર વધ્યો, GRAP લાગુ',
+                'શેર બજારમાં સેન્સેક્સ 700 પોઇન્ટ વધ્યો',
+              ],
+            },
+            {
+              id: 'slide-2',
+              image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+              link: '',
+              texts: [
+                'દક્ષિણ ગુજરાત અને સૌરાષ્ટ્રના દરિયાકાંઠાના વિસ્તારોમાં યલો એલર્ટ જાહેર કરાયું',
+                'માછીમારોને આગામી સૂચના સુધી દરિયો ન ખેડવા હવામાન કેન્દ્રની ચેતવણી',
+              ],
+            },
+          ],
+    };
   }
 
   return (
     <div>
       <ElectionBanner initialConfig={electionBannerInitial} />
+      <BreakingNewsShowcase initialConfig={breakingBannerInitial} />
       {/* Main 3-column portal layout containing all active sections */}
       <HeroSection
         initialArticles={articles}

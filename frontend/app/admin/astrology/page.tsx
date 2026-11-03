@@ -1,5 +1,7 @@
 'use client';
 
+
+
 import React, { useState, useEffect } from 'react';
 import { Sparkles, CheckCircle, RefreshCw, Eye, Zap } from 'lucide-react';
 import { getPublicAstrology } from '@/lib/api';

@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { getHeroSettings } from '@/lib/api';
+import { useApp } from '@/components/AppProvider';
+import { useAutoTranslate } from '@/lib/translate';
+import type { Language } from '@/types';
 
 export interface PartySeat {
   id: string;
@@ -154,7 +157,7 @@ export function PartyLogoRenderer({ party }: { party: PartySeat }) {
       <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gray-50 dark:bg-zinc-800 border border-gray-200/60 dark:border-zinc-700 p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-2xs">
         <Image
           src={cleanUrl}
-          alt={party.nameGu || party.name}
+          alt={party.name || 'Party Logo'}
           fill
           sizes="44px"
           className="object-contain p-0.5"
@@ -214,7 +217,28 @@ export function PartyLogoRenderer({ party }: { party: PartySeat }) {
   );
 }
 
-export function PartyCard({ party }: { party: PartySeat }) {
+
+const ELECTION_I18N: Record<string, Record<Language, string>> = {
+  won: { gu: 'જીત', hi: 'जीत', en: 'Won' },
+  leads: { gu: 'આગે', hi: 'आगे', en: 'Leads' },
+  trailing: { gu: 'પાછળ', hi: 'पीछे', en: 'Trailing' },
+  totalSeats: { gu: 'કુલ બેઠકો', hi: 'कुल सीटें', en: 'Total Seats' },
+  majorityTarget: { gu: 'બહુમતી માટે', hi: 'बहुमत के लिए', en: 'Majority' },
+  others: { gu: 'અન્ય', hi: 'अन्य', en: 'Others' },
+};
+
+function getElectionTitle(rawTitle: string, lang: Language): string {
+  const t = (rawTitle || '').trim();
+  if (t.includes('ગુજરાત ચૂંટણી') || t.includes('Gujarat Election') || t.includes('गुजरात चुनाव')) {
+    const year = t.match(/\d{4}/)?.[0] || '2026';
+    if (lang === 'gu') return `ગુજરાત ચૂંટણી ${year}`;
+    if (lang === 'hi') return `गुजरात चुनाव ${year}`;
+    return `Gujarat Election ${year}`;
+  }
+  return '';
+}
+
+export function PartyCard({ party, language = 'gu' }: { party: PartySeat; language?: Language }) {
   const { won, leads, trailing, wonColor } = getPartyStats(party);
 
   return (
@@ -271,9 +295,16 @@ interface ElectionBannerProps {
 }
 
 export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
+  const { language } = useApp();
   const pathname = usePathname();
   const [config, setConfig] = useState<ElectionBannerConfig>(() => initialConfig || DEFAULT_ELECTION_BANNER);
-  const [loaded, setLoaded] = useState(false);
+    const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    if (initialConfig) {
+      setConfig(initialConfig);
+    }
+  }, [initialConfig]);
 
   // Parse raw JSON safely
   const parseBannerData = useCallback((enabled: boolean, rawJson: any): ElectionBannerConfig => {
@@ -289,7 +320,7 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
     }
 
     return {
-      enabled: typeof enabled === 'boolean' ? enabled : Boolean(parsed.enabled),
+      enabled: Boolean(enabled),
       title: parsed.title || DEFAULT_ELECTION_BANNER.title,
       showLive: parsed.showLive !== undefined ? Boolean(parsed.showLive) : DEFAULT_ELECTION_BANNER.showLive,
       mapIconUrl: parsed.mapIconUrl || '',
@@ -304,7 +335,7 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
 
   const refreshBanner = useCallback(async () => {
     try {
-      const res: any = await getHeroSettings();
+      const res: any = await getHeroSettings(true);
       const enabled = res?.electionBannerEnabled ?? res?.setting?.electionBannerEnabled ?? false;
       const rawJson = res?.electionBannerJson || res?.setting?.electionBannerJson || null;
       setConfig(parseBannerData(Boolean(enabled), rawJson));
@@ -343,6 +374,15 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
     };
   }, [refreshBanner]);
 
+  // Split title if space exists (e.g. "ગુજરાત ચૂંટણી" and "2026") - MUST run before early returns to preserve Hook order
+  const presetTitle = getElectionTitle(config.title || 'ગુજરાત ચૂંટણી 2026', language);
+  const autoTitle = useAutoTranslate(config.title || 'ગુજરાત ચૂંટણી 2026', language);
+  const activeTitle = presetTitle || autoTitle || config.title || 'ગુજરાત ચૂંટણી 2026';
+
+  const titleParts = activeTitle.split(' ');
+  const titleLine1 = titleParts.slice(0, -1).join(' ') || titleParts[0];
+  const titleLine2 = titleParts.length > 1 ? titleParts[titleParts.length - 1] : '';
+
   // Don't render on admin / login
   if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
     return null;
@@ -357,11 +397,6 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
   if (!config.showOnAllPages && pathname !== '/') {
     return null;
   }
-
-  // Split title if space exists (e.g. "ગુજરાત ચૂંટણી" and "2026")
-  const titleParts = (config.title || 'ગુજરાત ચૂંટણી 2026').split(' ');
-  const titleLine1 = titleParts.slice(0, -1).join(' ') || titleParts[0];
-  const titleLine2 = titleParts.length > 1 ? titleParts[titleParts.length - 1] : '';
 
   return (
     <section className="mx-auto max-w-screen-xl px-4 py-2 sm:py-2.5 w-full select-none">
@@ -417,7 +452,7 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
           {/* 2. Middle: Parties distributed evenly */}
           <div className="flex items-center justify-center gap-3 lg:gap-4 flex-1">
             {config.parties.map((party) => (
-              <PartyCard key={party.id || party.name} party={party} />
+              <PartyCard key={party.id || party.name} party={party} language={language} />
             ))}
           </div>
 
@@ -500,7 +535,7 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
               key={party.id || party.name}
               className="shrink-0 snap-center min-w-[145px]"
             >
-              <PartyCard party={party} />
+              <PartyCard party={party} language={language} />
             </div>
           ))}
 
