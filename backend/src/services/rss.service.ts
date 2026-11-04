@@ -38,16 +38,47 @@ export function getSiteBaseUrl(): string {
 }
 
 /**
-/**
- * Category alias mappings to bridge legacy PHP slugs and modern Next.js slugs.
+ * Strips the 'KEY HIGHLIGHTS' (એક નજરમાં) markdown/HTML block from article excerpts and content.
  */
+export function stripKeyHighlights(text?: string | null): string {
+  if (!text) return '';
+  let cleaned = text;
+
+  // 1. Markdown block:
+  // ## 📌 એક નજરમાં (KEY HIGHLIGHTS)
+  // --------------------------------------------------
+  // ... bullets ...
+  // --------------------------------------------------
+  cleaned = cleaned.replace(
+    /(?:^|\n)\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n]*\n+[-—_=]{3,}[\s\S]*?[-—_=]{3,}\n*/gi,
+    '\n'
+  );
+
+  // 2. HTML container block if wrapped in tags
+  cleaned = cleaned.replace(
+    /<(h[1-6]|p|div|section)[^>]*>[\s\S]*?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[\s\S]*?<\/\1>\s*(?:<hr\s*\/?>)?/gi,
+    ''
+  );
+
+  // 3. Fallback: single header line
+  cleaned = cleaned.replace(
+    /(?:^|\n)\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n-]*(?:[-—_=]{3,})?/gi,
+    ''
+  );
+
+  // 4. Remove leftover dashes or bullets at start
+  cleaned = cleaned.replace(/^\s*[-—_=]{3,}\s*\n*/, '');
+
+  return cleaned.trim();
+}
+
 /**
  * Cleans excerpts for RSS descriptions by stripping markdown highlights, divider lines, and bullets.
  */
 function cleanRssExcerpt(text?: string | null): string {
   if (!text) return '';
-  return stripHtmlTags(text)
-    .replace(/(?:^|\n)\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n-]*/gi, ' ')
+  const withoutHighlights = stripKeyHighlights(text);
+  return stripHtmlTags(withoutHighlights)
     .replace(/[-—_=]{3,}/g, ' ')
     .replace(/^[#\s*•\-–—]+/gm, '')
     .replace(/\s+/g, ' ')
@@ -580,7 +611,16 @@ ${itemsXml}  </channel>
     }
 
     const imageUrl = (art.featuredImage || '').trim();
-    const fullHtml = sanitizeHtmlContent(rawBody);
+    const cleanedBody = stripKeyHighlights(rawBody);
+    const fullHtml = sanitizeHtmlContent(cleanedBody);
+
+    // If excerpt is empty after stripping highlights, fall back to first 280 characters of cleaned body
+    if (!rawExcerpt) {
+      rawExcerpt = cleanRssExcerpt(cleanedBody).slice(0, 280);
+    }
+    if (!rawExcerpt) {
+      rawExcerpt = cleanRssExcerpt(rawTitle);
+    }
 
     itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>
