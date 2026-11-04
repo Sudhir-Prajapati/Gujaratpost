@@ -1451,3 +1451,88 @@ export async function updateAdminLegalPage(slug: string, payload: any): Promise<
 
 
 
+
+
+/**
+ * Admin: Get website login users
+ */
+export async function getAdminWebsiteUsers(params?: {
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+  sort?: string;
+  order?: string;
+}): Promise<any> {
+  const query = new URLSearchParams();
+  if (params?.status && params.status !== 'ALL') query.set('status', params.status);
+  if (params?.search) query.set('search', params.search);
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  if (params?.sort) query.set('sort', params.sort);
+  if (params?.order) query.set('order', params.order);
+
+  const qs = query.toString();
+  const url = `/api/admin/website-users${qs ? `?${qs}` : ''}`;
+  const res = await authFetch(url);
+  if (!res.ok) {
+    throw new Error('Failed to fetch website users');
+  }
+  const json = await res.json();
+  return json?.data || { items: [], total: 0, stats: {} };
+}
+
+/**
+ * Admin: Update website user (status/notes/name/phone)
+ */
+export async function updateAdminWebsiteUser(
+  id: string,
+  payload: { status?: string; name?: string; phone?: string; notes?: string }
+): Promise<any> {
+  const res = await authFetch(`/api/admin/website-users/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || 'Failed to update website user');
+  }
+  return res.json();
+}
+
+/**
+ * Admin: Delete website user
+ */
+export async function deleteAdminWebsiteUser(id: string): Promise<any> {
+  const res = await authFetch(`/api/admin/website-users/${id}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || 'Failed to delete website user');
+  }
+  return res.json();
+}
+
+/**
+ * Admin: Create/Add website user manually
+ */
+export async function createAdminWebsiteUser(payload: {
+  email: string;
+  name?: string;
+  phone?: string;
+  status?: string;
+  notes?: string;
+}): Promise<any> {
+  const res = await authFetch(`/api/admin/website-users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => null);
+    throw new Error(err?.message || 'Failed to add website user');
+  }
+  return res.json();
+}
