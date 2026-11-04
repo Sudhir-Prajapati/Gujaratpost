@@ -1220,7 +1220,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
       </div>
 
       {/* ─── MAIN STORY ROW ("Main Headline Section" + "Side Top News") ─── */}
-      <div className="grid grid-cols-12 gap-0 h-[650px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
+      <div className="grid grid-cols-12 gap-0 h-[660px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
         {/* Main headline section ("Main Headline Section") - 73% (col-span-9) */}
         <div className="col-span-9 pr-4 border-r border-slate-400 flex flex-col justify-between">
           <div className="h-full flex flex-col">
@@ -1504,7 +1504,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
       </div>
 
       {/* ─── THREE NEWS BLOCKS ("News Block 1" | "News Block 2" | "News Block 3") ─── */}
-      <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 h-[490px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
+      <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 h-[500px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
         {/* Block 1 (Rain & Alert) */}
         <div className="pr-4 flex flex-col justify-between overflow-hidden h-full">
           <div className="h-full flex flex-col overflow-hidden">
@@ -1719,7 +1719,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
       </div>
 
       {/* ─── BOTTOM TWO BLOCKS: FEATURE + SPORTS ─── */}
-      <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[429px] shrink-0 overflow-hidden">
+      <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[440px] shrink-0 overflow-hidden">
         {/* Bottom left feature ("Bottom Left - Feature") */}
         <div className="col-span-6 pr-4 flex flex-col justify-between">
           <div className="h-full flex flex-col">

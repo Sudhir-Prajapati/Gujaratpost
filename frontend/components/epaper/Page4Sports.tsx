@@ -466,7 +466,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
 
   return (
     <EpaperReadOnlyProvider value={isReadOnly}>
-      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-[#fffefb] text-slate-950 shadow-2xl border border-slate-400/80 p-7 flex flex-col justify-between font-serif select-none box-border overflow-hidden relative shrink-0">
+      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-[#fffefb] text-slate-950 shadow-2xl border border-slate-400/80 p-5 flex flex-col justify-between font-serif select-none box-border overflow-hidden relative shrink-0">
 
         {/* ─── 1. TOP SECTION HEADER BAR (EXACT SAME AS PAGE 2 & PAGE 3) ─── */}
         <div className="shrink-0 mb-1.5">
@@ -518,7 +518,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 3. ROW 1: SPORTS ARENA (8 Cols Lead Cricket + 4 Cols Athletics & Wire) ─── */}
-        <div className="grid grid-cols-12 gap-0 h-[495px] mb-2 shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 gap-0 h-[510px] mb-2 shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Left: Lead Sports Story (col-span-8) */}
           <div className="col-span-8 pr-4 border-r border-slate-400 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col">
@@ -780,7 +780,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 4. ROW 2: CINEMA, BOLLYWOOD & OTT WORLD (7 Cols + 5 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[380px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[440px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Cinema Lead (col-span-7) */}
           <div className="col-span-7 pr-4 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col justify-between">
@@ -1083,7 +1083,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 5. ROW 3: 12 ZODIAC SIGNS HOROSCOPE (6x2 Astrological Grid) ─── */}
-        <div className="bg-purple-50/40 border border-purple-400/80 rounded-xs p-2 mb-2 shrink-0 shadow-2xs">
+        <div className="bg-purple-50/40 border border-purple-400/80 rounded-xs p-2 mb-2 h-[200px] shrink-0 shadow-2xs overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between border-b border-purple-400 pb-1 mb-1.5 font-sans">
             <div className="flex items-center gap-1.5 font-black text-purple-950 text-xs">
               <Sparkles className="w-3.5 h-3.5 text-purple-700" />
@@ -1127,7 +1127,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         </div>
 
         {/* ─── 6. ROW 4: 3 BOTTOM EDITORIAL & SPORTS/CULTURE NEWS STORIES (100% NEWS - ZERO ADS!) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-1 h-[345px] shrink-0 overflow-hidden border border-slate-400 bg-white shadow-2xs">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-1 h-[470px] shrink-0 overflow-hidden border border-slate-400 bg-white shadow-2xs">
           {(data.bottomStories || []).slice(0, 3).map((story: any, idx: number) => {
             const basePath = `bottomStories.${idx}`;
             const categoryColors = [
@@ -1198,8 +1198,8 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                         onImageChange={(img: string) => updateField(`${basePath}.image`, img)}
                         isSelected={selectedPath === `${basePath}.image`}
                         onSelect={() => onSelectSlot?.(`${basePath}.image`, `બોટમ ન્યૂઝ ${idx + 1} ફોટો`)}
-                        containerHeight="105px"
-                        className="w-full h-[105px] object-cover rounded-xs border border-slate-400 shadow-2xs"
+                        containerHeight="130px"
+                        className="w-full h-[130px] object-cover rounded-xs border border-slate-400 shadow-2xs"
                       />
                       {story.caption && (
                         <EditableTextSlot
