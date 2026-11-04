@@ -1,4 +1,4 @@
-export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-4K0RT88M7L';
+export const GA_TRACKING_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-95H476MCPR';
 
 /**
  * Sends a custom pageview event to Google Analytics

@@ -24,7 +24,7 @@ export class RssController {
   static async getPublicRss(req: Request, res: Response, next: NextFunction) {
     try {
       const categorySlug = req.params.category;
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 100;
 
       const lang = ((req.query.lang as string) || (req.query.language as string) || 'gu').toLowerCase().trim();
       const feed = await generatePublicRssFeed({
