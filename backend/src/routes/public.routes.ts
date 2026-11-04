@@ -6,6 +6,7 @@ import { cloudinary } from '../config/cloudinary.js';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { withDbRetry } from '../utils/db.js';
+import { optimizeCloudinaryUrl, sanitizeUrlInContent, sanitizeImageUrl as sanitizeSingleUrl } from '../utils/cloudinary.util.js';
 import { HeroController } from '../controllers/hero.controller.js';
 import { InstagramReelController } from '../controllers/instagramReel.controller.js';
 import { WebStoryController } from '../controllers/webStory.controller.js';
@@ -108,28 +109,7 @@ function cacheResponse(ttlSeconds: number) {
   };
 }
 
-function sanitizeUrlInContent(text?: string | null): string {
-  if (!text) return '';
-  return text.replace(/(https:\/\/res\.cloudinary\.com\/[^\s"'<>]+?\.(?:jpg|jpeg|png|webp|gif|svg|avif))/gi, (imgUrl) => {
-    let clean = imgUrl.replace('/raw/upload/', '/image/upload/');
-    if (!clean.includes('/video/upload/') && !clean.toLowerCase().endsWith('.pdf') && !clean.toLowerCase().includes('.pdf?')) {
-      clean = clean.replace(/\.(?:jpg|jpeg|png|webp|gif)(?:\?.*)?$/i, '.avif');
-    }
-    return clean;
-  });
-}
-
-function sanitizeSingleUrl(url?: string | null): string {
-  if (!url || typeof url !== 'string') return '';
-  let clean = url.trim();
-  if (clean.includes('res.cloudinary.com') && clean.includes('/raw/upload/') && !clean.toLowerCase().endsWith('.pdf') && !clean.toLowerCase().includes('.pdf?')) {
-    clean = clean.replace('/raw/upload/', '/image/upload/');
-  }
-  if (clean.includes('res.cloudinary.com') && clean.includes('/image/upload/') && !clean.toLowerCase().endsWith('.pdf') && !clean.toLowerCase().includes('.pdf?') && !clean.includes('/video/upload/')) {
-    clean = clean.replace(/\.(?:jpg|jpeg|png|webp|gif)(?:\?.*)?$/i, '.avif');
-  }
-  return clean;
-}
+// Note: sanitizeUrlInContent and sanitizeSingleUrl are centralized in ../utils/cloudinary.util.js
 
 function generateRichGujaratiNewsBody(title?: string, excerpt?: string, category?: string, location?: string | null): string {
   const loc = location || 'ગુજરાત';

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { sanitizeImageUrl } from '@/lib/media';
 import { 
   ChevronLeft, ChevronRight, Eye, Phone, Globe, Mail,
   Bookmark, Printer, Copy, Maximize2, X, Camera, Share2, Sparkles, Layers,
@@ -101,17 +102,19 @@ function resolvePhotoUrl(val: any, fallback: string = ''): string {
         const parsed = JSON.parse(trimmed);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const first = parsed[0];
-          return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+          const urlStr = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+          return sanitizeImageUrl(urlStr);
         }
       } catch {}
     }
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
-      return trimmed;
+      return sanitizeImageUrl(trimmed);
     }
   }
   if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
     const first = val.images[0];
-    return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+    const urlStr = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+    return sanitizeImageUrl(urlStr);
   }
   return fallback;
 }
@@ -352,7 +355,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
     if (Array.isArray(rawImages) && rawImages.length > 0) {
       items = rawImages.map((entry: any, idx: number) => {
-        const itemSrc = typeof entry === 'string' ? entry : (entry.src || entry.url || photo?.src || mainFallback);
+        const itemSrc = sanitizeImageUrl(typeof entry === 'string' ? entry : (entry.src || entry.url || photo?.src || mainFallback));
         let itemDesc = (typeof entry === 'object' && (entry.description || entry.captionGu || entry.caption))
           ? (entry.description || entry.captionGu || entry.caption)
           : (paragraphs[idx] || (photo?.caption && photo?.caption !== title ? photo.caption : ''));

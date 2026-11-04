@@ -10,6 +10,7 @@ import { getPublicArticles } from '@/lib/api';
 import { stripHtmlTags, getMockTitle } from './homeHelpers';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import { sanitizeImageUrl } from '@/lib/media';
 
 const mockFactCheckList = [
   {
@@ -81,7 +82,7 @@ const mockFactCheckList = [
 function getArticleImage(art: any, fallback = '/assets/demo/2.jpg'): string {
   const raw = art?.featuredImage || art?.image || (art?.media && art.media[0]?.url) || '';
   if (raw && typeof raw === 'string' && raw.trim() !== '') {
-    return raw.trim();
+    return sanitizeImageUrl(raw.trim());
   }
   return fallback;
 }

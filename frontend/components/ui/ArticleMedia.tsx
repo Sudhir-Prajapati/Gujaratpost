@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Play } from 'lucide-react';
-import { isMediaVideo } from '@/lib/media';
+import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 
 interface ArticleMediaProps {
   src?: string | null;
@@ -51,19 +51,8 @@ export default function ArticleMedia({
     }
   }, [isVideo, autoPlay, src]);
 
-  // Clean / sanitize Cloudinary or raw URLs and convert images to AVIF format
-  let cleanSrc = src && typeof src === 'string'
-    ? src.replace('/raw/upload/', '/image/upload/').trim()
-    : null;
-  if (
-    cleanSrc &&
-    cleanSrc.includes('res.cloudinary.com') &&
-    cleanSrc.includes('/image/upload/') &&
-    !isVideo &&
-    !cleanSrc.toLowerCase().endsWith('.pdf')
-  ) {
-    cleanSrc = cleanSrc.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
-  }
+  // Clean / sanitize Cloudinary or raw URLs safely with centralized optimizer
+  const cleanSrc = sanitizeImageUrl(src);
 
   const isAbsolute = className.includes('absolute');
   const posClass = isAbsolute ? 'absolute inset-0' : 'relative';

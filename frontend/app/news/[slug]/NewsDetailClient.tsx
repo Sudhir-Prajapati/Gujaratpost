@@ -536,7 +536,7 @@ function getCardThumbnail(art: any, index: number = 0): string {
     !raw.includes('photo-1589308078059') &&
     !raw.includes('placehold.co')
   ) {
-    return raw;
+    return sanitizeImageUrl(raw);
   }
   let hash = index;
   if (art?.id || art?.slug) {
@@ -2344,11 +2344,12 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                             src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
                             alt={`${article.title} slide ${index + 1}`}
                             fill
+                            priority={index === 0}
+                            loading={index === 0 ? 'eager' : 'lazy'}
                             unoptimized={true}
                             sizes="(max-width: 1024px) 100vw, 66vw"
                             className="relative z-10 object-contain"
                             style={{ objectFit: 'contain', objectPosition: 'center' }}
-                            loading={index === 0 ? 'eager' : 'lazy'}
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               if (target.src && !target.src.includes('placehold.co')) {
@@ -2727,6 +2728,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           mostReadArticles={mostReadArticles}
           trending={trending}
           related={related}
+          readAlsoPool={readAlsoPool}
           savedIds={savedIds}
           getCardThumbnail={getCardThumbnail}
           DEMO_THUMBNAILS={DEMO_THUMBNAILS}
