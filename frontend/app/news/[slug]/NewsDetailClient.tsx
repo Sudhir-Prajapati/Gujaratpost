@@ -15,6 +15,7 @@ import { playArticleAudio, stopArticleAudio, cleanTextForSpeech } from '@/lib/ar
 
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
+import { filterUniqueArticles } from '@/lib/articleDeduplication';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
@@ -1436,20 +1437,10 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const tags = (language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)) || article.tags || [];
 
   const readAlsoPool = useMemo(() => {
-    const topMostReadIds = new Set((mostReadArticles || []).slice(0, 3).map((a) => String(a.id || '')));
-    const seen = new Set<string>([String(article?.id || ''), ...topMostReadIds]);
-    const list: Article[] = [];
+    const topMostRead = (mostReadArticles || []).slice(0, 3);
     const pool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
-    for (const item of pool) {
-      if (!item) continue;
-      const id = String(item.id || '');
-      if (id && !seen.has(id)) {
-        seen.add(id);
-        list.push(item);
-      }
-    }
-    return list.slice(0, 4);
-  }, [article?.id, related, trending, mostReadArticles]);
+    return filterUniqueArticles(pool, [article, ...topMostRead]).slice(0, 4);
+  }, [article, related, trending, mostReadArticles]);
 
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
 
@@ -1738,26 +1729,21 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   // 2. Top Sidebar Recommended Pool (For Main Article Sidebar)
   // Strictly excludes main article, Most Read top 3 articles, and Also Read articles
   const sidebarRecommendedPool = useMemo(() => {
-    const mainId = String(article.id);
-    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
-    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
-    const excludeIds = new Set([mainId, ...mostReadIds, ...readAlsoIds]);
-
-    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
+    const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
+    const excludeList = [article, ...mostReadSubset, ...readAlsoPool];
 
     const pool = [...trending, ...related, ...mostReadArticles].filter(
-      (item, index, self) =>
-        !excludeIds.has(String(item.id)) &&
-        !isHealthArticle(item) &&
-        self.findIndex((t) => String(t.id) === String(item.id)) === index
+      (item) => !isHealthArticle(item)
     );
+    const uniquePool = filterUniqueArticles(pool, excludeList);
 
-    const stateNationalCandidates = pool.filter((cand) => {
+    const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
+    const stateNationalCandidates = uniquePool.filter((cand) => {
       const cat = String(cand.category || '').toLowerCase().trim();
       return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
     });
 
-    const poolToUse = [...stateNationalCandidates, ...pool.filter((cand) => !stateNationalCandidates.includes(cand))];
+    const poolToUse = [...stateNationalCandidates, ...uniquePool.filter((cand) => !stateNationalCandidates.includes(cand))];
 
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
@@ -1770,56 +1756,60 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const distinctCatArts = Array.from(byCategory.values());
     const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
     return combinedPool.slice(0, 8);
-  }, [article.id, trending, related, mostReadArticles, trendingLimit, readAlsoPool]);
+  }, [article, trending, related, mostReadArticles, trendingLimit, readAlsoPool]);
 
   // 3. Stream Continuation Articles (For Infinite Stream below main article)
   // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
   const streamList = useMemo(() => {
-    const mainId = String(article.id);
-    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
-    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
-    const topSidebarIds = new Set(sidebarRecommendedPool.map((a) => String(a.id || '')));
-    const alreadyShownIds = new Set<string>([
-      mainId,
-      ...mostReadIds,
-      ...readAlsoIds,
-      ...topSidebarIds,
+    const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
+    const excludeList = [
+      article,
+      ...mostReadSubset,
+      ...readAlsoPool,
+      ...sidebarRecommendedPool,
+    ];
+
+    const remainingRelated = filterUniqueArticles(related || [], excludeList);
+    const shownInRelated = remainingRelated.slice(0, relatedLimit);
+
+    const pool = [
+      ...remainingRelated.slice(relatedLimit),
+      ...(trending || []),
+      ...(related || []),
+    ];
+
+    const finalStreamPool = filterUniqueArticles(pool, [
+      ...excludeList,
+      ...shownInRelated,
     ]);
 
-    const remainingRelated = (related || []).filter((item) => !alreadyShownIds.has(String(item.id)));
-    const shownInRelated = remainingRelated.slice(0, relatedLimit);
-    shownInRelated.forEach((a) => alreadyShownIds.add(String(a.id)));
-
-    const pool = [...remainingRelated.slice(relatedLimit), ...(trending || []), ...(related || [])];
-    return pool
-      .filter((item, index, self) => !alreadyShownIds.has(String(item.id)) && self.findIndex((t) => String(t.id) === String(item.id)) === index)
-      .slice(0, 8);
-  }, [related, trending, article.id, readAlsoPool, relatedLimit, mostReadArticles, trendingLimit, sidebarRecommendedPool]);
+    return finalStreamPool.slice(0, 8);
+  }, [related, trending, article, readAlsoPool, relatedLimit, mostReadArticles, trendingLimit, sidebarRecommendedPool]);
 
   // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
   // Strictly excludes ALL articles already displayed anywhere on the page!
   const streamSidebarRecommendedPool = useMemo(() => {
-    const mainId = String(article.id);
-    const mostReadIds = new Set((mostReadArticles || []).slice(0, trendingLimit).map((a) => String(a.id || '')));
-    const readAlsoIds = new Set(readAlsoPool.map((a) => String(a.id || '')));
-    const topSidebarIds = new Set(sidebarRecommendedPool.map((a) => String(a.id || '')));
-    const streamIds = new Set(streamList.map((a) => String(a.id || '')));
-    const excludeIds = new Set([mainId, ...mostReadIds, ...readAlsoIds, ...topSidebarIds, ...streamIds]);
+    const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
+    const excludeList = [
+      article,
+      ...mostReadSubset,
+      ...readAlsoPool,
+      ...sidebarRecommendedPool,
+      ...streamList,
+    ];
 
     const pool = [...trending, ...related, ...mostReadArticles].filter(
-      (item, index, self) =>
-        !excludeIds.has(String(item.id)) &&
-        !isHealthArticle(item) &&
-        self.findIndex((t) => String(t.id) === String(item.id)) === index
+      (item) => !isHealthArticle(item)
     );
+    const uniquePool = filterUniqueArticles(pool, excludeList);
 
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
-    const stateNationalCandidates = pool.filter((cand) => {
+    const stateNationalCandidates = uniquePool.filter((cand) => {
       const cat = String(cand.category || '').toLowerCase().trim();
       return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
     });
 
-    const poolToUse = [...stateNationalCandidates, ...pool.filter((cand) => !stateNationalCandidates.includes(cand))];
+    const poolToUse = [...stateNationalCandidates, ...uniquePool.filter((cand) => !stateNationalCandidates.includes(cand))];
 
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
@@ -1832,7 +1822,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const distinctCatArts = Array.from(byCategory.values());
     const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
     return combinedPool.slice(0, 8);
-  }, [article.id, trending, related, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
+  }, [article, trending, related, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
 
   useEffect(() => {
     const onScroll = () => {

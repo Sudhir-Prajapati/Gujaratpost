@@ -163,7 +163,6 @@ function ArticleStreamShareBar({
 function StreamArticleItem({
   streamArticle,
   language,
-  readAlsoArticles,
   getCardThumbnail,
   DEMO_THUMBNAILS,
   uiLabel,
@@ -174,11 +173,9 @@ function StreamArticleItem({
   getTopicHref,
   TranslatedInlineText,
   TranslatedParagraph,
-}:
-{
+}: {
   streamArticle: Article;
   language: Language;
-  readAlsoArticles: Article[];
   getCardThumbnail: (item: Article, index: number) => string;
   DEMO_THUMBNAILS: string[];
   uiLabel: (language: Language, values: { en: string; gu: string; hi: string }) => string;
@@ -421,91 +418,7 @@ function StreamArticleItem({
       {/* Share Bar */}
       <ArticleStreamShareBar article={articleData} language={language} uiLabel={uiLabel} audioText={audioText} body={streamBody} />
 
-      {/* Read Also section */}
-      {readAlsoArticles.length > 0 && (
-        <div className="w-full mt-2.5 mb-4">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="block w-[4px] h-5 rounded-full bg-[#B3121B]"></span>
-            </div>
-            <h4 className="font-extrabold text-[15px] uppercase tracking-widest text-[#B3121B]">
-              {uiLabel(language, { en: 'Read Also', gu: 'આ પણ વાંચો', hi: 'यह भी पढ़ें' })}
-            </h4>
-            <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
-          </div>
 
-          {/* Mobile View (< md): Hero Section style list */}
-          <div className="flex flex-col divide-y divide-border/60 md:hidden">
-            {readAlsoArticles.map((raArt, index) => (
-              <MobileHeroArticleCard
-                key={`mobile-stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
-                article={raArt}
-                language={language}
-                index={index}
-              />
-            ))}
-          </div>
-
-          {/* Desktop View (>= md): existing 2-column card grid */}
-          <div className="hidden md:grid md:grid-cols-2 gap-3">
-            {readAlsoArticles.map((raArt, index) => {
-              const raCat = normalizeDisplayText(getCategoryLabel(raArt, language) || raArt.category || '');
-              return (
-                <Link
-                  key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
-                  href={`/news/${raArt.slug}`}
-                  className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
-                >
-                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-sm">
-                    <img
-                      src={getCardThumbnail(raArt, index)}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
-                    />
-                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                    <Image
-                      src={getCardThumbnail(raArt, index)}
-                      alt={getArticleTitle(raArt, language)}
-                      fill
-                      sizes="90px"
-                      className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-110"
-                      style={{ objectFit: 'contain', objectPosition: 'center' }}
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-                      }}
-                    />
-                    <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </div>
-                  <div className="min-w-0 flex-1 flex flex-col gap-1">
-                    <span className="block text-[10.5px] font-black uppercase tracking-wider text-[#B3121B] opacity-85">{raCat}</span>
-                    <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
-                      <AutoArticleTitle article={raArt} language={language} />
-                    </p>
-                  </div>
-                  <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Topics Tags */}
-      <div className="flex flex-wrap items-center gap-2 mt-5 select-none">
-        <span className="topics-title font-extrabold text-neutral-900 dark:text-white mr-2 text-[14.5px] tracking-wide uppercase border-b-2 border-[#B3121B] pb-0.5">
-          {uiLabel(language, { en: 'Topics:', gu: 'ટોપિક્સ:', hi: 'વિષય:' })}
-        </span>
-        {getStreamTags(articleData).map((tag, tIdx) => (
-          <Link
-            key={tIdx}
-            href={getTopicHref(tag)}
-            className="topic-pill cursor-pointer bg-neutral-100 dark:bg-neutral-800/80 hover:bg-[#B3121B] dark:hover:bg-[#B3121B] text-neutral-800 dark:text-neutral-200 hover:text-white dark:hover:text-white rounded-full px-4 py-1.5 text-xs font-bold border border-neutral-300 dark:border-neutral-700 hover:border-[#B3121B] dark:hover:border-[#B3121B] shadow-sm transition-all duration-200"
-          >
-            {normalizeDisplayText(tag)}
-          </Link>
-        ))}
-      </div>
     </div>
   );
 }
@@ -536,127 +449,23 @@ export default function ArticleInfiniteStream({
     <div className="article-grid mt-3.5 border-t border-neutral-200 dark:border-neutral-800 !pt-3.5" suppressHydrationWarning>
       <article className="article-stream-container select-none w-full" suppressHydrationWarning>
         <div className="space-y-5" suppressHydrationWarning>
-          {mounted && (() => {
-            // Global set to track used Read Also article IDs across all stream items
-            const usedReadAlsoIds = new Set<string>();
-
-            return streamList.map((streamArticle) => {
-              const mainId = String(article.id);
-              const streamArtId = String(streamArticle.id);
-
-              // Calculate 4 Read Also articles that are TRULY RELATED to this streamArticle
-              const streamCatSlug = (streamArticle.category || '').toLowerCase().replace(/\s+/g, '-');
-              const streamCatName = (streamArticle.category || '').toLowerCase().trim();
-              const streamLoc = (streamArticle.location || '').toLowerCase().trim();
-
-              const streamGenericTags = new Set([
-                'news', 'popular stories', 'popular-stories', 'popularstories',
-                'trending', 'breaking', 'breaking news', 'national', 'સમાચાર',
-                'ન્યૂઝ', 'લાઇવ', 'વિશેષ', 'ગુજરાત', 'ભારત'
-              ]);
-
-              const streamTags = [
-                ...(streamArticle.tags || []),
-                ...(streamArticle.tagsGu || []),
-                ...(streamArticle.tagsHi || []),
-              ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
-
-              const streamSlugWords = (streamArticle.slug || '')
-                .split('-')
-                .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
-
-              // Combine all available candidate pools: related first, then trending, then mostReadArticles
-              const rawPool = [...related, ...trending, ...mostReadArticles].filter(
-                (cand, idx, self) =>
-                  String(cand.id) !== mainId &&
-                  String(cand.id) !== streamArtId &&
-                  self.findIndex((t) => String(t.id) === String(cand.id)) === idx
-              );
-
-              // Prefer candidates not yet shown in this stream session
-              let candidatePool = rawPool.filter((cand) => !usedReadAlsoIds.has(String(cand.id)));
-              if (candidatePool.length < 4) {
-                candidatePool = rawPool;
-              }
-
-              const scoredCandidates = candidatePool.map((cand) => {
-                let score = 0;
-                const candCatSlug = (cand.category || '').toLowerCase().replace(/\s+/g, '-');
-                const candCatName = (cand.category || '').toLowerCase().trim();
-
-                // 1. Same category bonus (primary relevance factor!)
-                if (
-                  candCatSlug === streamCatSlug ||
-                  (streamCatName && candCatName && (streamCatName === candCatName || streamCatName.includes(candCatName) || candCatName.includes(streamCatName)))
-                ) {
-                  score += 35;
-                }
-
-                // 2. Tag overlap (specific tags scored heavily, generic tags minimally)
-                const candTags = [
-                  ...(cand.tags || []),
-                  ...(cand.tagsGu || []),
-                  ...(cand.tagsHi || []),
-                ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
-
-                candTags.forEach((t) => {
-                  if (streamTags.includes(t)) {
-                    score += streamGenericTags.has(t) ? 3 : 18;
-                  }
-                });
-
-                // 3. Title / Slug keyword similarity
-                const candSlug = (cand.slug || '').toLowerCase();
-                streamSlugWords.forEach((word) => {
-                  if (candSlug.includes(word)) {
-                    score += 15;
-                  }
-                });
-
-                // 4. Same location bonus
-                const candLoc = (cand.location || '').toLowerCase().trim();
-                if (streamLoc && candLoc && streamLoc === candLoc) {
-                  score += 20;
-                }
-
-                // 5. Prefer unused in this session
-                if (!usedReadAlsoIds.has(String(cand.id))) {
-                  score += 10;
-                }
-
-                // 6. Popularity & recency
-                if (cand.isTrending) score += 3;
-                if (cand.isFeatured) score += 2;
-
-                return { cand, score };
-              });
-
-              scoredCandidates.sort((a, b) => b.score - a.score);
-
-              const readAlsoArticles = scoredCandidates.slice(0, 4).map((entry) => entry.cand);
-
-              readAlsoArticles.forEach((a) => usedReadAlsoIds.add(String(a.id)));
-
-              return (
-                <StreamArticleItem
-                  key={streamArticle.id}
-                  streamArticle={streamArticle}
-                  language={language}
-                  readAlsoArticles={readAlsoArticles}
-                  getCardThumbnail={getCardThumbnail}
-                  DEMO_THUMBNAILS={DEMO_THUMBNAILS}
-                  uiLabel={uiLabel}
-                  getArticleContent={getArticleContent}
-                  parseArticleBodyBlocks={parseArticleBodyBlocks}
-                  sanitizeParagraphHtml={sanitizeParagraphHtml}
-                  getStreamTags={getStreamTags}
-                  getTopicHref={getTopicHref}
-                  TranslatedInlineText={TranslatedInlineText}
-                  TranslatedParagraph={TranslatedParagraph}
-                />
-              );
-            });
-          })()}
+          {mounted && streamList.map((streamArticle) => (
+            <StreamArticleItem
+              key={streamArticle.id || streamArticle.slug}
+              streamArticle={streamArticle}
+              language={language}
+              getCardThumbnail={getCardThumbnail}
+              DEMO_THUMBNAILS={DEMO_THUMBNAILS}
+              uiLabel={uiLabel}
+              getArticleContent={getArticleContent}
+              parseArticleBodyBlocks={parseArticleBodyBlocks}
+              sanitizeParagraphHtml={sanitizeParagraphHtml}
+              getStreamTags={getStreamTags}
+              getTopicHref={getTopicHref}
+              TranslatedInlineText={TranslatedInlineText}
+              TranslatedParagraph={TranslatedParagraph}
+            />
+          ))}
         </div>
       </article>
 

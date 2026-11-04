@@ -31,14 +31,6 @@ const fallbackPage4 = {
     articleBody: 'અમદાવાદ: નરેન્દ્ર મોદી સ્ટેડિયમ ખાતે રમાયેલી રોમાંચક વન-ડે શ્રેણીની આખરી મેચમાં ભારતીય ટીમે ઓસ્ટ્રેલિયા સામે ૪ વિકેટે ભવ્ય વિજય હાંસલ કર્યો છે.',
     image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80',
     caption: 'અમદાવાદના નરેન્દ્ર મોદી સ્ટેડિયમમાં ઐતિહાસિક જીત બાદ ઉજવણી કરતા ભારતીય ખેલાડીઓ',
-    keyPoints: {
-      title: 'મેચ હાઇલાઇટ્સ',
-      points: [
-        'ભારત ૪ વિકેટે વિજયી',
-        'વિરાટ કોહલીની ૧૧૪ રનની સદી',
-        'જસપ્રીત બુમરાહની ૪/૩૩ શ્રેષ્ઠ બોલિંગ',
-      ],
-    },
     matchScorecard: {
       title: '🏏 મેચ સમરી સ્કોરકાર્ડ',
       venue: 'અમદાવાદ',
@@ -102,14 +94,6 @@ const fallbackPage4 = {
     articleBody: 'મુંબઈ: દેશભરના ૧,૮૦૦થી વધુ સ્ક્રીન્સ પર રિલીઝ થયેલી નવી ગુજરાતી પારિવારિક ડ્રામા ફિલ્મે પહેલા જ દિવસે બોક્સ ઓફિસ પર સર્વકાલીન નવો રેકોર્ડ બનાવ્યો છે.',
     image: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80',
     caption: 'ફિલ્મ પ્રીમિયર દરમિયાન કલાકારો અને નિર્દેશકની ખાસ ક્ષણ',
-    keyPoints: {
-      title: 'ફિલ્મના ખાસ પાસાં',
-      points: [
-        'પ્રથમ દિવસે ₹૪.૫ કરોડનું ઓપનિંગ',
-        'કલાકારોનો હૃદયસ્પર્શી અભિનય',
-        'ક્રિટિક્સ રેટિંગ: ★★★★☆ ૪.૫/૫',
-      ],
-    },
     boxOffice: {
       title: '📊 બોક્સ ઓફિસ કલેક્શન',
       rating: '★★★★☆ ૪.૫/૫',
@@ -260,14 +244,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         body: msStory.body || msStory.articleBody || fallbackPage4.mainSportsStory.articleBody,
         image: msStory.image || fallbackPage4.mainSportsStory.image,
         caption: msStory.caption || fallbackPage4.mainSportsStory.caption,
-        keyPoints: msStory.keyPoints
-          ? {
-              title: msStory.keyPoints.title || fallbackPage4.mainSportsStory.keyPoints.title,
-              points: Array.isArray(msStory.keyPoints.points)
-                ? msStory.keyPoints.points.slice(0, 3)
-                : fallbackPage4.mainSportsStory.keyPoints.points,
-            }
-          : fallbackPage4.mainSportsStory.keyPoints,
+        keyPoints: undefined,
         matchScorecard: {
           title: msStory.matchScorecard?.title || fallbackPage4.mainSportsStory.matchScorecard.title,
           venue: msStory.matchScorecard?.venue || fallbackPage4.mainSportsStory.matchScorecard.venue,
@@ -308,14 +285,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
         body: entStory.body || entStory.articleBody || fallbackPage4.entertainmentStory.articleBody,
         image: entStory.image || fallbackPage4.entertainmentStory.image,
         caption: entStory.caption || fallbackPage4.entertainmentStory.caption,
-        keyPoints: entStory.keyPoints
-          ? {
-              title: entStory.keyPoints.title || fallbackPage4.entertainmentStory.keyPoints.title,
-              points: Array.isArray(entStory.keyPoints.points)
-                ? entStory.keyPoints.points.slice(0, 3)
-                : fallbackPage4.entertainmentStory.keyPoints.points.slice(0, 3),
-            }
-          : fallbackPage4.entertainmentStory.keyPoints,
+        keyPoints: undefined,
         boxOffice: {
           title: entStory.boxOffice?.title || fallbackPage4.entertainmentStory.boxOffice.title,
           rating: entStory.boxOffice?.rating || fallbackPage4.entertainmentStory.boxOffice.rating,
@@ -705,15 +675,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                       />
                     )}
                   </div>
-                  {data.mainSportsStory.keyPoints && (
-                    <div className="mt-1">
-                      <KeyPointsBox
-                        basePath="mainSportsStory"
-                        title={data.mainSportsStory.keyPoints.title}
-                        points={data.mainSportsStory.keyPoints.points}
-                      />
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             </div>
@@ -972,21 +934,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                       className="mb-1"
                     />
                   </div>
-                  {data.entertainmentStory.keyPoints && (
-                    <div className="bg-purple-50 border border-purple-400 p-1.5 rounded-xs">
-                      <span className="text-[10px] font-bold text-purple-900 block mb-0.5 font-sans">
-                        {data.entertainmentStory.keyPoints.title}
-                      </span>
-                      <ul className="text-[9.5px] text-purple-950 space-y-0.5 font-serif">
-                        {(Array.isArray(data.entertainmentStory.keyPoints.points) ? data.entertainmentStory.keyPoints.points.slice(0, 3) : []).map((pt: string, pIdx: number) => (
-                          <li key={pIdx} className="flex items-center gap-1">
-                            <span className="text-purple-600 text-[10px]">★</span>
-                            <span>{pt}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
+                  
                 </div>
               </div>
             </div>

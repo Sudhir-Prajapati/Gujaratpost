@@ -129,16 +129,6 @@ export const samplePage1Data: Page1Data = {
     body: 'અમદાવાદ: ગુજરાત રાજ્યમાં આજે મુખ્યમંત્રીની અધ્યક્ષતામાં યોજાયેલી ઉચ્ચ સ્તરીય બેઠકમાં રાજ્યના સર્વાંગી વિકાસ માટે અનેક મોટા અને મહત્વપૂર્ણ નિર્ણયો લેવામાં આવ્યા છે. ઇન્ફ્રાસ્ટ્રક્ચર, આરોગ્ય અને શિક્ષણ ક્ષેત્રે નવી યોજનાઓ શરૂ કરવામાં આવશે. સંબંધિત વિભાગો દ્વારા વિગતોની સમીક્ષા ચાલુ છે અને આગામી કાર્યવાહી અંગે અધિકૃત માહિતી સમયસર જાહેર કરવામાં આવશે. સ્થાનિક લોકો તથા તજજ્ઞોના પ્રતિભાવો પણ લેવામાં આવી રહ્યા છે. રાજ્યના તમામ જિલ્લાઓમાં આધુનિક પ્રકલ્પો માટે બજેટની ફાળવણી પૂર્ણ થઈ છે. નાગરિકોની સુખાકારી અને પ્રગતિ માટે આ નિર્ણયો ઐતિહાસિક સાબિત થશે. રાજ્યના દરેક જિલ્લા મથકે આધુનિક સિવિલ હોસ્પિટલોનું નિર્માણ અને શાળાઓમાં સ્માર્ટ વર્ગખંડો સ્થાપવાની કામગીરીને અગ્રતા આપવામાં આવશે.\n\nગ્રામીણ વિસ્તારોમાં ખેડૂતોને સિંચાઈનું પાણી અને ૨૪ કલાક અવિરત ગુણવત્તાસભર વીજળી પહોંચાડવા માટે નવી સબ-સ્ટેશનો કાર્યરત કરાશે. ઔદ્યોગિક કોરિડોર અને એક્સપ્રેસવે પ્રોજેક્ટ્સને ઝડપથી પૂર્ણ કરવા વહીવટી મંજૂરીઓ તાત્કાલિક ધોરણે આપી દેવામાં આવી છે.\n\nયુવાનો માટે ટેકનિકલ શિક્ષણ અને સ્કીલ ડેવલપમેન્ટ સેન્ટરો શરૂ કરી સ્થાનિક સ્તરે હજારો નવી રોજગારીની તકોનું સર્જન કરાશે. તમામ જિલ્લા કલેક્ટરો અને સચિવોને આ પ્રોજેક્ટ્સનું સાપ્તાહિક મોનિટરિંગ કરી પ્રગતિ અહેવાલ મુખ્યમંત્રી કાર્યાલયને મોકલવા આદેશ કરાયો છે.',
     image: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=800&q=80',
     imageCaption: 'નવી શિક્ષણ પ્રણાલીના અમલથી રાજ્યના વિદ્યાર્થીઓ માટે નવા અવસર ઉભા થશે.',
-    keyPoints: {
-      title: 'મુખ્ય મુદ્દાઓ',
-      points: [
-        'ધોરણ ૧થી નવી શિક્ષણ પ્રણાલી અમલમાં',
-        'કૌશલ્ય આધારિત અભ્યાસક્રમ પર ભાર',
-        'ડિજિટલ શિક્ષણ અને સ્માર્ટ વર્ગખંડ',
-        'વિદ્યાર્થીઓ માટે વ્યક્તિગત મૂલ્યાંકન પદ્ધતિ',
-        'ગ્રામીણ વિસ્તારોમાં પણ સુવિધાઓનો વિસ્તાર',
-      ],
-    },
   },
 
   sideTopNews: {
@@ -171,14 +161,6 @@ export const samplePage1Data: Page1Data = {
       paragraph2: 'જિલ્લા વહીવટીતંત્ર દ્વારા નીચાણવાળા વિસ્તારોમાંથી લોકોને સલામત સ્થળે ખસેડવાની કામગીરી શરૂ કરવામાં આવી છે. ડિઝાસ્ટર મેનેજમેન્ટ અને એનડીઆરએફની ટીમોને એલર્ટ મોડ પર રાખવામાં આવી છે.',
       body: 'ગુજરાતમાં આજે દક્ષિણ ગુજરાતના સંત વરસાદ અને નવસારી જિલ્લામાં ભારે પાણી ભરાવાથી લોકો મુશ્કેલીમાં મુકાયા છે. વહીવટીતંત્ર સતર્ક બન્યું છે. ગુજરાતમાં આજે દક્ષિણ ગુજરાતના સંત વરસાદ અને નવસારી જિલ્લામાં ભારે પાણી ભરાવાથી લોકો મુશ્કેલીમાં મુકાયા છે. વહીવટીતંત્ર સતર્ક બન્યું છે. ગુજરાતમાં આજે દક્ષિણ ગુજરાતના સંત વરસાદ અને નવસારી જિલ્લામાં ભારે પાણી ભરાવાથી લોકો મુશ્કેલીમાં મુકાયા છે. વહીવટીતંત્ર સતર્ક બન્યું છે.\n\nજિલ્લા વહીવટીતંત્ર દ્વારા નીચાણવાળા વિસ્તારોમાંથી લોકોને સલામત સ્થળે ખસેડવાની કામગીરી શરૂ કરવામાં આવી છે. ડિઝાસ્ટર મેનેજમેન્ટ અને એનડીઆરએફની ટીમોને એલર્ટ મોડ પર રાખવામાં આવી છે.',
       image: 'https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?auto=format&fit=crop&w=600&q=80',
-      keyPoints: {
-        title: 'હવામાન વિભાગની આગાહી',
-        points: [
-          'આગામી ૪૮ કલાક ભારે વરસાદની શક્યતા',
-          'નવસારી, વલસાડ, ડાંગમાં એલર્ટ',
-          'લોકોને સાવચેતી રાખવાની સૂચના',
-        ],
-      },
     },
     {
       category: 'આર્થિક વિકાસમાં ગુજરાત ફરી આગળ',
@@ -189,15 +171,6 @@ export const samplePage1Data: Page1Data = {
       paragraph2: 'વિદેશી રોકાણકારો સાથે થયેલા કરારોથી ઓટોમોબાઇલ, સેમિકન્ડક્ટર અને ડિફેન્સ મેન્યુફેક્ચરિંગ જેવા ક્ષેત્રોમાં તેજી આવશે અને કૌશલ્યવાન ઇજનેરો તથા યુવાનોની માંગ વધશે.',
       body: 'ગુજરાતમાં ઔદ્યોગિક વિકાસ ઝડપથી આગળ વધી રહ્યો છે. નવી નીતિઓથી ઉદ્યોગ જગતમાં ઉત્સાહ અને હજારો નવી રોજગારીની તકો ઊભી થશે. રાજ્ય સરકાર દ્વારા જાહેર કરાયેલી નવી ઔદ્યોગિક નીતિ અને સિંગલ વિન્ડો સિસ્ટમના કારણે દેશ-વિદેશના અગ્રણી ઉદ્યોગગૃહો રાજ્યમાં મૂડીરોકાણ કરવા આકર્ષાયા છે. વિવિધ ક્ષેત્રોમાં નવી ફેક્ટરીઓ અને ઉત્પાદન એકમો સ્થાપિત થવાથી યુવા વર્ગ માટે સ્થાનિક કક્ષાએ જ ૧ લાખથી વધુ પ્રત્યક્ષ અને પરોક્ષ રોજગારીની વિશાળ તકો ઉપલબ્ધ થશે.\n\nવિદેશી રોકાણકારો સાથે થયેલા કરારોથી ઓટોમોબાઇલ, સેમિકન્ડક્ટર અને ડિફેન્સ મેન્યુફેક્ચરિંગ જેવા ક્ષેત્રોમાં તેજી આવશે અને કૌશલ્યવાન ઇજનેરો તથા યુવાનોની માંગ વધશે.',
       image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80',
-      keyPoints: {
-        title: 'રોજગારીના મુખ્ય ક્ષેત્રો',
-        points: [
-          'મેન્યુફેક્ચરિંગ',
-          'ગ્રીન એનર્જી',
-          'IT અને ફિનટેક',
-          'લોજિસ્ટિક્સ અને પોર્ટ ડેવલપમેન્ટ',
-        ],
-      },
     },
     {
       category: 'ભારતની મોટી સફળતા',
@@ -208,14 +181,6 @@ export const samplePage1Data: Page1Data = {
       paragraph2: 'આ મિશનમાં વપરાયેલા તમામ વૈજ્ઞાનિક પેલોડ સંપૂર્ણ સ્વદેશી ટેકનોલોજીથી ભારતમાં જ તૈયાર કરાયા છે, જે સ્પેસ સેક્ટરમાં આત્મનિર્ભરતાનું ઉત્તમ ઉદાહરણ પૂરું પાડે છે.',
       body: 'ભારતીય અવકાશ સંશોધન સંસ્થા (ઇસરો) દ્વારા સૂર્યના અભ્યાસ માટે મોકલવામાં આવેલા આદિત્ય-L1 મિશને સફળતાપૂર્વક તેના નિર્ધારિત લેગ્રેન્જ પોઇન્ટ-૧ પર પહોંચી વૈજ્ઞાનિક ડેટા મોકલવાનું શરૂ કર્યું છે. આ અભિયાનથી સૌર તોફાનો, કિરણોત્સર્ગ અને પૃથ્વીના વાતાવરણ પર થતી અસરો વિશે ઊંડાણપૂર્વકની માહિતી મળશે. ભારતીય વૈજ્ઞાનિકોની આ અભૂતપૂર્વ સિદ્ધિની વૈશ્વિક સ્તરે નાસા સહિતની એજન્સીઓ દ્વારા ભારે પ્રશંસા થઈ રહી છે.\n\nઆ મિશનમાં વપરાયેલા તમામ વૈજ્ઞાનિક પેલોડ સંપૂર્ણ સ્વદેશી ટેકનોલોજીથી ભારતમાં જ તૈયાર કરાયા છે, જે સ્પેસ સેક્ટરમાં આત્મનિર્ભરતાનું ઉત્તમ ઉદાહરણ પૂરું પાડે છે.',
       image: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=600&q=80',
-      keyPoints: {
-        title: 'મિશનની વિશેષતાઓ',
-        points: [
-          'સૂર્યની સપાટી અને તેની ગતિવિધિઓનું અધ્યયન',
-          'પાંચ વૈજ્ઞાનિક ઉપકરણો સાથે મિશન',
-          'ભારત માટે વૈજ્ઞાનિક દ્રષ્ટિએ મહત્વપૂર્ણ પગલું',
-        ],
-      },
     },
   ],
 
@@ -228,14 +193,6 @@ export const samplePage1Data: Page1Data = {
     paragraph2: 'કાયદા નિષ્ણાતોના મતે આ બિલ પાસ થવાથી પીડિત મહિલાઓને સમયસર અને ઝડપી ન્યાય મળશે તેમજ ન્યાયિક પ્રક્રિયા વધુ પારદર્શક તથા પરિણામલક્ષી બનશે. દેશભરની સામાજિક સંસ્થાઓ અને મહિલા સંગઠનોએ આ બિલને આવકાર્યું છે અને કેન્દ્ર સરકારના આ પગલાને મહિલા સશક્તિકરણની દિશામાં એક ઐતિહાસિક અને ક્રાંતિકારી પહેલ ગણાવી છે.',
     body: 'મહિલા સુરક્ષા બિલ કાયદાને મજબૂત કરવા માટે આજે સંસદના વિશેષ સત્રમાં લોકસભામાં રજૂ કરવામાં આવ્યું છે. આ ઐતિહાસિક બિલમાં મહિલાઓની સુરક્ષા, કાર્યસ્થળે સતામણી સામે કડક રક્ષણ અને ગુનેગારોને ઝડપી સજા આપવા માટે નવી જોગવાઈઓ સામેલ કરવામાં આવી છે. તમામ પક્ષો દ્વારા આ બિલને સૈદ્ધાંતિક સમર્થન મળવાની અપેક્ષા વ્યક્ત કરવામાં આવી છે. ગૃહમાં આ બિલ પર સભ્યો દ્વારા વિગતવાર ચર્ચા થશે અને ત્યારબાદ મંજૂરી માટે મતદાન યોજાશે. કાયદા મંત્રીએ જણાવ્યું હતું કે મહિલાઓ સામેના ગંભીર ગુનાઓમાં તપાસ પ્રક્રિયા સમયબદ્ધ પૂર્ણ થાય તે માટે પોલીસ વિભાગને આધુનિક ટેકનોલોજી અને વિશેષ ટાસ્ક ફોર્સ પૂરી પાડવામાં આવશે. દેશના તમામ રાજ્યોમાં ફાસ્ટ-ટ્રેક અદાલતોની સંખ્યા બમણી કરવાનો અને પીડિતોને આર્થિક સહાય તથા તાત્કાલિક પુનર્વસન પૂરું પાડવાનો આદેશ પણ અપાયો છે. આ ઉપરાંત દરેક જિલ્લામાં ૨૪ કલાક કાર્યરત હેલ્પલાઇન અને વન-સ્ટોપ સપોર્ટ સેન્ટરો ઊભા કરાશે, જેથી પીડિત મહિલાઓને એક જ સ્થળેથી ત્વરિત કાનૂની, તબીબી અને પરામર્શ સહાય મળી રહેશે.\n\nકાયદા નિષ્ણાતોના મતે આ બિલ પાસ થવાથી પીડિત મહિલાઓને સમયસર અને ઝડપી ન્યાય મળશે તેમજ ન્યાયિક પ્રક્રિયા વધુ પારદર્શક તથા પરિણામલક્ષી બનશે. દેશભરની સામાજિક સંસ્થાઓ અને મહિલા સંગઠનોએ આ બિલને આવકાર્યું છે અને કેન્દ્ર સરકારના આ પગલાને મહિલા સશક્તિકરણની દિશામાં એક ઐતિહાસિક અને ક્રાંતિકારી પહેલ ગણાવી છે.',
     image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?auto=format&fit=crop&w=600&q=80',
-    keyPoints: {
-      title: 'બિલની મુખ્ય જોગવાઈઓ',
-      points: [
-        'મહિલા સુરક્ષા માટે કડક કાયદા',
-        'ઝડપી ન્યાય માટે વિશેષ કોર્ટ',
-        'ઓનલાઇન હેરાસમેન્ટ સામે કડક પગલા',
-      ],
-    },
   },
 
   bottomMiddleSports: {
@@ -247,15 +204,6 @@ export const samplePage1Data: Page1Data = {
     paragraph2: 'ભારતીય બોલિંગ આક્રમણમાં જસપ્રીત બુમરાહે ૩ વિકેટ ઝડપી પાકિસ્તાનના મિડલ ઓર્ડરને ધ્વસ્ત કરી દીધો હતો, જ્યારે કુલદીપ યાદવે ૨ મહત્વની વિકેટ મેળવી હતી. આ ભવ્ય વિજય સાથે ભારતીય ટીમ એશિયા કપના સુપર-૪ રાઉન્ડમાં ટોચના સ્થાને પહોંચી ગઈ છે અને ચાહકોમાં ઉત્સાહનો માહોલ જોવા મળી રહ્યો છે.',
     body: 'દુબઈ ઇન્ટરનેશનલ સ્ટેડિયમ ખાતે રમાયેલી એશિયા કપ ૨૦૨૬ની રોમાંચક હાઈ-વોલ્ટેજ મેચમાં ભારતીય ટીમે શાનદાર સર્વાંગી પ્રદર્શન કરતાં કટ્ટર હરીફ પાકિસ્તાનને ૫ વિકેટે પરાજય આપીને વિજયી કૂચ જારી રાખી છે. પાકિસ્તાને ટોસ જીતીને પ્રથમ બેટિંગ કરવાનો નિર્ણય લીધો હતો, પરંતુ ભારતીય બોલરોના શિસ્તબદ્ધ આક્રમણ સામે પાકિસ્તાની ટીમ નિર્ધારિત ૫૦ ઓવરમાં ૨૪૫ રન બનાવીને ઓલઆઉટ થઈ ગઈ હતી. લક્ષ્યાંકનો પીછો કરવા ઉતરેલી ભારતીય ટીમ તરફથી સુકાની રોહિત શર્મા અને યુવા ઓપનર શુભમન ગિલે આક્રમક શરૂઆત અપાવી હતી. રોહિત શર્માએ ૭ ચોગ્ગા અને ૩ છગ્ગાની મદદથી ૬૪ રનની કેપ્ટન ઇનિંગ રમી હતી, જ્યારે ગિલે ૬૨ રનનું મહત્વનું યોગદાન આપ્યું હતું. બંને વચ્ચે પ્રથમ વિકેટ માટે ૧૧૫ રનની મજબૂત ભાગીદારી નોંધાઈ હતી, જેણે ભારતની જીતનો મજબૂત પાયો નાખ્યો હતો. મધ્યમ ક્રમમાં વિરાટ કોહલી અને કેએલ રાહુલે સંયમપૂર્વક બેટિંગ કરીને ટીમને વિજયના દ્વાર સુધી પહોંચાડી હતી.\n\nભારતીય બોલિંગ આક્રમણમાં જસપ્રીત બુમરાહે ૩ વિકેટ ઝડપી પાકિસ્તાનના મિડલ ઓર્ડરને ધ્વસ્ત કરી દીધો હતો, જ્યારે કુલદીપ યાદવે ૨ મહત્વની વિકેટ મેળવી હતી. આ ભવ્ય વિજય સાથે ભારતીય ટીમ એશિયા કપના સુપર-૪ રાઉન્ડમાં ટોચના સ્થાને પહોંચી ગઈ છે અને ચાહકોમાં ઉત્સાહનો માહોલ જોવા મળી રહ્યો છે.',
     image: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=600&q=80',
-    keyPoints: {
-      title: 'મેચની મુખ્ય વાતો',
-      points: [
-        'ભારતે ૫ વિકેટે જીત્યું',
-        'રોહિત શર્માએ ૬૪ રન',
-        'ગિલે ૬૨ રન નોંધ્યા',
-        'ભારત સુપર-૪ માં આગળ',
-      ],
-    },
   },
 
   pageNumber: '૦૧',
@@ -352,7 +300,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
         body: inputData.mainHeadline?.body || inputData.leadStory?.articleBody || inputData.leadStory?.body || samplePage1Data.mainHeadline.body,
         image: inputData.mainHeadline?.image ?? inputData.leadStory?.image ?? samplePage1Data.mainHeadline.image,
         imageCaption: inputData.mainHeadline?.imageCaption || inputData.leadStory?.caption || samplePage1Data.mainHeadline.imageCaption,
-        keyPoints: inputData.mainHeadline?.keyPoints || inputData.leadStory?.keyPoints || samplePage1Data.mainHeadline.keyPoints,
+        keyPoints: inputData.mainHeadline?.keyPoints || inputData.leadStory?.keyPoints,
       },
       sideTopNews: {
         category: inputData.sideTopNews?.category || samplePage1Data.sideTopNews.category,
@@ -381,7 +329,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
           name: inputData.sideTopNews?.pullQuote?.name || inputData.sideTopNews?.pullQuote?.author || samplePage1Data.sideTopNews.pullQuote?.name,
           author: inputData.sideTopNews?.pullQuote?.author || inputData.sideTopNews?.pullQuote?.name || samplePage1Data.sideTopNews.pullQuote?.author,
         },
-        keyPoints: inputData.sideTopNews?.keyPoints || samplePage1Data.sideTopNews.keyPoints,
+        keyPoints: undefined,
       },
       newsBlocks: (() => {
         const inputBlocks = Array.isArray(inputData.newsBlocks) && inputData.newsBlocks.length > 0
@@ -454,7 +402,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
             paragraph2: p2,
             body,
             image: inBlock.image ?? sampleBlock.image,
-            keyPoints: inBlock.keyPoints || sampleBlock.keyPoints,
+            keyPoints: undefined,
           });
         }
         return result;
@@ -502,7 +450,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
           paragraph2: p2,
           body,
           image: inBL.image ?? sampleBL.image,
-          keyPoints: inBL.keyPoints || sampleBL.keyPoints,
+          keyPoints: undefined,
         };
       })(),
       bottomMiddleSports: (() => {
@@ -547,7 +495,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
           paragraph2: p2,
           body,
           image: inBMS.image ?? sampleBMS.image,
-          keyPoints: inBMS.keyPoints || sampleBMS.keyPoints,
+          keyPoints: undefined,
         };
       })(),
       pageNumber: inputData.pageNumber || samplePage1Data.pageNumber || '૦૧',
@@ -1342,7 +1290,6 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
                   onSelect={() => onSelectSlot?.('mainHeadline.image', 'મુખ્ય ઈમેજ')}
                   containerHeight="245px"
                   alt="Main headline image"
-                  actionsClassName={data.mainHeadline.keyPoints ? 'w-[52%]' : undefined}
                 />
                 {data.mainHeadline.imageCaption && (
                   <EditableTextSlot
@@ -1353,15 +1300,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
                     className="text-[11px] text-slate-600 italic mt-1 font-sans text-center"
                   />
                 )}
-                {data.mainHeadline.keyPoints && (
-                  <div className="absolute top-0 right-0 w-[47%]">
-                    <KeyPointsBox
-                      basePath="mainHeadline"
-                      title={data.mainHeadline.keyPoints.title}
-                      points={data.mainHeadline.keyPoints.points}
-                    />
-                  </div>
-                )}
+                
 
                 {/* News content under the image: Two separate paragraphs side by side */}
                 <div className="mt-2 pt-2 border-t border-slate-400 flex-1 overflow-hidden grid grid-cols-2 gap-4">
@@ -1623,15 +1562,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
                 />
               </div>
 
-              <div className="col-span-6 overflow-hidden">
-                {data.newsBlocks[0]?.keyPoints && (
-                  <KeyPointsBox
-                    basePath="newsBlocks.0"
-                    title={data.newsBlocks[0].keyPoints.title}
-                    points={data.newsBlocks[0].keyPoints.points}
-                  />
-                )}
-                <div className="text-[11px] leading-[1.38] text-slate-800 font-serif text-justify overflow-hidden mt-1">
+              <div className="col-span-6 text-[11px] leading-[1.38] text-slate-800 font-serif text-justify overflow-hidden">
                   <EditableTextSlot
                     value={data.newsBlocks[0]?.paragraph2 || ''}
                     onChange={(val) => updateField('newsBlocks.0.paragraph2', val)}
@@ -1643,7 +1574,6 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
               </div>
             </div>
           </div>
-        </div>
 
         {/* Block 2 (Jobs & Industries) */}
         <div className="px-4 flex flex-col justify-between overflow-hidden h-full">
@@ -1712,16 +1642,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
               </div>
             </div>
 
-            {/* Full width Key points box: રોજગારીના મુખ્ય ક્ષેત્રો */}
-            {data.newsBlocks[1]?.keyPoints && (
-              <div className="mt-auto">
-                <KeyPointsBox
-                  basePath="newsBlocks.1"
-                  title={data.newsBlocks[1].keyPoints.title}
-                  points={data.newsBlocks[1].keyPoints.points}
-                />
-              </div>
-            )}
+            
           </div>
         </div>
 
@@ -1792,16 +1713,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
               </div>
             </div>
 
-            {/* Full width Key points box: મિશનની વિશેષતાઓ */}
-            {data.newsBlocks[2]?.keyPoints && (
-              <div className="mt-auto">
-                <KeyPointsBox
-                  basePath="newsBlocks.2"
-                  title={data.newsBlocks[2].keyPoints.title}
-                  points={data.newsBlocks[2].keyPoints.points}
-                />
-              </div>
-            )}
+            
           </div>
         </div>
       </div>
@@ -1866,13 +1778,7 @@ export const Page1Front: React.FC<Page1FrontProps> = ({
                   className="mb-1"
                 />
 
-                {data.bottomLeftFeature.keyPoints && (
-                  <KeyPointsBox
-                    basePath="bottomLeftFeature"
-                    title={data.bottomLeftFeature.keyPoints.title}
-                    points={data.bottomLeftFeature.keyPoints.points}
-                  />
-                )}
+                
 
                 <div className="text-[10.5px] leading-[1.38] text-slate-800 font-serif text-justify overflow-hidden mt-1">
                   <EditableTextSlot

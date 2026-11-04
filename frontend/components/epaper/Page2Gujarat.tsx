@@ -32,15 +32,6 @@ const fallbackPage2 = {
     articleBody: 'ગાંધીનગર: ગુજરાત રાજ્યના સર્વાંગી અને ઝડપી વિકાસને નવી ગતિ આપવા માટે આજે મુખ્યમંત્રીની અધ્યક્ષતામાં મળેલી કેબિનેટ બેઠકમાં ઐતિહાસિક નિર્ણયો લેવામાં આવ્યા છે. રાજ્યભરમાં માર્ગ અને પરિવહન નેટવર્કને અત્યાધુનિક બનાવવા માટે ₹૧૮,૫૦૦ કરોડના વિશાળ બજેટ સાથે ૫ નવા હાઈસ્પીડ ગ્રીનફિલ્ડ એક્સપ્રેસવે અને વિવિધ મહાનગરોમાં ૧૨ સ્માર્ટ સિગ્નેચર બ્રિજનું નિર્માણ કરવાની સૈદ્ધાંતિક મંજૂરી આપવામાં આવી છે.',
     image: 'https://images.unsplash.com/photo-1545558014-8692077e9b5c?auto=format&fit=crop&w=800&q=80',
     caption: 'રાજ્યમાં નિર્માણાધીન આધુનિક એક્સપ્રેસવે અને સ્માર્ટ બ્રિજ પ્રોજેક્ટ',
-    keyPoints: {
-      title: 'પ્રોજેક્ટની મુખ્ય બાબતો',
-      points: [
-        '₹૧૮,૫૦૦ કરોડનું ઐતિહાસિક રોકાણ',
-        '૫ નવા હાઈસ્પીડ ગ્રીનફિલ્ડ કોરિડોર',
-        '૧૨ આધુનિક સ્માર્ટ સિગ્નેચર બ્રિજ',
-        'મુસાફરી સમયમાં ૫૦% સુધીનો ઘટાડો',
-      ],
-    },
   },
   sideLeadStory: {
     district: 'અમદાવાદ',
@@ -70,14 +61,6 @@ const fallbackPage2 = {
       paragraph2: 'કાપડ અને હીરા ઉદ્યોગમાં નવી ટેકનોલોજીના સમાવેશથી આગામી છ મહિનામાં ₹૧૫,૦૦૦ કરોડથી વધુનો એક્સપોર્ટ બિઝનેસ વધવાની અપેક્ષા વ્યક્ત કરાઈ છે.',
       articleBody: 'સુરત: વિશ્વના સૌથી મોટા ઓફિસ સંકુલ સુરત ડાયમંડ બુર્સમાં આજે આંતરરાષ્ટ્રીય જેમ્સ એન્ડ જ્વેલરી ટ્રેડ સેન્ટરનો વિધિવત પ્રારંભ થયો છે. વૈશ્વિક વેપારને સીધો વેગ મળશે.',
       image: 'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?auto=format&fit=crop&w=500&q=80',
-      keyPoints: {
-        title: 'સુરત ટ્રેડિંગ હાઈલાઈટ્સ',
-        points: [
-          '૫૦થી વધુ દેશોનું ડાયરેક્ટ ટ્રેડિંગ',
-          'નવા ૨૦,૦૦૦ રોજગારીના અવસર',
-          'ટેક્સટાઇલ અને જેમ્સ હબનો વિકાસ',
-        ],
-      },
     },
     {
       district: 'રાજકોટ',
@@ -89,14 +72,6 @@ const fallbackPage2 = {
       paragraph2: 'જર્મની અને જાપાનની અગ્રણી કંપનીઓ સાથે સંયુક્ત સાહસ કરી ગુજરાતમાં બનતા ઓટોમોબાઇલ પાર્ટ્સની નિકાસને પ્રોત્સાહન આપવામાં આવશે.',
       articleBody: 'રાજકોટ: સૌરાષ્ટ્રના ઔદ્યોગિક પાટનગર રાજકોટના શાપર-વેરાવળ પંથકમાં નવું હાઈ-ટેક એન્જિનિયરિંગ ક્લસ્ટર સ્થાપવાની મંજૂરી અપાઈ છે. આધુનિક પ્લાન્ટ્સ ઊભા કરાશે.',
       image: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=500&q=80',
-      keyPoints: {
-        title: 'રાજકોટ ક્લસ્ટર વિગત',
-        points: [
-          'શાપર-વેરાવળમાં વિશાળ જમીન ફાળવણી',
-          'ઓટો અને મશીનરી પાર્ટ્સનું હબ',
-          'સ્થાનિક યુવાનોને સ્કીલ ટ્રેનિંગ',
-        ],
-      },
     },
     {
       district: 'વડોદરા',
@@ -108,14 +83,6 @@ const fallbackPage2 = {
       paragraph2: 'નદી કાંઠે સુંદર રિવરફ્રન્ટ પ્રોમેનાડ, પક્ષી અભયારણ્ય અને પૂર નિયંત્રણ માટે અધ્યતન જળ વ્યવસ્થાપન દીવાલોનું નિર્માણ તાત્કાલિક શરૂ કરાશે.',
       articleBody: 'વડોદરા: વડોદરા શહેરની શાન સમાન વિશ્વામિત્રી નદીના કાયાકલ્પ માટે ₹૧,૨૦૦ કરોડના મેગા રિડેવલપમેન્ટ પ્રોજેક્ટને કેન્દ્ર અને રાજ્ય સરકારની અંતિમ મંજૂરી મળી છે.',
       image: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=500&q=80',
-      keyPoints: {
-        title: 'વિશ્વામિત્રી પ્રોજેક્ટ ફાયદા',
-        points: [
-          'પૂર નિયંત્રણ માટે પાકી સુરક્ષા દીવાલો',
-          '૧૫ કિમી લાંબો ગ્રીન રિવરફ્રન્ટ',
-          'પર્યાવરણ અને જળ શુદ્ધિકરણ પ્લાન્ટ',
-        ],
-      },
     },
   ],
   bottomLeftFeature: {
@@ -127,14 +94,6 @@ const fallbackPage2 = {
     paragraph2: 'કૃષિ મંત્રીએ જણાવ્યું કે દરેક તાલુકા મથકે પ્રાકૃતિક કૃષિ ઉત્પાદનોના વેચાણ માટે વિશેષ ખેડૂત બજારો સ્થાપવામાં આવશે. પ્રમાણિત ઉત્પાદનોને પ્રીમિયમ ભાવ મળે તે માટે ડિજિટલ સર્ટિફિકેશન વ્યવસ્થા પણ અમલમાં મૂકવામાં આવી રહી છે.',
     articleBody: 'આણંદ કૃષિ યુનિવર્સિટી ખાતે આયોજિત રાજ્યકક્ષાના પ્રાકૃતિક કૃષિ પરિસંવાદમાં રાજ્ય સરકાર દ્વારા ખેડૂતોના હિતમાં મોટી જાહેરાત કરવામાં આવી છે. દેશી ગાય પાળતા અને રસાયણમુક્ત પ્રાકૃતિક ખેતી કરતા પ્રત્યેક ખેડૂતને વાર્ષિક ₹૫,૦૦૦ સુધીની સીધી આર્થિક સહાય બેંક ખાતામાં જમા કરવામાં આવશે.',
     image: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=600&q=80',
-    keyPoints: {
-      title: 'કૃષિ પેકેજ હાઈલાઈટ્સ',
-      points: [
-        '૧૦ લાખ ખેડૂતોને સીધી આર્થિક સહાય',
-        'તાલુકા મથકે ઓર્ગેનિક બજારો',
-        'ડિજિટલ ક્વોલિટી સર્ટિફિકેશન',
-      ],
-    },
   },
   bottomRightFeature: {
     category: 'શિક્ષણ અને આદિજાતિ ઉત્કર્ષ',
@@ -145,14 +104,6 @@ const fallbackPage2 = {
     paragraph2: 'આદિજાતિ વિકાસ વિભાગ દ્વારા તેજસ્વી વિદ્યાર્થીઓને વિદેશ અભ્યાસ માટે પણ વિશેષ સ્કોલરશિપ આપવાની નવી ગાઈડલાઈન જાહેર કરવામાં આવી છે, જેથી આદિવાસી યુવાનો વૈશ્વિક સ્તરે ઉત્કૃષ્ટ કારકિર્દી બનાવી શકે.',
     articleBody: 'નર્મદા: રાજ્યના પૂર્વ પટ્ટીના છેવાડાના વિસ્તારોમાં શિક્ષણનો વ્યાપ વધારવા માટે સરકારે ₹૪૫૦ કરોડના ખર્ચે ૧૫ અત્યાધુનિક એકલવ્ય મોડેલ રેસિડેન્શિયલ શાળાઓ મંજૂર કરી છે.',
     image: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=600&q=80',
-    keyPoints: {
-      title: 'શિક્ષણ સુવિધાઓ',
-      points: [
-        '૧૫ અત્યાધુનિક રેસિડેન્શિયલ કેમ્પસ',
-        'ડિજિટલ સ્માર્ટ વર્ગખંડો અને હોસ્ટેલ',
-        'વિદેશ અભ્યાસ માટે વિશેષ સહાય',
-      ],
-    },
   },
 };
 
@@ -194,7 +145,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         body: main.body || main.articleBody || fallbackPage2.mainDistrictStory.articleBody,
         image: main.image || fallbackPage2.mainDistrictStory.image,
         caption: main.caption || main.imageCaption || fallbackPage2.mainDistrictStory.caption,
-        keyPoints: main.keyPoints || fallbackPage2.mainDistrictStory.keyPoints,
+        keyPoints: undefined,
       },
       sideLeadStory: {
         category: side.category || fallbackPage2.sideLeadStory.category,
@@ -223,7 +174,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
           body: item.body || item.articleBody || fb.articleBody,
           image: item.image || fb.image,
           caption: item.caption || item.imageCaption || fb.caption,
-          keyPoints: item.keyPoints || fb.keyPoints,
+          keyPoints: undefined,
         };
       }),
       bottomLeftFeature: {
@@ -236,7 +187,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         body: bLeft.body || bLeft.articleBody || fallbackPage2.bottomLeftFeature.articleBody,
         image: bLeft.image || fallbackPage2.bottomLeftFeature.image,
         caption: bLeft.caption || bLeft.imageCaption || (fallbackPage2.bottomLeftFeature as any).caption || '',
-        keyPoints: bLeft.keyPoints || fallbackPage2.bottomLeftFeature.keyPoints,
+        keyPoints: undefined,
       },
       bottomRightFeature: {
         category: bRight.category || fallbackPage2.bottomRightFeature.category,
@@ -248,7 +199,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         body: bRight.body || bRight.articleBody || fallbackPage2.bottomRightFeature.articleBody,
         image: bRight.image || fallbackPage2.bottomRightFeature.image,
         caption: bRight.caption || bRight.imageCaption || (fallbackPage2.bottomRightFeature as any).caption || '',
-        keyPoints: bRight.keyPoints || fallbackPage2.bottomRightFeature.keyPoints,
+        keyPoints: undefined,
       },
     };
   }, [inputData]);
@@ -424,7 +375,6 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
                     onSelect={() => onSelectSlot?.('mainDistrictStory.image', 'મુખ્ય ઈમેજ')}
                     containerHeight="245px"
                     alt="Main district story image"
-                    actionsClassName={data.mainDistrictStory.keyPoints ? 'w-[52%]' : undefined}
                   />
                   {data.mainDistrictStory.caption && (
                     <EditableTextSlot
@@ -435,15 +385,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
                       className="text-[11px] text-slate-600 italic mt-1 font-sans text-center"
                     />
                   )}
-                  {data.mainDistrictStory.keyPoints && (
-                    <div className="absolute top-0 right-0 w-[47%]">
-                      <KeyPointsBox
-                        basePath="mainDistrictStory"
-                        title={data.mainDistrictStory.keyPoints.title}
-                        points={data.mainDistrictStory.keyPoints.points}
-                      />
-                    </div>
-                  )}
+                  
 
                   {/* Under-image 2 Paragraphs side by side */}
                   <div className="mt-2 pt-2 border-t border-slate-400 flex-1 overflow-hidden grid grid-cols-2 gap-4">
@@ -665,15 +607,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
                 </div>
 
                 {/* Red Key Points Box at Bottom */}
-                {dist.keyPoints && (
-                  <div className="mt-auto">
-                    <KeyPointsBox
-                      basePath={`districtStories.${idx}`}
-                      title={dist.keyPoints.title}
-                      points={dist.keyPoints.points}
-                    />
-                  </div>
-                )}
+                
               </div>
             </div>
           ))}
@@ -736,13 +670,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
                     containerHeight="115px"
                     className="mb-1"
                   />
-                  {data.bottomLeftFeature.keyPoints && (
-                    <KeyPointsBox
-                      basePath="bottomLeftFeature"
-                      title={data.bottomLeftFeature.keyPoints.title}
-                      points={data.bottomLeftFeature.keyPoints.points}
-                    />
-                  )}
+                  
                   <div className="text-[10.5px] leading-[1.38] text-slate-800 font-serif text-justify overflow-hidden mt-1">
                     <EditableTextSlot
                       value={data.bottomLeftFeature.paragraph2}
@@ -812,13 +740,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
                     containerHeight="115px"
                     className="mb-1"
                   />
-                  {data.bottomRightFeature.keyPoints && (
-                    <KeyPointsBox
-                      basePath="bottomRightFeature"
-                      title={data.bottomRightFeature.keyPoints.title}
-                      points={data.bottomRightFeature.keyPoints.points}
-                    />
-                  )}
+                  
                   <div className="text-[10.5px] leading-[1.38] text-slate-800 font-serif text-justify overflow-hidden mt-1">
                     <EditableTextSlot
                       value={data.bottomRightFeature.paragraph2}

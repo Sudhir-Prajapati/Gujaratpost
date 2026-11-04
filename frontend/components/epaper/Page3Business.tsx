@@ -29,15 +29,6 @@ const fallbackPage3 = {
     articleBody: 'મુંબઈ: વૈશ્વિક સકારાત્મક સંકેતો અને વિદેશી સંસ્થાકીય રોકાણકારો (FII) ની અવિરત જોરદાર ખરીદીને કારણે આજે ભારતીય શેરબજારમાં અભૂતપૂર્વ ઐતિહાસિક ઉછાળો જોવા મળ્યો છે. બોમ્બે સ્ટોક એક્સચેન્જનો સંવેદનશીલ સૂચકાંક સેન્સેક્સ ૮૫૦ પોઈન્ટના તોતિંગ ઉછાળા સાથે નવી સર્વોચ્ચ સપાટીએ પહોંચ્યો હતો. આઈટી, બેન્કિંગ, ઓટોમોબાઇલ અને રિન્યુએબલ એનર્જી સેક્ટરના શેરોમાં ભારે લેવાલી નોંધાઈ હતી.',
     image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=800&q=80',
     caption: 'શેરબજારમાં રેકોર્ડબ્રેક તેજીથી રોકાણકારોમાં ભારે ઉત્સાહ',
-    keyPoints: {
-      title: 'બજાર તેજીના મુખ્ય પરિબળો',
-      points: [
-        'સેન્સેક્સ અને નિફ્ટી સર્વોચ્ચ સ્તરે',
-        'રોકાણકારોની સંપત્તિમાં ₹૪ લાખ કરોડનો ઉછાળો',
-        'બેન્કિંગ અને આઈટી શેરોમાં ભારે લેવાલી',
-        'ભારતીય જીડીપી દર ૭.૨% રહેવાનો અંદાજ',
-      ],
-    },
   },
   editorial: {
     title: 'તંત્રીલેખ: ગુજરાતના આર્થિક અને સામાજિક વિકાસનો નવો સૂર્યોદય',
@@ -46,14 +37,6 @@ const fallbackPage3 = {
     authorRole: 'મુખ્ય સંપાદક, ગુજરાત પોસ્ટ',
     editorialText: 'કોઈપણ રાજ્ય કે રાષ્ટ્રના સર્વાંગી વિકાસનો મુખ્ય આધાર તેની દૂરંદેશી આર્થિક નીતિઓ અને પ્રજાની અથાક પરિશ્રમ ક્ષમતા પર રહેલો છે. વર્તમાન સમયમાં ગુજરાત જે તેજ ગતિએ સેમિકન્ડક્ટર, રિન્યુએબલ એનર્જી અને ગ્લોબલ ટ્રેડિંગ હબ તરીકે ઉભરી રહ્યું છે તે સમગ્ર રાષ્ટ્ર માટે એક ગૌરવપૂર્ણ આદર્શ મોડેલ સાબિત થયું છે.\n\nયુવા સાહસિકો માટે ઊભા થયેલા નવા અવસરો અને સ્ટાર્ટઅપ ઇકોસિસ્ટમ આવનારા દાયકામાં રાજ્યને નવી ઊંચાઈએ લઈ જશે. પારદર્શક પ્રશાસન અને નીતિગત સ્થિરતા જ કોઈપણ અર્થતંત્રને વૈશ્વિક કક્ષાએ સ્પર્ધાત્મક બનાવી શકે છે.',
     authorImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=300&q=80',
-    keyPoints: {
-      title: 'તંત્રીના મુખ્ય વિચારો',
-      points: [
-        'ઔદ્યોગિક સ્થિરતા અને પારદર્શક વહીવટ',
-        'યુવા ઉદ્યોગસાહસિકોને પ્રોત્સાહન',
-        'ગ્લોબલ ઇન્વેસ્ટમેન્ટ્સમાં ભારત મોખરે',
-      ],
-    },
   },
   politicsStory: {
     category: 'કેન્દ્રીય કેબિનેટ અને નીતિગત નિર્ણયો',
@@ -65,14 +48,6 @@ const fallbackPage3 = {
     articleBody: 'નવી દિલ્હી: કેન્દ્રીય મંત્રીમંડળની આજે મળેલી અગત્યની બેઠકમાં દેશના અર્થતંત્રને ગતિ આપવા માટે નવી રાષ્ટ્રીય નિકાસ નીતિ અને MSME સેક્ટર માટે ₹૨૫,૦૦૦ કરોડનું વિશેષ પ્રોત્સાહક પેકેજ મંજૂર કરવામાં આવ્યું છે.',
     image: 'https://images.unsplash.com/photo-1541872703-74c5e44368f9?auto=format&fit=crop&w=800&q=80',
     caption: 'કેન્દ્રીય મંત્રીમંડળની બેઠક બાદ પત્રકાર પરિષદ',
-    keyPoints: {
-      title: 'નીતિગત નિર્ણયોની વિગત',
-      points: [
-        'MSME માટે ₹૨૫,૦૦૦ કરોડનું પેકેજ',
-        'નિકાસકારો માટે સિંગલ વિન્ડો સિસ્ટમ',
-        'લોકલથી ગ્લોબલ સપ્લાય ચેઈન મજબૂત',
-      ],
-    },
   },
   techStory: {
     category: 'ટેકનોલોજી & સેમિકન્ડક્ટર મિશન',
@@ -84,13 +59,6 @@ const fallbackPage3 = {
     articleBody: 'ગાંધીનગર: રાજ્યમાં સેમિકન્ડક્ટર અને માઇક્રોચિપ ઉત્પાદન ક્ષેત્રે ક્રાંતિ સર્જવા માટે વિશ્વની અગ્રણી ટેક કંપનીઓ દ્વારા સાણંદ અને ધોલેરા સ્પેશિયલ ઇન્વેસ્ટમેન્ટ રિજનમાં ₹૫૦,૦૦૦ કરોડથી વધુના નવા સેમિકન્ડક્ટર ફેબ પ્લાન્ટ્સ સ્થાપવાની કાર્યવાહી પૂરજોશમાં આગળ વધી રહી છે.',
     image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
     caption: 'સાણંદ ખાતે નિર્માણાધીન અત્યાધુનિક ચિપ પ્લાન્ટ',
-    keyPoints: {
-      title: 'સેમિકન્ડક્ટર મિશન હાઈલાઈટ્સ',
-      points: [
-        'સાણંદ-ધોલેરામાં મેગા ચિપ પ્લાન્ટ્સ',
-        '₹૫૦,૦૦૦ કરોડથી વધુનું વૈશ્વિક રોકાણ',
-      ],
-    },
   },
   bankingStory: {
     category: 'બેન્કિંગ & મ્યુચ્યુઅલ ફંડ્સ',
@@ -102,13 +70,6 @@ const fallbackPage3 = {
     articleBody: 'અમદાવાદ: ભારતીય રિઝર્વ બેંક (RBI) દ્વારા આજે જાહેર કરાયેલી નાણાકીય નીતિ સમીક્ષામાં રેપો રેટ યથાવત રાખવામાં આવ્યો છે.',
     image: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?auto=format&fit=crop&w=800&q=80',
     caption: 'બેન્કિંગ ક્ષેત્રમાં સ્થિર વ્યાજદરથી ગ્રાહકોમાં રાહત',
-    keyPoints: {
-      title: 'સ્માર્ટ રોકાણ ટિપ્સ',
-      points: [
-        'હોમ લોનના EMI માં સ્થિરતા',
-        'SIP અને ગોલ્ડ ઇટીએફમાં ઉત્તમ વળતર',
-      ],
-    },
   },
   startupStory: {
     category: 'સ્ટાર્ટઅપ & સાહસિકતા',
@@ -210,7 +171,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         body: bStory.body || bStory.articleBody || fallbackPage3.businessStory.articleBody,
         image: bStory.image || fallbackPage3.businessStory.image,
         caption: bStory.caption || bStory.imageCaption || fallbackPage3.businessStory.caption,
-        keyPoints: bStory.keyPoints || fallbackPage3.businessStory.keyPoints,
+        keyPoints: undefined,
       },
       editorial: {
         title: edit.title || fallbackPage3.editorial.title,
@@ -219,7 +180,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         authorRole: edit.authorRole || fallbackPage3.editorial.authorRole,
         editorialText: edit.editorialText || fallbackPage3.editorial.editorialText,
         authorImage: edit.authorImage || fallbackPage3.editorial.authorImage,
-        keyPoints: edit.keyPoints || fallbackPage3.editorial.keyPoints,
+        keyPoints: undefined,
       },
       politicsStory: {
         category: pStory.category || fallbackPage3.politicsStory.category,
@@ -231,7 +192,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         body: pStory.body || pStory.articleBody || fallbackPage3.politicsStory.articleBody,
         image: pStory.image || fallbackPage3.politicsStory.image,
         caption: pStory.caption || pStory.imageCaption || fallbackPage3.politicsStory.caption,
-        keyPoints: pStory.keyPoints || fallbackPage3.politicsStory.keyPoints,
+        keyPoints: undefined,
       },
       techStory: {
         category: tStory.category || fallbackPage3.techStory.category,
@@ -243,12 +204,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         body: tStory.body || tStory.articleBody || fallbackPage3.techStory.articleBody,
         image: tStory.image || fallbackPage3.techStory.image,
         caption: tStory.caption || tStory.imageCaption || fallbackPage3.techStory.caption,
-        keyPoints: tStory.keyPoints
-          ? {
-              ...tStory.keyPoints,
-              points: (tStory.keyPoints.points || fallbackPage3.techStory.keyPoints.points).slice(0, 2),
-            }
-          : fallbackPage3.techStory.keyPoints,
+        keyPoints: undefined,
       },
       bankingStory: {
         category: bkStory.category || fallbackPage3.bankingStory.category,
@@ -260,12 +216,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         body: bkStory.body || bkStory.articleBody || fallbackPage3.bankingStory.articleBody,
         image: bkStory.image || fallbackPage3.bankingStory.image,
         caption: bkStory.caption || bkStory.imageCaption || fallbackPage3.bankingStory.caption,
-        keyPoints: bkStory.keyPoints
-          ? {
-              ...bkStory.keyPoints,
-              points: (bkStory.keyPoints.points || fallbackPage3.bankingStory.keyPoints.points).slice(0, 2),
-            }
-          : fallbackPage3.bankingStory.keyPoints,
+        keyPoints: undefined,
       },
       startupStory: {
         category: sStory.category || fallbackPage3.startupStory.category,
@@ -581,7 +532,6 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                     onSelect={() => onSelectSlot?.('businessStory.image', 'બિઝનેસ ઈમેજ')}
                     containerHeight="200px"
                     alt="Business Story Image"
-                    actionsClassName={data.businessStory.keyPoints ? 'w-[52%]' : undefined}
                   />
                   {data.businessStory.caption && (
                     <EditableTextSlot
@@ -592,15 +542,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                       className="text-[10.5px] text-slate-600 italic mt-0.5 font-sans text-center"
                     />
                   )}
-                  {data.businessStory.keyPoints && (
-                    <div className="absolute top-0 right-0 w-[47%]">
-                      <KeyPointsBox
-                        basePath="businessStory"
-                        title={data.businessStory.keyPoints.title}
-                        points={data.businessStory.keyPoints.points}
-                      />
-                    </div>
-                  )}
+                  
 
                   {/* Under-image 2 paragraphs side by side */}
                   <div className="mt-1.5 pt-1.5 border-t border-slate-400 flex-1 overflow-hidden grid grid-cols-2 gap-3">
@@ -701,17 +643,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
               </div>
 
               {/* Key Insights Box */}
-              {data.editorial.keyPoints && (
-                <div className="mt-1 shrink-0">
-                  <KeyPointsBox
-                    basePath="editorial"
-                    title={data.editorial.keyPoints.title}
-                    points={data.editorial.keyPoints.points}
-                    titleClassName="text-[10px]"
-                    pointClassName="text-[9.5px]"
-                  />
-                </div>
-              )}
+              
             </div>
           </div>
         </div>
@@ -773,13 +705,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                     containerHeight="95px"
                     className="mb-1"
                   />
-                  {data.politicsStory.keyPoints && (
-                    <KeyPointsBox
-                      basePath="politicsStory"
-                      title={data.politicsStory.keyPoints.title}
-                      points={data.politicsStory.keyPoints.points}
-                    />
-                  )}
+                  
                   <div className="text-[10px] leading-[1.35] text-slate-800 font-serif text-justify overflow-hidden mt-0.5">
                     <EditableTextSlot
                       value={data.politicsStory.paragraph2}
@@ -849,13 +775,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                     containerHeight="95px"
                     className="mb-1"
                   />
-                  {data.techStory.keyPoints && (
-                    <KeyPointsBox
-                      basePath="techStory"
-                      title={data.techStory.keyPoints.title}
-                      points={data.techStory.keyPoints.points.slice(0, 2)}
-                    />
-                  )}
+                  
                   <div className="text-[10px] leading-[1.35] text-slate-800 font-serif text-justify overflow-hidden mt-0.5">
                     <EditableTextSlot
                       value={data.techStory.paragraph2}
@@ -918,17 +838,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                 />
               </div>
 
-              {data.bankingStory.keyPoints && (
-                <div className="mt-1">
-                  <KeyPointsBox
-                    basePath="bankingStory"
-                    title={data.bankingStory.keyPoints.title}
-                    points={data.bankingStory.keyPoints.points.slice(0, 2)}
-                    titleClassName="text-[9.5px]"
-                    pointClassName="text-[9px]"
-                  />
-                </div>
-              )}
+              
             </div>
           </div>
 

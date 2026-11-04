@@ -5,6 +5,7 @@ import type { Language } from "@/types";
 import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
+import { filterUniqueArticles } from "@/lib/articleDeduplication";
 
 export const revalidate = 30;
 
@@ -197,7 +198,7 @@ export default async function NewsDetailPage(
 
   const categoryArticles = catRes?.articles || [];
   const fallbackArticles = fallbackRes?.articles || [];
-  const trending = trendingRes?.articles || [];
+  const trending = filterUniqueArticles(trendingRes?.articles || [], [article]);
 
   const currentTags = new Set([
     ...(article.tags || []),
