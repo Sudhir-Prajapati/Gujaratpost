@@ -582,11 +582,25 @@ export function autoFillPage3(
     clone.businessStory = { ...clone.businessStory, ...lead };
   }
 
-  // 2. Distinguished Editorial Column (1,700 chars solid fill)
+  // 2. Distinguished Editorial Column (1,750 chars solid fill)
   const editArt = pickNextUniqueArticle(articles, [], usedIds);
   if (editArt) {
     const edit = mapArticleToStory(editArt, 'editorial');
-    clone.politicsStory = { ...clone.politicsStory, ...edit };
+    clone.editorial = {
+      title: edit.headline || clone.editorial?.title || 'ગુજરાતના આર્થિક અને સામાજિક વિકાસનો નવો સૂર્યોદય',
+      subheadline: edit.subheadline || clone.editorial?.subheadline || 'આધુનિક ટેકનોલોજી અને પારદર્શક વહીવટથી રાજ્યનું ભવિષ્ય ઉજ્જવળ બનશે',
+      authorName: clone.editorial?.authorName || 'રમેશભાઈ પંડ્યા',
+      authorRole: clone.editorial?.authorRole || 'મુખ્ય સંપાદક, ગુજરાત પોસ્ટ',
+      editorialText: edit.paragraph1 || edit.articleBody || clone.editorial?.editorialText || '',
+      authorImage: clone.editorial?.authorImage || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=300&q=80',
+    };
+  }
+
+  // 3. National Economic Policy Story (Row 2 Left)
+  const polArt = pickNextUniqueArticle(articles, [], usedIds);
+  if (polArt) {
+    const pol = mapArticleToStory(polArt, 'block');
+    clone.politicsStory = { ...(clone.politicsStory || {}), ...pol };
   }
 
   // 3. Tech Story (Row 2 Right)
@@ -698,6 +712,7 @@ export function autoFillPage4(
       ...ott,
       ottPicks: {
         title: 'આ સપ્તાહના ટોપ-૩ OTT સ્ટ્રીમિંગ રિલીઝ',
+        tagline: 'ઓટીટી વિશેષ',
         pick1Platform: 'નેટફ્લિક્સ',
         pick1Title: 'ધ ગ્રેટ ઇન્ડિયન ક્રાઇમ ડ્રામા (સીરીઝ)',
         pick2Platform: 'પ્રાઇમ વિડીયો',
@@ -794,19 +809,19 @@ export async function autoFillAllPages(
   let clone: NewspaperTemplateData = JSON.parse(JSON.stringify(currentData));
 
   // Page 1: Top breaking & lead stories
-  clone.page1 = autoFillPage1(clone.page1, topArticles.length > 0 ? topArticles : globalPool, usedArticleIds);
+  clone.page1 = autoFillPage1(clone.page1, [...topArticles, ...globalPool], usedArticleIds);
 
   // Page 2: Gujarat state & district stories (strictly unique)
-  clone.page2 = autoFillPage2(clone.page2, gujaratArticles.length > 0 ? gujaratArticles : globalPool, usedArticleIds);
+  clone.page2 = autoFillPage2(clone.page2, [...gujaratArticles, ...globalPool], usedArticleIds);
 
   // Page 3: Business, policy & finance stories (strictly unique)
-  clone.page3 = autoFillPage3(clone.page3, businessArticles.length > 0 ? businessArticles : globalPool, usedArticleIds);
+  clone.page3 = autoFillPage3(clone.page3, [...businessArticles, ...globalPool], usedArticleIds);
 
   // Page 4: Sports, cinema, entertainment & lifestyle stories (strictly unique)
   clone.page4 = autoFillPage4(
     clone.page4,
-    sportsArticles,
-    entertainmentArticles,
+    [...sportsArticles, ...globalPool],
+    [...entertainmentArticles, ...globalPool],
     globalPool,
     usedArticleIds
   );

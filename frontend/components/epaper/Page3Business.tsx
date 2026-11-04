@@ -642,7 +642,23 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                 />
               </div>
 
-              {/* Key Insights Box */}
+              {/* Bottom Editorial Sign-off & Analysis Highlight Box */}
+              <div className="shrink-0 mt-1 pt-1.5 border-t-2 border-slate-900 bg-amber-100/70 p-2 rounded-xs border border-amber-800/40 font-sans shadow-2xs">
+                <div className="flex items-center justify-between text-[10px] font-black text-amber-950 mb-0.5">
+                  <span className="flex items-center gap-1">
+                    <span>📌</span>
+                    <span>સંપાદકીય વિશ્લેષણ અને મુખ્ય તારણ</span>
+                  </span>
+                  <span className="text-[8.5px] bg-red-700 text-white font-bold px-1.5 py-0.2 rounded-2xs">વિશેષ સંકેત</span>
+                </div>
+                <div className="text-[9.5px] text-slate-800 font-serif leading-[1.35] italic text-justify">
+                  “રાજ્યના સર્વાંગી વિકાસ માટે પારદર્શક વહીવટ, ઔદ્યોગિક નીતિઓનું સચોટ અમલીકરણ અને યુવા ઉદ્યોગસાહસિકોને પ્રોત્સાહન આપવું એ સમયની માંગ છે. આર્થિક સુધારાઓના પરિણામો સામાન્ય જનતા સુધી પહોંચે તે માટે સંકલિત પ્રયાસો આવશ્યક છે.”
+                </div>
+                <div className="mt-1 flex items-center justify-between text-[8.5px] text-slate-600 font-sans border-t border-amber-300 pt-0.5">
+                  <span className="font-bold text-slate-800">— મુખ્ય સંપાદકીય ડેસ્ક, ગુજરાત પોસ્ટ</span>
+                  <span className="text-emerald-800 font-bold">વિશેષ વિશ્લેષણ</span>
+                </div>
+              </div>
               
             </div>
           </div>
@@ -834,6 +850,15 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                   onChange={(val) => updateField('bankingStory.paragraph1', val)}
                   isSelected={selectedPath === 'bankingStory.paragraph1'}
                   onSelect={() => onSelectSlot?.('bankingStory.paragraph1', 'બેન્કિંગ પેરાગ્રાફ ૧')}
+                  multiline
+                />
+              </div>
+              <div className="mt-1 bg-amber-50/60 border border-amber-800/30 p-1 rounded-xs text-[10px] text-slate-700 font-sans leading-tight">
+                <EditableTextSlot
+                  value={data.bankingStory.paragraph2}
+                  onChange={(val) => updateField('bankingStory.paragraph2', val)}
+                  isSelected={selectedPath === 'bankingStory.paragraph2'}
+                  onSelect={() => onSelectSlot?.('bankingStory.paragraph2', 'બેન્કિંગ પેરાગ્રાફ ૨')}
                   multiline
                 />
               </div>
