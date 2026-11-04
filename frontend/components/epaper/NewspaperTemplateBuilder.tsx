@@ -1518,26 +1518,25 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
     setAutoFillMenuOpen(false);
     try {
       const clone: NewspaperTemplateData = JSON.parse(JSON.stringify(data));
+      const usedIds = new Set<string>();
       if (pageToFill === 1) {
-        const articles = await fetchPublishedArticles({ limit: 20 });
-        clone.page1 = autoFillPage1(clone.page1, articles);
+        const articles = await fetchPublishedArticles({ limit: 40 });
+        clone.page1 = autoFillPage1(clone.page1, articles, usedIds);
       } else if (pageToFill === 2) {
-        const gujArticles = await fetchPublishedArticles({ categorySlug: 'gujarat', limit: 15 });
-        const fallbackArticles = gujArticles.length >= 6 ? gujArticles : await fetchPublishedArticles({ limit: 15 });
-        clone.page2 = autoFillPage2(clone.page2, gujArticles.length >= 6 ? gujArticles : [...gujArticles, ...fallbackArticles]);
+        const gujArticles = await fetchPublishedArticles({ categorySlug: 'gujarat', limit: 30 });
+        const fallbackArticles = await fetchPublishedArticles({ limit: 30 });
+        clone.page2 = autoFillPage2(clone.page2, gujArticles.length >= 6 ? gujArticles : [...gujArticles, ...fallbackArticles], usedIds);
       } else if (pageToFill === 3) {
-        const bizArticles = await fetchPublishedArticles({ categorySlug: 'business', limit: 15 });
-        const fallbackArticles = bizArticles.length >= 6 ? bizArticles : await fetchPublishedArticles({ limit: 15 });
-        clone.page3 = autoFillPage3(clone.page3, bizArticles.length >= 6 ? bizArticles : [...bizArticles, ...fallbackArticles]);
+        const bizArticles = await fetchPublishedArticles({ categorySlug: 'business', limit: 25 });
+        const fallbackArticles = await fetchPublishedArticles({ limit: 30 });
+        clone.page3 = autoFillPage3(clone.page3, bizArticles.length >= 6 ? bizArticles : [...bizArticles, ...fallbackArticles], usedIds);
       } else if (pageToFill === 4) {
-        const [sportsArticles, entArticles] = await Promise.all([
-          fetchPublishedArticles({ categorySlug: 'sports', limit: 10 }),
-          fetchPublishedArticles({ categorySlug: 'entertainment', limit: 10 }),
+        const [sportsArticles, entArticles, fallbackArticles] = await Promise.all([
+          fetchPublishedArticles({ categorySlug: 'sports', limit: 25 }),
+          fetchPublishedArticles({ categorySlug: 'entertainment', limit: 25 }),
+          fetchPublishedArticles({ limit: 35 }),
         ]);
-        const fallbackArticles = await fetchPublishedArticles({ limit: 10 });
-        const safeSports = sportsArticles.length >= 3 ? sportsArticles : [...sportsArticles, ...fallbackArticles];
-        const safeEnt = entArticles.length >= 2 ? entArticles : [...entArticles, ...fallbackArticles];
-        clone.page4 = autoFillPage4(clone.page4, safeSports, safeEnt);
+        clone.page4 = autoFillPage4(clone.page4, sportsArticles, entArticles, fallbackArticles, usedIds);
       }
       setData(clone);
       setAutoFillSuccessMsg(`પેજ ${pageToFill} ના તમામ સ્લોટ વેબસાઇટના તાજા આર્ટિકલ્સથી ભરાઈ ગયા છે!`);

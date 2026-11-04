@@ -347,7 +347,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
 
   return (
     <EpaperReadOnlyProvider value={isReadOnly}>
-      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-[#fffefb] text-slate-950 shadow-2xl border border-slate-400/80 p-7 flex flex-col justify-between font-serif select-none box-border overflow-hidden relative shrink-0">
+      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-[#fffefb] text-slate-950 shadow-2xl border border-slate-400/80 p-6 flex flex-col justify-between font-serif select-none box-border overflow-hidden relative shrink-0">
 
         {/* ─── 1. TOP SECTION HEADER BAR (EXACT SAME AS PAGE 2) ─── */}
         <div className="shrink-0 mb-1.5">
@@ -467,7 +467,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 3. ROW 1: MEGA BUSINESS LEAD (8 Cols) + DISTINGUISHED EDITORIAL COLUMN (4 Cols) ─── */}
-        <div className="grid grid-cols-12 gap-0 h-[525px] mb-2 shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 gap-0 h-[560px] mb-2 shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Left: Mega Business Lead Story (col-span-8) */}
           <div className="col-span-8 pr-4 border-r border-slate-400 flex flex-col justify-between">
             <div className="h-full flex flex-col">
@@ -649,7 +649,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 4. ROW 2: NATIONAL ECONOMIC POLICY (6 Cols) + SEMICONDUCTOR TECH (6 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[310px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[340px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Left Feature: National Economic Policy & MSME (col-span-6) */}
           <div className="col-span-6 pr-4 flex flex-col justify-between overflow-hidden h-full">
             <div className="h-full flex flex-col overflow-hidden">
@@ -792,7 +792,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 5. ROW 3: TRIPLE FINANCIAL & INNOVATION COLUMNS (4 Cols + 4 Cols + 4 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[340px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[380px] shrink-0 border-b border-slate-400 pb-2 overflow-hidden">
           {/* Col 1: Banking & Wealth Guide (col-span-4) */}
           <div className="col-span-4 pr-3 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col">
@@ -958,7 +958,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
         </div>
 
         {/* ─── 6. ROW 4: CORPORATE BRIEFS (7 Cols, 3 Bulletins) + CORPORATE SOLUS AD (5 Cols) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-1.5 h-[280px] shrink-0 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-1.5 h-[370px] shrink-0 overflow-hidden">
           {/* Left: Corporate Diary / Fast Bulletins (col-span-7) */}
           <div className="col-span-7 pr-3 flex flex-col justify-between h-full overflow-hidden">
             <div className="h-full flex flex-col justify-between">
@@ -1031,7 +1031,7 @@ export const Page3Business: React.FC<Page3BusinessProps> = ({
                   onImageChange={(img) => updateField('advertisement.image', img)}
                   isSelected={selectedPath === 'advertisement.image'}
                   onSelect={() => onSelectSlot?.('advertisement.image', 'જાહેરાત ઈમેજ')}
-                  containerHeight="220px"
+                  containerHeight="290px"
                   alt="Business Partner Ad"
                 />
                 <div className="text-center mt-0.5 shrink-0">

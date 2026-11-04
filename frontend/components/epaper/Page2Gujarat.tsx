@@ -281,7 +281,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
 
   return (
     <EpaperReadOnlyProvider value={isReadOnly}>
-      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-[#fffefb] text-slate-950 shadow-2xl border border-slate-400/80 p-8 flex flex-col justify-between font-serif select-none box-border overflow-hidden relative shrink-0">
+      <div className="w-[1224px] h-[1815px] max-h-[1815px] max-w-[1224px] bg-[#fffefb] text-slate-950 shadow-2xl border border-slate-400/80 p-6 flex flex-col justify-between font-serif select-none box-border overflow-hidden relative shrink-0">
 
         {/* ─── 1. TOP SECTION HEADER BAR (~30% variation: Regional & State Edition Header) ─── */}
         <div className="shrink-0 mb-1">
@@ -310,7 +310,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         </div>
 
         {/* ─── 2. MAIN STORY ROW (73% Lead State Story + 27% Side Lead Spotlight) ─── */}
-        <div className="grid grid-cols-12 gap-0 h-[650px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
+        <div className="grid grid-cols-12 gap-0 h-[660px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
           {/* Main State Lead Story - 73% (col-span-9) */}
           <div className="col-span-9 pr-4 border-r border-slate-400 flex flex-col justify-between">
             <div className="h-full flex flex-col">
@@ -532,7 +532,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         </div>
 
         {/* ─── 3. THREE-ACROSS DISTRICT NEWS BLOCKS (Surat | Rajkot | Vadodara) ─── */}
-        <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 h-[490px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
+        <div className="grid grid-cols-3 divide-x divide-slate-400 gap-0 h-[510px] mb-2.5 shrink-0 border-b border-slate-400 pb-2.5 overflow-hidden">
           {data.districtStories.slice(0, 3).map((dist, idx) => (
             <div
               key={idx}
@@ -614,7 +614,7 @@ export const Page2Gujarat: React.FC<Page2GujaratProps> = ({
         </div>
 
         {/* ─── 4. BOTTOM ROW: TWO FULL NEWS FEATURES (NO ADVERTISEMENT!) ─── */}
-        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[429px] shrink-0 overflow-hidden">
+        <div className="grid grid-cols-12 divide-x divide-slate-400 gap-0 mb-2 h-[480px] shrink-0 overflow-hidden">
           {/* Bottom Left Feature: Agriculture & Rural Economy */}
           <div className="col-span-6 pr-4 flex flex-col justify-between">
             <div className="h-full flex flex-col">
