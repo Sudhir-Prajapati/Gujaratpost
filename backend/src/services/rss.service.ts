@@ -93,7 +93,7 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
  * Generates dynamic RSS 2.0 XML for public news articles, photo gallery, videos, and reels.
  */
 export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promise<GeneratedFeedResult> {
-  const limit = Math.min(Math.max(options.limit ?? 50, 1), 100);
+  const limit = Math.min(Math.max(options.limit ?? 100, 1), 100);
   const rawCategorySlug = (options.categorySlug || '').trim().toLowerCase().replace(/\.xml$/, '');
   let cleanTopic = rawCategorySlug;
   if (cleanTopic.includes('-updates-')) {
@@ -415,24 +415,19 @@ ${itemsXml}  </channel>
       channelTitle = 'આરોગ્ય & હેલ્થ સમાચાર - Gujarat Post';
       channelDescription = 'Latest Health, Wellness, Diet, and Medical News from Gujarat Post';
     } else if (categorySlug === 'technology' || categorySlug === 'tech') {
-      where.AND.push({
-        OR: [
-          ...(catIds.length > 0 ? [{ categoryId: { in: catIds } }] : []),
-          { tags: { some: { tag: { slug: { in: ['technology', 'tech', ...searchSlugs] } } } } },
-          { title: { contains: 'technology' } },
-          { title: { contains: 'tech' } },
-          { title: { contains: 'smartphone' } },
-          { title: { contains: 'whatsapp' } },
-          { titleGu: { contains: 'ટેકનોલોજી' } },
-          { titleGu: { contains: 'સ્માર્ટફોન' } },
-          { titleGu: { contains: 'વોટ્સએપ' } },
-          { titleGu: { contains: 'ઇન્ટરનેટ' } },
-          { titleGu: { contains: 'આઇફોન' } },
-          { titleGu: { contains: 'ગૂગલ' } },
-          { titleGu: { contains: 'મોબાઇલ' } },
-          { titleGu: { contains: 'ઇસરો' } },
-        ],
-      });
+      const orConditions: any[] = [];
+      if (catIds.length > 0) {
+        orConditions.push({ categoryId: { in: catIds } });
+        orConditions.push({ categories: { some: { categoryId: { in: catIds } } } });
+      }
+      orConditions.push({ category: { slug: { in: searchSlugs } } });
+      orConditions.push({ categories: { some: { category: { slug: { in: searchSlugs } } } } });
+      orConditions.push({ category: { name: 'Technology' } });
+      orConditions.push({ category: { nameGu: 'ટેકનોલોજી' } });
+      orConditions.push({ categories: { some: { category: { name: 'Technology' } } } });
+      orConditions.push({ categories: { some: { category: { nameGu: 'ટેકનોલોજી' } } } });
+
+      where.AND.push({ OR: orConditions });
       channelTitle = 'ટેકનોલોજી સમાચાર - Gujarat Post';
       channelDescription = 'Latest Technology, Gadgets, Mobile, and Digital Innovations from Gujarat Post';
     } else if (categorySlug === 'crime') {
@@ -479,12 +474,45 @@ ${itemsXml}  </channel>
         channelTitle = `${categorySlug.toUpperCase()} News - Gujarat Post`;
       }
     }
+  } else if (isHomeSlug) {
+    // Filter strictly to articles selected for the Home page (isFeatured = true, Hero settings IDs, or Home category)
+    let homeSettingIds: string[] = [];
+    try {
+      const heroSetting = await prisma.heroSetting.findFirst();
+      if (heroSetting) {
+        const parseIds = (raw: any): string[] => {
+          if (!raw) return [];
+          try {
+            const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+            return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+          } catch {
+            return [];
+          }
+        };
+        const heroGridIds = parseIds(heroSetting.heroGridIds);
+        const trendingNewsIds = parseIds(heroSetting.trendingNewsIds);
+        const popularNewsIds = parseIds(heroSetting.popularNewsIds);
+        const slots = [heroSetting.slot1Id, heroSetting.slot2Id, heroSetting.slot3Id].map((s) => (s ? String(s) : '')).filter(Boolean);
+        homeSettingIds = Array.from(new Set([...heroGridIds, ...trendingNewsIds, ...popularNewsIds, ...slots]));
+      }
+    } catch {}
+
+    where.AND.push({
+      OR: [
+        { isFeatured: true },
+        ...(homeSettingIds.length > 0 ? [{ id: { in: homeSettingIds } }] : []),
+        { category: { slug: 'home' } },
+        { category: { name: 'Home' } },
+        { categories: { some: { category: { slug: 'home' } } } },
+        { categories: { some: { category: { name: 'Home' } } } },
+      ],
+    });
   }
 
   const articles = await prisma.post.findMany({
     where,
     take: limit,
-    orderBy: { createdAt: 'desc' },
+    orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
     select: {
       id: true,
       slug: true,

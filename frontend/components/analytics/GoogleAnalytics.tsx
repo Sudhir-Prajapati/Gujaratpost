@@ -4,7 +4,7 @@ import React, { useEffect, useRef, Suspense } from 'react';
 import Script from 'next/script';
 import { usePathname, useSearchParams } from 'next/navigation';
 
-const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-4K0RT88M7L';
+const GA_ID = process.env.NEXT_PUBLIC_GA_ID || 'G-95H476MCPR';
 
 function GoogleAnalyticsRouteTracker() {
   const pathname = usePathname();

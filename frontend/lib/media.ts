@@ -37,35 +37,87 @@ export function getVideoPosterUrl(url?: string | null): string {
   return clean;
 }
 
-export function sanitizeImageUrl(url?: string | null): string {
+/**
+ * Safely optimize Cloudinary image delivery URLs by injecting standard f_auto,q_auto
+ * capabilities without changing file extensions, dimensions, or aspect ratios.
+ * 
+ * Rules:
+ * 1. Never transforms video URLs.
+ * 2. Never transforms PDFs or raw documents.
+ * 3. Never alters non-Cloudinary URLs.
+ * 4. Preserves public IDs, version identifiers, folders, file extensions, and query parameters.
+ * 5. Avoids duplicate transformation parameters.
+ * 6. Does NOT rewrite file extensions to .avif.
+ */
+export function optimizeCloudinaryUrl(url?: string | null): string {
   if (!url || typeof url !== 'string') return '';
   let clean = url.trim();
+
+  // Strip enclosing quotes if present
   if ((clean.startsWith('"') && clean.endsWith('"')) || (clean.startsWith("'") && clean.endsWith("'"))) {
     clean = clean.slice(1, -1).trim();
   }
-  if (clean.includes(',')) {
-    const parts = clean.split(',').map((p) => p.trim()).filter(Boolean);
-    clean = parts[0] || '';
+
+  // Handle legacy multiple comma-separated URLs (e.g. "url1, url2") without splitting Cloudinary transformation params
+  if (clean.includes(',') && /,\s*https?:\/\//i.test(clean)) {
+    const parts = clean.split(/,\s*https?:\/\//i);
+    clean = parts[0]?.trim() || '';
   }
+
+  // Preserve non-Cloudinary URLs untouched
+  if (!clean.includes('res.cloudinary.com')) return clean;
+
+  const lower = clean.toLowerCase();
+
+  // Never transform video URLs
+  if (isMediaVideo(clean)) {
+    return clean;
+  }
+
+  // Never transform raw PDFs or documents
   if (
-    clean.includes('res.cloudinary.com') &&
-    clean.includes('/raw/upload/') &&
-    !clean.toLowerCase().endsWith('.pdf') &&
-    !clean.toLowerCase().includes('.pdf?')
+    lower.endsWith('.pdf') ||
+    lower.includes('.pdf?') ||
+    lower.endsWith('.doc') ||
+    lower.endsWith('.docx')
   ) {
+    return clean;
+  }
+
+  // Normalize misclassified /raw/upload/ to /image/upload/ for valid image file extensions only
+  if (clean.includes('/raw/upload/') && /\.(?:jpg|jpeg|png|webp|gif|jfif|bmp|svg)(?:\?.*)?$/i.test(clean)) {
     clean = clean.replace('/raw/upload/', '/image/upload/');
   }
-  // Convert all Cloudinary images to .avif format for optimal web performance
-  if (
-    clean.includes('res.cloudinary.com') &&
-    clean.includes('/image/upload/') &&
-    !isMediaVideo(clean) &&
-    !clean.toLowerCase().endsWith('.pdf') &&
-    !clean.toLowerCase().includes('.pdf?')
-  ) {
-    clean = clean.replace(/\.(?:jpg|jpeg|png|webp|gif|jfif|bmp)(?:\?.*)?$/i, '.avif');
+
+  // Must be a Cloudinary image delivery URL
+  if (!clean.includes('/image/upload/')) return clean;
+
+  // Never modify attachment download directives
+  if (clean.includes('/fl_attachment')) return clean;
+
+  const uploadSegment = '/image/upload/';
+  const uploadIndex = clean.indexOf(uploadSegment);
+  const prefix = clean.substring(0, uploadIndex + uploadSegment.length);
+  const rest = clean.substring(uploadIndex + uploadSegment.length);
+
+  // Check if f_auto or q_auto already exist in the URL transformation segment
+  const hasFAuto = /[\/,]f_auto([\/,]|$)/.test(clean);
+  const hasQAuto = /[\/,]q_auto([\/,]|$)/.test(clean);
+
+  if (hasFAuto && hasQAuto) {
+    return clean;
   }
-  return clean;
+
+  const addParams: string[] = [];
+  if (!hasFAuto) addParams.push('f_auto');
+  if (!hasQAuto) addParams.push('q_auto');
+  const paramStr = addParams.join(',');
+
+  return prefix + paramStr + '/' + rest;
+}
+
+export function sanitizeImageUrl(url?: string | null): string {
+  return optimizeCloudinaryUrl(url);
 }
 
 function getBackendOrigin(): string {

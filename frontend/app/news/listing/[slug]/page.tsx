@@ -1,119 +1,121 @@
-import { CATEGORY_META, categorySlugMapping, CATEGORY_CUSTOM_SEO, getCategoryCustomSeo } from "@/data";
-import { getPublicArticles, getPublicCategories } from "@/lib/api";
-import { sortArticlesByLatest } from "@/lib/utils";
-import CategoryPageClient from "@/app/category/[slug]/CategoryPageClient";
-import { notFound } from "next/navigation";
-
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  const rawLower = (slug || '').toLowerCase().trim();
-  const resolvedSlug = categorySlugMapping[rawLower] || categorySlugMapping[slug] || rawLower;
-  const category = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
-  const name = category?.name || slug;
-
-  const customSeo = getCategoryCustomSeo(resolvedSlug, name, category?.gu) || CATEGORY_CUSTOM_SEO[resolvedSlug] || CATEGORY_CUSTOM_SEO[rawLower];
-
-  const pageTitle = customSeo?.title || `${name} News`;
-  const metaDesc = customSeo?.description || `Latest ${name} news, photos and videos from Gujarat Post.`;
-  const canonicalUrl = customSeo?.url || `https://www.gujaratpost.in/news/listing/${slug}`;
-
-  return {
-    title: customSeo?.title ? { absolute: customSeo.title } : pageTitle,
-    description: metaDesc,
-    keywords: customSeo?.keywords,
-    alternates: {
-      canonical: canonicalUrl,
-      types: {
-        'application/rss+xml': `/rss/${resolvedSlug || slug}.xml`,
-      },
-    },
-    openGraph: {
-      title: pageTitle.includes('Gujarat Post') ? pageTitle : `${pageTitle} | Gujarat Post`,
-      description: metaDesc,
-      url: canonicalUrl,
-      type: "website",
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title: pageTitle.includes('Gujarat Post') ? pageTitle : `${pageTitle} | Gujarat Post`,
-      description: metaDesc,
-    },
-  };
-}
-
-export default async function NewsListingPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ page?: string; limit?: string }>;
-}) {
-  const { slug } = await params;
-  const resolvedSearchParams = await searchParams;
-  const page = parseInt(resolvedSearchParams?.page || "1", 10);
-  const limit = parseInt(resolvedSearchParams?.limit || "42", 10);
-
-  const rawLower = (slug || '').toLowerCase().trim();
-  const resolvedSlug = categorySlugMapping[rawLower] || categorySlugMapping[slug] || rawLower;
-
-  const fallbackCat = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
-
-  const [dbCategories, catRes] = await Promise.all([
-    fallbackCat ? Promise.resolve([]) : getPublicCategories().catch(() => []),
-    getPublicArticles({
-      categorySlug: resolvedSlug === 'trending' ? undefined : resolvedSlug,
-      isTrending: resolvedSlug === 'trending' ? true : undefined,
-      page,
-      limit,
-    }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-  ]);
-
-  const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);
-
-  if (!dbCat && !fallbackCat) {
-    notFound();
-  }
-
-  const categoryData = {
-    name: dbCat?.name || fallbackCat?.name || slug,
-    nameGu: dbCat?.nameGu || fallbackCat?.gu || slug,
-    nameHi: dbCat?.nameHi || fallbackCat?.hi || slug,
-    description: dbCat?.description || dbCat?.descriptionGu || "",
-    icon: dbCat?.icon || "newspaper",
-    color: dbCat?.color || "#dc2626",
-  };
-
-  const customSeo = getCategoryCustomSeo(resolvedSlug, categoryData.name, categoryData.nameGu);
-
-  let rawArticles = catRes?.articles || [];
-  let total = catRes?.total || 0;
-  let totalPages = catRes?.totalPages || 1;
-
-  if (!rawArticles || rawArticles.length === 0) {
-    const fallbackRes = await getPublicArticles({
-      page: 1,
-      limit: 42,
-    }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
-    rawArticles = fallbackRes.articles || [];
-    total = fallbackRes.total || rawArticles.length;
-    totalPages = fallbackRes.totalPages || 1;
-  }
-
-  const articles = sortArticlesByLatest(rawArticles);
-
-  return (
-    <CategoryPageClient
-      articles={articles}
-      category={categoryData}
-      trending={[]}
-      customSeo={customSeo}
-      currentPage={page}
-      totalPages={totalPages || Math.ceil(total / limit)}
-      slug={resolvedSlug}
-      resolvedSlug={resolvedSlug}
-    />
-  );
-}
+import { CATEGORY_META, categorySlugMapping, CATEGORY_CUSTOM_SEO, getCategoryCustomSeo } from "@/data";
+import { getPublicArticles, getPublicCategories } from "@/lib/api";
+import { sortArticlesByLatest } from "@/lib/utils";
+import CategoryPageClient from "@/app/category/[slug]/CategoryPageClient";
+import { notFound } from "next/navigation";
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const rawLower = (slug || '').toLowerCase().trim();
+  const resolvedSlug = categorySlugMapping[rawLower] || categorySlugMapping[slug] || rawLower;
+  const category = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
+  const name = category?.name || (slug || '').replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const customSeo = getCategoryCustomSeo(resolvedSlug, name, category?.gu) || CATEGORY_CUSTOM_SEO[resolvedSlug] || CATEGORY_CUSTOM_SEO[rawLower];
+
+  const pageTitle = customSeo?.title || `${name} News`;
+  const metaDesc = customSeo?.description || `Latest ${name} news, photos and videos from Gujarat Post.`;
+  const canonicalUrl = (resolvedSlug === 'fact-check' || rawLower === 'fact-check' || rawLower === 'factcheck')
+    ? 'https://www.gujaratpost.in/news/listing/Fact-Check'
+    : (customSeo?.url && customSeo.url.includes('/news/listing/') ? customSeo.url : `https://www.gujaratpost.in/news/listing/${slug}`);
+
+  return {
+    title: customSeo?.title ? { absolute: customSeo.title } : pageTitle,
+    description: metaDesc,
+    keywords: customSeo?.keywords,
+    alternates: {
+      canonical: canonicalUrl,
+      types: {
+        'application/rss+xml': `/rss/${resolvedSlug || slug}.xml`,
+      },
+    },
+    openGraph: {
+      title: pageTitle.includes('Gujarat Post') ? pageTitle : `${pageTitle} | Gujarat Post`,
+      description: metaDesc,
+      url: canonicalUrl,
+      type: "website",
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: pageTitle.includes('Gujarat Post') ? pageTitle : `${pageTitle} | Gujarat Post`,
+      description: metaDesc,
+    },
+  };
+}
+
+export default async function NewsListingPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ page?: string; limit?: string }>;
+}) {
+  const { slug } = await params;
+  const resolvedSearchParams = await searchParams;
+  const page = parseInt(resolvedSearchParams?.page || "1", 10);
+  const limit = parseInt(resolvedSearchParams?.limit || "42", 10);
+
+  const rawLower = (slug || '').toLowerCase().trim();
+  const resolvedSlug = categorySlugMapping[rawLower] || categorySlugMapping[slug] || rawLower;
+
+  const fallbackCat = CATEGORY_META[resolvedSlug as keyof typeof CATEGORY_META];
+
+  const [dbCategories, catRes] = await Promise.all([
+    fallbackCat ? Promise.resolve([]) : getPublicCategories().catch(() => []),
+    getPublicArticles({
+      categorySlug: resolvedSlug === 'trending' ? undefined : resolvedSlug,
+      isTrending: resolvedSlug === 'trending' ? true : undefined,
+      page,
+      limit,
+    }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+  ]);
+
+  const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);
+
+  if (!dbCat && !fallbackCat) {
+    notFound();
+  }
+
+  const categoryData = {
+    name: dbCat?.name || fallbackCat?.name || slug,
+    nameGu: dbCat?.nameGu || fallbackCat?.gu || slug,
+    nameHi: dbCat?.nameHi || fallbackCat?.hi || slug,
+    description: dbCat?.description || dbCat?.descriptionGu || "",
+    icon: dbCat?.icon || "newspaper",
+    color: dbCat?.color || "#dc2626",
+  };
+
+  const customSeo = getCategoryCustomSeo(resolvedSlug, categoryData.name, categoryData.nameGu);
+
+  let rawArticles = catRes?.articles || [];
+  let total = catRes?.total || 0;
+  let totalPages = catRes?.totalPages || 1;
+
+  if (!rawArticles || rawArticles.length === 0) {
+    const fallbackRes = await getPublicArticles({
+      page: 1,
+      limit: 42,
+    }).catch(() => ({ articles: [], total: 0, totalPages: 1 }));
+    rawArticles = fallbackRes.articles || [];
+    total = fallbackRes.total || rawArticles.length;
+    totalPages = fallbackRes.totalPages || 1;
+  }
+
+  const articles = sortArticlesByLatest(rawArticles);
+
+  return (
+    <CategoryPageClient
+      articles={articles}
+      category={categoryData}
+      trending={[]}
+      customSeo={customSeo}
+      currentPage={page}
+      totalPages={totalPages || Math.ceil(total / limit)}
+      slug={resolvedSlug}
+      resolvedSlug={resolvedSlug}
+    />
+  );
+}

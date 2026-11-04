@@ -24,6 +24,7 @@ import {
   Megaphone,
   Newspaper,
   ShieldAlert,
+  Shield,
   ArrowLeft,
   Sparkles,
   Heart,
@@ -80,6 +81,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/cleanup',
       '/admin/rss',
       '/admin/feedback',
+      '/admin/website-users',
     ],
   },
   EDITOR: {
@@ -106,6 +108,7 @@ export const ROLE_CONFIG: Record<string, RoleMeta> = {
       '/admin/legal',
       '/admin/rss',
       '/admin/feedback',
+      '/admin/website-users',
     ],
   },
   REPORTER: {
@@ -224,13 +227,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { label: 'Reels', href: '/admin/reels', icon: Smartphone },
     { label: 'Web Stories', href: '/admin/web-stories', icon: BookOpen },
     { label: 'E-Paper', href: '/admin/epaper', icon: Newspaper },
-    { label: 'Users', href: '/admin/users', icon: Users },
+    { label: 'Admin Staff', href: '/admin/users', icon: Shield },
     { label: 'Support QR & Bank', href: '/admin/support', icon: Heart },
     { label: 'About Us', href: '/admin/about', icon: Info },
     { label: 'Contact Us', href: '/admin/contact', icon: PhoneCall },
     { label: 'Advertise Page', href: '/admin/advertise', icon: BadgePercent },
     { label: 'Legal Pages', href: '/admin/legal', icon: Scale },
     { label: 'Feedback & Complaints', href: '/admin/feedback', icon: MessageSquareText },
+    { label: 'Website Users', href: '/admin/website-users', icon: Users },
   ];
 
   const currentRoleMeta = userRole ? ROLE_CONFIG[userRole] : null;

@@ -5,6 +5,7 @@ import type { Language } from "@/types";
 import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
+import { filterUniqueArticles } from "@/lib/articleDeduplication";
 
 export const revalidate = 30;
 
@@ -190,14 +191,14 @@ export default async function NewsDetailPage(
   // Dynamically fetch related articles and calculate smart relevance scores
   const categorySlug = (article.category || '').toLowerCase().replace(/\s+/g, '-');
   const [catRes, fallbackRes, trendingRes] = await Promise.all([
-    getPublicArticles({ categorySlug, limit: 25 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ limit: 45 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ isTrending: true, limit: 25 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ categorySlug, limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ limit: 100 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ isTrending: true, limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const categoryArticles = catRes?.articles || [];
   const fallbackArticles = fallbackRes?.articles || [];
-  const trending = trendingRes?.articles || [];
+  const trending = filterUniqueArticles(trendingRes?.articles || [], [article]);
 
   const currentTags = new Set([
     ...(article.tags || []),

@@ -10,6 +10,7 @@ import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/Au
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 import ArticleShareAudioBar from './ArticleShareAudioBar';
 import { getPublicArticleBySlug } from '@/lib/api';
+import { filterUniqueArticles } from '@/lib/articleDeduplication';
 
 interface ArticleInfiniteStreamProps {
   mounted: boolean;
@@ -19,6 +20,7 @@ interface ArticleInfiniteStreamProps {
   mostReadArticles: Article[];
   trending: Article[];
   related: Article[];
+  readAlsoPool?: Article[];
   savedIds: string[];
   getCardThumbnail: (item: Article, index: number) => string;
   DEMO_THUMBNAILS: string[];
@@ -323,7 +325,7 @@ function StreamArticleItem({
 
       <Link
         href={`/news/${streamArticle.slug}`}
-        className="block relative aspect-[16/9] w-full overflow-hidden bg-zinc-100 dark:bg-neutral-950 rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
+        className="block relative aspect-[16/9] w-full min-h-[200px] overflow-hidden bg-zinc-100 dark:bg-neutral-950 rounded-lg shadow-sm mb-6 mt-4 group cursor-pointer"
       >
         <img
           src={articleData.image}
@@ -332,13 +334,12 @@ function StreamArticleItem({
           className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
         />
         <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-        <Image
+        <img
           src={articleData.image}
           alt={getArticleTitle(articleData, language)}
-          fill
-          sizes="(max-width: 1024px) 100vw, 760px"
-          className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-105"
+          className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
           style={{ objectFit: 'contain', objectPosition: 'center' }}
+          loading="lazy"
         />
       </Link>
 
@@ -456,7 +457,7 @@ function StreamArticleItem({
                   href={`/news/${raArt.slug}`}
                   className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
                 >
-                  <div className="relative h-[70px] w-[90px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-sm">
+                  <div className="relative h-[70px] w-[90px] min-h-[70px] min-w-[90px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-sm">
                     <img
                       src={getCardThumbnail(raArt, index)}
                       alt=""
@@ -464,13 +465,12 @@ function StreamArticleItem({
                       className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
                     />
                     <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                    <Image
+                    <img
                       src={getCardThumbnail(raArt, index)}
                       alt={getArticleTitle(raArt, language)}
-                      fill
-                      sizes="90px"
-                      className="relative z-10 object-contain transition-transform duration-500 group-hover:scale-110"
+                      className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
                       style={{ objectFit: 'contain', objectPosition: 'center' }}
+                      loading="lazy"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
                       }}
@@ -518,6 +518,7 @@ export default function ArticleInfiniteStream({
   mostReadArticles,
   trending,
   related,
+  readAlsoPool = [],
   savedIds,
   getCardThumbnail,
   DEMO_THUMBNAILS,
@@ -529,8 +530,8 @@ export default function ArticleInfiniteStream({
   getTopicHref,
   TranslatedInlineText,
   TranslatedParagraph,
-  sidebarRecommendedPool,
-  streamSidebarRecommendedPool,
+  sidebarRecommendedPool = [],
+  streamSidebarRecommendedPool = [],
 }: ArticleInfiniteStreamProps) {
   return (
     <div className="article-grid mt-3.5 border-t border-neutral-200 dark:border-neutral-800 !pt-3.5" suppressHydrationWarning>
@@ -539,6 +540,22 @@ export default function ArticleInfiniteStream({
           {mounted && (() => {
             // Global set to track used Read Also article IDs across all stream items
             const usedReadAlsoIds = new Set<string>();
+
+            // All articles displayed anywhere on the page (main article, stream articles, main readAlso, sidebars)
+            // MUST NEVER be selected in ANY Read Also box to completely eliminate duplicates!
+            const globalForbiddenArticles = [
+              article,
+              ...(streamList || []),
+              ...(readAlsoPool || []),
+              ...(sidebarRecommendedPool || []),
+              ...(streamSidebarRecommendedPool || []),
+            ];
+
+            // Master candidate pool strictly pre-filtered using deep deduplication (ID, slug, title)
+            const masterCandidatePool = filterUniqueArticles(
+              [...(related || []), ...(trending || []), ...(mostReadArticles || [])],
+              globalForbiddenArticles
+            );
 
             return streamList.map((streamArticle) => {
               const mainId = String(article.id);
@@ -565,18 +582,14 @@ export default function ArticleInfiniteStream({
                 .split('-')
                 .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
 
-              // Combine all available candidate pools: related first, then trending, then mostReadArticles
-              const rawPool = [...related, ...trending, ...mostReadArticles].filter(
-                (cand, idx, self) =>
-                  String(cand.id) !== mainId &&
-                  String(cand.id) !== streamArtId &&
-                  self.findIndex((t) => String(t.id) === String(cand.id)) === idx
+              // Strictly exclude the current stream article and any article already used in a previous stream Read Also card
+              let candidatePool = masterCandidatePool.filter(
+                (cand) => !usedReadAlsoIds.has(String(cand.id)) && String(cand.id) !== streamArtId
               );
 
-              // Prefer candidates not yet shown in this stream session
-              let candidatePool = rawPool.filter((cand) => !usedReadAlsoIds.has(String(cand.id)));
+              // Fallback to remaining masterCandidatePool if unused candidates run low (still STRICTLY excludes all stream articles, main article, etc.)
               if (candidatePool.length < 4) {
-                candidatePool = rawPool;
+                candidatePool = masterCandidatePool.filter((cand) => String(cand.id) !== streamArtId);
               }
 
               const scoredCandidates = candidatePool.map((cand) => {
@@ -660,77 +673,64 @@ export default function ArticleInfiniteStream({
         </div>
       </article>
 
-      {(() => {
-        const streamPool = (streamSidebarRecommendedPool && streamSidebarRecommendedPool.length > 0)
-          ? streamSidebarRecommendedPool
-          : (sidebarRecommendedPool && sidebarRecommendedPool.length > 8)
-          ? sidebarRecommendedPool.slice(8)
-          : [];
+      <aside className="select-none h-fit sticky top-4 w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
+        {/* Heading and recommended stories stick together below header */}
+        <div className="wtitle mb-3">
+          <span className="d"></span>
+          <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
+        </div>
 
-        if (streamPool.length === 0) return null;
+        {/* Mobile View (< md): Hero Section style list (7 items) */}
+        <div className="flex flex-col divide-y divide-border/60 md:hidden">
+          {(streamSidebarRecommendedPool.length > 0 ? streamSidebarRecommendedPool : sidebarRecommendedPool).slice(0, 7).map((item, index) => (
+            <MobileHeroArticleCard
+              key={`stream-rec-mob-${item.id || index}`}
+              article={item}
+              language={language}
+              index={index}
+            />
+          ))}
+        </div>
 
-        return (
-          <aside className="select-none h-fit sticky top-4 w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
-            {/* Heading and fresh recommended stories stick together below header */}
-            <div className="wtitle mb-3">
-              <span className="d"></span>
-              <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
-            </div>
-
-            {/* Mobile View (< md): Hero Section style list */}
-            <div className="flex flex-col divide-y divide-border/60 md:hidden">
-              {streamPool.slice(0, 7).map((item, index) => (
-                <MobileHeroArticleCard
-                  key={`stream-rec-mob-${item.id || index}`}
-                  article={item}
-                  language={language}
-                  index={index}
-                />
-              ))}
-            </div>
-
-            {/* Desktop View (>= md): completely unique articles without repeating top sidebar */}
-            <div className="hidden md:block space-y-0">
-              {streamPool.slice(0, 6).map((item, index) => {
-                const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
-                return (
-                  <Link
-                    key={item.id}
-                    href={`/news/${item.slug}`}
-                    className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
-                  >
-                    <div className="min-w-0 flex-1 pr-1">
-                      <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
-                        {itemCategory}
-                      </span>
-                      <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
-                        <AutoArticleTitle article={item} language={language} />
-                      </h3>
-                    </div>
-                    <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
-                      <img
-                        src={getCardThumbnail(item, index)}
-                        alt=""
-                        aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
-                      />
-                      <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                      <Image
-                        src={getCardThumbnail(item, index)}
-                        alt={item.title || ''}
-                        fill
-                        sizes="114px"
-                        className="relative z-10 object-contain transition-transform duration-300 group-hover:scale-105"
-                        style={{ objectFit: 'contain', objectPosition: 'center' }}
-                      />
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </aside>
-        );
-      })()}
+        {/* Desktop View (>= md): existing */}
+        <div className="hidden md:block space-y-0">
+          {(streamSidebarRecommendedPool.length > 0 ? streamSidebarRecommendedPool : sidebarRecommendedPool).slice(0, 6).map((item, index) => {
+            const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+            return (
+              <Link
+                key={item.id}
+                href={`/news/${item.slug}`}
+                className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
+              >
+                <div className="min-w-0 flex-1 pr-1">
+                  <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
+                    {itemCategory}
+                  </span>
+                  <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
+                    <AutoArticleTitle article={item} language={language} />
+                  </h3>
+                </div>
+                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] min-w-[108px] min-h-[72px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
+                  <img
+                    src={getCardThumbnail(item, index)}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
+                  />
+                  <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
+                  <img
+                    src={getCardThumbnail(item, index)}
+                    alt={item.title || ''}
+                    className="relative z-10 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
+                    style={{ objectFit: 'contain', objectPosition: 'center' }}
+                    loading="lazy"
+                  />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </aside>
     </div>
   );
 }

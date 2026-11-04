@@ -52,6 +52,14 @@ import { HeaderEditor } from './HeaderEditor';
 import { fetchLiveCityWeather } from '@/lib/weather';
 import { ArticleImportModal } from './ArticleImportModal';
 import {
+  autoFillAllPages,
+  autoFillPage1,
+  autoFillPage2,
+  autoFillPage3,
+  autoFillPage4,
+  fetchPublishedArticles,
+} from '@/lib/epaperAutoFill';
+import {
   renderElementToDataUrl,
   buildPdfFromImages,
   uploadPdfBlob,
@@ -88,6 +96,17 @@ const CATEGORY_PRESETS = [
   'આરોગ્ય',
 ];
 
+function stripAllKeyPoints<T>(obj: T): T {
+  if (!obj || typeof obj !== 'object') return obj;
+  if (Array.isArray(obj)) return obj.map(stripAllKeyPoints) as any;
+  const copy: any = {};
+  for (const k of Object.keys(obj)) {
+    if (k === 'keyPoints') continue;
+    copy[k] = stripAllKeyPoints((obj as any)[k]);
+  }
+  return copy as T;
+}
+
 export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> = ({
   initialData,
   city,
@@ -98,7 +117,7 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
   onBackToDashboard,
 }) => {
   const [data, setData] = useState<NewspaperTemplateData>(() => {
-    const defaults = getDefaultTemplateData(cityGu || city, date);
+    const defaults = stripAllKeyPoints(getDefaultTemplateData(cityGu || city, date));
     if (!initialData || !initialData.page1) return defaults;
 
     const merged: NewspaperTemplateData = {
@@ -475,6 +494,12 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
   const [validationWarnings, setValidationWarnings] = useState<string[]>([]);
   const [articleSavedMessage, setArticleSavedMessage] = useState<string | null>(null);
   const [imageUploadSuccess, setImageUploadSuccess] = useState<boolean>(false);
+
+  // Auto-Fill from Website state
+  const [autoFilling, setAutoFilling] = useState(false);
+  const [autoFillSuccessMsg, setAutoFillSuccessMsg] = useState<string | null>(null);
+  const [autoFillMenuOpen, setAutoFillMenuOpen] = useState(false);
+  const autoFilledOnMount = useRef(false);
 
   // Refs for active preview & sequential staging capture
   const pageRef = useRef<HTMLDivElement>(null);
@@ -1404,63 +1429,154 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
     headline: string;
     subheadline?: string;
     articleBody: string;
+    paragraph1?: string;
+    paragraph2?: string;
+    paragraph3?: string;
     image: string;
     category: string;
+    location?: string;
   }) => {
     const { path } = importTargetSlot;
     const pageKey: keyof NewspaperTemplateData = `page${activePage}` as any;
-    const clone = JSON.parse(JSON.stringify(data));
+    const clone: NewspaperTemplateData = JSON.parse(JSON.stringify(data));
 
-    let targetObj = clone[pageKey];
+    let targetObj: any = clone[pageKey];
     const keys = path.split('.');
     for (const k of keys) {
-      targetObj = targetObj[k];
+      if (targetObj && targetObj[k] !== undefined) {
+        targetObj = targetObj[k];
+      }
     }
 
     if (targetObj) {
       if (article.headline) targetObj.headline = article.headline;
-      if (article.subheadline && targetObj.subheadline !== undefined) targetObj.subheadline = article.subheadline;
-      if (article.articleBody) {
-        targetObj.articleBody = article.articleBody;
-        targetObj.body = article.articleBody;
-        const pParts = article.articleBody.split(/\n\s*\n/).map((p: string) => p.trim()).filter(Boolean);
-        if (pParts.length >= 3) {
-          targetObj.paragraph1 = pParts[0];
-          targetObj.paragraph2 = pParts[1];
-          targetObj.paragraph3 = pParts.slice(2).join('\n\n');
-        } else if (pParts.length === 2) {
-          targetObj.paragraph1 = pParts[0];
-          targetObj.paragraph2 = pParts[1];
-          targetObj.paragraph3 = '';
-        } else if (pParts.length === 1) {
-          targetObj.paragraph1 = pParts[0];
-          targetObj.paragraph2 = '';
-          targetObj.paragraph3 = '';
+      if (article.subheadline !== undefined) targetObj.subheadline = article.subheadline;
+      if (article.category) targetObj.category = article.category;
+      if (article.image) targetObj.image = article.image;
+      if (article.location) {
+        targetObj.location = article.location;
+        if ('district' in targetObj || path.includes('district') || activePage === 2) {
+          targetObj.district = article.location;
         }
       }
-      if (article.image) targetObj.image = article.image;
-      if (article.category && targetObj.category !== undefined) targetObj.category = article.category;
 
+      const p1 = article.paragraph1 || '';
+      const p2 = article.paragraph2 || '';
+      const p3 = article.paragraph3 || '';
+      targetObj.paragraph1 = p1;
+      targetObj.paragraph2 = p2;
+      targetObj.paragraph3 = p3;
+      targetObj.articleBody = article.articleBody || [p1, p2, p3].filter(Boolean).join('\n\n');
+      targetObj.body = targetObj.articleBody;
+
+      // Synchronization for Page 1 leadStory / mainHeadline
       if (activePage === 1 && (path.startsWith('leadStory') || path.startsWith('mainHeadline'))) {
-        if (!clone.page1.mainHeadline) clone.page1.mainHeadline = {};
-        if (!clone.page1.leadStory) clone.page1.leadStory = {};
-        clone.page1.mainHeadline.headline = targetObj.headline;
-        clone.page1.mainHeadline.articleBody = targetObj.articleBody;
-        clone.page1.mainHeadline.body = targetObj.body;
-        clone.page1.mainHeadline.paragraph1 = targetObj.paragraph1;
-        clone.page1.mainHeadline.paragraph2 = targetObj.paragraph2;
-        clone.page1.mainHeadline.paragraph3 = targetObj.paragraph3;
-        clone.page1.leadStory.headline = targetObj.headline;
-        clone.page1.leadStory.articleBody = targetObj.articleBody;
-        clone.page1.leadStory.body = targetObj.body;
-        clone.page1.leadStory.paragraph1 = targetObj.paragraph1;
-        clone.page1.leadStory.paragraph2 = targetObj.paragraph2;
-        clone.page1.leadStory.paragraph3 = targetObj.paragraph3;
+        if (!clone.page1.mainHeadline) clone.page1.mainHeadline = {} as any;
+        if (!clone.page1.leadStory) clone.page1.leadStory = {} as any;
+        const syncFields = [
+          'headline',
+          'subheadline',
+          'category',
+          'image',
+          'location',
+          'paragraph1',
+          'paragraph2',
+          'paragraph3',
+          'body',
+          'articleBody',
+        ];
+        for (const sf of syncFields) {
+          clone.page1.mainHeadline[sf] = targetObj[sf];
+          clone.page1.leadStory[sf] = targetObj[sf];
+        }
+      }
+
+      // Synchronization for Page 1 sideTopNews
+      if (activePage === 1 && path === 'sideTopNews') {
+        clone.page1.sideTopNews = {
+          ...(clone.page1.sideTopNews || {}),
+          headline: targetObj.headline,
+          subheadline: targetObj.subheadline,
+          category: targetObj.category,
+          image: targetObj.image,
+          location: targetObj.location,
+          paragraph1: targetObj.paragraph1,
+          paragraph2: targetObj.paragraph2,
+          body: targetObj.body,
+          articleBody: targetObj.articleBody,
+        };
       }
     }
 
     setData(clone);
+    setAutoFillSuccessMsg(`સ્લોટ "${importTargetSlot.label}" માં વેબસાઇટ આર્ટિકલ સફળતાપૂર્વક સેટ થઈ ગયો!`);
+    setTimeout(() => setAutoFillSuccessMsg(null), 3500);
   };
+
+  const handleAutoFillPage = async (pageToFill = activePage) => {
+    setAutoFilling(true);
+    setAutoFillMenuOpen(false);
+    try {
+      const clone: NewspaperTemplateData = JSON.parse(JSON.stringify(data));
+      if (pageToFill === 1) {
+        const articles = await fetchPublishedArticles({ limit: 20 });
+        clone.page1 = autoFillPage1(clone.page1, articles);
+      } else if (pageToFill === 2) {
+        const gujArticles = await fetchPublishedArticles({ categorySlug: 'gujarat', limit: 15 });
+        const fallbackArticles = gujArticles.length >= 6 ? gujArticles : await fetchPublishedArticles({ limit: 15 });
+        clone.page2 = autoFillPage2(clone.page2, gujArticles.length >= 6 ? gujArticles : [...gujArticles, ...fallbackArticles]);
+      } else if (pageToFill === 3) {
+        const bizArticles = await fetchPublishedArticles({ categorySlug: 'business', limit: 15 });
+        const fallbackArticles = bizArticles.length >= 6 ? bizArticles : await fetchPublishedArticles({ limit: 15 });
+        clone.page3 = autoFillPage3(clone.page3, bizArticles.length >= 6 ? bizArticles : [...bizArticles, ...fallbackArticles]);
+      } else if (pageToFill === 4) {
+        const [sportsArticles, entArticles] = await Promise.all([
+          fetchPublishedArticles({ categorySlug: 'sports', limit: 10 }),
+          fetchPublishedArticles({ categorySlug: 'entertainment', limit: 10 }),
+        ]);
+        const fallbackArticles = await fetchPublishedArticles({ limit: 10 });
+        const safeSports = sportsArticles.length >= 3 ? sportsArticles : [...sportsArticles, ...fallbackArticles];
+        const safeEnt = entArticles.length >= 2 ? entArticles : [...entArticles, ...fallbackArticles];
+        clone.page4 = autoFillPage4(clone.page4, safeSports, safeEnt);
+      }
+      setData(clone);
+      setAutoFillSuccessMsg(`પેજ ${pageToFill} ના તમામ સ્લોટ વેબસાઇટના તાજા આર્ટિકલ્સથી ભરાઈ ગયા છે!`);
+      setTimeout(() => setAutoFillSuccessMsg(null), 4000);
+    } catch (err) {
+      console.error('Failed to auto-fill page:', err);
+    } finally {
+      setAutoFilling(false);
+    }
+  };
+
+  const handleAutoFillAllPages = async () => {
+    setAutoFilling(true);
+    setAutoFillMenuOpen(false);
+    try {
+      const updated = await autoFillAllPages(data);
+      setData(updated);
+      setAutoFillSuccessMsg('તમામ ૪ પેજ પર વેબસાઇટના તાજા આર્ટિકલ્સ આપમેળે ગોઠવાઈ ગયા છે!');
+      setTimeout(() => setAutoFillSuccessMsg(null), 4000);
+    } catch (err) {
+      console.error('Failed to auto-fill all pages:', err);
+    } finally {
+      setAutoFilling(false);
+    }
+  };
+
+  // Auto-fill on initial load when creating a new edition
+  useEffect(() => {
+    if (!autoFilledOnMount.current) {
+      const isDefaultLead =
+        !initialData ||
+        !initialData.page1 ||
+        initialData.page1.leadStory?.headline === samplePage1Data.mainHeadline.headline;
+      if (isDefaultLead) {
+        autoFilledOnMount.current = true;
+        handleAutoFillAllPages();
+      }
+    }
+  }, [initialData]);
 
   // Validate template before publishing
   const validateTemplate = (): string[] => {
@@ -1677,6 +1793,14 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
 
   return (
     <div className="fixed inset-0 top-0 left-0 right-0 bottom-0 z-[999] w-screen h-screen min-w-full min-h-full bg-slate-950 text-slate-100 font-sans flex flex-col overflow-hidden select-none">
+      {/* Toast Notification for Auto-Fill & Article Import */}
+      {autoFillSuccessMsg && (
+        <div className="fixed top-14 left-1/2 -translate-x-1/2 z-[9999] bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-5 py-2.5 rounded-2xl shadow-2xl font-black text-xs flex items-center gap-2.5 border border-emerald-400 animate-in fade-in slide-in-from-top-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-200" />
+          <span>{autoFillSuccessMsg}</span>
+        </div>
+      )}
+
       {/* ─── 1. TOP BUILDER TOOLBAR HEADER ─── */}
       <header className="bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-4 py-2 flex items-center justify-between z-20 shrink-0 shadow-xl gap-2">
         {/* Left: Back + Branding + Meta */}
@@ -1822,6 +1946,50 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
               <Maximize2 className="w-3.5 h-3.5 text-slate-400 hover:text-cyan-400" />
             )}
           </button>
+
+          {/* Auto-Fill Website Articles Button with Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setAutoFillMenuOpen((v) => !v)}
+              disabled={autoFilling || saving || publishing}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500/20 via-orange-500/20 to-amber-500/20 hover:from-amber-500/30 hover:to-orange-500/30 text-amber-300 text-xs px-2.5 sm:px-3 py-1.5 rounded-xl font-black transition cursor-pointer border border-amber-500/40 shadow-xs disabled:opacity-50 group shrink-0"
+              title="વેબસાઇટ પરથી તાજા આર્ટિકલ્સ લાવો"
+            >
+              {autoFilling ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-amber-300" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
+              )}
+              <span className="hidden sm:inline">આર્ટિકલ્સ ઓટો-ફિલ</span>
+            </button>
+
+            {autoFillMenuOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl p-1.5 z-50 text-xs space-y-1">
+                <button
+                  type="button"
+                  onClick={() => handleAutoFillPage(activePage)}
+                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-slate-100 font-bold flex items-center justify-between transition cursor-pointer"
+                >
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>પેજ {activePage} ઓટો-ફિલ કરો</span>
+                  </span>
+                  <span className="text-[10px] bg-red-600/30 text-red-300 px-1.5 py-0.5 rounded font-bold">Current</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleAutoFillAllPages()}
+                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-slate-800 text-amber-300 font-black flex items-center justify-between transition cursor-pointer border-t border-slate-800"
+                >
+                  <span className="flex items-center gap-2">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <span>તમામ ૪ પેજ ઓટો-ફિલ કરો</span>
+                  </span>
+                  <span className="text-[10px] bg-emerald-600/30 text-emerald-300 px-1.5 py-0.5 rounded font-bold">All 4</span>
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Full Preview Modal Button */}
           <button
@@ -2129,11 +2297,50 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
                           {selectedLabel || selectedPath}
                         </span>
                       </div>
+
+                      {/* 1-Click Page Auto-Fill from Website */}
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          disabled={autoFilling}
+                          onClick={() => handleAutoFillPage(activePage)}
+                          className="w-full bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:opacity-95 text-white text-[11px] font-black py-2 px-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5 shadow-md shadow-red-900/30 disabled:opacity-50"
+                          title="વેબસાઇટના લેટેસ્ટ આર્ટિકલ્સથી આ પેજના તમામ સ્લોટ ભરો"
+                        >
+                          {autoFilling ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                          ) : (
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                          )}
+                          <span>⚡ આ પેજના તમામ સ્લોટ ઓટો-ફિલ કરો</span>
+                        </button>
+                      </div>
                     </div>
 
                     {/* Rich Story Form if current selection is a story */}
                     {currentStoryObj ? (
                       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 space-y-4 shadow-sm">
+                        {/* 1-Click Import Website Article for this active slot */}
+                        <div className="bg-gradient-to-r from-blue-950/80 via-slate-900 to-indigo-950/80 border border-blue-500/40 rounded-xl p-3 flex items-center justify-between gap-2 shadow-sm">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/30 flex items-center justify-center shrink-0">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-black text-white truncate">વેબસાઇટ આર્ટિકલમાંથી લાવો</p>
+                              <p className="text-[10px] text-blue-300/80 truncate">લખવાની જરૂર નથી, સીધું પસંદ કરો</p>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenImport(storyRootPath, selectedLabel || 'આર્ટિકલ')}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition cursor-pointer flex items-center gap-1.5 shrink-0 shadow-sm shadow-blue-900/40"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                            <span>આર્ટિકલ પસંદ કરો</span>
+                          </button>
+                        </div>
+
                         {/* Category Tag Field with Quick Presets */}
                         {'category' in currentStoryObj && (
                           <div className="space-y-1.5">
@@ -2364,104 +2571,6 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
                           </div>
                         )}
 
-                        {/* ─── Key Points Box Editor (મુખ્ય મુદ્દાઓ - Edit and Delete Only) ─── */}
-                        {Boolean((currentStoryObj as any)?.keyPoints) && (
-                          <div className="space-y-2.5 pt-2 border-t border-slate-800">
-                            <div className="flex items-center justify-between">
-                              <label className="flex items-center gap-1.5 text-xs font-bold text-purple-400">
-                                <ListOrdered className="w-3.5 h-3.5" />
-                                <span>મુખ્ય મુદ્દાઓ / કી પોઈન્ટ્સ (Key Points Box)</span>
-                              </label>
-                            </div>
-
-                            <div className="bg-purple-950/20 border border-purple-900/40 rounded-xl p-3 space-y-3">
-                              {/* Box Title with Delete Box action */}
-                              <div className="space-y-1">
-                                <div className="flex items-center justify-between">
-                                  <label className="text-[10px] text-purple-300 font-bold">બોક્સ શિર્ષક (Box Title):</label>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateStoryField('keyPoints' as any, null)}
-                                    className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-0.5 cursor-pointer font-bold"
-                                    title="કી પોઈન્ટ્સ બોક્સ દૂર કરો"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                    <span>બોક્સ દૂર કરો</span>
-                                  </button>
-                                </div>
-                                <input
-                                  type="text"
-                                  value={(currentStoryObj as any).keyPoints?.title || ''}
-                                  onChange={(e) => {
-                                    const currentKP = (currentStoryObj as any).keyPoints || { title: '', points: [] };
-                                    updateStoryField('keyPoints' as any, {
-                                      ...currentKP,
-                                      title: e.target.value,
-                                    });
-                                  }}
-                                  placeholder="દા.ત. મુખ્ય મુદ્દાઓ, આગાહી, વિશેષતાઓ..."
-                                  className="w-full bg-slate-950 border border-purple-800/60 rounded-lg px-2.5 py-1.5 text-xs text-purple-100 font-bold focus:ring-2 focus:ring-purple-500/40 focus:border-purple-500 outline-none"
-                                />
-                              </div>
-
-                              {/* List of Points (Edit and Delete only) */}
-                              {(() => {
-                                const rawPts: string[] = (currentStoryObj as any).keyPoints?.points || [];
-                                const isPage3Capped = activePage === 3 && (storyRootPath === 'techStory' || storyRootPath === 'bankingStory');
-                                const maxPoints = isPage3Capped ? 2 : (activePage === 4 ? 3 : rawPts.length);
-                                const ptsToDisplay = rawPts.slice(0, maxPoints);
-                                return (
-                                  <div className="space-y-2">
-                                    <label className="text-[10px] text-slate-400 font-bold block">
-                                      મુદ્દાઓની યાદી ({ptsToDisplay.length} મુદ્દા):
-                                    </label>
-                                    {ptsToDisplay.map((pt: string, idx: number) => (
-                                      <div key={idx} className="flex items-start gap-1.5">
-                                        <span className="text-[10px] font-bold text-purple-400 bg-purple-900/50 w-5 h-7 rounded flex items-center justify-center shrink-0 mt-0.5">
-                                          {idx + 1}
-                                        </span>
-                                        <textarea
-                                          rows={2}
-                                          value={pt}
-                                          onChange={(e) => {
-                                            const currentKP = (currentStoryObj as any).keyPoints || { title: 'મુખ્ય મુદ્દાઓ', points: [] };
-                                            const capLimit = isPage3Capped ? 2 : (activePage === 4 ? 3 : (currentKP.points || []).length);
-                                            const basePts = (currentKP.points || []).slice(0, capLimit);
-                                            const newPoints = [...basePts];
-                                            newPoints[idx] = e.target.value;
-                                            updateStoryField('keyPoints' as any, {
-                                              ...currentKP,
-                                              points: isPage3Capped ? newPoints.slice(0, 2) : (activePage === 4 ? newPoints.slice(0, 3) : newPoints),
-                                            });
-                                          }}
-                                          placeholder={`મુદ્દો ${idx + 1}...`}
-                                          className="flex-1 bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 resize-none outline-none focus:border-purple-500 font-sans"
-                                        />
-                                        <button
-                                          type="button"
-                                          onClick={() => {
-                                            const currentKP = (currentStoryObj as any).keyPoints || { title: 'મુખ્ય મુદ્દાઓ', points: [] };
-                                            const capLimit = isPage3Capped ? 2 : (activePage === 4 ? 3 : (currentKP.points || []).length);
-                                            const basePts = (currentKP.points || []).slice(0, capLimit);
-                                            const newPoints = basePts.filter((_: any, i: number) => i !== idx);
-                                            updateStoryField('keyPoints' as any, {
-                                              ...currentKP,
-                                              points: isPage3Capped ? newPoints.slice(0, 2) : (activePage === 4 ? newPoints.slice(0, 3) : newPoints),
-                                            });
-                                          }}
-                                          className="text-slate-500 hover:text-red-400 p-1 rounded hover:bg-slate-800 transition cursor-pointer mt-1"
-                                          title="આ મુદ્દો કાઢી નાખો"
-                                        >
-                                          <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                      </div>
-                                    ))}
-                                  </div>
-                                );
-                              })()}
-                            </div>
-                          </div>
-                        )}
 
                         {/* ─── 🏏 Page 4 Feature 1: Cricket Match Summary Scorecard ─── */}
                         {activePage === 4 && (storyRootPath === 'mainSportsStory' || (currentStoryObj as any)?.matchScorecard !== undefined) && (
