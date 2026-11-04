@@ -432,82 +432,54 @@ ${itemsXml}  </channel>
     });
     const catIds = categoryRecords.map((c) => c.id);
 
-    if (categorySlug === 'health') {
-      where.AND.push({
-        OR: [
-          ...(catIds.length > 0 ? [{ categoryId: { in: catIds } }] : []),
-          { tags: { some: { tag: { slug: { in: ['health', 'lifestyle', ...searchSlugs] } } } } },
-          { title: { contains: 'health' } },
-          { titleGu: { contains: 'આરોગ્ય' } },
-          { titleGu: { contains: 'સ્વાસ્થ્ય' } },
-          { titleGu: { contains: 'હેલ્થ' } },
-        ],
-      });
-      channelTitle = 'આરોગ્ય & હેલ્થ સમાચાર - Gujarat Post';
-      channelDescription = 'Latest Health, Wellness, Diet, and Medical News from Gujarat Post';
-    } else if (categorySlug === 'technology' || categorySlug === 'tech') {
-      const orConditions: any[] = [];
-      if (catIds.length > 0) {
-        orConditions.push({ categoryId: { in: catIds } });
-        orConditions.push({ categories: { some: { categoryId: { in: catIds } } } });
+    // Strict Category Filtering: An article ONLY belongs to this category feed if
+    // this category was explicitly chosen as Primary category OR Multi-category.
+    const orConditions: any[] = [];
+    if (catIds.length > 0) {
+      orConditions.push({ categoryId: { in: catIds } });
+      orConditions.push({ categories: { some: { categoryId: { in: catIds } } } });
+    }
+    orConditions.push({ category: { slug: { in: searchSlugs } } });
+    orConditions.push({ categories: { some: { category: { slug: { in: searchSlugs } } } } });
+
+    // Category names in case slug differs slightly
+    for (const c of categoryRecords) {
+      if (c.name) {
+        orConditions.push({ category: { name: c.name } });
+        orConditions.push({ categories: { some: { category: { name: c.name } } } });
       }
-      orConditions.push({ category: { slug: { in: searchSlugs } } });
-      orConditions.push({ categories: { some: { category: { slug: { in: searchSlugs } } } } });
-      orConditions.push({ category: { name: 'Technology' } });
-      orConditions.push({ category: { nameGu: 'ટેકનોલોજી' } });
-      orConditions.push({ categories: { some: { category: { name: 'Technology' } } } });
-      orConditions.push({ categories: { some: { category: { nameGu: 'ટેકનોલોજી' } } } });
-
-      where.AND.push({ OR: orConditions });
-      channelTitle = 'ટેકનોલોજી સમાચાર - Gujarat Post';
-      channelDescription = 'Latest Technology, Gadgets, Mobile, and Digital Innovations from Gujarat Post';
-    } else if (categorySlug === 'crime') {
-      where.AND.push({
-        OR: [
-          ...(catIds.length > 0 ? [{ categoryId: { in: catIds } }] : []),
-          { tags: { some: { tag: { slug: { in: ['crime', ...searchSlugs] } } } } },
-          { titleGu: { contains: 'ક્રાઇમ' } },
-          { titleGu: { contains: 'હત્યા' } },
-          { titleGu: { contains: 'પોલીસ' } },
-        ],
-      });
-      channelTitle = 'ક્રાઇમ સમાચાર - Gujarat Post';
-      channelDescription = 'Latest Crime, Investigation, and Law Enforcement News from Gujarat Post';
-    } else {
-      const orConditions: any[] = [];
-      if (catIds.length > 0) {
-        orConditions.push({ categoryId: { in: catIds } });
-        orConditions.push({ categories: { some: { categoryId: { in: catIds } } } });
-      }
-      orConditions.push({ category: { slug: { in: searchSlugs } } });
-      orConditions.push({ categories: { some: { category: { slug: { in: searchSlugs } } } } });
-
-      if (categorySlug === 'trending' || categorySlug === 'popular-stories') {
-        orConditions.push({ isTrending: true });
-      }
-
-      where.AND.push({ OR: orConditions });
-
-      const primaryCat = categoryRecords[0];
-      if (primaryCat) {
-        const catName = lang === 'en' ? primaryCat.name : lang === 'hi' ? (primaryCat.nameHi || primaryCat.name) : (primaryCat.nameGu || primaryCat.name);
-        channelTitle = lang === 'en'
-          ? `${primaryCat.name} News - Gujarat Post`
-          : lang === 'hi'
-          ? `${catName} समाचार - गुजरात पोस्ट`
-          : `${catName} સમાચાર - Gujarat Post`;
-        channelDescription = lang === 'en'
-          ? (primaryCat.description || `Latest ${primaryCat.name} news from Gujarat Post`)
-          : lang === 'hi'
-          ? (primaryCat.descriptionHi || `गुजरात पोस्ट से ${catName} के ताजा समाचार`)
-          : (primaryCat.descriptionGu || `Latest ${primaryCat.name} news from Gujarat Post`);
-      } else {
-        channelTitle = `${categorySlug.toUpperCase()} News - Gujarat Post`;
+      if (c.nameGu) {
+        orConditions.push({ category: { nameGu: c.nameGu } });
+        orConditions.push({ categories: { some: { category: { nameGu: c.nameGu } } } });
       }
     }
+
+    if (categorySlug === 'trending' || categorySlug === 'popular-stories') {
+      orConditions.push({ isTrending: true });
+    }
+
+    where.AND.push({ OR: orConditions });
+
+    const primaryCat = categoryRecords[0];
+    if (primaryCat) {
+      const catName = lang === 'en' ? primaryCat.name : lang === 'hi' ? (primaryCat.nameHi || primaryCat.name) : (primaryCat.nameGu || primaryCat.name);
+      channelTitle = lang === 'en'
+        ? `${primaryCat.name} News - Gujarat Post`
+        : lang === 'hi'
+        ? `${catName} समाचार - गुजरात पोस्ट`
+        : `${catName} સમાચાર - Gujarat Post`;
+      channelDescription = lang === 'en'
+        ? (primaryCat.description || `Latest ${primaryCat.name} news from Gujarat Post`)
+        : lang === 'hi'
+        ? (primaryCat.descriptionHi || `गुजरात पोस्ट से ${catName} के ताजा समाचार`)
+        : (primaryCat.descriptionGu || `Latest ${primaryCat.name} news from Gujarat Post`);
+    } else {
+      channelTitle = `${categorySlug.toUpperCase()} News - Gujarat Post`;
+    }
   } else if (isHomeSlug) {
-    // Filter strictly to articles selected for the Home page (isFeatured = true, Hero settings IDs, or Home category)
-    let homeSettingIds: string[] = [];
+    // Strict Home Filtering: An article ONLY appears in Home feed if the editor explicitly selected
+    // "Home / News" (isFeatured = true in CMS) OR primary/multi category is Home OR explicitly set in Main Hero Grid.
+    let heroGridIds: string[] = [];
     try {
       const heroSetting = await prisma.heroSetting.findFirst();
       if (heroSetting) {
@@ -520,18 +492,16 @@ ${itemsXml}  </channel>
             return [];
           }
         };
-        const heroGridIds = parseIds(heroSetting.heroGridIds);
-        const trendingNewsIds = parseIds(heroSetting.trendingNewsIds);
-        const popularNewsIds = parseIds(heroSetting.popularNewsIds);
+        heroGridIds = parseIds(heroSetting.heroGridIds);
         const slots = [heroSetting.slot1Id, heroSetting.slot2Id, heroSetting.slot3Id].map((s) => (s ? String(s) : '')).filter(Boolean);
-        homeSettingIds = Array.from(new Set([...heroGridIds, ...trendingNewsIds, ...popularNewsIds, ...slots]));
+        heroGridIds = Array.from(new Set([...heroGridIds, ...slots]));
       }
     } catch {}
 
     where.AND.push({
       OR: [
-        { isFeatured: true },
-        ...(homeSettingIds.length > 0 ? [{ id: { in: homeSettingIds } }] : []),
+        { isFeatured: true }, // Set when editor checks "Home / News (Show in Home / News)" in CMS
+        ...(heroGridIds.length > 0 ? [{ id: { in: heroGridIds } }] : []),
         { category: { slug: 'home' } },
         { category: { name: 'Home' } },
         { categories: { some: { category: { slug: 'home' } } } },
