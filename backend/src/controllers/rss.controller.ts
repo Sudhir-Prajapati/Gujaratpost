@@ -33,28 +33,9 @@ export class RssController {
         lang,
       });
 
-      // Handle conditional HTTP requests (ETag & Last-Modified)
-      const ifNoneMatch = req.headers['if-none-match'];
-      const ifModifiedSince = req.headers['if-modified-since'];
-
-      if (ifNoneMatch && ifNoneMatch === feed.etag) {
-        res.setHeader('ETag', feed.etag);
-        res.setHeader('Last-Modified', feed.lastModified.toUTCString());
-        return res.status(304).end();
-      }
-
-      if (ifModifiedSince) {
-        const clientDate = new Date(ifModifiedSince);
-        if (!isNaN(clientDate.getTime()) && clientDate.getTime() >= Math.floor(feed.lastModified.getTime() / 1000) * 1000) {
-          res.setHeader('ETag', feed.etag);
-          res.setHeader('Last-Modified', feed.lastModified.toUTCString());
-          return res.status(304).end();
-        }
-      }
-
       res.set({
         'Content-Type': 'application/rss+xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         ETag: feed.etag,
         'Last-Modified': feed.lastModified.toUTCString(),
       });
@@ -139,27 +120,9 @@ export class RssController {
         lang,
       });
 
-      const ifNoneMatch = req.headers['if-none-match'];
-      const ifModifiedSince = req.headers['if-modified-since'];
-
-      if (ifNoneMatch && ifNoneMatch === feed.etag) {
-        res.setHeader('ETag', feed.etag);
-        res.setHeader('Last-Modified', feed.lastModified.toUTCString());
-        return res.status(304).end();
-      }
-
-      if (ifModifiedSince) {
-        const clientDate = new Date(ifModifiedSince);
-        if (!isNaN(clientDate.getTime()) && clientDate.getTime() >= Math.floor(feed.lastModified.getTime() / 1000) * 1000) {
-          res.setHeader('ETag', feed.etag);
-          res.setHeader('Last-Modified', feed.lastModified.toUTCString());
-          return res.status(304).end();
-        }
-      }
-
       res.set({
         'Content-Type': 'application/rss+xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         ETag: feed.etag,
         'Last-Modified': feed.lastModified.toUTCString(),
       });
@@ -184,28 +147,9 @@ export class RssController {
         lang,
       });
 
-      const ifNoneMatch = req.headers['if-none-match'];
-      const ifModifiedSince = req.headers['if-modified-since'];
-
-      if (ifNoneMatch && ifNoneMatch === feed.etag) {
-        res.setHeader('ETag', feed.etag);
-        res.setHeader('Last-Modified', feed.lastModified.toUTCString());
-        return res.status(304).end();
-      }
-
-      if (ifModifiedSince) {
-        const clientDate = new Date(ifModifiedSince);
-        if (!isNaN(clientDate.getTime()) && clientDate.getTime() >= Math.floor(feed.lastModified.getTime() / 1000) * 1000) {
-          res.setHeader('ETag', feed.etag);
-          res.setHeader('Last-Modified', feed.lastModified.toUTCString());
-          return res.status(304).end();
-        }
-
-      }
-
       res.set({
         'Content-Type': 'application/rss+xml; charset=utf-8',
-        'Cache-Control': 'public, max-age=300, stale-while-revalidate=60',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
         ETag: feed.etag,
         'Last-Modified': feed.lastModified.toUTCString(),
       });
