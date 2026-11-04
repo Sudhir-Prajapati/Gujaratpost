@@ -716,7 +716,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                   className="mb-1"
                 />
 
-                <div className="text-[10px] leading-[1.38] text-slate-800 font-serif text-justify line-clamp-3">
+                <div className="text-[10px] leading-[1.38] text-slate-800 font-serif text-justify">
                   {data.secondarySportsStory.location && (
                     <span className="font-bold text-amber-800">{data.secondarySportsStory.location} | </span>
                   )}
@@ -743,8 +743,8 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                 </div>
 
                 <div className="space-y-1 overflow-hidden flex-1 flex flex-col justify-around">
-                  {data.sportsBriefs.slice(0, 3).map((sb: any, idx: number) => (
-                    <div key={idx} className="border-b border-slate-400 pb-0.5 last:border-0 last:pb-0">
+                  {(data.sportsBriefs || []).slice(0, 4).map((sb: any, idx: number) => (
+                    <div key={idx} className="border-b border-slate-300 pb-1 last:border-0 last:pb-0">
                       <div className="flex items-center gap-1">
                         <span className="text-[8.5px] font-black bg-emerald-100 text-emerald-900 px-1 py-0.2 rounded-2xs shrink-0">
                           <EditableTextSlot
@@ -754,7 +754,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                             onSelect={() => onSelectSlot?.(`sportsBriefs.${idx}.category`, `બ્રીફ ${idx + 1} કેટેગરી`)}
                           />
                         </span>
-                        <span className="text-[10.5px] font-black text-slate-900 truncate flex-1">
+                        <span className="text-[10px] font-black text-slate-900 line-clamp-1 flex-1">
                           <EditableTextSlot
                             value={sb.headline}
                             onChange={(val) => updateField(`sportsBriefs.${idx}.headline`, val)}
@@ -763,7 +763,7 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                           />
                         </span>
                       </div>
-                      <div className="text-[9px] leading-tight text-slate-600 truncate mt-0.5">
+                      <div className="text-[9px] leading-[1.3] text-slate-700 line-clamp-2 mt-0.5 font-serif text-justify">
                         <EditableTextSlot
                           value={sb.articleBody}
                           onChange={(val) => updateField(`sportsBriefs.${idx}.articleBody`, val)}
@@ -997,6 +997,17 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                     multiline
                   />
                 </div>
+                {data.ottLifestyleStory.paragraph2 && (
+                  <div className="text-[10px] leading-[1.38] text-slate-800 font-serif text-justify overflow-hidden mt-1">
+                    <EditableTextSlot
+                      value={data.ottLifestyleStory.paragraph2}
+                      onChange={(val) => updateField('ottLifestyleStory.paragraph2', val)}
+                      isSelected={selectedPath === 'ottLifestyleStory.paragraph2'}
+                      onSelect={() => onSelectSlot?.('ottLifestyleStory.paragraph2', 'ઓટીટી પેરા ૨')}
+                      multiline
+                    />
+                  </div>
+                )}
 
                 {/* Top 3 OTT Streaming Releases Box - 100% Editable */}
                 {data.ottLifestyleStory.ottPicks && (
@@ -1213,16 +1224,26 @@ export const Page4Sports: React.FC<Page4SportsProps> = ({
                     </div>
                   )}
 
-                  {/* Paragraph 1 */}
-                  <div className="flex-1 overflow-hidden">
+                  {/* Paragraphs 1 & 2 (100% full height coverage) */}
+                  <div className="flex-1 overflow-hidden space-y-1">
                     <EditableTextSlot
                       value={story.paragraph1}
                       onChange={(val) => updateField(`${basePath}.paragraph1`, val)}
                       isSelected={selectedPath === `${basePath}.paragraph1`}
                       onSelect={() => onSelectSlot?.(`${basePath}.paragraph1`, `બોટમ ન્યૂઝ ${idx + 1} પેરા ૧`)}
                       multiline
-                      className="text-[9.5px] font-serif text-slate-800 leading-[1.38] text-justify line-clamp-4"
+                      className="text-[9.5px] font-serif text-slate-800 leading-[1.38] text-justify"
                     />
+                    {story.paragraph2 && (
+                      <EditableTextSlot
+                        value={story.paragraph2}
+                        onChange={(val) => updateField(`${basePath}.paragraph2`, val)}
+                        isSelected={selectedPath === `${basePath}.paragraph2`}
+                        onSelect={() => onSelectSlot?.(`${basePath}.paragraph2`, `બોટમ ન્યૂઝ ${idx + 1} પેરા ૨`)}
+                        multiline
+                        className="text-[9.5px] font-serif text-slate-800 leading-[1.38] text-justify"
+                      />
+                    )}
                   </div>
                 </div>
 

@@ -1525,11 +1525,11 @@ export const NewspaperTemplateBuilder: React.FC<NewspaperTemplateBuilderProps> =
       } else if (pageToFill === 2) {
         const gujArticles = await fetchPublishedArticles({ categorySlug: 'gujarat', limit: 30 });
         const fallbackArticles = await fetchPublishedArticles({ limit: 30 });
-        clone.page2 = autoFillPage2(clone.page2, gujArticles.length >= 6 ? gujArticles : [...gujArticles, ...fallbackArticles], usedIds);
+        clone.page2 = autoFillPage2(clone.page2, [...gujArticles, ...fallbackArticles], usedIds);
       } else if (pageToFill === 3) {
         const bizArticles = await fetchPublishedArticles({ categorySlug: 'business', limit: 25 });
         const fallbackArticles = await fetchPublishedArticles({ limit: 30 });
-        clone.page3 = autoFillPage3(clone.page3, bizArticles.length >= 6 ? bizArticles : [...bizArticles, ...fallbackArticles], usedIds);
+        clone.page3 = autoFillPage3(clone.page3, [...bizArticles, ...fallbackArticles], usedIds);
       } else if (pageToFill === 4) {
         const [sportsArticles, entArticles, fallbackArticles] = await Promise.all([
           fetchPublishedArticles({ categorySlug: 'sports', limit: 25 }),
