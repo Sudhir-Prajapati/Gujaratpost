@@ -10,7 +10,7 @@ export const errorHandler = (
 ) => {
   // Log unexpected errors
   if (!(err instanceof AppError)) {
-    console.error('Unhandled Server Error:', err);
+    console.error(`[Unhandled Server Error] ${req.method} ${req.originalUrl}:`, err);
   }
 
   // 1. Check if error is our custom application error
@@ -36,11 +36,11 @@ export const errorHandler = (
   }
 
   // 4. Default to 500 Internal Server Error
-  const env = process.env.NODE_ENV || 'development';
+  const isProd = process.env.NODE_ENV === 'production';
   const devMessage = err.message || 'Internal Server Error';
   return sendError(
     res,
-    env === 'development' ? devMessage : 'Something went wrong',
+    isProd ? 'Something went wrong' : devMessage,
     500
   );
 };

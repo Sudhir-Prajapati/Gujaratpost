@@ -152,7 +152,7 @@ export default function CategoriesPage() {
       try {
         const res = await authFetch(getBackendApiUrl('/api/admin/categories'));
         const json = await res.json();
-        if (!res.ok) throw new Error(json.error || 'Failed to fetch categories');
+        if (!res.ok) throw new Error(json.message || json.error || 'Failed to fetch categories');
         const sorted = (json.data || []).sort((a: CategoryData, b: CategoryData) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
         setCategories(sorted);
       } catch (err: any) {
