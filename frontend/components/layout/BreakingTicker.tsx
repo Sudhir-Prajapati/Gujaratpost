@@ -337,17 +337,32 @@ export default function BreakingTicker() {
 
   return (
     <div
-      className="flex h-8 sm:h-11 md:h-11.5 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-3 sm:mb-3.5 md:mb-4"
+      className="flex h-9 sm:h-12 md:h-13 items-center overflow-hidden bg-[#B3121B] text-white border-y border-[#8a0d14] relative z-30 shadow-sm select-none mb-3 sm:mb-3.5 md:mb-4"
       role="region"
       aria-label="Breaking News Ticker"
     >
-      {/* Left Badge */}
-      <div className="z-20 flex h-full shrink-0 items-center bg-black px-2 sm:px-3.5 md:px-4 text-[11px] sm:text-[14px] md:text-[14.5px] font-black uppercase tracking-wider text-white border-r border-black shadow-md gap-1.5 sm:gap-2 whitespace-nowrap">
-        <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-red-600"></span>
-        </span>
-        <span>{badgeText}</span>
+      {/* Left Badge — Two-tone BREAKING | NEWS style */}
+      <div className="z-20 flex h-full shrink-0 items-center whitespace-nowrap shadow-md">
+        {/* "BREAKING" part — red text on white bg */}
+        <div className="flex h-full items-center bg-white px-2 sm:px-3 md:px-4">
+          <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5 shrink-0 mr-1.5 sm:mr-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-[#B3121B]"></span>
+          </span>
+          <span className="text-[14px] sm:text-[18px] md:text-[20px] font-black uppercase tracking-widest text-[#B3121B] leading-none">
+            {badgeText === 'BREAKING NEWS' || badgeText === 'બ્રેકિંગ ન્યૂઝ' || badgeText === 'ब्रेकिंग न्यूज़'
+              ? (badgeText === 'BREAKING NEWS' ? 'BREAKING' : badgeText === 'ब्रेकिंग न्यूज़' ? 'ब्रेकिंग' : 'બ્રેકિંગ')
+              : badgeText}
+          </span>
+        </div>
+        {/* "NEWS" part — white text on red bg */}
+        {(badgeText === 'BREAKING NEWS' || badgeText === 'બ્રેકિંગ ન્યૂઝ' || badgeText === 'ब्रेकिंग न्यूज़') && (
+          <div className="flex h-full items-center bg-[#B3121B] px-2 sm:px-3 md:px-4 border-l-2 border-white/30">
+            <span className="text-[14px] sm:text-[18px] md:text-[20px] font-black uppercase tracking-widest text-white leading-none">
+              {badgeText === 'BREAKING NEWS' ? 'NEWS' : badgeText === 'ब्रेकिंग न्यूज़' ? 'न्यूज़' : 'ન્યૂઝ'}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* ── MODE 1: CONTINUOUS MARQUEE SCROLL (Right to Left) ── */}

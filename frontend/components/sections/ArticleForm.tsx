@@ -25,6 +25,7 @@ interface CategoryData {
   headerType?: string;
   displayOrder?: number;
   isActive?: boolean;
+  showInArticle?: boolean;
   status?: string;
 }
 
@@ -2508,7 +2509,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const valid = categories.filter((c) => {
       if (isDisplayOnlySectionCategory(c)) return false;
       const isActive = c.isActive !== false && (c as any).status !== 'inactive' && (c as any).status !== 'disabled';
-      return isActive || isSelected(c);
+      const showInArticle = c.showInArticle !== false;
+      return (isActive && showInArticle) || isSelected(c);
     });
 
     // 1. Gujarat State (Always #1)

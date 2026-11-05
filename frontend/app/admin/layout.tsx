@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 
 import { useState, useEffect } from 'react';
@@ -43,6 +43,7 @@ import { getBackendApiUrl, authFetch } from '@/lib/api';
 
 import Link from 'next/link';
 import Image from 'next/image';
+import NotFoundClient from '@/components/ui/NotFoundClient';
 
 interface RoleMeta {
   title: string;
@@ -161,6 +162,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -185,7 +187,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     authFetch(getBackendApiUrl('/api/auth/me'))
       .then((res) => {
         if (res.status === 401) {
-          router.push('/login');
+          router.push('/cms-admin');
           return null;
         }
         return res.json();
@@ -205,11 +207,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             router.replace(config.defaultPath);
           }
         } else if (json && !json.success) {
-          router.push('/login');
+          router.push('/cms-admin');
         }
       })
       .catch(() => {
-        router.push('/login');
+        router.push('/cms-admin');
       });
   }, [router, pathname]);
 
@@ -269,12 +271,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       if (typeof localStorage !== 'undefined') {
         localStorage.removeItem('access_token');
       }
-      window.location.href = '/login';
+      window.location.href = '/cms-admin';
     } catch (err) {
       console.error('Logout failed:', err);
       setLoggingOut(false);
     }
   };
+
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-zinc-950 flex items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
+      </div>
+    );
+  }
+
+  if (isAuthorized === false) {
+    return <NotFoundClient />;
+  }
 
   return (
     <div className="flex min-h-screen bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-200">

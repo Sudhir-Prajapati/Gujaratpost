@@ -41,7 +41,7 @@ export class CategoryController {
    */
   static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInHeader, headerType } = req.body;
+      const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInArticle, showInHeader, headerType } = req.body;
 
       if (!name || typeof name !== 'string' || name.trim() === '') {
         throw new BadRequestError('Category name is required.');
@@ -98,6 +98,7 @@ export class CategoryController {
           displayOrder: parsedOrder,
           isActive: isActive !== undefined ? isActive : true,
           showInHome: showInHome !== undefined ? showInHome : true,
+          showInArticle: showInArticle !== undefined ? showInArticle : true,
           showInHeader: showInHeader !== undefined ? showInHeader : true,
           headerType: headerType !== undefined ? headerType : 'GLOBAL',
         },
@@ -116,7 +117,7 @@ export class CategoryController {
   static async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInHeader, headerType } = req.body;
+      const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInArticle, showInHeader, headerType } = req.body;
 
       const category = await prisma.category.findUnique({
         where: { id },
@@ -148,6 +149,7 @@ export class CategoryController {
 
       if (isActive !== undefined) updateData.isActive = isActive;
       if (showInHome !== undefined) updateData.showInHome = showInHome;
+      if (showInArticle !== undefined) updateData.showInArticle = showInArticle;
       if (showInHeader !== undefined) updateData.showInHeader = showInHeader;
       if (headerType !== undefined) updateData.headerType = headerType;
 
@@ -321,6 +323,7 @@ export class CategoryController {
                 homeOrder: 0,
                 isActive: true,
                 showInHome: false,
+                showInArticle: true,
                 showInHeader: false,
               },
             });

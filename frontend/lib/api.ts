@@ -848,6 +848,7 @@ export async function updateHeroSettings(payload: {
   trendingTopics?: string[] | string;
   trendingNewsIds?: string[] | string;
   popularNewsIds?: string[] | string;
+  popularNewsMode?: 'auto' | 'manual';
   mostReadIds?: string[] | string;
   mostReadMode?: 'auto' | 'manual';
   heroGridIds?: string[] | string;

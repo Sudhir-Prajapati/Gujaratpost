@@ -126,9 +126,71 @@ export async function ensureHeroSettingsTableColumns() {
     if (!colNames.has('mostreadmode')) {
       await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN mostReadMode VARCHAR(50) DEFAULT 'auto'`).catch(() => {});
     }
+    if (!colNames.has('popularnewsmode')) {
+      await prisma.$executeRawUnsafe(`ALTER TABLE hero_settings ADD COLUMN popularNewsMode VARCHAR(50) DEFAULT 'manual'`).catch(() => {});
+    }
     heroColumnsEnsured = true;
   } catch (err: any) {
     console.warn('⚠️ ensureHeroSettingsTableColumns notice:', err?.message || err);
+  }
+}
+
+export async function getAutoPopularNewsArticles(): Promise<any[]> {
+  try {
+    const activeNewsCategories: any[] = await prisma.category.findMany({
+      where: {
+        isActive: true,
+        slug: {
+          notIn: ['photos', 'videos', 'shorts', 'webstory', 'instagram', 'live-center', 'weather', 'podcasts']
+        }
+      },
+      orderBy: [
+        { homeOrder: 'desc' },
+        { name: 'asc' }
+      ],
+      select: { id: true, name: true, slug: true }
+    });
+
+    const categoryPostsPromises = activeNewsCategories.map((cat) =>
+      prisma.post.findMany({
+        where: {
+          categoryId: cat.id,
+          status: 'PUBLISHED',
+        },
+        orderBy: { articleNumber: 'desc' },
+        take: 2,
+        select: heroPostSelect,
+      }).catch(() => [])
+    );
+
+    const categoryPostsResults = await Promise.all(categoryPostsPromises);
+
+    const round1: any[] = [];
+    const round2: any[] = [];
+    const seenAutoIds = new Set<string>();
+
+    categoryPostsResults.forEach((posts) => {
+      if (posts[0] && !seenAutoIds.has(posts[0].id)) {
+        seenAutoIds.add(posts[0].id);
+        round1.push(formatPost(posts[0]));
+      }
+      if (posts[1]) {
+        round2.push(posts[1]);
+      }
+    });
+
+    for (const post of round2) {
+      if (round1.length >= 12) break;
+      if (post && !seenAutoIds.has(post.id)) {
+        seenAutoIds.add(post.id);
+        round1.push(formatPost(post));
+      }
+    }
+
+    return round1.slice(0, 12);
+  } catch (err: any) {
+    console.warn('Warning: error fetching auto popular news articles:', err?.message);
+    return [];
   }
 }
 
@@ -239,6 +301,17 @@ export class HeroController {
             parsedPopularNewsIds = [];
           }
         }
+
+        let popularNewsMode = (heroSetting as any)?.popularNewsMode;
+        if (!popularNewsMode) {
+          try {
+            const rawRows: any = await prisma.$queryRawUnsafe(`SELECT popularNewsMode FROM hero_settings WHERE id = 'default' LIMIT 1`);
+            if (rawRows && rawRows[0]?.popularNewsMode) {
+              popularNewsMode = rawRows[0].popularNewsMode;
+            }
+          } catch { }
+        }
+        popularNewsMode = popularNewsMode || 'manual';
 
         let parsedHeroGridIds: string[] = [];
         if ((heroSetting as any)?.heroGridIds) {
@@ -441,17 +514,29 @@ export class HeroController {
           .sort((a: any, b: any) => (b.articleNumber || 0) - (a.articleNumber || 0))
           .slice(0, 10);
 
-        // Resolve Popular News (preserving order and fallback)
-        let popularNewsArticles: any[] = [];
-        if (parsedPopularNewsIds.length > 0) {
-          popularNewsArticles = parsedPopularNewsIds
-            .map((id) => postsMap.get(id))
-            .filter(Boolean);
-        }
+        // Resolve Popular News (Automatic top 1-2 per category vs Manual 12 positions)
+        const autoPopularNewsArticles = await getAutoPopularNewsArticles();
 
-        if (popularNewsArticles.length === 0) {
-          popularNewsArticles = (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted.slice(0, 12)).map(formatPost);
+        let popularNewsArticles: any[] = [];
+        if (popularNewsMode === 'auto') {
+          popularNewsArticles = autoPopularNewsArticles;
+          if (popularNewsArticles.length === 0) {
+            popularNewsArticles = (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted.slice(0, 12)).map(formatPost);
+          }
           parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+        } else {
+          // Manual mode: use admin curated list
+          if (parsedPopularNewsIds.length > 0) {
+            popularNewsArticles = parsedPopularNewsIds
+              .map((id) => postsMap.get(id))
+              .filter(Boolean);
+          }
+          if (popularNewsArticles.length === 0) {
+            popularNewsArticles = autoPopularNewsArticles.length > 0
+              ? autoPopularNewsArticles
+              : (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted.slice(0, 12)).map(formatPost);
+            parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+          }
         }
 
         // Resolve Hero Grid (strictly 9 articles for top hero section)
@@ -531,6 +616,7 @@ export class HeroController {
             trendingTopics: parsedTopics,
             trendingNewsIds: parsedTrendingNewsIds,
             popularNewsIds: parsedPopularNewsIds,
+            popularNewsMode,
             mostReadIds: parsedMostReadIds,
             mostReadMode,
             heroGridIds: parsedHeroGridIds,
@@ -548,7 +634,9 @@ export class HeroController {
           trendingNewsIds: parsedTrendingNewsIds,
           trendingNewsArticles,
           popularNewsIds: parsedPopularNewsIds,
+          popularNewsMode,
           popularNewsArticles,
+          autoPopularNewsArticles,
           mostReadIds: parsedMostReadIds,
           mostReadMode,
           mostReadArticles,
@@ -589,7 +677,7 @@ export class HeroController {
    */
   static async updateHeroSettings(req: Request, res: Response, next: NextFunction) {
     try {
-      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds, electionBannerEnabled, electionBannerJson, breakingBannerEnabled, breakingBannerJson } = req.body;
+      const { slot1Id, slot2Id, slot3Id, trendingTopics, trendingNewsIds, popularNewsIds, popularNewsMode, mostReadIds, mostReadMode, heroGridIds, heroGridMode, tickerLabel, heroSliderMode, heroSliderIds, electionBannerEnabled, electionBannerJson, breakingBannerEnabled, breakingBannerJson } = req.body;
 
       const tickerLabelStr = tickerLabel !== undefined
         ? (typeof tickerLabel === 'object' ? JSON.stringify(tickerLabel) : String(tickerLabel))
@@ -638,6 +726,7 @@ export class HeroController {
       if (trendingTopics !== undefined) updateData.trendingTopics = topicsStr;
       if (trendingNewsIds !== undefined) updateData.trendingNewsIds = newsIdsStr;
       if (popularNewsIds !== undefined) updateData.popularNewsIds = popularIdsStr;
+      if (popularNewsMode !== undefined) updateData.popularNewsMode = popularNewsMode || 'manual';
       if (mostReadIds !== undefined) updateData.mostReadIds = mostReadIdsStr;
       if (heroGridIds !== undefined) updateData.heroGridIds = heroGridIdsStr;
       if (tickerLabelStr !== undefined) updateData.tickerLabel = tickerLabelStr;
@@ -663,6 +752,7 @@ export class HeroController {
             trendingTopics: topicsStr,
             trendingNewsIds: newsIdsStr,
             popularNewsIds: popularIdsStr,
+            popularNewsMode: popularNewsMode || 'manual',
             mostReadIds: mostReadIdsStr,
             heroGridIds: heroGridIdsStr,
             tickerLabel: tickerLabelStr || null,
@@ -735,6 +825,18 @@ export class HeroController {
           (updatedSetting as any).mostReadMode = mostReadMode || 'auto';
         } catch (rawErr) {
           console.warn('Could not update mostReadMode via raw SQL:', rawErr);
+        }
+      }
+
+      if (popularNewsMode !== undefined) {
+        try {
+          await prisma.$executeRawUnsafe(
+            `UPDATE hero_settings SET popularNewsMode = ? WHERE id = 'default'`,
+            popularNewsMode || 'manual'
+          );
+          (updatedSetting as any).popularNewsMode = popularNewsMode || 'manual';
+        } catch (rawErr) {
+          console.warn('Could not update popularNewsMode via raw SQL:', rawErr);
         }
       }
 
@@ -822,19 +924,41 @@ export class HeroController {
           .filter(Boolean);
       }
 
+      let finalPopularNewsMode = popularNewsMode || (updatedSetting as any)?.popularNewsMode;
+      if (!finalPopularNewsMode) {
+        try {
+          const rawRows: any = await prisma.$queryRawUnsafe(`SELECT popularNewsMode FROM hero_settings WHERE id = 'default' LIMIT 1`);
+          if (rawRows && rawRows[0]?.popularNewsMode) {
+            finalPopularNewsMode = rawRows[0].popularNewsMode;
+          }
+        } catch { }
+      }
+      finalPopularNewsMode = finalPopularNewsMode || 'manual';
+
+      const autoPopularNewsArticles = await getAutoPopularNewsArticles();
+
       let popularNewsArticles: any[] = [];
-      if (parsedPopularNewsIds.length > 0) {
-        const posts = await withDbRetry(() =>
-          prisma.post.findMany({
-            where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
-            select: heroPostSelect,
-          })
-        ).catch(() => []);
-        const map = new Map<string, any>();
-        posts.forEach((p) => map.set(p.id, formatPost(p)));
-        popularNewsArticles = parsedPopularNewsIds
-          .map((id) => map.get(id))
-          .filter(Boolean);
+      if (finalPopularNewsMode === 'auto') {
+        popularNewsArticles = autoPopularNewsArticles;
+        parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+      } else {
+        if (parsedPopularNewsIds.length > 0) {
+          const posts = await withDbRetry(() =>
+            prisma.post.findMany({
+              where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
+              select: heroPostSelect,
+            })
+          ).catch(() => []);
+          const map = new Map<string, any>();
+          posts.forEach((p) => map.set(p.id, formatPost(p)));
+          popularNewsArticles = parsedPopularNewsIds
+            .map((id) => map.get(id))
+            .filter(Boolean);
+        }
+        if (popularNewsArticles.length === 0) {
+          popularNewsArticles = autoPopularNewsArticles;
+          parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+        }
       }
 
       let finalMostReadMode = (updatedSetting as any)?.mostReadMode || mostReadMode;
@@ -1010,6 +1134,7 @@ export class HeroController {
           trendingTopics: parsedTopics,
           trendingNewsIds: parsedTrendingNewsIds,
           popularNewsIds: parsedPopularNewsIds,
+          popularNewsMode: finalPopularNewsMode,
           mostReadIds: parsedMostReadIds,
           mostReadMode: finalMostReadMode,
           heroGridIds: parsedHeroGridIds,
@@ -1023,7 +1148,9 @@ export class HeroController {
         trendingNewsIds: parsedTrendingNewsIds,
         trendingNewsArticles,
         popularNewsIds: parsedPopularNewsIds,
+        popularNewsMode: finalPopularNewsMode,
         popularNewsArticles,
+        autoPopularNewsArticles,
         mostReadIds: parsedMostReadIds,
         mostReadMode: finalMostReadMode,
         mostReadArticles,

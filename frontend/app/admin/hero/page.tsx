@@ -234,23 +234,6 @@ function SlotCard({
             <span className="text-xs font-semibold">No article selected</span>
           </div>
         )}
-        {/* Overlay gradient when article exists */}
-        {article && (
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        )}
-        {/* Category & Article Number badges */}
-        {article && (
-          <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-            <span className="inline-flex items-center rounded-full bg-[#B3121B] px-2.5 py-1 text-xs font-black uppercase tracking-wide text-white">
-              {catName(article.category) || 'News'}
-            </span>
-            {article.articleNumber && (
-              <span className="inline-flex items-center rounded-full bg-black/75 backdrop-blur-sm border border-white/20 px-2.5 py-1 text-xs font-black text-white">
-                #{article.articleNumber}
-              </span>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Article Info */}
@@ -400,6 +383,8 @@ export default function HeroManagerPage() {
   const [trendingNewsArticles, setTrendingNewsArticles] = useState<Article[]>([]);
   const [savingTrendingNews, setSavingTrendingNews] = useState(false);
   const [popularNewsArticles, setPopularNewsArticles] = useState<Article[]>([]);
+  const [popularNewsMode, setPopularNewsMode] = useState<'auto' | 'manual'>('manual');
+  const [autoPopularNewsArticles, setAutoPopularNewsArticles] = useState<Article[]>([]);
   const [savingPopularNews, setSavingPopularNews] = useState(false);
   const [draggedPopularIndex, setDraggedPopularIndex] = useState<number | null>(null);
 
@@ -691,8 +676,16 @@ export default function HeroManagerPage() {
       const combinedTrending = [...trending, ...serverTrending].filter((a, idx, arr) => a && arr.findIndex((x) => x?.id === a.id) === idx);
       setTrendingNewsArticles(combinedTrending.slice(0, 10));
 
+      const serverPopularNewsMode = (heroRes as any)?.popularNewsMode || heroRes?.setting?.popularNewsMode || 'manual';
+      setPopularNewsMode(serverPopularNewsMode);
+
+      const serverAutoPopularNews = Array.isArray((heroRes as any)?.autoPopularNewsArticles) ? (heroRes as any).autoPopularNewsArticles : [];
+      setAutoPopularNewsArticles(serverAutoPopularNews);
+
       if (heroRes && Array.isArray((heroRes as any).popularNewsArticles) && (heroRes as any).popularNewsArticles.length > 0) {
         setPopularNewsArticles((heroRes as any).popularNewsArticles as unknown as Article[]);
+      } else if (serverAutoPopularNews.length > 0) {
+        setPopularNewsArticles(serverAutoPopularNews.slice(0, 12));
       } else {
         setPopularNewsArticles(arts.slice(0, 12));
       }
@@ -1413,6 +1406,7 @@ export default function HeroManagerPage() {
         trendingTopics: trendingTopics,
         trendingNewsIds: trendingNewsArticles.map((a) => a.id),
         popularNewsIds: popularNewsArticles.map((a) => a.id),
+        popularNewsMode,
         heroGridIds: heroGridArticles.map((a) => a.id),
       };
 
@@ -1638,6 +1632,7 @@ export default function HeroManagerPage() {
         trendingTopics: trendingTopics,
         trendingNewsIds: trendingNewsArticles.map((a) => a.id),
         popularNewsIds: popularNewsArticles.map((a) => a.id),
+        popularNewsMode,
       };
 
       const res = await updateHeroSettings(payload);
@@ -1645,8 +1640,14 @@ export default function HeroManagerPage() {
       if (res && res.success) {
         triggerOnDemandRevalidate();
         showToast('✅ Saved! Popular News slider articles updated live on user side.', true);
+        if (res.data?.popularNewsMode) {
+          setPopularNewsMode(res.data.popularNewsMode);
+        }
         if (res.data?.popularNewsArticles && Array.isArray(res.data.popularNewsArticles)) {
           setPopularNewsArticles(res.data.popularNewsArticles as unknown as Article[]);
+        }
+        if (res.data?.autoPopularNewsArticles && Array.isArray(res.data.autoPopularNewsArticles)) {
+          setAutoPopularNewsArticles(res.data.autoPopularNewsArticles as unknown as Article[]);
         }
       } else {
         showToast('Failed to save Popular News articles. Please try again.', false);
@@ -1820,6 +1821,7 @@ export default function HeroManagerPage() {
         trendingTopics: trendingTopics,
         trendingNewsIds: trendingNewsArticles.map((a) => a.id),
         popularNewsIds: popularNewsArticles.map((a) => a.id),
+        popularNewsMode,
         heroGridIds: heroGridArticles.map((a) => a.id),
         heroGridMode,
       };
@@ -4377,12 +4379,15 @@ export default function HeroManagerPage() {
                   <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
                     Popular News Slider (લોકપ્રિય સમાચાર)
                   </h3>
-                  <span className="text-sm font-bold px-3 py-1 rounded-full border bg-amber-50 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:border-amber-800 shrink-0">
-                    {popularNewsArticles.length} / 12 Positions
+                  <span className={`text-sm font-bold px-3 py-1 rounded-full border shrink-0 ${popularNewsMode === 'auto'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
+                    : 'bg-amber-50 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300'
+                    }`}>
+                    {popularNewsMode === 'auto' ? '⚡ Auto Mode (Top 1-2 from Each Category)' : `${popularNewsArticles.length} / 12 Positions (Manual)`}
                   </span>
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Manage the 12 articles displayed in the &quot;લોકપ્રિય સમાચાર&quot; (Popular News) slider on the homepage. Use Move Up / Move Down or Drag &amp; Drop to change exact rank #1 to #12.
+                  Manage the 12 articles displayed in the &quot;લોકપ્રિય સમાચાર&quot; (Popular News) slider on the homepage. Toggle between Automatic (top 1-2 news from each category) or Manual (admin-curated positions #1 to #12).
                 </p>
               </div>
 
@@ -4397,106 +4402,245 @@ export default function HeroManagerPage() {
               </button>
             </div>
 
-            {/* Quick Article Search to Add Position */}
-            <div className="mb-6 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3.5 border border-gray-400 dark:border-zinc-700">
-              <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2">
-                ➕ Add Article to Popular News Slider (લોકપ્રિય સમાચાર)
+            {/* Mode Switcher */}
+            <div className="mb-6 p-4 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50">
+              <p className="text-xs font-black uppercase tracking-wider text-zinc-500 dark:text-zinc-400 mb-3">
+                Popular News Display Mode (લોકપ્રિય સમાચાર મોડ પસંદ કરો)
               </p>
-              <ArticleSearchBox
-                allArticles={allArticles}
-                excluded={popularNewsArticles.map((a) => a.id)}
-                maxLimit={100}
-                placeholder={popularNewsArticles.length >= 12 ? '[ Limit 12 reached — remove an article to add new ]' : 'Search latest 100 articles by title or #articleNumber to add to Popular News...'}
-                onSelect={(art) => handleAddPopularNewsArticle(art)}
-              />
+              <div className="flex flex-col sm:flex-row gap-3">
+                {/* Auto Mode Option */}
+                <button
+                  type="button"
+                  onClick={() => setPopularNewsMode('auto')}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${popularNewsMode === 'auto'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                    }`}
+                >
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${popularNewsMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
+                    {popularNewsMode === 'auto' && (
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-black flex items-center gap-2 ${popularNewsMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
+                      ⚡ Automatic Mode (દરેક કેટેગરીમાંથી ૧-૨ મુખ્ય સમાચાર)
+                      <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">AUTO</span>
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                      દરેક એક્ટિવ કેટેગરી (ગુજરાત, ભારત, વિશ્વ, રાજનીતિ, ક્રાઇમ, મનોરંજન, ફેક્ટ ચેક, ટેકનોલોજી, હેલ્થ, અમદાવાદ, સુરત વગેરે) માંથી તાજા ૧ કે ૨ મહત્વના સમાચાર આપમેળે ૧૨ પોઝિશન્સમાં સ્લાઇડર માટે પસંદ થાય છે.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Manual Mode Option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPopularNewsMode('manual');
+                    if (popularNewsArticles.length === 0 && autoPopularNewsArticles.length > 0) {
+                      setPopularNewsArticles(autoPopularNewsArticles.slice(0, 12));
+                    }
+                  }}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${popularNewsMode === 'manual'
+                    ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
+                    }`}
+                >
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${popularNewsMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
+                    {popularNewsMode === 'manual' && (
+                      <div className="h-2 w-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-black ${popularNewsMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
+                      ✍️ Manual Mode (મેન્યુઅલ કસ્ટમાઇઝેશન - ૧૨ પોઝિશન્સ)
+                    </p>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                      એડમિન પોતાની પસંદગી મુજબ કોઈપણ ૧૨ સમાચાર સર્ચ કરીને રેન્ક #1 થી #12 પર ગોઠવી શકે છે. ઉપર-નીચે ખસેડી અથવા ડ્રેગ કરીને ક્રમ બદલી શકાય છે.
+                    </p>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            {/* List of Popular News Positions */}
-            <div className="space-y-3">
-              {popularNewsArticles.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-gray-400 dark:border-zinc-700 p-6 text-center text-sm text-zinc-400">
-                  No articles assigned. Default published articles will be displayed automatically.
+            {/* ── Auto Mode Live Preview ── */}
+            {popularNewsMode === 'auto' && (
+              <div className="rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/20 p-4 sm:p-5 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-emerald-200 dark:border-emerald-800/80 gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span className="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                      ⚡ Live Auto-Feed Preview (Currently Active on Homepage Slider)
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (autoPopularNewsArticles.length > 0) {
+                        setPopularNewsArticles([...autoPopularNewsArticles.slice(0, 12)]);
+                      }
+                      setPopularNewsMode('manual');
+                      showToast('📋 Auto-feed articles loaded into manual editor! You can now rearrange or replace them.', true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-emerald-800 dark:text-emerald-200 bg-emerald-100 dark:bg-emerald-900/60 hover:bg-emerald-200 dark:hover:bg-emerald-800 rounded-lg border border-emerald-300 dark:border-emerald-700 transition cursor-pointer self-start sm:self-auto"
+                  >
+                    📋 Load These Into Manual Editor
+                  </button>
                 </div>
-              ) : (
-                popularNewsArticles.map((art, idx) => {
-                  const isDragging = draggedPopularIndex === idx;
-                  return (
-                    <div
-                      key={art.id}
-                      draggable
-                      onDragStart={(e) => handleDragStartPopular(e, idx)}
-                      onDragOver={(e) => handleDragOverPopular(e, idx)}
-                      onDragEnd={handleDragEndPopular}
-                      className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
-                        } hover:shadow-md`}
-                    >
-                      {/* Left Info */}
-                      <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
-                        <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder rank">
-                          <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
-                          <span className="h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white bg-[#B3121B]">
+
+                <p className="text-xs text-emerald-700 dark:text-emerald-400 mb-4 font-medium">
+                  નીચે દર્શાવેલ ૧૨ સમાચાર દરેક એક્ટિવ કેટેગરીમાંથી ટોપ ૧ કે ૨ લેટેસ્ટ સમાચાર તરીકે આપમેળે વેબસાઇટના &quot;લોકપ્રિય સમાચાર&quot; સ્લાઇડરમાં દેખાઈ રહ્યા છે:
+                </p>
+
+                <div className="space-y-2.5">
+                  {autoPopularNewsArticles.length === 0 ? (
+                    <div className="p-4 text-center text-xs text-zinc-400">Loading auto-feed articles...</div>
+                  ) : (
+                    autoPopularNewsArticles.slice(0, 12).map((art, idx) => (
+                      <div
+                        key={art.id || idx}
+                        className="flex items-center justify-between p-3 rounded-xl border border-emerald-200 dark:border-emerald-900/60 bg-white dark:bg-zinc-900 gap-3 shadow-xs"
+                      >
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <span className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-xs font-black text-white bg-emerald-600">
                             #{idx + 1}
                           </span>
-                        </div>
-
-                        <div className="relative h-12 w-16 sm:h-14 sm:w-20 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-gray-400 dark:border-zinc-700 shadow-2xs">
-                          <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
-                        </div>
-
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
-                              Popular Rank #{idx + 1}
-                            </span>
-                            {art.articleNumber && (
-                              <span className="text-[10px] sm:text-xs font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-400 dark:border-red-800">
-                                #{art.articleNumber}
-                              </span>
-                            )}
+                          <div className="relative h-11 w-14 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-gray-300 dark:border-zinc-700">
+                            <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
                           </div>
-                          <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mt-1">
-                            {getTitle(art)}
-                          </p>
-                          <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-semibold mt-1 truncate">
-                            {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
-                          </p>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                {catName(art.category)}
+                              </span>
+                              {art.articleNumber && (
+                                <span className="text-[10px] font-bold text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded">
+                                  #{art.articleNumber}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 line-clamp-1 leading-snug mt-0.5">
+                              {getTitle(art)}
+                            </p>
+                          </div>
                         </div>
                       </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
-                      {/* Right Controls */}
-                      <div className="flex items-center gap-2 mt-3 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-gray-400 dark:border-zinc-800/80 pt-2.5 sm:pt-0">
-                        <button
-                          type="button"
-                          onClick={() => movePopularArticle(idx, -1)}
-                          disabled={idx === 0}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
-                          title="Move Up 1 Position"
-                        >
-                          ⬆️ Move Up
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => movePopularArticle(idx, 1)}
-                          disabled={idx === popularNewsArticles.length - 1}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
-                          title="Move Down 1 Position"
-                        >
-                          ⬇️ Move Down
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemovePopularNewsArticle(art.id)}
-                          className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-red-600 rounded-lg border border-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
-                          title="Remove from Popular News"
-                        >
-                          ✕ Remove
-                        </button>
-                      </div>
+            {/* ── Manual Mode Editor ── */}
+            {popularNewsMode === 'manual' && (
+              <>
+                {/* Quick Article Search to Add Position */}
+                <div className="mb-6 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 p-3.5 border border-gray-400 dark:border-zinc-700">
+                  <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400 mb-2">
+                    ➕ Add Article to Popular News Slider (લોકપ્રિય સમાચાર)
+                  </p>
+                  <ArticleSearchBox
+                    allArticles={allArticles}
+                    excluded={popularNewsArticles.map((a) => a.id)}
+                    maxLimit={100}
+                    placeholder={popularNewsArticles.length >= 12 ? '[ Limit 12 reached — remove an article to add new ]' : 'Search latest 100 articles by title or #articleNumber to add to Popular News...'}
+                    onSelect={(art) => handleAddPopularNewsArticle(art)}
+                  />
+                </div>
+
+                {/* List of Popular News Positions */}
+                <div className="space-y-3">
+                  {popularNewsArticles.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-gray-400 dark:border-zinc-700 p-6 text-center text-sm text-zinc-400">
+                      No articles assigned. Default published articles will be displayed automatically.
                     </div>
-                  );
-                })
-              )}
-            </div>
+                  ) : (
+                    popularNewsArticles.map((art, idx) => {
+                      const isDragging = draggedPopularIndex === idx;
+                      return (
+                        <div
+                          key={art.id}
+                          draggable
+                          onDragStart={(e) => handleDragStartPopular(e, idx)}
+                          onDragOver={(e) => handleDragOverPopular(e, idx)}
+                          onDragEnd={handleDragEndPopular}
+                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border border-gray-400 bg-white dark:border-zinc-700 dark:bg-zinc-900/80 transition-all hover:border-[#B3121B]/40 cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
+                            } hover:shadow-md`}
+                        >
+                          {/* Left Info */}
+                          <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
+                            <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder rank">
+                              <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
+                              <span className="h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white bg-[#B3121B]">
+                                #{idx + 1}
+                              </span>
+                            </div>
+
+                            <div className="relative h-12 w-16 sm:h-14 sm:w-20 shrink-0 rounded-lg overflow-hidden bg-zinc-100 border border-gray-400 dark:border-zinc-700 shadow-2xs">
+                              <ArticleMedia src={getArticleImage(art)} alt="" className="object-cover" />
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800">
+                                  Popular Rank #{idx + 1}
+                                </span>
+                                {art.articleNumber && (
+                                  <span className="text-[10px] sm:text-xs font-bold text-[#B3121B] bg-red-50 dark:bg-red-950/40 px-2 py-0.5 rounded border border-red-400 dark:border-red-800">
+                                    #{art.articleNumber}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-base sm:text-lg font-bold text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug mt-1">
+                                {getTitle(art)}
+                              </p>
+                              <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-semibold mt-1 truncate">
+                                {catName(art.category)} • {authorName(art.author)} {(art.publishedAt || art.createdAt) && `• ${fmtDate(art.publishedAt || art.createdAt)}`}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Right Controls */}
+                          <div className="flex items-center gap-2 mt-3 sm:mt-0 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 border-gray-400 dark:border-zinc-800/80 pt-2.5 sm:pt-0">
+                            <button
+                              type="button"
+                              onClick={() => movePopularArticle(idx, -1)}
+                              disabled={idx === 0}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                              title="Move Up 1 Position"
+                            >
+                              ⬆️ Move Up
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => movePopularArticle(idx, 1)}
+                              disabled={idx === popularNewsArticles.length - 1}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold rounded-lg border border-gray-400 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 disabled:hover:bg-transparent transition cursor-pointer"
+                              title="Move Down 1 Position"
+                            >
+                              ⬇️ Move Down
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePopularNewsArticle(art.id)}
+                              className="flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-bold text-red-600 rounded-lg border border-red-400 bg-red-50/50 dark:bg-red-950/20 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                              title="Remove from Popular News"
+                            >
+                              ✕ Remove
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* ════════════════════════════════════════════════════════════════

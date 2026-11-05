@@ -73,6 +73,7 @@ model Category {
   homeOrder     Int      @default(0)
   isActive      Boolean  @default(true)
   showInHome    Boolean  @default(true)
+  showInArticle Boolean  @default(true)
   showInHeader  Boolean  @default(true)
   headerType    String   @default("GLOBAL")
   createdAt     DateTime @default(now())
@@ -304,6 +305,7 @@ model HeroSetting {
   trendingTopics  String?  @db.Text
   trendingNewsIds String?  @db.Text
   popularNewsIds  String?  @db.Text
+  popularNewsMode String?  @default("manual") @db.VarChar(50)
   mostReadIds     String?  @db.Text
   heroGridIds     String?  @db.Text
   heroGridMode    String?  @default("auto") @db.VarChar(50)

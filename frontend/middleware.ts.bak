@@ -1,0 +1,32 @@
+﻿import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
+
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 1. Direct access to /login should always show 404
+  if (pathname === '/login' || pathname.startsWith('/login/')) {
+    const notFoundUrl = new URL('/not-found', request.url);
+    return NextResponse.rewrite(notFoundUrl, { status: 404 });
+  }
+
+  // 2. Direct access to /admin or /admin/* without access_token cookie should show 404
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const token = request.cookies.get('access_token')?.value;
+    if (!token || token.trim() === '') {
+      const notFoundUrl = new URL('/not-found', request.url);
+      return NextResponse.rewrite(notFoundUrl, { status: 404 });
+    }
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    '/login',
+    '/login/:path*',
+    '/admin',
+    '/admin/:path*',
+  ],
+};

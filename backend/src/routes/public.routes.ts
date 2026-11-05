@@ -1061,6 +1061,7 @@ router.get('/categories', cacheResponse(60), async (req, res, next) => {
   try {
     const showInHeader = req.query.showInHeader === 'true';
     const showInHome = req.query.showInHome === 'true';
+    const showInArticle = req.query.showInArticle === 'true';
     const headerType = req.query.headerType as string | undefined;
 
     // Build where clause WITHOUT headerType — it's filtered in JS below
@@ -1071,6 +1072,7 @@ router.get('/categories', cacheResponse(60), async (req, res, next) => {
 
     if (showInHeader) where.showInHeader = true;
     if (showInHome) where.showInHome = true;
+    if (showInArticle) where.showInArticle = true;
 
     let orderBy: any = [{ displayOrder: 'desc' }, { id: 'asc' }];
     if (showInHeader) orderBy = [{ headerOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
