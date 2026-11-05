@@ -8,6 +8,11 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  // CRITICAL: Prevent error responses from being cached by browsers or CDNs
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   // Log unexpected errors
   if (!(err instanceof AppError)) {
     console.error(`[Unhandled Server Error] ${req.method} ${req.originalUrl}:`, err);
