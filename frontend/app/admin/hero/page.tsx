@@ -285,10 +285,10 @@ function SlotCard({
         <button
           onClick={() => setShowSearch((v) => !v)}
           className={`mt-auto flex items-center justify-center gap-2 w-full rounded-xl text-sm sm:text-base font-bold py-3 transition-all cursor-pointer ${showSearch
-              ? 'bg-[#B3121B] text-white shadow-md shadow-[#B3121B]/20'
-              : article
-                ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-[#B3121B]/10 hover:text-[#B3121B]'
-                : 'bg-[#B3121B] text-white hover:bg-[#8E0E15] shadow-sm shadow-[#B3121B]/30'
+            ? 'bg-[#B3121B] text-white shadow-md shadow-[#B3121B]/20'
+            : article
+              ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-[#B3121B]/10 hover:text-[#B3121B]'
+              : 'bg-[#B3121B] text-white hover:bg-[#8E0E15] shadow-sm shadow-[#B3121B]/30'
             }`}
         >
           {showSearch ? (
@@ -426,11 +426,15 @@ export default function HeroManagerPage() {
   // ── TV BREAKING NEWS SHOWCASE BANNER STATES ──
   const [breakingBannerEnabled, setBreakingBannerEnabled] = useState(false);
   const [breakingBannerBadgeText, setBreakingBannerBadgeText] = useState('BREAKING NEWS');
+  const [breakingBannerLiveUpdateText, setBreakingBannerLiveUpdateText] = useState('લાઇવ અપડેટ્સ');
   const [breakingBannerInterval, setBreakingBannerInterval] = useState<number>(4);
   const [breakingSlides, setBreakingSlides] = useState<BreakingSlide[]>([
     {
       id: 'slide-1',
       image: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80',
+      ],
       link: '',
       texts: [
         'વિશાખાપટ્ટનમની ઓઇલ રિફાઇનરીમાં ભીષણ વિસ્ફોટ',
@@ -441,6 +445,9 @@ export default function HeroManagerPage() {
     {
       id: 'slide-2',
       image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+      ],
       link: '',
       texts: [
         'ગુજરાતમાં આગામી ૪૮ કલાક ભારેથી અતિભારે વરસાદની હવામાન વિભાગની આગાહી',
@@ -450,6 +457,7 @@ export default function HeroManagerPage() {
   ]);
   const [savingBreakingBanner, setSavingBreakingBanner] = useState(false);
   const [uploadingSlideImgIdx, setUploadingSlideImgIdx] = useState<number | null>(null);
+  const [slideImageUrlInputs, setSlideImageUrlInputs] = useState<Record<number, string>>({});
   const [mostReadMode, setMostReadMode] = useState<'auto' | 'manual'>('auto');
   const [autoMostReadArticles, setAutoMostReadArticles] = useState<Article[]>([]);
   const [savingMostRead, setSavingMostRead] = useState(false);
@@ -569,12 +577,25 @@ export default function HeroManagerPage() {
           const parsed = typeof rawBreakingJson === 'string' ? JSON.parse(rawBreakingJson) : rawBreakingJson;
           if (parsed && typeof parsed === 'object') {
             if (parsed.badgeText) setBreakingBannerBadgeText(parsed.badgeText);
+            if (parsed.liveUpdateText) setBreakingBannerLiveUpdateText(parsed.liveUpdateText);
             if (parsed.intervalSeconds) setBreakingBannerInterval(Number(parsed.intervalSeconds) || 4);
             if (Array.isArray(parsed.slides) && parsed.slides.length > 0) {
-              setBreakingSlides(parsed.slides);
+              const normalizedSlides = parsed.slides.map((s: any, idx: number) => {
+                const imgs = Array.isArray(s.images) && s.images.length > 0
+                  ? s.images.filter((img: any) => typeof img === 'string' && img.trim() !== '')
+                  : (s.image && s.image.trim() !== '' ? [s.image.trim()] : []);
+                return {
+                  ...s,
+                  id: s.id || `slide-${idx + 1}`,
+                  images: imgs,
+                  image: imgs[0] || '',
+                  texts: Array.isArray(s.texts) && s.texts.length > 0 ? s.texts : [''],
+                };
+              });
+              setBreakingSlides(normalizedSlides);
             }
           }
-        } catch {}
+        } catch { }
       }
 
       // Populate Election Banner
@@ -624,7 +645,7 @@ export default function HeroManagerPage() {
               }));
             }
           }
-        } catch {}
+        } catch { }
       }
 
       const serverGridMode = (heroRes as any)?.heroGridMode || heroRes?.setting?.heroGridMode || 'auto';
@@ -814,7 +835,7 @@ export default function HeroManagerPage() {
       localStorage.setItem('gp_ticker_hidden', hide ? 'true' : 'false');
       try {
         document.cookie = `gp_ticker_hidden=${hide ? 'true' : 'false'}; path=/; max-age=31536000; SameSite=Lax`;
-      } catch {}
+      } catch { }
     }
 
     // 3. Instantly broadcast via BroadcastChannel to all open browser tabs
@@ -853,36 +874,122 @@ export default function HeroManagerPage() {
   };
 
   // ─── ELECTION BANNER HANDLERS ───────────────────────────────────────
-  const handleUploadSlideImage = async (file: File, slideIdx: number) => {
-    if (!file || !file.type.startsWith('image/')) {
-      showToast('Please select a valid image file (PNG, JPG, WebP)', false);
-      return;
-    }
+  const handleUploadSlideImages = async (files: FileList | File[], slideIdx: number) => {
+    if (!files || files.length === 0) return;
     setUploadingSlideImgIdx(slideIdx);
+    const uploadedUrls: string[] = [];
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await res.json();
-      const url = data?.data?.url || data?.url;
-      if (url) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file || !file.type.startsWith('image/')) continue;
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await authFetch(getBackendApiUrl('/api/admin/upload'), {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        const url = data?.data?.url || data?.url;
+        if (url) {
+          uploadedUrls.push(url);
+        }
+      }
+
+      if (uploadedUrls.length > 0) {
         setBreakingSlides(prev => {
           const next = [...prev];
-          next[slideIdx] = { ...next[slideIdx], image: url };
+          const curr = next[slideIdx];
+          const existing = Array.isArray(curr.images) && curr.images.length > 0
+            ? curr.images
+            : (curr.image ? [curr.image] : []);
+          const combined = [...existing, ...uploadedUrls];
+          next[slideIdx] = {
+            ...curr,
+            images: combined,
+            image: combined[0] || '',
+          };
           return next;
         });
-        showToast('Slide image uploaded successfully!', true);
+        showToast(`${uploadedUrls.length} image(s) uploaded successfully!`, true);
       } else {
-        showToast('Upload succeeded but no image URL was returned.', false);
+        showToast('No images were uploaded.', false);
       }
     } catch (e: any) {
-      showToast(e?.message || 'Error uploading slide image', false);
+      showToast(e?.message || 'Error uploading slide images', false);
     } finally {
       setUploadingSlideImgIdx(null);
     }
+  };
+
+  const handleAddSlideImageUrl = (slideIdx: number, rawUrl: string) => {
+    const url = (rawUrl || '').trim();
+    if (!url) return;
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const curr = next[slideIdx];
+      const existing = Array.isArray(curr.images) && curr.images.length > 0
+        ? curr.images
+        : (curr.image ? [curr.image] : []);
+      const combined = [...existing, url];
+      next[slideIdx] = {
+        ...curr,
+        images: combined,
+        image: combined[0] || '',
+      };
+      return next;
+    });
+    setSlideImageUrlInputs(prev => ({ ...prev, [slideIdx]: '' }));
+    showToast('Image added to slide!', true);
+  };
+
+  const handleRemoveSlideImage = (slideIdx: number, imgIdx: number) => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const curr = next[slideIdx];
+      const existing = Array.isArray(curr.images) && curr.images.length > 0
+        ? curr.images
+        : (curr.image ? [curr.image] : []);
+      const filtered = existing.filter((_, i) => i !== imgIdx);
+      next[slideIdx] = {
+        ...curr,
+        images: filtered,
+        image: filtered[0] || '',
+      };
+      return next;
+    });
+  };
+
+  const handleMoveSlideImage = (slideIdx: number, imgIdx: number, direction: 'left' | 'right') => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      const curr = next[slideIdx];
+      const existing = [...(Array.isArray(curr.images) && curr.images.length > 0
+        ? curr.images
+        : (curr.image ? [curr.image] : []))];
+      const targetIdx = direction === 'left' ? imgIdx - 1 : imgIdx + 1;
+      if (targetIdx < 0 || targetIdx >= existing.length) return prev;
+      const temp = existing[imgIdx];
+      existing[imgIdx] = existing[targetIdx];
+      existing[targetIdx] = temp;
+      next[slideIdx] = {
+        ...curr,
+        images: existing,
+        image: existing[0] || '',
+      };
+      return next;
+    });
+  };
+
+  const handleClearAllSlideImages = (slideIdx: number) => {
+    setBreakingSlides(prev => {
+      const next = [...prev];
+      next[slideIdx] = {
+        ...next[slideIdx],
+        images: [],
+        image: '',
+      };
+      return next;
+    });
   };
 
   const handleAddBreakingSlide = () => {
@@ -891,8 +998,9 @@ export default function HeroManagerPage() {
       {
         id: 'slide-' + Date.now(),
         image: '',
+        images: [],
         link: '',
-        texts: ['નવી બ્રેકિંગ ન્યૂઝ હેડલાઇન લખો...'],
+        texts: [''],
       },
     ]);
   };
@@ -927,7 +1035,7 @@ export default function HeroManagerPage() {
       const currentTexts = next[slideIdx]?.texts || [];
       next[slideIdx] = {
         ...next[slideIdx],
-        texts: [...currentTexts, 'નવો મુદ્દો...'],
+        texts: [...currentTexts, ''],
       };
       return next;
     });
@@ -939,7 +1047,7 @@ export default function HeroManagerPage() {
       const currentTexts = (next[slideIdx]?.texts || []).filter((_, i) => i !== textIdx);
       next[slideIdx] = {
         ...next[slideIdx],
-        texts: currentTexts.length > 0 ? currentTexts : ['મુદ્દો ૧'],
+        texts: currentTexts.length > 0 ? currentTexts : [''],
       };
       return next;
     });
@@ -980,8 +1088,19 @@ export default function HeroManagerPage() {
     try {
       const bannerPayload = {
         badgeText: breakingBannerBadgeText.trim() || 'BREAKING NEWS',
+        liveUpdateText: breakingBannerLiveUpdateText.trim() || 'લાઇવ અપડેટ્સ',
         intervalSeconds: Number(breakingBannerInterval) || 4,
-        slides: breakingSlides,
+        slides: breakingSlides.map((s) => {
+          const imgs = Array.isArray(s.images) && s.images.length > 0
+            ? s.images.filter((img) => typeof img === 'string' && img.trim() !== '')
+            : (s.image && s.image.trim() !== '' ? [s.image.trim()] : []);
+          return {
+            ...s,
+            images: imgs,
+            image: imgs[0] || '',
+            texts: (s.texts || []).filter((t) => t && t.trim() !== ''),
+          };
+        }),
       };
 
       const res = await updateHeroSettings({
@@ -1059,8 +1178,19 @@ export default function HeroManagerPage() {
     try {
       const bannerPayload = {
         badgeText: breakingBannerBadgeText.trim() || 'BREAKING NEWS',
+        liveUpdateText: breakingBannerLiveUpdateText.trim() || 'લાઇવ અપડેટ્સ',
         intervalSeconds: breakingBannerInterval,
-        slides: breakingSlides,
+        slides: breakingSlides.map((s) => {
+          const imgs = Array.isArray(s.images) && s.images.length > 0
+            ? s.images.filter((img) => typeof img === 'string' && img.trim() !== '')
+            : (s.image && s.image.trim() !== '' ? [s.image.trim()] : []);
+          return {
+            ...s,
+            images: imgs,
+            image: imgs[0] || '',
+            texts: (s.texts || []).filter((t) => t && t.trim() !== ''),
+          };
+        }),
       };
 
       const res = await updateHeroSettings({
@@ -1249,7 +1379,7 @@ export default function HeroManagerPage() {
         localStorage.setItem('gp_ticker_hidden', tickerHidden ? 'true' : 'false');
         try {
           document.cookie = `gp_ticker_hidden=${tickerHidden ? 'true' : 'false'}; path=/; max-age=31536000; SameSite=Lax`;
-        } catch {}
+        } catch { }
       }
       const res = await updateHeroSettings(payload);
       if (res && res.success) {
@@ -1724,10 +1854,10 @@ export default function HeroManagerPage() {
       const payload = bottomSlotsMode === 'auto'
         ? { slot1Id: null, slot2Id: null, slot3Id: null }
         : {
-            slot1Id: slots[0]?.id || null,
-            slot2Id: slots[1]?.id || null,
-            slot3Id: slots[2]?.id || null,
-          };
+          slot1Id: slots[0]?.id || null,
+          slot2Id: slots[1]?.id || null,
+          slot3Id: slots[2]?.id || null,
+        };
 
       const res = await updateHeroSettings(payload);
 
@@ -1880,11 +2010,10 @@ export default function HeroManagerPage() {
                     Choose whether the top Breaking News Ticker is visible to visitors or completely hidden.
                   </p>
                 </div>
-                <span className={`text-xs font-black px-3 py-1 rounded-full border shrink-0 ${
-                  tickerHidden
-                    ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
-                    : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
-                }`}>
+                <span className={`text-xs font-black px-3 py-1 rounded-full border shrink-0 ${tickerHidden
+                  ? 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800'
+                  : 'bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                  }`}>
                   {tickerHidden ? '● હાલમાં છુપાયેલ છે (Currently Hidden)' : '● લાઈવ ચાલુ છે (Currently Visible)'}
                 </span>
               </div>
@@ -1893,11 +2022,10 @@ export default function HeroManagerPage() {
                 {/* Option A: Show Section (Visible) */}
                 <div
                   onClick={() => handleToggleTickerVisibility(false)}
-                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    !tickerHidden
-                      ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/20 shadow-sm ring-2 ring-emerald-500/20'
-                      : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 hover:border-zinc-400'
-                  }`}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${!tickerHidden
+                    ? 'border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/20 shadow-sm ring-2 ring-emerald-500/20'
+                    : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 hover:border-zinc-400'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -1916,9 +2044,8 @@ export default function HeroManagerPage() {
                         </p>
                       </div>
                     </div>
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
-                      !tickerHidden ? 'border-emerald-600 bg-emerald-600' : 'border-zinc-400'
-                    }`}>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${!tickerHidden ? 'border-emerald-600 bg-emerald-600' : 'border-zinc-400'
+                      }`}>
                       {!tickerHidden && <div className="h-2 w-2 rounded-full bg-white" />}
                     </div>
                   </div>
@@ -1930,11 +2057,10 @@ export default function HeroManagerPage() {
                 {/* Option B: Hide Section (Hidden) */}
                 <div
                   onClick={() => handleToggleTickerVisibility(true)}
-                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    tickerHidden
-                      ? 'border-red-600 bg-red-50/60 dark:bg-red-950/20 shadow-sm ring-2 ring-red-500/20'
-                      : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 hover:border-zinc-400'
-                  }`}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerHidden
+                    ? 'border-red-600 bg-red-50/60 dark:bg-red-950/20 shadow-sm ring-2 ring-red-500/20'
+                    : 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/60 hover:border-zinc-400'
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -1953,9 +2079,8 @@ export default function HeroManagerPage() {
                         </p>
                       </div>
                     </div>
-                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${
-                      tickerHidden ? 'border-red-600 bg-red-600' : 'border-zinc-400'
-                    }`}>
+                    <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 ${tickerHidden ? 'border-red-600 bg-red-600' : 'border-zinc-400'
+                      }`}>
                       {tickerHidden && <div className="h-2 w-2 rounded-full bg-white" />}
                     </div>
                   </div>
@@ -2016,8 +2141,8 @@ export default function HeroManagerPage() {
                     <div
                       onClick={() => setTickerMode('scroll')}
                       className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'scroll'
-                          ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
-                          : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
+                        ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                        : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
                         }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -2048,8 +2173,8 @@ export default function HeroManagerPage() {
                     <div
                       onClick={() => setTickerMode('single')}
                       className={`p-4 sm:p-5 rounded-2xl border-2 cursor-pointer transition-all ${tickerMode === 'single'
-                          ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
-                          : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
+                        ? 'border-[#B3121B] bg-red-50/40 dark:bg-red-950/20 shadow-sm'
+                        : 'border-zinc-300 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-800/40 hover:border-zinc-400'
                         }`}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -2099,8 +2224,8 @@ export default function HeroManagerPage() {
                             type="button"
                             onClick={() => setTickerSpeed(opt.ms)}
                             className={`text-xs sm:text-sm px-3.5 py-1.5 rounded-lg font-bold transition cursor-pointer ${tickerSpeed === opt.ms
-                                ? 'bg-[#B3121B] text-white shadow-xs'
-                                : 'bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400'
+                              ? 'bg-[#B3121B] text-white shadow-xs'
+                              : 'bg-white dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-zinc-700 dark:text-zinc-300 hover:border-zinc-400'
                               }`}
                           >
                             {opt.label}
@@ -2145,8 +2270,8 @@ export default function HeroManagerPage() {
                           type="button"
                           onClick={() => setTickerBadgeText(preset)}
                           className={`text-xs sm:text-sm px-3.5 py-1 rounded-full border font-semibold transition cursor-pointer ${tickerBadgeText === preset
-                              ? 'bg-[#B3121B] text-white border-[#B3121B]'
-                              : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
+                            ? 'bg-[#B3121B] text-white border-[#B3121B]'
+                            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-gray-400 dark:border-zinc-700 hover:border-zinc-400'
                             }`}
                         >
                           {preset}
@@ -2156,11 +2281,10 @@ export default function HeroManagerPage() {
                   </div>
 
                   {/* Live Preview Card */}
-                  <div className={`rounded-xl border p-4 flex flex-col justify-center transition-all ${
-                    tickerHidden
-                      ? 'border-amber-300 dark:border-amber-800/80 bg-amber-50/40 dark:bg-amber-950/20'
-                      : 'border-gray-400 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/40'
-                  }`}>
+                  <div className={`rounded-xl border p-4 flex flex-col justify-center transition-all ${tickerHidden
+                    ? 'border-amber-300 dark:border-amber-800/80 bg-amber-50/40 dark:bg-amber-950/20'
+                    : 'border-gray-400 dark:border-zinc-700/80 bg-zinc-50 dark:bg-zinc-800/40'
+                    }`}>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-zinc-500">Live Bar Preview</span>
                       <div className="flex items-center gap-2">
@@ -2198,8 +2322,8 @@ export default function HeroManagerPage() {
                                     ? customTickerHeadlines[previewTickerIndex % customTickerHeadlines.length]?.heading
                                     : 'કસ્ટમ હેડિંગ દાખલ કરો (Enter custom headline below)...'
                                   : selectedTickerArticles.length > 0
-                                  ? getTitle(selectedTickerArticles[previewTickerIndex % selectedTickerArticles.length])
-                                  : 'નીચેથી આર્ટિકલ્સ પસંદ કરો (Select articles below)...'}
+                                    ? getTitle(selectedTickerArticles[previewTickerIndex % selectedTickerArticles.length])
+                                    : 'નીચેથી આર્ટિકલ્સ પસંદ કરો (Select articles below)...'}
                               </span>
                             </div>
                             {tickerSourceType === 'custom' ? (
@@ -2248,256 +2372,279 @@ export default function HeroManagerPage() {
                         Choose whether to select existing news articles or manually type custom breaking headlines with links (applies to {tickerMode === 'scroll' ? 'Continuous Marquee Scroll' : 'Single Headline Slider'}).
                       </p>
                     </div>
-                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
-                        {tickerSourceType === 'custom'
-                          ? `${customTickerHeadlines.length} headlines added`
-                          : `${selectedTickerArticles.length} articles selected`}
-                      </span>
-                    </div>
+                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#B3121B]/10 text-[#B3121B] border border-[#B3121B]/20 shrink-0">
+                      {tickerSourceType === 'custom'
+                        ? `${customTickerHeadlines.length} headlines added`
+                        : `${selectedTickerArticles.length} articles selected`}
+                    </span>
+                  </div>
 
-                    {/* Mode Selector Tabs: [ 📰 Select from Articles ] vs [ ✍️ Enter Heading & Link ] */}
-                    <div className="flex items-center gap-2 p-1.5 bg-zinc-200/80 dark:bg-zinc-800/90 rounded-2xl border border-zinc-300 dark:border-zinc-700 w-full sm:w-fit mb-4 shadow-2xs">
-                      <button
-                        type="button"
-                        onClick={() => setTickerSourceType('articles')}
-                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                          tickerSourceType === 'articles'
-                            ? 'bg-white dark:bg-zinc-900 text-[#B3121B] shadow-sm'
-                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                  {/* Mode Selector Tabs: [ 📰 Select from Articles ] vs [ ✍️ Enter Heading & Link ] */}
+                  <div className="flex items-center gap-2 p-1.5 bg-zinc-200/80 dark:bg-zinc-800/90 rounded-2xl border border-zinc-300 dark:border-zinc-700 w-full sm:w-fit mb-4 shadow-2xs">
+                    <button
+                      type="button"
+                      onClick={() => setTickerSourceType('articles')}
+                      className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${tickerSourceType === 'articles'
+                        ? 'bg-white dark:bg-zinc-900 text-[#B3121B] shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                         }`}
-                      >
-                        <FileText className="h-4 w-4" />
-                        <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles / Selected by Admin)</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setTickerSourceType('custom')}
-                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                          tickerSourceType === 'custom'
-                            ? 'bg-white dark:bg-zinc-900 text-[#B3121B] shadow-sm'
-                            : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                    >
+                      <FileText className="h-4 w-4" />
+                      <span>આર્ટિકલ્સમાંથી પસંદ કરો (Select Articles / Selected by Admin)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTickerSourceType('custom')}
+                      className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${tickerSourceType === 'custom'
+                        ? 'bg-white dark:bg-zinc-900 text-[#B3121B] shadow-sm'
+                        : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
                         }`}
-                      >
-                        <PenLine className="h-4 w-4" />
-                        <span>હેડિંગ અને લિંક જાતે લખો (Custom Heading & Link)</span>
-                      </button>
-                    </div>
+                    >
+                      <PenLine className="h-4 w-4" />
+                      <span>હેડિંગ અને લિંક જાતે લખો (Custom Heading & Link)</span>
+                    </button>
+                  </div>
 
-                    {/* SUB-SECTION A: SELECT ARTICLES FROM DATABASE */}
-                    {tickerSourceType === 'articles' ? (
-                      <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
-                        {/* Search box to add articles */}
-                        <ArticleSearchBox
-                          allArticles={allArticles}
-                          excluded={selectedTickerArticles.map((a) => a.id)}
-                          placeholder="Search news by title, category or article # to add to slider..."
-                          onSelect={handleAddTickerArticle}
-                        />
+                  {/* SUB-SECTION A: SELECT ARTICLES FROM DATABASE */}
+                  {tickerSourceType === 'articles' ? (
+                    <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
+                      {/* Search box to add articles */}
+                      <ArticleSearchBox
+                        allArticles={allArticles}
+                        excluded={selectedTickerArticles.map((a) => a.id)}
+                        placeholder="Search news by title, category or article # to add to slider..."
+                        onSelect={handleAddTickerArticle}
+                      />
 
-                        {/* List of currently selected ticker articles */}
-                        {selectedTickerArticles.length === 0 ? (
-                          <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
-                            <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
-                              No articles selected yet for Single Headline Slider.
-                            </p>
-                            <p className="text-xs mt-1 text-zinc-500">
-                              Please search in the box above to select at least 1 or more articles to rotate one-by-one.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
-                            {selectedTickerArticles.map((art, idx) => (
-                              <div
-                                key={art.id}
-                                className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
-                              >
-                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
-                                  #{idx + 1}
-                                </span>
+                      {/* List of currently selected ticker articles */}
+                      {selectedTickerArticles.length === 0 ? (
+                        <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
+                          <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                            No articles selected yet for Single Headline Slider.
+                          </p>
+                          <p className="text-xs mt-1 text-zinc-500">
+                            Please search in the box above to select at least 1 or more articles to rotate one-by-one.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
+                          {selectedTickerArticles.map((art, idx) => (
+                            <div
+                              key={art.id}
+                              className="flex items-center gap-3 p-2.5 sm:p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs"
+                            >
+                              <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
+                                #{idx + 1}
+                              </span>
 
-                                <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
-                                  <ArticleMedia
-                                    src={getArticleImage(art)}
-                                    alt={getTitle(art)}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                </div>
+                              <div className="h-10 w-14 relative rounded-md overflow-hidden bg-zinc-100 shrink-0">
+                                <ArticleMedia
+                                  src={getArticleImage(art)}
+                                  alt={getTitle(art)}
+                                  fill
+                                  className="object-cover"
+                                />
+                              </div>
 
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                                    {getTitle(art)}
-                                  </p>
-                                  <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
-                                    {catName(art.category) && <span>{catName(art.category)}</span>}
-                                    {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
-                                  </div>
-                                </div>
-
-                                {/* Reorder and Delete buttons */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMoveTickerArticle(idx, 'up')}
-                                    disabled={idx === 0}
-                                    title="Move up"
-                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                                  >
-                                    <ArrowUp className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleMoveTickerArticle(idx, 'down')}
-                                    disabled={idx === selectedTickerArticles.length - 1}
-                                    title="Move down"
-                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
-                                  >
-                                    <ArrowDown className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveTickerArticle(idx)}
-                                    title="Remove from slider"
-                                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                  {getTitle(art)}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
+                                  {catName(art.category) && <span>{catName(art.category)}</span>}
+                                  {art.publishedAt && <span>• {fmtDate(art.publishedAt)}</span>}
                                 </div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      /* SUB-SECTION B: ENTER CUSTOM HEADING AND LINK */
-                      <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
-                        {/* Input form to add a custom heading & link */}
-                        <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm space-y-3">
-                          <div className="flex items-center gap-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                            <PenLine className="h-4 w-4 text-[#B3121B]" />
-                            <span>નવું હેડિંગ અને લિંક ઉમેરો (Add New Headline & Link)</span>
-                          </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-                            <div className="md:col-span-7">
-                              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                                Headline / Heading (મુખ્ય હેડિંગ લખાણ) <span className="text-red-500">*</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={newCustomHeading}
-                                onChange={(e) => setNewCustomHeading(e.target.value)}
-                                placeholder="દા.ત. બ્રેકિંગ: ગુજરાતમાં ભારે વરસાદને પગલે શાળાઓમાં રજા જાહેર..."
-                                className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') {
-                                    e.preventDefault();
-                                    handleAddCustomHeadline();
-                                  }
-                                }}
-                              />
-                            </div>
-
-                            <div className="md:col-span-5">
-                              <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                                Article Link / URL (આર્ટિકલ લિંક અથવા URL)
-                              </label>
-                              <div className="flex gap-2">
-                                <div className="relative flex-1">
-                                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-                                  <input
-                                    type="text"
-                                    value={newCustomLink}
-                                    onChange={(e) => setNewCustomLink(e.target.value)}
-                                    placeholder="દા.ત. /news/slug અથવા https://..."
-                                    className="w-full pl-9 pr-3 py-2.5 text-sm font-medium rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter') {
-                                        e.preventDefault();
-                                        handleAddCustomHeadline();
-                                      }
-                                    }}
-                                  />
-                                </div>
+                              {/* Reorder and Delete buttons */}
+                              <div className="flex items-center gap-1 shrink-0">
                                 <button
                                   type="button"
-                                  onClick={handleAddCustomHeadline}
-                                  disabled={!newCustomHeading.trim()}
-                                  className="px-4 py-2.5 rounded-xl bg-[#B3121B] hover:bg-[#900e15] disabled:opacity-40 text-white text-xs font-bold shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                                  onClick={() => handleMoveTickerArticle(idx, 'up')}
+                                  disabled={idx === 0}
+                                  title="Move up"
+                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
                                 >
-                                  <Plus className="h-4 w-4" />
-                                  <span>Add</span>
+                                  <ArrowUp className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveTickerArticle(idx, 'down')}
+                                  disabled={idx === selectedTickerArticles.length - 1}
+                                  title="Move down"
+                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer"
+                                >
+                                  <ArrowDown className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveTickerArticle(idx)}
+                                  title="Remove from slider"
+                                  className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
                                 </button>
                               </div>
                             </div>
-                          </div>
-                          <p className="text-[11px] text-zinc-500 font-medium">
-                            💡 Tip: Enter the full breaking news sentence and optional link (e.g. website link, internal article page `/news/article-slug`, or external URL).
-                          </p>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* SUB-SECTION B: ENTER CUSTOM HEADING AND LINK */
+                    <div className="p-4 sm:p-5 rounded-2xl border border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/40 space-y-4">
+                      {/* Input form to add a custom heading & link */}
+                      <div className="p-4 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm space-y-3">
+                        <div className="flex items-center gap-2 text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                          <PenLine className="h-4 w-4 text-[#B3121B]" />
+                          <span>નવું હેડિંગ અને લિંક ઉમેરો (Add New Headline & Link)</span>
                         </div>
 
-                        {/* List of custom entered headlines */}
-                        {customTickerHeadlines.length === 0 ? (
-                          <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
-                            <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
-                              No custom headlines entered yet.
-                            </p>
-                            <p className="text-xs mt-1 text-zinc-500">
-                              Please enter a Headline and Link in the box above and click "Add" to rotate one-by-one in the slider.
-                            </p>
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+                          <div className="md:col-span-7">
+                            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                              Headline / Heading (મુખ્ય હેડિંગ લખાણ) <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={newCustomHeading}
+                              onChange={(e) => setNewCustomHeading(e.target.value)}
+                              placeholder="દા.ત. બ્રેકિંગ: ગુજરાતમાં ભારે વરસાદને પગલે શાળાઓમાં રજા જાહેર..."
+                              className="w-full px-3.5 py-2.5 text-sm font-semibold rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddCustomHeadline();
+                                }
+                              }}
+                            />
                           </div>
-                        ) : (
-                          <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
-                            {customTickerHeadlines.map((h, idx) => {
-                              const isEditing = editingHeadlineId === h.id;
 
-                              if (isEditing) {
-                                return (
-                                  <div
-                                    key={h.id}
-                                    className="p-3.5 rounded-xl border-2 border-[#B3121B]/60 bg-red-50/30 dark:bg-zinc-900 shadow-sm space-y-3 transition-all"
-                                  >
-                                    <div className="flex items-center justify-between gap-2">
-                                      <div className="flex items-center gap-2">
-                                        <span className="flex items-center justify-center h-5 w-5 rounded-full bg-[#B3121B] text-[11px] font-black text-white shrink-0">
-                                          #{idx + 1}
-                                        </span>
-                                        <span className="text-xs font-bold text-[#B3121B] dark:text-red-400 flex items-center gap-1">
-                                          <Pencil className="h-3.5 w-3.5" /> હેડિંગમાં ફેરફાર કરો (Edit Headline #{idx + 1})
-                                        </span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <button
-                                          type="button"
-                                          onClick={() => handleSaveEditCustomHeadline(h.id)}
-                                          disabled={!editingHeadingText.trim()}
-                                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#B3121B] hover:bg-[#900e15] disabled:opacity-40 text-white text-xs font-bold cursor-pointer transition shadow-2xs"
-                                        >
-                                          <Check className="h-3.5 w-3.5" />
-                                          <span>Save</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={handleCancelEditCustomHeadline}
-                                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold cursor-pointer transition"
-                                        >
-                                          <X className="h-3.5 w-3.5" />
-                                          <span>Cancel</span>
-                                        </button>
-                                      </div>
+                          <div className="md:col-span-5">
+                            <label className="block text-xs font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                              Article Link / URL (આર્ટિકલ લિંક અથવા URL)
+                            </label>
+                            <div className="flex gap-2">
+                              <div className="relative flex-1">
+                                <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
+                                <input
+                                  type="text"
+                                  value={newCustomLink}
+                                  onChange={(e) => setNewCustomLink(e.target.value)}
+                                  placeholder="દા.ત. /news/slug અથવા https://..."
+                                  className="w-full pl-9 pr-3 py-2.5 text-sm font-medium rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddCustomHeadline();
+                                    }
+                                  }}
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={handleAddCustomHeadline}
+                                disabled={!newCustomHeading.trim()}
+                                className="px-4 py-2.5 rounded-xl bg-[#B3121B] hover:bg-[#900e15] disabled:opacity-40 text-white text-xs font-bold shrink-0 flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                              >
+                                <Plus className="h-4 w-4" />
+                                <span>Add</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 font-medium">
+                          💡 Tip: Enter the full breaking news sentence and optional link (e.g. website link, internal article page `/news/article-slug`, or external URL).
+                        </p>
+                      </div>
+
+                      {/* List of custom entered headlines */}
+                      {customTickerHeadlines.length === 0 ? (
+                        <div className="py-8 text-center text-zinc-500 dark:text-zinc-400 border-2 border-dashed border-red-300 dark:border-red-900/60 bg-red-50/30 dark:bg-red-950/10 rounded-xl p-4">
+                          <p className="font-bold text-sm text-zinc-800 dark:text-zinc-200">
+                            No custom headlines entered yet.
+                          </p>
+                          <p className="text-xs mt-1 text-zinc-500">
+                            Please enter a Headline and Link in the box above and click "Add" to rotate one-by-one in the slider.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 mt-3 max-h-[380px] overflow-y-auto pr-1">
+                          {customTickerHeadlines.map((h, idx) => {
+                            const isEditing = editingHeadlineId === h.id;
+
+                            if (isEditing) {
+                              return (
+                                <div
+                                  key={h.id}
+                                  className="p-3.5 rounded-xl border-2 border-[#B3121B]/60 bg-red-50/30 dark:bg-zinc-900 shadow-sm space-y-3 transition-all"
+                                >
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="flex items-center gap-2">
+                                      <span className="flex items-center justify-center h-5 w-5 rounded-full bg-[#B3121B] text-[11px] font-black text-white shrink-0">
+                                        #{idx + 1}
+                                      </span>
+                                      <span className="text-xs font-bold text-[#B3121B] dark:text-red-400 flex items-center gap-1">
+                                        <Pencil className="h-3.5 w-3.5" /> હેડિંગમાં ફેરફાર કરો (Edit Headline #{idx + 1})
+                                      </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      <button
+                                        type="button"
+                                        onClick={() => handleSaveEditCustomHeadline(h.id)}
+                                        disabled={!editingHeadingText.trim()}
+                                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#B3121B] hover:bg-[#900e15] disabled:opacity-40 text-white text-xs font-bold cursor-pointer transition shadow-2xs"
+                                      >
+                                        <Check className="h-3.5 w-3.5" />
+                                        <span>Save</span>
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelEditCustomHeadline}
+                                        className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 text-xs font-semibold cursor-pointer transition"
+                                      >
+                                        <X className="h-3.5 w-3.5" />
+                                        <span>Cancel</span>
+                                      </button>
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+                                    <div className="md:col-span-7">
+                                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                        Headline / Heading (મુખ્ય હેડિંગ લખાણ) <span className="text-red-500">*</span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        value={editingHeadingText}
+                                        onChange={(e) => setEditingHeadingText(e.target.value)}
+                                        placeholder="Enter headline..."
+                                        className="w-full px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            handleSaveEditCustomHeadline(h.id);
+                                          } else if (e.key === 'Escape') {
+                                            e.preventDefault();
+                                            handleCancelEditCustomHeadline();
+                                          }
+                                        }}
+                                        autoFocus
+                                      />
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
-                                      <div className="md:col-span-7">
-                                        <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                                          Headline / Heading (મુખ્ય હેડિંગ લખાણ) <span className="text-red-500">*</span>
-                                        </label>
+                                    <div className="md:col-span-5">
+                                      <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
+                                        Article Link / URL (આર્ટિકલ લિંક અથવા URL)
+                                      </label>
+                                      <div className="relative">
+                                        <LinkIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
                                         <input
                                           type="text"
-                                          value={editingHeadingText}
-                                          onChange={(e) => setEditingHeadingText(e.target.value)}
-                                          placeholder="Enter headline..."
-                                          className="w-full px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
+                                          value={editingLinkText}
+                                          onChange={(e) => setEditingLinkText(e.target.value)}
+                                          placeholder="દા.ત. /news/slug અથવા https://..."
+                                          className="w-full pl-8 pr-3 py-2 text-xs sm:text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
                                           onKeyDown={(e) => {
                                             if (e.key === 'Enter') {
                                               e.preventDefault();
@@ -2507,112 +2654,87 @@ export default function HeroManagerPage() {
                                               handleCancelEditCustomHeadline();
                                             }
                                           }}
-                                          autoFocus
                                         />
                                       </div>
-
-                                      <div className="md:col-span-5">
-                                        <label className="block text-[11px] font-bold text-zinc-700 dark:text-zinc-300 mb-1">
-                                          Article Link / URL (આર્ટિકલ લિંક અથવા URL)
-                                        </label>
-                                        <div className="relative">
-                                          <LinkIcon className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-400" />
-                                          <input
-                                            type="text"
-                                            value={editingLinkText}
-                                            onChange={(e) => setEditingLinkText(e.target.value)}
-                                            placeholder="દા.ત. /news/slug અથવા https://..."
-                                            className="w-full pl-8 pr-3 py-2 text-xs sm:text-sm font-medium rounded-lg border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-[#B3121B] shadow-2xs"
-                                            onKeyDown={(e) => {
-                                              if (e.key === 'Enter') {
-                                                e.preventDefault();
-                                                handleSaveEditCustomHeadline(h.id);
-                                              } else if (e.key === 'Escape') {
-                                                e.preventDefault();
-                                                handleCancelEditCustomHeadline();
-                                              }
-                                            }}
-                                          />
-                                        </div>
-                                      </div>
                                     </div>
-                                  </div>
-                                );
-                              }
-
-                              return (
-                                <div
-                                  key={h.id}
-                                  className="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs hover:border-zinc-300 transition-all"
-                                >
-                                  <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
-                                    #{idx + 1}
-                                  </span>
-
-                                  <div className="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-950/40 text-[#B3121B] flex items-center justify-center shrink-0">
-                                    <PenLine className="h-4 w-4" />
-                                  </div>
-
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
-                                      {h.heading}
-                                    </p>
-                                    <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
-                                      {h.link ? (
-                                        <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 truncate max-w-[320px]">
-                                          <LinkIcon className="h-3 w-3 shrink-0" />
-                                          <span className="truncate">{h.link}</span>
-                                        </span>
-                                      ) : (
-                                        <span className="text-zinc-400 italic">No link attached</span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Edit, Reorder and Delete buttons */}
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleStartEditCustomHeadline(h)}
-                                      title="Edit headline & link (લખાણ કે લિંક સુધારો)"
-                                      className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/40 cursor-pointer transition"
-                                    >
-                                      <Pencil className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMoveCustomHeadline(idx, 'up')}
-                                      disabled={idx === 0}
-                                      title="Move up"
-                                      className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
-                                    >
-                                      <ArrowUp className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleMoveCustomHeadline(idx, 'down')}
-                                      disabled={idx === customTickerHeadlines.length - 1}
-                                      title="Move down"
-                                      className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
-                                    >
-                                      <ArrowDown className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleRemoveCustomHeadline(idx)}
-                                      title="Remove from slider"
-                                      className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer transition"
-                                    >
-                                      <Trash2 className="h-4 w-4" />
-                                    </button>
                                   </div>
                                 </div>
                               );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                            }
+
+                            return (
+                              <div
+                                key={h.id}
+                                className="flex items-center gap-3 p-3 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-2xs hover:border-zinc-300 transition-all"
+                              >
+                                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-zinc-100 dark:bg-zinc-800 text-xs font-black text-zinc-600 dark:text-zinc-400 shrink-0">
+                                  #{idx + 1}
+                                </span>
+
+                                <div className="h-9 w-9 rounded-lg bg-red-50 dark:bg-red-950/40 text-[#B3121B] flex items-center justify-center shrink-0">
+                                  <PenLine className="h-4 w-4" />
+                                </div>
+
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100 truncate">
+                                    {h.heading}
+                                  </p>
+                                  <div className="flex items-center gap-2 text-xs text-zinc-500 font-medium mt-0.5">
+                                    {h.link ? (
+                                      <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 truncate max-w-[320px]">
+                                        <LinkIcon className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">{h.link}</span>
+                                      </span>
+                                    ) : (
+                                      <span className="text-zinc-400 italic">No link attached</span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Edit, Reorder and Delete buttons */}
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleStartEditCustomHeadline(h)}
+                                    title="Edit headline & link (લખાણ કે લિંક સુધારો)"
+                                    className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/40 cursor-pointer transition"
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveCustomHeadline(idx, 'up')}
+                                    disabled={idx === 0}
+                                    title="Move up"
+                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
+                                  >
+                                    <ArrowUp className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleMoveCustomHeadline(idx, 'down')}
+                                    disabled={idx === customTickerHeadlines.length - 1}
+                                    title="Move down"
+                                    className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-30 cursor-pointer transition"
+                                  >
+                                    <ArrowDown className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveCustomHeadline(idx)}
+                                    title="Remove from slider"
+                                    className="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/40 cursor-pointer transition"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Bottom Save Action Bar */}
@@ -2668,11 +2790,10 @@ export default function HeroManagerPage() {
                   type="button"
                   onClick={() => handleToggleElectionBanner(!electionBannerEnabled)}
                   disabled={savingElectionBanner}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${
-                    electionBannerEnabled
-                      ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                  }`}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${electionBannerEnabled
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                    }`}
                 >
                   {electionBannerEnabled ? (
                     <>
@@ -3239,11 +3360,10 @@ export default function HeroManagerPage() {
                   type="button"
                   onClick={() => handleToggleBreakingBanner(!breakingBannerEnabled)}
                   disabled={savingBreakingBanner}
-                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${
-                    breakingBannerEnabled
-                      ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
-                      : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
-                  }`}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm transition-all cursor-pointer ${breakingBannerEnabled
+                    ? 'bg-red-600 hover:bg-red-700 text-white shadow-red-600/20'
+                    : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                    }`}
                 >
                   {breakingBannerEnabled ? (
                     <>
@@ -3304,8 +3424,9 @@ export default function HeroManagerPage() {
             {/* If Enabled */}
             {breakingBannerEnabled && (
               <div className="space-y-6">
-                {/* 1. Badge Text & Speed Controls */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                {/* 1. Badge Text, Live Update Tag & Speed Controls */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700">
+                  {/* 1.1 Header Badge */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                       Badge Label / Header (હેડર બેજ લખાણ)
@@ -3318,16 +3439,15 @@ export default function HeroManagerPage() {
                       className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-2 text-sm font-bold text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
                     />
                     <div className="flex flex-wrap gap-1.5 pt-1">
-                      {['BREAKING NEWS', 'બ્રેકિંગ ન્યૂઝ', 'લાઈવ સમાચાર', 'ખાસ અહેવાલ', 'LIVE UPDATES'].map((s) => (
+                      {['BREAKING NEWS', 'બ્રેકિંગ ન્યૂઝ', 'લાઈવ સમાચાર', 'ખાસ અહેવાલ'].map((s) => (
                         <button
                           key={s}
                           type="button"
                           onClick={() => setBreakingBannerBadgeText(s)}
-                          className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border transition cursor-pointer ${
-                            breakingBannerBadgeText === s
-                              ? 'bg-red-600 text-white border-red-600'
-                              : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-red-400'
-                          }`}
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border transition cursor-pointer ${breakingBannerBadgeText === s
+                            ? 'bg-red-600 text-white border-red-600'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-red-400'
+                            }`}
                         >
                           {s}
                         </button>
@@ -3335,6 +3455,37 @@ export default function HeroManagerPage() {
                     </div>
                   </div>
 
+                  {/* 1.2 Live Updates Label (Customizable by Admin - User Request Point 2) */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
+                      <span>Live Updates Label (લાઇવ અપડેટ્સ લેબલ)</span>
+                      <span className="text-[10px] text-red-600 font-semibold">((•)) Live Tag</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={breakingBannerLiveUpdateText}
+                      onChange={(e) => setBreakingBannerLiveUpdateText(e.target.value)}
+                      placeholder="દા.ત. લાઇવ અપડેટ્સ અથવા LIVE UPDATES"
+                      className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3.5 py-2 text-sm font-bold text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                    />
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {['લાઇવ અપડેટ્સ', 'લાઈવ અપડેટ્સ', 'LIVE UPDATES', 'તાજા સમાચાર', 'સીધા પ્રસારણ'].map((s) => (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setBreakingBannerLiveUpdateText(s)}
+                          className={`text-[11px] px-2 py-0.5 rounded-md font-semibold border transition cursor-pointer ${breakingBannerLiveUpdateText === s
+                            ? 'bg-red-600 text-white border-red-600'
+                            : 'bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700 hover:border-red-400'
+                            }`}
+                        >
+                          {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* 1.3 Headline Speed */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                       Headline Transition Speed (દરેક મુદ્દાનો સમયગાળો)
@@ -3431,86 +3582,171 @@ export default function HeroManagerPage() {
 
                         {/* Image & Link configuration */}
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-                          {/* Image Box (Left) */}
-                          <div className="lg:col-span-5 space-y-2">
-                            <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center justify-between">
-                              <span>તસવીર (Slide Image)</span>
-                              {slide.image && (
-                                <button
-                                  type="button"
-                                  onClick={() => handleSlideChange(sIdx, 'image', '')}
-                                  className="text-[10px] text-red-600 hover:underline cursor-pointer"
-                                >
-                                  હટાવો (Remove)
-                                </button>
-                              )}
-                            </label>
+                          {/* Multiple Images Box (Left - User Request Point 1) */}
+                          <div className="lg:col-span-6 space-y-3">
+                            {(() => {
+                              const slideImgs = Array.isArray(slide.images) && slide.images.length > 0
+                                ? slide.images
+                                : (slide.image ? [slide.image] : []);
 
-                            <div className="flex items-center gap-3">
-                              {/* Thumbnail preview */}
-                              <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-gray-300 dark:border-zinc-700 bg-black flex items-center justify-center">
-                                {slide.image ? (
-                                  <Image
-                                    src={slide.image}
-                                    alt="Slide preview"
-                                    fill
-                                    className="object-cover"
-                                    unoptimized
-                                  />
-                                ) : (
-                                  <div className="text-center p-1">
-                                    <ImageIcon className="h-6 w-6 text-zinc-500 mx-auto" />
-                                    <span className="text-[9px] text-zinc-500">No Image</span>
+                              return (
+                                <>
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                                      <span>🖼️ સ્લાઇડ તસવીરો (Slide Images - Multiple)</span>
+                                      <span className="text-[11px] font-semibold text-red-600 bg-red-50 dark:bg-red-950/50 px-2 py-0.5 rounded-full border border-red-200 dark:border-red-800">
+                                        {slideImgs.length} {slideImgs.length === 1 ? 'તસવીર' : 'તસવીરો'}
+                                      </span>
+                                    </label>
+                                    {slideImgs.length > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleClearAllSlideImages(sIdx)}
+                                        className="text-[10px] text-red-600 hover:underline cursor-pointer font-bold"
+                                      >
+                                        બધી હટાવો (Clear All)
+                                      </button>
+                                    )}
                                   </div>
-                                )}
-                              </div>
 
-                              <div className="flex-1 space-y-1.5">
-                                {/* Upload button */}
-                                <label className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white hover:bg-red-700 active:scale-95 transition cursor-pointer shadow-xs">
-                                  <Upload className="h-3.5 w-3.5" />
-                                  <span>{uploadingSlideImgIdx === sIdx ? 'અપલોડ થઈ રહ્યું છે...' : 'તસવીર અપલોડ કરો'}</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    disabled={uploadingSlideImgIdx === sIdx}
-                                    onChange={(e) => {
-                                      const f = e.target.files?.[0];
-                                      if (f) handleUploadSlideImage(f, sIdx);
-                                      e.target.value = '';
-                                    }}
-                                  />
-                                </label>
+                                  {/* PC Multiple Upload Button */}
+                                  <div className="flex flex-col sm:flex-row gap-2">
+                                    <label className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 px-3.5 py-2 text-xs font-bold text-white hover:bg-red-700 active:scale-95 transition cursor-pointer shadow-xs">
+                                      <Upload className="h-4 w-4" />
+                                      <span>
+                                        {uploadingSlideImgIdx === sIdx
+                                          ? 'અપલોડ થઈ રહી છે...'
+                                          : '+ તસવીરો અપલોડ કરો (PC માંથી મલ્ટીપલ સિલેક્ટ કરો)'}
+                                      </span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        multiple
+                                        className="hidden"
+                                        disabled={uploadingSlideImgIdx === sIdx}
+                                        onChange={(e) => {
+                                          if (e.target.files && e.target.files.length > 0) {
+                                            handleUploadSlideImages(e.target.files, sIdx);
+                                          }
+                                          e.target.value = '';
+                                        }}
+                                      />
+                                    </label>
+                                  </div>
 
-                                <input
-                                  type="text"
-                                  value={slide.image || ''}
-                                  onChange={(e) => handleSlideChange(sIdx, 'image', e.target.value)}
-                                  placeholder="અથવા Image URL પેસ્ટ કરો"
-                                  className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
-                                />
-                              </div>
-                            </div>
+                                  {/* Add by Image URL */}
+                                  <div className="flex items-center gap-1.5">
+                                    <input
+                                      type="text"
+                                      value={slideImageUrlInputs[sIdx] || ''}
+                                      onChange={(e) =>
+                                        setSlideImageUrlInputs((prev) => ({ ...prev, [sIdx]: e.target.value }))
+                                      }
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          e.preventDefault();
+                                          handleAddSlideImageUrl(sIdx, slideImageUrlInputs[sIdx] || '');
+                                        }
+                                      }}
+                                      placeholder="અથવા Image URL પેસ્ટ કરીને '+ ઉમેરો' દબાવો"
+                                      className="flex-1 rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1.5 text-xs text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                                    />
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddSlideImageUrl(sIdx, slideImageUrlInputs[sIdx] || '')}
+                                      className="rounded-lg bg-zinc-800 dark:bg-zinc-700 hover:bg-zinc-900 text-white px-3 py-1.5 text-xs font-bold transition cursor-pointer shrink-0"
+                                    >
+                                      + ઉમેરો
+                                    </button>
+                                  </div>
 
-                            {/* Optional link */}
-                            <div className="pt-1 space-y-1">
-                              <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
-                                <LinkIcon className="h-3 w-3" />
-                                <span>આર્ટિકલ લિંક / URL (વૈકલ્પિક - Optional Link)</span>
-                              </label>
-                              <input
-                                type="text"
-                                value={slide.link || ''}
-                                onChange={(e) => handleSlideChange(sIdx, 'link', e.target.value)}
-                                placeholder="દા.ત. /news/article-slug અથવા https://..."
-                                className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
-                              />
-                            </div>
+                                  {/* Thumbnails Gallery Grid */}
+                                  {slideImgs.length > 0 ? (
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/60 max-h-56 overflow-y-auto">
+                                      {slideImgs.map((imgUrl, imgIdx) => (
+                                        <div
+                                          key={imgIdx}
+                                          className="relative group rounded-lg overflow-hidden border border-zinc-300 dark:border-zinc-700 bg-black aspect-video flex items-center justify-center shadow-xs"
+                                        >
+                                          <Image
+                                            src={imgUrl}
+                                            alt={`Slide ${sIdx + 1} img ${imgIdx + 1}`}
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
+                                          />
+                                          {/* Badge #1, #2 */}
+                                          <span className="absolute top-1 left-1 bg-black/85 text-white font-black text-[10px] px-1.5 py-0.5 rounded shadow">
+                                            #{imgIdx + 1}
+                                          </span>
+
+                                          {/* Reorder and Delete controls */}
+                                          <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1.5">
+                                            {imgIdx > 0 && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleMoveSlideImage(sIdx, imgIdx, 'left')}
+                                                className="p-1 rounded bg-white text-zinc-900 hover:bg-zinc-200 text-xs font-black shadow cursor-pointer"
+                                                title="Move Left"
+                                              >
+                                                ◀
+                                              </button>
+                                            )}
+                                            <button
+                                              type="button"
+                                              onClick={() => handleRemoveSlideImage(sIdx, imgIdx)}
+                                              className="p-1.5 rounded bg-red-600 hover:bg-red-700 text-white text-xs font-bold shadow cursor-pointer"
+                                              title="Remove image"
+                                            >
+                                              <Trash2 className="h-3.5 w-3.5" />
+                                            </button>
+                                            {imgIdx < slideImgs.length - 1 && (
+                                              <button
+                                                type="button"
+                                                onClick={() => handleMoveSlideImage(sIdx, imgIdx, 'right')}
+                                                className="p-1 rounded bg-white text-zinc-900 hover:bg-zinc-200 text-xs font-black shadow cursor-pointer"
+                                                title="Move Right"
+                                              >
+                                                ▶
+                                              </button>
+                                            )}
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="p-3.5 rounded-xl border border-dashed border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900/30 text-center">
+                                      <ImageIcon className="h-6 w-6 text-zinc-400 mx-auto mb-1" />
+                                      <p className="text-xs font-semibold text-zinc-600 dark:text-zinc-400">
+                                        કોઈ તસવીર અપલોડ નથી કરી
+                                      </p>
+                                      <p className="text-[10px] text-zinc-400 mt-0.5">
+                                        ઉપરના બટન પર ક્લિક કરીને ૧ થી વધુ તસવીરો ઉમેરો
+                                      </p>
+                                    </div>
+                                  )}
+
+                                  {/* Optional link */}
+                                  <div className="pt-1 space-y-1">
+                                    <label className="text-[11px] font-bold text-zinc-600 dark:text-zinc-400 flex items-center gap-1">
+                                      <LinkIcon className="h-3 w-3" />
+                                      <span>આર્ટિકલ લિંક / URL (વૈકલ્પિક - Optional Link)</span>
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={slide.link || ''}
+                                      onChange={(e) => handleSlideChange(sIdx, 'link', e.target.value)}
+                                      placeholder="દા.ત. /news/article-slug અથવા https://..."
+                                      className="w-full rounded-lg border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2.5 py-1 text-xs text-zinc-900 dark:text-white focus:border-red-500 focus:outline-hidden"
+                                    />
+                                  </div>
+                                </>
+                              );
+                            })()}
                           </div>
 
                           {/* Multi-Headline Texts (Right) */}
-                          <div className="lg:col-span-7 space-y-2">
+                          <div className="lg:col-span-6 space-y-2">
                             <div className="flex items-center justify-between">
                               <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
                                 હેડલાઇન લખાણ / મુદ્દાઓ (Sequential Headline Texts)
@@ -3600,6 +3836,7 @@ export default function HeroManagerPage() {
                       previewConfig={{
                         enabled: true,
                         badgeText: breakingBannerBadgeText,
+                        liveUpdateText: breakingBannerLiveUpdateText,
                         intervalSeconds: breakingBannerInterval,
                         slides: breakingSlides,
                       }}
@@ -3677,23 +3914,20 @@ export default function HeroManagerPage() {
                 <button
                   type="button"
                   onClick={() => setHeroGridMode('auto')}
-                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    heroGridMode === 'auto'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
-                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
-                  }`}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${heroGridMode === 'auto'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                    }`}
                 >
-                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                    heroGridMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
-                  }`}>
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${heroGridMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
                     {heroGridMode === 'auto' && (
                       <div className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
                   <div>
-                    <p className={`text-sm font-black flex items-center gap-2 ${
-                      heroGridMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
+                    <p className={`text-sm font-black flex items-center gap-2 ${heroGridMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
                       🔄 Automatic Mode (સ્વયંસંચાલિત)
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">DEFAULT</span>
                     </p>
@@ -3712,23 +3946,20 @@ export default function HeroManagerPage() {
                       setHeroGridArticles(allArticles.slice(0, 9));
                     }
                   }}
-                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    heroGridMode === 'manual'
-                      ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
-                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
-                  }`}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${heroGridMode === 'manual'
+                    ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
+                    }`}
                 >
-                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                    heroGridMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
-                  }`}>
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${heroGridMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
                     {heroGridMode === 'manual' && (
                       <div className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
                   <div>
-                    <p className={`text-sm font-black ${
-                      heroGridMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
+                    <p className={`text-sm font-black ${heroGridMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
                       🖊️ Manual Mode (મેન્યુઅલ સિલેક્શન - મહત્તમ 9 આર્ટિકલ્સ)
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
@@ -3793,21 +4024,20 @@ export default function HeroManagerPage() {
             {heroGridMode === 'manual' && (
               <div className="space-y-4">
                 {/* Dynamic Status / Behavior Hint */}
-                <div className={`p-4 rounded-xl border flex items-start gap-3 ${
-                  heroGridArticles.length === 1
-                    ? 'border-blue-300 bg-blue-50/80 dark:border-blue-800 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
-                    : heroGridArticles.length === 2
+                <div className={`p-4 rounded-xl border flex items-start gap-3 ${heroGridArticles.length === 1
+                  ? 'border-blue-300 bg-blue-50/80 dark:border-blue-800 dark:bg-blue-950/30 text-blue-900 dark:text-blue-200'
+                  : heroGridArticles.length === 2
                     ? 'border-indigo-300 bg-indigo-50/80 dark:border-indigo-800 dark:bg-indigo-950/30 text-indigo-900 dark:text-indigo-200'
                     : heroGridArticles.length === 3
-                    ? 'border-purple-300 bg-purple-50/80 dark:border-purple-800 dark:bg-purple-950/30 text-purple-900 dark:text-purple-200'
-                    : heroGridArticles.length >= 4 && heroGridArticles.length <= 7
-                    ? 'border-teal-300 bg-teal-50/80 dark:border-teal-800 dark:bg-teal-950/30 text-teal-900 dark:text-teal-200'
-                    : heroGridArticles.length === 8
-                    ? 'border-cyan-300 bg-cyan-50/80 dark:border-cyan-800 dark:bg-cyan-950/30 text-cyan-900 dark:text-cyan-200'
-                    : heroGridArticles.length === 9
-                    ? 'border-emerald-300 bg-emerald-50/80 dark:border-emerald-800 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
-                    : 'border-amber-300 bg-amber-50/80 dark:border-amber-800 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200'
-                }`}>
+                      ? 'border-purple-300 bg-purple-50/80 dark:border-purple-800 dark:bg-purple-950/30 text-purple-900 dark:text-purple-200'
+                      : heroGridArticles.length >= 4 && heroGridArticles.length <= 7
+                        ? 'border-teal-300 bg-teal-50/80 dark:border-teal-800 dark:bg-teal-950/30 text-teal-900 dark:text-teal-200'
+                        : heroGridArticles.length === 8
+                          ? 'border-cyan-300 bg-cyan-50/80 dark:border-cyan-800 dark:bg-cyan-950/30 text-cyan-900 dark:text-cyan-200'
+                          : heroGridArticles.length === 9
+                            ? 'border-emerald-300 bg-emerald-50/80 dark:border-emerald-800 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200'
+                            : 'border-amber-300 bg-amber-50/80 dark:border-amber-800 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200'
+                  }`}>
                   <span className="text-xl">
                     {heroGridArticles.length === 1 ? '🎯' : heroGridArticles.length === 2 ? '👥' : heroGridArticles.length === 3 ? '🎠' : heroGridArticles.length >= 4 ? '📌' : '⚠️'}
                   </span>
@@ -3897,21 +4127,18 @@ export default function HeroManagerPage() {
                           onDragStart={(e) => handleHeroDragStart(e, index)}
                           onDragOver={(e) => handleHeroDragOver(e, index)}
                           onDragEnd={handleHeroDragEnd}
-                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${
-                            isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
-                          } ${
-                            isSpotlightSlide
+                          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3.5 sm:p-4 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none ${isDragging ? 'opacity-40 scale-[0.98] border-dashed border-[#B3121B]' : ''
+                            } ${isSpotlightSlide
                               ? 'border-[#B3121B]/40 bg-red-50/40 dark:bg-red-950/10'
                               : 'border-blue-400 bg-blue-50/20 dark:border-blue-900/40 dark:bg-blue-950/10'
-                          } hover:shadow-md`}
+                            } hover:shadow-md`}
                         >
                           {/* Left Info */}
                           <div className="flex items-start sm:items-center gap-3 sm:gap-3.5 min-w-0 flex-1 w-full">
                             <div className="flex items-center gap-2 shrink-0 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 mt-0.5 sm:mt-0" title="Drag to reorder position">
                               <GripVertical className="h-4 sm:h-5 w-4 sm:w-5" />
-                              <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${
-                                isSpotlightSlide ? 'bg-[#B3121B]' : 'bg-blue-600'
-                              }`}>
+                              <span className={`h-7 sm:h-8 w-7 sm:w-8 shrink-0 rounded-full flex items-center justify-center text-xs sm:text-sm font-black text-white ${isSpotlightSlide ? 'bg-[#B3121B]' : 'bg-blue-600'
+                                }`}>
                                 #{index + 1}
                               </span>
                             </div>
@@ -3922,11 +4149,10 @@ export default function HeroManagerPage() {
 
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${
-                                  isSpotlightSlide
-                                    ? 'bg-red-100 text-[#B3121B]'
-                                    : 'bg-blue-100 text-blue-700'
-                                }`}>
+                                <span className={`text-[10px] sm:text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-md ${isSpotlightSlide
+                                  ? 'bg-red-100 text-[#B3121B]'
+                                  : 'bg-blue-100 text-blue-700'
+                                  }`}>
                                   {slotTitle}
                                 </span>
                                 {art.articleNumber && (
@@ -4030,23 +4256,20 @@ export default function HeroManagerPage() {
                 <button
                   type="button"
                   onClick={() => setBottomSlotsMode('auto')}
-                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    bottomSlotsMode === 'auto'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
-                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
-                  }`}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${bottomSlotsMode === 'auto'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                    }`}
                 >
-                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                    bottomSlotsMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
-                  }`}>
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${bottomSlotsMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
                     {bottomSlotsMode === 'auto' && (
                       <div className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
                   <div>
-                    <p className={`text-sm font-black flex items-center gap-2 ${
-                      bottomSlotsMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
+                    <p className={`text-sm font-black flex items-center gap-2 ${bottomSlotsMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
                       🔄 Auto Mode
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">RECOMMENDED</span>
                     </p>
@@ -4060,23 +4283,20 @@ export default function HeroManagerPage() {
                 <button
                   type="button"
                   onClick={() => setBottomSlotsMode('manual')}
-                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    bottomSlotsMode === 'manual'
-                      ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
-                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
-                  }`}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${bottomSlotsMode === 'manual'
+                    ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
+                    }`}
                 >
-                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                    bottomSlotsMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
-                  }`}>
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${bottomSlotsMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
                     {bottomSlotsMode === 'manual' && (
                       <div className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
                   <div>
-                    <p className={`text-sm font-black ${
-                      bottomSlotsMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
+                    <p className={`text-sm font-black ${bottomSlotsMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
                       🖊️ Manual Mode
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 font-medium">
@@ -4290,11 +4510,10 @@ export default function HeroManagerPage() {
                   <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">
                     Most Read 10 Positions (સૌથી વધુ વંચાયેલા)
                   </h3>
-                  <span className={`text-sm font-bold px-3 py-1 rounded-full border shrink-0 ${
-                    mostReadMode === 'auto'
-                      ? 'bg-emerald-50 text-emerald-800 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
-                      : 'bg-amber-50 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300'
-                  }`}>
+                  <span className={`text-sm font-bold px-3 py-1 rounded-full border shrink-0 ${mostReadMode === 'auto'
+                    ? 'bg-emerald-50 text-emerald-800 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
+                    : 'bg-amber-50 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300'
+                    }`}>
                     {mostReadMode === 'auto' ? '⚡ Auto Mode (Top 10 Past 7 Days)' : `${mostReadArticles.length} / 10 Positions (Manual)`}
                   </span>
                 </div>
@@ -4324,23 +4543,20 @@ export default function HeroManagerPage() {
                 <button
                   type="button"
                   onClick={() => setMostReadMode('auto')}
-                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    mostReadMode === 'auto'
-                      ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
-                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
-                  }`}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${mostReadMode === 'auto'
+                    ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 shadow-md shadow-emerald-500/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                    }`}
                 >
-                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                    mostReadMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
-                  }`}>
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${mostReadMode === 'auto' ? 'border-emerald-500 bg-emerald-500' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
                     {mostReadMode === 'auto' && (
                       <div className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
                   <div>
-                    <p className={`text-sm font-black flex items-center gap-2 ${
-                      mostReadMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
+                    <p className={`text-sm font-black flex items-center gap-2 ${mostReadMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
                       ⚡ Automatic Mode (છેલ્લા ૭ દિવસના સૌથી વધુ વંચાયેલા)
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">DEFAULT</span>
                     </p>
@@ -4359,23 +4575,20 @@ export default function HeroManagerPage() {
                       setMostReadArticles(autoMostReadArticles.slice(0, 10));
                     }
                   }}
-                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${
-                    mostReadMode === 'manual'
-                      ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
-                      : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
-                  }`}
+                  className={`flex-1 flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-all cursor-pointer ${mostReadMode === 'manual'
+                    ? 'border-[#B3121B] bg-red-50 dark:bg-red-950/20 shadow-md shadow-[#B3121B]/10'
+                    : 'border-gray-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 hover:border-[#B3121B]/50 hover:bg-red-50/50 dark:hover:bg-red-950/10'
+                    }`}
                 >
-                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                    mostReadMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
-                  }`}>
+                  <div className={`mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${mostReadMode === 'manual' ? 'border-[#B3121B] bg-[#B3121B]' : 'border-zinc-400 dark:border-zinc-500'
+                    }`}>
                     {mostReadMode === 'manual' && (
                       <div className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
                   <div>
-                    <p className={`text-sm font-black ${
-                      mostReadMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
-                    }`}>
+                    <p className={`text-sm font-black ${mostReadMode === 'manual' ? 'text-[#B3121B]' : 'text-zinc-800 dark:text-zinc-200'
+                      }`}>
                       ✍️ Manual Mode (મેન્યુઅલ કસ્ટમાઇઝેશન - ૧૦ પોઝિશન્સ)
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
@@ -4708,8 +4921,8 @@ export default function HeroManagerPage() {
                       onDragOver={(e) => handleDragOver(e, idx)}
                       onDragEnd={handleDragEnd}
                       className={`relative flex flex-col justify-between overflow-hidden rounded-xl border p-3 transition-all duration-150 cursor-grab active:cursor-grabbing group ${draggedIndex === idx
-                          ? 'border-[#B3121B] bg-[#B3121B]/10 shadow-xl scale-105 z-20 ring-2 ring-[#B3121B]/40'
-                          : 'border-gray-400 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-800/40 hover:border-[#B3121B]/50 hover:shadow-md'
+                        ? 'border-[#B3121B] bg-[#B3121B]/10 shadow-xl scale-105 z-20 ring-2 ring-[#B3121B]/40'
+                        : 'border-gray-400 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-800/40 hover:border-[#B3121B]/50 hover:shadow-md'
                         }`}
                     >
                       <div>

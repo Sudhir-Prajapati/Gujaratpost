@@ -301,6 +301,24 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
       if (language === 'hi') return mock.hi || mock.gu;
       return mock.en || mock.gu;
     }
+    if (language === 'hi' && photo?.captionHi && photo.captionHi !== photo.captionGu) {
+      return photo.captionHi;
+    }
+    if (photo?.descriptionGu || photo?.description) {
+      return photo.descriptionGu || photo.description;
+    }
+    if (photo?.contentGu || photo?.content) {
+      return photo.contentGu || photo.content;
+    }
+    if (photo?.caption && photo.caption !== photo?.captionGu) {
+      return photo.caption;
+    }
+    if (Array.isArray(photo?.images) && photo.images.length > 0) {
+      const firstDesc = photo.images[0]?.description || photo.images[0]?.caption;
+      if (firstDesc && firstDesc !== photo?.captionGu) {
+        return firstDesc;
+      }
+    }
     return photo?.caption || photo?.captionGu || photo?.alt || '';
   }, [photo, language]);
 
@@ -401,6 +419,49 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
     return items;
   }, [photo, language, title, caption, paragraphs, authorName, mainFallback]);
+
+  // Comprehensive description text for audio reading (TTS) and accessibility
+  const audioDescription = useMemo(() => {
+    const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
+    const normTitle = norm(title);
+
+    // 1. Gather all non-empty paragraph blocks that are distinct from the title
+    const distinctParas = paragraphs
+      .map((p: string) => p.trim())
+      .filter((p: string) => {
+        const np = norm(p);
+        return np && np !== normTitle && !normTitle.startsWith(np);
+      });
+
+    const collectedDescs: string[] = [];
+    if (distinctParas.length > 0) {
+      collectedDescs.push(distinctParas.join('\n\n'));
+    }
+
+    // 2. If any slide in galleryItems has distinct text not yet present, include it
+    galleryItems.forEach((item: any) => {
+      const d = (item.description || item.caption || '').trim();
+      const nd = norm(d);
+      if (
+        nd &&
+        nd !== normTitle &&
+        !normTitle.startsWith(nd) &&
+        !collectedDescs.some((existing: string) => norm(existing).includes(nd))
+      ) {
+        collectedDescs.push(d);
+      }
+    });
+
+    if (collectedDescs.length > 0) {
+      return collectedDescs.join('\n\n');
+    }
+
+    if (bodyText && norm(bodyText) !== normTitle) {
+      return bodyText.trim();
+    }
+
+    return '';
+  }, [title, paragraphs, galleryItems, bodyText]);
 
   // Keyboard navigation for Lightbox and Main Slider
   useEffect(() => {
@@ -645,13 +706,14 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
             <div className="mb-6">
               <ArticleShareAudioBar
                 title={title}
+                body={audioDescription}
                 articleUrl={photoUrl}
                 language={language}
                 copied={copied}
                 copyUrl={copyUrl}
                 saved={saved}
                 handleToggleSave={() => setSaved(!saved)}
-                audioText={title}
+                audioText={audioDescription}
               />
             </div>
 

@@ -157,7 +157,8 @@ export default function ArticleShareAudioBar({
     }
     playArticleAudio({
       title,
-      body: body || audioText,
+      subheading: subheading || excerpt,
+      body: body || audioText || '',
       language,
       onStart: () => setInternalSpeaking(true),
       onEnd: () => setInternalSpeaking(false),

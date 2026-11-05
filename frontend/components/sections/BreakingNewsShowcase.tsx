@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Play, Radio, PenTool, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExternalLink, Play, Radio } from 'lucide-react';
 import { getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import { useAutoTranslate } from '@/lib/translate';
@@ -12,6 +12,7 @@ import type { Language } from '@/types';
 export interface BreakingSlide {
   id: string;
   image: string;
+  images?: string[];
   link?: string;
   texts: string[];
 }
@@ -19,6 +20,7 @@ export interface BreakingSlide {
 export interface BreakingBannerConfig {
   enabled: boolean;
   badgeText: string;
+  liveUpdateText?: string;
   intervalSeconds: number;
   slides: BreakingSlide[];
 }
@@ -26,11 +28,15 @@ export interface BreakingBannerConfig {
 export const DEFAULT_BREAKING_BANNER: BreakingBannerConfig = {
   enabled: true,
   badgeText: 'BREAKING NEWS',
+  liveUpdateText: 'લાઇવ અપડેટ્સ',
   intervalSeconds: 4,
   slides: [
     {
       id: 'slide-1',
       image: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=1200&q=80',
+      ],
       link: '',
       texts: [
         'ગુજરાતમાં આગામી ૪૮ કલાક ભારે વરસાદની હવામાન વિભાગની આગાહી',
@@ -41,6 +47,9 @@ export const DEFAULT_BREAKING_BANNER: BreakingBannerConfig = {
     {
       id: 'slide-2',
       image: 'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+      images: [
+        'https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1200&q=80',
+      ],
       link: '',
       texts: [
         'દક્ષિણ ગુજરાત અને સૌરાષ્ટ્રના દરિયાકાંઠાના વિસ્તારોમાં યલો એલર્ટ જાહેર કરાયું',
@@ -150,6 +159,7 @@ export default function BreakingNewsShowcase({
       return {
         enabled: Boolean(initialConfig.enabled),
         badgeText: initialConfig.badgeText || 'BREAKING NEWS',
+        liveUpdateText: initialConfig.liveUpdateText || DEFAULT_BREAKING_BANNER.liveUpdateText,
         intervalSeconds: Number(initialConfig.intervalSeconds) || 4,
         slides: Array.isArray(initialConfig.slides) && initialConfig.slides.length > 0
           ? initialConfig.slides
@@ -165,6 +175,7 @@ export default function BreakingNewsShowcase({
       setConfig({
         enabled: Boolean(previewConfig.enabled),
         badgeText: previewConfig.badgeText || 'BREAKING NEWS',
+        liveUpdateText: previewConfig.liveUpdateText || '',
         intervalSeconds: Number(previewConfig.intervalSeconds) || 4,
         slides: Array.isArray(previewConfig.slides) && previewConfig.slides.length > 0
           ? previewConfig.slides
@@ -195,6 +206,7 @@ export default function BreakingNewsShowcase({
         setConfig({
           enabled: Boolean(isEnabled),
           badgeText: parsed?.badgeText || 'BREAKING NEWS',
+          liveUpdateText: parsed?.liveUpdateText || '',
           intervalSeconds: Number(parsed?.intervalSeconds) || 4,
           slides: Array.isArray(parsed?.slides) && parsed.slides.length > 0
             ? parsed.slides
@@ -217,6 +229,7 @@ export default function BreakingNewsShowcase({
             setConfig({
               enabled: Boolean(event.data.enabled),
               badgeText: event.data.config.badgeText || 'BREAKING NEWS',
+              liveUpdateText: event.data.config.liveUpdateText || '',
               intervalSeconds: Number(event.data.config.intervalSeconds) || 4,
               slides: Array.isArray(event.data.config.slides) && event.data.config.slides.length > 0
                 ? event.data.config.slides
@@ -245,39 +258,66 @@ export default function BreakingNewsShowcase({
   // Active slides filter
   const activeSlides = useMemo(() => {
     const list = Array.isArray(effectiveConfig.slides) && effectiveConfig.slides.length > 0
-      ? effectiveConfig.slides.filter((s) => s && ((Array.isArray(s.texts) && s.texts.some((t) => t.trim())) || s.image))
+      ? effectiveConfig.slides.filter(
+          (s) =>
+            s &&
+            ((Array.isArray(s.texts) && s.texts.some((t) => typeof t === 'string' && t.trim())) ||
+              (s.image && s.image.trim()) ||
+              (Array.isArray(s.images) && s.images.some((img) => typeof img === 'string' && img.trim())))
+        )
       : [];
     return list.length > 0 ? list : DEFAULT_BREAKING_BANNER.slides;
   }, [effectiveConfig.slides]);
 
   const [slideIndex, setSlideIndex] = useState(0);
-  const [textIndex, setTextIndex] = useState(0);
+  const [stepIndex, setStepIndex] = useState(0);
   const [isTextExiting, setIsTextExiting] = useState(false);
 
   // Keep indices in bounds if slides change
   useEffect(() => {
     if (slideIndex >= activeSlides.length) {
       setSlideIndex(0);
-      setTextIndex(0);
+      setStepIndex(0);
     }
   }, [activeSlides.length, slideIndex]);
 
   const currentSlide = activeSlides[slideIndex] || activeSlides[0];
+
   const slideTexts = useMemo(() => {
-    if (!currentSlide || !Array.isArray(currentSlide.texts)) return [];
+    if (!currentSlide || !Array.isArray(currentSlide.texts)) return ['બ્રેકિંગ ન્યૂઝ વિગત'];
     const valid = currentSlide.texts.filter((t) => typeof t === 'string' && t.trim());
     return valid.length > 0 ? valid : ['બ્રેકિંગ ન્યૂઝ વિગત'];
   }, [currentSlide]);
 
-  // Keep textIndex in bounds
-  useEffect(() => {
-    if (textIndex >= slideTexts.length) {
-      setTextIndex(0);
+  const currentSlideImages = useMemo(() => {
+    if (!currentSlide) return [];
+    if (Array.isArray(currentSlide.images) && currentSlide.images.length > 0) {
+      const valid = currentSlide.images.filter((img) => typeof img === 'string' && img.trim() !== '');
+      if (valid.length > 0) return valid;
     }
-  }, [slideTexts.length, textIndex]);
+    if (currentSlide.image && currentSlide.image.trim() !== '') {
+      return [currentSlide.image.trim()];
+    }
+    return [];
+  }, [currentSlide]);
 
+  const totalSteps = Math.max(slideTexts.length, currentSlideImages.length || 1);
+
+  // Keep stepIndex in bounds
+  useEffect(() => {
+    if (stepIndex >= totalSteps) {
+      setStepIndex(0);
+    }
+  }, [totalSteps, stepIndex]);
+
+  // Reset stepIndex on slideIndex change
+  useEffect(() => {
+    setStepIndex(0);
+  }, [slideIndex]);
+
+  const textIndex = slideTexts.length > 0 ? (stepIndex % slideTexts.length) : 0;
   const currentText = slideTexts[textIndex] || slideTexts[0] || '';
-  const hasImage = Boolean(currentSlide?.image && currentSlide.image.trim() !== '');
+  const hasImage = currentSlideImages.length > 0;
 
   const { language } = useApp();
 
@@ -296,50 +336,56 @@ export default function BreakingNewsShowcase({
   const translatedHeadline = useAutoTranslate(currentText, language);
   const displayedHeadline = (language === 'gu' ? currentText : (translatedHeadline || currentText)) || currentText;
 
-  // Step backwards (previous text or previous slide)
+  // Step backwards (previous step or previous slide)
   const advancePrev = useCallback(() => {
     if (activeSlides.length === 0) return;
     setIsTextExiting(true);
     setTimeout(() => {
-      if (textIndex > 0) {
-        setTextIndex((prev) => prev - 1);
+      if (stepIndex > 0) {
+        setStepIndex((prev) => prev - 1);
       } else {
         const prevSlideIdx = (slideIndex - 1 + activeSlides.length) % activeSlides.length;
         const prevSlide = activeSlides[prevSlideIdx];
-        const prevSlideTexts = (prevSlide?.texts || []).filter((t) => typeof t === 'string' && t.trim());
-        const lastTextIdx = Math.max(0, prevSlideTexts.length - 1);
-
+        const prevTexts = (prevSlide?.texts || []).filter((t) => typeof t === 'string' && t.trim());
+        const prevImgs = (Array.isArray(prevSlide?.images) && prevSlide.images.length > 0)
+          ? prevSlide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
+          : (prevSlide?.image && prevSlide.image.trim() !== '' ? [prevSlide.image.trim()] : []);
+        const prevMax = Math.max(prevTexts.length || 1, prevImgs.length || 1);
         setSlideIndex(prevSlideIdx);
-        setTextIndex(lastTextIdx);
+        setStepIndex(Math.max(0, prevMax - 1));
       }
       setTimeout(() => {
         setIsTextExiting(false);
       }, 40);
     }, 240);
-  }, [activeSlides, slideIndex, textIndex]);
+  }, [activeSlides, slideIndex, stepIndex]);
 
-  // Step to the next text, or to next slide if all texts shown
+  // Step to the next headline point / image, or to next slide if all steps finished
   const advanceNext = useCallback(() => {
     if (activeSlides.length === 0) return;
     const currSlide = activeSlides[slideIndex] || activeSlides[0];
-    const currentTexts = (currSlide?.texts || []).filter((t) => typeof t === 'string' && t.trim());
-    const totalTexts = currentTexts.length > 0 ? currentTexts.length : 1;
+    const texts = (currSlide?.texts || []).filter((t) => typeof t === 'string' && t.trim());
+    const imgs = (Array.isArray(currSlide?.images) && currSlide.images.length > 0)
+      ? currSlide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
+      : (currSlide?.image && currSlide.image.trim() !== '' ? [currSlide.image.trim()] : []);
+
+    const numTexts = texts.length > 0 ? texts.length : 1;
+    const numImgs = imgs.length > 0 ? imgs.length : 1;
+    const maxSteps = Math.max(numTexts, numImgs);
 
     setIsTextExiting(true);
     setTimeout(() => {
-      if (textIndex + 1 < totalTexts) {
-        // Next text of current slide
-        setTextIndex((prev) => prev + 1);
+      if (stepIndex + 1 < maxSteps) {
+        setStepIndex((prev) => prev + 1);
       } else {
-        // Next slide!
         setSlideIndex((prev) => (prev + 1) % activeSlides.length);
-        setTextIndex(0);
+        setStepIndex(0);
       }
       setTimeout(() => {
         setIsTextExiting(false);
       }, 40);
     }, 240);
-  }, [activeSlides, slideIndex, textIndex]);
+  }, [activeSlides, slideIndex, stepIndex]);
 
   // Timer interval (Continuous broadcast ticker, never stops on cursor hover)
   useEffect(() => {
@@ -379,12 +425,9 @@ export default function BreakingNewsShowcase({
         className="group relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border-[3px] border-[#CC1D0C] dark:border-[#CC1D0C] bg-[#750A00] shadow-2xl shadow-[#CC1D0C]/25 transition-all"
       >
         {/* ── Top Ribbon Bar (Gujarat Post Logo Red Gradient) ── */}
-        <div className="relative overflow-hidden flex items-center justify-between gap-2 sm:gap-4 border-b-2 border-white/60 py-3 sm:py-4 px-3 sm:px-6 bg-gradient-to-r from-[#8B0B00] via-[#CC1D0C] to-[#8B0B00]">
+        <div className="relative overflow-hidden flex items-center justify-center border-b-2 border-white/60 py-3 sm:py-4 px-3 sm:px-6 bg-gradient-to-r from-[#8B0B00] via-[#CC1D0C] to-[#8B0B00]">
           {/* Studio Tech Grid Watermark Texture */}
           <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:12px_12px] opacity-25" />
-
-          {/* Left spacer for desktop center balance */}
-          <div className="hidden lg:block w-32 shrink-0 relative z-10" />
 
           {/* Centered Slanted Broadcast Badge (/// BREAKING NEWS ///) */}
           <div className="flex items-center justify-center mx-auto relative z-10">
@@ -396,39 +439,6 @@ export default function BreakingNewsShowcase({
               ///
             </span>
           </div>
-
-          {/* Right: Slide Counter + Navigation Buttons */}
-          <div className="flex items-center justify-end gap-2 sm:gap-3 shrink-0 ml-auto lg:ml-0 lg:w-32 relative z-10">
-            <span className="text-xs sm:text-sm font-black text-white/95 select-none px-2 py-0.5 rounded bg-black/40 border border-white/20">
-              {slideIndex + 1}/{activeSlides.length}
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  advancePrev();
-                }}
-                aria-label="Previous"
-                className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-sm bg-black/70 hover:bg-black border border-white/30 text-white cursor-pointer active:scale-95 transition shadow-sm"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  advanceNext();
-                }}
-                aria-label="Next"
-                className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-sm bg-black/70 hover:bg-black border border-white/30 text-white cursor-pointer active:scale-95 transition shadow-sm"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* ── Inner Showcase Container with White Border Framing (Framing Image Box & Headline Box) ── */}
@@ -439,29 +449,35 @@ export default function BreakingNewsShowcase({
               <div className="relative w-full md:w-[48%] lg:w-[46%] xl:w-[45%] shrink-0 overflow-hidden bg-[#09090b]">
                 <div className="relative h-56 sm:h-64 md:h-full min-h-[220px] sm:min-h-[250px] md:min-h-[280px] lg:min-h-[310px] w-full overflow-hidden">
                   {activeSlides.map((slide, sIdx) => {
-                    const isActive = sIdx === slideIndex;
-                    return (
-                      <div
-                        key={slide.id || `slide-${sIdx}`}
-                        className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-                          isActive
-                            ? 'opacity-100 scale-100 z-10'
-                            : 'opacity-0 scale-105 pointer-events-none z-0'
-                        }`}
-                      >
-                        {slide?.image ? (
+                    const slideImgs = (Array.isArray(slide.images) && slide.images.length > 0)
+                      ? slide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
+                      : (slide.image && slide.image.trim() !== '' ? [slide.image.trim()] : []);
+
+                    if (slideImgs.length === 0) return null;
+
+                    return slideImgs.map((imgUrl, imgIdx) => {
+                      const isImgActive = (sIdx === slideIndex) && (imgIdx === (stepIndex % slideImgs.length));
+                      return (
+                        <div
+                          key={`${slide.id || sIdx}-img-${imgIdx}`}
+                          className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                            isImgActive
+                              ? 'opacity-100 scale-100 z-10'
+                              : 'opacity-0 scale-105 pointer-events-none z-0'
+                          }`}
+                        >
                           <Image
-                            src={slide.image}
+                            src={imgUrl}
                             alt={slide.texts?.[0] || 'Breaking News'}
                             fill
                             sizes="(max-width: 768px) 100vw, 620px"
                             className="object-cover object-center"
                             unoptimized
-                            priority={sIdx === 0}
+                            priority={sIdx === 0 && imgIdx === 0}
                           />
-                        ) : null}
-                      </div>
-                    );
+                        </div>
+                      );
+                    });
                   })}
 
                   {/* Gradient Overlays for Depth */}
@@ -473,6 +489,11 @@ export default function BreakingNewsShowcase({
                       <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current ml-0.5" />
                     </span>
                     <span>{BREAKING_I18N.visualReport[language] || 'વિઝ્યુઅલ રિપોર્ટ'}</span>
+                    {currentSlideImages.length > 1 && (
+                      <span className="text-[11px] font-bold text-yellow-300 ml-0.5 pl-1.5 border-l border-white/30">
+                        {(stepIndex % currentSlideImages.length) + 1}/{currentSlideImages.length}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -605,25 +626,41 @@ export default function BreakingNewsShowcase({
             <div className="relative z-10 mt-4 sm:mt-5 flex items-center justify-between gap-3 pt-3 sm:pt-3.5 border-t-2 border-white/30">
               <div className="flex items-center gap-2 text-sm sm:text-base font-black text-white">
                 <Radio className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-red-300 animate-pulse shrink-0" />
-                <span>{BREAKING_I18N.liveUpdate[language] || 'લાઇવ અપડેટ્સ'}</span>
+                <span>
+                  {(effectiveConfig.liveUpdateText && effectiveConfig.liveUpdateText.trim()) ||
+                    BREAKING_I18N.liveUpdate[language] ||
+                    'લાઇવ અપડેટ્સ'}
+                </span>
               </div>
 
               <span className="text-white/60 font-semibold text-base sm:text-lg select-none">|</span>
 
-              {currentSlide?.link ? (
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                {currentSlide?.link && (
+                  <Link
+                    href={currentSlide.link}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-black text-[#CC1D0C] shadow-md hover:bg-zinc-100 transition active:scale-95 shrink-0"
+                  >
+                    <span>{BREAKING_I18N.readFull[language] || 'સંપૂર્ણ વાંચો'}</span>
+                    <ExternalLink className="h-4 w-4" />
+                  </Link>
+                )}
+
                 <Link
-                  href={currentSlide.link}
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-white px-4 py-1.5 sm:px-5 sm:py-2 text-xs sm:text-sm font-black text-[#CC1D0C] shadow-md hover:bg-zinc-100 transition active:scale-95 shrink-0"
+                  href={currentSlide?.link || '/'}
+                  className="inline-flex items-center bg-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg shadow-md border border-white/50 hover:opacity-95 transition shrink-0"
+                  title="Gujarat Post"
                 >
-                  <span>{BREAKING_I18N.readFull[language] || 'સંપૂર્ણ વાંચો'}</span>
-                  <ExternalLink className="h-4 w-4" />
+                  <Image
+                    src="/GujaratpostFinalLogo.png"
+                    alt="Gujarat Post"
+                    width={110}
+                    height={26}
+                    className="h-5 sm:h-6 w-auto object-contain"
+                    priority
+                  />
                 </Link>
-              ) : (
-                <div className="inline-flex items-center gap-1.5 text-sm sm:text-base font-black text-white">
-                  <PenTool className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-yellow-300 shrink-0" />
-                  <span>{BREAKING_I18N.brandName[language] || 'ગુજરાત પોસ્ટ'}</span>
-                </div>
-              )}
+              </div>
             </div>
           </div>
         </div>

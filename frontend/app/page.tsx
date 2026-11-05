@@ -19,6 +19,7 @@ export default async function HomePage() {
     articlesRes,
     techArticlesRes,
     factCheckArticlesRes,
+    crimeArticlesRes,
     heroSettings,
     categories,
     videosRes,
@@ -29,6 +30,7 @@ export default async function HomePage() {
     getPublicArticles({ limit: 80, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
     withTimeout(getPublicArticles({ categorySlug: 'technology', limit: 12, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
     withTimeout(getPublicArticles({ categorySlug: 'fact-check', limit: 15, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
+    withTimeout(getPublicArticles({ categorySlug: 'crime', limit: 25, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
     getHeroSettings(true).catch(() => null),
     getPublicCategories({ showInHome: true }).catch(() => []),
     getPublicVideos('video').catch(() => []),
@@ -114,7 +116,10 @@ export default async function HomePage() {
   // Efficiently partition articles by category from the unified query
   const initialCategoryArticles: Record<string, any[]> = {
     gujarat: sortByLatest(articles.filter((a) => isCat(a, 'gujarat', 'state'))),
-    crime: sortByLatest(articles.filter((a) => isCat(a, 'crime', 'ક્રાઇમ'))),
+    crime: sortByLatest([
+      ...articles.filter((a) => isCat(a, 'crime', 'ક્રાઇમ')),
+      ...(((crimeArticlesRes as any)?.articles) || [])
+    ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
     national: sortByLatest(articles.filter((a) => isCat(a, 'national', 'india', 'ભારત'))),
     world: sortByLatest(articles.filter((a) => isCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ'))),
     manoranjan: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
@@ -180,6 +185,7 @@ export default async function HomePage() {
     breakingBannerInitial = {
       enabled: Boolean(isBreakingEnabled),
       badgeText: parsedBreaking?.badgeText || 'BREAKING NEWS',
+      liveUpdateText: parsedBreaking?.liveUpdateText || '',
       intervalSeconds: Number(parsedBreaking?.intervalSeconds) || 4,
       slides: Array.isArray(parsedBreaking?.slides) && parsedBreaking.slides.length > 0
         ? parsedBreaking.slides
