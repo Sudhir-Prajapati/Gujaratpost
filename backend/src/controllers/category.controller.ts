@@ -31,7 +31,8 @@ export class CategoryController {
         },
       });
       return sendSuccess(res, categories, 'Categories list retrieved successfully.');
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[CategoryController.getAllCategories] Error:', error?.message || error);
       next(error);
     }
   }

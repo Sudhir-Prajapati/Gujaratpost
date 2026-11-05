@@ -1108,7 +1108,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
         if (catRes.ok) {
           const rawCats: any[] = catJson.data?.categories || catJson.data || [];
-          const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c));
+          const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c) && (c.showInArticle !== false || (articleId && c.id === articleId)));
           setCategories(filtered);
           // Do not auto-select Gujarat or any category by default. Admin must choose explicitly.
           // Do not auto-set location to Gujarat by default.
@@ -1137,7 +1137,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         .then((res) => res.json())
         .then((catJson) => {
           const rawCats: any[] = catJson.data?.categories || catJson.data || [];
-          const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c));
+          const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c) && (c.showInArticle !== false || (articleId && c.id === articleId)));
           setCategories(filtered);
         })
         .catch(() => {});
