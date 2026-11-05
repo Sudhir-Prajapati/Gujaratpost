@@ -265,12 +265,34 @@ interface ChunkEntry {
       const norm = (s: string) => s.toLowerCase().replace(/[\s.,?!।:;'"“”\-–—#*•]/g, '');
       const normTitle = norm(cleanTitle);
 
+      // 1. Remove duplicate or redundant subheading if it matches/starts with title
       if (cleanSubheading && normTitle) {
         const normSub = norm(cleanSubheading);
         if (normSub === normTitle) {
           cleanSubheading = '';
         } else if (normSub.startsWith(normTitle)) {
-          cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।\s]+/, '').trim();
+          cleanSubheading = cleanSubheading.slice(cleanTitle.length).replace(/^[.,?!।:;\s\-–—]+/, '').trim();
+        }
+      }
+
+      // 2. Remove duplicate body if it matches title, or strip leading title if body starts with title
+      if (cleanBody && normTitle) {
+        const normBody = norm(cleanBody);
+        if (normBody === normTitle) {
+          cleanBody = '';
+        } else if (normBody.startsWith(normTitle)) {
+          cleanBody = cleanBody.slice(cleanTitle.length).replace(/^[.,?!।:;\s\-–—]+/, '').trim();
+        }
+      }
+
+      // 3. Remove duplicate body if it matches subheading, or strip leading subheading
+      if (cleanBody && cleanSubheading) {
+        const normSub = norm(cleanSubheading);
+        const normBody = norm(cleanBody);
+        if (normBody === normSub) {
+          cleanBody = '';
+        } else if (normBody.startsWith(normSub)) {
+          cleanBody = cleanBody.slice(cleanSubheading.length).replace(/^[.,?!।:;\s\-–—]+/, '').trim();
         }
       }
 
@@ -303,6 +325,19 @@ interface ChunkEntry {
           curElemIdx++;
         }
       }
+
+    // Global deduplication of consecutive identical chunks
+    const deduplicated: ChunkEntry[] = [];
+    for (const ce of chunkEntries) {
+      const prev = deduplicated[deduplicated.length - 1];
+      const normCur = norm(ce.chunkText);
+      const normPrev = prev ? norm(prev.chunkText) : '';
+      if (!normPrev || normCur !== normPrev) {
+        deduplicated.push(ce);
+      }
+    }
+    chunkEntries.length = 0;
+    chunkEntries.push(...deduplicated);
     }
 
     if (chunkEntries.length === 0) {

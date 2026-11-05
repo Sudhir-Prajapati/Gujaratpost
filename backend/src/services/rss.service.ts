@@ -114,8 +114,10 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   'tech': ['technology', 'tech'],
   'videos': ['videos', 'video'],
   'video': ['videos', 'video'],
-  'photos': ['photos', 'gallery'],
-  'gallery': ['photos', 'gallery'],
+  'photos': ['photos', 'gallery', 'photo-gallery', 'photo'],
+  'gallery': ['photos', 'gallery', 'photo-gallery', 'photo'],
+  'photo-gallery': ['photos', 'gallery', 'photo-gallery', 'photo'],
+  'photo': ['photos', 'gallery', 'photo-gallery', 'photo'],
   'instagram': ['instagram', 'reels'],
   'reels': ['instagram', 'reels'],
 };
@@ -153,7 +155,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   // ==========================================
   // Special Feed Type 1: Photo Gallery Feed
   // ==========================================
-  if (categorySlug === 'photos' || categorySlug === 'gallery') {
+  if (categorySlug === 'photos' || categorySlug === 'gallery' || categorySlug === 'photo-gallery' || categorySlug === 'photo') {
     const photos = await prisma.galleryPhoto.findMany({
       take: limit,
       orderBy: { createdAt: 'desc' },
@@ -163,6 +165,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         alt: true,
         caption: true,
         captionGu: true,
+        captionHi: true,
         category: true,
         photographer: true,
         createdAt: true,
@@ -180,18 +183,100 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     for (const photo of photos) {
       const photoUrl = `${baseUrl}/photos/${photo.id}`;
       const pubDate = new Date(photo.createdAt).toUTCString();
-      const rawTitle = lang === 'en' ? (photo.caption || photo.captionGu || photo.alt || 'Gujarat Post Photo Gallery') : lang === 'hi' ? (photo.caption || photo.captionGu || photo.alt || 'गुजरात पोस्ट फोटो गैलरी') : (photo.captionGu || photo.caption || photo.alt || 'Gujarat Post Photo Gallery');
-      const rawDesc = stripHtmlTags(rawTitle);
-      const catName = lang === 'en' ? 'Photo Gallery' : lang === 'hi' ? 'फोटो गैलरी' : (photo.category || 'ફોટો ગેલેરી');
-      const authorName = photo.photographer || 'Gujarat Post Team';
-      let imageUrl = (photo.src || '').trim();
-      if (imageUrl.startsWith('[')) {
+
+      // Heading / Title
+      const titleCandidate = lang === 'en'
+        ? (photo.caption || photo.captionGu || photo.alt || 'Gujarat Post Photo Gallery')
+        : lang === 'hi'
+        ? (photo.captionHi || photo.captionGu || photo.caption || photo.alt || 'गुजरात पोस्ट फोटो गैलरी')
+        : (photo.captionGu || photo.caption || photo.alt || 'Gujarat Post Photo Gallery');
+      const rawTitle = stripHtmlTags(titleCandidate).trim();
+
+      // Extract all gallery slides / images
+      interface GallerySlideItem {
+        src: string;
+        title?: string;
+        caption?: string;
+        description?: string;
+      }
+      const slides: GallerySlideItem[] = [];
+      const rawSrc = (photo.src || '').trim();
+
+      if (rawSrc.startsWith('[')) {
         try {
-          const parsed = JSON.parse(imageUrl);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            imageUrl = parsed[0]?.src || parsed[0]?.url || (typeof parsed[0] === 'string' ? parsed[0] : '');
+          const parsed = JSON.parse(rawSrc);
+          if (Array.isArray(parsed)) {
+            for (const item of parsed) {
+              if (!item) continue;
+              const imgUrl = typeof item === 'string' ? item : (item.src || item.url || '');
+              if (imgUrl && typeof imgUrl === 'string' && (imgUrl.startsWith('http://') || imgUrl.startsWith('https://'))) {
+                slides.push({
+                  src: imgUrl.trim(),
+                  title: typeof item === 'object' ? stripHtmlTags(item.title || item.captionGu || '') : '',
+                  caption: typeof item === 'object' ? stripHtmlTags(item.caption || item.description || '') : '',
+                  description: typeof item === 'object' ? stripHtmlTags(item.description || item.caption || '') : '',
+                });
+              }
+            }
           }
         } catch {}
+      }
+
+      if (slides.length === 0) {
+        if (rawSrc.includes('\n') || (rawSrc.includes(',') && !rawSrc.startsWith('data:'))) {
+          const delimiter = rawSrc.includes('\n') ? '\n' : ',';
+          const splitUrls = rawSrc.split(delimiter).map((s) => s.trim()).filter((s) => s.startsWith('http://') || s.startsWith('https://'));
+          for (const u of splitUrls) {
+            slides.push({ src: u });
+          }
+        } else if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://')) {
+          slides.push({ src: rawSrc });
+        }
+      }
+
+      // Story Description (distinct from title)
+      let storyDesc = '';
+      if (photo.caption && photo.caption.trim() && photo.caption.trim() !== rawTitle) {
+        storyDesc = photo.caption.trim();
+      } else if (slides[0]?.description && slides[0].description !== rawTitle) {
+        storyDesc = slides[0].description;
+      } else if (slides[0]?.caption && slides[0].caption !== rawTitle) {
+        storyDesc = slides[0].caption;
+      } else if (photo.alt && photo.alt.trim() !== rawTitle) {
+        storyDesc = photo.alt.trim();
+      }
+
+      const rawDesc = cleanRssExcerpt(storyDesc || rawTitle);
+      const catName = lang === 'en' ? 'Photo Gallery' : lang === 'hi' ? 'फोटो गैलरी' : (photo.category || 'ફોટો ગેલેરી');
+      const authorName = photo.photographer || 'Gujarat Post Team';
+
+      // Full HTML body for Dailyhunt & modern RSS readers (<content:encoded>)
+      let fullHtml = '';
+      if (storyDesc) {
+        const cleanedStoryDesc = stripKeyHighlights(storyDesc);
+        const paras = cleanedStoryDesc.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+        if (paras.length > 0) {
+          fullHtml += paras.map((p) => `<p>${escapeXml(p)}</p>`).join('\n');
+        } else {
+          fullHtml += `<p>${escapeXml(cleanedStoryDesc)}</p>`;
+        }
+      }
+
+      for (let i = 0; i < slides.length; i++) {
+        const slide = slides[i];
+        const slideAlt = escapeXml(slide.title || rawTitle);
+        const slideCaption = (slide.caption || slide.description || '').trim();
+        const hasUniqueCaption = slideCaption && slideCaption !== rawTitle && slideCaption !== storyDesc;
+
+        fullHtml += `\n<figure>\n  <img src="${escapeXml(slide.src)}" alt="${slideAlt}" />`;
+        if (hasUniqueCaption) {
+          fullHtml += `\n  <figcaption>${escapeXml(slideCaption)}</figcaption>`;
+        }
+        fullHtml += `\n</figure>`;
+      }
+
+      if (!fullHtml.trim()) {
+        fullHtml = `<p>${escapeXml(rawTitle)}</p>`;
       }
 
       itemsXml += `    <item>
@@ -199,18 +284,33 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       <link>${photoUrl}</link>
       <guid isPermaLink="true">${photoUrl}</guid>
       <description>${wrapCdata(rawDesc)}</description>
+      <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
       <category>${wrapCdata(catName)}</category>
       <pubDate>${pubDate}</pubDate>
       <dc:creator>${wrapCdata(authorName)}</dc:creator>
       <author>editorial@gujaratpost.in (${escapeXml(authorName)})</author>`;
 
-      if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
-        const escapedImg = escapeXml(imageUrl);
+      // Enclosure: lead image
+      const leadImg = slides[0]?.src || '';
+      if (leadImg && (leadImg.startsWith('http://') || leadImg.startsWith('https://'))) {
+        const escapedLeadImg = escapeXml(leadImg);
         itemsXml += `
-      <enclosure url="${escapedImg}" type="image/jpeg" length="0" />
-      <media:content url="${escapedImg}" medium="image">
-        <media:title>${wrapCdata(rawTitle)}</media:title>
+      <enclosure url="${escapedLeadImg}" type="image/jpeg" length="0" />`;
+      }
+
+      // Media RSS: all images in the gallery
+      for (const slide of slides) {
+        if (slide.src && (slide.src.startsWith('http://') || slide.src.startsWith('https://'))) {
+          const escapedImg = escapeXml(slide.src);
+          const slideTitle = slide.title || rawTitle;
+          const slideCaption = (slide.caption || slide.description || '').trim();
+          const hasDesc = slideCaption && slideCaption !== rawTitle;
+
+          itemsXml += `
+      <media:content url="${escapedImg}" medium="image" type="image/jpeg">
+        <media:title>${wrapCdata(slideTitle)}</media:title>${hasDesc ? `\n        <media:description>${wrapCdata(slideCaption)}</media:description>` : ''}
       </media:content>`;
+        }
       }
 
       itemsXml += `

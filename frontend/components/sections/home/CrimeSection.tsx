@@ -85,8 +85,8 @@ export default function CrimeSection({
   }, [initialArticles, sortCrimeLatest]);
 
   useEffect(() => {
-    // Only fetch from network if initial data was not provided via SSR
-    if (!initialArticles || initialArticles.length === 0) {
+    // Fetch fresh articles if initial data was not provided or has fewer than 15 articles
+    if (!initialArticles || initialArticles.length < 15) {
       fetchFreshCrimeArticles();
     }
 
@@ -436,18 +436,37 @@ export default function CrimeSection({
   }, [dbCrimeArticles, language]);
 
   const popularColumns = useMemo(() => {
-    const remainingCrime = dbCrimeArticles.length > 7 ? dbCrimeArticles.slice(7) : dbCrimeArticles;
-    const list = remainingCrime;
-    if (list.length > 0) {
-      const cols = [];
-      for (let c = 0; c < 6; c++) {
-        const featArt = list[c] || list[c % list.length];
-        cols.push({
-          colId: c + 1,
+    // 1. Gather all article IDs used in the top slide carousel
+    const usedIds = new Set<string>();
+    slides.forEach((s) => {
+      if (s.article?.id) usedIds.add(s.article.id);
+      else if (s.id) usedIds.add(s.id);
+    });
+
+    // 2. Gather article IDs used in rightList on desktop (first 3 items displayed in top sidebar)
+    rightList.slice(0, 3).forEach((r) => {
+      if (r.article?.id) usedIds.add(r.article.id);
+      else if (r.id) usedIds.add(r.id);
+    });
+
+    // 3. Filter dbCrimeArticles strictly to those NOT used in slides or rightList
+    const unusedArticles = dbCrimeArticles.filter((art) => art?.id && !usedIds.has(art.id));
+
+    if (unusedArticles.length > 0) {
+      const distinctCols: any[] = [];
+      const colUsedIds = new Set<string>();
+
+      for (let i = 0; i < unusedArticles.length && distinctCols.length < 6; i++) {
+        const featArt = unusedArticles[i];
+        if (!featArt?.id || colUsedIds.has(featArt.id)) continue;
+        colUsedIds.add(featArt.id);
+
+        distinctCols.push({
+          colId: distinctCols.length + 1,
           featured: {
             id: featArt.id,
             slug: featArt.slug,
-            image: featArt.image || DEMO_IMAGES[c % DEMO_IMAGES.length],
+            image: featArt.image || DEMO_IMAGES[distinctCols.length % DEMO_IMAGES.length],
             article: featArt as Article,
             title: featArt.title,
             titleGu: featArt.titleGu || featArt.title,
@@ -455,7 +474,10 @@ export default function CrimeSection({
           subs: [],
         });
       }
-      return cols;
+
+      if (distinctCols.length > 0) {
+        return distinctCols;
+      }
     }
 
     return mockPopularColumns.slice(0, 6).map((col) => ({
@@ -470,7 +492,7 @@ export default function CrimeSection({
       },
       subs: [],
     }));
-  }, [dbCrimeArticles, language]);
+  }, [dbCrimeArticles, slides, rightList, language]);
 
   const currentSlide = slides[slideIdx % slides.length];
 

@@ -1034,7 +1034,7 @@ export default function HeroSection({
   const [crimeArtDB, setCrimeArtDB] = useState<Article[]>(
     (initialCategoryArticles['crime'] && initialCategoryArticles['crime'].length > 0)
       ? initialCategoryArticles['crime']
-      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'crime', 'ક્રાઇમ')).slice(0, 8)
+      : publishedInitialArticles.filter((a) => articleMatchesCat(a, 'crime', 'ક્રાઇમ')).slice(0, 25)
   );
   const [nationalArtDB, setNationalArtDB] = useState<Article[]>(
     (initialCategoryArticles['national'] && initialCategoryArticles['national'].length > 0)
@@ -1267,7 +1267,7 @@ export default function HeroSection({
         const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : sortedArts).slice(0, 10);
         setMostReadArtDB(mostReadPool);
         setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
-        setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 8));
+        setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 25));
         setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16));
         setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
         setPoliticsArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16));
