@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 
 
@@ -119,7 +119,6 @@ export default function AdminDashboard() {
         ]);
 
         if (meRes.status === 401 || statsRes.status === 401) {
-          router.push('/login');
           return;
         }
 

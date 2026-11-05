@@ -27,6 +27,7 @@ import {
   Lock,
   ChevronDown,
   MapPin,
+  FileText,
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch, clearApiCache } from '@/lib/api';
 
@@ -43,6 +44,7 @@ interface CategoryData {
   homeOrder?: number;
   isActive: boolean;
   showInHome?: boolean;
+  showInArticle?: boolean;
   showInHeader?: boolean;
   headerType?: string;
   createdAt: string;
@@ -136,6 +138,7 @@ export default function CategoriesPage() {
   const [displayOrder, setDisplayOrder] = useState(0);
   const [isActive, setIsActive] = useState(true);
   const [showInHome, setShowInHome] = useState(true);
+  const [showInArticle, setShowInArticle] = useState(true);
   const [showInHeader, setShowInHeader] = useState(true);
   const [headerType, setHeaderType] = useState('GLOBAL');
 
@@ -185,6 +188,7 @@ export default function CategoriesPage() {
     setDisplayOrder(endOrder);
     setIsActive(true);
     setShowInHome(true);
+    setShowInArticle(true);
     setShowInHeader(true);
     setHeaderType('GLOBAL');
     setModalOpen(true);
@@ -202,6 +206,7 @@ export default function CategoriesPage() {
     setDisplayOrder(cat.displayOrder ?? 0);
     setIsActive(cat.isActive ?? true);
     setShowInHome(cat.showInHome !== undefined ? cat.showInHome : true);
+    setShowInArticle(cat.showInArticle !== undefined ? cat.showInArticle : true);
     setShowInHeader(cat.showInHeader !== undefined ? cat.showInHeader : true);
     setHeaderType(cat.headerType || 'GLOBAL');
     setModalOpen(true);
@@ -401,6 +406,7 @@ export default function CategoriesPage() {
       displayOrder: Math.max(0, Number(displayOrder) || 0),
       isActive,
       showInHome,
+      showInArticle,
       showInHeader,
       headerType,
     };
@@ -466,6 +472,26 @@ export default function CategoriesPage() {
       });
       if (!res.ok) throw new Error('Failed to update category');
       setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, showInHome: nextVal } : c));
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
+  // Toggle Show in Article directly
+  const handleToggleShowInArticle = async (cat: CategoryData) => {
+    const nextVal = !(cat.showInArticle !== undefined ? cat.showInArticle : true);
+    try {
+      const res = await authFetch(getBackendApiUrl(`/api/admin/categories/${cat.id}`), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...cat,
+          showInArticle: nextVal
+        }),
+      });
+      if (!res.ok) throw new Error('Failed to update category');
+      setCategories(prev => prev.map(c => c.id === cat.id ? { ...c, showInArticle: nextVal } : c));
+      clearApiCache();
     } catch (err: any) {
       alert(err.message);
     }
@@ -758,6 +784,7 @@ export default function CategoriesPage() {
                   <th className="px-4 py-4">Slug</th>
                   <th className="px-4 py-4 text-center">Header Nav</th>
                   <th className="px-4 py-4 text-center">Home Page</th>
+                  <th className="px-4 py-4 text-center">Show in Article</th>
                   <th className="px-4 py-4 text-center">Status</th>
                   <th className="px-4 py-4 text-right">Actions</th>
                 </tr>
@@ -766,6 +793,7 @@ export default function CategoriesPage() {
                 {filteredCategories.map((cat, idx) => {
                   const inHeader = cat.showInHeader !== undefined ? cat.showInHeader : true;
                   const inHome = cat.showInHome !== undefined ? cat.showInHome : true;
+                  const inArticle = cat.showInArticle !== undefined ? cat.showInArticle : true;
 
                   return (
                     <tr key={cat.id} className="hover:bg-sky-100/60 dark:hover:bg-sky-950/35 transition-colors">
@@ -888,6 +916,22 @@ export default function CategoriesPage() {
                         >
                           <Home className="h-4.5 w-4.5 shrink-0" />
                           <span>{inHome ? 'Visible' : 'Hidden'}</span>
+                        </button>
+                      </td>
+
+                      {/* Show in Article Toggle */}
+                      <td className="px-4 py-4 text-center">
+                        <button
+                          onClick={() => handleToggleShowInArticle(cat)}
+                          className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-base font-semibold transition-all cursor-pointer ${
+                            inArticle 
+                              ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 ring-1 ring-blue-500/20' 
+                              : 'bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500'
+                          }`}
+                          title={inArticle ? 'Visible in Article Creator (Click to hide)' : 'Hidden from Article Creator (Click to show)'}
+                        >
+                          <FileText className="h-4.5 w-4.5 shrink-0" />
+                          <span>{inArticle ? 'Visible' : 'Hidden'}</span>
                         </button>
                       </td>
 
@@ -1666,7 +1710,34 @@ export default function CategoriesPage() {
                     </p>
                   </div>
 
-                  {/* Checkbox 3: Active Category */}
+                  {/* Checkbox 3: Show in Article Creation */}
+                  <div className="p-3 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="checkbox"
+                        id="showInArticleCheck"
+                        checked={showInArticle}
+                        onChange={(e) => setShowInArticle(e.target.checked)}
+                        className="h-4 w-4 rounded border-zinc-400 accent-blue-600 cursor-pointer"
+                      />
+                      <label htmlFor="showInArticleCheck" className="text-sm font-bold text-zinc-900 dark:text-zinc-100 cursor-pointer flex items-center gap-1.5">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        Show in Article Creation
+                      </label>
+                    </div>
+                    <p className="text-[11px] text-zinc-500 dark:text-zinc-400 pl-7 leading-relaxed">
+                      Controls whether this category is shown in the category selector when creating or editing news articles.
+                      {showInArticle ? (
+                        <span className="inline-flex items-center gap-1 font-bold ml-1 px-2 py-0.5 rounded text-[10px] bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                          ✓ Selectable when writing articles
+                        </span>
+                      ) : (
+                        <span className="text-zinc-400 font-medium ml-1">(Hidden from article creation form)</span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Checkbox 4: Active Category */}
                   <div className="p-3 rounded-xl border border-gray-400 dark:border-zinc-700 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-2">
                     <div className="flex items-center gap-3">
                       <input
@@ -1717,6 +1788,16 @@ export default function CategoriesPage() {
                           </span>
                         ) : (
                           <span className="text-zinc-400">Not shown on Home Page</span>
+                        )}
+                      </li>
+                      <li className="flex items-center gap-1.5">
+                        <span className="text-blue-600">• Article Creation:</span>
+                        {showInArticle && isActive ? (
+                          <span className="font-bold text-blue-700 dark:text-blue-300">
+                            Visible in Article Category Selector
+                          </span>
+                        ) : (
+                          <span className="text-zinc-400">Hidden from Article Category Selector</span>
                         )}
                       </li>
                     </ul>

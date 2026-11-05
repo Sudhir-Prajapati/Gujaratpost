@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { ShieldAlert, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -37,7 +37,7 @@ export default function UnauthorizedPage() {
         </button>
 
         <a
-          href="/login"
+          href="/cms-admin"
           className="inline-flex items-center justify-center rounded-xl border border-zinc-200 bg-white px-5 py-3 text-sm font-semibold text-zinc-700 transition-all hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
         >
           Sign in with Another Account

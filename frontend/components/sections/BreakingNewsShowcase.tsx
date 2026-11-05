@@ -91,9 +91,9 @@ const BREAKING_I18N: Record<string, Record<Language, string>> = {
 };
 
 /**
- * Renders the two-tone broadcast slanted badge matching the reference design:
- * Red slanted box for first word (e.g. BREAKING), white slanted box for rest (e.g. NEWS)
- * Prominently sized for impactful television broadcast presence.
+ * Renders the broadcast header badge matching the exact requested design:
+ * "BREAKING" in bold red text on white background, followed by a solid red box with "NEWS" in bold white text.
+ * Prominently sized with enlarged font for maximum impact.
  */
 function renderBroadcastBadge(badgeText: string) {
   const clean = (badgeText || 'BREAKING NEWS').trim();
@@ -102,19 +102,21 @@ function renderBroadcastBadge(badgeText: string) {
     const firstWord = parts[0];
     const rest = parts.slice(1).join(' ');
     return (
-      <div className="inline-flex items-center transform -skew-x-12 shadow-2xl overflow-hidden rounded-xs sm:rounded-sm ring-1 ring-black/40">
-        <span className="bg-[#CC1D0C] text-white font-black text-base sm:text-xl md:text-2xl lg:text-[28px] xl:text-[32px] px-3 sm:px-5 md:px-7 py-1 sm:py-1.5 md:py-2 tracking-wider uppercase select-none drop-shadow-md">
+      <div className="inline-flex items-center gap-2 sm:gap-3 md:gap-3.5 select-none py-0.5">
+        <span className="text-[#CC1D0C] font-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[54px] tracking-wide uppercase select-none leading-none drop-shadow-xs">
           {firstWord}
         </span>
-        <span className="bg-white text-zinc-950 font-black italic text-base sm:text-xl md:text-2xl lg:text-[28px] xl:text-[32px] px-3 sm:px-5 md:px-7 py-1 sm:py-1.5 md:py-2 tracking-wider uppercase select-none drop-shadow-md">
+        <span className="bg-[#CC1D0C] text-white font-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[54px] px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 md:py-2 tracking-wide uppercase select-none leading-none rounded-none shadow-sm">
           {rest}
         </span>
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center transform -skew-x-12 shadow-2xl overflow-hidden rounded-xs sm:rounded-sm bg-[#CC1D0C] px-4 sm:px-6 md:px-8 py-1 sm:py-1.5 md:py-2 text-white font-black text-base sm:text-xl md:text-2xl lg:text-[28px] xl:text-[32px] tracking-wider uppercase select-none drop-shadow-md ring-1 ring-black/40">
-      {clean}
+    <div className="inline-flex items-center select-none py-0.5">
+      <span className="bg-[#CC1D0C] text-white font-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[54px] px-4 sm:px-6 md:px-8 py-1 sm:py-1.5 md:py-2 tracking-wide uppercase select-none leading-none shadow-sm">
+        {clean}
+      </span>
     </div>
   );
 }
@@ -424,20 +426,11 @@ export default function BreakingNewsShowcase({
       <div
         className="group relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border-[3px] border-[#CC1D0C] dark:border-[#CC1D0C] bg-[#750A00] shadow-2xl shadow-[#CC1D0C]/25 transition-all"
       >
-        {/* ── Top Ribbon Bar (Gujarat Post Logo Red Gradient) ── */}
-        <div className="relative overflow-hidden flex items-center justify-center border-b-2 border-white/60 py-3 sm:py-4 px-3 sm:px-6 bg-gradient-to-r from-[#8B0B00] via-[#CC1D0C] to-[#8B0B00]">
-          {/* Studio Tech Grid Watermark Texture */}
-          <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(rgba(255,255,255,0.18)_1px,transparent_1px)] [background-size:12px_12px] opacity-25" />
-
-          {/* Centered Slanted Broadcast Badge (/// BREAKING NEWS ///) */}
+        {/* ── Top Ribbon Bar (Crisp White Header Matching Broadcast Reference) ── */}
+        <div className="relative overflow-hidden flex items-center justify-center border-b-[3px] border-[#CC1D0C] py-2.5 sm:py-3.5 md:py-4 px-3 sm:px-6 bg-white shadow-sm">
+          {/* Centered Broadcast Badge ("BREAKING" in red text, "NEWS" in solid red box) */}
           <div className="flex items-center justify-center mx-auto relative z-10">
-            <span className="text-white/80 font-black italic text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tighter mr-2 sm:mr-3.5 select-none drop-shadow-sm">
-              ///
-            </span>
             {renderBroadcastBadge(displayedBadge)}
-            <span className="text-white/80 font-black italic text-xl sm:text-2xl md:text-3xl lg:text-4xl tracking-tighter ml-2 sm:mr-3.5 select-none drop-shadow-sm">
-              ///
-            </span>
           </div>
         </div>
 
