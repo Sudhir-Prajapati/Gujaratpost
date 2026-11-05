@@ -396,6 +396,24 @@ export const getPublicArticleBySlug = cache(async (slug: string): Promise<Articl
 /**
  * Fetch list of categories from Express Backend API
  */
+export const FALLBACK_PUBLIC_CATEGORIES = [
+  { id: 'cat-gujarat', slug: 'gujarat', name: 'Gujarat', nameGu: 'ગુજરાત', headerOrder: 300, homeOrder: 180, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-national', slug: 'national', name: 'National', nameGu: 'ભારત', headerOrder: 290, homeOrder: 150, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-world', slug: 'world', name: 'World', nameGu: 'વિશ્વ', headerOrder: 285, homeOrder: 140, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-politics', slug: 'politics', name: 'Politics', nameGu: 'રાજનીતિ', headerOrder: 280, homeOrder: 120, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-crime', slug: 'crime', name: 'Crime', nameGu: 'ક્રાઇમ', headerOrder: 275, homeOrder: 110, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-health', slug: 'health', name: 'Health', nameGu: 'હેલ્થ', headerOrder: 270, homeOrder: 90, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-technology', slug: 'technology', name: 'Technology', nameGu: 'ટેકનોલોજી', headerOrder: 260, homeOrder: 80, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-entertainment', slug: 'entertainment', name: 'Entertainment', nameGu: 'મનોરંજન', headerOrder: 250, homeOrder: 70, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-trending', slug: 'trending', name: 'Trending', nameGu: 'ટ્રેન્ડિંગ', headerOrder: 245, homeOrder: 160, showInHome: false, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-latest', slug: 'latest-news', name: 'Latest News', nameGu: 'તાજા સમાચાર', headerOrder: 230, homeOrder: 130, showInHome: true, showInHeader: false, headerType: 'GLOBAL', isActive: true, showInArticle: true },
+  { id: 'cat-ahmedabad', slug: 'ahmedabad', name: 'Ahmedabad', nameGu: 'અમદાવાદ', headerOrder: 100, homeOrder: 0, showInHome: false, showInHeader: true, headerType: 'GUJARAT', isActive: true, showInArticle: true },
+  { id: 'cat-surat', slug: 'surat', name: 'Surat', nameGu: 'સુરત', headerOrder: 95, homeOrder: 0, showInHome: false, showInHeader: true, headerType: 'GUJARAT', isActive: true, showInArticle: true },
+  { id: 'cat-rajkot', slug: 'rajkot', name: 'Rajkot', nameGu: 'રાજકોટ', headerOrder: 90, homeOrder: 0, showInHome: false, showInHeader: true, headerType: 'GUJARAT', isActive: true, showInArticle: true },
+  { id: 'cat-vadodara', slug: 'vadodara', name: 'Vadodara', nameGu: 'વડોદરા', headerOrder: 85, homeOrder: 0, showInHome: false, showInHeader: true, headerType: 'GUJARAT', isActive: true, showInArticle: true },
+  { id: 'cat-gandhinagar', slug: 'gandhinagar', name: 'Gandhinagar', nameGu: 'ગાંધીનગર', headerOrder: 80, homeOrder: 0, showInHome: false, showInHeader: true, headerType: 'GUJARAT', isActive: true, showInArticle: true },
+];
+
 export async function getPublicCategories(options?: { showInHeader?: boolean; showInHome?: boolean; headerType?: string }): Promise<any[]> {
   try {
     const query = new URLSearchParams();
@@ -406,7 +424,7 @@ export async function getPublicCategories(options?: { showInHeader?: boolean; sh
 
     const url = `${API_BASE_URL}/categories${queryString}`;
     const json = await fetchCachedJson<any>(url, 5000);
-    if (json?.success && json.data?.categories) {
+    if (json?.success && Array.isArray(json.data?.categories) && json.data.categories.length > 0) {
       return json.data.categories;
     }
   } catch (error: any) {
@@ -414,7 +432,14 @@ export async function getPublicCategories(options?: { showInHeader?: boolean; sh
       console.warn('Backend API fetch error for categories:', error?.message || error);
     }
   }
-  return [];
+
+  // Resilient fallback so navigation and sections never break if backend API returns an error or is cached
+  return FALLBACK_PUBLIC_CATEGORIES.filter((c: any) => {
+    if (options?.showInHeader && !c.showInHeader) return false;
+    if (options?.showInHome && !c.showInHome) return false;
+    if (options?.headerType && (c.headerType || '').toUpperCase() !== options.headerType.toUpperCase()) return false;
+    return true;
+  });
 }
 
 /**

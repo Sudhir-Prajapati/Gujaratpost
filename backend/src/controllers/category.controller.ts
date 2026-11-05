@@ -4,6 +4,54 @@ import { sendSuccess } from '../utils/response.js';
 import { BadRequestError, ConflictError, NotFoundError } from '../utils/errors.js';
 import { clearPublicRoutesCache } from '../utils/publicCache.js';
 
+let categoryColumnsEnsured = false;
+export async function ensureCategoryTableColumns(): Promise<void> {
+  if (categoryColumnsEnsured) return;
+  try {
+    const columns: any = await prisma.$queryRawUnsafe(`
+      SELECT COLUMN_NAME 
+      FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_NAME = 'categories' 
+        AND TABLE_SCHEMA = DATABASE()
+    `);
+    const colNames = new Set((columns || []).map((c: any) => (c.COLUMN_NAME || c.column_name || '').toLowerCase()));
+
+    if (!colNames.has('showinarticle')) {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE categories ADD COLUMN showInArticle TINYINT(1) NOT NULL DEFAULT 1 AFTER showInHome'
+      ).catch(() => {});
+      console.log('✅ Added missing showInArticle column to categories');
+    }
+    if (!colNames.has('showinheader')) {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE categories ADD COLUMN showInHeader TINYINT(1) NOT NULL DEFAULT 1 AFTER showInHome'
+      ).catch(() => {});
+      console.log('✅ Added missing showInHeader column to categories');
+    }
+    if (!colNames.has('headertype')) {
+      await prisma.$executeRawUnsafe(
+        "ALTER TABLE categories ADD COLUMN headerType VARCHAR(50) NOT NULL DEFAULT 'GLOBAL' AFTER showInHeader"
+      ).catch(() => {});
+      console.log('✅ Added missing headerType column to categories');
+    }
+    if (!colNames.has('headerorder')) {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE categories ADD COLUMN headerOrder INT NOT NULL DEFAULT 0 AFTER displayOrder'
+      ).catch(() => {});
+      console.log('✅ Added missing headerOrder column to categories');
+    }
+    if (!colNames.has('homeorder')) {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE categories ADD COLUMN homeOrder INT NOT NULL DEFAULT 0 AFTER headerOrder'
+      ).catch(() => {});
+      console.log('✅ Added missing homeOrder column to categories');
+    }
+    categoryColumnsEnsured = true;
+  } catch (err: any) {
+    console.warn('[ensureCategoryTableColumns] Skipped or failed:', err?.message || err);
+  }
+}
+
 export class CategoryController {
   /**
    * Get all categories sorted by displayOrder DESC (large number first, low number last).

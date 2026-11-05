@@ -24,6 +24,7 @@ import { RssController } from '../controllers/rss.controller.js';
 import { getDailyAstrologySigns, fetchLiveDailyAstrologySigns } from '../services/astrology.service.js';
 import { getLiveMarketRates } from '../services/marketRates.service.js';
 import { redisClient } from '../config/redis.js';
+import { ensureCategoryTableColumns } from '../controllers/category.controller.js';
 
 const router = Router();
 
@@ -64,12 +65,11 @@ function cacheResponse(ttlSeconds: number) {
     const maxEntries = isSearchQuery ? MAX_SEARCH_CACHE_ENTRIES : MAX_PUBLIC_CACHE_ENTRIES;
     const key = isSearchQuery ? getNormalizedSearchCacheKey(req) : (req.originalUrl || req.url);
 
-    res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=300`);
-
     // 1. Fast in-memory check
     const cached = targetCache.get(key);
     const now = Date.now();
     if (cached && now - cached.timestamp < ttlMs) {
+      res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=300`);
       return res.status(200).json(cached.payload);
     }
 
@@ -85,6 +85,7 @@ function cacheResponse(ttlSeconds: number) {
         if (fromRedis) {
           const parsed = JSON.parse(fromRedis);
           targetCache.set(key, { timestamp: now, payload: parsed });
+          res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=300`);
           return res.status(200).json(parsed);
         }
       } catch { }
@@ -93,6 +94,7 @@ function cacheResponse(ttlSeconds: number) {
     const originalJson = res.json.bind(res);
     res.json = (body: any) => {
       if (res.statusCode >= 200 && res.statusCode < 300) {
+        res.setHeader('Cache-Control', `public, max-age=${ttlSeconds}, s-maxage=${ttlSeconds}, stale-while-revalidate=300`);
         if (targetCache.size >= maxEntries) {
           const oldestKey = targetCache.keys().next().value;
           if (oldestKey) targetCache.delete(oldestKey);
@@ -102,6 +104,8 @@ function cacheResponse(ttlSeconds: number) {
         if (redisClient.isOpen) {
           redisClient.setEx(redisKey, ttlSeconds, JSON.stringify(body)).catch(() => { });
         }
+      } else {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       }
       return originalJson(body);
     };
@@ -1059,13 +1063,13 @@ router.get('/authors', async (req, res, next) => {
  */
 router.get('/categories', cacheResponse(60), async (req, res, next) => {
   try {
+    await ensureCategoryTableColumns().catch(() => {});
+
     const showInHeader = req.query.showInHeader === 'true';
     const showInHome = req.query.showInHome === 'true';
     const showInArticle = req.query.showInArticle === 'true';
     const headerType = req.query.headerType as string | undefined;
 
-    // Build where clause WITHOUT headerType — it's filtered in JS below
-    // (Prisma client may not have headerType in its type definitions yet)
     const where: any = {
       isActive: true,
     };
@@ -1078,17 +1082,64 @@ router.get('/categories', cacheResponse(60), async (req, res, next) => {
     if (showInHeader) orderBy = [{ headerOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
     else if (showInHome) orderBy = [{ homeOrder: 'desc' }, { displayOrder: 'desc' }, { id: 'asc' }];
 
-    const allCategories = await withDbRetry(() =>
-      prisma.category.findMany({
-        where,
-        orderBy,
-      })
-    );
+    let allCategories: any[] = [];
+    try {
+      allCategories = await withDbRetry(() =>
+        prisma.category.findMany({
+          where,
+          orderBy,
+        })
+      );
+    } catch (primaryErr: any) {
+      console.warn('[public.routes.ts] Primary category query failed, trying safe fallback:', primaryErr?.message);
+      try {
+        const fallbackWhere: any = { isActive: true };
+        if (showInHeader) fallbackWhere.showInHeader = true;
+        if (showInHome) fallbackWhere.showInHome = true;
 
-    // Apply headerType filter in JavaScript
-    const categories = allCategories.filter((c: any) => {
-      if (headerType) {
-        return (c.headerType || '').toUpperCase() === headerType.toUpperCase();
+        allCategories = await prisma.category.findMany({
+          where: fallbackWhere,
+          orderBy: [{ displayOrder: 'desc' }],
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            nameGu: true,
+            nameHi: true,
+            description: true,
+            descriptionGu: true,
+            descriptionHi: true,
+            icon: true,
+            color: true,
+            displayOrder: true,
+            isActive: true,
+            showInHome: true,
+            showInHeader: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
+      } catch (safeErr: any) {
+        console.warn('[public.routes.ts] Safe select failed, trying raw SQL:', safeErr?.message);
+        allCategories = (await prisma.$queryRawUnsafe(`
+          SELECT * FROM categories WHERE isActive = 1 ORDER BY displayOrder DESC
+        `).catch(() => [])) as any[];
+      }
+    }
+
+    // Apply headerType & showInArticle filter in JavaScript
+    const categories = (allCategories || []).map((c: any) => ({
+      ...c,
+      showInArticle: c.showInArticle !== undefined ? Boolean(c.showInArticle) : true,
+      headerType: c.headerType || 'GLOBAL',
+      headerOrder: typeof c.headerOrder === 'number' ? c.headerOrder : 0,
+      homeOrder: typeof c.homeOrder === 'number' ? c.homeOrder : 0,
+    })).filter((c: any) => {
+      if (headerType && (c.headerType || '').toUpperCase() !== headerType.toUpperCase()) {
+        return false;
+      }
+      if (showInArticle && c.showInArticle === false) {
+        return false;
       }
       return true;
     });
