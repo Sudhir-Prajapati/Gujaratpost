@@ -20,6 +20,7 @@ import {
   X,
   FileText,
   Loader2,
+  BookOpen,
 } from 'lucide-react';
 import { getLocalized } from '@/data';
 import { useApp } from '@/components/AppProvider';
@@ -53,7 +54,7 @@ function isImageUrl(url?: string): boolean {
 }
 
 export default function EpaperPageClient() {
-  const { language } = useApp();
+  const { language, epaperEnabled } = useApp();
 
   const [editions, setEditions] = useState<EPaperEdition[]>([]);
   const [citiesList, setCitiesList] = useState<CityItem[]>([]);
@@ -239,6 +240,34 @@ export default function EpaperPageClient() {
       return dateStr;
     }
   };
+
+  if (!epaperEnabled) {
+    return (
+      <main className="bg-background min-h-[70vh] flex items-center justify-center px-4 py-16">
+        <div className="max-w-md w-full bg-card border border-border p-8 rounded-2xl text-center shadow-lg">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-100 dark:bg-red-950/40 flex items-center justify-center text-[#B3121B]">
+            <BookOpen className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-foreground mb-2">
+            {language === 'gu' ? 'ઈ-પેપર સુવિધા હાલમાં બંધ છે' : language === 'hi' ? 'ई-पेपर सुविधा वर्तमान में बंद है' : 'E-Paper is Currently Unavailable'}
+          </h2>
+          <p className="text-sm text-muted-foreground mb-6">
+            {language === 'gu'
+              ? 'એડમિન દ્વારા ઈ-પેપર સેક્શન અસ્થાયી રૂપે બંધ કરવામાં આવ્યું છે.'
+              : language === 'hi'
+              ? 'व्यवस्थापक द्वारा ई-पेपर अनुभाग अस्थायी रूप से अक्षम किया गया है।'
+              : 'The E-Paper section has been temporarily disabled by the administrator.'}
+          </p>
+          <a
+            href="/"
+            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] text-white font-bold text-sm shadow-sm transition"
+          >
+            {language === 'gu' ? 'મુખ્ય પેજ પર જાઓ' : language === 'hi' ? 'मुख्य पृष्ठ पर जाएं' : 'Go to Homepage'}
+          </a>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="bg-background min-h-screen pb-16">

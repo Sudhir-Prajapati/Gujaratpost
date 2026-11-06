@@ -145,22 +145,65 @@ export default function CategoriesPage() {
   // Temporary list state for Reorder Modal
   const [orderList, setOrderList] = useState<CategoryData[]>([]);
 
-  // Fetch categories
-  useEffect(() => {
-    async function loadCategories() {
-      setLoading(true);
-      try {
-        const res = await authFetch(getBackendApiUrl('/api/admin/categories'));
+  // Fetch categories with multi-tier resilience & cache-busting
+  const loadCategories = async () => {
+    setLoading(true);
+    setError(null);
+    let loadedCats: CategoryData[] = [];
+    let fetchError: string | null = null;
+
+    // 1. Try Admin API first with cache-busting timestamp
+    try {
+      const adminUrl = getBackendApiUrl(`/api/admin/categories?_t=${Date.now()}`);
+      const res = await authFetch(adminUrl, { cache: 'no-store' });
+      if (res.ok) {
         const json = await res.json();
-        if (!res.ok) throw new Error(json.message || json.error || 'Failed to fetch categories');
-        const sorted = (json.data || []).sort((a: CategoryData, b: CategoryData) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
-        setCategories(sorted);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
+        if (Array.isArray(json?.data)) {
+          loadedCats = json.data;
+        } else if (Array.isArray(json?.data?.categories)) {
+          loadedCats = json.data.categories;
+        } else if (Array.isArray(json)) {
+          loadedCats = json;
+        }
+      } else {
+        const errJson = await res.json().catch(() => ({}));
+        fetchError = errJson.message || errJson.error || `HTTP ${res.status}`;
+      }
+    } catch (err: any) {
+      fetchError = err.message || 'Failed to fetch admin categories';
+    }
+
+    // 2. Resilient fallback to Public API if admin endpoint failed or returned empty
+    if (loadedCats.length === 0) {
+      try {
+        const pubUrl = getBackendApiUrl(`/api/public/categories?_t=${Date.now()}`);
+        const pubRes = await fetch(pubUrl, { cache: 'no-store' });
+        if (pubRes.ok) {
+          const pubJson = await pubRes.json();
+          if (Array.isArray(pubJson?.data?.categories)) {
+            loadedCats = pubJson.data.categories;
+          } else if (Array.isArray(pubJson?.data)) {
+            loadedCats = pubJson.data;
+          }
+          fetchError = null; // Successfully recovered!
+        }
+      } catch (pubErr: any) {
+        console.warn('[CategoriesPage] Public fallback query failed:', pubErr?.message);
       }
     }
+
+    if (loadedCats.length > 0) {
+      const sorted = [...loadedCats].sort((a: CategoryData, b: CategoryData) => (b.displayOrder ?? 0) - (a.displayOrder ?? 0));
+      setCategories(sorted);
+      setError(null);
+    } else if (fetchError) {
+      setError(fetchError);
+    }
+
+    setLoading(false);
+  };
+
+  useEffect(() => {
     loadCategories();
   }, []);
 
@@ -766,7 +809,17 @@ export default function CategoriesPage() {
           <span className="mt-2 text-sm">Querying categories...</span>
         </div>
       ) : error ? (
-        <div className="text-center py-20 text-red-500">{error}</div>
+        <div className="flex flex-col items-center justify-center py-16 px-4 border rounded-2xl border-red-200 bg-red-50/50 dark:border-red-900/40 dark:bg-red-950/20 text-center">
+          <AlertCircle className="h-10 w-10 text-red-500 mb-3" />
+          <h3 className="text-base font-bold text-red-700 dark:text-red-400">કેટેગરી લોડ કરવામાં સમસ્યા આવી (Failed to load categories)</h3>
+          <p className="text-xs text-red-600/80 dark:text-red-400/80 mt-1 max-w-md">{error}</p>
+          <button
+            onClick={() => loadCategories()}
+            className="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2 cursor-pointer"
+          >
+            🔄 ફરી પ્રયાસ કરો (Retry)
+          </button>
+        </div>
       ) : filteredCategories.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 border rounded-2xl border-dashed bg-white dark:border-zinc-800 dark:bg-zinc-900 text-zinc-400">
           <FolderOpen className="h-12 w-12 text-zinc-300 mb-2" />

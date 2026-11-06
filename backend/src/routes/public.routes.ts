@@ -196,6 +196,7 @@ router.get('/advertise', cacheResponse(60), AdvertiseController.getAdvertiseSett
 router.get('/legal/:slug', cacheResponse(60), LegalController.getLegalPage);
 
 // Public E-Paper routes
+router.get('/epaper/settings', EPaperController.getSettings);
 router.get('/epaper', EPaperController.getPublicEditions);
 router.get('/epaper/cities', EPaperController.getCities);
 

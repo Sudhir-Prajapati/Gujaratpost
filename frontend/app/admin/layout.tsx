@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 
 import { useState, useEffect } from 'react';
@@ -187,17 +187,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     authFetch(getBackendApiUrl('/api/auth/me'))
       .then((res) => {
         if (res.status === 401) {
-          router.push('/cms-admin');
+          setIsAuthorized(false);
+          setAuthChecked(true);
           return null;
         }
         return res.json();
       })
       .then((json) => {
-        if (json?.success && json.data?.user) {
+        if (!json) return;
+        if (json.success && json.data?.user) {
           const role = json.data.user.role;
           setUserRole(role);
           setUserEmail(json.data.user.email);
           setUserName(json.data.user.authorName || json.data.user.email?.split('@')[0]);
+          setIsAuthorized(true);
           setAuthChecked(true);
 
           // If user landed on /admin root but their role does not have Dashboard access,
@@ -206,12 +209,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           if (config && pathname === '/admin' && role !== 'SUPER_ADMIN' && role !== 'EDITOR') {
             router.replace(config.defaultPath);
           }
-        } else if (json && !json.success) {
-          router.push('/cms-admin');
+        } else {
+          setIsAuthorized(false);
+          setAuthChecked(true);
         }
       })
       .catch(() => {
-        router.push('/cms-admin');
+        setIsAuthorized(false);
+        setAuthChecked(true);
       });
   }, [router, pathname]);
 

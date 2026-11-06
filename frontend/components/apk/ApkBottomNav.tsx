@@ -8,7 +8,7 @@ import ApkDrawer from './ApkDrawer';
 
 export default function ApkBottomNav() {
   const pathname = usePathname();
-  const { language } = useApp();
+  const { language, epaperEnabled } = useApp();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isHomeActive = pathname === '/';
@@ -131,38 +131,40 @@ export default function ApkBottomNav() {
           </Link>
 
           {/* 4. EPAPER */}
-          <Link
-            href="/epaper"
-            className="flex flex-col items-center justify-center h-full active:scale-90 transition-transform cursor-pointer"
-          >
-            {isEpaperActive ? (
-              <div className="w-8 h-8 rounded-full bg-[#B3121B] text-white flex items-center justify-center shadow-xs">
-                <svg className="w-4.5 h-4.5 fill-white" viewBox="0 0 24 24">
-                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z" />
-                </svg>
-              </div>
-            ) : (
-              <div className="w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400">
-                <svg
-                  className="w-5 h-5 fill-none stroke-current stroke-[1.8]"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
-                  />
-                </svg>
-              </div>
-            )}
-            <span
-              className={`text-[10px] tracking-tight mt-0.5 ${
-                isEpaperActive ? 'font-black text-[#B3121B]' : 'font-bold text-gray-500 dark:text-gray-400'
-              }`}
+          {epaperEnabled && (
+            <Link
+              href="/epaper"
+              className="flex flex-col items-center justify-center h-full active:scale-90 transition-transform cursor-pointer"
             >
-              {getLabel('ઇ-પેપર', 'ई-पेपर', 'E-Paper')}
-            </span>
-          </Link>
+              {isEpaperActive ? (
+                <div className="w-8 h-8 rounded-full bg-[#B3121B] text-white flex items-center justify-center shadow-xs">
+                  <svg className="w-4.5 h-4.5 fill-white" viewBox="0 0 24 24">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14H7v-2h5v2zm5-4H7v-2h10v2zm0-4H7V7h10v2z" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="w-8 h-8 flex items-center justify-center text-gray-500 dark:text-gray-400">
+                  <svg
+                    className="w-5 h-5 fill-none stroke-current stroke-[1.8]"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                    />
+                  </svg>
+                </div>
+              )}
+              <span
+                className={`text-[10px] tracking-tight mt-0.5 ${
+                  isEpaperActive ? 'font-black text-[#B3121B]' : 'font-bold text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                {getLabel('ઇ-પેપર', 'ई-पेपर', 'E-Paper')}
+              </span>
+            </Link>
+          )}
 
           {/* 5. MENU */}
           <button

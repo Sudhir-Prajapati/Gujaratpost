@@ -41,7 +41,7 @@ export default function LatestUpdatesSection({
   initialMostRead?: Article[];
   initialPopularNews?: Article[];
 }) {
-  const { language } = useApp();
+  const { language, epaperEnabled } = useApp();
   const [latestNews, setLatestNews] = useState<Article[]>(() =>
     initialArticles && initialArticles.length > 0 ? sortArticlesByLatest(initialArticles).slice(0, 10) : []
   );
@@ -554,27 +554,29 @@ export default function LatestUpdatesSection({
       </div>
 
       {/* ── 2. E-PAPER WIDGET (ઈ-પેપર) ── */}
-      <Link
-        href="/epaper"
-        className="group flex items-center justify-between p-3.5 rounded-xl border border-[#e9c3c7] dark:border-zinc-700 bg-gradient-to-r from-white to-[#fff8f8] dark:from-zinc-900 dark:to-zinc-900/90 shadow-[0_2px_7px_rgba(179,18,27,0.08)] hover:border-[#B3121B]/75 hover:shadow-[0_5px_14px_rgba(179,18,27,0.14)] transition-all duration-200 cursor-pointer"
-      >
-        <div className="flex items-center gap-3">
-          <span className="bg-[#B3121B] text-white text-[11px] font-extrabold px-2.5 py-1 rounded-md shadow-xs">
-            ઈ-પેપર
-          </span>
-          <div>
-            <h4 className="text-[13px] font-extrabold text-zinc-900 dark:text-white group-hover:text-[#B3121B] transition-colors">
-              આજનું ઈ-પેપર વાંચો
-            </h4>
-            <p className="text-[11px] font-medium text-zinc-400 mt-0.5">
-              {new Date().toLocaleDateString('gu-IN', { day: 'numeric', month: 'long', year: 'numeric' })} - PDF
-            </p>
+      {epaperEnabled && (
+        <Link
+          href="/epaper"
+          className="group flex items-center justify-between p-3.5 rounded-xl border border-[#e9c3c7] dark:border-zinc-700 bg-gradient-to-r from-white to-[#fff8f8] dark:from-zinc-900 dark:to-zinc-900/90 shadow-[0_2px_7px_rgba(179,18,27,0.08)] hover:border-[#B3121B]/75 hover:shadow-[0_5px_14px_rgba(179,18,27,0.14)] transition-all duration-200 cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <span className="bg-[#B3121B] text-white text-[11px] font-extrabold px-2.5 py-1 rounded-md shadow-xs">
+              ઈ-પેપર
+            </span>
+            <div>
+              <h4 className="text-[13px] font-extrabold text-zinc-900 dark:text-white group-hover:text-[#B3121B] transition-colors">
+                આજનું ઈ-પેપર વાંચો
+              </h4>
+              <p className="text-[11px] font-medium text-zinc-400 mt-0.5">
+                {new Date().toLocaleDateString('gu-IN', { day: 'numeric', month: 'long', year: 'numeric' })} - PDF
+              </p>
+            </div>
           </div>
-        </div>
-        <span className="text-[#B3121B] font-bold text-base transition-transform group-hover:translate-x-1">
-          →
-        </span>
-      </Link>
+          <span className="text-[#B3121B] font-bold text-base transition-transform group-hover:translate-x-1">
+            →
+          </span>
+        </Link>
+      )}
 
       {/* ── 3. SIDEBAR ADVERTISEMENT WIDGET (જાહેરાત) ── */}
       <div className="w-full">

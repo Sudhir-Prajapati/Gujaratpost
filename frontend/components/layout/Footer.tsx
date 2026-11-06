@@ -211,8 +211,10 @@ function NavColumn({
 
 /* ─── Footer Component ─────────────────────────────────────────────────── */
 export default function Footer({ isInline = false }: { isInline?: boolean }) {
-    const { language, openSupportModal, supportEnabled } = useApp();
+    const { language, openSupportModal, supportEnabled, epaperEnabled } = useApp();
     const pathname = usePathname();
+
+    const filteredTopics2Links = epaperEnabled ? topics2Links : topics2Links.filter(l => l.href !== '/epaper');
 
 
     if (pathname === '/login' || pathname === '/cms-admin' || pathname.startsWith('/admin')) {
@@ -324,7 +326,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                         {/* Exact 4 NavColumns matching Website (Image 3) in a clean 2x2 grid */}
                         <div className="grid grid-cols-2 gap-x-6 gap-y-7 px-2">
                             <NavColumn title="Topics" links={topics1Links} delay={0} />
-                            <NavColumn title="Topics" links={topics2Links} delay={0.7} />
+                            <NavColumn title="Topics" links={filteredTopics2Links} delay={0.7} />
                             <NavColumn title="Topics" links={topics3Links} delay={1.4} />
                             <NavColumn title="Company" links={companyLinks} onSupportClick={openSupportModal} delay={2.1} englishOnly />
                         </div>
@@ -449,7 +451,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
                             <NavColumn title="Topics" links={topics1Links} delay={0} />
 
                             {/* Topics Col 2 */}
-                            <NavColumn title="Topics" links={topics2Links} delay={0.7} />
+                            <NavColumn title="Topics" links={filteredTopics2Links} delay={0.7} />
 
                             {/* Topics Col 3 */}
                             <NavColumn title="Topics" links={topics3Links} delay={1.4} />

@@ -43,6 +43,8 @@ import {
   deleteEPaperEdition,
   createEPaperCity,
   deleteEPaperCity,
+  fetchEPaperSettings,
+  updateEPaperSettings,
   getTodayDateStr,
   getDateOffsetStr,
   clearLegacyLocalStorage,
@@ -114,6 +116,51 @@ export default function AdminEPaperPage() {
   const [selectedDateFilter, setSelectedDateFilter] = useState(getTodayDateStr());
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('ALL');
   const [toast, setToast] = useState<Toast | null>(null);
+
+  // User Side Visibility Toggle (Show or Not Show button on public website)
+  const [showUserSideButton, setShowUserSideButton] = useState(true);
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  useEffect(() => {
+    fetchEPaperSettings().then((s) => {
+      setShowUserSideButton(s.showUserSideButton);
+    });
+  }, []);
+
+  const handleToggleUserSideButton = async () => {
+    const nextVal = !showUserSideButton;
+    setShowUserSideButton(nextVal);
+    setSavingSettings(true);
+    try {
+      const ok = await updateEPaperSettings({ showUserSideButton: nextVal });
+      if (ok) {
+        setToast({
+          type: 'success',
+          message: nextVal
+            ? 'યુઝર સાઇડ ઈ-પેપર બટન સક્રિય (SHOW) થયું છે.'
+            : 'યુઝર સાઇડ ઈ-પેપર બટન બંધ (NOT SHOW) થયું છે.',
+        });
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('gp-epaper-updated'));
+          if ('BroadcastChannel' in window) {
+            try {
+              const ch = new BroadcastChannel('gp-admin-updates');
+              ch.postMessage({ type: 'EPAPER_SETTINGS_UPDATED', timestamp: Date.now() });
+              ch.close();
+            } catch {}
+          }
+        }
+      } else {
+        setShowUserSideButton(!nextVal); // rollback
+        setToast({ type: 'error', message: 'Failed to update E-Paper visibility' });
+      }
+    } catch {
+      setShowUserSideButton(!nextVal);
+      setToast({ type: 'error', message: 'Network error updating settings' });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   // Add/Edit Edition Modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -782,7 +829,43 @@ export default function AdminEPaperPage() {
         </div>
 
         {/* Top Header Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0 flex-wrap">
+          {/* User Side Show / Not Show Toggle Button */}
+          <button
+            type="button"
+            onClick={handleToggleUserSideButton}
+            disabled={savingSettings}
+            className={`flex items-center justify-between sm:justify-center gap-2.5 px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all shadow-sm cursor-pointer whitespace-nowrap border ${
+              showUserSideButton
+                ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-500 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 ring-2 ring-emerald-500/20'
+                : 'bg-zinc-100 dark:bg-zinc-800/80 border-zinc-400 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+            }`}
+            title="યુઝર સાઇડ (મુખ્ય વેબસાઇટ) પર ઈ-પેપર બટન બતાવવું કે નહીં તે નક્કી કરો"
+          >
+            <div className="flex items-center gap-2">
+              <span className={`inline-block w-2.5 h-2.5 rounded-full ${showUserSideButton ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-400'}`} />
+              <span className="font-bold">વેબસાઇટ ઈ-પેપર:</span>
+              <span className={`font-black uppercase px-2 py-0.5 rounded-md text-[11px] sm:text-xs ${
+                showUserSideButton
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-zinc-300 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300'
+              }`}>
+                {showUserSideButton ? 'SHOW (ચાલુ)' : 'NOT SHOW (બંધ)'}
+              </span>
+            </div>
+
+            {/* Toggle switch visual */}
+            <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${
+              showUserSideButton ? 'bg-emerald-600' : 'bg-zinc-400 dark:bg-zinc-600'
+            }`}>
+              <span
+                className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                  showUserSideButton ? 'translate-x-4.5' : 'translate-x-1'
+                }`}
+              />
+            </div>
+          </button>
+
           <button
             onClick={() => setAddCityModalOpen(true)}
             className="flex items-center justify-center gap-2 bg-zinc-800 text-white px-4 py-2.5 rounded-xl font-black text-xs sm:text-sm hover:bg-zinc-900 transition shadow-sm cursor-pointer whitespace-nowrap w-full sm:w-auto"

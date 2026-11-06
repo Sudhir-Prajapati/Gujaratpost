@@ -260,3 +260,37 @@ export async function deleteEPaperCity(cityIdOrName: string): Promise<boolean> {
   }
   return false;
 }
+
+export interface EPaperSettings {
+  showUserSideButton: boolean;
+}
+
+export async function fetchEPaperSettings(): Promise<EPaperSettings> {
+  try {
+    const res = await fetch(getBackendApiUrl(`/api/public/epaper/settings?_t=${Date.now()}`), { cache: 'no-store' });
+    const result = await safeParseJson(res);
+    if (result.ok && result.data?.data) {
+      return {
+        showUserSideButton: result.data.data.showUserSideButton !== false,
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to fetch epaper settings:', err);
+  }
+  return { showUserSideButton: true };
+}
+
+export async function updateEPaperSettings(settings: Partial<EPaperSettings>): Promise<boolean> {
+  try {
+    const res = await authFetch(getBackendApiUrl('/api/admin/epaper/settings'), {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    });
+    const result = await safeParseJson(res);
+    return (result.ok && result.data?.success) || false;
+  } catch (err) {
+    console.warn('Failed to update epaper settings:', err);
+  }
+  return false;
+}

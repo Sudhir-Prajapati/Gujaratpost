@@ -160,7 +160,7 @@ export default function Header() {
   }
 
   const router = useRouter();
-  const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal, supportEnabled } = useApp();
+  const { theme, toggleTheme, language, setLanguage, fsLevel, incFs, decFs, openSupportModal, supportEnabled, epaperEnabled } = useApp();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -372,7 +372,7 @@ export default function Header() {
 
     // Unified Header Categories: all active header categories (excluding GUJARAT cities for DistrictBar and hidden categories)
     const headerCats = dbCategories
-      .filter((c) => !isHiddenFromNavbar(c) && c.headerType !== 'GUJARAT')
+      .filter((c) => !isHiddenFromNavbar(c) && c.headerType !== 'GUJARAT' && (epaperEnabled || (c.slug || '').toLowerCase() !== 'epaper'))
       .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
 
     const homeLink = { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' };
@@ -918,7 +918,13 @@ export default function Header() {
               </div>
             </Link>
             {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
-            <div className={`grid ${supportEnabled ? 'grid-cols-4' : 'grid-cols-3'} gap-1.5 sm:gap-2.5`}>
+            <div className={`grid ${
+              [true, true, epaperEnabled, supportEnabled].filter(Boolean).length === 4
+                ? 'grid-cols-4'
+                : [true, true, epaperEnabled, supportEnabled].filter(Boolean).length === 3
+                ? 'grid-cols-3'
+                : 'grid-cols-2'
+            } gap-1.5 sm:gap-2.5`}>
               <Link
                 href="/news-brief"
                 onClick={() => setMenuOpen(false)}
@@ -950,16 +956,18 @@ export default function Header() {
                 </svg>
                 <span className="font-black tracking-wide leading-none">AQI</span>
               </Link>
-              <a
-                href="/epaper"
-                onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
-              >
-                <BookOpen className="h-4 w-4 shrink-0 text-white" strokeWidth={2.4} />
-                <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
-                  {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
-                </span>
-              </a>
+              {epaperEnabled && (
+                <a
+                  href="/epaper"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
+                >
+                  <BookOpen className="h-4 w-4 shrink-0 text-white" strokeWidth={2.4} />
+                  <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
+                    {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
+                  </span>
+                </a>
+              )}
               {supportEnabled && <button
                 type="button"
                 onClick={() => {
@@ -1159,20 +1167,22 @@ export default function Header() {
               </button>}
 
               {/* E-Paper CTA */}
-              <a
-                href="/epaper"
-                className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3 text-[13px] font-black text-white shadow-md shadow-red-900/30 ring-1 ring-red-600/40 transition-all duration-200 hover:bg-red-700 hover:shadow-lg hover:shadow-red-900/40 hover:scale-[1.03] active:scale-95"
-              >
-                {/* shimmer sweep on hover */}
-                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
-                <BookOpen className="h-4 w-4 shrink-0" />
-                <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}</span>
-                {/* live pulse dot */}
-                <span className="relative flex h-1.5 w-1.5 shrink-0">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
-                </span>
-              </a>
+              {epaperEnabled && (
+                <a
+                  href="/epaper"
+                  className="group relative inline-flex h-9 items-center gap-1.5 overflow-hidden rounded-lg bg-red-600 px-3 text-[13px] font-black text-white shadow-md shadow-red-900/30 ring-1 ring-red-600/40 transition-all duration-200 hover:bg-red-700 hover:shadow-lg hover:shadow-red-900/40 hover:scale-[1.03] active:scale-95"
+                >
+                  {/* shimmer sweep on hover */}
+                  <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-500 group-hover:translate-x-full" aria-hidden="true" />
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  <span className="tracking-wide font-black text-[13px]">{language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}</span>
+                  {/* live pulse dot */}
+                  <span className="relative flex h-1.5 w-1.5 shrink-0">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-60" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
+                  </span>
+                </a>
+              )}
             </div>
 
             {otherMenuOpen && otherLinks.length > 0 && (

@@ -8,41 +8,57 @@ let categoryColumnsEnsured = false;
 export async function ensureCategoryTableColumns(): Promise<void> {
   if (categoryColumnsEnsured) return;
   try {
-    const columns: any = await prisma.$queryRawUnsafe(`
-      SELECT COLUMN_NAME 
-      FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_NAME = 'categories' 
-        AND TABLE_SCHEMA = DATABASE()
-    `);
-    const colNames = new Set((columns || []).map((c: any) => (c.COLUMN_NAME || c.column_name || '').toLowerCase()));
+    let colNames = new Set<string>();
+    try {
+      // 1. Direct cross-platform inspection using SHOW COLUMNS (schema-independent)
+      const rawCols: any = await prisma.$queryRawUnsafe(`SHOW COLUMNS FROM categories`);
+      colNames = new Set((rawCols || []).map((c: any) => (c.Field || c.field || c.COLUMN_NAME || c.column_name || '').toLowerCase()));
+    } catch {
+      // 2. Fallback to INFORMATION_SCHEMA
+      try {
+        const rawCols: any = await prisma.$queryRawUnsafe(`
+          SELECT COLUMN_NAME 
+          FROM INFORMATION_SCHEMA.COLUMNS 
+          WHERE TABLE_NAME = 'categories' 
+            AND TABLE_SCHEMA = DATABASE()
+        `);
+        colNames = new Set((rawCols || []).map((c: any) => (c.COLUMN_NAME || c.column_name || '').toLowerCase()));
+      } catch {}
+    }
 
+    if (!colNames.has('showinhome')) {
+      await prisma.$executeRawUnsafe(
+        'ALTER TABLE categories ADD COLUMN showInHome TINYINT(1) NOT NULL DEFAULT 1'
+      ).catch(() => {});
+      console.log('✅ Added missing showInHome column to categories');
+    }
     if (!colNames.has('showinarticle')) {
       await prisma.$executeRawUnsafe(
-        'ALTER TABLE categories ADD COLUMN showInArticle TINYINT(1) NOT NULL DEFAULT 1 AFTER showInHome'
+        'ALTER TABLE categories ADD COLUMN showInArticle TINYINT(1) NOT NULL DEFAULT 1'
       ).catch(() => {});
       console.log('✅ Added missing showInArticle column to categories');
     }
     if (!colNames.has('showinheader')) {
       await prisma.$executeRawUnsafe(
-        'ALTER TABLE categories ADD COLUMN showInHeader TINYINT(1) NOT NULL DEFAULT 1 AFTER showInHome'
+        'ALTER TABLE categories ADD COLUMN showInHeader TINYINT(1) NOT NULL DEFAULT 1'
       ).catch(() => {});
       console.log('✅ Added missing showInHeader column to categories');
     }
     if (!colNames.has('headertype')) {
       await prisma.$executeRawUnsafe(
-        "ALTER TABLE categories ADD COLUMN headerType VARCHAR(50) NOT NULL DEFAULT 'GLOBAL' AFTER showInHeader"
+        "ALTER TABLE categories ADD COLUMN headerType VARCHAR(50) NOT NULL DEFAULT 'GLOBAL'"
       ).catch(() => {});
       console.log('✅ Added missing headerType column to categories');
     }
     if (!colNames.has('headerorder')) {
       await prisma.$executeRawUnsafe(
-        'ALTER TABLE categories ADD COLUMN headerOrder INT NOT NULL DEFAULT 0 AFTER displayOrder'
+        'ALTER TABLE categories ADD COLUMN headerOrder INT NOT NULL DEFAULT 0'
       ).catch(() => {});
       console.log('✅ Added missing headerOrder column to categories');
     }
     if (!colNames.has('homeorder')) {
       await prisma.$executeRawUnsafe(
-        'ALTER TABLE categories ADD COLUMN homeOrder INT NOT NULL DEFAULT 0 AFTER headerOrder'
+        'ALTER TABLE categories ADD COLUMN homeOrder INT NOT NULL DEFAULT 0'
       ).catch(() => {});
       console.log('✅ Added missing homeOrder column to categories');
     }
@@ -58,27 +74,83 @@ export class CategoryController {
    */
   static async getAllCategories(req: Request, res: Response, next: NextFunction) {
     try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      await ensureCategoryTableColumns().catch(() => {});
+
       const activeOnly = req.query.activeOnly === 'true' || req.query.isActive === 'true';
       const where: any = {};
       if (activeOnly) {
         where.isActive = true;
       }
 
-      const categories = await prisma.category.findMany({
-        where,
-        orderBy: {
-          displayOrder: 'desc',
-        },
-        include: {
-          _count: {
-            select: {
-              posts: true,
-              videos: true,
+      let categories: any[] = [];
+      try {
+        categories = await prisma.category.findMany({
+          where,
+          orderBy: {
+            displayOrder: 'desc',
+          },
+          include: {
+            _count: {
+              select: {
+                posts: true,
+                videos: true,
+              },
             },
           },
-        },
-      });
-      return sendSuccess(res, categories, 'Categories list retrieved successfully.');
+        });
+      } catch (findErr: any) {
+        console.warn('[CategoryController.getAllCategories] Primary findMany failed, trying fallback without videos count:', findErr?.message);
+        try {
+          categories = await prisma.category.findMany({
+            where,
+            orderBy: {
+              displayOrder: 'desc',
+            },
+            include: {
+              _count: {
+                select: {
+                  posts: true,
+                },
+              },
+            },
+          });
+        } catch (findErr2: any) {
+          console.warn('[CategoryController.getAllCategories] Second findMany failed, trying without _count:', findErr2?.message);
+          try {
+            categories = await prisma.category.findMany({
+              where,
+              orderBy: {
+                displayOrder: 'desc',
+              },
+            });
+          } catch (findErr3: any) {
+            console.warn('[CategoryController.getAllCategories] Third findMany failed, trying raw SQL:', findErr3?.message);
+            const whereClause = activeOnly ? 'WHERE isActive = 1' : '';
+            categories = (await prisma.$queryRawUnsafe(`
+              SELECT * FROM categories ${whereClause} ORDER BY displayOrder DESC
+            `).catch(() => [])) as any[];
+          }
+        }
+      }
+
+      // Normalize fields so frontend never gets undefined or broken structure
+      const normalized = (categories || []).map((c: any) => ({
+        ...c,
+        showInArticle: c.showInArticle !== undefined ? Boolean(c.showInArticle) : true,
+        showInHeader: c.showInHeader !== undefined ? Boolean(c.showInHeader) : true,
+        showInHome: c.showInHome !== undefined ? Boolean(c.showInHome) : true,
+        headerType: c.headerType || 'GLOBAL',
+        headerOrder: typeof c.headerOrder === 'number' ? c.headerOrder : 0,
+        homeOrder: typeof c.homeOrder === 'number' ? c.homeOrder : 0,
+        displayOrder: typeof c.displayOrder === 'number' ? c.displayOrder : 0,
+        _count: c._count || { posts: 0, videos: 0 },
+      }));
+
+      return sendSuccess(res, normalized, 'Categories list retrieved successfully.');
     } catch (error: any) {
       console.error('[CategoryController.getAllCategories] Error:', error?.message || error);
       next(error);
@@ -90,6 +162,7 @@ export class CategoryController {
    */
   static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
+      await ensureCategoryTableColumns().catch(() => {});
       const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInArticle, showInHeader, headerType } = req.body;
 
       if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -165,6 +238,7 @@ export class CategoryController {
    */
   static async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
+      await ensureCategoryTableColumns().catch(() => {});
       const { id } = req.params;
       const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInArticle, showInHeader, headerType } = req.body;
 
@@ -250,6 +324,7 @@ export class CategoryController {
    */
   static async reorderCategories(req: Request, res: Response, next: NextFunction) {
     try {
+      await ensureCategoryTableColumns().catch(() => {});
       const { items, target } = req.body;
 
       if (!items || !Array.isArray(items) || items.length === 0) {

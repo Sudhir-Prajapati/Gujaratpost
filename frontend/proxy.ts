@@ -77,14 +77,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // If token is missing, redirect to login (or return 401 for API routes)
+  // If token is missing, show 404 Not Found (or return 401 for API routes)
   if (!token) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json({ error: "Authentication token missing" }, { status: 401 });
     }
-    const loginUrl = new URL("/cms-admin", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    return NextResponse.redirect(loginUrl);
+    const notFoundUrl = new URL("/not-found", request.url);
+    return NextResponse.rewrite(notFoundUrl, { status: 404 });
   }
 
   try {
@@ -125,9 +124,8 @@ export async function proxy(request: NextRequest) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Access denied. You do not have permission to access the admin portal." }, { status: 401 });
       }
-      const loginUrl = new URL("/login", request.url);
-      loginUrl.searchParams.set("error", "unauthorized_role");
-      const response = NextResponse.redirect(loginUrl);
+      const notFoundUrl = new URL("/not-found", request.url);
+      const response = NextResponse.rewrite(notFoundUrl, { status: 404 });
       response.cookies.delete("access_token");
       return response;
     }
@@ -200,9 +198,8 @@ export async function proxy(request: NextRequest) {
       return NextResponse.json({ error: "Invalid or expired token" }, { status: 401 });
     }
 
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("from", pathname);
-    const response = NextResponse.redirect(loginUrl);
+    const notFoundUrl = new URL("/not-found", request.url);
+    const response = NextResponse.rewrite(notFoundUrl, { status: 404 });
     response.cookies.delete("access_token");
     return response;
   }

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
-
+import { clearPublicRoutesCache } from '../utils/publicCache.js';
 import { randomUUID } from 'crypto';
 
 function sanitizePdfUrl(url?: string | null): string {
@@ -115,6 +115,29 @@ async function ensureEPaperTablesExist(): Promise<void> {
   })();
 
   return tableEnsuringPromise;
+}
+
+let settingsTableEnsured = false;
+async function ensureEPaperSettingsTable(): Promise<void> {
+  if (settingsTableEnsured) return;
+  try {
+    await prisma.$executeRawUnsafe(`
+      CREATE TABLE IF NOT EXISTS \`epaper_settings\` (
+        \`id\` VARCHAR(50) NOT NULL DEFAULT 'default',
+        \`showUserSideButton\` TINYINT(1) NOT NULL DEFAULT 1,
+        \`updatedAt\` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
+        PRIMARY KEY (\`id\`)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    `).catch(() => null);
+
+    await prisma.$executeRawUnsafe(`
+      INSERT IGNORE INTO \`epaper_settings\` (\`id\`, \`showUserSideButton\`) VALUES ('default', 1);
+    `).catch(() => null);
+
+    settingsTableEnsured = true;
+  } catch (err) {
+    console.warn('ePaper settings table ensure warning:', err);
+  }
 }
 
 async function getEPaperDelegate() {
@@ -465,6 +488,55 @@ export class EPaperController {
     } catch (error) {
       console.warn('Delete city notice:', error);
       return sendSuccess(res, null, 'City removed');
+    }
+  }
+
+  // Public & Admin: Get E-Paper settings (e.g. showUserSideButton)
+  static async getSettings(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      await ensureEPaperSettingsTable();
+      let row: any = null;
+      try {
+        const rows: any[] = await prisma.$queryRawUnsafe(`SELECT * FROM \`epaper_settings\` WHERE \`id\` = 'default' LIMIT 1`);
+        if (rows && rows.length > 0) {
+          row = rows[0];
+        }
+      } catch (_) {}
+
+      const showUserSideButton = row ? Boolean(row.showUserSideButton) : true;
+      return sendSuccess(res, { showUserSideButton }, 'E-Paper settings fetched');
+    } catch (error) {
+      console.warn('ePaper getSettings error:', error);
+      return sendSuccess(res, { showUserSideButton: true }, 'E-Paper settings fallback');
+    }
+  }
+
+  // Admin: Update E-Paper settings
+  static async updateSettings(req: Request, res: Response, next: NextFunction) {
+    try {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      await ensureEPaperSettingsTable();
+
+      const { showUserSideButton } = req.body;
+      const isVisible = showUserSideButton !== undefined ? (showUserSideButton ? 1 : 0) : 1;
+
+      await prisma.$executeRawUnsafe(
+        `INSERT INTO \`epaper_settings\` (\`id\`, \`showUserSideButton\`, \`updatedAt\`) VALUES ('default', ?, NOW())
+         ON DUPLICATE KEY UPDATE \`showUserSideButton\` = ?, \`updatedAt\` = NOW()`,
+        isVisible,
+        isVisible
+      );
+
+      clearPublicRoutesCache();
+
+      return sendSuccess(res, { showUserSideButton: Boolean(isVisible) }, 'E-Paper settings updated successfully');
+    } catch (error) {
+      console.error('ePaper updateSettings error:', error);
+      next(error);
     }
   }
 }

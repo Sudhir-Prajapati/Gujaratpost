@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import SupportModal from '@/components/ui/SupportModal';
 import { useIsApk } from '@/lib/useIsApk';
-import { getPublicSupportDetails } from '@/lib/api';
+import { getPublicSupportDetails, getPublicEpaperSettings } from '@/lib/api';
 
 type Theme = 'light' | 'dark';
 type Language = 'gu' | 'en' | 'hi';
@@ -20,6 +20,7 @@ interface AppContextType {
   decFs: () => void;
   supportModalOpen: boolean;
   supportEnabled: boolean;
+  epaperEnabled: boolean;
   openSupportModal: () => void;
   closeSupportModal: () => void;
 }
@@ -36,6 +37,7 @@ const AppContext = createContext<AppContextType>({
   decFs: () => {},
   supportModalOpen: false,
   supportEnabled: true,
+  epaperEnabled: true,
   openSupportModal: () => {},
   closeSupportModal: () => {},
 });
@@ -70,6 +72,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [fsLevel, setFsLevel] = useState<number>(1);
   const [supportModalOpen, setSupportModalOpen] = useState(false);
   const [supportEnabled, setSupportEnabled] = useState(true);
+  const [epaperEnabled, setEpaperEnabled] = useState(true);
   const [preferencesReady, setPreferencesReady] = useState(false);
 
   const openSupportModal = () => {
@@ -87,13 +90,53 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (!enabled) setSupportModalOpen(false);
     };
 
+    const refreshEpaperVisibility = async () => {
+      const settings = await getPublicEpaperSettings();
+      if (!active || !settings) return;
+      setEpaperEnabled(settings.showUserSideButton !== false);
+    };
+
     refreshSupportVisibility();
-    const interval = window.setInterval(refreshSupportVisibility, 30000);
-    window.addEventListener('focus', refreshSupportVisibility);
+    refreshEpaperVisibility();
+
+    const interval = window.setInterval(() => {
+      refreshSupportVisibility();
+      refreshEpaperVisibility();
+    }, 30000);
+
+    const handleWindowFocus = () => {
+      refreshSupportVisibility();
+      refreshEpaperVisibility();
+    };
+
+    const handleEpaperUpdated = () => {
+      refreshEpaperVisibility();
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    window.addEventListener('gp-epaper-updated', handleEpaperUpdated);
+
+    // Cross-tab broadcast listener
+    let broadcastChannel: BroadcastChannel | null = null;
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      try {
+        broadcastChannel = new BroadcastChannel('gp-admin-updates');
+        broadcastChannel.onmessage = (event) => {
+          if (event?.data?.type === 'EPAPER_SETTINGS_UPDATED') {
+            refreshEpaperVisibility();
+          }
+        };
+      } catch {}
+    }
+
     return () => {
       active = false;
       window.clearInterval(interval);
-      window.removeEventListener('focus', refreshSupportVisibility);
+      window.removeEventListener('focus', handleWindowFocus);
+      window.removeEventListener('gp-epaper-updated', handleEpaperUpdated);
+      if (broadcastChannel) {
+        broadcastChannel.close();
+      }
     };
   }, []);
 
@@ -241,10 +284,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       decFs,
       supportModalOpen,
       supportEnabled,
+      epaperEnabled,
       openSupportModal,
       closeSupportModal,
     }),
-    [theme, apkTheme, language, fsLevel, supportModalOpen, supportEnabled, isApk],
+    [theme, apkTheme, language, fsLevel, supportModalOpen, supportEnabled, epaperEnabled, isApk],
   );
 
   return (

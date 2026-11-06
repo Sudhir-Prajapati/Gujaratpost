@@ -96,6 +96,17 @@ function GalleryScrollStrip({
   const scrollLeftStartRef = useRef<number>(0);
   const hasDraggedRef = useRef<boolean>(false);
 
+  // Left arrow visibility state
+  const [canScrollLeft, setCanScrollLeft] = useState<boolean>(false);
+  const canScrollLeftRef = useRef<boolean>(false);
+
+  const updateCanScrollLeft = useCallback((hasLeft: boolean) => {
+    if (canScrollLeftRef.current !== hasLeft) {
+      canScrollLeftRef.current = hasLeft;
+      setCanScrollLeft(hasLeft);
+    }
+  }, []);
+
   // Duplicate list for infinite wrap (2 sets if >=15 items, 3 sets if fewer)
   const copies = galleryList.length < 15 ? 3 : 2;
   const repeatedGallery = Array.from({ length: copies }, () => galleryList).flat();
@@ -126,8 +137,35 @@ function GalleryScrollStrip({
     const el = scrollRef.current;
     if (!el) return;
     pauseAutoScroll();
-    const distance = dir === 'right' ? 380 : -380;
-    el.scrollBy({ left: distance, behavior: 'smooth' });
+
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+    const cardWidth = isMobile ? window.innerWidth * 0.82 + 16 : 370;
+    const singleSetWidth = el.scrollWidth / copies;
+
+    if (dir === 'left') {
+      const target = Math.max(0, el.scrollLeft - cardWidth);
+      el.scrollTo({ left: target, behavior: 'smooth' });
+      scrollPosRef.current = target;
+      updateCanScrollLeft(target > 20);
+    } else {
+      const target = el.scrollLeft + cardWidth;
+      if (singleSetWidth > 0 && target >= singleSetWidth * (copies - 1)) {
+        // Silently shift back by one set width so the user can continue scrolling right smoothly
+        el.scrollLeft -= singleSetWidth;
+        scrollPosRef.current = el.scrollLeft;
+        requestAnimationFrame(() => {
+          if (scrollRef.current) {
+            scrollRef.current.scrollTo({ left: scrollRef.current.scrollLeft + cardWidth, behavior: 'smooth' });
+            scrollPosRef.current = scrollRef.current.scrollLeft + cardWidth;
+          }
+        });
+      } else {
+        el.scrollTo({ left: target, behavior: 'smooth' });
+        scrollPosRef.current = target;
+      }
+      updateCanScrollLeft(true);
+    }
+
     resumeAutoScrollAfterDelay(4000);
   };
 
@@ -139,6 +177,7 @@ function GalleryScrollStrip({
     el.style.scrollBehavior = 'auto';
     lastTimeRef.current = performance.now();
     scrollPosRef.current = el.scrollLeft;
+    updateCanScrollLeft(el.scrollLeft > 20);
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     const SPEED = isMobile ? 46 : 32; // Minor speed increase for mobile auto-scroll; desktop strictly 32 px/sec
 
@@ -178,13 +217,11 @@ function GalleryScrollStrip({
         if (scrollPosRef.current >= singleSetWidth * (copies - 1)) {
           scrollPosRef.current -= singleSetWidth;
           el.scrollLeft = scrollPosRef.current;
-        } else if (scrollPosRef.current <= 5) {
-          scrollPosRef.current += singleSetWidth;
-          el.scrollLeft = scrollPosRef.current;
         }
       }
 
       checkActivePhoto();
+      updateCanScrollLeft(el.scrollLeft > 20);
       animFrameIdRef.current = requestAnimationFrame(loop);
     };
 
@@ -194,7 +231,7 @@ function GalleryScrollStrip({
       if (animFrameIdRef.current) cancelAnimationFrame(animFrameIdRef.current);
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
     };
-  }, [galleryList, copies, onActivePhotoChange]);
+  }, [galleryList, copies, onActivePhotoChange, updateCanScrollLeft]);
 
   // Mouse Drag handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -228,15 +265,17 @@ function GalleryScrollStrip({
 
   return (
     <div className="relative group/strip">
-      {/* Floating Left Arrow */}
-      <button
-        type="button"
-        onClick={() => handleScrollManual('left')}
-        aria-label="Previous photos"
-        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-xl backdrop-blur-md opacity-0 group-hover/strip:opacity-100 hover:bg-[#B3121B] hover:scale-110 transition-all cursor-pointer hidden sm:flex"
-      >
-        <ChevronLeft className="h-5 w-5" />
-      </button>
+      {/* Floating Left Arrow: only visible when there are photos to the left */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={() => handleScrollManual('left')}
+          aria-label="Previous photos"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-black/70 text-white shadow-xl backdrop-blur-md opacity-0 group-hover/strip:opacity-100 hover:bg-[#B3121B] hover:scale-110 transition-all cursor-pointer hidden sm:flex"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+      )}
 
       {/* Floating Right Arrow */}
       <button
@@ -251,6 +290,11 @@ function GalleryScrollStrip({
       {/* Scrolling Strip Container */}
       <div
         ref={scrollRef}
+        onScroll={() => {
+          if (scrollRef.current) {
+            updateCanScrollLeft(scrollRef.current.scrollLeft > 20);
+          }
+        }}
         onMouseEnter={pauseAutoScroll}
         onMouseLeave={() => {
           if (isDraggingRef.current) {

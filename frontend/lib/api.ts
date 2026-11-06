@@ -1084,6 +1084,26 @@ export async function getPublicSupportDetails(): Promise<any | null> {
   return null;
 }
 
+/**
+ * Fetch public E-Paper settings (e.g. showUserSideButton)
+ */
+export async function getPublicEpaperSettings(): Promise<{ showUserSideButton: boolean } | null> {
+  try {
+    const url = `${API_BASE_URL}/epaper/settings`;
+    const json = await fetchCachedJson<any>(url, 5 * 1000);
+    if (json && json.success && json.data) {
+      return {
+        showUserSideButton: json.data.showUserSideButton !== false,
+      };
+    }
+  } catch (error: any) {
+    if (process.env.NODE_ENV === 'development') {
+      console.warn('Failed to fetch public epaper settings:', error?.message || error);
+    }
+  }
+  return { showUserSideButton: true };
+}
+
 export interface TributeItem {
   id: string;
   type: 'BIRTHDAY' | 'SHRADHANJALI';
