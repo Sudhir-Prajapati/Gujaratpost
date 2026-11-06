@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { BadRequestError, NotFoundError } from '../utils/errors.js';
+import { clearPublicRoutesCache } from '../utils/publicCache.js';
 
 const DEFAULT_5_PHOTOS = [
   {
@@ -418,6 +419,7 @@ export class GalleryController {
           },
         });
         console.log('[Gallery] Photo saved to DB, id:', photo.id);
+        clearPublicRoutesCache();
       } catch (dbErr: any) {
         console.error('[Gallery] DB create FAILED:', dbErr?.message || dbErr);
         return res.status(500).json({
@@ -475,6 +477,7 @@ export class GalleryController {
           update: photoData,
           create: { id, ...photoData },
         });
+        clearPublicRoutesCache();
       } catch (dbErr) {
         console.warn('Gallery DB upsert failed, using memory fallback:', dbErr);
         updated = {
@@ -501,6 +504,7 @@ export class GalleryController {
         await prisma.galleryPhoto.delete({
           where: { id },
         });
+        clearPublicRoutesCache();
       } catch (dbErr) {
         console.warn('Gallery DB delete failed, using memory fallback:', dbErr);
       }

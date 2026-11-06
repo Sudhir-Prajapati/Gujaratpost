@@ -38,6 +38,25 @@ export function getSiteBaseUrl(): string {
 }
 
 /**
+ * Ensures an image URL is in universal JPEG (.jpg) format for maximum RSS reader and aggregator (Dailyhunt) compatibility.
+ * Cloudinary supports dynamic format conversion via /f_jpg,q_auto/ and .jpg extension.
+ */
+export function ensureJpegUrl(url?: string | null): string {
+  if (!url) return '';
+  let u = url.trim();
+  if (u.includes('res.cloudinary.com') && u.includes('/upload/')) {
+    if (!u.includes('/f_jpg') && !u.includes('/f_auto')) {
+      u = u.replace('/upload/', '/upload/f_jpg,q_auto/');
+    } else if (u.includes('/f_auto')) {
+      u = u.replace('/f_auto', '/f_jpg');
+    }
+    // Replace .avif / .webp extension with .jpg for maximum aggregator compatibility
+    u = u.replace(/\.(avif|webp)$/i, '.jpg');
+  }
+  return u;
+}
+
+/**
  * Strips the 'KEY HIGHLIGHTS' (એક નજરમાં) markdown/HTML block from article excerpts and content.
  */
 export function stripKeyHighlights(text?: string | null): string {
@@ -158,7 +177,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   if (categorySlug === 'photos' || categorySlug === 'gallery' || categorySlug === 'photo-gallery' || categorySlug === 'photo') {
     const photos = await prisma.galleryPhoto.findMany({
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
       select: {
         id: true,
         src: true,
@@ -182,7 +201,8 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     let itemsXml = '';
     for (const photo of photos) {
       const photoUrl = `${baseUrl}/photos/${photo.id}`;
-      const pubDate = new Date(photo.createdAt).toUTCString();
+      // Prefer updatedAt so aggregators (Dailyhunt) immediately detect updated galleries
+      const pubDate = new Date(photo.updatedAt || photo.createdAt).toUTCString();
 
       // Heading / Title
       const titleCandidate = lang === 'en'
@@ -208,8 +228,9 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
           if (Array.isArray(parsed)) {
             for (const item of parsed) {
               if (!item) continue;
-              const imgUrl = typeof item === 'string' ? item : (item.src || item.url || '');
-              if (imgUrl && typeof imgUrl === 'string' && (imgUrl.startsWith('http://') || imgUrl.startsWith('https://'))) {
+              const rawImgUrl = typeof item === 'string' ? item : (item.src || item.url || '');
+              const imgUrl = ensureJpegUrl(rawImgUrl);
+              if (imgUrl && (imgUrl.startsWith('http://') || imgUrl.startsWith('https://'))) {
                 slides.push({
                   src: imgUrl.trim(),
                   title: typeof item === 'object' ? stripHtmlTags(item.title || item.captionGu || '') : '',
@@ -227,10 +248,12 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
           const delimiter = rawSrc.includes('\n') ? '\n' : ',';
           const splitUrls = rawSrc.split(delimiter).map((s) => s.trim()).filter((s) => s.startsWith('http://') || s.startsWith('https://'));
           for (const u of splitUrls) {
-            slides.push({ src: u });
+            const converted = ensureJpegUrl(u);
+            if (converted) slides.push({ src: converted });
           }
         } else if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://')) {
-          slides.push({ src: rawSrc });
+          const converted = ensureJpegUrl(rawSrc);
+          if (converted) slides.push({ src: converted });
         }
       }
 
@@ -238,6 +261,8 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       let storyDesc = '';
       if (photo.caption && photo.caption.trim() && photo.caption.trim() !== rawTitle) {
         storyDesc = photo.caption.trim();
+      } else if (photo.captionGu && photo.captionGu.trim() && photo.captionGu.trim() !== rawTitle) {
+        storyDesc = photo.captionGu.trim();
       } else if (slides[0]?.description && slides[0].description !== rawTitle) {
         storyDesc = slides[0].description;
       } else if (slides[0]?.caption && slides[0].caption !== rawTitle) {
@@ -246,11 +271,17 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         storyDesc = photo.alt.trim();
       }
 
+      // If description starts with title, strip duplicate title prefix
+      if (storyDesc.startsWith(rawTitle)) {
+        storyDesc = storyDesc.substring(rawTitle.length).replace(/^[:\s\-]+/, '').trim();
+      }
+
       const rawDesc = cleanRssExcerpt(storyDesc || rawTitle);
       const catName = lang === 'en' ? 'Photo Gallery' : lang === 'hi' ? 'फोटो गैलरी' : (photo.category || 'ફોટો ગેલેરી');
       const authorName = photo.photographer || 'Gujarat Post Team';
 
-      // Full HTML body for Dailyhunt & modern RSS readers (<content:encoded>)
+      // Dailyhunt & universal RSS compatible HTML body (<content:encoded>)
+      // Dailyhunt's parser drops <figure> and <figcaption>, but perfectly renders <p> and <p><img .../></p>
       let fullHtml = '';
       if (storyDesc) {
         const cleanedStoryDesc = stripKeyHighlights(storyDesc);
@@ -262,17 +293,18 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         }
       }
 
+      // Add each slide image with its caption using Dailyhunt-compatible <p><img ... /></p> structure
       for (let i = 0; i < slides.length; i++) {
         const slide = slides[i];
         const slideAlt = escapeXml(slide.title || rawTitle);
         const slideCaption = (slide.caption || slide.description || '').trim();
+        // Check if caption is unique compared to title and overall story description
         const hasUniqueCaption = slideCaption && slideCaption !== rawTitle && slideCaption !== storyDesc;
 
-        fullHtml += `\n<figure>\n  <img src="${escapeXml(slide.src)}" alt="${slideAlt}" />`;
+        fullHtml += `\n<p><img src="${escapeXml(slide.src)}" alt="${slideAlt}" /></p>`;
         if (hasUniqueCaption) {
-          fullHtml += `\n  <figcaption>${escapeXml(slideCaption)}</figcaption>`;
+          fullHtml += `\n<p><strong>${escapeXml(slideCaption)}</strong></p>`;
         }
-        fullHtml += `\n</figure>`;
       }
 
       if (!fullHtml.trim()) {
@@ -290,7 +322,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       <dc:creator>${wrapCdata(authorName)}</dc:creator>
       <author>editorial@gujaratpost.in (${escapeXml(authorName)})</author>`;
 
-      // Enclosure: lead image
+      // Enclosure: lead image (JPEG for Dailyhunt)
       const leadImg = slides[0]?.src || '';
       if (leadImg && (leadImg.startsWith('http://') || leadImg.startsWith('https://'))) {
         const escapedLeadImg = escapeXml(leadImg);
@@ -680,7 +712,7 @@ ${itemsXml}  </channel>
       rawBody = art.contentHi || art.contentGu || art.content || '';
     }
 
-    const imageUrl = (art.featuredImage || '').trim();
+    const imageUrl = ensureJpegUrl(art.featuredImage);
     const cleanedBody = stripKeyHighlights(rawBody);
     const fullHtml = sanitizeHtmlContent(cleanedBody);
 
