@@ -9,6 +9,7 @@ import { VIDEOS, formatViews, getLocalized } from '@/data';
 import { safeYouTubeId } from '@/lib/youtube';
 import { cleanVideoTitle, getRealisticViews, getRealisticDuration } from './homeHelpers';
 import { ConsentGate } from '@/components/consent/ConsentGate';
+import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 export default function VideoDesk({ videos, language, showShorts = true, onlyShorts = false }: { videos: typeof VIDEOS; language: Language; showShorts?: boolean; onlyShorts?: boolean }) {
   const [playId, setPlayId] = useState<string | null>(null);
@@ -247,13 +248,13 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
           {/* Header */}
           <div className="relative z-10 flex items-center justify-between mb-5 select-none">
             <span className="bg-white/20 text-white font-black text-[12.5px] px-3.5 py-1.5 rounded-sm tracking-wide border border-white/25">
-              {language === 'gu' ? 'શોર્ટ  વીડિયો' : language === 'hi' ? 'शॉर्ट  वीडियो' : 'Short Videos'}
+              {language === 'gu' ? 'શોર્ટ વીડિયો' : language === 'hi' ? 'शॉर्ट वीडियो' : 'Short Videos'}
             </span>
             <Link
               href="/shorts"
               className="text-white/95 font-extrabold text-[15px] md:text-[16px] hover:text-white hover:underline flex items-center gap-1"
             >
-              {language === 'gu' ? 'વધુ શોર્ટ્સ →' : 'More Shorts →'}
+              {language === 'gu' ? 'વધુ શોર્ટ્સ →' : language === 'hi' ? 'और शॉर्ट्स →' : 'More Shorts →'}
             </Link>
           </div>
 
@@ -354,11 +355,11 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                           {/* Bottom title & metadata */}
                           <div className="relative z-10 mt-auto">
                             <p className="text-white text-[12px] font-black leading-snug line-clamp-2 drop-shadow">
-                              {card.titleGu}
+                              <AutoTranslateString text={card.titleGu} language={language} />
                             </p>
                             <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/90 mt-1.5 drop-shadow">
                               <Eye className="h-3 w-3 text-white/80" />
-                              <span>{card.viewsGu} વ્યુ</span>
+                              <span>{card.viewsGu} {language === 'gu' ? 'વ્યુ' : language === 'hi' ? 'व्यू' : 'views'}</span>
                               <span>|</span>
                               <Clock className="h-3 w-3 text-white/80" />
                               <span>{card.duration}</span>
@@ -432,14 +433,14 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
         <div className="relative z-10 flex items-center justify-between mb-3 md:mb-4">
           <div className="flex items-center gap-3">
             <span className="text-white font-black text-[18px] md:text-[20px] select-none tracking-tight">
-              {language === 'gu' ? 'વીડિયો' : 'Videos'}
+              {language === 'gu' ? 'વીડિયો' : language === 'hi' ? 'वीडियो' : 'Videos'}
             </span>
           </div>
           <Link
             href="/videos"
             className="text-white/95 font-extrabold text-[15px] md:text-[16px] hover:text-white hover:underline flex items-center gap-1"
           >
-            {language === 'gu' ? 'વધુ જુઓ →' : 'See All →'}
+            {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'See All →'}
           </Link>
         </div>
 
@@ -478,7 +479,10 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
             {/* Title container with fixed exact height & clean titles */}
             <div className="h-[46px] md:h-[50px] overflow-hidden flex items-start mt-1">
               <h3 key={`title-${featuredIndex}`} className="font-extrabold text-[15px] md:text-[18px] leading-[1.35] text-white group-hover:underline transition-all line-clamp-2 animate-in fade-in duration-500">
-                {cleanVideoTitle(getLocalized(language, { en: featuredVideo.title, gu: featuredVideo.titleGu || featuredVideo.title, hi: featuredVideo.titleHi || featuredVideo.title }))}
+                <AutoTranslateString
+                  text={cleanVideoTitle(getLocalized(language, { en: featuredVideo.title, gu: featuredVideo.titleGu || featuredVideo.title, hi: featuredVideo.titleHi || featuredVideo.title }))}
+                  language={language}
+                />
               </h3>
             </div>
 
@@ -531,7 +535,10 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                   <div className="flex flex-col justify-center min-w-0 flex-1">
                     <div className="h-[36px] overflow-hidden flex items-start">
                       <h4 className="text-[13px] font-extrabold leading-[1.3] text-white group-hover:underline transition-all line-clamp-2">
-                        {cleanVideoTitle(getLocalized(language, { en: v.title, gu: v.titleGu || v.title, hi: v.titleHi || v.title }))}
+                        <AutoTranslateString
+                          text={cleanVideoTitle(getLocalized(language, { en: v.title, gu: v.titleGu || v.title, hi: v.titleHi || v.title }))}
+                          language={language}
+                        />
                       </h4>
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 text-[11px] text-white/70 font-semibold select-none">

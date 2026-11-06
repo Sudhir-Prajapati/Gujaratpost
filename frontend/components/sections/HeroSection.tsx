@@ -43,7 +43,7 @@ import { useIsApk } from '@/lib/useIsApk';
 import ApkHomeFeed from '@/components/apk/ApkHomeFeed';
 import ApkHomeSkeleton from '@/components/apk/ApkHomeSkeleton';
 import { HomePageSkeleton } from '@/components/ui/PageSkeleton';
-import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleTitleWithPrefix, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 
 import VideoDesk from './home/VideoDesk';
@@ -587,12 +587,6 @@ function HeroStorySlider({
     setSlideIndex(idx);
   };
 
-  const rawTitle = (language === 'hi' ? (current as any).titleHi : language === 'gu' ? ((current as any).titleGu || current.title) : (current as any).titleEn || current.title) || current.title || '';
-  const colonIdx = rawTitle.indexOf(':');
-  const hasPrefix = colonIdx > 3 && colonIdx <= 48;
-  const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
-  const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
-
   return (
     <div
       className="flex flex-col gap-3 group/hero-slider relative h-full"
@@ -607,14 +601,11 @@ function HeroStorySlider({
             <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
               LIVE
             </span>
-            {hasPrefix ? (
-              <>
-                <span className="text-[#B3121B] font-black mr-1">{prefixText}</span>
-                <span>{restText}</span>
-              </>
-            ) : (
-              <AutoArticleTitle article={current} language={language} />
-            )}
+            <AutoArticleTitleWithPrefix
+              article={current}
+              language={language}
+              prefixClassName="text-[#B3121B] font-black mr-1"
+            />
           </h1>
         </Link>
 
@@ -710,7 +701,7 @@ function HeroStorySlider({
             aria-label="Share"
           >
             <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-            <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+            <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'शेयर' : 'Share'}</span>
           </button>
         </div>
       </div>
@@ -1481,7 +1472,7 @@ export default function HeroSection({
                   <div className="flex items-end gap-1.5">
                     <span className="text-[#B3121B] text-[17px] md:text-[18px] font-black leading-none pb-0.5">♦</span>
                     <h3 className="text-[17px] md:text-[18px] font-black text-foreground leading-none pb-0.5">
-                      {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : 'Gold & Silver Rates'}
+                      {language === 'gu' ? 'સોના-ચાંદીના ભાવ' : language === 'hi' ? 'सोना-चांदी के भाव' : 'Gold & Silver Rates'}
                     </h3>
                   </div>
                   <div className="flex items-center gap-1.5 pb-0.5">
@@ -1503,10 +1494,10 @@ export default function HeroSection({
                       </div>
                       <div>
                         <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                          {language === 'gu' ? 'Gold (10 Grams)' : 'Gold (10 Grams)'}
+                          {language === 'gu' ? 'સોનું (10 ગ્રામ)' : language === 'hi' ? 'सोना (10 ग्राम)' : 'Gold (10 Grams)'}
                         </h4>
                         <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
-                          {language === 'gu' ? '24 Karat' : '24 Karat'}
+                          {language === 'gu' ? '24 કેરેટ' : language === 'hi' ? '24 कैरेट' : '24 Karat'}
                         </p>
                       </div>
                     </div>
@@ -1537,10 +1528,10 @@ export default function HeroSection({
                       </div>
                       <div>
                         <h4 className="text-[17px] md:text-[17.5px] text-foreground leading-tight font-black" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                          {language === 'gu' ? 'Silver (1 Kg)' : 'Silver (1 Kg)'}
+                          {language === 'gu' ? 'ચાંદી (1 કિગ્રા)' : language === 'hi' ? 'चांदी (1 किग्रा)' : 'Silver (1 Kg)'}
                         </h4>
                         <p className="text-[13px] font-bold text-muted-foreground mt-0.5">
-                          {language === 'gu' ? 'Per Kg' : 'Per Kg'}
+                          {language === 'gu' ? 'પ્રતિ કિગ્રા' : language === 'hi' ? 'प्रति किग्रा' : 'Per Kg'}
                         </p>
                       </div>
                     </div>
@@ -1961,11 +1952,6 @@ export default function HeroSection({
                         {/* ─── MOBILE VIEW (< md): Clean Compact Cards with Category Pill & WhatsApp Share (Matching Image 2) ─── */}
                         <div className="flex flex-col gap-2.5 md:hidden">
                           {afterTop3News.slice(0, 6).map((story, idx) => {
-                            const rawTitle = (language === 'hi' ? (story as any).titleHi : language === 'gu' ? ((story as any).titleGu || story.title) : (story as any).titleEn || story.title) || story.title || '';
-                            const colonIdx = rawTitle.indexOf(':');
-                            const hasPrefix = colonIdx > 3 && colonIdx <= 48;
-                            const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
-                            const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
                             const catSlug = (story as any).category?.slug || (story as any).categorySlug || 'news';
                             const catLabel = getCategoryLabel(story, language);
 
@@ -1978,16 +1964,15 @@ export default function HeroSection({
                                   {/* Left: Headline */}
                                   <Link href={`/news/${story.slug}`} className="flex flex-col flex-1 min-w-0 pr-1">
                                     <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                                      {hasPrefix ? (
-                                        <>
-                                          <span className={idx % 2 === 0 ? "text-[#0284c7] dark:text-[#38bdf8] font-black mr-1" : "text-[#d97706] dark:text-[#fbbf24] font-black mr-1"}>
-                                            {prefixText}
-                                          </span>
-                                          <span>{restText}</span>
-                                        </>
-                                      ) : (
-                                        <AutoArticleTitle article={story} language={language} />
-                                      )}
+                                      <AutoArticleTitleWithPrefix
+                                        article={story}
+                                        language={language}
+                                        prefixClassName={
+                                          idx % 2 === 0
+                                            ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
+                                            : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
+                                        }
+                                      />
                                     </h3>
                                   </Link>
 
@@ -2034,7 +2019,7 @@ export default function HeroSection({
                                     aria-label="Share"
                                   >
                                     <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-                                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'शेयर' : 'Share'}</span>
                                   </button>
                                 </div>
                               </div>
@@ -2180,7 +2165,7 @@ export default function HeroSection({
                   rel="noopener noreferrer"
                   className="text-[#B3121B] hover:underline flex items-center gap-0.5 font-black shrink-0"
                 >
-                  {language === 'gu' ? 'યુટ્યુબ પર જુઓ ↗' : 'Watch on YouTube ↗'}
+                  {language === 'gu' ? 'યુટ્યુબ પર જુઓ ↗' : language === 'hi' ? 'यूट्यूब पर देखें ↗' : 'Watch on YouTube ↗'}
                 </a>
               </div>
             </div>
@@ -2190,13 +2175,13 @@ export default function HeroSection({
             <div className="md:hidden w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">
               <div className="bg-[#B3121B] px-4 py-3 flex items-center justify-between">
                 <span className="text-white font-black text-[16px] tracking-wide">
-                  {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : 'Most Read'}
+                  {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : language === 'hi' ? 'सबसे ज्यादा पढ़े गए' : 'Most Read'}
                 </span>
                 <Link
                   href="/category/trending"
                   className="text-[12px] font-bold text-white/90 hover:text-white hover:underline"
                 >
-                  {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
+                  {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
                 </Link>
               </div>
               <div className="divide-y divide-slate-100 dark:divide-slate-800/80 p-1">
@@ -2234,13 +2219,13 @@ export default function HeroSection({
             <div className="hidden md:flex w-full overflow-hidden rounded-xl border border-slate-400 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] select-none">
-                  {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : 'Most Read'}
+                  {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : language === 'hi' ? 'सबसे ज्यादा पढ़े गए' : 'Most Read'}
                 </span>
                 <Link
                   href="/category/trending"
                   className="text-[13px] md:text-[13.5px] font-bold text-[#B3121B] hover:text-red-700 hover:underline"
                 >
-                  {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
+                  {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
                 </Link>
               </div>
 
@@ -2323,7 +2308,7 @@ export default function HeroSection({
             >
               <input
                 type="email"
-                placeholder={language === 'gu' ? 'તમારો ઈમેલ દાખલ કરો' : 'Enter your email'}
+                placeholder={language === 'gu' ? 'તમારો ઈમેલ દાખલ કરો' : language === 'hi' ? 'अपना ईमेल दर्ज करें' : 'Enter your email'}
                 className="flex-1 px-4 py-3 bg-[#241c19] border border-[#3c302a] text-white text-sm rounded-sm focus:outline-none focus:border-[#e02020] placeholder-[#6d5e56]"
                 required
               />
@@ -2331,7 +2316,7 @@ export default function HeroSection({
                 type="submit"
                 className="bg-[#e02020] hover:bg-[#c01818] text-white text-sm font-black px-6 py-3 rounded-sm transition-all whitespace-nowrap"
               >
-                {language === 'gu' ? 'સબસ્ક્રાઇબ' : 'Subscribe'}
+                {language === 'gu' ? 'સબસ્ક્રાઇબ' : language === 'hi' ? 'सब्सक्राइब' : 'Subscribe'}
               </button>
             </form>
           </div>

@@ -23,43 +23,43 @@ export async function ensureCategoryTableColumns(): Promise<void> {
             AND TABLE_SCHEMA = DATABASE()
         `);
         colNames = new Set((rawCols || []).map((c: any) => (c.COLUMN_NAME || c.column_name || '').toLowerCase()));
-      } catch {}
+      } catch { }
     }
 
     if (!colNames.has('showinhome')) {
       await prisma.$executeRawUnsafe(
         'ALTER TABLE categories ADD COLUMN showInHome TINYINT(1) NOT NULL DEFAULT 1'
-      ).catch(() => {});
+      ).catch(() => { });
       console.log('✅ Added missing showInHome column to categories');
     }
     if (!colNames.has('showinarticle')) {
       await prisma.$executeRawUnsafe(
         'ALTER TABLE categories ADD COLUMN showInArticle TINYINT(1) NOT NULL DEFAULT 1'
-      ).catch(() => {});
+      ).catch(() => { });
       console.log('✅ Added missing showInArticle column to categories');
     }
     if (!colNames.has('showinheader')) {
       await prisma.$executeRawUnsafe(
         'ALTER TABLE categories ADD COLUMN showInHeader TINYINT(1) NOT NULL DEFAULT 1'
-      ).catch(() => {});
+      ).catch(() => { });
       console.log('✅ Added missing showInHeader column to categories');
     }
     if (!colNames.has('headertype')) {
       await prisma.$executeRawUnsafe(
         "ALTER TABLE categories ADD COLUMN headerType VARCHAR(50) NOT NULL DEFAULT 'GLOBAL'"
-      ).catch(() => {});
+      ).catch(() => { });
       console.log('✅ Added missing headerType column to categories');
     }
     if (!colNames.has('headerorder')) {
       await prisma.$executeRawUnsafe(
         'ALTER TABLE categories ADD COLUMN headerOrder INT NOT NULL DEFAULT 0'
-      ).catch(() => {});
+      ).catch(() => { });
       console.log('✅ Added missing headerOrder column to categories');
     }
     if (!colNames.has('homeorder')) {
       await prisma.$executeRawUnsafe(
         'ALTER TABLE categories ADD COLUMN homeOrder INT NOT NULL DEFAULT 0'
-      ).catch(() => {});
+      ).catch(() => { });
       console.log('✅ Added missing homeOrder column to categories');
     }
     categoryColumnsEnsured = true;
@@ -78,7 +78,7 @@ export class CategoryController {
       res.setHeader('Pragma', 'no-cache');
       res.setHeader('Expires', '0');
 
-      await ensureCategoryTableColumns().catch(() => {});
+      await ensureCategoryTableColumns().catch(() => { });
 
       const activeOnly = req.query.activeOnly === 'true' || req.query.isActive === 'true';
       const where: any = {};
@@ -162,7 +162,7 @@ export class CategoryController {
    */
   static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      await ensureCategoryTableColumns().catch(() => {});
+      await ensureCategoryTableColumns().catch(() => { });
       const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInArticle, showInHeader, headerType } = req.body;
 
       if (!name || typeof name !== 'string' || name.trim() === '') {
@@ -238,7 +238,7 @@ export class CategoryController {
    */
   static async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      await ensureCategoryTableColumns().catch(() => {});
+      await ensureCategoryTableColumns().catch(() => { });
       const { id } = req.params;
       const { name, nameGu, nameHi, slug, icon, color, displayOrder, isActive, showInHome, showInArticle, showInHeader, headerType } = req.body;
 
@@ -324,7 +324,7 @@ export class CategoryController {
    */
   static async reorderCategories(req: Request, res: Response, next: NextFunction) {
     try {
-      await ensureCategoryTableColumns().catch(() => {});
+      await ensureCategoryTableColumns().catch(() => { });
       const { items, target } = req.body;
 
       if (!items || !Array.isArray(items) || items.length === 0) {

@@ -923,7 +923,7 @@ export default function VideosPageClient() {
           </span>
         </div>
         <Link href="/category/latest" className="text-xs font-bold text-accent hover:underline">
-          {language === 'gu' ? 'વધુ જુઓ →' : 'View all →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
         </Link>
       </div>
       <div className="flex flex-col divide-y divide-border">
@@ -977,7 +977,7 @@ export default function VideosPageClient() {
       <Link
         href="/shorts"
         className="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-xs sm:text-sm font-bold text-accent hover:bg-accent/10 transition-colors"
-        aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : 'Show more shorts'}
+        aria-label={language === 'gu' ? 'વધુ શોર્ટ્સ જુઓ' : language === 'hi' ? 'और शॉर्ट्स देखें' : 'Show more shorts'}
       >
         <span>{language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'View more'}</span>
         <ChevronRight className="h-4 w-4" />

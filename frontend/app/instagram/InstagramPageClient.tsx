@@ -117,7 +117,7 @@ export default function InstagramPageClient() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-full bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white hover:opacity-95 transition shadow-xs"
               >
-                <span>{language === 'gu' ? 'ફોલો કરો' : 'Follow'}</span>
+                <span>{language === 'gu' ? 'ફોલો કરો' : language === 'hi' ? 'फॉलो करें' : 'Follow'}</span>
                 <ExternalLink className="h-3 w-3" />
               </a>
             </div>

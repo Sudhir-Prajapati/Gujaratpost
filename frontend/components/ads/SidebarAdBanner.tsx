@@ -167,11 +167,11 @@ export default function SidebarAdBanner({
   const cta = language === 'gu' ? fallbackCtaGu : fallbackCtaEn;
 
   // Header Title for current slide
-  let headerLabel = language === 'gu' ? 'જાહેરાત' : 'Advertisement';
+  let headerLabel = language === 'gu' ? 'જાહેરાત' : language === 'hi' ? 'विज्ञापन' : 'Advertisement';
   if (currentSlide.type === 'BIRTHDAY') {
-    headerLabel = language === 'gu' ? '🎂 જન્મદિવસની હાર્દિક શુભકામના' : '🎂 Birthday Wishes';
+    headerLabel = language === 'gu' ? '🎂 જન્મદિવસની હાર્દિક શુભકામના' : language === 'hi' ? '🎂 जन्मदिन की हार्दिक शुभकामनाएं' : '🎂 Birthday Wishes';
   } else if (currentSlide.type === 'SHRADHANJALI') {
-    headerLabel = language === 'gu' ? '🕊️ ભાવપૂર્ણ શ્રદ્ધાંજલિ / સ્મૃતિ' : '🕊️ In Loving Memory';
+    headerLabel = language === 'gu' ? '🕊️ ભાવપૂર્ણ શ્રદ્ધાંજલિ / સ્મૃતિ' : language === 'hi' ? '🕊️ भावपूर्ण श्रद्धांजलि / स्मृति' : '🕊️ In Loving Memory';
   }
 
   // Render Ad Slide Content (strictly locked to bannerHeight)

@@ -372,7 +372,7 @@ function GalleryScrollStrip({
                 <div className="flex items-center gap-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
                   <div className="h-[2.5px] w-7 rounded-full" style={{ backgroundColor: accentColor }} />
                   <span className="text-white text-[13.5px] md:text-[14.5px] font-extrabold tracking-wide">
-                    {language === 'gu' ? 'ફોટો જુઓ' : 'View Photos'}
+                    {language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}
                   </span>
                   <svg className="h-4 w-4" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
@@ -446,14 +446,14 @@ export default function PhotoGallerySection({ language }: { language: Language }
             prefetch={true}
             className="section-heading-badge bg-[#B3121B] text-white px-6 py-2.5 sm:py-3 text-[19px] sm:text-[21px] md:text-[23px] font-black rounded-xl select-none leading-none tracking-tight shadow-md cursor-pointer hover:bg-red-700 transition-colors"
           >
-            {language === 'gu' ? 'ફોટો   ગેલેરી' : language === 'hi' ? 'फोटो   गैलरी' : 'Photo   Gallery'}
+            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
           </Link>
           <Link
             href="/photos"
             prefetch={true}
             className="text-[#B3121B] hover:text-red-700 font-black text-[17px] sm:text-[18px] md:text-[20px] hover:underline flex items-center gap-1.5 transition-colors cursor-pointer relative z-20 py-1"
           >
-            <span>{language === 'gu' ? 'વધુ જુઓ' : 'More →'}</span>
+            <span>{language === 'gu' ? 'વધુ જુઓ' : language === 'hi' ? 'और देखें' : 'More'}</span>
             <span>→</span>
           </Link>
         </div>

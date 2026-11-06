@@ -8,6 +8,7 @@ import { getLocalized } from '@/data';
 import { getPublicVideos } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
 import { ConsentGate } from '@/components/consent/ConsentGate';
+import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 interface ShortItem {
   id: string;
@@ -356,7 +357,7 @@ export default function YouTubeShorts() {
                     </div>
                     <div className="absolute bottom-0 inset-x-0 p-3.5 z-10 flex flex-col justify-end space-y-1.5">
                       <h3 className="text-white text-[12.5px] font-black leading-snug line-clamp-2 drop-shadow-md group-hover:text-red-200 transition-colors">
-                        {language === 'gu' ? (short.titleGu || short.title) : short.title}
+                        <AutoTranslateString text={short.titleGu || short.title} language={language} />
                       </h3>
                       <div className="flex items-center gap-1.5 text-[10.5px] font-extrabold text-white/90 drop-shadow">
                         <Eye className="h-3 w-3 text-white/80" />

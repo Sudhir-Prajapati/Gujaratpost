@@ -245,7 +245,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
           href="/category/fact-check"
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
-          {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'More →'}
         </Link>
       </div>
 
@@ -326,7 +326,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
                 </h3>
                 <div className="mt-1.5 flex items-center text-[10.5px] sm:text-[10px] text-muted-foreground">
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                    {language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'સत्याપિત' : 'Verified'}
+                    {language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'सत्यापित' : 'Verified'}
                   </span>
                 </div>
               </div>

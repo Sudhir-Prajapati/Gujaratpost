@@ -208,7 +208,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
       if (!res.ok) {
         throw new Error(
           json.message ||
-            (language === 'gu' ? 'અમાન્ય ઓટીપી. ઇમેઇલ ડીબીમાં સ્ટોર થયું નથી.' : 'Invalid OTP code. Email was NOT stored in database.')
+            (language === 'gu' ? 'અમાન્ય ઓટીપી. ઇમેઇલ ડીબીમાં સ્ટોર થયું નથી.' : language === 'hi' ? 'अमान्य ओटीपी। ईमेल डेटाबेस में स्टोर नहीं हुआ।' : 'Invalid OTP code. Email was NOT stored in database.')
         );
       }
 
@@ -220,6 +220,8 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
       setSuccessMessage(
         language === 'gu'
           ? 'ઇમેઇલ ચકાસાયેલ છે અને ડીબીમાં સફળતાપૂર્વક સંગ્રહિત થયું છે!'
+          : language === 'hi'
+          ? 'ईमेल सत्यापित हो गया और डेटाबेस में सफलतापूर्वक सुरक्षित कर लिया गया है!'
           : 'Email verified & stored in database successfully!'
       );
 
@@ -254,7 +256,7 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
       setTimeLeft(300);
       setResendCooldown(60);
       setSuccessMessage(
-        language === 'gu' ? 'તમારા ઇમેઇલ પર નવો ઓટીપી મોકલ્યો છે.' : 'New OTP sent to your email.'
+        language === 'gu' ? 'તમારા ઇમેઇલ પર નવો ઓટીપી મોકલ્યો છે.' : language === 'hi' ? 'आपके ईमेल पर नया ओटीपी भेजा गया है।' : 'New OTP sent to your email.'
       );
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
@@ -449,13 +451,13 @@ export default function UserAuthModal({ isOpen, onClose, language = 'gu' }: User
             {/* Prominent Centered OTP Expiration Timer */}
             <div className="w-full py-2.5 px-4 rounded-xl bg-zinc-100 dark:bg-zinc-800/80 border border-zinc-400 dark:border-zinc-700/80 flex items-center justify-center gap-2 text-center text-sm font-extrabold text-zinc-800 dark:text-zinc-100 shadow-xs">
               <Clock className="w-4 h-4 text-[#B3121B] shrink-0" />
-              <span>{language === 'gu' ? 'ઓટીપી સમય:' : 'OTP Expiry:'}</span>
+              <span>{language === 'gu' ? 'ઓટીપી સમય:' : language === 'hi' ? 'ओटीपी समय:' : 'OTP Expiry:'}</span>
               <span className={`font-mono text-base tracking-wider ${timeLeft < 60 ? 'text-red-600 dark:text-red-400 animate-pulse font-black' : 'text-[#B3121B]'}`}>
                 {formatTimer(timeLeft)}
               </span>
               {timeLeft === 0 && (
                 <span className="text-xs font-black text-red-600 dark:text-red-400 ml-1">
-                  ({language === 'gu' ? 'સમય સમાપ્ત' : 'Expired'})
+                  ({language === 'gu' ? 'સમય સમાપ્ત' : language === 'hi' ? 'समय समाप्त' : 'Expired'})
                 </span>
               )}
             </div>

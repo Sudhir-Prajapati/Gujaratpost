@@ -188,7 +188,7 @@ export default function WebStoriesSection() {
             href="/category/webstory"
             className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
           >
-            {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
+            {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'More →'}
           </Link>
         </div>
 
@@ -246,7 +246,7 @@ export default function WebStoriesSection() {
                   <div className="relative aspect-[9/16] w-full overflow-hidden rounded-2xl border border-border/10 bg-muted shadow-sm transition-all duration-300 group-hover:scale-[1.03] group-hover:shadow-md">
                     {/* Badge at top-left */}
                     <span className="absolute top-3 left-3 bg-[#c36f30]/90 text-white text-[9.5px] font-extrabold px-2 py-0.5 rounded-sm uppercase tracking-wide z-10 select-none">
-                      {language === 'gu' ? 'વેબ સ્ટોરી' : 'Web Story'}
+                      {language === 'gu' ? 'વેબ સ્ટોરી' : language === 'hi' ? 'वेब स्टोरी' : 'Web Story'}
                     </span>
 
                     {/* Image */}

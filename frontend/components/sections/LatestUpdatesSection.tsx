@@ -342,7 +342,7 @@ export default function LatestUpdatesSection({
             href="/category/trending"
             className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline flex items-center gap-1 cursor-pointer transition-colors"
           >
-            {language === 'gu' ? 'વધુ જુઓ →' : 'View All →'}
+            {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View All →'}
           </Link>
         </div>
 

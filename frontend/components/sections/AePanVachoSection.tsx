@@ -124,8 +124,8 @@ export default function AePanVachoSection({ language = 'gu', spacingClassName = 
       ) : (
         <div className="py-8 text-center text-xs text-muted-foreground bg-muted/20 rounded-xl">
           {loading
-            ? (language === 'gu' ? 'સમાચાર લોડ થઈ રહ્યા છે...' : 'Loading...')
-            : (language === 'gu' ? 'હાલમાં કોઈ સમાચાર ઉપલબ્ધ નથી' : 'No articles available')}
+            ? (language === 'gu' ? 'સમાચાર લોડ થઈ રહ્યા છે...' : language === 'hi' ? 'समाचार लोड हो रहे हैं...' : 'Loading...')
+            : (language === 'gu' ? 'હાલમાં કોઈ સમાચાર ઉપલબ્ધ નથી' : language === 'hi' ? 'फिलहाल कोई समाचार उपलब्ध नहीं है' : 'No articles available')}
         </div>
       )}
     </section>

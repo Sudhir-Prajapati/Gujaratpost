@@ -48,6 +48,46 @@ export function AutoArticleTitle({ article, language, fallback }: { article: Art
   return <AutoTranslatedArticleText article={article} field="title" language={language} fallback={fallback} />;
 }
 
+export function AutoArticleTitleWithPrefix({
+  article,
+  language,
+  prefixClassName = 'text-[#B3121B] font-black mr-1',
+  fallback = '',
+}: {
+  article: Article;
+  language: Language;
+  prefixClassName?: string;
+  fallback?: string;
+}) {
+  const sourceText = getFieldValue(article, 'title', language) || fallback;
+  const translatedText = useAutoTranslate(sourceText, language);
+
+  let finalTitle = translatedText || sourceText;
+
+  if ((language === 'en' || language === 'hi') && !translatedText && /[\u0A80-\u0AFF]/.test(sourceText)) {
+    const explicitEn = (article as any)?.titleEn || (article as any)?.englishTitle;
+    const explicitHi = (article as any)?.titleHi && /[\u0900-\u097F]/.test((article as any).titleHi) ? (article as any).titleHi : null;
+    if (language === 'hi' && explicitHi) finalTitle = explicitHi;
+    if (language === 'en' && explicitEn) finalTitle = explicitEn;
+  }
+
+  const colonIdx = finalTitle.indexOf(':');
+  const hasPrefix = colonIdx > 2 && colonIdx <= 48;
+
+  if (hasPrefix) {
+    const prefix = finalTitle.substring(0, colonIdx + 1);
+    const rest = finalTitle.substring(colonIdx + 1).trim();
+    return (
+      <span suppressHydrationWarning>
+        <span className={prefixClassName}>{prefix}</span>{' '}
+        <span>{rest}</span>
+      </span>
+    );
+  }
+
+  return <span suppressHydrationWarning>{finalTitle}</span>;
+}
+
 export function AutoArticleExcerpt({ article, language, fallback }: { article: Article; language: Language; fallback?: string }) {
   return <AutoTranslatedArticleText article={article} field="excerpt" language={language} fallback={fallback} />;
 }

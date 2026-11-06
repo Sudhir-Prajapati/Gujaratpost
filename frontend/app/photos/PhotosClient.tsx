@@ -208,7 +208,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
                 <div className="flex items-center gap-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
                   <div className="h-[2.5px] w-7 rounded-full bg-[#B3121B]" />
                   <span className="text-white text-[13.5px] md:text-[14.5px] font-extrabold tracking-wide">
-                    {language === 'gu' ? 'ફોટો જુઓ' : 'View Photos'}
+                    {language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}
                   </span>
                   <ChevronRight className="h-4 w-4 text-[#B3121B] stroke-[3]" />
                 </div>

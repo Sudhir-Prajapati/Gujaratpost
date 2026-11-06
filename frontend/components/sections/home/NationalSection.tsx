@@ -285,7 +285,7 @@ export default function NationalSection({ language, initialArticles }: { languag
           href="/category/national"
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
-          {language === 'gu' ? 'વધુ જુઓ →' : 'More →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'More →'}
         </Link>
       </div>
 

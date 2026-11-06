@@ -116,7 +116,7 @@ function SidebarPhotoCardImage({
 }
 
 export function SidebarPhotoCard({ photo, index, language }: { photo: any; index: number; language: string }) {
-  const title = photo.captionGu || photo.alt || photo.caption || photo.titleGu || photo.title || (language === 'gu' ? 'ગુજરાત પોસ્ટ ફોટો ગેલેરી' : 'Photo Gallery');
+  const title = photo.captionGu || photo.alt || photo.caption || photo.titleGu || photo.title || (language === 'gu' ? 'ગુજરાત પોસ્ટ ફોટો ગેલેરી' : language === 'hi' ? 'गुजरात पोस्ट फोटो गैलरी' : 'Photo Gallery');
   const imgSrc = photo.src || photo.image || photo.imageUrl;
 
   return (
@@ -153,7 +153,7 @@ export function SidebarPhotoCard({ photo, index, language }: { photo: any; index
 }
 
 export function SidebarPhotoMiniCard({ photo, index, language }: { photo: any; index: number; language: string }) {
-  const title = photo.captionGu || photo.alt || photo.caption || photo.titleGu || photo.title || (language === 'gu' ? 'ગુજરાત પોસ્ટ ફોટો ગેલેરી' : 'Photo Gallery');
+  const title = photo.captionGu || photo.alt || photo.caption || photo.titleGu || photo.title || (language === 'gu' ? 'ગુજરાત પોસ્ટ ફોટો ગેલેરી' : language === 'hi' ? 'गुजरात पोस्ट फोटो गैलरी' : 'Photo Gallery');
   const imgSrc = photo.src || photo.image || photo.imageUrl;
 
   return (
@@ -171,7 +171,7 @@ export function SidebarPhotoMiniCard({ photo, index, language }: { photo: any; i
       {/* Mini Top badge */}
       <div className="absolute top-1.5 left-1.5 z-10 flex items-center gap-1 bg-[#B3121B] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs">
         <Camera className="h-2.5 w-2.5" />
-        <span>{language === 'gu' ? 'ફોટો' : 'Photo'}</span>
+        <span>{language === 'gu' ? 'ફોટો' : language === 'hi' ? 'फोटो' : 'Photo'}</span>
       </div>
 
       {/* Bottom title */}
@@ -223,11 +223,13 @@ export default function MediaSidebar({
               <path d="M22.5 7.1a2.8 2.8 0 0 0-2-2C18.7 4.6 12 4.6 12 4.6s-6.7 0-8.5.5a2.8 2.8 0 0 0-2 2A29.5 29.5 0 0 0 1 12a29.5 29.5 0 0 0 .5 4.9 2.8 2.8 0 0 0 2 2c1.8.5 8.5.5 8.5.5s6.7 0 8.5-.5a2.8 2.8 0 0 0 2-2A29.5 29.5 0 0 0 23 12a29.5 29.5 0 0 0-.5-4.9Z" />
               <path fill="white" d="m9.8 15.2 5.6-3.2-5.6-3.2v6.4Z" />
             </svg>
-            <span>{language === 'gu' ? 'ગુજરાત પોસ્ટ યુટ્યુબ' : 'Gujarat Post YouTube'}</span>
+            <span>{language === 'gu' ? 'ગુજરાત પોસ્ટ યુટ્યુબ' : language === 'hi' ? 'गुजरात पोस्ट यूट्यूब' : 'Gujarat Post YouTube'}</span>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground font-semibold px-1 mb-3.5">
             {language === 'gu'
               ? 'તમામ શોર્ટ્સ, બુલેટિન અને એક્સક્લુઝિવ વીડિયો — એક જ જગ્યાએ.'
+              : language === 'hi'
+              ? 'सभी शॉर्ट्स, बुलेटिन और एक्सक्लूसिव वीडियो — एक ही जगह पर।'
               : 'All shorts, bulletins and exclusive videos — in one place.'}
           </p>
           <a
@@ -237,7 +239,7 @@ export default function MediaSidebar({
             className="w-full inline-flex items-center justify-center gap-2 bg-[#E62117] hover:bg-[#CC181E] text-white font-black text-xs sm:text-sm py-2.5 rounded-xl transition-all hover:scale-[1.02] shadow-sm cursor-pointer select-none active:scale-[0.98]"
           >
             <Bell className="h-4 w-4 fill-current shrink-0" />
-            <span>{language === 'gu' ? 'સબસ્ક્રાઇબ કરો' : 'Subscribe'}</span>
+            <span>{language === 'gu' ? 'સબસ્ક્રાઇબ કરો' : language === 'hi' ? 'सब्सक्राइब करें' : 'Subscribe'}</span>
           </a>
         </div>
       ) : (
@@ -246,11 +248,13 @@ export default function MediaSidebar({
             <svg viewBox="0 0 24 24" className="h-6 w-6 text-[#C13584]" fill="currentColor">
               <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
             </svg>
-            <span>{language === 'gu' ? 'ગુજરાત પોસ્ટ ઇન્સ્ટાગ્રામ' : 'Gujarat Post Instagram'}</span>
+            <span>{language === 'gu' ? 'ગુજરાત પોસ્ટ ઇન્સ્ટાગ્રામ' : language === 'hi' ? 'गुजरात पोस्ट इंस्टाग्राम' : 'Gujarat Post Instagram'}</span>
           </div>
           <p className="text-xs leading-relaxed text-muted-foreground font-semibold px-1 mb-3.5">
             {language === 'gu'
               ? 'રોજેરોજના વાયરલ રીલ્સ અને તાજા અપડેટ્સ મેળવો.'
+              : language === 'hi'
+              ? 'रोजाना वायरल रील्स और ताज़ा अपडेट्स पाएं।'
               : 'Daily viral reels and breaking updates on Instagram.'}
           </p>
           <a
@@ -259,7 +263,7 @@ export default function MediaSidebar({
             rel="noopener noreferrer"
             className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] hover:opacity-95 text-white font-black text-xs sm:text-sm py-2.5 rounded-xl transition-all hover:scale-[1.02] shadow-sm cursor-pointer select-none active:scale-[0.98]"
           >
-            <span>{language === 'gu' ? 'ઇન્સ્ટાગ્રામ પર ફોલો કરો' : 'Follow on Instagram'}</span>
+            <span>{language === 'gu' ? 'ઇન્સ્ટાગ્રામ પર ફોલો કરો' : language === 'hi' ? 'इंस्टाग्राम पर फॉलो करें' : 'Follow on Instagram'}</span>
           </a>
         </div>
       )}
@@ -368,7 +372,7 @@ export default function MediaSidebar({
         {/* Header: Red Badge on left + "વધુ ફોટો ગેલેરી →" on right */}
         <div className="flex items-center justify-between mb-3.5 pb-2.5 border-b-[2.5px] border-slate-900 dark:border-white/20">
           <span className="bg-[#B3121B] text-white px-4.5 py-2 text-sm sm:text-base font-black rounded-lg tracking-tight shadow-xs select-none leading-none">
-            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलરી' : 'Photo Gallery'}
+            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
           </span>
           <Link
             href="/photos"

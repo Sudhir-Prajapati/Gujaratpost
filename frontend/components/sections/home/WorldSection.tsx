@@ -463,7 +463,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
           href="/category/world"
           className="text-[#B3121B] hover:text-red-700 font-extrabold text-[20px] md:text-[21px] hover:underline"
         >
-          {language === 'gu' ? 'વધુ જુઓ →' : 'More News →'}
+          {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'और देखें →' : 'More News →'}
         </Link>
       </div>
 

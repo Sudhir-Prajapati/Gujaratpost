@@ -8,6 +8,7 @@ import { useApp } from '@/components/AppProvider';
 import { getLocalized } from '@/data';
 import { getPublicVideos } from '@/lib/api';
 import { safeYouTubeId } from '@/lib/youtube';
+import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 interface VideoItem {
   id: string;
@@ -120,9 +121,9 @@ export default function VideoSection({ initialVideos }: Props) {
   const sidebarList = videos.filter((v) => v.id !== activeMain.id).slice(0, 5);
 
   const getTitle = (item: VideoItem) => {
+    if (language === 'hi' && item.titleHi && /[\u0900-\u097F]/.test(item.titleHi)) return item.titleHi;
     if (language === 'gu') return item.titleGu || item.title;
-    if (language === 'hi') return item.titleHi || item.title;
-    return item.title;
+    return item.titleGu || item.title;
   };
 
   const sectionTitle = getLocalized(language, { en: 'Videos', gu: 'વીડિયો', hi: 'वीडियो' });
@@ -196,12 +197,12 @@ export default function VideoSection({ initialVideos }: Props) {
               onClick={() => window.open(`https://www.youtube.com/watch?v=${safeYouTubeId(activeMain.youtubeId || activeMain.id)}`, '_blank', 'noopener,noreferrer')}
             >
               <h3 className="text-sm sm:text-base md:text-xl font-black leading-snug text-white line-clamp-2 group-hover/title:text-red-400 group-hover/title:underline transition-colors">
-                {getTitle(activeMain)}
+                <AutoTranslateString text={getTitle(activeMain)} language={language} />
               </h3>
               <div className="mt-1 flex items-center gap-2.5 text-[11px] sm:text-xs font-bold text-white/80">
                 <span className="flex items-center gap-1">
                   <Eye className="h-3.5 w-3.5" />
-                  {activeMain.views || 190} {language === 'gu' ? 'વ્યૂઝ' : language === 'hi' ? 'ভিউઝ' : 'views'}
+                  {activeMain.views || 190} {language === 'gu' ? 'વ્યૂઝ' : language === 'hi' ? 'व्यूज' : 'views'}
                 </span>
                 <span>·</span>
                 <span className="flex items-center gap-1">
@@ -247,7 +248,7 @@ export default function VideoSection({ initialVideos }: Props) {
                 {/* Text Info */}
                 <div className="flex flex-1 flex-col justify-center min-w-0">
                   <h4 className="text-xs md:text-sm font-extrabold leading-tight text-white line-clamp-2 group-hover:text-white/90 transition-colors">
-                    {getTitle(item)}
+                    <AutoTranslateString text={getTitle(item)} language={language} />
                   </h4>
                   <div className="mt-1 flex items-center gap-2 text-[11px] font-bold text-white/70">
                     <span>{item.views || 400} {language === 'gu' ? 'વ્યૂઝ' : language === 'hi' ? 'व्यूज' : 'views'}</span>

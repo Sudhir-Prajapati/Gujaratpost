@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 import ArticleMedia from '@/components/ui/ArticleMedia';
-import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleTitleWithPrefix } from '@/components/ui/AutoTranslatedArticleText';
 import { getArticleTitle, getCategoryLabel } from '@/data';
 
 export interface MobileHeroArticleCardProps {
@@ -37,11 +37,6 @@ export default function MobileHeroArticleCard({
       : (article.titleEn || article.title)) ||
     article.title ||
     '';
-
-  const colonIdx = rawTitle.indexOf(':');
-  const hasPrefix = colonIdx > 3 && colonIdx <= 48;
-  const prefixText = hasPrefix ? rawTitle.substring(0, colonIdx + 1) : '';
-  const restText = hasPrefix ? rawTitle.substring(colonIdx + 1).trim() : '';
 
   const catLabel =
     getCategoryLabel(article, language) ||
@@ -94,22 +89,15 @@ export default function MobileHeroArticleCard({
           {catLabel}
         </span>
         <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-          {hasPrefix ? (
-            <>
-              <span
-                className={
-                  index % 2 === 0
-                    ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
-                    : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
-                }
-              >
-                {prefixText}
-              </span>
-              <span>{restText}</span>
-            </>
-          ) : (
-            <AutoArticleTitle article={article} language={language} />
-          )}
+          <AutoArticleTitleWithPrefix
+            article={article}
+            language={language}
+            prefixClassName={
+              index % 2 === 0
+                ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
+                : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
+            }
+          />
         </h3>
       </div>
 

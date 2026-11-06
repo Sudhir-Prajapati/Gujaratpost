@@ -153,7 +153,7 @@ export default function ElectionSection({
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
               <div className="absolute top-3 left-3 bg-[#B3121B] text-white text-[11px] font-black uppercase px-3 py-1 rounded-md shadow-md tracking-wider flex items-center gap-1.5">
                 <Vote className="h-3 w-3" />
-                <span>{language === 'gu' ? 'વિશેષ કવરેજ • ચૂંટણી 2027' : 'Special Coverage 2027'}</span>
+                <span>{language === 'gu' ? 'વિશેષ કવરેજ • ચૂંટણી 2027' : language === 'hi' ? 'विशेष कवरेज • चुनाव 2027' : 'Special Coverage 2027'}</span>
               </div>
             </div>
 
@@ -169,7 +169,7 @@ export default function ElectionSection({
 
               <div className="flex items-center justify-end pt-3 mt-3 border-t border-border/50 text-[12px] font-bold text-muted-foreground">
                 <span className="text-[#B3121B] font-black group-hover:underline">
-                  {language === 'gu' ? 'સંપૂર્ણ અહેવાલ વાંચો →' : 'Read Full Story →'}
+                  {language === 'gu' ? 'સંપૂર્ણ અહેવાલ વાંચો →' : language === 'hi' ? 'पूरी रिपोर्ट पढ़ें →' : 'Read Full Story →'}
                 </span>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default function ElectionSection({
                   <div className="flex items-center gap-2 mb-1 text-[11px] font-black text-[#B3121B]">
                     <span>#{idx + 1}</span>
                     <span>•</span>
-                    <span>{language === 'gu' ? 'ચૂંટણી અપડેટ' : 'Election Update'}</span>
+                    <span>{language === 'gu' ? 'ચૂંટણી અપડેટ' : language === 'hi' ? 'चुनाव अपडेट' : 'Election Update'}</span>
                   </div>
                   <h4 className="text-[14px] sm:text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                     <AutoArticleTitle article={art} language={language} />

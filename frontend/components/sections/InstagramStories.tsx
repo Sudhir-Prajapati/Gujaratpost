@@ -293,7 +293,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
         {/* Section Header */}
         <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 mb-3">
           <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight">
-            {language === 'gu' ? 'ઇન્સ્ટાગ્રામ રિલ્સ' : language === 'hi' ? 'इन्स्टाग्राम रीલ્સ' : 'Instagram Reels'}
+            {language === 'gu' ? 'ઇન્સ્ટાગ્રામ રિલ્સ' : language === 'hi' ? 'इंस्टाग्राम रील्स' : 'Instagram Reels'}
           </span>
           <a
             href="https://www.instagram.com/gujaratpost.in/"
@@ -301,7 +301,7 @@ export default function InstagramStories({ initialReels }: { initialReels?: Reel
             rel="noopener noreferrer"
             className="text-[#B3121B] hover:text-red-700 font-extrabold text-[15px] md:text-[16px] hover:underline"
           >
-            {language === 'gu' ? 'વધુ રિલ્સ →' : 'More →'}
+            {language === 'gu' ? 'વધુ રિલ્સ →' : language === 'hi' ? 'और रील्स →' : 'More →'}
           </a>
         </div>
 

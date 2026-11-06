@@ -179,10 +179,10 @@ export default function PodcastSection({ language }: { language: Language }) {
                 <div className="pt-3 mt-3 border-t border-border/50 flex items-center justify-between text-[11.5px] text-muted-foreground font-bold">
                   <span className="flex items-center gap-1">
                     <Headphones className="h-3.5 w-3.5 text-muted-foreground/80" />
-                    <span>{language === 'gu' ? 'સાંભળો / જુઓ' : 'Listen / Watch'}</span>
+                    <span>{language === 'gu' ? 'સાંભળો / જુઓ' : language === 'hi' ? 'सुनें / देखें' : 'Listen / Watch'}</span>
                   </span>
                   <span className="text-[#B3121B] font-extrabold group-hover:underline">
-                    {language === 'gu' ? 'શરૂ કરો ▶' : 'Play ▶'}
+                    {language === 'gu' ? 'શરૂ કરો ▶' : language === 'hi' ? 'शुरू करें ▶' : 'Play ▶'}
                   </span>
                 </div>
               </div>

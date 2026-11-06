@@ -5,6 +5,7 @@ import { Play, ExternalLink, Bell, RefreshCw, AlertCircle, X, ChevronLeft, Chevr
 import { useApp } from '@/components/AppProvider';
 import { getLocalized } from '@/data';
 import { ConsentGate } from '@/components/consent/ConsentGate';
+import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 function YoutubeIcon({ className = 'h-5 w-5' }: { className?: string }) {
   return (
@@ -366,7 +367,7 @@ export default function YouTubeLatest() {
                     {/* Info Container */}
                     <div className="flex flex-1 flex-col p-4">
                       <h3 className="line-clamp-2 text-sm font-bold leading-snug text-foreground group-hover:text-[#ff0000] transition-colors h-[2.5rem]">
-                        {video.title}
+                        <AutoTranslateString text={video.title} language={language} />
                       </h3>
                       
                       {/* Channel Row with Verified Badge */}

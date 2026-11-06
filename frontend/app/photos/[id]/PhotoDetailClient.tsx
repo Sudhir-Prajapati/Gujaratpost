@@ -164,7 +164,7 @@ const MorePhotoCard = memo(function MorePhotoCard({
   index: number;
   language: Language;
 }) {
-  const rawItemTitle = item.captionGu || item.caption || item.titleGu || item.title || item.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : 'Photo Gallery');
+  const rawItemTitle = item.captionGu || item.caption || item.titleGu || item.title || item.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery');
   const itemCategory = getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
   const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
   const initialSrc = resolvePhotoUrl(item, fallback);
@@ -775,7 +775,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                         setIsLightboxOpen(true);
                       }}
                       className="absolute top-3.5 right-3.5 z-20 flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white hover:bg-[#B3121B] transition-all border border-white/20 shadow-lg cursor-pointer"
-                      title={language === 'gu' ? 'મોટો ફોટો જુઓ' : 'View Fullscreen'}
+                      title={language === 'gu' ? 'મોટો ફોટો જુઓ' : language === 'hi' ? 'बड़ा फोटो देखें' : 'View Fullscreen'}
                       aria-label="Fullscreen"
                     >
                       <Maximize2 className="h-4.5 w-4.5 text-white" />
