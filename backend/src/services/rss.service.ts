@@ -204,7 +204,6 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       // Prefer updatedAt so aggregators (Dailyhunt) immediately detect updated galleries
       const photoTimestamp = new Date(photo.updatedAt || photo.createdAt);
       const pubDate = photoTimestamp.toUTCString();
-      const guidValue = `${photoUrl}?v=${photoTimestamp.getTime()}`;
 
       // Heading / Title
       const titleCandidate = lang === 'en'
@@ -316,7 +315,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>
       <link>${photoUrl}</link>
-      <guid isPermaLink="false">${guidValue}</guid>
+      <guid isPermaLink="true">${photoUrl}</guid>
       <description>${wrapCdata(rawDesc)}</description>
       <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
       <category>${wrapCdata(catName)}</category>
@@ -324,35 +323,15 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       <dc:creator>${wrapCdata(authorName)}</dc:creator>
       <author>editorial@gujaratpost.in (${escapeXml(authorName)})</author>`;
 
-      // Enclosure & Cover Media Content: lead image (JPEG for Dailyhunt)
+      // Enclosure & Lead Media Content: formatted identically to standard news articles for Dailyhunt article layout
       const leadImg = slides[0]?.src || '';
       if (leadImg && (leadImg.startsWith('http://') || leadImg.startsWith('https://'))) {
         const escapedLeadImg = escapeXml(leadImg);
         itemsXml += `
       <enclosure url="${escapedLeadImg}" type="image/jpeg" length="0" />
-      <media:content url="${escapedLeadImg}" medium="image" type="image/jpeg">
+      <media:content url="${escapedLeadImg}" medium="image">
         <media:title>${wrapCdata(rawTitle)}</media:title>
-        <media:description>${wrapCdata(rawDesc)}</media:description>
       </media:content>`;
-      }
-
-      // Media RSS: all images in the gallery grouped inside <media:group> for Dailyhunt gallery/slideshow card UI
-      if (slides.length > 0) {
-        itemsXml += `\n      <media:group>`;
-        for (const slide of slides) {
-          if (slide.src && (slide.src.startsWith('http://') || slide.src.startsWith('https://'))) {
-            const escapedImg = escapeXml(slide.src);
-            const slideTitle = slide.title || rawTitle;
-            const slideCaption = (slide.caption || slide.description || '').trim();
-            const hasDesc = slideCaption && slideCaption !== rawTitle;
-
-            itemsXml += `
-        <media:content url="${escapedImg}" medium="image" type="image/jpeg">
-          <media:title>${wrapCdata(slideTitle)}</media:title>${hasDesc ? `\n          <media:description>${wrapCdata(slideCaption)}</media:description>` : ''}
-        </media:content>`;
-          }
-        }
-        itemsXml += `\n      </media:group>`;
       }
 
       itemsXml += `
