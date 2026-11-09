@@ -30,7 +30,12 @@ yarn-error.log*
 backend/uploads/*
 !backend/uploads/.gitkeep
 
-# Keystores & Signing Secrets
+# Archives
+*.zip
+*.rar
+*.tar
+*.gz
+
 *.jks
 *.keystore
 signing-key-info.txt
