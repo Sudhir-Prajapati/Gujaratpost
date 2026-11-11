@@ -524,7 +524,7 @@ export default function CrimeSection({
                   alt={currentSlide.titleGu}
                   fill
                   sizes="(max-width: 768px) 100vw, 40vw"
-                  className="object-contain transition-transform duration-300"
+                  className="object-cover transition-transform duration-300"
                 />
                 <button
                   type="button"

@@ -565,7 +565,7 @@ export default function EntertainTechLifeSection({
                 </h4>
               </div>
               <div className="cc-thumb bg-muted shrink-0">
-                <Image src={a.img} alt={a.titleGu} fill sizes="105px" className="object-contain" />
+                <Image src={a.img} alt={a.titleGu} fill sizes="105px" className="object-cover transition-transform duration-300" />
               </div>
             </Link>
           ))}

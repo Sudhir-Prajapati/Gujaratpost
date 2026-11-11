@@ -149,7 +149,7 @@ export default function ShortsPageClient() {
                           alt={item.titleGu}
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                          className="object-contain transition-transform duration-300"
+                          className="object-cover transition-transform duration-300"
                         />
 
                         {/* Centered Circular Play Button */}

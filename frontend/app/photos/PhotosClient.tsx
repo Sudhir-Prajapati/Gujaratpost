@@ -56,23 +56,14 @@ function PhotoCardImage({ src: rawSrc, alt, index }: { src?: any; alt: string; i
   }, [rawSrc, fallback]);
 
   return (
-    <>
-      <img
-        src={src}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-      />
-      <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-      <Image
-        src={src}
-        alt={alt}
-        fill
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-        className="relative z-10 object-contain transition-transform duration-700 ease-out"
-        onError={() => setSrc(fallback)}
-      />
-    </>
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+      className="object-cover transition-transform duration-700 ease-out"
+      onError={() => setSrc(fallback)}
+    />
   );
 }
 
@@ -252,19 +243,12 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
                   className="group overflow-hidden rounded-xl border border-border bg-card shadow-sm hover:shadow-md transition-shadow"
                 >
                   <div className="relative aspect-video overflow-hidden bg-zinc-100 dark:bg-neutral-900">
-                    <img
-                      src={image}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-                    />
-                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
                     <Image
                       src={image}
                       alt={title}
                       fill
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                      className="relative z-10 object-contain transition-transform duration-300"
+                      className="object-cover transition-transform duration-300"
                     />
                   </div>
                   <div className="p-3">

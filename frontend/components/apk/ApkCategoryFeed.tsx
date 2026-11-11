@@ -219,8 +219,8 @@ export default function ApkCategoryFeed({
                 alt={heroArticle.titleGu || heroArticle.title}
                 fill
                 priority
-                className="object-contain transition-transform duration-500 group-hover:scale-105"
-                style={{ objectFit: 'contain', objectPosition: 'center' }}
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
                 sizes="(max-width: 640px) 100vw, 450px"
               />
               <span className="absolute top-2.5 left-2.5 bg-[#B3121B] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wide">

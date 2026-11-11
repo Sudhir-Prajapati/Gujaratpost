@@ -2119,7 +2119,7 @@ export default function HeroSection({
                   fill
                   priority
                   loading="eager"
-                  className="object-contain transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 768px) 100vw, 350px"
                 />
                 <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">

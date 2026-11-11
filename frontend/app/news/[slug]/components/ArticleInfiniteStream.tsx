@@ -330,16 +330,9 @@ function StreamArticleItem({
       >
         <img
           src={articleData.image}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-        />
-        <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-        <img
-          src={articleData.image}
           alt={getArticleTitle(articleData, language)}
-          className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-105"
-          style={{ objectFit: 'contain', objectPosition: 'center' }}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          style={{ objectFit: 'cover', objectPosition: 'center' }}
           loading="lazy"
         />
       </Link>

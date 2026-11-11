@@ -1138,7 +1138,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={heroArticle.image || (heroArticle as any).thumbnail || (heroArticle.videoId ? `https://img.youtube.com/vi/${heroArticle.videoId}/hqdefault.jpg` : undefined)}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition">
                           <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
@@ -1157,7 +1157,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={heroArticle.image || (heroArticle as any).featuredImage}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1230,7 +1230,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={art.image || art.featuredImage || art.thumbnail}
                           alt={getArticleTitle(art, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                         {isVid && (
                           <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
@@ -1304,7 +1304,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1328,7 +1328,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1373,7 +1373,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
                           alt={getArticleTitle(fourthStory, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1397,7 +1397,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
                           alt={getArticleTitle(fourthStory, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'contain', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
                         />
                       </div>
                     </Link>
@@ -1617,7 +1617,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                       <img
                         src={artImg}
                         alt={artTitle}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center' }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                         loading="lazy"
                       />
@@ -1680,20 +1680,11 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     href={`/photos/${photo.id || ''}`}
                     className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-black shadow-md transition-all duration-300 active:scale-[0.99]"
                   >
-                    {/* Ambient blurred backdrop so portrait images gracefully fill the box without being cropped */}
-                    <img
-                      src={photoSrc}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-                    />
-                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-
-                    {/* Main image - object-contain matching Photo Gallery */}
+                    {/* Main image - object-cover matching clean rectangle */}
                     <img
                       src={photoSrc}
                       alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                      className="relative z-10 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                       loading="lazy"
                     />
@@ -1750,20 +1741,11 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     className="group relative block overflow-hidden rounded-2xl border-2 border-[#b31217] bg-black shadow-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
                     style={{ aspectRatio: '1/1' }}
                   >
-                    {/* Ambient blurred backdrop so portrait images gracefully fill the box without being cropped */}
-                    <img
-                      src={photoSrc}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-                    />
-                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-
-                    {/* Main image - object-contain matching Photo Gallery */}
+                    {/* Main image - object-cover matching clean rectangle */}
                     <img
                       src={photoSrc}
                       alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                      className="relative z-10 w-full h-full object-contain transition-transform duration-700 ease-out group-hover:scale-105"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                       onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                       loading="lazy"
                     />

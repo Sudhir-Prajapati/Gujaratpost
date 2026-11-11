@@ -216,19 +216,12 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             className="group flex flex-col"
           >
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-zinc-100 dark:bg-neutral-900 mb-2 md:mb-3">
-              <img
-                src={featImage}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
               <Image
                 src={featImage}
                 alt="Fact Check Featured"
                 fill
                 sizes="(max-width: 1024px) 100vw, 35vw"
-                className="relative z-10 object-contain transition-transform duration-300"
+                className="object-cover transition-transform duration-300"
               />
             </div>
             <span className={`flex items-center gap-1 font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase tracking-wide ${featStatus.color}`}>
@@ -336,7 +329,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       alt={item.titleGu}
                       fill
                       sizes="(max-width: 1024px) 155px, 170px"
-                      className="object-contain transition-transform duration-300"
+                      className="object-cover transition-transform duration-300"
                     />
                   </div>
 

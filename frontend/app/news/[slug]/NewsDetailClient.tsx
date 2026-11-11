@@ -733,7 +733,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         : '';
 
     const safeImgUrl = sanitizeImageUrl(cleanUrl);
-    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none" /><div class="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true"></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-cover transition-transform duration-300" style="object-fit: cover; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -2329,35 +2329,23 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                           onEnded={handleNextImage}
                         />
                       ) : (
-                        <>
-                          {/* Ambient blurred backdrop for letterbox areas */}
-                          <img
-                            src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
-                            alt=""
-                            aria-hidden="true"
-                            className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-                          />
-                          {/* Light / Dark tint wash overlay */}
-                          <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-
-                          <Image
-                            src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
-                            alt={`${article.title} slide ${index + 1}`}
-                            fill
-                            priority={index === 0}
-                            loading={index === 0 ? 'eager' : 'lazy'}
-                            unoptimized={true}
-                            sizes="(max-width: 1024px) 100vw, 66vw"
-                            className="relative z-10 object-contain"
-                            style={{ objectFit: 'contain', objectPosition: 'center' }}
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              if (target.src && !target.src.includes('placehold.co')) {
-                                target.src = 'https://placehold.co/800x500/e2e8f0/94a3b8?text=Gujarat+Post';
-                              }
-                            }}
-                          />
-                        </>
+                        <Image
+                          src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
+                          alt={`${article.title} slide ${index + 1}`}
+                          fill
+                          priority={index === 0}
+                          loading={index === 0 ? 'eager' : 'lazy'}
+                          unoptimized={true}
+                          sizes="(max-width: 1024px) 100vw, 66vw"
+                          className="object-cover"
+                          style={{ objectFit: 'cover', objectPosition: 'center' }}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            if (target.src && !target.src.includes('placehold.co')) {
+                              target.src = 'https://placehold.co/800x500/e2e8f0/94a3b8?text=Gujarat+Post';
+                            }
+                          }}
+                        />
                       )}
                     </div>
                   );

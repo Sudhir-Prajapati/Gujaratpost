@@ -60,7 +60,7 @@ function GalleryStripImage({ src: initialSrc, alt, index }: { src?: any; alt: st
       fill
       sizes="(max-width: 768px) 85vw, 350px"
       draggable={false}
-      className="object-contain pointer-events-none transition-transform duration-700 ease-out"
+      className="object-cover pointer-events-none transition-transform duration-700 ease-out"
       onError={() => setSrc(fallback)}
     />
   );

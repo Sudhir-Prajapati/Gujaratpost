@@ -105,7 +105,7 @@ function SidebarPhotoCardImage({
       fill
       unoptimized
       sizes="(max-width: 768px) 100vw, 360px"
-      className="object-contain transition-transform duration-500 ease-out"
+      className="object-cover transition-transform duration-500 ease-out"
       onError={() => {
         if (src !== fallback) {
           setSrc(fallback);
@@ -307,7 +307,7 @@ export default function MediaSidebar({
                     alt={item.titleGu || item.title || 'Video'}
                     fill
                     sizes="(max-width: 768px) 100px, 120px"
-                    className="object-contain transition-transform duration-300"
+                    className="object-cover transition-transform duration-300"
                   />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover/thumb:bg-black/10 transition-all">
                     <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-white shadow-xs transition-transform group-hover/thumb:scale-110">
@@ -348,7 +348,7 @@ export default function MediaSidebar({
                   <img
                     src={(art as any).featuredImage || art.image || (art as any).thumbnail || '/assets/demo/1.jpg'}
                     alt={art.title || ''}
-                    className="absolute inset-0 w-full h-full object-contain transition-transform duration-300"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300"
                     loading="lazy"
                   />
                 </div>
