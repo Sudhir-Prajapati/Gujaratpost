@@ -475,11 +475,19 @@ export class HeroController {
 
         const fallbackFormatted = featuredFallbackRes.map(formatPost);
 
+        // Helper to exclude non-hard-news categories (e.g. Health) from top Hero slots
+        const isExcludedFromHeroTop = (p: any): boolean => {
+          if (!p) return true;
+          const catSlug = (p.category?.slug || p.categorySlug || '').toLowerCase().trim();
+          const catName = (p.category?.name || p.category?.nameGu || (typeof p.category === 'string' ? p.category : '') || '').toLowerCase().trim();
+          return catSlug === 'health' || catSlug === 'heath' || catName === 'health' || catName === 'હેલ્થ' || catName.includes('સ્વાસ્થ્ય') || catName.includes('આરોગ્ય');
+        };
+
         // Resolve Slots: Return explicitly assigned articles if set by Admin.
-        // If not assigned by admin (null/empty), leave as null so client/user side knows to use auto fallback (Articles 10, 11, 12).
-        const s1 = (slot1Id && postsMap.get(slot1Id)) ? postsMap.get(slot1Id) : null;
-        const s2 = (slot2Id && postsMap.get(slot2Id)) ? postsMap.get(slot2Id) : null;
-        const s3 = (slot3Id && postsMap.get(slot3Id)) ? postsMap.get(slot3Id) : null;
+        // If not assigned by admin (null/empty) or excluded (e.g. Health), leave as null so client/user side knows to use auto fallback (Articles 10, 11, 12).
+        const s1 = (slot1Id && postsMap.get(slot1Id) && !isExcludedFromHeroTop(postsMap.get(slot1Id))) ? postsMap.get(slot1Id) : null;
+        const s2 = (slot2Id && postsMap.get(slot2Id) && !isExcludedFromHeroTop(postsMap.get(slot2Id))) ? postsMap.get(slot2Id) : null;
+        const s3 = (slot3Id && postsMap.get(slot3Id) && !isExcludedFromHeroTop(postsMap.get(slot3Id))) ? postsMap.get(slot3Id) : null;
         const slots = [s1, s2, s3];
 
         // Resolve Trending News (preserving order and fallback)

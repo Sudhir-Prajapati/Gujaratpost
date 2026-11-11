@@ -4,23 +4,27 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
-const CATEGORIES = [
-  'home-updates-home',
-  'gujarat-updates-gujarat',
-  'politics-updates-politics',
-  'national-updates-national',
-  'international-updates-international',
-  'photo-gallery-updates-photo-gallery',
-  'entertainment-lifestyle-updates-entertainment-lifestyle',
-  'gandhinagar-updates-gandhinagar',
-  'ahmedabad-updates-ahmedabad',
-  'surat-updates-surat',
-  'vadodara-updates-vadodara',
-  'rajkot-updates-rajkot',
-  'crime-updates-crime',
-  'health-updates-health',
-  'technology-updates-technology',
-  'fact-check-updates-fact-check'
+const DEEPLINKS = [
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/home-updates-home',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/gujarat-updates-gujarat',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/politics-updates-politics',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/national-updates-national',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/international-updates-international',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/gallery-updates-gallery',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/entertainmentlifestyle-updates-entertainmentlifestyle',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/gandhinagar-updates-gandhinagar',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/ahmedabad-updates-ahmedabad',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/surat-updates-surat',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/vadodara-updates-vadodara',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/rajkot-updates-rajkot',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/popularstories-updates-popularstories',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/others-updates-others',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/video-updates-video',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/crime-updates-crime',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/heath-updates-heath',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/technology-updates-technology',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/shorts-updates-shorts',
+  'https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/factcheck-updates-factcheck'
 ];
 
 function findItems(obj) {
@@ -44,7 +48,6 @@ function cleanSlug(url) {
   try {
     const parts = url.replace(/\/+$/, '').split('/');
     let last = parts[parts.length - 1];
-    // if last part contains ? query, strip it
     last = last.split('?')[0];
     return decodeURIComponent(last).trim().toLowerCase();
   } catch (e) {
@@ -52,20 +55,11 @@ function cleanSlug(url) {
   }
 }
 
-function normalizeTitle(t) {
-  if (!t) return '';
-  return t
-    .replace(/[:\-–—,\.\|\(\)\?\'\"\s\t\n]+/g, '')
-    .trim()
-    .toLowerCase();
-}
-
 async function main() {
-  console.log('--- 1. Fetching all Gujarat Post stories from Dailyhunt ---');
+  console.log('--- 1. Fetching all 20 categories from Dailyhunt ---');
   const storiesMap = new Map();
 
-  for (const cat of CATEGORIES) {
-    const url = `https://m.dailyhunt.in/news/india/gujarati/gujarat+post-epaper-gujpost/${cat}`;
+  for (const url of DEEPLINKS) {
     try {
       const r = await fetch(url, {
         headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
@@ -82,12 +76,12 @@ async function main() {
         }
       }
     } catch (e) {
-      console.error(`Failed ${cat}: ${e.message}`);
+      console.error(url, e.message);
     }
   }
 
   const stories = Array.from(storiesMap.values());
-  console.log(`Total unique stories retrieved from Dailyhunt: ${stories.length}`);
+  console.log(`Total unique stories retrieved: ${stories.length}`);
 
   const uploadsNewsDir = path.join(__dirname, '..', 'uploads', 'news');
   const dhUploadsDir = path.join(__dirname, '..', 'uploads', 'dailyhunt_news');
@@ -95,63 +89,45 @@ async function main() {
   if (!fs.existsSync(dhUploadsDir)) fs.mkdirSync(dhUploadsDir, { recursive: true });
 
   const sqlStatements = [];
-  let downloadedCount = 0;
-  let skippedCount = 0;
-  let matchedCount = 0;
+  let downloaded = 0;
+  let cached = 0;
 
-  console.log('\n--- 2. Downloading images and matching with database ---');
-
-  for (let i = 0; i < stories.length; i++) {
-    const s = stories[i];
+  for (const s of stories) {
     const rawImgUrl = s.contentImage;
     if (!rawImgUrl) continue;
 
-    // Convert resize placeholder to high-resolution 800x600_80 or original
     const fullImgUrl = rawImgUrl.replace(/#DH_EMB_IMG_REP#__DHQ_\//, '800x600_80/');
-
     const sourceUrl = s.sourceProvidedContentUrl || s.publisherStoryUrl || '';
     const slug = cleanSlug(sourceUrl);
     const title = s.title.trim();
-    const titleNorm = normalizeTitle(title);
 
-    // Filename to save as
-    // e.g. dh_leopard-terror-on-diwali-night.webp or dh_s_<id>.webp
     const safeSlug = slug ? slug.replace(/[^a-z0-9\-]/gi, '_').slice(0, 80) : `dh_story_${s.id}`;
     const filename = `dh_${safeSlug}.webp`;
     const localNewsPath = path.join(uploadsNewsDir, filename);
     const localDhPath = path.join(dhUploadsDir, filename);
 
-    // Download file if not already downloaded
     if (!fs.existsSync(localNewsPath) || fs.statSync(localNewsPath).size < 1000) {
       try {
         const res = await fetch(fullImgUrl, {
-          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+          headers: { 'User-Agent': 'Mozilla/5.0' }
         });
         if (res.ok) {
           const buf = Buffer.from(await res.arrayBuffer());
           fs.writeFileSync(localNewsPath, buf);
           fs.writeFileSync(localDhPath, buf);
-          downloadedCount++;
-        } else {
-          console.error(`Failed to download ${fullImgUrl}: ${res.status}`);
-          continue;
+          downloaded++;
         }
-      } catch (err) {
-        console.error(`Error downloading ${fullImgUrl}: ${err.message}`);
-        continue;
+      } catch (e) {
+        console.error(`Failed ${fullImgUrl}:`, e.message);
       }
     } else {
-      // copy to dhUploadsDir as well
       if (!fs.existsSync(localDhPath)) {
         fs.copyFileSync(localNewsPath, localDhPath);
       }
-      skippedCount++;
+      cached++;
     }
 
     const relativeUrl = `/uploads/news/${filename}`;
-
-    // Create SQL statement
-    // Match by slug first, or by title
     const escapedRelUrl = relativeUrl.replace(/'/g, "''");
     const escapedTitle = title.replace(/'/g, "''");
 
@@ -165,17 +141,12 @@ async function main() {
         `UPDATE \`posts\` SET \`featuredImage\` = '${escapedRelUrl}' WHERE \`titleGu\` = '${escapedTitle}' OR \`title\` = '${escapedTitle}';`
       );
     }
-    matchedCount++;
   }
 
-  console.log(`\nResults:`);
-  console.log(`- Images downloaded: ${downloadedCount}`);
-  console.log(`- Images already cached: ${skippedCount}`);
-  console.log(`- SQL statements generated: ${sqlStatements.length}`);
+  console.log(`Downloaded: ${downloaded}, Cached: ${cached}, Total SQL: ${sqlStatements.length}`);
 
-  // Write SQL file
   const sqlContent = [
-    '-- Gujarat Post: Update recent article images from Dailyhunt CDN',
+    '-- Gujarat Post: Update article images from Dailyhunt CDN',
     'SET NAMES utf8mb4;',
     'START TRANSACTION;',
     '',
@@ -187,11 +158,9 @@ async function main() {
 
   const outSqlPath = path.join(__dirname, '..', 'update_dailyhunt_images.sql');
   fs.writeFileSync(outSqlPath, sqlContent, 'utf8');
-  console.log(`\nGenerated SQL file at: ${outSqlPath} (${(fs.statSync(outSqlPath).size / 1024).toFixed(1)} KB)`);
-  console.log(`Images saved in: ${dhUploadsDir}`);
+  console.log(`Generated: ${outSqlPath}`);
 }
 
 main()
   .catch(console.error)
   .finally(() => prisma.$disconnect());
-

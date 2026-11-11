@@ -916,6 +916,21 @@ export default function HeroSection({
     return true;
   };
 
+  // Helper to exclude non-hard-news categories (e.g. Health, Ayurveda, Lifestyle) from homepage top Hero slots
+  const isExcludedFromHeroTop = (a: any): boolean => {
+    if (!a) return true;
+    if (articleMatchesCat(a, 'health', 'heath', 'હેલ્થ', 'સ્વાસ્થ્ય', 'આરોગ્ય', 'lifestyle', 'લાઈફસ્ટાઈલ', 'ayurved', 'ayurveda', 'આયુર્વેદ')) {
+      return true;
+    }
+    const catSlug = (
+      (a as any).categorySlug ||
+      (typeof (a as any).category === 'string' ? (a as any).category : (a as any).category?.slug) ||
+      ''
+    ).toLowerCase().trim();
+    if (catSlug === 'health' || catSlug === 'heath' || catSlug === 'lifestyle') return true;
+    return false;
+  };
+
   const publishedInitialArticles = useMemo(() => {
     return [...(initialArticles || [])]
       .filter(isPublicArticle)
@@ -934,7 +949,9 @@ export default function HeroSection({
   // 2. Side Box: Articles 4 to 9 (6 cards)
   // 3. Bottom 3 Hero Boxes: Articles 10 to 12 (3 cards)
   const computeHeroPoolList = (arts: Article[], _heroSettingsData?: any) => {
-    const pubArts = (arts || []).filter(isPublicArticle);
+    const pubArts = (arts || [])
+      .filter(isPublicArticle)
+      .filter((a) => !isExcludedFromHeroTop(a));
 
     // Sort strictly latest first: articleNumber desc, then publishedAt desc
     const sortedLatest = [...pubArts].sort((a: Article, b: Article) => {
@@ -962,25 +979,28 @@ export default function HeroSection({
     pool: Article[],
     heroSettingsData?: any
   ): Article[] => {
-    // Default fallback: Articles 10, 11, 12 (0-indexed 9, 10, 11)
-    const auto10 = pool[9] || articlesList[9] || null;
-    const auto11 = pool[10] || articlesList[10] || null;
-    const auto12 = pool[11] || articlesList[11] || null;
+    const validPool = (pool || []).filter((a) => isPublicArticle(a) && !isExcludedFromHeroTop(a));
+    const validArticlesList = (articlesList || []).filter((a) => isPublicArticle(a) && !isExcludedFromHeroTop(a));
+
+    // Default fallback: Articles 10, 11, 12 (0-indexed 9, 10, 11) from valid non-excluded pool
+    const auto10 = validPool[9] || validArticlesList[9] || null;
+    const auto11 = validPool[10] || validArticlesList[10] || null;
+    const auto12 = validPool[11] || validArticlesList[11] || null;
 
     const slots = heroSettingsData?.slots;
     const setting = heroSettingsData?.setting;
 
-    const slot1 = (slots && slots[0] && isPublicArticle(slots[0]))
+    const slot1 = (slots && slots[0] && isPublicArticle(slots[0]) && !isExcludedFromHeroTop(slots[0]))
       ? slots[0]
-      : (setting?.slot1Id ? articlesList.find((a) => a.id === setting.slot1Id) : null);
+      : (setting?.slot1Id ? validArticlesList.find((a) => a.id === setting.slot1Id) : null);
 
-    const slot2 = (slots && slots[1] && isPublicArticle(slots[1]))
+    const slot2 = (slots && slots[1] && isPublicArticle(slots[1]) && !isExcludedFromHeroTop(slots[1]))
       ? slots[1]
-      : (setting?.slot2Id ? articlesList.find((a) => a.id === setting.slot2Id) : null);
+      : (setting?.slot2Id ? validArticlesList.find((a) => a.id === setting.slot2Id) : null);
 
-    const slot3 = (slots && slots[2] && isPublicArticle(slots[2]))
+    const slot3 = (slots && slots[2] && isPublicArticle(slots[2]) && !isExcludedFromHeroTop(slots[2]))
       ? slots[2]
-      : (setting?.slot3Id ? articlesList.find((a) => a.id === setting.slot3Id) : null);
+      : (setting?.slot3Id ? validArticlesList.find((a) => a.id === setting.slot3Id) : null);
 
     const card1 = slot1 || auto10;
     const card2 = slot2 || auto11;
@@ -1834,9 +1854,11 @@ export default function HeroSection({
               let afterTop3News: Article[] = [];
 
               // Prioritize articles where admin selected "Home / News" (isFeatured = true)
-              const homeNewsArticles: Article[] = manualGridArts.length > 0
-                ? manualGridArts
-                : articlesList.filter((a: Article) => a.isFeatured === true).slice(0, 9);
+              const homeNewsArticles: Article[] = (
+                manualGridArts.length > 0
+                  ? manualGridArts
+                  : articlesList.filter((a: Article) => a.isFeatured === true)
+              ).filter((a) => !isExcludedFromHeroTop(a)).slice(0, 9);
 
               if (homeNewsArticles.length > 0 && gridMode === 'manual') {
                 // Strictly sequential: First up to 3 articles in Spotlight Slider (Slide 1, Slide 2, Slide 3 in latest order)
@@ -1874,7 +1896,7 @@ export default function HeroSection({
                 if (baseArticles.length > 3) {
                   for (const art of baseArticles.slice(3, 9)) {
                     if (afterTop3News.length >= 6) break;
-                    if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                    if (art && art.id && !isExcludedFromHeroTop(art) && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
                       afterTop3News.push(art);
                     }
                   }
@@ -1883,7 +1905,7 @@ export default function HeroSection({
                 // Next 6 articles in Middle Column from uniqueTopStories if needed
                 for (const art of uniqueTopStories) {
                   if (afterTop3News.length >= 6) break;
-                  if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                  if (art && art.id && !isExcludedFromHeroTop(art) && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
                     afterTop3News.push(art);
                   }
                 }
@@ -1891,7 +1913,7 @@ export default function HeroSection({
                 if (afterTop3News.length < 6) {
                   for (const art of articlesList) {
                     if (afterTop3News.length >= 6) break;
-                    if (art && art.id && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                    if (art && art.id && !isExcludedFromHeroTop(art) && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
                       afterTop3News.push(art);
                     }
                   }
@@ -1910,7 +1932,7 @@ export default function HeroSection({
                       ...afterTop3News.slice(3),
                       ...uniqueTopStories.slice(9),
                       ...articlesList,
-                    ].filter((art, index, self) => art && (art.id || art.slug) && self.findIndex((a) => (a.id && a.id === art.id) || (a.slug && a.slug === art.slug)) === index)
+                    ].filter((art, index, self) => art && (art.id || art.slug) && !isExcludedFromHeroTop(art) && self.findIndex((a) => (a.id && a.id === art.id) || (a.slug && a.slug === art.slug)) === index)
               ).slice(0, 3);
 
               return (
