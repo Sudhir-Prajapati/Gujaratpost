@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { PrismaClient, Role, AccountStatus, PostStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import process from 'node:process';

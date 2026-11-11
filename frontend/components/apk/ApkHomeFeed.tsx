@@ -12,6 +12,7 @@ import ApkVideoPlayer from './ApkVideoPlayer';
 import ApkHomeSkeleton from './ApkHomeSkeleton';
 import ApkAdBanner from './ApkAdBanner';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 
 
 function getReelThumbnail(reel: any): string | null {
@@ -645,38 +646,12 @@ export default function ApkHomeFeed({
         </div>
 
         {remainingArticles.map((art, idx) => (
-          <Link
+          <MobileModernArticleCard
             key={`apk-feed-${art.id || art.slug || idx}-${idx}`}
-            href={`/news/${art.slug || art.id}`}
-            className="flex gap-3 bg-white dark:bg-[#18181b] p-3 rounded-xl border border-gray-400/80 dark:border-gray-800 shadow-xs active:bg-gray-50 dark:active:bg-gray-800/80 transition"
-          >
-            {/* Content Left */}
-            <div className="flex-1 flex flex-col justify-center min-w-0">
-              <span className="text-[10px] font-black text-[#B3121B] uppercase tracking-wide">
-                <AutoTranslateString
-                  text={art.category || 'ગુજરાત'}
-                  language={language}
-                />
-              </span>
-              <h3 className="font-extrabold text-[13.5px] leading-[1.35] text-gray-900 dark:text-gray-100 line-clamp-2 my-1">
-                <AutoArticleTitle
-                  article={art}
-                  language={language}
-                />
-              </h3>
-            </div>
-
-            {/* Thumbnail Right */}
-            <div className="relative w-24 h-24 shrink-0 rounded-lg overflow-hidden bg-slate-900 border border-gray-400 dark:border-gray-800">
-              <Image
-                src={art.image || '/logo.png'}
-                alt={art.titleGu || art.title || ''}
-                fill
-                className="object-cover"
-                sizes="96px"
-              />
-            </div>
-          </Link>
+            article={art}
+            language={language}
+            index={idx}
+          />
         ))}
 
         {/* Infinite Scroll Sentinel + Loading Spinner */}

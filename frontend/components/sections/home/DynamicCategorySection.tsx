@@ -10,6 +10,7 @@ import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoArticleExcerpt } from '@/components/ui/AutoTranslatedArticleText';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 
 const CATEGORY_SYNONYMS: Record<string, string[]> = {
   varsad: ['varsad', 'weather', 'rain', 'વરસાદ', 'હવામાન'],
@@ -209,8 +210,22 @@ export default function DynamicCategorySection({ category, language, initialArti
             </div>
           ) : null}
 
-          {/* Side Cards List (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col divide-y divide-border/50 bg-card border border-border/80 rounded-xl p-3 sm:p-4 shadow-sm">
+          {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+          <div className="lg:hidden flex flex-col gap-3.5 mt-2">
+            {sideArticles.map((art, sIdx) => (
+              <MobileModernArticleCard
+                key={`dyn-mob-${category}-${art.id}-${sIdx}`}
+                article={art}
+                language={language}
+                index={sIdx}
+                defaultCategoryLabel={categoryTitle}
+                defaultCategorySlug={catSlug}
+              />
+            ))}
+          </div>
+
+          {/* Desktop View (>= lg): Side Cards List (5 cols) */}
+          <div className="hidden lg:flex lg:col-span-5 flex-col divide-y divide-border/50 bg-card border border-border/80 rounded-xl p-3 sm:p-4 shadow-sm">
             {sideArticles.map((art, sIdx) => (
               <Link
                 key={`dyn-${category}-${art.id}-${sIdx}`}
@@ -228,7 +243,6 @@ export default function DynamicCategorySection({ category, language, initialArti
                   <h4 className="text-[14px] font-extrabold text-foreground leading-snug line-clamp-2 group-hover:text-[#B3121B] transition-colors">
                     <AutoArticleTitle article={art} language={language} />
                   </h4>
-
                 </div>
               </Link>
             ))}

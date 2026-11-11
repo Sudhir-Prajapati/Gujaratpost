@@ -2576,8 +2576,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
                 </div>
 
-                {/* Mobile view (< md): Hero Section style list (1 more news added: 3 items) */}
-                <div className="flex flex-col divide-y divide-border/60 md:hidden mt-3">
+                {/* Mobile view (< md): Modern separated cards with Category Pill & WhatsApp Share */}
+                <div className="flex flex-col gap-3.5 md:hidden mt-3">
                   {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 3).map((item, index) => (
                     <MobileHeroArticleCard
                       key={`rec-mob-${item.id || index}`}
@@ -2588,40 +2588,65 @@ export default function NewsDetailClient({ article, related, trending, articleUr
                   ))}
                 </div>
 
-                {/* Desktop view (>= md): UNTOUCHED */}
-                <div className="hidden md:block space-y-0 mt-3 transition-all duration-300">
+                {/* Desktop view (>= md): Modern Separated Cards with Bottom Shadow & Share */}
+                <div className="hidden md:flex flex-col gap-3 mt-3 transition-all duration-300">
                   {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 2).map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
                       <Link
                         key={item.id || index}
                         href={`/news/${item.slug}`}
-                        className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
+                        className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
                       >
-                        <div className="min-w-0 flex-1 pr-1">
-                          <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
-                            {itemCategory}
-                          </span>
-                          <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
-                            <AutoArticleTitle article={item} language={language} />
-                          </h3>
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1 pr-1">
+                            <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                              {itemCategory}
+                            </span>
+                            <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                              <AutoArticleTitle article={item} language={language} />
+                            </h3>
+                          </div>
+                          <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                            <Image
+                              src={getCardThumbnail(item, index)}
+                              alt={item.title || ''}
+                              fill
+                              sizes="100px"
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
                         </div>
-                        <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
-                          <img
-                            src={getCardThumbnail(item, index)}
-                            alt=""
-                            aria-hidden="true"
-                            className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
-                          />
-                          <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                          <Image
-                            src={getCardThumbnail(item, index)}
-                            alt={item.title || ''}
-                            fill
-                            sizes="114px"
-                            className="relative z-10 object-contain transition-transform duration-300 group-hover:scale-105"
-                            style={{ objectFit: 'contain', objectPosition: 'center' }}
-                          />
+
+                        {/* Bottom Row with Category Pill & WhatsApp Share */}
+                        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                            <span>{itemCategory}</span>
+                          </span>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              const title = getArticleTitle(item, language);
+                              const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
+                              const text = `${title}\n\n${url}`;
+                              if (typeof navigator !== 'undefined' && navigator.share) {
+                                navigator.share({ title, url, text }).catch(() => {
+                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                });
+                              } else {
+                                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                              }
+                            }}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                            aria-label="Share"
+                          >
+                            <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
+                            <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                          </button>
                         </div>
                       </Link>
                     );

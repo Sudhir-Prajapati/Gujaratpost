@@ -10,6 +10,7 @@ import { getPublicArticles } from '@/lib/api';
 import SidebarAdBanner from '@/components/ads/SidebarAdBanner';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { stripHtmlTags, DEMO_IMAGES, getMockRelativeTime } from './homeHelpers';
 
@@ -473,66 +474,18 @@ export default function WorldSection({ language, initialArticles }: { language: 
         {/* Left Column: Big horizontal featured card + 4-column horizontal card list */}
         <div className="flex flex-col min-w-0">
 
-          {/* Mobile View (< md): 1 Lead Featured Story + Compact News List */}
-          <div className="md:hidden flex flex-col">
-            {/* 1. Lead Featured Story */}
-            <Link
-              href={`/news/${featured.slug}`}
-              className="group flex flex-col pb-2 mb-1 border-b border-border/40"
-            >
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
-                <ArticleMedia
-                  src={featured.image}
-                  alt={featured.titleGu}
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-                <span className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9.5px] font-black px-2 py-0.5 rounded-sm select-none tracking-tight">
-                  {featured.watermarkGu}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mb-0.5">
-                <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider select-none leading-none">
-                  <AutoTranslateString text={featured.categoryGu} language={language} />
-                </span>
-              </div>
-              <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                {featured.article
-                  ? <AutoArticleTitle article={featured.article} language={language} />
-                  : <AutoTranslateString text={featured.titleGu} language={language} />}
-              </h3>
-            </Link>
-
-            {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section (1 more news added on mobile) */}
-            <div className="flex flex-col gap-2 mt-1">
-              {mobileCardsList.map((card) => (
-                <Link
-                  key={`mob-${card.id}`}
-                  href={`/news/${card.slug}`}
-                  className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-                >
-                  {/* Title & Metadata on the left */}
-                  <div className="flex flex-col min-w-0 flex-1 pr-1">
-                    <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
-                      <AutoTranslateString text={card.categoryGu} language={language} />
-                    </span>
-                    <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                      {card.article
-                        ? <AutoArticleTitle article={card.article} language={language} />
-                        : <AutoTranslateString text={card.titleGu} language={language} />}
-                    </h4>
-                  </div>
-
-                  {/* Thumbnail on the right */}
-                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                    <ArticleMedia
-                      src={card.image}
-                      alt={card.titleGu}
-                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
-                  </div>
-                </Link>
-              ))}
-            </div>
+          {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+          <div className="md:hidden flex flex-col gap-3.5 mt-2">
+            {(featured ? [featured, ...mobileCardsList] : mobileCardsList).map((card, idx) => (
+              <MobileModernArticleCard
+                key={`world-mob-${card.id}-${idx}`}
+                article={card.article || card}
+                language={language}
+                index={idx}
+                defaultCategoryLabel={card.categoryGu || (language === 'gu' ? 'વિશ્વ' : language === 'hi' ? 'विदेश' : 'World')}
+                defaultCategorySlug="world"
+              />
+            ))}
           </div>
 
           {/* Desktop View (>= md): Exactly preserved big horizontal featured card + 4-column cards */}

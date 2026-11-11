@@ -45,6 +45,7 @@ import ApkHomeSkeleton from '@/components/apk/ApkHomeSkeleton';
 import { HomePageSkeleton } from '@/components/ui/PageSkeleton';
 import { AutoArticleTitle, AutoArticleTitleWithPrefix, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 
 import VideoDesk from './home/VideoDesk';
 import CityHyperlocalSection from './home/CityHyperlocalSection';
@@ -455,7 +456,7 @@ function MobileHorizontalCardStrip({
             <Link
               key={art.id || idx}
               href={`/news/${art.slug}`}
-              className="group relative shrink-0 snap-center w-[84vw] sm:w-[325px] rounded-2xl bg-card dark:bg-card/90 border border-slate-200 dark:border-slate-800 shadow-2xs flex flex-col overflow-hidden select-none active:scale-[0.99] transition-all duration-200"
+              className="group relative shrink-0 snap-center w-[84vw] sm:w-[325px] rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden select-none active:scale-[0.99] transition-all duration-200"
             >
               {/* Top Image Container matching Fact Check UI (Image 2) */}
               <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
@@ -484,10 +485,41 @@ function MobileHorizontalCardStrip({
               </div>
 
               {/* Bottom Content Container */}
-              <div className="p-3.5 sm:p-4 flex flex-col justify-center flex-1 min-w-0">
+              <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
                 <h4 className="text-[15.5px] sm:text-[16.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
                   <AutoArticleTitle article={art} language={language} />
                 </h4>
+
+                {/* Bottom Row: Category Pill & WhatsApp Share */}
+                <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[11px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                    <span>{getCategoryLabel(art, language)}</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const title = getArticleTitle(art, language);
+                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${art.slug}`;
+                      const text = `${title}\n\n${url}`;
+                      if (typeof navigator !== 'undefined' && navigator.share) {
+                        navigator.share({ title, url, text }).catch(() => {
+                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                        });
+                      } else {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[12px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                    aria-label="Share"
+                  >
+                    <SocialIcon platform="whatsapp" className="w-3.5 h-3.5 fill-current" />
+                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                  </button>
+                </div>
               </div>
             </Link>
           ))}
@@ -594,7 +626,7 @@ function HeroStorySlider({
       onMouseLeave={() => setIsHovered(false)}
     >
       {/* ─── MOBILE VIEW (< md): Header First, then Image, then Category & Share (matches Image 2) ─── */}
-      <div className="flex md:hidden flex-col w-full">
+      <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4 mb-2">
         {/* 1. Header on Top: LIVE badge inline with Headline */}
         <Link href={`/news/${current.slug}`} className="group block mb-3">
           <h1 className="text-foreground font-black text-[18px] sm:text-[20px] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
@@ -1971,82 +2003,16 @@ export default function HeroSection({
                           ))}
                         </div>
 
-                        {/* ─── MOBILE VIEW (< md): Clean Compact Cards with Category Pill & WhatsApp Share (Matching Image 2) ─── */}
-                        <div className="flex flex-col gap-2.5 md:hidden">
-                          {afterTop3News.slice(0, 6).map((story, idx) => {
-                            const catSlug = (story as any).category?.slug || (story as any).categorySlug || 'news';
-                            const catLabel = getCategoryLabel(story, language);
-
-                            return (
-                              <div
-                                key={story.id || story.slug || idx}
-                                className="group flex flex-col p-3 sm:p-3.5 rounded-2xl bg-card/75 dark:bg-card/60 hover:bg-card/90 border border-border/60 hover:border-border transition-all min-w-0 shadow-2xs"
-                              >
-                                <div className="flex flex-row items-center justify-between gap-3 min-w-0">
-                                  {/* Left: Headline */}
-                                  <Link href={`/news/${story.slug}`} className="flex flex-col flex-1 min-w-0 pr-1">
-                                    <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                                      <AutoArticleTitleWithPrefix
-                                        article={story}
-                                        language={language}
-                                        prefixClassName={
-                                          idx % 2 === 0
-                                            ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
-                                            : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
-                                        }
-                                      />
-                                    </h3>
-                                  </Link>
-
-                                  {/* Right: Thumbnail */}
-                                  <Link
-                                    href={`/news/${story.slug}`}
-                                    className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted"
-                                  >
-                                    <ArticleMedia
-                                      src={story.image || (story as any).featuredImage || getArticleImage(story)}
-                                      alt={story.title || ''}
-                                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                                    />
-                                  </Link>
-                                </div>
-
-                                {/* Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) matching Image 2 */}
-                                <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-border/50">
-                                  <Link
-                                    href={`/category/${catSlug}`}
-                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs select-none"
-                                  >
-                                    <span>{catLabel}</span>
-                                    <ChevronRight className="w-3 h-3 text-muted-foreground" />
-                                  </Link>
-
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      const title = getArticleTitle(story, language);
-                                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${story.slug}`;
-                                      const text = `${title}\n\n${url}`;
-                                      if (typeof navigator !== 'undefined' && navigator.share) {
-                                        navigator.share({ title, url, text }).catch(() => {
-                                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                        });
-                                      } else {
-                                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                                      }
-                                    }}
-                                    className="inline-flex items-center gap-1.5 text-[13px] font-extrabold text-muted-foreground hover:text-emerald-600 active:scale-95 transition-colors cursor-pointer select-none"
-                                    aria-label="Share"
-                                  >
-                                    <SocialIcon platform="whatsapp" className="h-4 w-4 text-emerald-600 shrink-0" />
-                                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'शेयर' : 'Share'}</span>
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
+                        {/* ─── MOBILE VIEW (< md): Modern Separated Cards with Category Pill & WhatsApp Share ─── */}
+                        <div className="flex flex-col gap-3.5 md:hidden">
+                          {afterTop3News.slice(0, 6).map((story, idx) => (
+                            <MobileModernArticleCard
+                              key={story.id || story.slug || idx}
+                              article={story}
+                              language={language}
+                              index={idx}
+                            />
+                          ))}
                         </div>
                       </div>
                     )}

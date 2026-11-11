@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { getPublicCategories, getPublicArticles } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 
 /* ─── Per-category brand colour config ───────────────────────────────────── */
 type ColourScheme = {
@@ -366,7 +367,9 @@ export default function EntertainTechLifeSection({
     btnTextEn: string,
     icon: React.ReactNode,
     c: ColourScheme,
-    uid: string           // unique id so CSS selectors don't bleed between cards
+    uid: string,           // unique id so CSS selectors don't bleed between cards
+    rawArticles?: Article[],
+    catSlug?: string
   ) => (
     <div className={`cat-card-${uid} bg-card border-[1.5px] border-zinc-300 dark:border-zinc-700 rounded-2xl p-4 sm:p-5 shadow-sm hover:shadow-md flex flex-col justify-between min-w-0 h-full transition-all duration-300`}>
       <style>{`
@@ -548,8 +551,8 @@ export default function EntertainTechLifeSection({
           <div className="cc-bar" />
         </div>
 
-        {/* Article rows */}
-        <div className="flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800/80">
+        {/* Article rows - DESKTOP VIEW (>= md) */}
+        <div className="hidden md:flex flex-col divide-y divide-zinc-200 dark:divide-zinc-800/80">
           {items.map((a, i) => (
             <Link
               key={a.id || a.slug || `art-${i}`}
@@ -565,6 +568,20 @@ export default function EntertainTechLifeSection({
                 <Image src={a.img} alt={a.titleGu} fill sizes="105px" className="object-contain" />
               </div>
             </Link>
+          ))}
+        </div>
+
+        {/* Article rows - MOBILE VIEW (< md): Modern separated cards with Category Pill & WhatsApp Share */}
+        <div className="flex md:hidden flex-col gap-3.5 my-2">
+          {(rawArticles || []).slice(0, 4).map((art, i) => (
+            <MobileModernArticleCard
+              key={art.id || art.slug || `art-mob-${i}`}
+              article={art}
+              language={language}
+              index={i}
+              catSlug={catSlug || 'news'}
+              catLabel={language === 'gu' ? titleGu : titleEn}
+            />
           ))}
         </div>
       </div>
@@ -626,6 +643,8 @@ export default function EntertainTechLifeSection({
                 getCategoryIcon(cat.slug, scheme),
                 scheme,
                 uid,
+                catArticles,
+                cat.slug,
               )}
             </div>
           );

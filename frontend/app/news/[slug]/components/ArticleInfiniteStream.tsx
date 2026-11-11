@@ -8,6 +8,7 @@ import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, formatArticleDateTime, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
 import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 import ArticleShareAudioBar from './ArticleShareAudioBar';
 import { getPublicArticleBySlug } from '@/lib/api';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
@@ -435,8 +436,8 @@ function StreamArticleItem({
             <div className="flex-1 h-px bg-gradient-to-r from-[#B3121B]/20 to-transparent"></div>
           </div>
 
-          {/* Mobile View (< md): Hero Section style list */}
-          <div className="flex flex-col divide-y divide-border/60 md:hidden">
+          {/* Mobile View (< md): Modern separated cards with Category Pill & WhatsApp Share */}
+          <div className="flex flex-col gap-3.5 md:hidden">
             {readAlsoArticles.map((raArt, index) => (
               <MobileHeroArticleCard
                 key={`mobile-stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
@@ -447,43 +448,66 @@ function StreamArticleItem({
             ))}
           </div>
 
-          {/* Desktop View (>= md): existing 2-column card grid */}
-          <div className="hidden md:grid md:grid-cols-2 gap-3">
+          {/* Desktop View (>= md): Modern Separated Cards with Bottom Shadow & Share */}
+          <div className="hidden md:grid md:grid-cols-2 gap-3.5">
             {readAlsoArticles.map((raArt, index) => {
               const raCat = normalizeDisplayText(getCategoryLabel(raArt, language) || raArt.category || '');
               return (
                 <Link
                   key={`stream-${streamArticle.id}-ra-${raArt.id}-${index}`}
                   href={`/news/${raArt.slug}`}
-                  className="group flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl bg-white dark:bg-neutral-900 border border-neutral-200/90 dark:border-neutral-800 shadow-xs hover:border-[#B3121B] hover:shadow-[0_6px_20px_rgba(179,18,27,0.12)] dark:hover:shadow-[0_6px_20px_rgba(179,18,27,0.22)] hover:-translate-y-0.5 transition-all duration-300 text-left"
+                  className="group relative flex flex-col justify-between p-3.5 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg hover:border-accent/40 transition-all duration-300 text-left overflow-hidden"
                 >
-                  <div className="relative h-[70px] w-[90px] min-h-[70px] min-w-[90px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-sm">
-                    <img
-                      src={getCardThumbnail(raArt, index)}
-                      alt=""
-                      aria-hidden="true"
-                      className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
-                    />
-                    <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                    <img
-                      src={getCardThumbnail(raArt, index)}
-                      alt={getArticleTitle(raArt, language)}
-                      className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-                      style={{ objectFit: 'contain', objectPosition: 'center' }}
-                      loading="lazy"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 pr-1">
+                      <span className="block text-[11px] font-black uppercase tracking-wider text-[#B3121B] dark:text-red-400 mb-1">{raCat || 'સમાચાર'}</span>
+                      <h4 className="line-clamp-2 text-[14px] sm:text-[14.5px] font-bold text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-[1.38]">
+                        <AutoArticleTitle article={raArt} language={language} />
+                      </h4>
+                    </div>
+                    <div className="relative w-[100px] h-[72px] sm:w-[110px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                      <img
+                        src={getCardThumbnail(raArt, index)}
+                        alt={getArticleTitle(raArt, language)}
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Category Pill & WhatsApp Share Button */}
+                  <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[11px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                      <span>{raCat || 'સમાચાર'}</span>
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const title = getArticleTitle(raArt, language);
+                        const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${raArt.slug}`;
+                        const text = `${title}\n\n${url}`;
+                        if (typeof navigator !== 'undefined' && navigator.share) {
+                          navigator.share({ title, url, text }).catch(() => {
+                            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                          });
+                        } else {
+                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                        }
                       }}
-                    />
-                    <div className="absolute inset-0 z-20 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                      aria-label="Share"
+                    >
+                      <SocialIcon platform="whatsapp" className="w-3.5 h-3.5 fill-current" />
+                      <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                    </button>
                   </div>
-                  <div className="min-w-0 flex-1 flex flex-col gap-1">
-                    <span className="block text-[10.5px] font-black uppercase tracking-wider text-[#B3121B] opacity-85">{raCat}</span>
-                    <p className="line-clamp-3 text-[13px] font-bold text-neutral-800 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors duration-200 leading-snug">
-                      <AutoArticleTitle article={raArt} language={language} />
-                    </p>
-                  </div>
-                  <span className="shrink-0 mt-1 text-neutral-400 group-hover:text-[#B3121B] group-hover:translate-x-1 transition-all duration-200 text-sm font-bold">→</span>
                 </Link>
               );
             })}
@@ -680,8 +704,8 @@ export default function ArticleInfiniteStream({
           <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
         </div>
 
-        {/* Mobile View (< md): Hero Section style list (7 items) */}
-        <div className="flex flex-col divide-y divide-border/60 md:hidden">
+        {/* Mobile View (< md): Modern separated cards with Category Pill & WhatsApp Share (7 items) */}
+        <div className="flex flex-col gap-3.5 md:hidden mt-3">
           {(streamSidebarRecommendedPool.length > 0 ? streamSidebarRecommendedPool : sidebarRecommendedPool).slice(0, 7).map((item, index) => (
             <MobileHeroArticleCard
               key={`stream-rec-mob-${item.id || index}`}
@@ -692,39 +716,64 @@ export default function ArticleInfiniteStream({
           ))}
         </div>
 
-        {/* Desktop View (>= md): existing */}
-        <div className="hidden md:block space-y-0">
+        {/* Desktop View (>= md): Modern Separated Cards with Bottom Shadow & Share */}
+        <div className="hidden md:flex flex-col gap-3 mt-3">
           {(streamSidebarRecommendedPool.length > 0 ? streamSidebarRecommendedPool : sidebarRecommendedPool).slice(0, 6).map((item, index) => {
             const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
             return (
               <Link
-                key={item.id}
+                key={item.id || index}
                 href={`/news/${item.slug}`}
-                className="group flex items-start gap-3 py-2.5 border-b border-neutral-200/80 dark:border-neutral-800 last:border-b-0 text-left hover:opacity-90 transition-all"
+                className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
               >
-                <div className="min-w-0 flex-1 pr-1">
-                  <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-0.5">
-                    {itemCategory}
-                  </span>
-                  <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-3">
-                    <AutoArticleTitle article={item} language={language} />
-                  </h3>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1 pr-1">
+                    <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                      {itemCategory}
+                    </span>
+                    <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                      <AutoArticleTitle article={item} language={language} />
+                    </h3>
+                  </div>
+                  <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                    <img
+                      src={getCardThumbnail(item, index)}
+                      alt={item.title || ''}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
                 </div>
-                <div className="relative w-[108px] sm:w-[114px] h-[72px] sm:h-[76px] min-w-[108px] min-h-[72px] shrink-0 overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900 shadow-xs self-start">
-                  <img
-                    src={getCardThumbnail(item, index)}
-                    alt=""
-                    aria-hidden="true"
-                    className="absolute inset-0 w-full h-full object-cover scale-125 blur-xl opacity-60 dark:opacity-40 pointer-events-none"
-                  />
-                  <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-xs pointer-events-none" aria-hidden="true" />
-                  <img
-                    src={getCardThumbnail(item, index)}
-                    alt={item.title || ''}
-                    className="relative z-10 w-full h-full object-contain transition-transform duration-300 group-hover:scale-105"
-                    style={{ objectFit: 'contain', objectPosition: 'center' }}
-                    loading="lazy"
-                  />
+
+                {/* Bottom Row with Category Pill & WhatsApp Share */}
+                <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                    <span>{itemCategory || 'સમાચાર'}</span>
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const title = getArticleTitle(item, language);
+                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
+                      const text = `${title}\n\n${url}`;
+                      if (typeof navigator !== 'undefined' && navigator.share) {
+                        navigator.share({ title, url, text }).catch(() => {
+                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                        });
+                      } else {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                    aria-label="Share"
+                  >
+                    <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
+                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                  </button>
                 </div>
               </Link>
             );

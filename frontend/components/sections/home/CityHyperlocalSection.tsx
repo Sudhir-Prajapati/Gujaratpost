@@ -13,6 +13,7 @@ import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { stripHtmlTags, getLocalizedTrendingTags } from './homeHelpers';
 
 const toGuLocal = (num: number | string): string => {
@@ -1186,33 +1187,16 @@ export default function CityHyperlocalSection({
               </div>
             )}
 
-            {/* Mobile View (< md): Premium Boxed Cards matching Hero Section */}
-            <div className="md:hidden flex flex-col gap-2 mt-0">
-              {mockList.map((item) => (
-                <Link
+            {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+            <div className="md:hidden flex flex-col gap-3.5 mt-0">
+              {mockList.map((item, idx) => (
+                <MobileModernArticleCard
                   key={`mob-${item.id}`}
-                  href={`/news/${item.slug}`}
-                  className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-                >
-                  {/* Details on the left */}
-                  <div className="flex flex-col min-w-0 flex-1 pr-1">
-                    <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
-                      {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
-                    </span>
-                    <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                      <AutoTranslateString text={getLocalized(language, { en: item.title, gu: item.titleGu, hi: item.titleHi })} language={language} />
-                    </h4>
-                  </div>
-
-                  {/* Thumbnail on the right */}
-                  <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                    <ArticleMedia
-                      src={item.image}
-                      alt={item.titleGu}
-                      className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                    />
-                  </div>
-                </Link>
+                  article={item}
+                  language={language}
+                  index={idx}
+                  defaultCategoryLabel={getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
+                />
               ))}
             </div>
 
