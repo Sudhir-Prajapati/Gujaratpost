@@ -758,12 +758,21 @@ export async function getPublicWebStories(): Promise<any[]> {
 /**
  * Fetch Live Center data (Fuel, Market, Cricket, Football) from Express Backend API
  */
-export async function getLiveCenterData(): Promise<any> {
+export async function getLiveCenterData(forceRefresh = false): Promise<any> {
   try {
-    const url = `${API_BASE_URL}/live-center`;
-    const json = await fetchCachedJson<any>(url, 60 * 1000);
-    if (json?.success && json.data) {
-      return json.data;
+    const url = `${API_BASE_URL}/live-center?_t=${Date.now()}${forceRefresh ? '&refresh=true' : ''}`;
+    const res = await fetch(url, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+      },
+    });
+    if (res.ok) {
+      const json = await res.json();
+      if (json?.success && json.data) {
+        return json.data;
+      }
     }
   } catch (error: any) {
     if (process.env.NODE_ENV === 'development') {

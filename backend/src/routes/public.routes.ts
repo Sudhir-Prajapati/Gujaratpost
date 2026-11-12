@@ -1313,6 +1313,7 @@ export async function fetchFreshLiveCenterData(force = false) {
       bseRes,
       bankRes,
       bharatStocksRes,
+      cricinfoXml,
       cricketDbRes,
       footballRes,
       espnSoccerRes,
@@ -1323,12 +1324,13 @@ export async function fetchFreshLiveCenterData(force = false) {
       liveCngHtml
     ] = await Promise.all([
       fetchWithTimeout('https://open.er-api.com/v6/latest/USD', { headers }).then((r) => r ? r.json() : null).catch(() => null),
-      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI', { headers }).then((r) => r ? r.json() : null).catch(() => null),
-      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN', { headers }).then((r) => r ? r.json() : null).catch(() => null),
-      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEI?range=1d&interval=15m', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5EBSESN?range=1d&interval=15m', { headers }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://query1.finance.yahoo.com/v8/finance/chart/%5ENSEBANK?range=1d&interval=15m', { headers }).then((r) => r ? r.json() : null).catch(() => null),
       fetchWithTimeout('https://bharatstockapi.com/v1/stocks/quotes?symbols=RELIANCE,TCS,HDFCBANK', {
         headers: { 'X-API-Key': BHARAT_STOCK_API_KEY }
       }).then((r) => r ? r.json() : null).catch(() => null),
+      fetchWithTimeout('https://static.cricinfo.com/rss/livescores.xml', { headers }).then((r) => r ? r.text() : null).catch(() => null),
       fetchWithTimeout('https://api.cricketdatabase.com/v1/results/yesterday', {
         headers: { Authorization: `Bearer ${CRICKET_API_KEY}`, Accept: 'application/json' }
       }).then((r) => r ? r.json() : null).catch(() => null),
@@ -1354,15 +1356,17 @@ export async function fetchFreshLiveCenterData(force = false) {
     const parseYahooStock = (json: any, defaultName: string, defaultEx: string, defVal: number, defCh: number, defPct: number) => {
       try {
         const meta = json?.chart?.result?.[0]?.meta;
+        const quotes = json?.chart?.result?.[0]?.indicators?.quote?.[0]?.close;
+        const sparkline = Array.isArray(quotes) ? quotes.filter((n: any) => typeof n === 'number' && !isNaN(n)).slice(-10) : [];
         if (meta && meta.regularMarketPrice) {
           const val = Math.round(meta.regularMarketPrice * 10) / 10;
           const prevClose = meta.chartPreviousClose || meta.previousClose || val;
           const ch = Math.round((val - prevClose) * 10) / 10;
           const pct = Math.round((ch / prevClose) * 10000) / 100;
-          return { name: defaultName, exchange: defaultEx, value: val, change: ch, changePercent: pct };
+          return { name: defaultName, exchange: defaultEx, value: val, change: ch, changePercent: pct, sparkline };
         }
       } catch (e) { }
-      return { name: defaultName, exchange: defaultEx, value: defVal, change: defCh, changePercent: defPct };
+      return { name: defaultName, exchange: defaultEx, value: defVal, change: defCh, changePercent: defPct, sparkline: [] };
     };
 
     const stocks: any[] = [
@@ -1455,9 +1459,49 @@ export async function fetchFreshLiveCenterData(force = false) {
       ];
     }
 
-    // 4. Cricket Scores from Cricket Database API (with ESPN Live fallback)
+    // 4. Live Cricket Scores from Cricinfo RSS (Real-Time International & Domestic)
     let cricketMatches: any[] = [];
-    if (Array.isArray((cricketDbRes as any)?.data?.results) && (cricketDbRes as any).data.results.length > 0) {
+    if (cricinfoXml && typeof cricinfoXml === 'string') {
+      try {
+        const regex = /<item>[\s\S]*?<title>([\s\S]*?)<\/title>[\s\S]*?<description>([\s\S]*?)<\/description>[\s\S]*?<\/item>/gi;
+        let match;
+        while ((match = regex.exec(cricinfoXml)) !== null) {
+          const rawTitle = match[1].replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+          const parts = rawTitle.split(/\s+v\s+/i);
+          if (parts.length === 2) {
+            const isLive = rawTitle.includes('*');
+            const team1Raw = parts[0].trim();
+            const team2Raw = parts[1].trim();
+
+            const extractTeamScore = (str: string) => {
+              const scoreMatch = str.match(/(.*?)\s+((?:\d+\/\d+|\d+)(?:\s*(?:&amp;|&)\s*(?:\d+\/\d+|\d+))?(?:\s*\*)?)$/);
+              if (scoreMatch) {
+                return { name: scoreMatch[1].trim(), score: scoreMatch[2].trim() };
+              }
+              return { name: str.replace(/\*/g, '').trim(), score: '—' };
+            };
+
+            const t1 = extractTeamScore(team1Raw);
+            const t2 = extractTeamScore(team2Raw);
+
+            cricketMatches.push({
+              title: rawTitle.replace(/\*/g, '').trim(),
+              statusType: isLive ? 'live' : (t1.score !== '—' && t2.score !== '—' ? 'result' : 'time'),
+              statusText: isLive ? 'LIVE' : (t1.score !== '—' && t2.score !== '—' ? 'Result' : 'Upcoming'),
+              team1: t1.name,
+              team1Score: t1.score,
+              team2: t2.name,
+              team2Score: t2.score,
+              order: isLive ? 0 : 1
+            });
+          }
+        }
+        cricketMatches.sort((a, b) => a.order - b.order);
+      } catch (e) { }
+    }
+
+    // Fallback to Cricket Database API if Cricinfo returned 0 matches
+    if (cricketMatches.length === 0 && Array.isArray((cricketDbRes as any)?.data?.results) && (cricketDbRes as any).data.results.length > 0) {
       for (const r of (cricketDbRes as any).data.results) {
         if (cricketMatches.length >= 3) break;
         const t1 = r.teams?.[0];
@@ -1643,10 +1687,10 @@ export async function fetchFreshLiveCenterData(force = false) {
   }
 }
 
-// Background sync every 15 minutes: ensures the database always has fresh daily rates
+// Background sync every 2 minutes: ensures the database always has fresh live financial & sports data
 setInterval(() => {
   fetchFreshLiveCenterData().catch(() => { });
-}, 15 * 60 * 1000);
+}, 2 * 60 * 1000);
 
 /**
  * GET /api/public/live-center
@@ -1662,8 +1706,8 @@ router.get('/live-center', async (req, res) => {
     const t = updatedAtStr ? new Date(updatedAtStr).getTime() : (cacheTime || 0);
     if (!t || isNaN(t)) return { isDifferentDay: true, isStale: true, isVeryOld: true, time: 0 };
     const isDifferentDay = new Date(t).toDateString() !== new Date(NOW).toDateString();
-    const isStale = NOW - t >= 15 * 60 * 1000; // 15 mins
-    const isVeryOld = NOW - t >= 60 * 60 * 1000; // 1 hour
+    const isStale = NOW - t >= 60 * 1000; // 1 min freshness
+    const isVeryOld = NOW - t >= 15 * 60 * 1000; // 15 mins
     return { isDifferentDay, isStale, isVeryOld, time: t };
   };
 
