@@ -19,6 +19,30 @@ import {
   X,
   Home,
   Heart,
+  Globe,
+  MapPin,
+  Calendar,
+  Zap,
+  Leaf,
+  Newspaper,
+  TrendingUp,
+  Trophy,
+  Laptop,
+  Film,
+  HeartPulse,
+  Sprout,
+  ShieldAlert,
+  CheckCircle2,
+  Flame,
+  Video,
+  Camera,
+  Mic,
+  Coins,
+  MoreHorizontal,
+  CloudSun,
+  ArrowRight,
+  LogIn,
+  Share2,
 } from 'lucide-react';
 import { useApp } from '@/components/AppProvider';
 import { SocialLinks } from '@/components/ui/SocialLinks';
@@ -34,6 +58,142 @@ const languageLabels = {
   en: 'English',
   hi: 'हिन्दी',
 };
+
+const formatTopBarDate = (lang: string) => {
+  const d = new Date();
+  if (lang === 'gu') {
+    const monthsGu = [
+      'જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન',
+      'જુલાઈ', 'ઓગસ્ટ', 'સપ્ટેમ્બર', 'ઓક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર',
+    ];
+    return `${d.getDate()} ${monthsGu[d.getMonth()]}, ${d.getFullYear()}`;
+  }
+  if (lang === 'hi') {
+    const monthsHi = [
+      'जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून',
+      'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर',
+    ];
+    return `${d.getDate()} ${monthsHi[d.getMonth()]}, ${d.getFullYear()}`;
+  }
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+
+function getCategoryIcon(slug: string, name?: string) {
+  const s = (slug || '').toLowerCase().replace('/category/', '').replace('/', '');
+  const n = (name || '').toLowerCase();
+
+  // Gujarat
+  if (s === 'gujarat' || n.includes('ગુજરાત') || n.includes('gujarat')) {
+    return (
+      <img
+        src="/assets/GujaratLogo.png"
+        alt="Gujarat"
+        className="h-5 w-5 object-contain shrink-0"
+      />
+    );
+  }
+
+  // Bharat / National / India
+  if (s === 'national' || s === 'india' || s === 'bharat' || n.includes('ભારત') || n.includes('भारत')) {
+    return (
+      <svg viewBox="0 0 24 24" className="h-5 w-5 text-orange-500 shrink-0" fill="currentColor">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+      </svg>
+    );
+  }
+
+  // World / Vishva
+  if (s === 'world' || s === 'international' || s === 'vishva' || n.includes('વિશ્વ') || n.includes('विश्व')) {
+    return <Globe className="h-5 w-5 text-blue-500 shrink-0" />;
+  }
+
+  // Politics / Rajniti / Rajkaran
+  if (s === 'politics' || s === 'rajaniti' || n.includes('રાજ') || n.includes('राजनीति')) {
+    return (
+      <svg viewBox="0 0 24 24" className="h-5 w-5 text-amber-800 dark:text-amber-600 shrink-0" fill="currentColor">
+        <path d="M12 1 2 6v2h20V6L12 1zm-7 9v9h2v-9H5zm4 0v9h2v-9H9zm4 0v9h2v-9h-2zm4 0v9h2v-9h-2zm-15 11v2h20v-2H2z" />
+      </svg>
+    );
+  }
+
+  // Business
+  if (s === 'business' || s === 'bigness' || s === 'market' || n.includes('બિઝનેસ') || n.includes('बिजनेस')) {
+    return <TrendingUp className="h-5 w-5 text-red-600 shrink-0" />;
+  }
+
+  // Sports / Krida
+  if (s === 'sports' || s === 'krida' || n.includes('ક્રીડા') || n.includes('રમત') || n.includes('खेल')) {
+    return <Trophy className="h-5 w-5 text-yellow-500 shrink-0" />;
+  }
+
+  // Technology
+  if (s === 'technology' || s === 'tech' || n.includes('ટેક') || n.includes('तकनीक')) {
+    return <Laptop className="h-5 w-5 text-sky-500 shrink-0" />;
+  }
+
+  // Entertainment / Manoranjan
+  if (s === 'entertainment' || s === 'manoranjan' || n.includes('મનોરંજન') || n.includes('मनोरंजन')) {
+    return <Film className="h-5 w-5 text-red-600 shrink-0" />;
+  }
+
+  // Health
+  if (s === 'health' || n.includes('હેલ્થ') || n.includes('સ્વાસ્થ્ય') || n.includes('स्वास्थ्य')) {
+    return <HeartPulse className="h-5 w-5 text-red-600 shrink-0" />;
+  }
+
+  // Agriculture / Krushi
+  if (s === 'krushi' || s === 'agriculture' || n.includes('કૃષિ') || n.includes('ખેતી') || n.includes('कृषि')) {
+    return <Sprout className="h-5 w-5 text-emerald-600 shrink-0" />;
+  }
+
+  // Education / Shikshan
+  if (s === 'education' || s === 'shikshan' || n.includes('શિક્ષણ') || n.includes('शिक्षा')) {
+    return <BookOpen className="h-5 w-5 text-red-600 shrink-0" />;
+  }
+
+  // Crime
+  if (s === 'crime' || n.includes('ક્રાઇમ') || n.includes('अपराध')) {
+    return <ShieldAlert className="h-5 w-5 text-rose-600 shrink-0" />;
+  }
+
+  // Fact check
+  if (s.includes('fact') || n.includes('ફેક્ટ') || n.includes('फैक्ट')) {
+    return <CheckCircle2 className="h-5 w-5 text-teal-600 shrink-0" />;
+  }
+
+  // Trending
+  if (s.includes('trend') || n.includes('ટ્રેન્ડ') || n.includes('ट्रेंड')) {
+    return <Flame className="h-5 w-5 text-orange-500 shrink-0" />;
+  }
+
+  // Videos
+  if (s.includes('video') || n.includes('વીડિયો') || n.includes('वीडियो')) {
+    return <Video className="h-5 w-5 text-red-600 shrink-0" />;
+  }
+
+  // Photos / Gallery
+  if (s.includes('photo') || s.includes('gallery') || n.includes('ફોટો') || n.includes('फोटो')) {
+    return <Camera className="h-5 w-5 text-purple-600 shrink-0" />;
+  }
+
+  // Podcasts
+  if (s.includes('podcast') || n.includes('પોડકાસ્ટ')) {
+    return <Mic className="h-5 w-5 text-violet-600 shrink-0" />;
+  }
+
+  // Weather / Rain
+  if (s.includes('weather') || s.includes('varsad') || s.includes('rain') || n.includes('હવામાન') || n.includes('વરસાદ')) {
+    return <CloudSun className="h-5 w-5 text-sky-500 shrink-0" />;
+  }
+
+  // Gold - Silver
+  if (s.includes('gold') || n.includes('ગોલ્ડ') || n.includes('સોના')) {
+    return <Coins className="h-5 w-5 text-amber-500 shrink-0" />;
+  }
+
+  // Default / More
+  return <MoreHorizontal className="h-5 w-5 text-zinc-500 shrink-0" />;
+}
 
 const cityTranslations: Record<string, { gu: string; hi: string; en: string }> = {
   'અમદાવાદ': { gu: 'અમદાવાદ', hi: 'अहमदाबाद', en: 'Ahmedabad' },
@@ -168,6 +328,21 @@ export default function Header() {
   const [cityModalOpen, setCityModalOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [otherMenuOpen, setOtherMenuOpen] = useState(false);
+  const [liveTemp, setLiveTemp] = useState('28°C');
+  const [liveWeatherIcon, setLiveWeatherIcon] = useState('⛅');
+
+  useEffect(() => {
+    fetch('/api/weather-multi')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json?.success && json?.data?.weatherData) {
+          const w = json.data.weatherData[selectedCity] || json.data.weatherData.Ahmedabad;
+          if (w?.temp) setLiveTemp(w.temp);
+          if (w?.icon) setLiveWeatherIcon(w.icon);
+        }
+      })
+      .catch(() => {});
+  }, [selectedCity]);
   const triggerRef = useRef<HTMLDivElement>(null);
   const [dropdownLeft, setDropdownLeft] = useState<number | null>(null);
   const [hideStickyNav, setHideStickyNav] = useState(false);
@@ -391,6 +566,20 @@ export default function Header() {
     return { navLinks: mainNav, otherLinks: dropdownLinks };
   }, [dbCategories]);
 
+  const allDrawerCategories = useMemo(() => {
+    const combined = [...navLinks.filter((l) => l.href !== '/'), ...otherLinks];
+    const seen = new Set<string>();
+    const list: { label: string; labelGu?: string; labelHi?: string; href: string; slug?: string }[] = [];
+    for (const item of combined) {
+      if (!seen.has(item.href)) {
+        seen.add(item.href);
+        const slug = item.href.replace('/category/', '').replace('/', '');
+        list.push({ ...item, slug });
+      }
+    }
+    return list;
+  }, [navLinks, otherLinks]);
+
   // Determine active link: exact match for home, startsWith for others
   const isActive = (href: string) => {
     if (href === '/') return pathname === '/';
@@ -464,26 +653,39 @@ export default function Header() {
   return (
     <>
       <header ref={headerRef} className="relative z-[60] bg-card/95">
-        {/* Top bar: date + social */}
-        <div className="bg-black dark:bg-black text-white/95 select-none">
-          <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-1.5 min-h-[38px] sm:min-h-0">
-            {/* Left: Date + City */}
-            <div className="min-w-0 flex items-center gap-2 sm:gap-3 truncate text-xs sm:text-sm font-semibold opacity-90">
-              <span className="hidden sm:inline">
+        {/* Top bar: date + weather/city + quick actions */}
+        <div className="bg-black text-white select-none">
+          <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-1.5 min-h-[38px]">
+            {/* Left: Date + City + Weather */}
+            <div className="min-w-0 flex items-center gap-1.5 sm:gap-3 truncate text-xs sm:text-sm font-semibold opacity-95">
+              {/* Desktop full date */}
+              <span className="hidden sm:inline font-bold">
                 {mounted ? formatDateLong(language) : 'Sunday, 21 June 2026'}
               </span>
-              <span className="sm:hidden text-[13px] font-black text-white tracking-tight whitespace-nowrap">
-                {mounted ? formatDateShort(language) : '21 Jun 2026'}
+
+              {/* Mobile compact date with calendar icon */}
+              <span className="sm:hidden text-[12px] font-black text-white tracking-tight whitespace-nowrap flex items-center gap-1">
+                <span>📅</span>
+                <span>{mounted ? formatTopBarDate(language) : '12 નવે, 2026'}</span>
               </span>
+
               <span className="opacity-40">|</span>
+
+              {/* City location badge */}
               <button
                 type="button"
                 onClick={() => setCityModalOpen(true)}
-                className="inline-flex items-center gap-1.5 text-[12.5px] sm:text-xs font-black text-white hover:text-red-200 transition duration-150 cursor-pointer bg-white/15 hover:bg-white/25 px-2.5 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0 border border-white/10 shadow-2xs"
+                className="inline-flex items-center gap-1 text-[11.5px] sm:text-xs font-black text-white hover:text-red-200 transition duration-150 cursor-pointer bg-zinc-800/90 hover:bg-zinc-700 px-2 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0 border border-zinc-700 shadow-2xs"
               >
                 <span>📍</span>
                 <span>{cityTranslations[selectedCity]?.[language] || selectedCity}</span>
               </button>
+
+              {/* Mobile live weather */}
+              <span className="sm:hidden inline-flex items-center gap-1 text-[11.5px] font-bold text-white shrink-0 ml-0.5">
+                <span>{liveWeatherIcon}</span>
+                <span>{liveTemp}</span>
+              </span>
             </div>
 
             {/* Right: Desktop App buttons & Social links */}
@@ -512,33 +714,27 @@ export default function Header() {
               <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', whatsapp: 'https://wa.me/919909907237' }} />
             </div>
 
-            {/* Right: Mobile quick access badges (News Brief & AQI) */}
+            {/* Right: Mobile quick access badges (BRIEF & AQI matching reference pills) */}
             <div className="flex md:hidden items-center gap-1.5 shrink-0">
               <Link
                 href="/news-brief"
-                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-[#B3121B] shadow-sm"
+                className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black border border-red-600/80 hover:bg-zinc-900 active:bg-zinc-800 text-white text-[11.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 shadow-sm"
                 title="News Brief"
               >
-                <Image
-                  src="/rightSide.png"
-                  alt="News Brief"
-                  width={15}
-                  height={15}
-                  className="shrink-0 object-contain group-hover:translate-x-0.5 transition-transform"
-                />
-                <span className="text-white">BRIEF</span>
+                <Zap className="h-3 w-3 text-red-500 fill-red-500 shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="text-white font-black tracking-wide">BRIEF</span>
               </Link>
               <Link
                 href="/aqi"
-                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-[#B3121B] shadow-sm"
+                className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black border border-amber-500/80 hover:bg-zinc-900 active:bg-zinc-800 text-white text-[11.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 shadow-sm"
                 title="Weather & AQI"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="w-4 h-4 text-white shrink-0 group-hover:scale-110 transition-transform"
+                  className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.2"
+                  strokeWidth="2.4"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -549,7 +745,7 @@ export default function Header() {
                   <path d="M15.9 16A5 5 0 1 0 9 10.45" />
                   <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
                 </svg>
-                <span className="text-white">AQI</span>
+                <span className="text-white font-black tracking-wide">AQI</span>
               </Link>
             </div>
           </div>
@@ -656,12 +852,12 @@ export default function Header() {
             </div>
 
             {/* Controls (Mobile + Desktop compact icons) */}
-            <div className="flex shrink-0 items-center gap-1">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               {/* Mobile Search Icon Button */}
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
-                className="md:hidden flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-muted text-foreground transition hover:bg-secondary active:scale-95 shrink-0"
+                className="md:hidden flex h-8 w-8 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-foreground transition hover:bg-zinc-200 active:scale-95 shrink-0"
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />
@@ -672,38 +868,28 @@ export default function Header() {
                 <button
                   type="button"
                   onClick={() => setLanguageOpen((value) => !value)}
-                  className={`inline-flex h-7.5 sm:h-9 items-center gap-1 sm:gap-1.5 rounded-full bg-muted px-2 sm:px-3 text-[11px] sm:text-[13px] font-black text-foreground transition-all duration-200 hover:bg-secondary cursor-pointer shadow-xs active:scale-95 ${languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
-                    }`}
-                  style={{ fontWeight: 800 }}
+                  className={`inline-flex h-8 sm:h-9 items-center gap-1 sm:gap-1.5 rounded-full bg-zinc-100 dark:bg-zinc-800 px-2.5 sm:px-3 text-[11.5px] sm:text-[13px] font-black text-foreground transition-all duration-200 hover:bg-zinc-200 dark:hover:bg-zinc-700 cursor-pointer shadow-2xs active:scale-95 ${
+                    languageOpen ? 'ring-2 ring-red-600/50 bg-secondary' : ''
+                  }`}
                   aria-label="Switch language"
                   aria-expanded={languageOpen}
                 >
-                  {/* Globe icon */}
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <path d="M2 12h20" />
-                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                  </svg>
-                  {/* Desktop label */}
-                  <span className="hidden sm:inline font-black" style={{ fontWeight: 800 }}>
+                  <Globe className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-zinc-700 dark:text-zinc-300" />
+                  <span className="hidden sm:inline font-black">
                     {languageChosen ? languageLabels[language] : 'Language'}
                   </span>
-                  {/* Mobile label - compact to fit header controls without pushing the hamburger button off */}
-                  <span className="sm:hidden font-black" style={{ fontWeight: 800 }}>
-                    {languageChosen ? (language === 'gu' ? 'ગુજ' : language === 'hi' ? 'हि' : 'EN') : 'Lang'}
+                  <span className="sm:hidden font-black">
+                    {languageChosen ? (language === 'gu' ? 'ગુજ' : language === 'hi' ? 'હિ' : 'EN') : 'Lang'}
                   </span>
-                  <ChevronDown strokeWidth={2.5} className={`h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
+                  <ChevronDown strokeWidth={2.5} className={`h-3 w-3 sm:h-4 sm:w-4 shrink-0 transition-transform duration-300 ${languageOpen ? 'rotate-180 text-red-600' : ''}`} />
                 </button>
 
                 {languageOpen && (
                   <>
-                    {/* Backdrop overlay to close dropdown when clicking outside */}
                     <div
                       className="fixed inset-0 z-[9998] cursor-default"
                       onClick={() => setLanguageOpen(false)}
                     />
-
-                    {/* Dropdown Menu Popup with Smooth Scale & Slide Entrance Animation */}
                     <div className="absolute right-0 top-full z-[9999] mt-2 w-36 rounded-xl border border-border/90 bg-card p-1.5 shadow-[0_12px_40px_rgba(0,0,0,0.25)] backdrop-blur-md origin-top-right transition-all duration-200 animate-in fade-in-0 zoom-in-95 slide-in-from-top-2 notranslate">
                       {(['gu', 'en', 'hi'] as const).map((item) => {
                         const isSelected = languageChosen && language === item;
@@ -717,10 +903,11 @@ export default function Header() {
                               setLanguageChosen(true);
                               try { sessionStorage.setItem('gp-lang-chosen', 'true'); } catch (e) { }
                             }}
-                            className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs font-bold transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 ${isSelected
-                              ? 'bg-red-600 text-white font-extrabold shadow-sm'
-                              : 'text-foreground hover:bg-muted'
-                              }`}
+                            className={`flex items-center justify-between w-full rounded-lg px-3 py-2 text-left text-xs font-bold transition-all duration-150 cursor-pointer hover:scale-[1.02] active:scale-98 ${
+                              isSelected
+                                ? 'bg-red-600 text-white font-extrabold shadow-sm'
+                                : 'text-foreground hover:bg-muted'
+                            }`}
                           >
                             <span>{languageLabels[item]}</span>
                             {isSelected && (
@@ -738,17 +925,17 @@ export default function Header() {
               <button
                 type="button"
                 onClick={toggleTheme}
-                className="group inline-flex h-7.5 w-7.5 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-amber-500 dark:hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 hover:scale-105 active:scale-95 shadow-2xs cursor-pointer"
+                className="group inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 text-foreground transition-all duration-200 hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:text-amber-500 shrink-0 active:scale-95 shadow-2xs cursor-pointer"
                 aria-label="Toggle dark mode"
               >
                 {theme === 'dark' ? (
-                  <Sun className="h-4 w-4 text-amber-400 transition-transform duration-200 group-hover:rotate-45 group-hover:scale-110" />
+                  <Sun className="h-4 w-4 text-amber-400 transition-transform duration-200 group-hover:rotate-45" />
                 ) : (
-                  <Moon className="h-4 w-4 transition-transform duration-200 group-hover:-rotate-12 group-hover:scale-110" />
+                  <Moon className="h-4 w-4 transition-transform duration-200 group-hover:-rotate-12" />
                 )}
               </button>
 
-              {/* Saved News */}
+              {/* Saved News (Desktop) */}
               <Link
                 href="/saved"
                 className="group relative hidden md:inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
@@ -757,37 +944,21 @@ export default function Header() {
               >
                 <Bookmark className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
                 {savedCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#B3121B] text-[9.5px] font-black text-white shadow-sm ring-1 ring-white dark:ring-zinc-900 animate-in zoom-in-75 duration-200">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#B3121B] text-[9.5px] font-black text-white shadow-sm ring-1 ring-white dark:ring-zinc-900">
                     {savedCount > 99 ? '99+' : savedCount}
                   </span>
                 )}
               </Link>
 
-              {/* User / Login */}
+              {/* User / Login profile button (Matches Reference: circular red button with white user icon on mobile & desktop) */}
               <button
                 type="button"
-                onClick={() => {
-                  setAuthModalOpen(true);
-                }}
-                className="group hidden sm:inline-flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full border border-zinc-400 dark:border-zinc-700 bg-muted text-foreground transition-all duration-200 hover:border-red-600 dark:hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400 hover:scale-105 active:scale-95 shrink-0 shadow-2xs cursor-pointer"
+                onClick={() => setAuthModalOpen(true)}
+                className="flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700 active:scale-95 transition-all shadow-xs cursor-pointer shrink-0"
                 aria-label="Sign In"
                 title="Sign In"
               >
-                <User className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-              </button>
-
-              {/* Mobile hamburger — premium modern red button */}
-              <button
-                type="button"
-                onClick={() => setMenuOpen((v) => !v)}
-                className="relative inline-flex h-8.5 w-8.5 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-gradient-to-b from-[#e51d28] via-[#c6111a] to-[#a30b13] text-white md:hidden shrink-0 shadow-[0_2px_8px_rgba(179,18,27,0.35)] border border-white/20 active:scale-90 hover:brightness-110 transition-all duration-200 cursor-pointer overflow-hidden ml-1"
-                aria-label={menuOpen ? 'Close menu' : 'Open menu'}
-              >
-                <div className="flex flex-col justify-center items-center w-5 h-4 gap-[3.5px] pointer-events-none">
-                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-250 ease-out origin-center ${menuOpen ? 'rotate-45 translate-y-[5.5px]' : ''}`} />
-                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-150 ease-out ${menuOpen ? 'opacity-0 scale-x-0' : 'opacity-100'}`} />
-                  <span className={`block h-[2px] w-[17px] rounded-full bg-white transition-all duration-250 ease-out origin-center ${menuOpen ? '-rotate-45 -translate-y-[5.5px]' : ''}`} />
-                </div>
+                <User className="h-4 w-4 text-white" />
               </button>
             </div>
           </div>
@@ -838,10 +1009,63 @@ export default function Header() {
           )}
         </div>
 
+        {/* Row 3: Mobile Category Navigation Row (Matches Reference Exactly) */}
+        <div className="flex md:hidden items-center border-b border-border bg-white dark:bg-card px-2 py-0.5 select-none relative z-10 shadow-xs">
+          {/* Home icon button with red underline indicator */}
+          <Link
+            href="/"
+            onClick={() => setMenuOpen(false)}
+            className={`relative shrink-0 flex items-center gap-1 px-2.5 py-2 text-[13.5px] font-black transition-colors ${
+              pathname === '/' ? 'text-red-600' : 'text-zinc-800 dark:text-zinc-200 hover:text-red-600'
+            }`}
+          >
+            <Home className="h-4 w-4 shrink-0 text-red-600" />
+            <span>{language === 'gu' ? 'હોમ' : language === 'hi' ? 'होम' : 'Home'}</span>
+            {pathname === '/' && (
+              <span className="absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-red-600" />
+            )}
+          </Link>
+
+          {/* Horizontal scrollable categories */}
+          <div className="flex-1 min-w-0 flex items-center gap-3.5 overflow-x-auto scrollbar-none py-1.5 px-1.5 text-[13.5px] font-extrabold whitespace-nowrap">
+            {navLinks.filter((l) => l.href !== '/').map((link) => {
+              const active = isActive(link.href);
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuOpen(false)}
+                  className={`relative py-1 px-1 transition-colors shrink-0 ${
+                    active ? 'text-red-600 font-black' : 'text-zinc-800 dark:text-zinc-200 hover:text-red-600'
+                  }`}
+                >
+                  <span>{getNavLabel(link)}</span>
+                  {active && (
+                    <span className="absolute bottom-0 left-0 right-0 h-[2.5px] rounded-full bg-red-600" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Hamburger menu button on the right */}
+          <button
+            type="button"
+            onClick={() => setMenuOpen((v) => !v)}
+            className="shrink-0 p-1.5 ml-1 text-zinc-900 dark:text-zinc-100 hover:text-red-600 active:scale-90 transition-all cursor-pointer"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {menuOpen ? (
+              <X className="h-6 w-6 stroke-[2.2] text-red-600" />
+            ) : (
+              <Menu className="h-6 w-6 stroke-[2.2]" />
+            )}
+          </button>
+        </div>
+
         {/* -- Full-Screen Mobile Menu Drawer Overlay (below header) ------------- */}
-        {/* -- Mobile Menu Drawer: always mounted, CSS-transitioned open/close -- */}
         <div
-          className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-card text-foreground md:hidden overflow-y-auto select-none"
+          className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-[#F9FAFB] dark:bg-zinc-950 text-foreground md:hidden overflow-y-auto select-none"
           style={{
             top: `${headerHeight}px`,
             opacity: menuOpen ? 1 : 0,
@@ -851,196 +1075,311 @@ export default function Header() {
           }}
         >
           {/* Menu Drawer Content Container */}
-          <div className="px-4 py-4 space-y-4 pb-24">
-            {/* Mobile User Profile & Theme Toggle Bar */}
-            <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/60 border border-border">
+          <div className="px-3.5 py-3.5 space-y-3.5 pb-24">
+            {/* 4. Login Section Card */}
+            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FFF0F2] dark:bg-red-950/25 border border-red-100 dark:border-red-900/30 shadow-xs">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-600 text-white shrink-0 shadow-xs">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <h4 className="text-[14.5px] font-black text-zinc-900 dark:text-zinc-100 leading-tight">
+                    {language === 'gu' ? 'સાઇન ઇન / એકાઉન્ટ' : language === 'hi' ? 'साइन इन / खाता' : 'Sign In / Account'}
+                  </h4>
+                  <p className="text-[11.5px] font-medium text-zinc-600 dark:text-zinc-400 truncate mt-0.5">
+                    {language === 'gu' ? 'તમારા માટે વિવિધ સમાચાર અને અપડેટ્સ મેળવો' : language === 'hi' ? 'आपके लिए विभिन्न समाचार और अपडेट प्राप्त करें' : 'Get personalized news and updates'}
+                  </p>
+                </div>
+              </div>
               <button
                 type="button"
                 onClick={() => {
                   setMenuOpen(false);
                   setAuthModalOpen(true);
                 }}
-                className="flex items-center gap-2 text-xs font-black text-foreground hover:text-red-600 transition"
+                className="shrink-0 ml-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-900/50 text-red-600 dark:text-red-500 text-xs font-black hover:bg-red-50 active:scale-95 transition-all shadow-2xs cursor-pointer"
               >
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600 text-white shadow-xs">
-                  <User className="h-4 w-4" />
-                </div>
-                <span>{language === 'gu' ? 'સાઇન ઇન / એકાઉન્ટ' : language === 'hi' ? 'साइन इन / खाता' : 'Sign In / Account'}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={toggleTheme}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-card text-xs font-bold text-foreground transition active:scale-95"
-              >
-                {theme === 'dark' ? (
-                  <>
-                    <Sun className="h-3.5 w-3.5 text-amber-400" />
-                    <span>Light</span>
-                  </>
-                ) : (
-                  <>
-                    <Moon className="h-3.5 w-3.5 text-slate-700" />
-                    <span>Dark</span>
-                  </>
-                )}
+                <LogIn className="h-3.5 w-3.5" />
+                <span>{language === 'gu' ? 'લોગિન' : language === 'hi' ? 'लॉगिन' : 'Login'}</span>
               </button>
             </div>
 
-            {/* Mobile Saved Articles Banner */}
-            <Link
-              href="/saved"
-              onClick={() => setMenuOpen(false)}
-              className="group flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-red-600/10 via-red-600/5 to-transparent border border-red-600/25 text-foreground hover:bg-red-600/15 hover:border-red-600/40 transition-all shadow-xs"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[#e51d28] to-[#960f16] text-white shadow-sm group-hover:scale-105 transition-transform">
-                  <Bookmark className="h-4.5 w-4.5" />
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[14px] font-black text-foreground group-hover:text-red-600 dark:group-hover:text-red-400 transition-colors">
-                    {language === 'gu' ? 'સાચવેલા સમાચાર' : language === 'hi' ? 'सहेजे गए समाचार' : 'Saved News'}
-                  </span>
-                  <span className="text-[11.5px] font-medium text-muted-foreground">
-                    {savedCount > 0
-                      ? (language === 'gu' ? `${savedCount} સમાચાર સાચવેલા છે` : language === 'hi' ? `${savedCount} समाचार सहेजे गए हैं` : `${savedCount} news saved`)
-                      : (language === 'gu' ? 'કોઈ સમાચાર સાચવેલ નથી' : language === 'hi' ? 'कोई समाचार सहेजा नहीं गया' : 'No news saved yet')}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5">
+            {/* 5. Quick Access Cards (Grid 4 Cols) */}
+            <div className="grid grid-cols-4 gap-2">
+              {/* Card 1: Saved News */}
+              <Link
+                href="/saved"
+                onClick={() => setMenuOpen(false)}
+                className="flex flex-col items-center justify-center text-center p-2 rounded-2xl bg-[#FEECEF] dark:bg-red-950/25 border border-red-100 dark:border-red-900/30 hover:scale-[1.02] active:scale-95 transition-all shadow-2xs min-h-[92px]"
+              >
+                <Bookmark className="h-5 w-5 text-red-600 mb-1.5" />
+                <span className="text-[11.5px] font-black text-zinc-900 dark:text-zinc-100 leading-tight">
+                  {language === 'gu' ? 'સાચવેલા સમાચાર' : language === 'hi' ? 'सहेजे गए' : 'Saved News'}
+                </span>
                 {savedCount > 0 && (
-                  <span className="flex h-5.5 min-w-[22px] px-2 items-center justify-center rounded-full bg-[#B3121B] text-[11px] font-black text-white shadow-sm">
-                    {savedCount}
+                  <span className="text-[10px] font-bold text-red-600 mt-0.5">
+                    ({savedCount})
                   </span>
                 )}
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-              </div>
-            </Link>
-            {/* Quick Action Badges Bar: News Brief, AQI, E-Paper, Support Us */}
-            <div className={`grid ${
-              [true, true, epaperEnabled, supportEnabled].filter(Boolean).length === 4
-                ? 'grid-cols-4'
-                : [true, true, epaperEnabled, supportEnabled].filter(Boolean).length === 3
-                ? 'grid-cols-3'
-                : 'grid-cols-2'
-            } gap-1.5 sm:gap-2.5`}>
+              </Link>
+
+              {/* Card 2: BRIEF */}
               <Link
                 href="/news-brief"
                 onClick={() => setMenuOpen(false)}
-                className="group flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-zinc-900 dark:text-zinc-100 shadow-xs hover:bg-[#B3121B] hover:border-[#B3121B] hover:text-white active:bg-[#B3121B] active:border-[#B3121B] active:text-white hover:scale-[1.02] active:scale-95 transition-all duration-150 whitespace-nowrap select-none"
+                className="flex flex-col items-center justify-center text-center p-2 rounded-2xl bg-[#FEF7E6] dark:bg-amber-950/25 border border-amber-100 dark:border-amber-900/30 hover:scale-[1.02] active:scale-95 transition-all shadow-2xs min-h-[92px]"
               >
-                <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0 group-hover:brightness-110 transition" />
-                <span className="font-black tracking-wide leading-none group-hover:text-white group-active:text-white transition-colors">BRIEF</span>
+                <Zap className="h-5 w-5 text-amber-500 fill-amber-500 mb-1.5" />
+                <span className="text-[12.5px] font-black text-zinc-900 dark:text-zinc-100 leading-tight">BRIEF</span>
+                <span className="text-[9.5px] font-semibold text-zinc-500 dark:text-zinc-400 leading-none mt-0.5">
+                  {language === 'gu' ? '(ઝડપી સમાચાર)' : language === 'hi' ? '(त्वरित)' : '(Brief)'}
+                </span>
               </Link>
+
+              {/* Card 3: AQI */}
               <Link
                 href="/aqi"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-amber-500/15 border border-amber-500/40 h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-amber-600 dark:text-amber-400 shadow-sm hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
+                className="flex flex-col items-center justify-center text-center p-2 rounded-2xl bg-[#E8F7EE] dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/30 hover:scale-[1.02] active:scale-95 transition-all shadow-2xs min-h-[92px]"
               >
-                <svg
-                  viewBox="0 0 24 24"
-                  className="w-4 h-4 text-amber-500 shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M12 2v2" />
-                  <path d="m4.93 4.93 1.41 1.41" />
-                  <path d="M20 12h2" />
-                  <path d="m19.07 4.93-1.41 1.41" />
-                  <path d="M15.9 16A5 5 0 1 0 9 10.45" />
-                  <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
-                </svg>
-                <span className="font-black tracking-wide leading-none">AQI</span>
-              </Link>
-              {epaperEnabled && (
-                <a
-                  href="/epaper"
-                  onClick={() => setMenuOpen(false)}
-                  className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
-                >
-                  <BookOpen className="h-4 w-4 shrink-0 text-white" strokeWidth={2.4} />
-                  <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
-                    {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
-                  </span>
-                </a>
-              )}
-              {supportEnabled && <button
-                type="button"
-                onClick={() => {
-                  setMenuOpen(false);
-                  openSupportModal();
-                }}
-                onMouseEnter={prefetchSupportDetails}
-                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-white shadow-sm hover:scale-[1.02] active:scale-95 transition cursor-pointer whitespace-nowrap select-none border-0"
-              >
-                <Heart className="h-4 w-4 shrink-0 fill-white text-white" />
-                <span className="font-black text-[13.5px] sm:text-[14.5px] leading-none text-white tracking-normal">
-                  {language === 'gu' ? 'સપોર્ટ' : language === 'hi' ? 'સપોર્ટ' : 'Support'}
+                <Leaf className="h-5 w-5 text-emerald-600 fill-emerald-600 mb-1.5" />
+                <span className="text-[12.5px] font-black text-zinc-900 dark:text-zinc-100 leading-tight">AQI</span>
+                <span className="text-[9.5px] font-semibold text-zinc-500 dark:text-zinc-400 leading-none mt-0.5">
+                  {language === 'gu' ? '(હવાના ગુણવત્તા)' : language === 'hi' ? '(वायु गुणवत्ता)' : '(Air)'}
                 </span>
-              </button>}
-            </div>
+              </Link>
 
-            {/* App downloads CTA (Matches Footer Image 1 Style) */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+              {/* Card 4: E-Paper */}
               <a
-                href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
+                href="/epaper"
+                onClick={() => setMenuOpen(false)}
+                className="flex flex-col items-center justify-center text-center p-2 rounded-2xl bg-[#E6F2FE] dark:bg-blue-950/25 border border-blue-100 dark:border-blue-900/30 hover:scale-[1.02] active:scale-95 transition-all shadow-2xs min-h-[92px]"
               >
-                <AppleIcon className="h-4.5 w-4.5 text-white shrink-0" />
-                <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">App Store</span>
-              </a>
-              <a
-                href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
-                target="_blank"
-                rel="noreferrer"
-                className="flex items-center justify-center gap-2 rounded-xl border border-zinc-700 bg-zinc-900 py-2.5 px-3 text-white hover:border-zinc-500 hover:bg-zinc-800 active:scale-95 transition shadow-sm select-none cursor-pointer"
-              >
-                <PlayStoreIcon className="h-4.5 w-4.5 shrink-0" />
-                <span translate="no" className="text-[13px] sm:text-[13.5px] font-black text-white tracking-tight">Google Play</span>
+                <Newspaper className="h-5 w-5 text-blue-600 mb-1.5" />
+                <span className="text-[12px] font-black text-zinc-900 dark:text-zinc-100 leading-tight">
+                  {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
+                </span>
               </a>
             </div>
 
-            {/* Flat Link Grid */}
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
-              {[...navLinks, ...otherLinks].map((link, idx) => {
-                const active = isActive(link.href);
-                return (
-                  <a
-                    key={`${link.href}-${link.label || ''}-${idx}`}
-                    href={link.href}
-                    onClick={() => setMenuOpen(false)}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-semibold transition ${active
-                      ? 'border-accent/30 bg-accent/8 text-accent font-extrabold'
-                      : 'border-border bg-muted/60 text-foreground hover:border-accent/25 hover:text-accent'
+            {/* 6. News Categories – TWO COLUMN LAYOUT */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-5 w-1 rounded-full bg-red-600 shrink-0" />
+                  <h3 className="text-[15px] font-black text-zinc-900 dark:text-zinc-100">
+                    {language === 'gu' ? 'વર્ગો (Categories)' : language === 'hi' ? 'वर्ग (Categories)' : 'Categories'}
+                  </h3>
+                </div>
+                <Link
+                  href="/categories"
+                  onClick={() => setMenuOpen(false)}
+                  className="inline-flex items-center gap-1 text-xs font-black text-red-600 hover:text-red-700 transition"
+                >
+                  <span>{language === 'gu' ? 'બધા વર્ગો જુઓ' : language === 'hi' ? 'सभी वर्ग देखें' : 'View All'}</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+
+              {/* TWO COLUMN GRID */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {allDrawerCategories.map((cat, idx) => {
+                  const active = isActive(cat.href);
+                  return (
+                    <Link
+                      key={`${cat.href}-${idx}`}
+                      href={cat.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`flex items-center justify-between p-3 rounded-xl border bg-white dark:bg-zinc-900 shadow-2xs hover:scale-[1.01] active:scale-98 transition-all h-[50px] ${
+                        active
+                          ? 'border-red-600 ring-1 ring-red-600/40 text-red-600'
+                          : 'border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 hover:border-red-300'
                       }`}
-                    aria-current={active ? 'page' : undefined}
-                  >
-                    {active && (
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />
-                    )}
-                    <span className="truncate">{getNavLabel(link)}</span>
-                  </a>
-                );
-              })}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {getCategoryIcon(cat.slug || '', getNavLabel(cat))}
+                        <span className="truncate font-black text-[13px]">
+                          {getNavLabel(cat)}
+                        </span>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-zinc-400 shrink-0 ml-1" />
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Social links at bottom of drawer */}
-            <div className="pt-3 border-t border-border flex items-center gap-2.5">
-              <span className="text-xs font-bold text-muted-foreground shrink-0">Follow Us:</span>
-              <SocialLinks size="sm" hrefOverrides={{ news: 'https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu', whatsapp: 'https://wa.me/919909907237' }} />
+            {/* 7. App Promotion Section */}
+            <div className="rounded-2xl bg-black text-white p-3.5 border border-zinc-800 shadow-md relative overflow-hidden">
+              <div className="flex items-center gap-3">
+                {/* Smartphone mockups graphic */}
+                <div className="relative shrink-0 w-22 h-26 flex items-center justify-center">
+                  <div className="absolute left-0 top-1 w-15 h-24 rounded-xl border border-zinc-700 bg-zinc-900 overflow-hidden shadow-lg -rotate-6">
+                    <div className="h-3 bg-red-600 flex items-center justify-center px-1">
+                      <span className="text-[5px] font-black text-white">GUJARAT POST</span>
+                    </div>
+                    <div className="p-1 space-y-1">
+                      <div className="h-6 rounded bg-zinc-800" />
+                      <div className="h-1.5 w-3/4 bg-zinc-700 rounded" />
+                    </div>
+                  </div>
+                  <div className="absolute right-0 top-0 w-15 h-24 rounded-xl border border-zinc-600 bg-zinc-950 overflow-hidden shadow-2xl rotate-3">
+                    <div className="h-3.5 bg-[#B3121B] flex items-center justify-center px-1">
+                      <span className="text-[5px] font-black text-white tracking-tight">GUJARAT POST</span>
+                    </div>
+                    <div className="p-1 space-y-1">
+                      <div className="h-7 rounded bg-zinc-800 flex items-center justify-center">
+                        <img src="/GujaratpostFinalLogo.png" alt="logo" className="h-2.5 w-9 object-contain" />
+                      </div>
+                      <div className="h-1.5 w-full bg-zinc-700 rounded" />
+                      <div className="h-1.5 w-2/3 bg-zinc-700 rounded" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Text and buttons */}
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-[14px] font-black text-white leading-tight">Gujarat Post App</h4>
+                  <h5 className="text-[12.5px] font-bold text-white leading-tight mt-0.5">
+                    {language === 'gu' ? 'હવે તમારા મોબાઇલમાં' : language === 'hi' ? 'अब आपके मोबाइल में' : 'Now on your Mobile'}
+                  </h5>
+                  <p className="text-[10px] font-normal text-zinc-400 mt-1 leading-snug">
+                    {language === 'gu'
+                      ? 'ઝડપી, વિશ્વસનીય અને અપડેટેડ સમાચાર માટે એપ ડાઉનલોડ કરો.'
+                      : language === 'hi'
+                      ? 'त्वरित, विश्वसनीय और अद्यतन समाचार के लिए ऐप डाउनलोड करें।'
+                      : 'Download the app for fast and reliable news updates.'}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-1.5 mt-2">
+                    <a
+                      href="https://apps.apple.com/in/app/gujarat-post/id6475000526"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 py-1 px-1.5 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-xs"
+                    >
+                      <AppleIcon className="h-3.5 w-3.5 text-white shrink-0" />
+                      <span translate="no" className="text-[10px] font-black text-white tracking-tight">App Store</span>
+                    </a>
+                    <a
+                      href="https://play.google.com/store/apps/details?id=com.gujaratpost.app"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-1 rounded-lg border border-zinc-700 bg-zinc-900 py-1 px-1.5 text-white hover:border-zinc-500 active:scale-95 transition-all shadow-xs"
+                    >
+                      <PlayStoreIcon className="h-3.5 w-3.5 shrink-0" />
+                      <span translate="no" className="text-[10px] font-black text-white tracking-tight">Google Play</span>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 8. Social Media Section */}
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-200 dark:border-zinc-800">
+              <span className="text-xs font-black text-zinc-900 dark:text-zinc-100 shrink-0">Follow Us :</span>
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                {/* Facebook */}
+                <a
+                  href="https://www.facebook.com/gujpost.in"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-[#1877F2] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+                    <path d="M14.2 8.2V6.8c0-.7.5-.9.9-.9h2.2V2.1L14.2 2c-3.5 0-4.3 2.1-4.3 4.1v2.1H7.8v4.2h2.1V22h4.3v-9.6h2.9l.5-4.2h-3.4Z" />
+                  </svg>
+                </a>
+                {/* Instagram */}
+                <a
+                  href="https://www.instagram.com/gujaratpost.in/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-gradient-to-tr from-[#f09433] via-[#e6683c] via-[#dc2743] via-[#cc2366] to-[#bc1888] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="5" />
+                    <circle cx="12" cy="12" r="4.2" />
+                    <circle cx="17.4" cy="6.7" r="1.2" fill="currentColor" />
+                  </svg>
+                </a>
+                {/* YouTube */}
+                <a
+                  href="https://www.youtube.com/@Gujaratpostnews"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-[#FF0000] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M21.58 7.19a2.7 2.7 0 0 0-1.9-1.9C18 4.8 12 4.8 12 4.8s-6 0-7.68.49a2.7 2.7 0 0 0-1.9 1.9A28.4 28.4 0 0 0 2 12a28.4 28.4 0 0 0 .42 4.81 2.7 2.7 0 0 0 1.9 1.9c1.68.49 7.68.49 7.68.49s6 0 7.68-.49a2.7 2.7 0 0 0 1.9-1.9A28.4 28.4 0 0 0 22 12a28.4 28.4 0 0 0-.42-4.81ZM10 15V9l5.2 3L10 15Z" />
+                  </svg>
+                </a>
+                {/* WhatsApp */}
+                <a
+                  href="https://wa.me/919909907237"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-[#25D366] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/>
+                    <path d="M12.004 2.003A9.998 9.998 0 0 0 2 12.001c0 1.762.46 3.418 1.268 4.858L2.05 21.78a.5.5 0 0 0 .607.632l5.09-1.336A9.953 9.953 0 0 0 12.004 22c5.522 0 9.998-4.477 9.998-9.999S17.526 2.003 12.004 2.003zm0 18.001a8.299 8.299 0 0 1-4.232-1.156l-.303-.18-3.024.793.808-2.955-.198-.32A8.3 8.3 0 0 1 3.7 12.001c0-4.584 3.73-8.31 8.304-8.31 4.576 0 8.305 3.726 8.305 8.31 0 4.583-3.73 8.303-8.305 8.303z"/>
+                  </svg>
+                </a>
+                {/* X */}
+                <a
+                  href="https://x.com/maheshrpat59606"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="X"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-black text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3 w-3" fill="currentColor">
+                    <path d="M18.9 2H22l-6.8 7.8L23.2 22H17l-4.8-6.3L6.7 22H3.5l7.2-8.3L3 2h6.3l4.4 5.8L18.9 2Zm-1.1 17.9h1.7L8.4 4H6.6l11.2 15.9Z" />
+                  </svg>
+                </a>
+                {/* Telegram */}
+                <a
+                  href="https://t.me/gujaratpost"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Telegram"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-[#0088cc] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                >
+                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.27-5.63 3.73-.53.36-1.02.54-1.45.53-.48-.01-1.4-.27-2.09-.49-.84-.27-1.51-.42-1.45-.89.03-.25.38-.51 1.05-.78 4.12-1.79 6.87-2.97 8.24-3.55 3.92-1.63 4.73-1.91 5.27-1.92.12 0 .38.03.55.17.14.12.18.28.2.4.02.08.02.24.01.35z"/>
+                  </svg>
+                </a>
+                {/* Share */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined') {
+                      if (navigator.share) {
+                        navigator.share({ title: 'Gujarat Post', url: window.location.origin }).catch(() => {});
+                      } else {
+                        navigator.clipboard.writeText(window.location.origin);
+                        alert('Link copied to clipboard!');
+                      }
+                    }
+                  }}
+                  aria-label="Share"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:scale-110 active:scale-95 transition-transform shadow-xs cursor-pointer"
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
-      {/* -- Sticky Nav Section (Category Bar + District Bar) ------------------ */}
-      <div className={`${hideStickyNav ? 'relative z-50' : 'sticky top-0 z-50'} bg-card/98 shadow-md transition-all duration-300 ${menuOpen ? 'max-md:hidden' : ''}`}>
+      {/* -- Sticky Nav Section (Category Bar + District Bar) (Desktop only) ------------------ */}
+      <div className={`${hideStickyNav ? 'relative z-50' : 'sticky top-0 z-50'} bg-card/98 shadow-md transition-all duration-300 hidden md:block`}>
         {/* Desktop Nav Bar */}
         <nav
           className="hidden border-y-2 border-zinc-400 bg-card/98 md:block dark:border-zinc-600"
@@ -1216,8 +1555,8 @@ export default function Header() {
           </div>
         </nav>
 
-        {/* District Bar (Hidden on mobile when mobile menu drawer is open) */}
-        <div className={menuOpen ? 'max-md:hidden' : ''}>
+        {/* District Bar */}
+        <div>
           <DistrictBar navLinks={navLinks} otherLinks={otherLinks} />
         </div>
       </div>
