@@ -107,7 +107,7 @@ export default function MobileModernArticleCard({
       <div className="flex flex-row items-center justify-between gap-3 min-w-0">
         {/* Left: Headline with Auto Translation & colored prefix */}
         <Link href={href} className="flex flex-col flex-1 min-w-0 pr-1">
-          <h3 className="text-[16px] sm:text-[17px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+          <h3 className="text-[14.5px] sm:text-[15.5px] font-bold leading-[1.35] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
             <AutoArticleTitleWithPrefix
               article={article}
               language={language}

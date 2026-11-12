@@ -1500,7 +1500,7 @@ export default function Header() {
                       <a
                         href={link.href}
                         className={`relative flex h-11 items-center justify-center whitespace-nowrap ${link.href === '/' ? 'px-2.5 sm:px-3' : 'px-2 sm:px-2.5 xl:px-3 2xl:px-3.5'
-                          } text-[15px] xl:text-[16px] 2xl:text-[17px] font-extrabold tracking-tight transition-colors duration-150 ${active
+                          } text-[14px] xl:text-[14.5px] 2xl:text-[15px] font-bold tracking-tight transition-colors duration-150 ${active
                             ? 'text-accent'
                             : 'text-foreground hover:text-accent'
                           }`}
@@ -1568,7 +1568,7 @@ export default function Header() {
                     }
                     setOtherMenuOpen(!otherMenuOpen);
                   }}
-                  className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[15px] xl:text-[16px] 2xl:text-[17px] font-extrabold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
+                  className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[14px] xl:text-[14.5px] 2xl:text-[15px] font-bold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
                     }`}
                   style={{ fontWeight: 800 }}
                 >

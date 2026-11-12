@@ -528,7 +528,7 @@ function HeroStorySlider({
       <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4 mb-2">
         {/* 1. Header on Top: LIVE badge inline with Headline */}
         <Link href={`/news/${current.slug}`} className="group block mb-3">
-          <h1 className="text-foreground font-black text-[18px] sm:text-[20px] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
+          <h1 className="text-foreground font-bold text-[17px] sm:text-[18px] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
             <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
               LIVE
             </span>
@@ -713,7 +713,7 @@ function HeroStorySlider({
         </div>
 
         {/* Headline */}
-        <h1 className="text-foreground font-extrabold text-[21.5px] sm:text-[23.5px] md:text-[25.5px] leading-[1.24] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
+        <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[23.5px] leading-[1.24] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
           <AutoArticleTitle article={current} language={language} />
         </h1>
 
@@ -1996,7 +1996,7 @@ export default function HeroSection({
                     className="group flex items-start gap-2.5 py-2.5 px-3 hover:bg-muted/30 transition-colors rounded-lg"
                   >
                     <span className="w-2.5 h-2.5 rounded-full bg-[#B3121B] mt-1.5 shrink-0" />
-                    <h4 className="text-[15.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors flex-1 line-clamp-2">
+                    <h4 className="text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors flex-1 line-clamp-2">
                       <AutoArticleTitle article={art} language={language} />
                     </h4>
                   </Link>
