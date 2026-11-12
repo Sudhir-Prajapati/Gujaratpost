@@ -1017,7 +1017,8 @@ export default function HeroSection({
 
   // Helper to determine the 3 bottom cards:
   // If admin selected custom slot articles in /admin/hero, use them.
-  // Otherwise, automatically falls back to Articles 10, 11, 12 from latest articles pool.
+  // Bottom Row 3 Cards: Always prioritizes fresh, latest articles.
+  // Stale pinned slot articles (>48-72h) are automatically bypassed to ensure latest news.
   const getBottomCards = (
     pool: Article[],
     heroSettingsData?: any
@@ -1025,29 +1026,47 @@ export default function HeroSection({
     const validPool = (pool || []).filter((a) => isPublicArticle(a) && !isExcludedFromHeroTop(a));
     const validArticlesList = (articlesList || []).filter((a) => isPublicArticle(a) && !isExcludedFromHeroTop(a));
 
-    // Default fallback: Articles 10, 11, 12 (0-indexed 9, 10, 11) from valid non-excluded pool
-    const auto10 = validPool[9] || validArticlesList[9] || null;
-    const auto11 = validPool[10] || validArticlesList[10] || null;
-    const auto12 = validPool[11] || validArticlesList[11] || null;
+    const isStale = (art: any, maxHours = 72) => {
+      if (!art) return true;
+      const pubTime = new Date(art.publishedAt || art.createdAt || 0).getTime();
+      if (!pubTime || isNaN(pubTime)) return false;
+      return (Date.now() - pubTime) > maxHours * 60 * 60 * 1000;
+    };
 
     const slots = heroSettingsData?.slots;
     const setting = heroSettingsData?.setting;
+    const isManualMode = setting?.heroGridMode === 'manual';
 
-    const slot1 = (slots && slots[0] && isPublicArticle(slots[0]) && !isExcludedFromHeroTop(slots[0]))
+    // Only use manual slots if explicitly in manual mode AND not stale
+    const slot1 = (isManualMode && slots && slots[0] && isPublicArticle(slots[0]) && !isExcludedFromHeroTop(slots[0]) && !isStale(slots[0]))
       ? slots[0]
-      : (setting?.slot1Id ? validArticlesList.find((a) => a.id === setting.slot1Id) : null);
+      : (isManualMode && setting?.slot1Id ? validArticlesList.find((a) => a.id === setting.slot1Id && !isStale(a)) : null);
 
-    const slot2 = (slots && slots[1] && isPublicArticle(slots[1]) && !isExcludedFromHeroTop(slots[1]))
+    const slot2 = (isManualMode && slots && slots[1] && isPublicArticle(slots[1]) && !isExcludedFromHeroTop(slots[1]) && !isStale(slots[1]))
       ? slots[1]
-      : (setting?.slot2Id ? validArticlesList.find((a) => a.id === setting.slot2Id) : null);
+      : (isManualMode && setting?.slot2Id ? validArticlesList.find((a) => a.id === setting.slot2Id && !isStale(a)) : null);
 
-    const slot3 = (slots && slots[2] && isPublicArticle(slots[2]) && !isExcludedFromHeroTop(slots[2]))
+    const slot3 = (isManualMode && slots && slots[2] && isPublicArticle(slots[2]) && !isExcludedFromHeroTop(slots[2]) && !isStale(slots[2]))
       ? slots[2]
-      : (setting?.slot3Id ? validArticlesList.find((a) => a.id === setting.slot3Id) : null);
+      : (isManualMode && setting?.slot3Id ? validArticlesList.find((a) => a.id === setting.slot3Id && !isStale(a)) : null);
 
-    const card1 = slot1 || auto10;
-    const card2 = slot2 || auto11;
-    const card3 = slot3 || auto12;
+    const usedIds = new Set<string>();
+    if (slot1?.id) usedIds.add(slot1.id);
+    if (slot2?.id) usedIds.add(slot2.id);
+    if (slot3?.id) usedIds.add(slot3.id);
+
+    // Pick freshest latest articles from pool and articlesList that are not yet used
+    const freshCandidates = [...validPool, ...validArticlesList].filter((a) => a?.id && !usedIds.has(a.id) && !isStale(a, 168));
+
+    const card1 = slot1 || freshCandidates[0] || validPool[0] || null;
+    if (card1?.id) usedIds.add(card1.id);
+
+    const freshRemaining = freshCandidates.filter((a) => a?.id && !usedIds.has(a.id));
+    const card2 = slot2 || freshRemaining[0] || validPool[1] || null;
+    if (card2?.id) usedIds.add(card2.id);
+
+    const freshRemaining2 = freshRemaining.filter((a) => a?.id && !usedIds.has(a.id));
+    const card3 = slot3 || freshRemaining2[0] || validPool[2] || null;
 
     return [card1, card2, card3].filter(Boolean) as Article[];
   };
