@@ -555,11 +555,13 @@ export default function CrimeSection({
                 {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
               </span>
               <Link href={`/news/${currentSlide.slug}`} className="group/link flex flex-col justify-start">
-                <h3 className="font-extrabold text-[16px] md:text-[17.5px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-2">
-                  {currentSlide.article
-                    ? <AutoArticleTitle article={currentSlide.article} language={language} />
-                    : <AutoTranslateString text={currentSlide.titleGu} language={language} />}
-                </h3>
+                <div className="h-[46px] md:h-[50px] min-h-[46px] md:min-h-[50px] overflow-hidden flex items-start">
+                  <h3 className="font-extrabold text-[16px] md:text-[17.5px] leading-snug tracking-tight text-foreground hover:text-[#B3121B] transition-colors line-clamp-2">
+                    {currentSlide.article
+                      ? <AutoArticleTitle article={currentSlide.article} language={language} />
+                      : <AutoTranslateString text={currentSlide.titleGu} language={language} />}
+                  </h3>
+                </div>
               </Link>
             </div>
           </div>

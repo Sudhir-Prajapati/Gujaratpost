@@ -1147,35 +1147,35 @@ export default function CityHyperlocalSection({
                   </span>
                 </div>
 
-                {/* Info Text below image */}
+                {/* Info Text below image (Fixed heights prevent jumping layout shift on mobile when description length changes) */}
                 <div className="mt-2 md:mt-3 flex flex-col">
-                  <span className="text-[#B3121B] font-black text-[12.5px] uppercase tracking-wide mb-1 select-none">
+                  <span className="text-[#B3121B] font-black text-[12.5px] uppercase tracking-wide mb-1 select-none leading-none h-[18px] flex items-center truncate">
                     {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
                   </span>
 
                   <Link href={`/news/${currentSlide.slug}`} className="group/link">
-                    <div className="min-h-0 md:min-h-[52px]">
-                      <h3 className="font-extrabold text-[16.5px] md:text-[18px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
+                    <div className="h-[46px] md:h-[52px] min-h-[46px] md:min-h-[52px] overflow-hidden flex items-start">
+                      <h3 className="font-extrabold text-[16px] md:text-[18px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
                         <AutoTranslateString text={getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })} language={language} />
                       </h3>
                     </div>
                   </Link>
 
-                  <div className="min-h-0 md:min-h-[42px] mt-1 md:mt-1.5">
-                    <p className="text-muted-foreground text-[13.5px] leading-relaxed line-clamp-2 font-medium">
+                  <div className="h-[40px] md:h-[44px] min-h-[40px] md:min-h-[44px] mt-1 md:mt-1.5 overflow-hidden flex items-start">
+                    <p className="text-muted-foreground text-[13px] md:text-[13.5px] leading-snug line-clamp-2 font-medium">
                       <AutoTranslateString text={stripHtmlTags(getLocalized(language, { en: currentSlide.excerpt, gu: currentSlide.excerptGu, hi: currentSlide.excerptHi }))} language={language} />
                     </p>
                   </div>
 
-                  {/* Meta Details with Inline Tags */}
-                  <div className="flex items-center gap-2.5 mt-1.5 md:mt-3 text-[11px] text-muted-foreground font-semibold md:border-b md:border-border/40 pb-1 md:pb-3 mb-0 md:mb-3.5 overflow-hidden">
-                    <div className="flex flex-wrap gap-2">
+                  {/* Meta Details with Inline Tags (Fixed height prevents multi-line wrap shifts) */}
+                  <div className="h-[26px] min-h-[26px] mt-1.5 md:mt-3 flex items-center overflow-hidden md:border-b md:border-border/40 pb-0.5 md:pb-3 mb-0 md:mb-3.5">
+                    <div className="flex items-center gap-1.5 overflow-hidden flex-nowrap">
                       {currentSlide.tags.slice(0, 3).map((tag) => {
                         const tagLabel = getLocalizedTag(tag, language);
                         return (
                           <span
                             key={tag}
-                            className="bg-muted text-muted-foreground text-[10.5px] font-bold px-2 py-0.5 rounded-sm border border-border select-none animate-fade-in"
+                            className="bg-muted text-muted-foreground text-[10.5px] font-bold px-2 py-0.5 rounded-sm border border-border select-none shrink-0 truncate max-w-[120px]"
                           >
                             {tagLabel}
                           </span>
