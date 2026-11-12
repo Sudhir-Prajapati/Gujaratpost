@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Fuel, TrendingUp, Trophy, Shield, Megaphone, ChevronDown } from 'lucide-react';
+import { Fuel, TrendingUp, Trophy, Megaphone, ChevronDown } from 'lucide-react';
 import type { Language } from '@/types';
 import { getLiveCenterData } from '@/lib/api';
 
@@ -15,7 +15,7 @@ const FUEL_PRICE_CITY_MAP: Record<string, { petrol: string; diesel: string; cng:
 export default function LiveCenterSection({ language }: { language: Language }) {
   const [fuelCity, setFuelCity] = useState('Ahmedabad');
   const [fuelPrices, setFuelPrices] = useState(FUEL_PRICE_CITY_MAP);
-  const [mobileTab, setMobileTab] = useState<'fuel' | 'stocks' | 'cricket' | 'football'>('fuel');
+  const [mobileTab, setMobileTab] = useState<'fuel' | 'stocks' | 'cricket'>('fuel');
 
   // Live Stock Market state
   const [stocks, setStocks] = useState([
@@ -34,13 +34,6 @@ export default function LiveCenterSection({ language }: { language: Language }) 
     { title: 'DC v KKR', statusType: 'result', statusText: 'Result', team1: 'DC', team1Score: '135/5', team2: 'KKR', team2Score: '136/7 (19.5 ov)' },
   ]);
 
-  // Live Football state
-  const [footballMatches, setFootballMatches] = useState([
-    { league: 'ISL', statusType: 'live', statusText: "75'", homeTeam: 'Mumbai City FC', homeScore: '2', awayTeam: 'Mohun Bagan', awayScore: '1' },
-    { league: 'EPL', statusType: 'time', statusText: '22:00', homeTeam: 'Man City', homeScore: '—', awayTeam: 'Arsenal', awayScore: '—' },
-    { league: 'La Liga', statusType: 'time', statusText: '23:00', homeTeam: 'Real Madrid', homeScore: '—', awayTeam: 'Barcelona', awayScore: '—' },
-  ]);
-
   // Fetch live center data from API with periodic refresh every 2.5 minutes
   useEffect(() => {
     let isMounted = true;
@@ -54,9 +47,6 @@ export default function LiveCenterSection({ language }: { language: Language }) 
           if (data.usdRate) setUsdRate(data.usdRate);
           if (Array.isArray(data.cricketMatches) && data.cricketMatches.length > 0) {
             setCricketMatches(data.cricketMatches.filter((m: any) => m.team1 !== 'Team 1' && m.title !== 'Cricket Match'));
-          }
-          if (Array.isArray(data.footballMatches) && data.footballMatches.length > 0) {
-            setFootballMatches(data.footballMatches);
           }
         }
       } catch {}
@@ -95,30 +85,30 @@ export default function LiveCenterSection({ language }: { language: Language }) 
     FUEL_PRICE_CITY_MAP[fuelCity] ||
     FUEL_PRICE_CITY_MAP.Ahmedabad;
 
-  /* ── 1. Compact Fuel Card Content ── */
+  /* ── 1. Fuel Card Content (Bigger font, 3-col expanded) ── */
   const renderFuelPanel = () => (
-    <div className="flex flex-col justify-between h-full rounded-xl bg-gradient-to-b from-[#b8171f] to-[#910d14] text-white p-2.5 sm:p-3 shadow-xs">
-      <div className="flex items-center justify-between pb-1.5 border-b border-white/20 select-none">
-        <div className="flex items-center gap-1.5">
-          <Fuel className="h-4 w-4 text-white shrink-0" />
-          <h4 className="text-[13px] font-black tracking-tight leading-none text-white">Fuel Price</h4>
+    <div className="flex flex-col justify-between h-full rounded-2xl bg-gradient-to-b from-[#b8171f] to-[#910d14] text-white p-3.5 sm:p-4 shadow-sm">
+      <div className="flex items-center justify-between pb-2 border-b border-white/20 select-none">
+        <div className="flex items-center gap-2">
+          <Fuel className="h-5 w-5 text-white shrink-0" />
+          <h4 className="text-[15px] sm:text-[16px] font-black tracking-tight leading-none text-white">Fuel Price</h4>
         </div>
         <div className="relative">
           <select
             value={fuelCity}
             onChange={(e) => setFuelCity(e.target.value)}
-            className="appearance-none bg-black/35 hover:bg-black/50 text-white text-[11px] font-bold px-2 py-0.5 pr-5 rounded border border-white/25 focus:outline-none cursor-pointer"
+            className="appearance-none bg-black/40 hover:bg-black/55 text-white text-[12.5px] sm:text-[13px] font-bold px-2.5 py-1 pr-6 rounded-md border border-white/30 focus:outline-none cursor-pointer"
           >
             <option value="Ahmedabad" className="bg-slate-900 text-white">Ahmedabad</option>
             <option value="Vadodara" className="bg-slate-900 text-white">Vadodara</option>
             <option value="Surat" className="bg-slate-900 text-white">Surat</option>
             <option value="Rajkot" className="bg-slate-900 text-white">Rajkot</option>
           </select>
-          <ChevronDown className="h-3 w-3 text-white absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="h-3.5 w-3.5 text-white absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
 
-      <div className="space-y-1.5 py-1.5">
+      <div className="space-y-2 py-2.5">
         {[
           { name: 'Petrol', price: activeFuel.petrol, unit: '/L', symbol: 'P', symBg: 'bg-white text-red-700' },
           { name: 'Diesel', price: activeFuel.diesel, unit: '/L', symbol: 'D', symBg: 'bg-white text-blue-700' },
@@ -126,56 +116,56 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         ].map((item) => (
           <div
             key={item.symbol}
-            className="flex items-center justify-between rounded-lg bg-white/95 text-slate-900 px-2.5 py-1 shadow-2xs"
+            className="flex items-center justify-between rounded-xl bg-white/95 text-slate-900 px-3.5 py-2 shadow-2xs"
           >
-            <div className="flex items-center gap-2">
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center font-black text-[10px] shadow-2xs shrink-0 ${item.symBg}`}>
+            <div className="flex items-center gap-2.5">
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-[12px] shadow-2xs shrink-0 ${item.symBg}`}>
                 {item.symbol}
               </span>
-              <span className="font-bold text-[12px]">{item.name}</span>
+              <span className="font-extrabold text-[14px] sm:text-[15px]">{item.name}</span>
             </div>
             <div className="text-right">
-              <span className="font-black text-[13px] text-slate-900">₹{item.price}</span>
-              <span className="text-[9.5px] font-semibold text-slate-500 ml-0.5">{item.unit}</span>
+              <span className="font-black text-[16px] sm:text-[17px] text-slate-900">₹{item.price}</span>
+              <span className="text-[11px] sm:text-[12px] font-bold text-slate-500 ml-1">{item.unit}</span>
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-[9.5px] font-bold text-white/70 select-none pt-0.5 leading-none">
+      <p className="text-[10.5px] font-bold text-white/70 select-none pt-1 leading-none">
         Source: API Mitra & IOCL
       </p>
     </div>
   );
 
-  /* ── 2. Compact Stock Market Content ── */
+  /* ── 2. Stock Market Content (Bigger font, 3-col expanded) ── */
   const renderStocksPanel = () => (
-    <div className="flex flex-col justify-between h-full rounded-xl bg-gradient-to-b from-[#181c24] to-[#0e1117] text-white p-2.5 sm:p-3 border border-slate-800 shadow-xs">
-      <div className="flex items-center justify-between pb-1.5 border-b border-white/10 select-none">
-        <div className="flex items-center gap-1.5">
-          <TrendingUp className="h-4 w-4 text-sky-400 shrink-0" />
-          <h4 className="text-[13px] font-black tracking-tight leading-none text-white">Stock Market</h4>
+    <div className="flex flex-col justify-between h-full rounded-2xl bg-gradient-to-b from-[#181c24] to-[#0e1117] text-white p-3.5 sm:p-4 border border-slate-800 shadow-sm">
+      <div className="flex items-center justify-between pb-2 border-b border-white/10 select-none">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-sky-400 shrink-0" />
+          <h4 className="text-[15px] sm:text-[16px] font-black tracking-tight leading-none text-white">Stock Market</h4>
         </div>
-        <span className="text-[9.5px] font-black text-slate-400 bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
+        <span className="text-[11px] sm:text-[11.5px] font-black text-slate-300 bg-white/10 px-2 py-0.5 rounded-md border border-white/10">
           India ₹ INR
         </span>
       </div>
 
-      <div className="space-y-1.5 py-1.5">
+      <div className="space-y-2 py-2.5">
         {stocks.slice(0, 3).map((item) => (
           <div
             key={item.name}
-            className="flex items-center justify-between rounded-lg bg-[#12151b] border border-white/[0.06] px-2.5 py-1 hover:border-white/20 transition-colors"
+            className="flex items-center justify-between rounded-xl bg-[#12151b] border border-white/[0.08] px-3.5 py-2 hover:border-white/20 transition-colors"
           >
             <div>
-              <span className="font-extrabold text-[12px] text-white block leading-none">{item.name}</span>
-              <span className="text-[9px] font-bold text-slate-400 leading-none">{item.exchange}</span>
+              <span className="font-extrabold text-[14px] sm:text-[15px] text-white block leading-tight">{item.name}</span>
+              <span className="text-[10.5px] sm:text-[11px] font-bold text-slate-400 leading-tight">{item.exchange}</span>
             </div>
             <div className="text-right">
-              <span className="font-black text-[12.5px] text-white block leading-none">
+              <span className="font-black text-[15.5px] sm:text-[16.5px] text-white block leading-tight">
                 ₹{item.value.toLocaleString('en-IN', { maximumFractionDigits: 1 })}
               </span>
-              <span className={`text-[9.5px] font-extrabold leading-none ${item.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+              <span className={`text-[11px] sm:text-[12px] font-extrabold leading-tight ${item.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
                 {item.change >= 0 ? '+' : ''}{item.changePercent.toFixed(2)}%
               </span>
             </div>
@@ -183,35 +173,35 @@ export default function LiveCenterSection({ language }: { language: Language }) 
         ))}
       </div>
 
-      <p className="text-[9.5px] font-bold text-slate-400 select-none pt-0.5 leading-none">
+      <p className="text-[10.5px] font-bold text-slate-400 select-none pt-1 leading-none">
         Source: BharatStock & Yahoo
       </p>
     </div>
   );
 
-  /* ── 3. Compact Cricket Content ── */
+  /* ── 3. Cricket Content (Bigger font, 3-col expanded) ── */
   const renderCricketPanel = () => (
-    <div className="flex flex-col justify-between h-full rounded-xl bg-gradient-to-b from-[#b8171f] to-[#910d14] text-white p-2.5 sm:p-3 shadow-xs">
-      <div className="flex items-center justify-between pb-1.5 border-b border-white/20 select-none">
-        <div className="flex items-center gap-1.5">
-          <Trophy className="h-4 w-4 text-amber-300 shrink-0" />
-          <h4 className="text-[13px] font-black tracking-tight leading-none text-white">Cricket</h4>
+    <div className="flex flex-col justify-between h-full rounded-2xl bg-gradient-to-b from-[#b8171f] to-[#910d14] text-white p-3.5 sm:p-4 shadow-sm">
+      <div className="flex items-center justify-between pb-2 border-b border-white/20 select-none">
+        <div className="flex items-center gap-2">
+          <Trophy className="h-5 w-5 text-amber-300 shrink-0" />
+          <h4 className="text-[15px] sm:text-[16px] font-black tracking-tight leading-none text-white">Cricket</h4>
         </div>
-        <span className="bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
-          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+        <span className="bg-emerald-500 text-white text-[10.5px] font-black px-2 py-0.5 rounded-full flex items-center gap-1.5 shadow-2xs">
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           LIVE
         </span>
       </div>
 
-      <div className="space-y-1.5 py-1.5">
+      <div className="space-y-2 py-2.5">
         {cricketMatches.slice(0, 3).map((match, i) => (
           <div
             key={i}
-            className="rounded-lg bg-white/95 text-slate-900 px-2.5 py-1 shadow-2xs"
+            className="rounded-xl bg-white/95 text-slate-900 px-3.5 py-2 shadow-2xs"
           >
-            <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-500 pb-0.5 border-b border-slate-200">
-              <span className="truncate max-w-[120px] font-black text-slate-800">{match.title}</span>
-              <span className={`px-1 rounded text-[8.5px] font-black ${
+            <div className="flex items-center justify-between text-[11.5px] font-extrabold text-slate-600 pb-1 border-b border-slate-200">
+              <span className="truncate max-w-[180px] sm:max-w-[240px] font-black text-slate-900">{match.title}</span>
+              <span className={`px-1.5 py-0.5 rounded text-[9.5px] font-black ${
                 match.statusType === 'live'
                   ? 'bg-emerald-100 text-emerald-800'
                   : 'bg-slate-200 text-slate-700'
@@ -219,59 +209,16 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 {match.statusText}
               </span>
             </div>
-            <div className="flex justify-between items-center text-[11px] font-bold text-slate-800 pt-0.5">
-              <span>{match.team1}: <strong className="font-black text-slate-950">{match.team1Score}</strong></span>
-              <span>{match.team2}: <strong className="font-black text-slate-950">{match.team2Score}</strong></span>
+            <div className="flex justify-between items-center text-[13px] sm:text-[13.5px] font-bold text-slate-800 pt-1">
+              <span>{match.team1}: <strong className="font-black text-slate-950 text-[13.5px] sm:text-[14px]">{match.team1Score}</strong></span>
+              <span>{match.team2}: <strong className="font-black text-slate-950 text-[13.5px] sm:text-[14px]">{match.team2Score}</strong></span>
             </div>
           </div>
         ))}
       </div>
 
-      <p className="text-[9.5px] font-bold text-white/70 select-none pt-0.5 leading-none">
+      <p className="text-[10.5px] font-bold text-white/70 select-none pt-1 leading-none">
         Source: Cricket DB & ESPN
-      </p>
-    </div>
-  );
-
-  /* ── 4. Compact Football Content ── */
-  const renderFootballPanel = () => (
-    <div className="flex flex-col justify-between h-full rounded-xl bg-gradient-to-b from-[#181c24] to-[#0e1117] text-white p-2.5 sm:p-3 border border-slate-800 shadow-xs">
-      <div className="flex items-center justify-between pb-1.5 border-b border-white/10 select-none">
-        <div className="flex items-center gap-1.5">
-          <Shield className="h-4 w-4 text-sky-400 shrink-0" />
-          <h4 className="text-[13px] font-black tracking-tight leading-none text-white">Football</h4>
-        </div>
-        <span className="text-[9.5px] font-black text-slate-400 bg-white/10 px-1.5 py-0.5 rounded border border-white/10">
-          Scores
-        </span>
-      </div>
-
-      <div className="space-y-1.5 py-1.5">
-        {footballMatches.slice(0, 3).map((match, i) => (
-          <div
-            key={i}
-            className="rounded-lg bg-[#12151b] border border-white/[0.06] px-2.5 py-1"
-          >
-            <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-400 pb-0.5 border-b border-white/[0.06]">
-              <span className="truncate max-w-[120px] font-black text-slate-200">{match.league}</span>
-              <span className={`px-1 rounded text-[8.5px] font-black ${
-                match.statusType === 'live'
-                  ? 'bg-red-900/60 text-red-200'
-                  : 'bg-white/10 text-slate-300'
-              }`}>
-                {match.statusText}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-[11px] font-bold text-slate-300 pt-0.5">
-              <span className="truncate max-w-[110px]">{match.homeTeam} <strong className="text-white font-black">{match.homeScore}</strong></span>
-              <span className="truncate max-w-[110px] text-right"><strong className="text-white font-black">{match.awayScore}</strong> {match.awayTeam}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <p className="text-[9.5px] font-bold text-slate-400 select-none pt-0.5 leading-none">
-        Source: API-Sports & ESPN
       </p>
     </div>
   );
@@ -288,8 +235,8 @@ export default function LiveCenterSection({ language }: { language: Language }) 
               <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
               ((•)) Live Center
             </span>
-            <span className="hidden sm:inline text-[11.5px] text-muted-foreground font-bold">
-              Fuel · Stocks · Sports — 2.5m live
+            <span className="hidden sm:inline text-[12px] sm:text-[12.5px] text-muted-foreground font-bold">
+              Fuel · Stocks · Cricket — Live Updates
             </span>
           </div>
 
@@ -304,19 +251,18 @@ export default function LiveCenterSection({ language }: { language: Language }) 
           </div>
         </div>
 
-        {/* ── MOBILE TABS (< md): Allows switching with 1 tap, reducing mobile height by 85% ── */}
-        <div className="flex md:hidden items-center gap-1.5 pt-2 pb-1 overflow-x-auto scrollbar-hide select-none">
+        {/* ── MOBILE TABS (< md): 3 clean tabs ── */}
+        <div className="flex md:hidden items-center gap-2 pt-2.5 pb-1 overflow-x-auto scrollbar-hide select-none">
           {[
             { id: 'fuel' as const, label: '⛽ Fuel Price' },
             { id: 'stocks' as const, label: '📈 Stocks' },
             { id: 'cricket' as const, label: '🏏 Cricket' },
-            { id: 'football' as const, label: '⚽ Football' },
           ].map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setMobileTab(tab.id)}
-              className={`text-[11.5px] font-black px-3 py-1 rounded-lg transition-all shrink-0 cursor-pointer ${
+              className={`text-[12.5px] font-black px-3.5 py-1.5 rounded-lg transition-all shrink-0 cursor-pointer ${
                 mobileTab === tab.id
                   ? 'bg-[#B3121B] text-white shadow-xs'
                   : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/[0.1]'
@@ -327,32 +273,30 @@ export default function LiveCenterSection({ language }: { language: Language }) 
           ))}
         </div>
 
-        {/* ── MOBILE CONTENT (< md): Shows only the selected tab in a compact card ── */}
-        <div className="block md:hidden pt-1.5">
+        {/* ── MOBILE CONTENT (< md): Shows only the selected tab ── */}
+        <div className="block md:hidden pt-2">
           {mobileTab === 'fuel' && renderFuelPanel()}
           {mobileTab === 'stocks' && renderStocksPanel()}
           {mobileTab === 'cricket' && renderCricketPanel()}
-          {mobileTab === 'football' && renderFootballPanel()}
         </div>
 
-        {/* ── DESKTOP CONTENT (>= md): Sleek 4-Column Compact Grid (<200px height) ── */}
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3 pt-2.5">
+        {/* ── DESKTOP CONTENT (>= md): High-Impact 3-Column Grid ── */}
+        <div className="hidden md:grid md:grid-cols-3 gap-3.5 sm:gap-4 pt-3">
           {renderFuelPanel()}
           {renderStocksPanel()}
           {renderCricketPanel()}
-          {renderFootballPanel()}
         </div>
 
         {/* ── Bottom Live Highlights Ticker Bar ── */}
-        <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06] flex items-center gap-2 select-none w-full text-[11px]">
+        <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06] flex items-center gap-2.5 select-none w-full text-[12px]">
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="bg-[#B3121B] text-white text-[10.5px] font-black px-2 py-0.5 rounded flex items-center gap-1 shadow-xs shrink-0">
-              <Megaphone className="h-3 w-3" />
+            <span className="bg-[#B3121B] text-white text-[11px] font-black px-2.5 py-0.5 rounded flex items-center gap-1 shadow-xs shrink-0">
+              <Megaphone className="h-3.5 w-3.5" />
               Live Highlights
             </span>
           </div>
 
-          <div className="flex-1 flex items-center gap-3 font-bold text-slate-700 dark:text-slate-300 overflow-x-auto scrollbar-hide py-0.5">
+          <div className="flex-1 flex items-center gap-3.5 font-bold text-slate-700 dark:text-slate-300 overflow-x-auto scrollbar-hide py-0.5">
             <span className="whitespace-nowrap">{stocks[0].name} ₹{stocks[0].value.toLocaleString('en-IN', { maximumFractionDigits: 1 })} <span className={`font-black ${stocks[0].change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}>{stocks[0].change >= 0 ? '▲' : '▼'} {stocks[0].change}</span></span>
             <span className="text-slate-300 dark:text-slate-700">|</span>
             <span className="whitespace-nowrap">{stocks[1].name} ₹{stocks[1].value.toLocaleString('en-IN', { maximumFractionDigits: 1 })} <span className={`font-black ${stocks[1].change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}>{stocks[1].change >= 0 ? '▲' : '▼'} {stocks[1].change}</span></span>
