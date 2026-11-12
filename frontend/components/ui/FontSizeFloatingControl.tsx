@@ -37,7 +37,7 @@ export default function FontSizeFloatingControl() {
     autoCloseTimerRef.current = setTimeout(() => {
       setIsOpen(false);
       setDragPct(null);
-    }, 3500);
+    }, 4000);
   }, []);
 
   const clearAutoCloseTimer = useCallback(() => {
@@ -47,7 +47,6 @@ export default function FontSizeFloatingControl() {
     }
   }, []);
 
-  // When open state changes
   useEffect(() => {
     if (isOpen) {
       resetAutoCloseTimer();
@@ -58,7 +57,7 @@ export default function FontSizeFloatingControl() {
     }
   }, [isOpen, resetAutoCloseTimer, clearAutoCloseTimer]);
 
-  // Click outside to close
+  // Click outside closes the slider
   useEffect(() => {
     if (!isOpen) return;
 
@@ -83,7 +82,7 @@ export default function FontSizeFloatingControl() {
     };
   }, [isOpen]);
 
-  // Calculate level directly from vertical pointer position (drag up = increase, drag down = decrease)
+  // Calculate level directly from vertical pointer position on the 180px track
   const updateFromPointer = useCallback((clientY: number) => {
     const track = trackRef.current;
     if (!track) return;
@@ -94,12 +93,13 @@ export default function FontSizeFloatingControl() {
     const pct = Math.round(fraction * 100);
     setDragPct(pct);
 
-    let nextLevel = 0;
-    if (fraction < 0.28) {
+    // Band mapping with a wide comfort zone for 16px (Normal)
+    let nextLevel = 1;
+    if (fraction < 0.25) {
       nextLevel = 0; // 14px
-    } else if (fraction < 0.58) {
+    } else if (fraction < 0.60) {
       nextLevel = 1; // 16px (Normal / Default)
-    } else if (fraction < 0.84) {
+    } else if (fraction < 0.85) {
       nextLevel = 2; // 18px (Large)
     } else {
       nextLevel = 3; // 20px (XL)
@@ -108,7 +108,7 @@ export default function FontSizeFloatingControl() {
     setFsLevel(nextLevel);
   }, [setFsLevel]);
 
-  // Butter-smooth window-level pointer tracking (no lag, 60-120fps)
+  // Window-level butter-smooth pointer movement
   useEffect(() => {
     if (!isDragging) return;
     clearAutoCloseTimer();
@@ -136,10 +136,12 @@ export default function FontSizeFloatingControl() {
     };
   }, [isDragging, updateFromPointer, clearAutoCloseTimer, resetAutoCloseTimer]);
 
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+  const handleTrackPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (!isOpen) {
+      // If collapsed, only open! Never calculate or change font size on initial open tap!
       setIsOpen(true);
+      return;
     }
     setIsDragging(true);
     updateFromPointer(e.clientY);
@@ -157,15 +159,14 @@ export default function FontSizeFloatingControl() {
     }
     lastTapRef.current = now;
 
-    if (isOpen) {
-      // Toggle or keep open
-      resetAutoCloseTimer();
-    } else {
+    if (!isOpen) {
       setIsOpen(true);
+    } else {
+      resetAutoCloseTimer();
     }
   };
 
-  // Skip on admin, login, cms, news-brief
+  // Don't render on admin, login, or news-brief screens
   if (!mounted || pathname?.startsWith('/admin') || pathname === '/login' || pathname === '/cms-admin' || pathname === '/news-brief') {
     return null;
   }
@@ -173,58 +174,138 @@ export default function FontSizeFloatingControl() {
   const currentSize = SIZES[fsLevel] || SIZES[1];
   const sizeLabel = language === 'hi' ? currentSize.labelHi : language === 'en' ? currentSize.labelEn : currentSize.labelGu;
 
-  // Visual fill height (matches user's volume bar: red liquid rising from bottom)
+  // Visual fill height (matches user reference image: red liquid rising from bottom)
   const displayFillPct = isDragging && dragPct !== null ? dragPct : currentSize.fillPct;
 
   // Stasis bottom position cleanly stacked above bottom-left megaphone
-  const bottomPosClass = isApk ? 'bottom-[126px] left-4 z-45' : 'bottom-[78px] left-6 z-[9990]';
+  const bottomPos = isApk ? '126px' : '78px';
+  const leftPos = isApk ? '16px' : '24px';
+  const zIndexVal = isApk ? 45 : 9990;
 
   return (
-    <div ref={containerRef} className={`fixed ${bottomPosClass} flex items-end select-none`}>
-      {/* Floating Readout Tooltip (Only visible while dragging or right after adjusting) */}
+    <div
+      ref={containerRef}
+      style={{
+        position: 'fixed',
+        bottom: bottomPos,
+        left: leftPos,
+        zIndex: zIndexVal,
+        display: 'flex',
+        alignItems: 'flex-end',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}
+    >
+      {/* Floating Readout Tooltip (Only visible while open/dragging, with hardcoded fixed px sizes) */}
       {isOpen && (
         <div
-          className="absolute left-[54px] bottom-6 z-50 pointer-events-none transition-all duration-150 animate-in fade-in"
-          style={{ transform: `translateY(-${(displayFillPct / 100) * 110}px)` }}
+          style={{
+            position: 'absolute',
+            left: '54px',
+            bottom: `${displayFillPct}%`,
+            transform: 'translateY(50%)',
+            pointerEvents: 'none',
+            transition: isDragging ? 'none' : 'bottom 0.22s ease-out, transform 0.15s ease-out',
+            zIndex: 9999,
+          }}
         >
-          <div className="bg-black/90 backdrop-blur-md text-white border border-white/25 px-2.5 py-1 rounded-full text-xs font-black shadow-2xl flex items-center gap-1.5 whitespace-nowrap">
-            <span className="text-red-400 font-extrabold">{currentSize.px}</span>
-            <span className="text-white/80 font-medium text-[11px]">· {sizeLabel}</span>
+          <div
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.92)',
+              color: '#ffffff',
+              border: '1px solid rgba(255, 255, 255, 0.3)',
+              borderRadius: '9999px',
+              padding: '4px 10px',
+              fontSize: '12px',
+              lineHeight: '1.2',
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+              boxShadow: '0 4px 18px rgba(0, 0, 0, 0.6)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+            }}
+          >
+            <span style={{ color: '#ff6b6b', fontWeight: 900, fontSize: '13px' }}>{currentSize.px}</span>
+            <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600, fontSize: '11px' }}>· {sizeLabel}</span>
           </div>
         </div>
       )}
 
-      {/* The Standalone Vertical Volume/Brightness Pill Slider (Image 2 style) */}
+      {/* The Standalone Vertical Volume Pill Slider (Exact match to reference Image 2, with FIXED px) */}
       <div
         ref={trackRef}
-        onPointerDown={handlePointerDown}
-        className={`relative rounded-full border-[2.5px] border-white bg-black shadow-2xl shadow-black/80 overflow-hidden cursor-ns-resize touch-none select-none ${
-          isOpen ? 'w-11 h-[172px]' : 'w-11 h-11'
-        } transition-[height,transform] duration-300 ease-out active:scale-98`}
-        style={{ touchAction: 'none' }}
-        title="ફોન્ટ સાઇઝ (અક્ષરનું કદ) - Drag Up to increase, Drag Down to decrease"
+        onPointerDown={handleTrackPointerDown}
+        style={{
+          position: 'relative',
+          width: '44px',
+          height: isOpen ? '180px' : '44px',
+          borderRadius: '22px',
+          border: '2.5px solid #ffffff',
+          backgroundColor: '#000000',
+          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.65)',
+          overflow: 'hidden',
+          cursor: isOpen ? 'ns-resize' : 'pointer',
+          touchAction: 'none',
+          transition: 'height 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.15s ease-out',
+          boxSizing: 'border-box',
+        }}
+        title="ફોન્ટ સાઇઝ (અક્ષરનું કદ) - Drag Up/Down"
         aria-label="Font Size Control"
       >
-        {/* Red Fill: Rises from bottom to top, exactly like the blue bar in Image 2 */}
+        {/* Red Fill: Rises from bottom to top, exactly like the blue bar in reference Image 2 */}
         <div
-          className="absolute bottom-0 left-0 right-0 bg-[#e11d2e] pointer-events-none"
           style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
             height: isOpen ? `${displayFillPct}%` : '100%',
-            // During active drag, no transition for instant 0ms finger tracking. When not dragging, smooth ease.
+            backgroundColor: '#e11d2e',
+            pointerEvents: 'none',
             transition: isDragging ? 'none' : 'height 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)',
+            boxSizing: 'border-box',
           }}
         />
 
-        {/* White Font Icon 'A' at the bottom of the pill (matches music note in Image 2) */}
+        {/* White Font Icon 'A' at the bottom of the pill (matches music note in reference Image 2) */}
         <button
           type="button"
           onClick={handleIconClick}
-          className="absolute bottom-0 left-0 right-0 h-11 flex items-center justify-center text-white focus:outline-none cursor-pointer z-10 select-none"
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '44px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#ffffff',
+            background: 'transparent',
+            border: 'none',
+            outline: 'none',
+            cursor: 'pointer',
+            zIndex: 10,
+            userSelect: 'none',
+            padding: 0,
+            margin: 0,
+          }}
           aria-label="Font Size"
         >
-          {/* Bold, clean white font symbol 'A' matching Image 2 music note */}
-          <span className="text-white font-black text-[16px] leading-none drop-shadow-[0_1px_2px_rgba(0,0,0,0.7)] flex items-baseline">
-            A<span className="text-[10px] font-bold opacity-95 ml-0.5">a</span>
+          {/* Bold, clean white font symbol 'A' with FIXED px size so it NEVER scales */}
+          <span
+            style={{
+              color: '#ffffff',
+              fontWeight: 900,
+              fontSize: '16px',
+              lineHeight: '1',
+              display: 'flex',
+              alignItems: 'baseline',
+              textShadow: '0 1px 3px rgba(0,0,0,0.7)',
+            }}
+          >
+            A<span style={{ fontSize: '11px', fontWeight: 800, opacity: 0.95, marginLeft: '1px' }}>a</span>
           </span>
         </button>
       </div>

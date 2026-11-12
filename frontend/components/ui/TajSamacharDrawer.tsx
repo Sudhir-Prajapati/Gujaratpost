@@ -248,11 +248,12 @@ export default function TajSamacharDrawer() {
           onClick={() => setIsOpen(!isOpen)}
           aria-label={language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
           title={language === 'gu' ? 'લેટેસ્ટ સમાચાર જુઓ' : language === 'hi' ? 'ताज़ा समाचार देखें' : 'View Latest News'}
-          className="relative group flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
+          className="relative group flex items-center justify-center rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
+          style={{ width: '44px', height: '44px' }}
         >
           {/* Periodic pulse ring animation (expands every 4 seconds) */}
           <span className="absolute -inset-1 rounded-full bg-red-600/60 animate-periodic-ping pointer-events-none" />
-          <Megaphone className="w-5 h-5 text-white relative z-10 transition-transform group-hover:rotate-12" />
+          <Megaphone className="text-white relative z-10 transition-transform group-hover:rotate-12" style={{ width: '20px', height: '20px' }} />
         </button>
       </div>
 
