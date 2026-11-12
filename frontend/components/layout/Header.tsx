@@ -516,7 +516,7 @@ export default function Header() {
             <div className="flex md:hidden items-center gap-1.5 shrink-0">
               <Link
                 href="/news-brief"
-                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-red-950/80 via-red-900/60 to-zinc-900 hover:from-red-900 hover:to-zinc-800 text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-red-500/60 hover:border-red-400 shadow-sm"
+                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-[#B3121B] shadow-sm"
                 title="News Brief"
               >
                 <Image
@@ -526,16 +526,16 @@ export default function Header() {
                   height={15}
                   className="shrink-0 object-contain group-hover:translate-x-0.5 transition-transform"
                 />
-                <span className="text-zinc-100 group-hover:text-red-300 transition-colors">BRIEF</span>
+                <span className="text-white">BRIEF</span>
               </Link>
               <Link
                 href="/aqi"
-                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-amber-950/80 via-amber-900/60 to-zinc-900 hover:from-amber-900 hover:to-zinc-800 text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-amber-500/60 hover:border-amber-400 shadow-sm"
+                className="group inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#B3121B] hover:bg-[#960f16] active:bg-[#850d13] text-white text-[13px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 border border-[#B3121B] shadow-sm"
                 title="Weather & AQI"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform"
+                  className="w-4 h-4 text-white shrink-0 group-hover:scale-110 transition-transform"
                   fill="none"
                   stroke="currentColor"
                   strokeWidth="2.2"
@@ -549,7 +549,7 @@ export default function Header() {
                   <path d="M15.9 16A5 5 0 1 0 9 10.45" />
                   <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
                 </svg>
-                <span className="text-zinc-100 group-hover:text-amber-300 transition-colors">AQI</span>
+                <span className="text-white">AQI</span>
               </Link>
             </div>
           </div>
@@ -928,10 +928,10 @@ export default function Header() {
               <Link
                 href="/news-brief"
                 onClick={() => setMenuOpen(false)}
-                className="flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-gradient-to-r from-zinc-950 to-black h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-white shadow-sm border border-zinc-800 hover:scale-[1.02] active:scale-95 transition whitespace-nowrap select-none"
+                className="group flex items-center justify-center gap-1 sm:gap-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 h-[42px] min-h-[42px] w-full px-1 sm:px-2 text-[13.5px] sm:text-[14.5px] font-black text-zinc-900 dark:text-zinc-100 shadow-xs hover:bg-[#B3121B] hover:border-[#B3121B] hover:text-white active:bg-[#B3121B] active:border-[#B3121B] active:text-white hover:scale-[1.02] active:scale-95 transition-all duration-150 whitespace-nowrap select-none"
               >
-                <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0" />
-                <span className="font-black tracking-wide leading-none">BRIEF</span>
+                <Image src="/rightSide.png" alt="News Brief" width={16} height={16} className="object-contain shrink-0 group-hover:brightness-110 transition" />
+                <span className="font-black tracking-wide leading-none group-hover:text-white group-active:text-white transition-colors">BRIEF</span>
               </Link>
               <Link
                 href="/aqi"

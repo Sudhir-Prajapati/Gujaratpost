@@ -1,4 +1,4 @@
-﻿-- Dailyhunt & Gallery Fix: Touch updatedAt for top galleries so Dailyhunt RSS picks up fresh news
+-- Dailyhunt & Gallery Fix: Touch updatedAt for top galleries so Dailyhunt RSS picks up fresh news
 START TRANSACTION;
 
 -- Touch Megha Shukla & Varun Dhawan so Dailyhunt re-fetches and replaces the blank thumbnail
