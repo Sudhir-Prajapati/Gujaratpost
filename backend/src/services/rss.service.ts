@@ -191,7 +191,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   if (categorySlug === 'photos' || categorySlug === 'gallery' || categorySlug === 'photo-gallery' || categorySlug === 'photo') {
     const photos = await prisma.galleryPhoto.findMany({
       take: limit,
-      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+      orderBy: { createdAt: 'desc' },
       select: {
         id: true,
         src: true,
@@ -207,7 +207,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     });
 
     const newestPhoto = photos[0];
-    const lastModified = newestPhoto?.updatedAt || newestPhoto?.createdAt || new Date();
+    const lastModified = newestPhoto?.createdAt || newestPhoto?.updatedAt || new Date();
     const lastBuildDate = lastModified.toUTCString();
     const etagSource = `photos:${photos.length}:${lastModified.getTime()}`;
     const etag = `"${crypto.createHash('md5').update(etagSource).digest('hex')}"`;
@@ -215,10 +215,9 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     let itemsXml = '';
     for (const photo of photos) {
       const photoUrl = `${baseUrl}/photos/${photo.id}`;
-      // Prefer updatedAt so aggregators (Dailyhunt) immediately detect updated galleries
-      const photoTimestamp = new Date(photo.updatedAt || photo.createdAt);
-      const pubDate = photoTimestamp.toUTCString();
-      const guidValue = `${photoUrl}?v=${photoTimestamp.getTime()}`;
+      // In compliance with RSS 2.0 and Dailyhunt standards, pubDate is strictly the original publication/creation date
+      const pubDate = new Date(photo.createdAt).toUTCString();
+      const guidValue = photoUrl;
 
       // Heading / Title (captionGu is always the primary headline in Gujarati)
       const titleCandidate = lang === 'hi' && photo.captionHi
@@ -347,7 +346,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>
       <link>${photoUrl}</link>
-      <guid isPermaLink="false">${guidValue}</guid>
+      <guid isPermaLink="true">${guidValue}</guid>
       <description>${wrapCdata(rawDesc)}</description>
       <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
       <category>${wrapCdata(catName)}</category>

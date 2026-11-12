@@ -275,7 +275,7 @@ export class GalleryController {
           } else {
             const [rawPhotos, totalCount] = await Promise.all([
               prisma.$queryRawUnsafe<any[]>(
-                `SELECT * FROM gallery_photos WHERE caption != 'ગેલેરી ફોટો' AND caption != '' ORDER BY (CASE WHEN src LIKE '[%' THEN 0 ELSE 1 END), createdAt DESC LIMIT ${limit} OFFSET ${skip}`
+                `SELECT * FROM gallery_photos WHERE caption != 'ગેલેરી ફોટો' AND caption != '' ORDER BY createdAt DESC LIMIT ${limit} OFFSET ${skip}`
               ),
               prisma.galleryPhoto.count({ where }),
             ]);
@@ -283,10 +283,10 @@ export class GalleryController {
             total = totalCount;
           }
         } else {
-          // Prioritize multi-image albums with rich Cloudinary gallery stories first
+          // Strictly newest gallery stories first (by createdAt DESC)
           const [rawPhotos, totalCount] = await Promise.all([
             prisma.$queryRawUnsafe<any[]>(
-              `SELECT * FROM gallery_photos WHERE caption != 'ગેલેરી ફોટો' AND caption != '' ORDER BY (CASE WHEN src LIKE '[%' THEN 0 ELSE 1 END), createdAt DESC LIMIT ${limit} OFFSET ${skip}`
+              `SELECT * FROM gallery_photos WHERE caption != 'ગેલેરી ફોટો' AND caption != '' ORDER BY createdAt DESC LIMIT ${limit} OFFSET ${skip}`
             ),
             prisma.galleryPhoto.count({ where }),
           ]);
