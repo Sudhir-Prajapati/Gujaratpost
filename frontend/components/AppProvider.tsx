@@ -16,8 +16,10 @@ interface AppContextType {
   language: Language;
   setLanguage: (l: Language) => void;
   fsLevel: number;
+  setFsLevel: (level: number) => void;
   incFs: () => void;
   decFs: () => void;
+  resetFs: () => void;
   supportModalOpen: boolean;
   supportEnabled: boolean;
   epaperEnabled: boolean;
@@ -33,8 +35,10 @@ const AppContext = createContext<AppContextType>({
   language: 'gu',
   setLanguage: () => {},
   fsLevel: 1,
+  setFsLevel: () => {},
   incFs: () => {},
   decFs: () => {},
+  resetFs: () => {},
   supportModalOpen: false,
   supportEnabled: true,
   epaperEnabled: true,
@@ -268,8 +272,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       console.warn('Failed to persist language:', e);
     }
   };
+  const handleSetFsLevel = (level: number) => {
+    const clamped = Math.max(0, Math.min(3, Math.round(level)));
+    setFsLevel(clamped);
+  };
   const incFs = () => setFsLevel((current) => Math.min(current + 1, 3));
   const decFs = () => setFsLevel((current) => Math.max(current - 1, 0));
+  const resetFs = () => setFsLevel(1);
 
   const value = useMemo(
     () => ({
@@ -280,8 +289,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       language,
       setLanguage: handleSetLanguage,
       fsLevel,
+      setFsLevel: handleSetFsLevel,
       incFs,
       decFs,
+      resetFs,
       supportModalOpen,
       supportEnabled,
       epaperEnabled,

@@ -6,6 +6,7 @@ import BreakingTicker from './BreakingTicker';
 import Footer from './Footer';
 import SplashLoader from '@/components/ui/SplashLoader';
 import TajSamacharDrawer from '@/components/ui/TajSamacharDrawer';
+import FontSizeFloatingControl from '@/components/ui/FontSizeFloatingControl';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkHeader from '@/components/apk/ApkHeader';
 import ApkBottomNav from '@/components/apk/ApkBottomNav';
@@ -78,6 +79,7 @@ export default function MainLayoutWrapper({ children }: Props) {
         <ApkHeader />
         <main className={`min-h-[80vh] pb-16 ${apkTheme === 'dark' ? 'bg-[#0f1015]' : 'bg-[#F8F9FA]'}`}>{children}</main>
         <TajSamacharDrawer />
+        <FontSizeFloatingControl />
         <ApkBottomNav />
       </div>
     );
@@ -94,6 +96,7 @@ export default function MainLayoutWrapper({ children }: Props) {
       <main className="flex-1 w-full flex flex-col">{children}</main>
       <Footer />
       <TajSamacharDrawer />
+      <FontSizeFloatingControl />
     </div>
   );
 }

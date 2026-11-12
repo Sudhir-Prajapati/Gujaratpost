@@ -401,7 +401,7 @@ function MobileHorizontalCardStrip({
 
           {/* Bottom Content Container */}
           <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
-            <h4 className="text-[15.5px] sm:text-[16.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+            <h4 className="text-[0.96875rem] sm:text-[1.03125rem] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
               <AutoArticleTitle article={art} language={language} />
             </h4>
 
@@ -528,7 +528,7 @@ function HeroStorySlider({
       <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4 mb-2">
         {/* 1. Header on Top: LIVE badge inline with Headline */}
         <Link href={`/news/${current.slug}`} className="group block mb-3">
-          <h1 className="text-foreground font-bold text-[17px] sm:text-[18px] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
+          <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
             <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
               LIVE
             </span>
