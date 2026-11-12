@@ -235,12 +235,6 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       const slides: GallerySlideItem[] = [];
       let rawSrc = (photo.src || '').trim();
 
-      // Clean rawSrc if it has quotes or JSON metadata appended
-      if (rawSrc.includes('"') && !rawSrc.startsWith('[')) {
-        rawSrc = rawSrc.substring(0, rawSrc.indexOf('"')).trim();
-      }
-      rawSrc = rawSrc.replace(/[,\}\]]+$/, '').trim();
-
       if (rawSrc.startsWith('[')) {
         try {
           const parsed = JSON.parse(rawSrc);
@@ -260,6 +254,12 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
             }
           }
         } catch {}
+      } else {
+        // Clean non-JSON rawSrc if it has quotes or trailing fragments appended
+        if (rawSrc.includes('"')) {
+          rawSrc = rawSrc.substring(0, rawSrc.indexOf('"')).trim();
+        }
+        rawSrc = rawSrc.replace(/[,\}\]]+$/, '').trim();
       }
 
       if (slides.length === 0) {
