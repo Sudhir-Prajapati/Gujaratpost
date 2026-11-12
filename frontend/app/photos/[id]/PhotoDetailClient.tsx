@@ -170,7 +170,7 @@ const MorePhotoCard = memo(function MorePhotoCard({
   language: Language;
 }) {
   const rawItemTitle = item.captionGu || item.caption || item.titleGu || item.title || item.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery');
-  const itemCategory = getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
+  const itemCategory = getPhotoCategoryBadge(item, language);
   const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
   const initialSrc = resolvePhotoUrl(item, fallback);
   const [src, setSrc] = useState(initialSrc);
@@ -297,7 +297,7 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
   const title = (language !== 'gu' && autoTranslatedTitle) ? autoTranslatedTitle : rawCaption;
   const caption = title;
   
-  const category = getCategoryLabel(photo?.category || photo?.categorySlug || photo || 'photos', language);
+  const category = getPhotoCategoryBadge(photo, language);
 
   const rawDescription = useMemo(() => {
     if (photo && MOCK_DESCRIPTIONS[photo.id]) {
@@ -1000,7 +1000,9 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
                 const rawItemTitle = isNewsItem
                   ? (getLocalized(language, { en: item.title || item.titleEn || '', gu: item.titleGu || item.title || '', hi: item.titleHi || item.title || '' }) || item.title || '')
                   : (getLocalized(language, { en: item.caption || '', gu: item.captionGu || item.caption || '', hi: item.captionHi || item.caption || '' }) || item.caption || '');
-                const itemCategory = getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News');
+                const itemCategory = isNewsItem
+                  ? (getCategoryLabel(item, language) || (language === 'gu' ? 'સમાચાર' : language === 'hi' ? 'समाचार' : 'News'))
+                  : getPhotoCategoryBadge(item, language);
                 const itemHref = isNewsItem ? `/news/${item.slug || item.id}` : `/photos/${item.id}`;
                 const relTime = formatTimeAgo(item.createdAt || item.publishedAt, language);
 

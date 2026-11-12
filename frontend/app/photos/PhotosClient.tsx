@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Camera } from 'lucide-react';
-import { PHOTOS, getLocalized, getCategoryLabel } from '@/data';
+import { PHOTOS, getLocalized, getCategoryLabel, getPhotoCategoryBadge } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import AePanVachoSection from '@/components/sections/AePanVachoSection';
 import { getPublicArticles, getPublicGallery } from '@/lib/api';
@@ -155,11 +155,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
       {/* Photo Gallery Grid matching Home Page Card Dimensions */}
       <div className="w-full flex flex-col items-center sm:flex-row sm:flex-wrap sm:justify-center gap-5 sm:gap-6 mx-auto">
         {gallery.map((photo, index) => {
-          const categoryText = language === 'gu'
-            ? (photo.categoryGu || photo.category || 'સમાચાર')
-            : language === 'hi'
-              ? (photo.categoryHi || 'समाचार')
-              : (photo.categoryEn || 'News');
+          const categoryText = getPhotoCategoryBadge(photo, language);
           const captionSource = photo.caption || photo.captionGu || photo.alt || '';
 
           return (

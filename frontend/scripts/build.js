@@ -38,7 +38,6 @@ console.log('🚀 [Build] Starting Next.js frontend build (single-pass)...');
 // - On Linux / Live Production Server: Uses Next.js native default (Turbopack) for maximum build speed.
 // - On Windows: Next.js 16 has an open bug with Google Fonts in Turbopack, so default to --webpack
 //   unless the developer explicitly passes --turbo or --turbopack.
-const isWindows = process.platform === 'win32';
 const hasExplicitTurbo = process.argv.includes('--turbo') || process.argv.includes('--turbopack');
 const hasExplicitWebpack = process.argv.includes('--webpack');
 

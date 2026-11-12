@@ -360,7 +360,8 @@ export const PHOTO_CATEGORY_TRANSLATIONS: Record<string, { en: string; gu: strin
 
   'sports': { en: 'Sports', gu: 'સ્પોર્ટ્સ', hi: 'खेल' },
 
-  'રાજકારણ': { en: 'Politics', gu: 'રાજકારણ', hi: 'राजनीति' },
+  'રાજકારણ': { en: 'Politics', gu: 'રાજકારણ', hi: 'राजनीति' },
+  'રાજનીતિ': { en: 'Politics', gu: 'રાજનીતિ', hi: 'રાજનીતિ' },
 
   'politics': { en: 'Politics', gu: 'રાજકારણ', hi: 'राजनीति' },
 
@@ -370,59 +371,69 @@ export const PHOTO_CATEGORY_TRANSLATIONS: Record<string, { en: string; gu: strin
 
   'ફોટો ગેલેરી': { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' },
 
-  'photo gallery': { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' },
-
-};
-
-
-
-export function getPhotoCategoryBadge(photo: any, language: Language | string): string {
-
-  const cat = (photo?.category || '').trim();
-
-  const lowerCat = cat.toLowerCase();
-
-
-
-  if (language === 'gu') {
-
-    if (photo?.categoryGu) return photo.categoryGu;
-
-    if (PHOTO_CATEGORY_TRANSLATIONS[cat]) return PHOTO_CATEGORY_TRANSLATIONS[cat].gu;
-
-    if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].gu;
-
-    return cat || 'સમાચાર';
-
-  }
-
-
-
-  if (language === 'hi') {
-
-    if (photo?.categoryHi) return photo.categoryHi;
-
-    if (PHOTO_CATEGORY_TRANSLATIONS[cat]) return PHOTO_CATEGORY_TRANSLATIONS[cat].hi;
-
-    if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].hi;
-
-    return cat === 'સમાચાર' ? 'समाचार' : (cat || 'समाचार');
-
-  }
-
-
-
-  // language === 'en'
-
-  if (photo?.categoryEn) return photo.categoryEn;
-
-  if (PHOTO_CATEGORY_TRANSLATIONS[cat]) return PHOTO_CATEGORY_TRANSLATIONS[cat].en;
-
-  if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].en;
-
-  return cat === 'સમાચાર' ? 'News' : (cat || 'News');
-
-}
+  'photo gallery': { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' },
+};
+
+export function getPhotoCategoryBadge(photo: any, language: Language | string): string {
+  const rawCat = (photo?.category || photo?.categoryGu || '').trim();
+  const title = `${photo?.captionGu || ''} ${photo?.caption || ''} ${photo?.alt || ''} ${photo?.title || ''}`.toLowerCase();
+
+  let resolvedCat = rawCat;
+
+  // 1. Entertainment / Bollywood / Actress / Model / Photoshoot
+  const isEntertainment =
+    /એક્ટ્રેસ|અભિનેત્રી|બોલિવૂડ|હોટ|બોલ્ડ|બિકિની|બિકીની|મોડલ|ગ્લેમરસ|સાડી|ડ્રેસ|શર્મા|કપૂર|ખાન|સિંહ|દિશા|મલાઇકા|સની|તસ્વીરો|તસવીરો|સેક્સી|હીરોઇન|શૂટ|ફોટોશૂટ|ગાઉન|લહેંગા|કાતિલ|અવતાર|જલવા|સ્વરૂપ|લુક|લૂક|નિકિતા|દીક્ષિત|બેન્દ્રે|કામરા|રાઉત|પટાની|પટની|અદા|લિયોની|અભિનેતા|સ્ટાર|star|actress|actor|bollywood|model|bikini|glamour|photoshoot|નાગિન|બબીતાજી|બિગ બોસ|કાર્દશિયન|સુહાની|અનુષ્કા|કિયારા|તારા સુતરિયા|કાજલ અગ્રવાલ|ભૂમિ|કેટરિના|પ્રિયંકા|જ્હાનવી|જ્હાન્વી|ઉર્ફી/i.test(title);
+
+  // 2. Sports / Cricket
+  const isSports =
+    !isEntertainment &&
+    /cricket|\bipl\b|ધોની|કોહલી|રોહિત|વર્લ્ડ કપ|world cup|સ્પોર્ટ્સ|sports|વાનખેડે|સ્ટેડિયમ|ઋષભ પંત/i.test(title);
+
+  // 3. Politics / Election
+  const isPolitics =
+    !isEntertainment &&
+    /ચૂંટણી|સંસદ|ભાજપ|કોંગ્રેસ|રાજ ઠાકરે|રાહુલ ગાંધી|શપથવિધી|election|politics/i.test(title);
+
+  // 4. Religion / Temple
+  const isReligion =
+    !isEntertainment &&
+    /સોમનાથ મંદિર|દ્વારકાધીશ|અંબાજી મંદિર|પાવાગઢ મંદિર|ડાકોર મંદિર|મહાદેવ|શિવલિંગ|પરિક્રમા/i.test(title);
+
+  if (isEntertainment) {
+    resolvedCat = 'મનોરંજન';
+  } else if (isSports) {
+    resolvedCat = 'સ્પોર્ટ્સ';
+  } else if (isPolitics) {
+    resolvedCat = 'રાજનીતિ';
+  } else if (isReligion) {
+    resolvedCat = 'ધર્મ';
+  } else if (resolvedCat === 'સમાચાર' || resolvedCat === 'News' || resolvedCat === 'ધર્મ' || !resolvedCat) {
+    // Photos in gallery are entertainment by default, not generic news
+    resolvedCat = 'મનોરંજન';
+  }
+
+  const lowerCat = resolvedCat.toLowerCase();
+
+  if (language === 'gu') {
+    if (PHOTO_CATEGORY_TRANSLATIONS[resolvedCat]) return PHOTO_CATEGORY_TRANSLATIONS[resolvedCat].gu;
+    if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].gu;
+    return resolvedCat || 'મનોરંજન';
+  }
+
+  if (language === 'hi') {
+    if (PHOTO_CATEGORY_TRANSLATIONS[resolvedCat]) return PHOTO_CATEGORY_TRANSLATIONS[resolvedCat].hi;
+    if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].hi;
+    return resolvedCat === 'મનોરંજન' ? 'मनोरंजन' : resolvedCat === 'સ્પોર્ટ્સ' ? 'खेल' : (resolvedCat || 'मनोरंजन');
+  }
+
+  // language === 'en'
+  if (PHOTO_CATEGORY_TRANSLATIONS[resolvedCat]) return PHOTO_CATEGORY_TRANSLATIONS[resolvedCat].en;
+  if (PHOTO_CATEGORY_TRANSLATIONS[lowerCat]) return PHOTO_CATEGORY_TRANSLATIONS[lowerCat].en;
+  return resolvedCat === 'મનોરંજન' ? 'Entertainment' : resolvedCat === 'સ્પોર્ટ્સ' ? 'Sports' : (resolvedCat || 'Entertainment');
+}
+
+
+
 
 
 

@@ -48,7 +48,7 @@ const DEFAULT_5_PHOTOS = [
     caption: 'Girnar Lili Parikrama: Massive gathering of devotees',
     captionGu: 'ગિરનાર લીલી પરિક્રમા: ભક્તિનો મહાસાગર ઉમટ્યો',
     captionHi: 'ગિરનાર લીલી પરિક્રમા',
-    category: 'ખેલ',
+    category: 'ધર્મ',
     photographer: 'Gujarat Post Team',
     copyright: '© Gujarat Post',
     createdAt: new Date().toISOString(),
@@ -111,6 +111,20 @@ export function formatGalleryPhoto(photo: any) {
       return { ...img, src: cleanPhotoSrc(img.src || img.url || '') };
     });
   }
+
+  // Ensure accurate category classification
+  let cat = (p.category || '').trim();
+  const text = `${p.captionGu || ''} ${p.caption || ''} ${p.alt || ''}`.toLowerCase();
+  if (cat === 'ધર્મ' && /નિકિતા|એક્ટ્રેસ|અભિનેત્રી|સાડી|હોટ|બોલ્ડ|બિકિની|મોડલ|શર્મા/i.test(text)) {
+    cat = 'મનોરંજન';
+  } else if (!cat || cat === 'સમાચાર' || cat === 'News') {
+    cat = 'મનોરંજન';
+  }
+  p.category = cat;
+  p.categoryGu = cat;
+  p.categoryHi = cat === 'મનોરંજન' ? 'मनोरंजन' : cat === 'સ્પોર્ટ્સ' ? 'खेल' : cat === 'રાજનીતિ' ? 'राजनीति' : cat === 'ધર્મ' ? 'धर्म' : cat;
+  p.categoryEn = cat === 'મનોરંજન' ? 'Entertainment' : cat === 'સ્પોર્ટ્સ' ? 'Sports' : cat === 'રાજનીતિ' ? 'Politics' : cat === 'ધર્મ' ? 'Religion' : cat;
+
   return p;
 }
 
