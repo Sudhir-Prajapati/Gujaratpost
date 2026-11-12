@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Fuel, TrendingUp, Trophy, Zap, ChevronDown, MapPin, Info } from 'lucide-react';
+import { Fuel, TrendingUp, Trophy, Zap, ChevronDown, ChevronLeft, ChevronRight, RotateCw, MapPin, Info } from 'lucide-react';
 import type { Language } from '@/types';
 import { getLiveCenterData } from '@/lib/api';
 
@@ -62,6 +62,8 @@ export default function LiveCenterSection({ language }: { language: Language }) 
   const [fuelCity, setFuelCity] = useState('Ahmedabad');
   const [fuelPrices, setFuelPrices] = useState(FUEL_PRICE_CITY_MAP);
   const [activeTab, setActiveTab] = useState<'fuel' | 'stocks' | 'cricket'>('fuel');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [cricketPage, setCricketPage] = useState(0);
 
   // Real-time Stock Market state
   const [stocks, setStocks] = useState([
@@ -76,11 +78,20 @@ export default function LiveCenterSection({ language }: { language: Language }) 
   // Real-time Cricket Matches state
   const [cricketMatches, setCricketMatches] = useState([
     {
+      title: 'Afghanistan Under-19s vs India Under-19s',
+      statusType: 'live',
+      statusText: 'LIVE',
+      team1: 'Afghanistan Under-19s',
+      team1Score: '227/8 *',
+      team2: 'India Under-19s',
+      team2Score: '—',
+    },
+    {
       title: 'Pakistan vs Sri Lanka',
       statusType: 'live',
       statusText: 'LIVE',
       team1: 'Pakistan',
-      team1Score: '49/1 & 434/9 *',
+      team1Score: '434/9 & 57/1 *',
       team2: 'Sri Lanka',
       team2Score: '446/10',
     },
@@ -89,54 +100,51 @@ export default function LiveCenterSection({ language }: { language: Language }) 
       statusType: 'live',
       statusText: 'LIVE',
       team1: 'New South Wales',
-      team1Score: '191/2 & 204/10 *',
+      team1Score: '204/10 & 191/2 *',
       team2: 'South Australia',
       team2Score: '325/10',
     },
-    {
-      title: 'Victoria vs Western Australia',
-      statusType: 'live',
-      statusText: 'LIVE',
-      team1: 'Victoria',
-      team1Score: '402/5',
-      team2: 'Western Australia',
-      team2Score: '185/3 *',
-    },
   ]);
 
-  // Fetch real-time live center data from Backend API with rapid auto-refresh
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadLiveCenterData = async () => {
-      try {
-        const data = await getLiveCenterData(false);
-        if (data && isMounted) {
-          if (data.fuelPrices) setFuelPrices(data.fuelPrices);
-          if (Array.isArray(data.stocks) && data.stocks.length >= 3) {
-            setStocks(data.stocks.slice(0, 3));
-          }
-          if (data.usdRate) setUsdRate(data.usdRate);
-          if (Array.isArray(data.cricketMatches) && data.cricketMatches.length > 0) {
-            setCricketMatches(data.cricketMatches.filter((m: any) => m.team1 !== 'Team 1' && m.title !== 'Cricket Match').slice(0, 3));
+  // Load real-time live center data from Backend API
+  const loadLiveCenterData = async (force = false) => {
+    try {
+      const data = await getLiveCenterData(force);
+      if (data) {
+        if (data.fuelPrices) setFuelPrices(data.fuelPrices);
+        if (Array.isArray(data.stocks) && data.stocks.length >= 3) {
+          setStocks(data.stocks.slice(0, 3));
+        }
+        if (data.usdRate) setUsdRate(data.usdRate);
+        if (Array.isArray(data.cricketMatches) && data.cricketMatches.length > 0) {
+          const valid = data.cricketMatches.filter((m: any) => m.team1 !== 'Team 1' && m.title !== 'Cricket Match');
+          if (valid.length > 0) {
+            setCricketMatches(valid);
           }
         }
-      } catch {}
-    };
+      }
+    } catch {}
+  };
 
-    loadLiveCenterData();
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await loadLiveCenterData(true);
+    setTimeout(() => setIsRefreshing(false), 600);
+  };
 
-    // Auto-refresh every 60 seconds for true live rates & scores
-    const intervalId = setInterval(loadLiveCenterData, 60000);
+  // Continuous auto-refresh every 30 seconds for live market & ball-by-ball score tracking
+  useEffect(() => {
+    loadLiveCenterData(false);
+
+    const intervalId = setInterval(() => loadLiveCenterData(false), 30000);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        loadLiveCenterData();
+        loadLiveCenterData(true);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      isMounted = false;
       clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
@@ -147,6 +155,9 @@ export default function LiveCenterSection({ language }: { language: Language }) 
     Object.entries(fuelPrices).find(([k]) => k.toLowerCase() === fuelCity.toLowerCase())?.[1] ||
     FUEL_PRICE_CITY_MAP[fuelCity] ||
     FUEL_PRICE_CITY_MAP.Ahmedabad;
+
+  const totalCricketPages = Math.ceil(cricketMatches.length / 3) || 1;
+  const currentCricketBatch = cricketMatches.slice(cricketPage * 3, cricketPage * 3 + 3);
 
   /* ──────────────────────────────────────────────────────────
      1. FUEL PRICE CARD (Signature Red Gradient + Pump Art)
@@ -239,7 +250,6 @@ export default function LiveCenterSection({ language }: { language: Language }) 
       <div className="pointer-events-none absolute -right-6 -top-6 w-36 h-36 rounded-full bg-cyan-500/10 blur-2xl" />
       <div className="pointer-events-none absolute right-2 top-3 opacity-25">
         <svg width="110" height="70" viewBox="0 0 100 60" fill="none">
-          {/* Candlesticks */}
           <line x1="20" y1="10" x2="20" y2="50" stroke="#10b981" strokeWidth="1.5" />
           <rect x="17" y="20" width="6" height="20" rx="1" fill="#10b981" />
           <line x1="40" y1="15" x2="40" y2="45" stroke="#f43f5e" strokeWidth="1.5" />
@@ -326,14 +336,13 @@ export default function LiveCenterSection({ language }: { language: Language }) 
       <div className="pointer-events-none absolute -right-6 -top-6 w-36 h-36 rounded-full bg-purple-500/15 blur-2xl" />
       <div className="pointer-events-none absolute right-3 top-4 opacity-25">
         <svg width="100" height="65" viewBox="0 0 100 65" fill="none">
-          {/* Cricket Ball */}
           <circle cx="70" cy="30" r="22" fill="#e11d48" />
           <path d="M54 20 C66 30, 74 30, 86 40" stroke="white" strokeWidth="2" strokeDasharray="2 2" />
         </svg>
       </div>
 
       <div>
-        {/* Header Row */}
+        {/* Header Row with Next/Prev Match Navigation */}
         <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-white/20 select-none">
           <div>
             <div className="flex items-center gap-2">
@@ -345,15 +354,42 @@ export default function LiveCenterSection({ language }: { language: Language }) 
             <p className="text-[11.5px] font-medium text-white/80 mt-1 pl-0.5">Live scores, results & updates</p>
           </div>
 
-          <span className="bg-emerald-500 text-white text-[10.5px] font-black px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm shrink-0">
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-            LIVE
-          </span>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {totalCricketPages > 1 && (
+              <div className="flex items-center gap-1 bg-black/30 px-1.5 py-0.5 rounded-lg border border-white/20">
+                <button
+                  type="button"
+                  onClick={() => setCricketPage((p) => Math.max(0, p - 1))}
+                  disabled={cricketPage === 0}
+                  className="p-0.5 hover:text-amber-300 disabled:opacity-25 transition-colors cursor-pointer text-white"
+                  title="Previous live matches"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <span className="text-[10px] font-extrabold text-white/90">
+                  {cricketPage + 1}/{totalCricketPages}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setCricketPage((p) => Math.min(totalCricketPages - 1, p + 1))}
+                  disabled={cricketPage >= totalCricketPages - 1}
+                  className="p-0.5 hover:text-amber-300 disabled:opacity-25 transition-colors cursor-pointer text-white"
+                  title="Next live matches"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            <span className="bg-emerald-500 text-white text-[10.5px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              LIVE
+            </span>
+          </div>
         </div>
 
-        {/* 3 Match Cards */}
+        {/* 3 Match Cards (Paginated / Live Highest Priority) */}
         <div className="space-y-2 py-3">
-          {cricketMatches.slice(0, 3).map((match, i) => (
+          {currentCricketBatch.map((match, i) => (
             <div
               key={i}
               className="rounded-xl bg-white text-slate-900 p-2.5 sm:p-3 shadow-sm transition-all hover:scale-[1.01]"
@@ -399,7 +435,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
 
         {/* ── MOBILE / SINGLE VIEW (< md) ── */}
         <div className="block md:hidden">
-          {/* Top Live Center Bar with dynamic active theme */}
+          {/* Top Live Center Bar with dynamic active theme & refresh */}
           <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-slate-100 dark:border-white/[0.06] select-none">
             <span
               className={`text-white text-[12px] font-black px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 shadow-xs transition-colors ${
@@ -414,13 +450,24 @@ export default function LiveCenterSection({ language }: { language: Language }) 
               ((•)) Live Center
             </span>
 
-            <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] dark:text-red-400 text-[11px] font-black px-2.5 py-0.5 rounded-full border border-red-200 dark:border-red-900/60 flex items-center gap-1.5 select-none">
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B3121B] opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-[#B3121B]" />
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleManualRefresh}
+                title="Refresh live rates and scores"
+                className="p-1 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/[0.08] dark:hover:bg-white/[0.15] text-slate-600 dark:text-slate-300 transition-all cursor-pointer active:scale-90"
+              >
+                <RotateCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-[#B3121B]' : ''}`} />
+              </button>
+
+              <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] dark:text-red-400 text-[11px] font-black px-2.5 py-0.5 rounded-full border border-red-200 dark:border-red-900/60 flex items-center gap-1.5 select-none">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#B3121B] opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#B3121B]" />
+                </span>
+                <span>LIVE</span>
               </span>
-              <span>LIVE</span>
-            </span>
+            </div>
           </div>
 
           {/* 3 Interactive Category Tabs with exact active styling */}
@@ -477,9 +524,19 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                 ((•)) Live Center
               </span>
-              <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] text-[10.5px] font-black px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B]" /> LIVE
-              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  title="Refresh"
+                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 transition-colors cursor-pointer"
+                >
+                  <RotateCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-[#B3121B]' : ''}`} />
+                </button>
+                <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] text-[10.5px] font-black px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B]" /> LIVE
+                </span>
+              </div>
             </div>
             {/* Tabs Row */}
             <div className="grid grid-cols-3 gap-1.5 text-[11.5px] font-extrabold select-none">
@@ -504,9 +561,19 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                 ((•)) Live Center
               </span>
-              <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] text-[10.5px] font-black px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B]" /> LIVE
-              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  title="Refresh"
+                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 transition-colors cursor-pointer"
+                >
+                  <RotateCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-[#0284c7]' : ''}`} />
+                </button>
+                <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] text-[10.5px] font-black px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B]" /> LIVE
+                </span>
+              </div>
             </div>
             {/* Tabs Row */}
             <div className="grid grid-cols-3 gap-1.5 text-[11.5px] font-extrabold select-none">
@@ -531,9 +598,19 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
                 ((•)) Live Center
               </span>
-              <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] text-[10.5px] font-black px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B]" /> LIVE
-              </span>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleManualRefresh}
+                  title="Refresh"
+                  className="p-1 rounded-full hover:bg-slate-200 dark:hover:bg-white/10 text-slate-500 transition-colors cursor-pointer"
+                >
+                  <RotateCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin text-[#7c3aed]' : ''}`} />
+                </button>
+                <span className="bg-red-50 dark:bg-red-950/40 text-[#B3121B] text-[10.5px] font-black px-2 py-0.5 rounded-full border border-red-200 flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#B3121B]" /> LIVE
+                </span>
+              </div>
             </div>
             {/* Tabs Row */}
             <div className="grid grid-cols-3 gap-1.5 text-[11.5px] font-extrabold select-none">

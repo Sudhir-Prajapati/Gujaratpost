@@ -1470,6 +1470,8 @@ export async function fetchFreshLiveCenterData(force = false) {
           const parts = rawTitle.split(/\s+v\s+/i);
           if (parts.length === 2) {
             const isLive = rawTitle.includes('*');
+            const isIndiaMatch = /india|ind\b|bharat/i.test(rawTitle);
+            const order = isLive ? (isIndiaMatch ? 0 : 1) : (isIndiaMatch ? 2 : 3);
             const team1Raw = parts[0].trim();
             const team2Raw = parts[1].trim();
 
@@ -1492,7 +1494,7 @@ export async function fetchFreshLiveCenterData(force = false) {
               team1Score: t1.score,
               team2: t2.name,
               team2Score: t2.score,
-              order: isLive ? 0 : 1
+              order
             });
           }
         }
@@ -1687,10 +1689,10 @@ export async function fetchFreshLiveCenterData(force = false) {
   }
 }
 
-// Background sync every 2 minutes: ensures the database always has fresh live financial & sports data
+// Background sync every 60 seconds: ensures the database always has fresh live financial & sports data
 setInterval(() => {
   fetchFreshLiveCenterData().catch(() => { });
-}, 2 * 60 * 1000);
+}, 60 * 1000);
 
 /**
  * GET /api/public/live-center
@@ -1706,8 +1708,8 @@ router.get('/live-center', async (req, res) => {
     const t = updatedAtStr ? new Date(updatedAtStr).getTime() : (cacheTime || 0);
     if (!t || isNaN(t)) return { isDifferentDay: true, isStale: true, isVeryOld: true, time: 0 };
     const isDifferentDay = new Date(t).toDateString() !== new Date(NOW).toDateString();
-    const isStale = NOW - t >= 60 * 1000; // 1 min freshness
-    const isVeryOld = NOW - t >= 15 * 60 * 1000; // 15 mins
+    const isStale = NOW - t >= 30 * 1000; // 30 sec freshness for live markets & sports
+    const isVeryOld = NOW - t >= 10 * 60 * 1000; // 10 mins
     return { isDifferentDay, isStale, isVeryOld, time: t };
   };
 
