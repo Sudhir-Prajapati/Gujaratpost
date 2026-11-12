@@ -8,10 +8,10 @@ import { useApp } from '@/components/AppProvider';
 
 const DISTRICTS = [
   { gu: 'અમદાવાદ', hi: 'अहमदाबाद', en: 'Ahmedabad', slug: 'ahmedabad' },
-  { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar', slug: 'gandhinagar' },
-  { gu: '\u0ab8\u0ac1\u0ab0\u0aa4', hi: '\u0938\u0942\u0930\u0924', en: 'Surat', slug: 'surat' },
+  { gu: 'સુરત', hi: 'सूरत', en: 'Surat', slug: 'surat' },
+  { gu: 'રાજકોટ', hi: 'રાજકોટ', en: 'Rajkot', slug: 'rajkot' },
   { gu: 'વડોદરા', hi: 'वडोदरा', en: 'Vadodara', slug: 'vadodara' },
-  { gu: '\u0ab0\u0abe\u0a9c\u0a95\u0acb\u0a9f', hi: '\u0930\u093e\u091c\u0915\u094b\u091f', en: 'Rajkot', slug: 'rajkot' },
+  { gu: 'ગાંધીનગર', hi: 'गांधीनगर', en: 'Gandhinagar', slug: 'gandhinagar' },
   { gu: 'અન્ય શહેરો', hi: 'अन्य शहर', en: 'Other Cities', slug: 'other-cities' }
 ];
 
@@ -213,9 +213,13 @@ export default function DistrictBar({
         label: language === 'hi' ? dist.hi : language === 'gu' ? dist.gu : dist.en,
       }));
 
+    const sequence = ['ahmedabad', 'surat', 'rajkot', 'vadodara', 'gandhinagar', 'other-cities'];
     return [...rawList].sort((a, b) => {
-      if (a.slug === 'ahmedabad') return -1;
-      if (b.slug === 'ahmedabad') return 1;
+      const idxA = sequence.indexOf(a.slug);
+      const idxB = sequence.indexOf(b.slug);
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+      if (idxA !== -1) return -1;
+      if (idxB !== -1) return 1;
       return 0;
     });
   }, [gujaratCategories, language]);

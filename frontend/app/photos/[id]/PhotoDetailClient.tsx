@@ -170,7 +170,6 @@ const MorePhotoCard = memo(function MorePhotoCard({
   language: Language;
 }) {
   const rawItemTitle = item.captionGu || item.caption || item.titleGu || item.title || item.alt || (language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery');
-  const itemCategory = getPhotoCategoryBadge(item, language);
   const fallback = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
   const initialSrc = resolvePhotoUrl(item, fallback);
   const [src, setSrc] = useState(initialSrc);
@@ -199,18 +198,15 @@ const MorePhotoCard = memo(function MorePhotoCard({
       {/* Bottom deep gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
 
-      {/* Category badge top-left & photo count badge top-right */}
-      <div className="absolute top-3.5 inset-x-3.5 z-10 flex items-center justify-between pointer-events-none">
-        <span className="text-white text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-md bg-[#B3121B] inline-block">
-          <AutoTranslateString text={itemCategory} language={language} />
-        </span>
-        {Array.isArray(item.images) && item.images.length > 1 && (
+      {/* Photo count badge top-right */}
+      {Array.isArray(item.images) && item.images.length > 1 && (
+        <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
           <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
             <Camera className="w-3 h-3 text-red-400" />
             <span>{item.images.length}</span>
           </span>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Title at bottom matching reference image */}
       <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 z-10 pointer-events-none">

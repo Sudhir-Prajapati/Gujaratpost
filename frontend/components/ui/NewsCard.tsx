@@ -99,7 +99,7 @@ export default function NewsCard({
             <span className="cat-badge mb-1.5" style={{ background: categoryColor }}>
               {displayCategory}
             </span>
-            <h2 className="line-clamp-2 text-sm sm:text-base font-black leading-snug text-white">
+            <h2 className="line-clamp-2 text-[15.5px] sm:text-[17px] font-black leading-snug text-white">
               <AutoArticleTitle article={article} language={language} fallback={title} />
             </h2>
           </div>
@@ -123,7 +123,7 @@ export default function NewsCard({
             <span className="cat-badge mb-1" style={{ background: categoryColor }}>
               {displayCategory}
             </span>
-            <h3 className="line-clamp-2 text-[14px] sm:text-[15px] font-black leading-snug text-foreground">
+            <h3 className="line-clamp-2 text-[15.5px] sm:text-[16.5px] font-black leading-snug text-foreground">
               <AutoArticleTitle article={article} language={language} fallback={title} />
             </h3>
           </div>
@@ -148,7 +148,7 @@ export default function NewsCard({
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="line-clamp-2 text-sm font-black leading-snug text-foreground">
+          <p className="line-clamp-2 text-[15.5px] font-black leading-snug text-foreground">
             <AutoArticleTitle article={article} language={language} fallback={title} />
           </p>
         </div>
@@ -179,7 +179,7 @@ export default function NewsCard({
                 </span>
               )}
             </div>
-            <h3 className="line-clamp-2 text-[13.5px] md:text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors mt-0.5 tracking-tight min-h-[2.6rem]">
+            <h3 className="line-clamp-2 text-[15px] md:text-[16px] font-extrabold leading-snug text-foreground group-hover:text-accent transition-colors mt-0.5 tracking-tight min-h-[2.8rem]">
               <AutoArticleTitle article={article} language={language} fallback={title} />
             </h3>
           </div>

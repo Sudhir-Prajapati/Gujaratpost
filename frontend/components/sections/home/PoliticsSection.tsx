@@ -181,7 +181,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[0, 1, 2].map(i => (
             <div key={i} className="flex flex-col gap-3">
-              <div className="aspect-[16/10] w-full rounded-sm bg-muted/40" />
+              <div className="aspect-[16/10] w-full rounded-xl bg-muted/40" />
               <div className="h-5 w-full rounded bg-muted/40" />
             </div>
           ))}
@@ -228,7 +228,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
           {top3.map((art) => (
             <div key={art.id} className="flex flex-col min-w-0">
               <Link href={`/news/${art.slug}`} className="group flex flex-col mb-2.5">
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                   <ArticleMedia
                     src={art.image || (art as any).imageUrl || '/assets/demo/1.jpg'}
                     alt={art.title}
@@ -252,7 +252,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
             {bottomGrid.map((art) => (
               <div key={art.id} className="flex flex-col min-w-0">
                 <Link href={`/news/${art.slug}`} className="group flex flex-col">
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                     <ArticleMedia
                       src={art.image || (art as any).imageUrl || '/assets/demo/2.jpg'}
                       alt={art.title}

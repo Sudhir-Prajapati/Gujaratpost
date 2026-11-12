@@ -49,10 +49,21 @@ export default function DynamicCategorySection({ category, language, initialArti
       const artCatNameGu = (art.category?.nameGu || art.categoryGu || '').toLowerCase().trim();
       const artCatId = art.category?.id || art.categoryId;
 
-      const artTitle = (art.title || '').toLowerCase();
-      const artTitleGu = (art.titleGu || '').toLowerCase();
-      const artExcerptGu = (art.excerptGu || art.excerpt || '').toLowerCase();
+      // Extract multi-categories assigned to this article in CMS
+      const multiCatSlugs = Array.isArray(art.categories)
+        ? art.categories.map((c: any) => (c.category?.slug || c.slug || '').toLowerCase().trim())
+        : [];
+      const multiCatNames = Array.isArray(art.categories)
+        ? art.categories.map((c: any) => (c.category?.name || c.name || '').toLowerCase().trim())
+        : [];
+      const multiCatNamesGu = Array.isArray(art.categories)
+        ? art.categories.map((c: any) => (c.category?.nameGu || c.nameGu || '').toLowerCase().trim())
+        : [];
+      const multiCatIds = Array.isArray(art.categories)
+        ? art.categories.map((c: any) => c.category?.id || c.categoryId || c.id)
+        : [];
 
+      // Strictly match assigned category attributes (never keyword match title/content which causes leaks)
       return searchTerms.some(term => {
         if (!term || term.length < 2) return false;
         return (
@@ -60,7 +71,10 @@ export default function DynamicCategorySection({ category, language, initialArti
           artCatName === term ||
           artCatNameGu === term ||
           (category?.id && artCatId === category.id) ||
-          (term.length >= 3 && (artTitle.includes(term) || artTitleGu.includes(term) || artExcerptGu.includes(term)))
+          multiCatSlugs.includes(term) ||
+          multiCatNames.includes(term) ||
+          multiCatNamesGu.includes(term) ||
+          (category?.id && multiCatIds.includes(category.id))
         );
       });
     };

@@ -215,7 +215,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             href={`/news/${featSlug}`}
             className="group flex flex-col"
           >
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-zinc-100 dark:bg-neutral-900 mb-2 md:mb-3">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-zinc-100 dark:bg-neutral-900 mb-2 md:mb-3 shadow-sm">
               <Image
                 src={featImage}
                 alt="Fact Check Featured"
@@ -289,7 +289,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                     className="group flex gap-3.5 hover:bg-muted/10 transition-colors p-1 rounded-md"
                   >
                     {/* Image Left */}
-                    <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                    <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-xl border border-border/15 bg-muted shadow-2xs">
                       <Image
                         src={getArticleImage(item, '/assets/demo/2.jpg')}
                         alt={item.titleGu || item.title || 'Fact Check'}
@@ -323,7 +323,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                   className="group flex gap-3.5 hover:bg-muted/10 transition-colors p-1 rounded-md"
                 >
                   {/* Image Left */}
-                  <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                  <div className="relative w-[155px] h-[102px] lg:w-[170px] lg:h-[110px] shrink-0 overflow-hidden rounded-xl border border-border/15 bg-muted shadow-2xs">
                     <Image
                       src={item.image}
                       alt={item.titleGu}

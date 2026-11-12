@@ -224,7 +224,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         {/* Grid Skeleton */}
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0 rounded-lg border border-border bg-card overflow-hidden">
+            <div key={i} className="w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0 rounded-xl border border-border bg-card overflow-hidden">
               <div className="aspect-[16/10] sm:aspect-[4/3] w-full bg-muted/40" />
             </div>
           ))}
@@ -291,7 +291,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
             <Link
               key={article.id}
               href={`/news/${article.slug}`}
-              className="group relative flex flex-col overflow-hidden rounded-md border border-slate-400 bg-card hover:border-[#B3121B]/40 hover:shadow-sm transition-all snap-center w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
+              className="group relative flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card hover:border-[#B3121B]/40 shadow-xs hover:shadow-md transition-all snap-center w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
             >
               {/* Image Container */}
               <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-muted">

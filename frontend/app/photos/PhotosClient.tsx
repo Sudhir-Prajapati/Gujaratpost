@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronRight, Camera } from 'lucide-react';
-import { PHOTOS, getLocalized, getCategoryLabel, getPhotoCategoryBadge } from '@/data';
+import { PHOTOS, getLocalized, getCategoryLabel } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import AePanVachoSection from '@/components/sections/AePanVachoSection';
 import { getPublicArticles, getPublicGallery } from '@/lib/api';
@@ -155,7 +155,6 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
       {/* Photo Gallery Grid matching Home Page Card Dimensions */}
       <div className="w-full flex flex-col items-center sm:flex-row sm:flex-wrap sm:justify-center gap-5 sm:gap-6 mx-auto">
         {gallery.map((photo, index) => {
-          const categoryText = getPhotoCategoryBadge(photo, language);
           const captionSource = photo.caption || photo.captionGu || photo.alt || '';
 
           return (
@@ -180,17 +179,15 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
               />
 
               {/* Category Badge & Photo Count Badge */}
-              <div className="absolute top-3.5 inset-x-3.5 z-10 flex items-center justify-between">
-                <span className="inline-block rounded-md bg-[#B3121B] px-2.5 py-0.5 text-[11px] font-black text-white uppercase tracking-wide shadow-md">
-                  <AutoTranslateString text={categoryText} language={language} />
-                </span>
-                {Array.isArray(photo.images) && photo.images.length > 1 && (
+              {/* Photo count badge top-right */}
+              {Array.isArray(photo.images) && photo.images.length > 1 && (
+                <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
                   <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[11px] font-black text-white shadow-md border border-white/20">
                     <Camera className="w-3 h-3 text-red-400" />
                     <span>{photo.images.length}</span>
                   </span>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Title & Call-to-action overlay matching Image 2 */}
               <div className="absolute bottom-0 inset-x-0 p-4 pt-8 z-10 pointer-events-none">

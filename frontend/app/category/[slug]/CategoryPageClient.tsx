@@ -12,7 +12,6 @@ import {
   getCategoryLabel,
   formatViews,
   CategorySeoMeta,
-  getPhotoCategoryBadge,
 } from '@/data';
 import { getCategoryColor, toGu, sortArticlesByLatest } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
@@ -1667,7 +1666,6 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   : language === 'hi'
                     ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
                     : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
-                const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
                 const photoCount = Array.isArray(photo.images) && photo.images.length > 1
@@ -1695,18 +1693,15 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     {/* Dark gradient overlay for text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none z-10" />
 
-                    {/* Top badges: Category & Photo count */}
-                    <div className="absolute top-3.5 inset-x-3.5 z-20 flex items-center justify-between pointer-events-none">
-                      <span className="bg-[#b31217] text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">
-                        <AutoTranslateString text={photoCategory} language={language as any} />
-                      </span>
-                      {photoCount > 1 && (
+                    {/* Top photo count badge */}
+                    {photoCount > 1 && (
+                      <div className="absolute top-3.5 right-3.5 z-20 pointer-events-none">
                         <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[11px] font-black text-white shadow-md border border-white/20">
                           <Camera className="w-3 h-3 text-red-400" />
                           <span>{photoCount}</span>
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Title inside card at bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 z-20 pointer-events-none">
@@ -1727,7 +1722,6 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   : language === 'hi'
                     ? (photo.captionHi || (photo.caption && /[\u0900-\u097F]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.titleHi || photo.title || photo.alt || '')
                     : (photo.captionEn || (photo.caption && !/[\u0A80-\u0AFF]/.test(photo.caption) ? photo.caption : '') || photo.caption || photo.captionGu || photo.title || photo.alt || '');
-                const photoCategory = getPhotoCategoryBadge(photo, language);
                 const fallbackImg = FALLBACK_GALLERY_IMAGES[idx % FALLBACK_GALLERY_IMAGES.length];
                 const photoSrc = photo.src || photo.coverImage || photo.image || photo.url || photo.thumbnail || fallbackImg;
                 const photoCount = Array.isArray(photo.images) && photo.images.length > 1
@@ -1756,18 +1750,15 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     {/* Dark gradient overlay for text readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none z-10" />
 
-                    {/* Top badges: Category & Photo count */}
-                    <div className="absolute top-2.5 inset-x-2.5 z-20 flex items-center justify-between pointer-events-none">
-                      <span className="bg-[#b31217] text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-sm">
-                        <AutoTranslateString text={photoCategory} language={language as any} />
-                      </span>
-                      {photoCount > 1 && (
+                    {/* Top photo count badge */}
+                    {photoCount > 1 && (
+                      <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
                         <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[10.5px] font-black text-white shadow-md border border-white/20">
                           <Camera className="w-3 h-3 text-red-400" />
                           <span>{photoCount}</span>
                         </span>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Title + "― ફોટો જુઓ >" inside the card at bottom */}
                     <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex flex-col pointer-events-none">

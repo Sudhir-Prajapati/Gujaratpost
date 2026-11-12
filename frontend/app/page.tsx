@@ -109,7 +109,7 @@ export default async function HomePage() {
     const tokens = getArticleCategoryTokens(a);
     return slugs.some((target) => {
       const t = target.toLowerCase().trim();
-      return tokens.some((token) => token === t || token.includes(t));
+      return tokens.some((token) => token === t);
     });
   };
 

@@ -311,7 +311,7 @@ export default function NationalSection({ language, initialArticles }: { languag
           {top3.map((item) => (
             <div key={item.id} className="flex flex-col justify-between min-w-0 border-b border-border/40 pb-3">
               <Link href={`/news/${item.slug}`} className="group flex flex-col">
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                   <ArticleMedia src={item.image} alt={item.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
                 </div>
                 <h3 className="text-[15px] md:text-[16.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
@@ -332,7 +332,7 @@ export default function NationalSection({ language, initialArticles }: { languag
                 if (!sub) return <div key={colIdx} />;
                 return (
                   <Link key={`${sub.id}-${rowIdx}-${colIdx}`} href={`/news/${sub.slug}`} className="group flex gap-3 hover:bg-muted/10 transition-colors p-1 min-w-0">
-                    <div className="relative h-[56px] w-[86px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                    <div className="relative h-[56px] w-[86px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted">
                       <ArticleMedia src={sub.image} alt={sub.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
                     </div>
                     <div className="flex flex-col justify-center min-w-0 flex-1">

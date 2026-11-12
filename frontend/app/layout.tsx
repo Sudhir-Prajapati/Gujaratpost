@@ -112,7 +112,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               root.dataset.theme = theme === 'dark' ? 'dark' : 'light';
               const level = Number(localStorage.getItem('gp-fs-level') ?? '1');
               if (Number.isInteger(level) && level >= 0 && level <= 3)
-                root.style.setProperty('--gp-font-size', ['14px', '16px', '18px', '20px'][level]);
+                root.style.setProperty('--gp-font-size', ['15px', '17px', '19px', '22px'][level]);
             } catch {}
             try {
               const language = sessionStorage.getItem('gp-lang');

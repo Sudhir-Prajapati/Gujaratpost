@@ -193,7 +193,7 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
           <span>Live {lastUpdated}</span>
         </span>
       </div>
-      <div className="border border-border/80 rounded-sm bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
+      <div className="border border-border/80 rounded-xl bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
         {rates.slice(0, 5).map((item) => {
           const name = item.nameEn;
           const isUp = item.change > 0;
@@ -513,13 +513,13 @@ export default function WorldSection({ language, initialArticles }: { language: 
               </div>
 
               {/* Image Right with Watermark */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm bg-muted order-1 md:order-2">
+              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted order-1 md:order-2 shadow-sm">
                 <ArticleMedia
                   src={featured.image}
                   alt={featured.titleGu}
                   className="transition-transform duration-300 group-hover:scale-[1.02]"
                 />
-                <span className="absolute bottom-2.5 right-2.5 bg-black/60 text-white text-[9.5px] font-black px-2 py-0.5 rounded-sm select-none tracking-tight">
+                <span className="absolute bottom-2.5 right-2.5 bg-black/75 backdrop-blur-xs text-white text-[9.5px] font-black px-2.5 py-0.5 rounded-md select-none tracking-tight shadow">
                   {featured.watermarkGu}
                 </span>
               </div>
@@ -533,7 +533,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
                     href={`/news/${card.slug}`}
                     className="group flex flex-col"
                   >
-                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                       <ArticleMedia
                         src={card.image}
                         alt={card.titleGu}

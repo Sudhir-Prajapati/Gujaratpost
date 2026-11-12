@@ -1108,7 +1108,7 @@ export default function CityHyperlocalSection({
             {currentSlide && (
               <div className="group relative flex flex-col min-w-0">
                 {/* Image container */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted shadow-sm">
                   <Link href={`/news/${currentSlide.slug}`} className="absolute inset-0 cursor-pointer">
                     <ArticleMedia
                       src={currentSlide.image}
@@ -1140,7 +1140,7 @@ export default function CityHyperlocalSection({
                     ›
                   </button>
                   {/* Counter Index */}
-                  <span className="absolute top-2.5 left-2.5 bg-black/70 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-sm z-10 select-none pointer-events-none">
+                  <span className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-xs text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-md z-10 select-none pointer-events-none shadow">
                     {language === 'gu'
                       ? `${toGuLocal(slideIdx + 1)} / ${toGuLocal(mockSlides.length)}`
                       : `${slideIdx + 1} / ${mockSlides.length}`}
@@ -1219,7 +1219,7 @@ export default function CityHyperlocalSection({
                   </div>
 
                   {/* Thumbnail on the right */}
-                  <div className="relative aspect-[16/10] w-[92px] h-[60px] sm:w-[102px] sm:h-[66px] shrink-0 overflow-hidden rounded-md border border-border/10 bg-muted">
+                  <div className="relative aspect-[16/10] w-[92px] h-[60px] sm:w-[102px] sm:h-[66px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted">
                     <ArticleMedia
                       src={item.image}
                       alt={item.titleGu}

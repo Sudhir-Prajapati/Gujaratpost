@@ -245,12 +245,7 @@ export default function PhotoGallery() {
                   {/* Dark Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-                  {/* Category Chip */}
-                  <div className="absolute top-3 left-3 z-10">
-                    <span className="bg-[#B3121B] text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md select-none">
-                      {photo.category || photo.tag || CATS[index % CATS.length]}
-                    </span>
-                  </div>
+{/* Category Chip removed per user request */}
 
                   {/* Caption (bottom) */}
                   <div className="absolute inset-x-0 bottom-0 z-10 p-4">

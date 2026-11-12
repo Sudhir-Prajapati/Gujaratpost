@@ -646,7 +646,7 @@ function HeroStorySlider({
       {/* ─── DESKTOP VIEW (>= md): 100% Untouched Existing Layout (Image First, Excerpt, Author) ─── */}
       <Link href={`/news/${current.slug}`} className="group hidden md:flex flex-col w-full">
         {/* Hero image with slider controls */}
-        <div className="relative w-full overflow-hidden rounded-sm shadow-sm aspect-[16/9] md:aspect-[3/2] bg-muted">
+        <div className="relative w-full overflow-hidden rounded-xl md:rounded-2xl shadow-md aspect-[16/9] md:aspect-[3/2] bg-muted border border-border/15">
           <ArticleMedia
             key={current.id || slideIndex}
             src={current.image || (current as any).featuredImage}
@@ -794,7 +794,7 @@ function articleMatchesCat(a: any, ...targets: string[]): boolean {
   const tokens = getArticleCategoryTokens(a);
   return targets.some((target) => {
     const t = target.toLowerCase().trim();
-    return tokens.some((token) => token === t || token.includes(t));
+    return tokens.some((token) => token === t);
   });
 }
 
@@ -882,37 +882,28 @@ export default function HeroSection({
   }, [initialArticles]);
 
   // Helper to compute heroPool identically for both initial SSR state and client useEffect:
-  // 1. Slider: Articles 1 to 3
-  // 2. Side Box: Articles 4 to 9 (6 cards)
-  // 3. Bottom 3 Hero Boxes: Articles 10 to 12 (3 cards)
+  // Strictly latest-first chronological FIFO order
   const computeHeroPoolList = (arts: Article[], _heroSettingsData?: any) => {
     const pubArts = (arts || [])
       .filter(isPublicArticle)
       .filter((a) => !isExcludedFromHeroTop(a));
 
-    // Sort strictly latest first: articleNumber desc, then publishedAt desc
+    // Sort strictly latest first: articleNumber desc, then publishedAt/createdAt desc
     const sortedLatest = [...pubArts].sort((a: Article, b: Article) => {
       const aNum = typeof (a as any).articleNumber === 'number' ? (a as any).articleNumber : (parseInt((a as any).articleNumber, 10) || 0);
       const bNum = typeof (b as any).articleNumber === 'number' ? (b as any).articleNumber : (parseInt((b as any).articleNumber, 10) || 0);
       if (bNum !== aNum) return bNum - aNum;
-      const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
-      const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+      const aTime = Math.max(new Date(a.publishedAt || 0).getTime(), new Date((a as any).createdAt || 0).getTime());
+      const bTime = Math.max(new Date(b.publishedAt || 0).getTime(), new Date((b as any).createdAt || 0).getTime());
       return bTime - aTime;
     });
-
-    const featuredOnly = sortedLatest.filter((a) => a.isFeatured === true);
-    if (featuredOnly.length > 0) {
-      const nonFeatured = sortedLatest.filter((a) => !a.isFeatured);
-      return [...featuredOnly, ...nonFeatured];
-    }
 
     return sortedLatest;
   };
 
   // Helper to determine the 3 bottom cards:
-  // If admin selected custom slot articles in /admin/hero, use them.
-  // Bottom Row 3 Cards: Always prioritizes fresh, latest articles.
-  // Stale pinned slot articles (>48-72h) are automatically bypassed to ensure latest news.
+  // Bottom Row 3 Cards: Strictly takes articles 10 to 12 (indices 9, 10, 11)
+  // so bottom 3 cards never duplicate the top 3 slider or 6 side stories!
   const getBottomCards = (
     pool: Article[],
     heroSettingsData?: any
@@ -920,49 +911,33 @@ export default function HeroSection({
     const validPool = (pool || []).filter((a) => isPublicArticle(a) && !isExcludedFromHeroTop(a));
     const validArticlesList = (articlesList || []).filter((a) => isPublicArticle(a) && !isExcludedFromHeroTop(a));
 
-    const isStale = (art: any, maxHours = 72) => {
-      if (!art) return true;
-      const pubTime = new Date(art.publishedAt || art.createdAt || 0).getTime();
-      if (!pubTime || isNaN(pubTime)) return false;
-      return (Date.now() - pubTime) > maxHours * 60 * 60 * 1000;
-    };
+    const combined = [...validPool, ...validArticlesList];
+    const seen = new Set<string>();
+    const uniqueList: Article[] = [];
+    for (const art of combined) {
+      if (!art || !art.id || seen.has(art.id)) continue;
+      seen.add(art.id);
+      uniqueList.push(art);
+    }
 
-    const slots = heroSettingsData?.slots;
-    const setting = heroSettingsData?.setting;
-    const isManualMode = setting?.heroGridMode === 'manual';
+    // Sort latest first
+    uniqueList.sort((a: Article, b: Article) => {
+      const aNum = typeof (a as any).articleNumber === 'number' ? (a as any).articleNumber : (parseInt((a as any).articleNumber, 10) || 0);
+      const bNum = typeof (b as any).articleNumber === 'number' ? (b as any).articleNumber : (parseInt((b as any).articleNumber, 10) || 0);
+      if (bNum !== aNum) return bNum - aNum;
+      const aTime = Math.max(new Date(a.publishedAt || 0).getTime(), new Date((a as any).createdAt || 0).getTime());
+      const bTime = Math.max(new Date(b.publishedAt || 0).getTime(), new Date((b as any).createdAt || 0).getTime());
+      return bTime - aTime;
+    });
 
-    // Only use manual slots if explicitly in manual mode AND not stale
-    const slot1 = (isManualMode && slots && slots[0] && isPublicArticle(slots[0]) && !isExcludedFromHeroTop(slots[0]) && !isStale(slots[0]))
-      ? slots[0]
-      : (isManualMode && setting?.slot1Id ? validArticlesList.find((a) => a.id === setting.slot1Id && !isStale(a)) : null);
-
-    const slot2 = (isManualMode && slots && slots[1] && isPublicArticle(slots[1]) && !isExcludedFromHeroTop(slots[1]) && !isStale(slots[1]))
-      ? slots[1]
-      : (isManualMode && setting?.slot2Id ? validArticlesList.find((a) => a.id === setting.slot2Id && !isStale(a)) : null);
-
-    const slot3 = (isManualMode && slots && slots[2] && isPublicArticle(slots[2]) && !isExcludedFromHeroTop(slots[2]) && !isStale(slots[2]))
-      ? slots[2]
-      : (isManualMode && setting?.slot3Id ? validArticlesList.find((a) => a.id === setting.slot3Id && !isStale(a)) : null);
-
-    const usedIds = new Set<string>();
-    if (slot1?.id) usedIds.add(slot1.id);
-    if (slot2?.id) usedIds.add(slot2.id);
-    if (slot3?.id) usedIds.add(slot3.id);
-
-    // Pick freshest latest articles from pool and articlesList that are not yet used
-    const freshCandidates = [...validPool, ...validArticlesList].filter((a) => a?.id && !usedIds.has(a.id) && !isStale(a, 168));
-
-    const card1 = slot1 || freshCandidates[0] || validPool[0] || null;
-    if (card1?.id) usedIds.add(card1.id);
-
-    const freshRemaining = freshCandidates.filter((a) => a?.id && !usedIds.has(a.id));
-    const card2 = slot2 || freshRemaining[0] || validPool[1] || null;
-    if (card2?.id) usedIds.add(card2.id);
-
-    const freshRemaining2 = freshRemaining.filter((a) => a?.id && !usedIds.has(a.id));
-    const card3 = slot3 || freshRemaining2[0] || validPool[2] || null;
-
-    return [card1, card2, card3].filter(Boolean) as Article[];
+    // Skip the top 9 articles (3 for slider + 6 for right-side grid)
+    if (uniqueList.length >= 12) {
+      return uniqueList.slice(9, 12);
+    }
+    if (uniqueList.length > 3) {
+      return uniqueList.slice(3, 6);
+    }
+    return uniqueList.slice(0, 3);
   };
 
   // Pre-calculate initial hero slots & grid from initialHeroSettings
@@ -1296,21 +1271,6 @@ export default function HeroSection({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
-
-  // Sidebar auto-changing video state (cycles every 10s)
-  const featuredSidebar = videosList.filter(v => v.isFeatured && (v.type === 'video' || !v.type));
-  const sidebarVideos = featuredSidebar.length > 0
-    ? featuredSidebar
-    : videosList.filter(v => v.type === 'video' || !v.type).slice(0, 6);
-  const [activeSidebarVideoIndex, setActiveSidebarVideoIndex] = useState(0);
-
-  useEffect(() => {
-    if (sidebarVideos.length === 0) return;
-    const interval = setInterval(() => {
-      setActiveSidebarVideoIndex((prev) => (prev + 1) % sidebarVideos.length);
-    }, 2500); // 2.5 seconds rotation
-    return () => clearInterval(interval);
-  }, [sidebarVideos.length]);
 
   const isCategoryVisible = (slug: string) => {
     if (!allCategoriesDB || !Array.isArray(allCategoriesDB) || allCategoriesDB.length === 0) {
@@ -1661,13 +1621,6 @@ export default function HeroSection({
     ),
   };
 
-  const currentSidebarVideo = sidebarVideos[activeSidebarVideoIndex] || {
-    youtubeId: 'A_5vL-ngK4M',
-    title: 'Latest Video',
-    titleGu: 'ગુજરાત પોસ્ટ તાજેતરનો વીડિયો',
-    titleHi: 'नवीनतम वीडियो',
-  };
-
   const [savedIds, setSavedIds] = useState<string[]>([]);
   useEffect(() => {
     const updateSaved = () => {
@@ -1804,92 +1757,108 @@ export default function HeroSection({
                 heroSettingsState?.heroGridArticles ||
                 initialHeroSettings?.heroGridArticles ||
                 []
-              ).filter(isPublicArticle).slice(0, 9);
+              ).filter(isPublicArticle);
+
+              // 1. Gather all candidates and strictly deduplicate by id & slug
+              const allCandidates = [
+                ...(articlesList || []),
+                ...(initialArticles || []),
+                ...(uniqueTopStories || []),
+              ];
+
+              const seenHeroIds = new Set<string>();
+              const allPublicArticles: Article[] = [];
+
+              for (const a of allCandidates) {
+                if (!a || !isPublicArticle(a) || isExcludedFromHeroTop(a)) continue;
+                const key = a.id || a.slug;
+                if (!key || seenHeroIds.has(key)) continue;
+                seenHeroIds.add(key);
+                allPublicArticles.push(a);
+              }
+
+              // 2. Sort strictly by latest (chronological FIFO):
+              // Primary: articleNumber desc
+              // Secondary: publishedAt / createdAt desc
+              allPublicArticles.sort((a: Article, b: Article) => {
+                const aNum = typeof (a as any).articleNumber === 'number'
+                  ? (a as any).articleNumber
+                  : (parseInt((a as any).articleNumber, 10) || 0);
+                const bNum = typeof (b as any).articleNumber === 'number'
+                  ? (b as any).articleNumber
+                  : (parseInt((b as any).articleNumber, 10) || 0);
+                if (bNum !== aNum) return bNum - aNum;
+
+                const aTime = Math.max(
+                  new Date(a.publishedAt || 0).getTime(),
+                  new Date((a as any).createdAt || 0).getTime()
+                );
+                const bTime = Math.max(
+                  new Date(b.publishedAt || 0).getTime(),
+                  new Date((b as any).createdAt || 0).getTime()
+                );
+                return bTime - aTime;
+              });
 
               let heroSliderArticlesToDisplay: Article[] = [];
               let afterTop3News: Article[] = [];
+              let desktopCards: Article[] = [];
 
-              // Prioritize articles where admin selected "Home / News" (isFeatured = true)
-              const homeNewsArticles: Article[] = (
-                manualGridArts.length > 0
-                  ? manualGridArts
-                  : articlesList.filter((a: Article) => a.isFeatured === true)
-              ).filter((a) => !isExcludedFromHeroTop(a)).slice(0, 9);
+              if (gridMode === 'manual' && manualGridArts.length > 0) {
+                const usedInHero = new Set<string>();
 
-              if (homeNewsArticles.length > 0 && gridMode === 'manual') {
-                // Strictly sequential: First up to 3 articles in Spotlight Slider (Slide 1, Slide 2, Slide 3 in latest order)
-                heroSliderArticlesToDisplay = homeNewsArticles.slice(0, Math.min(3, homeNewsArticles.length));
-                // Next articles (indices 3 to 8) in Middle Column (up to 6 cards)
-                afterTop3News = homeNewsArticles.slice(3, 9);
-              } else {
-                // AUTOMATIC MODE: Strictly sequential 9 articles for this section
-                const baseArticles = homeNewsArticles.length >= 9
-                  ? homeNewsArticles
-                  : uniqueTopStories;
+                // Manual Slider: Up to 3 articles
+                heroSliderArticlesToDisplay = manualGridArts.slice(0, 3);
+                heroSliderArticlesToDisplay.forEach((a) => { if (a?.id) usedInHero.add(a.id); });
 
-                // Top 3 latest articles in Spotlight Slider (Slide 1, Slide 2, Slide 3 in sequential order)
-                heroSliderArticlesToDisplay = baseArticles.slice(0, Math.min(3, baseArticles.length));
-
-                const activeSliderIds = new Set(heroSliderArticlesToDisplay.map((a) => a.id).filter(Boolean));
-                const customSlotIds = new Set(
-                  [
-                    heroSettingsState?.setting?.slot1Id,
-                    heroSettingsState?.setting?.slot2Id,
-                    heroSettingsState?.setting?.slot3Id,
-                    heroSettingsState?.slots?.[0]?.id,
-                    heroSettingsState?.slots?.[1]?.id,
-                    heroSettingsState?.slots?.[2]?.id,
-                    initialHeroSettings?.setting?.slot1Id,
-                    initialHeroSettings?.setting?.slot2Id,
-                    initialHeroSettings?.setting?.slot3Id,
-                    initialHeroSettings?.slots?.[0]?.id,
-                    initialHeroSettings?.slots?.[1]?.id,
-                    initialHeroSettings?.slots?.[2]?.id,
-                  ].filter(Boolean)
-                );
-
-                // If baseArticles has articles at indices 3..8, take them first for the 6 Middle Column cards:
-                if (baseArticles.length > 3) {
-                  for (const art of baseArticles.slice(3, 9)) {
-                    if (afterTop3News.length >= 6) break;
-                    if (art && art.id && !isExcludedFromHeroTop(art) && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
-                      afterTop3News.push(art);
-                    }
+                // Manual Right Side: Up to 6 articles (never duplicate slider)
+                for (const art of manualGridArts.slice(3)) {
+                  if (afterTop3News.length >= 6) break;
+                  if (art && art.id && !usedInHero.has(art.id)) {
+                    usedInHero.add(art.id);
+                    afterTop3News.push(art);
                   }
                 }
-
-                // Next 6 articles in Middle Column from uniqueTopStories if needed
-                for (const art of uniqueTopStories) {
+                for (const art of allPublicArticles) {
                   if (afterTop3News.length >= 6) break;
-                  if (art && art.id && !isExcludedFromHeroTop(art) && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
+                  if (art && art.id && !usedInHero.has(art.id)) {
+                    usedInHero.add(art.id);
                     afterTop3News.push(art);
                   }
                 }
 
-                if (afterTop3News.length < 6) {
-                  for (const art of articlesList) {
-                    if (afterTop3News.length >= 6) break;
-                    if (art && art.id && !isExcludedFromHeroTop(art) && !activeSliderIds.has(art.id) && !customSlotIds.has(art.id) && !afterTop3News.some((a) => a.id === art.id)) {
-                      afterTop3News.push(art);
-                    }
+                // Manual Bottom: Up to 3 articles (never duplicate slider or right side)
+                const manualSlots = [
+                  heroSettingsState?.slots?.[0],
+                  heroSettingsState?.slots?.[1],
+                  heroSettingsState?.slots?.[2],
+                ].filter(Boolean);
+                for (const slot of manualSlots) {
+                  if (desktopCards.length >= 3) break;
+                  if (slot && slot.id && !usedInHero.has(slot.id)) {
+                    usedInHero.add(slot.id);
+                    desktopCards.push(slot);
                   }
                 }
+                for (const art of allPublicArticles) {
+                  if (desktopCards.length >= 3) break;
+                  if (art && art.id && !usedInHero.has(art.id)) {
+                    usedInHero.add(art.id);
+                    desktopCards.push(art);
+                  }
+                }
+              } else {
+                // AUTOMATIC MODE (Default): Strictly 12 Unique Stories (Latest First FIFO)
+                // 1. Slider (Big box on left): First 3 latest stories (indices 0, 1, 2)
+                // 2. Right Side of Slider: Next 6 different latest stories (indices 3, 4, 5, 6, 7, 8)
+                // 3. Down of Slider: Next 3 different latest stories (indices 9, 10, 11)
+                // TOTAL = 12 DIFFERENT STORIES. When new story is uploaded from CMS -> enters at #1, shifts down, #12 drops off.
+                heroSliderArticlesToDisplay = allPublicArticles.slice(0, 3);
+                afterTop3News = allPublicArticles.slice(3, 9);
+                desktopCards = allPublicArticles.slice(9, 12);
               }
 
-              // AND AFTER THAT 3: Bottom Row 3 Image Cards are completely separate & different
-              const desktopCards = getBottomCards(uniqueTopStories, heroSettingsState || initialHeroSettings);
-
-              // Mobile Horizontal Scroll: Strictly 3 articles for the 3-page slider
-              const mobileHorizontalCards = (
-                desktopCards.length >= 3
-                  ? desktopCards.slice(0, 3)
-                  : [
-                      ...desktopCards,
-                      ...afterTop3News.slice(3),
-                      ...uniqueTopStories.slice(9),
-                      ...articlesList,
-                    ].filter((art, index, self) => art && (art.id || art.slug) && !isExcludedFromHeroTop(art) && self.findIndex((a) => (a.id && a.id === art.id) || (a.slug && a.slug === art.slug)) === index)
-              ).slice(0, 3);
+              const mobileHorizontalCards = desktopCards;
 
               return (
                 <>
@@ -1913,7 +1882,7 @@ export default function HeroSection({
                               href={`/news/${art.slug}`}
                               className="group flex flex-col gap-1 min-w-0"
                             >
-                              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+                              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border/15 bg-muted shadow-xs">
                                 <ArticleMedia
                                   src={art.image || (art as any).featuredImage || getArticleImage(art)}
                                   alt={art.title || ''}
@@ -1962,7 +1931,7 @@ export default function HeroSection({
                               href={`/news/${art.slug}`}
                               className="group flex flex-col items-start gap-0 min-w-0"
                             >
-                              <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+                              <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                                 <ArticleMedia
                                   src={art.image || (art as any).featuredImage || getArticleImage(art)}
                                   alt={art.title || ''}
@@ -2005,83 +1974,6 @@ export default function HeroSection({
               enableTributeSlides={true}
             />
 
-            {/* YouTube Video Section */}
-            <div className="w-full rounded-2xl md:rounded-xl border-2 border-red-400 border-t-4 border-t-[#B3121B] bg-gradient-to-b from-white to-red-50/45 p-4 shadow-[0_8px_24px_rgba(127,29,29,0.16)] ring-2 ring-red-100 flex flex-col gap-2.5 dark:border-red-800 dark:ring-red-950/70 dark:from-card dark:to-red-950/20 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] flex items-center gap-1.5 select-none">
-                  <Play className="h-3.5 w-3.5 fill-current" />
-                  {getLocalized(language, {
-                    en: 'YouTube Videos',
-                    gu: 'યુટ્યુબ વીડિયો',
-                    hi: 'यूट्यूब वीडियो'
-                  })}
-                </span>
-                <span className="bg-accent text-white text-[9px] font-black px-1.5 py-0.5 rounded-sm uppercase tracking-wider">
-                  {getLocalized(language, {
-                    en: 'VIDEO',
-                    gu: 'વીડિયો',
-                    hi: 'वीडियो',
-                  })}
-                </span>
-              </div>
-
-              <a
-                href={`https://www.youtube.com/watch?v=${safeYouTubeId(currentSidebarVideo.youtubeId)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative w-full overflow-hidden rounded-sm border border-slate-400/60 bg-black shadow-inner cursor-pointer group block"
-                style={{ aspectRatio: '16/9' }}
-                title={getLocalized(language, {
-                  en: currentSidebarVideo.title,
-                  gu: currentSidebarVideo.titleGu,
-                  hi: currentSidebarVideo.titleHi,
-                })}
-              >
-                <Image
-                  src={currentSidebarVideo.thumbnail || `https://i.ytimg.com/vi/${safeYouTubeId(currentSidebarVideo.youtubeId)}/hqdefault.jpg`}
-                  alt={currentSidebarVideo.title || 'Video'}
-                  fill
-                  priority
-                  loading="eager"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 350px"
-                />
-                <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-white shadow-xl transition-transform duration-300 group-hover:scale-110 border-2 border-white/80">
-                    <Play className="h-6 w-6 fill-current ml-0.5" />
-                  </div>
-                </div>
-              </a>
-
-              <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground pt-1 border-t border-border/40 mt-1 gap-2">
-                <a
-                  href={`https://www.youtube.com/watch?v=${safeYouTubeId(currentSidebarVideo.youtubeId)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="line-clamp-1 max-w-[170px] hover:text-[#B3121B] transition-colors"
-                  title={getLocalized(language, {
-                    en: currentSidebarVideo.title,
-                    gu: currentSidebarVideo.titleGu,
-                    hi: currentSidebarVideo.titleHi,
-                  })}
-                >
-                  {getLocalized(language, {
-                    en: currentSidebarVideo.title,
-                    gu: currentSidebarVideo.titleGu,
-                    hi: currentSidebarVideo.titleHi,
-                  })}
-                </a>
-                <a
-                  href={`https://www.youtube.com/watch?v=${safeYouTubeId(currentSidebarVideo.youtubeId)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#B3121B] hover:underline flex items-center gap-0.5 font-black shrink-0"
-                >
-                  {language === 'gu' ? 'યુટ્યુબ પર જુઓ ↗' : language === 'hi' ? 'यूट्यूब पर देखें ↗' : 'Watch on YouTube ↗'}
-                </a>
-              </div>
-            </div>
-
             {/* Popular Articles */}
             {/* Mobile View (< md): Image 2 style */}
             <div className="md:hidden w-full overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-card shadow-sm">
@@ -2104,7 +1996,7 @@ export default function HeroSection({
                     className="group flex items-start gap-2.5 py-2.5 px-3 hover:bg-muted/30 transition-colors rounded-lg"
                   >
                     <span className="w-2.5 h-2.5 rounded-full bg-[#B3121B] mt-1.5 shrink-0" />
-                    <h4 className="text-[14px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors flex-1 line-clamp-2">
+                    <h4 className="text-[15.5px] font-bold leading-snug text-foreground group-hover:text-accent transition-colors flex-1 line-clamp-2">
                       <AutoArticleTitle article={art} language={language} />
                     </h4>
                   </Link>

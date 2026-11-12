@@ -171,7 +171,7 @@ body {
 html {
   scroll-behavior: smooth;
   overflow-x: clip;
-  font-size: var(--gp-font-size, 16px);
+  font-size: var(--gp-font-size, 17px);
 }
 
 body {
@@ -291,7 +291,44 @@ h6,
 .font-semibold {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", "Nirmala UI", sans-serif;
   letter-spacing: -0.01em;
-  line-height: 1.25;
+  line-height: 1.3;
+}
+
+/* ── Global Heading Scaling for Crisp Readability ── */
+h1 {
+  font-size: clamp(1.48rem, 1.25rem + 1vw, 2.35rem);
+  line-height: 1.28;
+}
+
+h2 {
+  font-size: clamp(1.3rem, 1.12rem + 0.75vw, 1.9rem);
+  line-height: 1.3;
+}
+
+h3 {
+  font-size: clamp(1.15rem, 1.02rem + 0.4vw, 1.5rem);
+  line-height: 1.34;
+}
+
+h4 {
+  font-size: clamp(1.05rem, 0.96rem + 0.25vw, 1.28rem);
+  line-height: 1.38;
+}
+
+/* Section heading badge enhanced size */
+.section-heading-badge {
+  font-size: clamp(18px, 1.1rem + 0.35vw, 21px) !important;
+  font-weight: 900 !important;
+  letter-spacing: -0.01em !important;
+  line-height: 1.15 !important;
+  padding: 0.65rem 1.45rem !important;
+}
+
+/* Section heading titles */
+.section-heading {
+  font-size: clamp(1.35rem, 1.15rem + 0.65vw, 1.95rem) !important;
+  font-weight: 900 !important;
+  line-height: 1.3 !important;
 }
 
 b,
@@ -2093,7 +2130,7 @@ html[data-theme="dark"] .share-x {
 .article-title {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", sans-serif;
   font-weight: 800;
-  font-size: clamp(1.48rem, 1.25rem + 0.75vw, 1.95rem);
+  font-size: clamp(1.75rem, 1.45rem + 1.2vw, 2.45rem);
   line-height: 1.25;
   color: var(--ink);
   letter-spacing: -.5px;
@@ -2102,7 +2139,7 @@ html[data-theme="dark"] .share-x {
 
 .article-sub {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", sans-serif;
-  font-size: clamp(1.05rem, 1rem + 0.22vw, 1.22rem);
+  font-size: clamp(1.18rem, 1.08rem + 0.35vw, 1.38rem);
   line-height: 1.55;
   color: var(--ink-2);
   margin-bottom: 22px;

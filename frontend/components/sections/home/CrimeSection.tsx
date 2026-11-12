@@ -552,7 +552,7 @@ export default function CrimeSection({
         {currentSlide && (
           <div className="group relative flex flex-col min-w-0">
             <div>
-              <div className="relative aspect-[16/9.5] w-full overflow-hidden rounded-sm border border-border/10 bg-muted">
+              <div className="relative aspect-[16/9.5] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted shadow-sm">
                 <Image
                   src={currentSlide.image}
                   alt={currentSlide.titleGu}
@@ -576,7 +576,7 @@ export default function CrimeSection({
                 >
                   <ChevronRight className="h-5 w-5 stroke-[3px] text-white" />
                 </button>
-                <span className="absolute top-2.5 left-2.5 bg-black/70 text-white text-[11px] font-extrabold px-2 py-0.5 rounded-sm z-10 select-none">
+                <span className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-xs text-white text-[11px] font-extrabold px-2.5 py-0.5 rounded-md z-10 select-none shadow">
                   {language === 'gu'
                     ? `${toGuLocal((slideIdx % slides.length) + 1)} / ${toGuLocal(slides.length)}`
                     : `${(slideIdx % slides.length) + 1} / ${slides.length}`}
@@ -652,7 +652,7 @@ export default function CrimeSection({
               href={`/news/${col.featured.slug}`}
               className="group flex flex-col mb-2.5"
             >
-              <div className="relative aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2.5">
+              <div className="relative aspect-[16/10] md:aspect-[4/3] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                 <ArticleMedia
                   src={col.featured.image}
                   alt={col.featured.title}

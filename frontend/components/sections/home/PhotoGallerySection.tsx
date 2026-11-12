@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Camera } from 'lucide-react';
 import type { Language } from '@/types';
-import { getLocalized, PHOTOS, getPhotoCategoryBadge } from '@/data';
+import { getLocalized, PHOTOS } from '@/data';
 import { getPublicGallery } from '@/lib/api';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
@@ -322,7 +322,6 @@ function GalleryScrollStrip({
       >
         {repeatedGallery.map((item, index) => {
           const absIdx = index;
-          const cat = getPhotoCategoryBadge(item, language);
           const title = getLocalized(language, {
             en: item.caption || item.alt || item.title || '',
             gu: item.captionGu || item.caption || item.alt || '',
@@ -354,21 +353,15 @@ function GalleryScrollStrip({
                 style={{ opacity: 0.88 }}
               />
 
-              {/* Category chip & Photo count badge */}
-              <div className="absolute top-3 inset-x-3 z-10 flex items-center justify-between pointer-events-none">
-                <span
-                  className="text-white text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wide shadow-md"
-                  style={{ backgroundColor: accentColor }}
-                >
-                  <AutoTranslateString text={cat} language={language} />
-                </span>
-                {Array.isArray(item.images) && item.images.length > 1 && (
+              {/* Photo count badge */}
+              {Array.isArray(item.images) && item.images.length > 1 && (
+                <div className="absolute top-3 right-3 z-10 pointer-events-none">
                   <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
                     <Camera className="w-3 h-3 text-red-400" />
                     <span>{item.images.length}</span>
                   </span>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* Caption & View link */}
               <div className="absolute inset-x-0 bottom-0 z-10 p-4 translate-y-0 group-hover:-translate-y-1 transition-transform duration-300 pointer-events-none">

@@ -68,21 +68,26 @@ const formatTopBarDate = (lang: string) => {
       'જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન',
       'જુલાઈ', 'ઓગસ્ટ', 'સપ્ટેમ્બર', 'ઓક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર',
     ];
-    return `${d.getDate()} ${monthsGu[d.getMonth()]}, ${d.getFullYear()}`;
+    return `${monthsGu[d.getMonth()]}, ${d.getFullYear()}`;
   }
   if (lang === 'hi') {
     const monthsHi = [
       'जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून',
       'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर',
     ];
-    return `${d.getDate()} ${monthsHi[d.getMonth()]}, ${d.getFullYear()}`;
+    return `${monthsHi[d.getMonth()]}, ${d.getFullYear()}`;
   }
-  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
 };
 
 function getCategoryIcon(slug: string, name?: string) {
   const s = (slug || '').toLowerCase().replace('/category/', '').replace('/', '');
   const n = (name || '').toLowerCase();
+
+  // Cities
+  if (s === 'ahmedabad' || s === 'surat' || s === 'rajkot' || s === 'vadodara' || s === 'gandhinagar') {
+    return <MapPin className="h-5 w-5 text-red-600 shrink-0" />;
+  }
 
   // Gujarat
   if (s === 'gujarat' || n.includes('ગુજરાત') || n.includes('gujarat')) {
@@ -236,10 +241,23 @@ function PlayStoreIcon({ className = 'h-4 w-4' }: { className?: string }) {
 }
 
 // The 12 flat navigation links shown in the nav bar
+const CITY_NAV_LINKS = [
+  { label: 'Ahmedabad', labelGu: 'અમદાવાદ', labelHi: 'अहमदाबाद', href: '/category/ahmedabad', slug: 'ahmedabad' },
+  { label: 'Surat', labelGu: 'સુરત', labelHi: 'सूरत', href: '/category/surat', slug: 'surat' },
+  { label: 'Rajkot', labelGu: 'રાજકોટ', labelHi: 'राजकोट', href: '/category/rajkot', slug: 'rajkot' },
+  { label: 'Vadodara', labelGu: 'વડોદરા', labelHi: 'वडोदरा', href: '/category/vadodara', slug: 'vadodara' },
+  { label: 'Gandhinagar', labelGu: 'ગાંધીનગર', labelHi: 'गांधीनगर', href: '/category/gandhinagar', slug: 'gandhinagar' },
+];
+
 const NAV_LINKS = [
   { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' },
   { label: 'Video', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos' },
   { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'गुजरात', href: '/category/gujarat' },
+  { label: 'Ahmedabad', labelGu: 'અમદાવાદ', labelHi: 'अहमदाबाद', href: '/category/ahmedabad' },
+  { label: 'Surat', labelGu: 'સુરત', labelHi: 'सूरत', href: '/category/surat' },
+  { label: 'Rajkot', labelGu: 'રાજકોટ', labelHi: 'राजकोट', href: '/category/rajkot' },
+  { label: 'Vadodara', labelGu: 'વડોદરા', labelHi: 'वडोदरा', href: '/category/vadodara' },
+  { label: 'Gandhinagar', labelGu: 'ગાંધીનગર', labelHi: 'गांधीनगर', href: '/category/gandhinagar' },
   { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national' },
   { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world' },
   { label: 'Politics', labelGu: 'રાજકારણ', labelHi: 'राजनीति', href: '/category/politics' },
@@ -263,7 +281,6 @@ const formatDateLong = (lang: string) => {
   const locale = lang === 'gu' ? 'gu-IN' : lang === 'hi' ? 'hi-IN' : 'en-GB';
   return new Date().toLocaleDateString(locale, {
     weekday: 'long',
-    day: 'numeric',
     month: 'long',
     year: 'numeric',
   });
@@ -279,6 +296,11 @@ const formatDateShort = (lang: string) => {
 };
 
 const CATEGORY_TRANSLATIONS: Record<string, { en: string; hi: string; gu: string }> = {
+  ahmedabad: { en: 'Ahmedabad', hi: 'अहमदाबाद', gu: 'અમદાવાદ' },
+  surat: { en: 'Surat', hi: 'सूरत', gu: 'સુરત' },
+  rajkot: { en: 'Rajkot', hi: 'राजकोट', gu: 'રાજકોટ' },
+  vadodara: { en: 'Vadodara', hi: 'वडोदरा', gu: 'વડોદરા' },
+  gandhinagar: { en: 'Gandhinagar', hi: 'गांधीनगर', gu: 'ગાંધીનગર' },
   videos: { en: 'Video', hi: 'वीडियो', gu: 'વીડિયો' },
   video: { en: 'Video', hi: 'वीडियो', gu: 'વીડિયો' },
   gujarat: { en: 'Gujarat', hi: 'गुजरात', gu: 'ગુજરાત' },
@@ -548,30 +570,47 @@ export default function Header() {
       return { label: labelEn, labelGu, labelHi, href };
     };
 
-    // Unified Header Categories: all active header categories (excluding GUJARAT cities for DistrictBar and hidden categories)
+    // Unified Header Categories: all active header categories (excluding hidden categories)
     const headerCats = dbCategories
-      .filter((c) => !isHiddenFromNavbar(c) && c.headerType !== 'GUJARAT' && (epaperEnabled || (c.slug || '').toLowerCase() !== 'epaper'))
+      .filter((c) => !isHiddenFromNavbar(c) && (epaperEnabled || (c.slug || '').toLowerCase() !== 'epaper'))
       .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
 
     const homeLink = { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' };
     const videoLink = { label: 'Video', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos' };
+    const gujaratLink = { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'ગુજરાત', href: '/category/gujarat' };
+
+    // Explicit 5 major cities in exact user-requested sequence:
+    // Ahmedabad -> Surat -> Rajkot -> Vadodara -> Gandhinagar
+    const citySequence = ['ahmedabad', 'surat', 'rajkot', 'vadodara', 'gandhinagar'];
+    const cityLinks = citySequence.map((slug) => {
+      const foundInDb = dbCategories.find((c) => (c.slug || '').toLowerCase() === slug);
+      if (foundInDb) return mapCategory(foundInDb);
+      const fallback = CITY_NAV_LINKS.find((c) => c.slug === slug);
+      return fallback || { label: slug, labelGu: slug, labelHi: slug, href: `/category/${slug}` };
+    });
+
+    const cityHrefs = new Set(cityLinks.map((l) => l.href));
 
     const nonHomeLinks = headerCats
       .map(mapCategory)
       .filter((l) => l.href !== '/' && !isHiddenFromNavbar(l));
 
-    // Ensure Video (/videos) is ALWAYS the first link right after Home
-    const withoutVideo = nonHomeLinks.filter((l) => l.href !== '/videos');
-    const orderedNonHomeLinks = [videoLink, ...withoutVideo];
+    // Remove video, gujarat, and cities from remaining pool to avoid any duplicates
+    const otherCategories = nonHomeLinks.filter(
+      (l) => l.href !== '/videos' && l.href !== '/category/gujarat' && !cityHrefs.has(l.href)
+    );
 
-    // Top 14 categories + Home = 15 total links in main navbar before "અન્ય"
-    const mainNavLinks = orderedNonHomeLinks.slice(0, 14);
-    // Categories from index 14 onwards (item #15+) go into "અન્ય" dropdown
-    const dropdownLinks = orderedNonHomeLinks.slice(14);
+    // Exact requested sequence: Home -> Video -> Gujarat -> Ahmedabad -> Surat -> Rajkot -> Vadodara -> Gandhinagar -> Other Categories
+    const orderedNonHomeLinks = [videoLink, gujaratLink, ...cityLinks, ...otherCategories];
+
+    // Main navbar links (accommodates major cities + primary news categories)
+    const mainNavLinks = orderedNonHomeLinks.slice(0, 18);
+    // Categories from index 18 onwards go into "અન્ય" dropdown
+    const dropdownLinks = orderedNonHomeLinks.slice(18);
 
     const mainNav = [homeLink, ...mainNavLinks];
 
-    return { navLinks: mainNav, otherLinks: dropdownLinks };
+        return { navLinks: mainNav, otherLinks: dropdownLinks };
   }, [dbCategories]);
 
   const allDrawerCategories = useMemo(() => {
@@ -678,7 +717,7 @@ export default function Header() {
                 title={language === 'en' ? 'Open Calendar' : 'કેલેન્ડર જુઓ'}
               >
                 <DynamicCalendarIcon size="sm" language={language} className="group-hover:scale-105 transition-transform" />
-                <span>{mounted ? formatDateLong(language) : 'Sunday, 21 June 2026'}</span>
+                <span>{mounted ? formatDateLong(language) : 'Sunday, June 2026'}</span>
               </button>
 
               {/* Mobile compact date with dynamic calendar icon */}
@@ -689,7 +728,7 @@ export default function Header() {
                 title={language === 'en' ? 'Open Calendar' : 'કેલેન્ડર જુઓ'}
               >
                 <DynamicCalendarIcon size="sm" language={language} className="group-hover:scale-105 transition-transform" />
-                <span>{mounted ? formatTopBarDate(language) : '12 નવે, 2026'}</span>
+                <span>{mounted ? formatTopBarDate(language) : 'નવેમ્બર, 2026'}</span>
               </button>
 
               <span className="opacity-40">|</span>
@@ -1032,7 +1071,7 @@ export default function Header() {
           <Link
             href="/"
             onClick={() => setMenuOpen(false)}
-            className={`relative shrink-0 flex items-center gap-1 px-2.5 py-2 text-[13.5px] font-black transition-colors ${
+            className={`relative shrink-0 flex items-center gap-1 px-2.5 py-2 text-[15px] font-black transition-colors ${
               pathname === '/' ? 'text-red-600' : 'text-zinc-800 dark:text-zinc-200 hover:text-red-600'
             }`}
           >
@@ -1044,7 +1083,7 @@ export default function Header() {
           </Link>
 
           {/* Horizontal scrollable categories */}
-          <div className="flex-1 min-w-0 flex items-center gap-3.5 overflow-x-auto scrollbar-none py-1.5 px-1.5 text-[13.5px] font-extrabold whitespace-nowrap">
+          <div className="flex-1 min-w-0 flex items-center gap-3.5 overflow-x-auto scrollbar-none py-1.5 px-1.5 text-[15px] font-black whitespace-nowrap">
             {navLinks.filter((l) => l.href !== '/').map((link) => {
               const active = isActive(link.href);
               return (
@@ -1177,6 +1216,36 @@ export default function Header() {
                   {language === 'gu' ? 'ઈ-પેપર' : language === 'hi' ? 'ई-पेपर' : 'E-Paper'}
                 </span>
               </a>
+            </div>
+
+            {/* Quick Cities Navigation Row (Ahmedabad, Surat, Rajkot, Vadodara, Gandhinagar) */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <span className="h-4 w-1 rounded-full bg-red-600 shrink-0" />
+                <h3 className="text-[14px] font-black text-zinc-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-red-600" />
+                  <span>{language === 'gu' ? 'મુખ્ય શહેરો' : language === 'hi' ? 'प्रमुख शहर' : 'Major Cities'}</span>
+                </h3>
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 px-0.5">
+                {CITY_NAV_LINKS.map((city) => {
+                  const active = isActive(city.href);
+                  return (
+                    <Link
+                      key={city.href}
+                      href={city.href}
+                      onClick={() => setMenuOpen(false)}
+                      className={`shrink-0 px-3.5 py-1.5 rounded-full text-[12.5px] font-black border transition-all ${
+                        active
+                          ? 'bg-red-600 text-white border-red-600 shadow-xs'
+                          : 'bg-white dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 border-zinc-200 dark:border-zinc-800 hover:border-red-300'
+                      }`}
+                    >
+                      {getNavLabel(city)}
+                    </Link>
+                  );
+                })}
+              </div>
             </div>
 
             {/* 6. News Categories – TWO COLUMN LAYOUT */}
@@ -1359,16 +1428,17 @@ export default function Header() {
                     <path d="M18.9 2H22l-6.8 7.8L23.2 22H17l-4.8-6.3L6.7 22H3.5l7.2-8.3L3 2h6.3l4.4 5.8L18.9 2Zm-1.1 17.9h1.7L8.4 4H6.6l11.2 15.9Z" />
                   </svg>
                 </a>
-                {/* Telegram */}
+                {/* Google News */}
                 <a
-                  href="https://t.me/gujaratpost"
+                  href="https://news.google.com/search?q=gujaratpost&hl=gu-IN&gl=IN&ceid=IN%3Agu"
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Telegram"
-                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-[#0088cc] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
+                  aria-label="Google News"
+                  title="Google News"
+                  className="flex h-7.5 w-7.5 items-center justify-center rounded-full bg-[#4285F4] text-white hover:scale-110 active:scale-95 transition-transform shadow-xs"
                 >
-                  <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="currentColor">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.19-.08-.05-.19-.02-.27 0-.12.03-1.99 1.27-5.63 3.73-.53.36-1.02.54-1.45.53-.48-.01-1.4-.27-2.09-.49-.84-.27-1.51-.42-1.45-.89.03-.25.38-.51 1.05-.78 4.12-1.79 6.87-2.97 8.24-3.55 3.92-1.63 4.73-1.91 5.27-1.92.12 0 .38.03.55.17.14.12.18.28.2.4.02.08.02.24.01.35z"/>
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="currentColor">
+                    <path d="M20 3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H6v-6h5v6zm7 0h-5v-2h5v2zm0-4h-5v-2h5v2zm0-4H6V7h12v2z"/>
                   </svg>
                 </a>
                 {/* Share */}
@@ -1430,7 +1500,7 @@ export default function Header() {
                       <a
                         href={link.href}
                         className={`relative flex h-11 items-center justify-center whitespace-nowrap ${link.href === '/' ? 'px-2.5 sm:px-3' : 'px-2 sm:px-2.5 xl:px-3 2xl:px-3.5'
-                          } text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold tracking-tight transition-colors duration-150 ${active
+                          } text-[15px] xl:text-[16px] 2xl:text-[17px] font-extrabold tracking-tight transition-colors duration-150 ${active
                             ? 'text-accent'
                             : 'text-foreground hover:text-accent'
                           }`}
@@ -1498,7 +1568,7 @@ export default function Header() {
                     }
                     setOtherMenuOpen(!otherMenuOpen);
                   }}
-                  className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[14px] xl:text-[15px] 2xl:text-[16px] font-bold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
+                  className={`relative flex h-11 items-center gap-1 whitespace-nowrap px-2 sm:px-2.5 xl:px-3 2xl:px-3.5 text-[15px] xl:text-[16px] 2xl:text-[17px] font-extrabold sm:font-black tracking-tight transition-colors duration-150 cursor-pointer ${otherMenuOpen ? 'text-accent' : 'text-foreground hover:text-accent'
                     }`}
                   style={{ fontWeight: 800 }}
                 >
@@ -1596,7 +1666,7 @@ export default function Header() {
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2.5">
-              {['અમદાવાદ', 'વડોદરા', 'સુરત', 'ગાંધીનગર', 'રાજકોટ', 'અન્ય શહેરો'].map((city) => (
+              {['અમદાવાદ', 'સુરત', 'રાજકોટ', 'વડોદરા', 'ગાંધીનગર', 'અન્ય શહેરો'].map((city) => (
                 <button
                   key={city}
                   type="button"

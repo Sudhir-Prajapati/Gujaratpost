@@ -148,7 +148,7 @@ const articleMatchesCategory = (article: Article, categorySlug: string) => {
     typeof articleCategory === 'string' ? articleCategory : '',
   ].filter(Boolean).map((value) => String(value || '').trim().toLowerCase());
 
-  // Also include all categories from multi-categories array
+  // Also include all categories from multi-categories array (CMS assigned categories only)
   if (Array.isArray((article as any).categories)) {
     for (const item of (article as any).categories) {
       if (!item) continue;
@@ -172,24 +172,11 @@ const articleMatchesCategory = (article: Article, categorySlug: string) => {
     }
   }
 
-  // Also include tag tokens
-  if (Array.isArray((article as any).tags)) {
-    for (const t of (article as any).tags) {
-      if (!t) continue;
-      if (typeof t === 'string') categoryValues.push(t.trim().toLowerCase());
-      else {
-        if (t.name) categoryValues.push(String(t.name).trim().toLowerCase());
-        if (t.slug) categoryValues.push(String(t.slug).trim().toLowerCase());
-        if (t.tag?.name) categoryValues.push(String(t.tag.name).trim().toLowerCase());
-        if (t.tag?.slug) categoryValues.push(String(t.tag.slug).trim().toLowerCase());
-      }
-    }
-  }
-
+  // Tags are strictly excluded to avoid cross-category leaks (e.g. #apple-health-app tag must not put a tech article into health)
   const hasCategory = (...values: string[]) =>
     values.some((value) => {
       const v = value.toLowerCase().trim();
-      return categoryValues.some((cv) => cv === v || cv.includes(v));
+      return categoryValues.some((cv) => cv === v);
     });
 
   if (categorySlug === 'manoranjan' || categorySlug === 'entertainment') {
@@ -197,8 +184,7 @@ const articleMatchesCategory = (article: Article, categorySlug: string) => {
   }
 
   if (categorySlug === 'technology') {
-    const title = String((article as any).titleGu || article.title || '').toLowerCase();
-    return hasCategory('technology', 'tech', 'ટેકનોલોજી', 'ટેક્નોલોજી') && !title.includes('gst');
+    return hasCategory('technology', 'tech', 'ટેકનોલોજી', 'ટેક્નોલોજી');
   }
 
   if (categorySlug === 'health') {
@@ -220,15 +206,32 @@ export default function EntertainTechLifeSection({
 }) {
   const buildInitialMap = (): Record<string, Article[]> => {
     const map: Record<string, Article[]> = {};
+    const usedIds = new Set<string>();
+
+    const filterUniqueCol = (articles: Article[], catSlug: string, sortFn: (list: Article[]) => Article[]) => {
+      const matched = (articles || []).filter((art) => {
+        const idKey = art.id || art.slug;
+        if (!idKey || usedIds.has(idKey)) return false;
+        return articleMatchesCategory(art, catSlug);
+      });
+      const sorted = sortFn(matched).slice(0, 4);
+      sorted.forEach((art) => {
+        const idKey = art.id || art.slug;
+        if (idKey) usedIds.add(idKey);
+      });
+      return sorted;
+    };
+
+    // Priority: Technology & Health & Entertainment each get strictly distinct, non-overlapping articles
+    if (initialCategoryArticles['technology']?.length) {
+      map['technology'] = filterUniqueCol(initialCategoryArticles['technology'], 'technology', sortLatest);
+    }
     if (initialCategoryArticles['health']?.length) {
-      map['health'] = sortLatest(initialCategoryArticles['health'].filter((article) => articleMatchesCategory(article, 'health'))).slice(0, 4);
+      map['health'] = filterUniqueCol(initialCategoryArticles['health'], 'health', sortLatest);
     }
     const entertainmentKey = initialCategoryArticles['manoranjan']?.length ? 'manoranjan' : 'entertainment';
     if (initialCategoryArticles[entertainmentKey]?.length) {
-      map['manoranjan'] = sortByPublishDate(initialCategoryArticles[entertainmentKey].filter((article) => articleMatchesCategory(article, 'manoranjan'))).slice(0, 4);
-    }
-    if (initialCategoryArticles['technology']?.length) {
-      map['technology'] = sortLatest(initialCategoryArticles['technology'].filter((article) => articleMatchesCategory(article, 'technology'))).slice(0, 4);
+      map['manoranjan'] = filterUniqueCol(initialCategoryArticles[entertainmentKey], 'manoranjan', sortByPublishDate);
     }
     return map;
   };
@@ -319,7 +322,20 @@ export default function EntertainTechLifeSection({
 
         const results = await Promise.all(articlePromises);
         const map: Record<string, Article[]> = { ...existingMap };
-        results.forEach((r) => { map[r.slug] = r.articles; });
+        const usedCrossColumn = new Set<string>();
+
+        // Ensure each column gets distinct articles (no duplicates across health, entertainment, technology)
+        results.forEach((r) => {
+          const uniqueColArticles: Article[] = [];
+          for (const art of r.articles) {
+            const idKey = art.id || art.slug;
+            if (idKey && !usedCrossColumn.has(idKey)) {
+              usedCrossColumn.add(idKey);
+              uniqueColArticles.push(art);
+            }
+          }
+          map[r.slug] = uniqueColArticles.slice(0, 4);
+        });
         setCategoryArticlesMap(map);
       })
       .catch((err) => console.warn('Error loading 3-column dynamic section:', err))

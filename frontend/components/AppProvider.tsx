@@ -42,7 +42,7 @@ const AppContext = createContext<AppContextType>({
   closeSupportModal: () => {},
 });
 
-const FONT_SIZES = ['14px', '16px', '18px', '20px'];
+const FONT_SIZES = ['15px', '17px', '19px', '22px'];
 
 function clearGoogleTranslateCookie() {
   if (typeof document === 'undefined') return;

@@ -332,7 +332,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                             alt={card.titleGu}
                             fill
                             sizes="175px"
-                            className="object-cover transition-transform duration-300"
+                            className="object-contain transition-transform duration-300"
                           />
                           {/* Gradient overlay */}
                           <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/20" />
@@ -409,12 +409,12 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
               </div>
               <div className="relative aspect-video bg-black">
                 <ConsentGate type="youtube" category="marketing" title="Gujarat Post Video Player" aspectRatioClass="aspect-video" className="w-full h-full">
-                <iframe
-                  src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
-                  className="absolute inset-0 h-full w-full"
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
+                  <iframe
+                    src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
+                    className="absolute inset-0 h-full w-full"
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
                 </ConsentGate>
               </div>
             </div>
@@ -455,7 +455,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
             onMouseLeave={() => setFeaturedHovered(false)}
           >
             {/* Large thumbnail */}
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm bg-black/30 mb-3.5 shadow-inner border border-white/10">
+            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl bg-black/30 mb-3.5 shadow-md border border-white/15">
               <Image
                 key={featuredIndex}
                 src={featuredVideo.thumbnail}
@@ -464,14 +464,14 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                 priority
                 loading="eager"
                 sizes="(max-width: 1024px) 100vw, 60vw"
-                className="object-cover transition-transform duration-300 animate-in fade-in duration-500"
+                className="object-contain transition-transform duration-300 animate-in fade-in duration-500"
               />
               {/* Large play button */}
               <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[54px] h-[54px] rounded-full bg-white/95 text-[#B3121B] flex items-center justify-center shadow-2xl transition-transform duration-300 group-hover:scale-110">
                 <Play className="h-6 w-6 fill-current ml-0.5" />
               </span>
               {/* Duration badge */}
-              <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-black px-2 py-0.5 rounded-sm">
+              <span className="absolute bottom-2.5 right-2.5 bg-black/85 text-white text-[11px] font-black px-2.5 py-0.5 rounded-md shadow">
                 {(featuredVideo.duration && featuredVideo.duration !== '10:00') ? featuredVideo.duration : getRealisticDuration(featuredVideo.youtubeId || featuredVideo.id)}
               </span>
             </div>
@@ -504,7 +504,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
               ref={sidebarRef}
               onMouseEnter={() => { sidebarPaused.current = true; }}
               onMouseLeave={() => { sidebarPaused.current = false; }}
-              className="flex flex-col divide-y divide-white/10 h-full max-h-[450px] overflow-y-auto p-3 pr-2 scrollbar-hide bg-black/15 rounded-sm"
+              className="flex flex-col divide-y divide-white/10 h-full max-h-[450px] overflow-y-auto p-3 pr-2 scrollbar-hide bg-black/15 rounded-xl border border-white/10"
             >
               {sidebarVideos.map((v) => (
                 <div
@@ -513,20 +513,20 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                   onClick={() => handleSidebarClick(v.youtubeId)}
                 >
                   {/* Thumbnail */}
-                  <div className="relative h-[68px] w-[108px] shrink-0 overflow-hidden rounded-sm bg-black/30 border border-white/10">
+                  <div className="relative h-[68px] w-[108px] shrink-0 overflow-hidden rounded-lg bg-black/30 border border-white/10">
                     <Image
                       src={v.thumbnail}
                       alt={v.titleGu || v.title}
                       fill
                       sizes="108px"
-                      className="object-cover transition-transform duration-300"
+                      className="object-contain transition-transform duration-300"
                     />
                     {/* Mini play */}
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-white/90 text-[#B3121B] flex items-center justify-center shadow-md transition-transform duration-300 group-hover:scale-110">
                       <Play className="h-3 w-3 fill-current ml-0.5" />
                     </span>
                     {/* Duration */}
-                    <span className="absolute bottom-1 right-1 bg-black/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-sm">
+                    <span className="absolute bottom-1 right-1 bg-black/85 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow">
                       {(v.duration && v.duration !== '10:00') ? v.duration : getRealisticDuration(v.youtubeId || v.id)}
                     </span>
                   </div>
@@ -577,12 +577,12 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
             </div>
             <div className="relative aspect-video bg-black">
               <ConsentGate type="youtube" category="marketing" title="Gujarat Post Video Player" aspectRatioClass="aspect-video" className="w-full h-full">
-              <iframe
-                src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
-                className="absolute inset-0 h-full w-full"
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-              />
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${safeYouTubeId(playId)}?autoplay=1&rel=0`}
+                  className="absolute inset-0 h-full w-full"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
               </ConsentGate>
             </div>
           </div>
