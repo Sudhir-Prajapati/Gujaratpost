@@ -449,7 +449,7 @@ function MobileHorizontalCardStrip({
         onTouchEnd={handleTouchEnd}
         onMouseEnter={handleTouchStart}
         onMouseLeave={handleTouchEnd}
-        className="-mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth touch-pan-x overscroll-x-contain"
+        className="-mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth"
       >
         <div className="flex gap-4 px-[8vw] sm:px-6 pb-1 pt-0.5 items-stretch">
           {displayCards.map((art, idx) => (

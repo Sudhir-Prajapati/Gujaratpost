@@ -488,7 +488,7 @@ export default function ElectionBanner({ initialConfig }: ElectionBannerProps) {
         </div>
 
         {/* ─── MOBILE VIEW (< md): Left-to-Right Horizontal Swipe (Starts cleanly at left, NO clipping) ─── */}
-        <div className="flex md:hidden items-center justify-start gap-2.5 overflow-x-auto scrollbar-none snap-x snap-mandatory touch-pan-x overscroll-x-contain py-1">
+        <div className="flex md:hidden items-center justify-start gap-2.5 overflow-x-auto scrollbar-none snap-x snap-mandatory py-1">
           {/* 1. Left: Map + Title + LIVE */}
           <div className="flex items-center gap-2.5 shrink-0 pr-3 border-r-2 border-red-200/80 snap-start">
             {config.mapIconUrl ? (

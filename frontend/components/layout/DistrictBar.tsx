@@ -328,7 +328,7 @@ export default function DistrictBar({
 
           <div
             ref={scrollRef}
-            className="flex-1 overflow-x-auto scroll-smooth scrollbar-none overscroll-x-contain touch-pan-x"
+            className="flex-1 overflow-x-auto scroll-smooth scrollbar-none"
             style={{ WebkitOverflowScrolling: 'touch' }}
           >
             {/* ─── DESKTOP VIEW (>= md): Full horizontal city list ─── */}
