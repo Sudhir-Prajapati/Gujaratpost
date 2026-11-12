@@ -551,15 +551,20 @@ export default function Header() {
       .sort((a: any, b: any) => (b.headerOrder ?? b.displayOrder ?? 0) - (a.headerOrder ?? a.displayOrder ?? 0));
 
     const homeLink = { label: 'Home', labelGu: 'હોમ', labelHi: 'होम', href: '/' };
+    const videoLink = { label: 'Video', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos' };
 
     const nonHomeLinks = headerCats
       .map(mapCategory)
       .filter((l) => l.href !== '/' && !isHiddenFromNavbar(l));
 
-    // Top 14 categories + Home = 15 total links in main navbar before "અન્ય" (matching Image 3)
-    const mainNavLinks = nonHomeLinks.slice(0, 14);
-    // Categories from index 14 onwards (item #15+) go into "અન્ય" dropdown (matching Image 4)
-    const dropdownLinks = nonHomeLinks.slice(14);
+    // Ensure Video (/videos) is ALWAYS the first link right after Home
+    const withoutVideo = nonHomeLinks.filter((l) => l.href !== '/videos');
+    const orderedNonHomeLinks = [videoLink, ...withoutVideo];
+
+    // Top 14 categories + Home = 15 total links in main navbar before "અન્ય"
+    const mainNavLinks = orderedNonHomeLinks.slice(0, 14);
+    // Categories from index 14 onwards (item #15+) go into "અન્ય" dropdown
+    const dropdownLinks = orderedNonHomeLinks.slice(14);
 
     const mainNav = [homeLink, ...mainNavLinks];
 
@@ -684,12 +689,6 @@ export default function Header() {
                 <span>📍</span>
                 <span>{cityTranslations[selectedCity]?.[language] || selectedCity}</span>
               </button>
-
-              {/* Mobile live weather */}
-              <span className="sm:hidden inline-flex items-center gap-1 text-[11.5px] font-bold text-white shrink-0 ml-0.5">
-                <span>{liveWeatherIcon}</span>
-                <span>{liveTemp}</span>
-              </span>
             </div>
 
             {/* Right: Desktop App buttons & Social links */}

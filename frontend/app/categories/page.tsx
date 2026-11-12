@@ -35,3 +35,4 @@ export default async function CategoriesPage() {
   const categories = await getPublicCategories().catch(() => []);
   return <CategoriesClient initialCategories={Array.isArray(categories) ? categories : []} />;
 }
+

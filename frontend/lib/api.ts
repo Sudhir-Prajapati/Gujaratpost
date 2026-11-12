@@ -397,6 +397,7 @@ export const getPublicArticleBySlug = cache(async (slug: string): Promise<Articl
  * Fetch list of categories from Express Backend API
  */
 export const FALLBACK_PUBLIC_CATEGORIES = [
+  { id: 'cat-videos', slug: 'videos', name: 'Videos', nameGu: 'વીડિયો', headerOrder: 310, homeOrder: 185, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
   { id: 'cat-gujarat', slug: 'gujarat', name: 'Gujarat', nameGu: 'ગુજરાત', headerOrder: 300, homeOrder: 180, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
   { id: 'cat-national', slug: 'national', name: 'National', nameGu: 'ભારત', headerOrder: 290, homeOrder: 150, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
   { id: 'cat-world', slug: 'world', name: 'World', nameGu: 'વિશ્વ', headerOrder: 285, homeOrder: 140, showInHome: true, showInHeader: true, headerType: 'GLOBAL', isActive: true, showInArticle: true },
