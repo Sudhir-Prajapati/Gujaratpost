@@ -11,6 +11,7 @@ import { ZODIAC_SIGNS, ZodiacSign } from '@/components/sections/AstrologySection
 import { ZodiacIcon, GUJARAT_ZODIAC_LETTERS } from '@/components/ui/ZodiacIcon';
 import ZodiacDetailModal from '@/components/sections/ZodiacDetailModal';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { DEMO_IMAGES, getMockTime, getMockTitle, getMockRelativeTime, toGuLocal } from './homeHelpers';
 
@@ -523,7 +524,7 @@ export default function CrimeSection({
                   alt={currentSlide.titleGu}
                   fill
                   sizes="(max-width: 768px) 100vw, 40vw"
-                  className="object-contain transition-transform duration-300"
+                  className="object-cover transition-transform duration-300"
                 />
                 <button
                   type="button"
@@ -564,19 +565,32 @@ export default function CrimeSection({
           </div>
         )}
 
-        {/* Right side 4 articles with images matching slider height */}
-        <div className="flex flex-col justify-between min-w-0 md:border-l md:border-border/60 md:pl-2.5 gap-2 md:gap-0 divide-y md:divide-y divide-border/40 h-full">
+        {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+        <div className="md:hidden flex flex-col gap-3.5 mt-2">
           {rightList.map((item, idx) => (
+            <MobileModernArticleCard
+              key={`crime-mob-${item.id}-${idx}`}
+              article={item.article || item}
+              language={language}
+              index={idx}
+              defaultCategoryLabel={getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
+            />
+          ))}
+        </div>
+
+        {/* Desktop View (>= md): Right side 3 articles with images matching slider height */}
+        <div className="hidden md:flex flex-col justify-between min-w-0 md:border-l md:border-border/60 md:pl-2.5 divide-y divide-border/40 h-full">
+          {rightList.slice(0, 3).map((item, idx) => (
             <Link
               key={`${item.id}-${idx}`}
               href={`/news/${item.slug}`}
-            className={`group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl md:rounded-none bg-card/70 md:bg-transparent border md:border-0 border-border/50 transition-all py-2 first:pt-0 last:pb-0 ${idx >= 3 ? 'md:hidden' : ''}`}
+              className="group flex flex-row items-center justify-between gap-3 bg-transparent transition-all py-2 first:pt-0 last:pb-0"
             >
               <div className="flex flex-col min-w-0 flex-1 pr-1">
                 <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
                   {getLocalized(language, { en: item.category, gu: item.categoryGu, hi: item.categoryHi })}
                 </span>
-                <h4 className="text-[16px] md:text-[14.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
+                <h4 className="text-[14.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                   {item.article
                     ? <AutoArticleTitle article={item.article} language={language} />
                     : <AutoTranslateString text={item.titleGu || item.title} language={language} />}

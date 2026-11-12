@@ -9,6 +9,7 @@ import { getLocalized } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import { stripHtmlTags, getMockTitle } from './homeHelpers';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { sanitizeImageUrl } from '@/lib/media';
 
@@ -215,19 +216,12 @@ export default function FactCheckSection({ language, initialArticles }: { langua
             className="group flex flex-col"
           >
             <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-zinc-100 dark:bg-neutral-900 mb-2 md:mb-3">
-              <img
-                src={featImage}
-                alt=""
-                aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-              />
-              <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
               <Image
                 src={featImage}
                 alt="Fact Check Featured"
                 fill
                 sizes="(max-width: 1024px) 100vw, 35vw"
-                className="relative z-10 object-contain transition-transform duration-300"
+                className="object-cover transition-transform duration-300"
               />
             </div>
             <span className={`flex items-center gap-1 font-extrabold text-[12px] md:text-[13px] mb-1.5 select-none uppercase tracking-wide ${featStatus.color}`}>
@@ -256,81 +250,29 @@ export default function FactCheckSection({ language, initialArticles }: { langua
 
         {/* Right Column: Grid of 6 Fact Check items (Spans 2 columns on desktop) */}
         <div className="lg:col-span-2 pt-1 lg:pt-0">
-          {/* Mobile View (< md): Boxed Cards with Card Background & Border (matches Image 2) */}
-          <div className="md:hidden flex flex-col gap-2.5">
+          {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+          <div className="md:hidden flex flex-col gap-3.5">
             {hasDb && gridDbList.length > 0 ? (
-              gridDbList.map((item) => {
-                const st = getStatusInfo(item);
-                return (
-                  <Link
-                    key={`mob-${item.id}`}
-                    href={`/news/${item.slug}`}
-                    className="group flex flex-row items-center justify-between gap-3.5 p-2.5 sm:p-3 rounded-xl bg-card/75 dark:bg-card/60 hover:bg-card border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-                  >
-                    {/* Content on Left */}
-                    <div className="flex flex-col justify-center min-w-0 flex-1">
-                      {/* Status Dot + Category Label */}
-                      <div className="flex mb-1">
-                        <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${st.color}`}>
-                          <span className="text-[10px]">●</span>
-                          {language === 'gu' ? st.labelGu : language === 'hi' ? st.labelHi : st.labelEn}
-                        </span>
-                      </div>
-                      <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                        <AutoArticleTitle article={item} language={language} />
-                      </h4>
-                    </div>
-
-                    {/* Image on Right */}
-                    <div className="relative aspect-[16/10] w-[130px] h-[88px] sm:w-[140px] sm:h-[94px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                      <Image
-                        src={getArticleImage(item, '/assets/demo/2.jpg')}
-                        alt={item.titleGu || item.title || 'Fact Check'}
-                        fill
-                        sizes="(max-width: 640px) 130px, 140px"
-                        className="object-cover transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                  </Link>
-                );
-              })
+              gridDbList.map((item, idx) => (
+                <MobileModernArticleCard
+                  key={`fc-mob-${item.id}-${idx}`}
+                  article={item}
+                  language={language}
+                  index={idx}
+                  defaultCategoryLabel={language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'फैक्ट चेक' : 'Fact Check'}
+                  defaultCategorySlug="fact-check"
+                />
+              ))
             ) : (
-              mockFactCheckList.slice(0, 6).map((item) => (
-                <Link
-                  key={`mob-mock-${item.id}`}
-                  href={`/news/${item.slug}`}
-                  className="group flex flex-row items-center justify-between gap-3.5 p-2.5 sm:p-3 rounded-xl bg-card/75 dark:bg-card/60 hover:bg-card border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-                >
-                  {/* Content on Left */}
-                  <div className="flex flex-col justify-center min-w-0 flex-1">
-                    {/* Status Dot + Category Label */}
-                    <div className="flex mb-1">
-                      <span className={`flex items-center gap-1 text-[11px] font-black select-none leading-none uppercase ${item.status === 'true'
-                        ? 'text-green-600'
-                        : item.status === 'fake'
-                          ? 'text-red-600'
-                          : 'text-yellow-600'
-                        }`}>
-                        <span className="text-[10px]">●</span>
-                        {language === 'gu' ? item.statusLabelGu : language === 'hi' ? (item.status === 'true' ? 'सच' : item.status === 'fake' ? 'झूठा दावा' : 'भ्रामक') : item.status.toUpperCase()}
-                      </span>
-                    </div>
-                    <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                      <AutoTranslateString text={item.titleGu} language={language} />
-                    </h4>
-                  </div>
-
-                  {/* Image on Right */}
-                  <div className="relative aspect-[16/10] w-[130px] h-[88px] sm:w-[140px] sm:h-[94px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                    <Image
-                      src={item.image}
-                      alt={item.titleGu}
-                      fill
-                      sizes="(max-width: 640px) 130px, 140px"
-                      className="object-contain transition-transform duration-300"
-                    />
-                  </div>
-                </Link>
+              mockFactCheckList.slice(0, 6).map((item, idx) => (
+                <MobileModernArticleCard
+                  key={`fc-mob-mock-${item.id}-${idx}`}
+                  article={item}
+                  language={language}
+                  index={idx}
+                  defaultCategoryLabel={item.statusLabelGu || (language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'फैक्ट चेक' : 'Fact Check')}
+                  defaultCategorySlug="fact-check"
+                />
               ))
             )}
           </div>
@@ -387,7 +329,7 @@ export default function FactCheckSection({ language, initialArticles }: { langua
                       alt={item.titleGu}
                       fill
                       sizes="(max-width: 1024px) 155px, 170px"
-                      className="object-contain transition-transform duration-300"
+                      className="object-cover transition-transform duration-300"
                     />
                   </div>
 

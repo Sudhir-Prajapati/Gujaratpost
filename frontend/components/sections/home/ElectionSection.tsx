@@ -8,6 +8,7 @@ import type { Article, Language } from '@/types';
 import { getArticleTitle } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { AutoArticleTitle, AutoArticleExcerpt, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 
@@ -178,36 +179,17 @@ export default function ElectionSection({
 
         {/* Side Updates (Right 5 Cols) */}
         <div className="lg:col-span-5">
-          {/* Mobile View (< md): Flat list with Text on LEFT, Thumbnail on RIGHT (like Image 2) */}
-          <div className="md:hidden flex flex-col divide-y divide-border/40">
+          {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+          <div className="md:hidden flex flex-col gap-3.5">
             {sideList.map((art, idx) => (
-              <Link
-                key={`mob-${art.id || idx}`}
-                href={`/news/${art.slug}`}
-                className="group flex flex-row items-center justify-between gap-3.5 py-2 px-1 hover:bg-muted/20 transition-all min-w-0"
-              >
-                {/* Content on Left */}
-                <div className="flex flex-col justify-center min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className="text-[10px] text-[#B3121B]">●</span>
-                    <span className="text-[#B3121B] font-black text-[11px] uppercase tracking-wider select-none leading-none">
-                      #{idx + 1} {language === 'gu' ? 'ચૂંટણી અપડેટ' : language === 'hi' ? 'चुनाव अपडेट' : 'Election Update'}
-                    </span>
-                  </div>
-                  <h4 className="text-[15px] font-extrabold leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                    <AutoArticleTitle article={art} language={language} />
-                  </h4>
-                </div>
-
-                {/* Thumbnail on Right */}
-                <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 rounded-lg overflow-hidden border border-border/10 bg-muted">
-                  <ArticleMedia
-                    src={art.image || (art as any).featuredImage || `/assets/demo/${(idx % 8) + 1}.jpg`}
-                    alt={getArticleTitle(art, language)}
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                </div>
-              </Link>
+              <MobileModernArticleCard
+                key={`elec-mob-${art.id || idx}`}
+                article={art}
+                language={language}
+                index={idx}
+                defaultCategoryLabel={language === 'gu' ? 'ચૂંટણી 2027' : language === 'hi' ? 'चुनाव 2027' : 'Election 2027'}
+                defaultCategorySlug="election-2027"
+              />
             ))}
           </div>
 

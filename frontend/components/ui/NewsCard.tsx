@@ -164,7 +164,7 @@ export default function NewsCard({
             src={mediaSrc}
             alt={article.title}
             className="absolute inset-0 h-full w-full"
-            style={{ objectFit: 'contain', objectPosition: 'center' }}
+            style={{ objectFit: 'cover', objectPosition: 'center' }}
           />
         </div>
         <div className="flex flex-col flex-1 mt-2.5 justify-between">

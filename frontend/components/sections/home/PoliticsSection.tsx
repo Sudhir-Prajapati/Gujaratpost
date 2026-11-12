@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Article, Language } from '@/types';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { DEMO_IMAGES } from './homeHelpers';
@@ -206,59 +207,18 @@ export default function PoliticsSection({ language, initialArticles }: { languag
         </Link>
       </div>
 
-      {/* Mobile View (< md): 1 Lead Featured Story + Compact News List */}
-      <div className="md:hidden flex flex-col">
-        {/* 1. Lead Featured Story */}
-        {allCards[0] && (
-          <Link
-            href={`/news/${allCards[0].slug}`}
-            className="group flex flex-col pb-2 mb-1 border-b border-border/40"
-          >
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
-              <ArticleMedia
-                src={allCards[0].image || (allCards[0] as any).imageUrl || '/assets/demo/1.jpg'}
-                alt={allCards[0].title}
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-0.5 select-none leading-none">
-              {(allCards[0] as any).categoryGu || (allCards[0] as any).category?.nameGu || (language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics')}
-            </span>
-            <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-              <AutoArticleTitle article={allCards[0]} language={language} />
-            </h3>
-          </Link>
-        )}
-
-        {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section */}
-        <div className="flex flex-col gap-2 mt-1">
-          {allCards.slice(1, 7).map((art) => (
-            <Link
-              key={`mob-${art.id}`}
-              href={`/news/${art.slug}`}
-              className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-            >
-              {/* Title & Metadata on the left */}
-              <div className="flex flex-col min-w-0 flex-1 pr-1">
-                <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
-                  {(art as any).categoryGu || (art as any).category?.nameGu || (language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics')}
-                </span>
-                <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                  <AutoArticleTitle article={art} language={language} />
-                </h4>
-              </div>
-
-              {/* Thumbnail on the right */}
-              <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                <ArticleMedia
-                  src={art.image || (art as any).imageUrl || '/assets/demo/2.jpg'}
-                  alt={art.title}
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-              </div>
-            </Link>
-          ))}
-        </div>
+      {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+      <div className="md:hidden flex flex-col gap-3.5 mt-2">
+        {allCards.slice(0, 7).map((art, idx) => (
+          <MobileModernArticleCard
+            key={`pol-mob-${art.id}-${idx}`}
+            article={art}
+            language={language}
+            index={idx}
+            defaultCategoryLabel={(art as any).categoryGu || (art as any).category?.nameGu || (language === 'gu' ? 'રાજકારણ' : language === 'hi' ? 'राजनीति' : 'Politics')}
+            defaultCategorySlug="politics"
+          />
+        ))}
       </div>
 
       {/* Desktop View (>= md): Exactly preserved 3-column top row + 6-card bottom grid */}

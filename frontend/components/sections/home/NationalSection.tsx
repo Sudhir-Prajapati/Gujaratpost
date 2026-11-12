@@ -8,6 +8,7 @@ import type { Article, Language } from '@/types';
 import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import { DEMO_IMAGES, getMockRelativeTime } from './homeHelpers';
@@ -289,63 +290,18 @@ export default function NationalSection({ language, initialArticles }: { languag
         </Link>
       </div>
 
-      {/* Mobile View (< md): 1 Lead Featured Story + Compact News List */}
-      <div className="md:hidden flex flex-col">
-        {/* 1. Lead Featured Story */}
-        {top3[0] && (
-          <Link
-            href={`/news/${top3[0].slug}`}
-            className="group flex flex-col pb-2 mb-1 border-b border-border/40"
-          >
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-1.5 shadow-2xs">
-              <ArticleMedia
-                src={top3[0].image}
-                alt={top3[0].titleGu}
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-              />
-            </div>
-            <span className="text-[#B3121B] font-black text-[11.5px] uppercase tracking-wider mb-0.5 select-none leading-none">
-              {language === 'gu' ? 'ભારત' : language === 'hi' ? 'भारत' : 'Bharat'}
-            </span>
-            <h3 className="text-[16px] font-extrabold leading-[1.34] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-              {top3[0].article
-                ? <AutoArticleTitle article={top3[0].article} language={language} />
-                : <AutoTranslateString text={top3[0].titleGu} language={language} />}
-            </h3>
-          </Link>
-        )}
-
-        {/* 2. Mobile View (< md): Premium Boxed Cards matching Hero Section */}
-        <div className="flex flex-col gap-2 mt-1">
-          {mobileList.map((item) => (
-            <Link
-              key={`mob-${item.id}`}
-              href={`/news/${item.slug}`}
-              className="group flex flex-row items-center justify-between gap-3 p-2.5 sm:p-3 rounded-xl bg-card/70 hover:bg-muted/40 border border-border/50 hover:border-border transition-all min-w-0 shadow-2xs"
-            >
-              {/* Title & Metadata on the left */}
-              <div className="flex flex-col min-w-0 flex-1 pr-1">
-                <span className="text-[#B3121B] font-black text-[11px] sm:text-[11.5px] uppercase tracking-wider mb-1 select-none leading-none">
-                  {language === 'gu' ? 'ભારત' : language === 'hi' ? 'भारत' : 'Bharat'}
-                </span>
-                <h4 className="text-[16px] sm:text-[16.5px] font-extrabold leading-[1.32] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
-                  {item.article
-                    ? <AutoArticleTitle article={item.article} language={language} />
-                    : <AutoTranslateString text={item.titleGu} language={language} />}
-                </h4>
-              </div>
-
-              {/* Thumbnail on the right */}
-              <div className="relative aspect-[16/10] w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-lg border border-border/10 bg-muted">
-                <ArticleMedia
-                  src={item.image}
-                  alt={item.titleGu}
-                  className="object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-                />
-              </div>
-            </Link>
-          ))}
-        </div>
+      {/* Mobile View (< md): Modern Separated Cards with Category Pill & WhatsApp Share */}
+      <div className="md:hidden flex flex-col gap-3.5 mt-2">
+        {(top3[0] ? [top3[0], ...mobileList] : mobileList).map((item, idx) => (
+          <MobileModernArticleCard
+            key={`nat-mob-${item.id}-${idx}`}
+            article={item.article || item}
+            language={language}
+            index={idx}
+            defaultCategoryLabel={language === 'gu' ? 'ભારત' : language === 'hi' ? 'भारत' : 'Bharat'}
+            defaultCategorySlug="national"
+          />
+        ))}
       </div>
 
       {/* Desktop View (>= md): Exactly preserved 3-column top row + 3-column bottom grid */}

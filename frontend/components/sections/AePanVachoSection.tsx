@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { getPublicArticles } from '@/lib/api';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import ArticleMedia from '@/components/ui/ArticleMedia';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 
 interface ArticleItem {
   id: string;
@@ -82,45 +83,61 @@ export default function AePanVachoSection({ language = 'gu', spacingClassName = 
 
       {/* ── 3-COLUMN ARTICLE GRID (9 ITEMS) MATCHING IMAGE 4 ── */}
       {articles.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-5 gap-y-6 sm:gap-y-7">
-          {articles.map((art) => {
-            const title = language === 'gu'
-              ? (art.titleGu || art.title)
-              : language === 'hi'
-                ? (art.titleHi || art.title)
-                : art.title;
-            const image = art.featuredImage || art.image || '/assets/demo/1.jpg';
+        <>
+          {/* ─── DESKTOP VIEW (>= md): 3-Column Grid ─── */}
+          <div className="hidden md:grid md:grid-cols-3 gap-x-5 gap-y-6 sm:gap-y-7">
+            {articles.map((art) => {
+              const title = language === 'gu'
+                ? (art.titleGu || art.title)
+                : language === 'hi'
+                  ? (art.titleHi || art.title)
+                  : art.title;
+              const image = art.featuredImage || art.image || '/assets/demo/1.jpg';
 
-            return (
-              <Link
-                key={art.id || art.slug}
-                href={`/news/${art.slug}`}
-                className="group flex flex-col cursor-pointer"
-              >
-                {/* 16:9 Image */}
-                <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted shadow-xs">
-                  <ArticleMedia
-                    src={image}
-                    alt={title}
-                    className="absolute inset-0 h-full w-full"
-                  />
-                </div>
+              return (
+                <Link
+                  key={art.id || art.slug}
+                  href={`/news/${art.slug}`}
+                  className="group flex flex-col cursor-pointer"
+                >
+                  {/* 16:9 Image */}
+                  <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-muted shadow-xs">
+                    <ArticleMedia
+                      src={image}
+                      alt={title}
+                      className="absolute inset-0 h-full w-full"
+                    />
+                  </div>
 
-                {/* Content: Category Label + Title */}
-                <div className="mt-2.5 flex flex-col">
-                  <span className="text-[11px] sm:text-[11.5px] font-black text-[#B3121B] uppercase tracking-wide">
-                    {art.customCategoryLabel ? (
-                      <AutoTranslateString text={art.customCategoryLabel} language={language as any} />
-                    ) : null}
-                  </span>
-                  <h4 className="mt-1 text-[13.5px] sm:text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                    <AutoArticleTitle article={art as any} language={language as any} />
-                  </h4>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                  {/* Content: Category Label + Title */}
+                  <div className="mt-2.5 flex flex-col">
+                    <span className="text-[11px] sm:text-[11.5px] font-black text-[#B3121B] uppercase tracking-wide">
+                      {art.customCategoryLabel ? (
+                        <AutoTranslateString text={art.customCategoryLabel} language={language as any} />
+                      ) : null}
+                    </span>
+                    <h4 className="mt-1 text-[13.5px] sm:text-[14.5px] font-bold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                      <AutoArticleTitle article={art as any} language={language as any} />
+                    </h4>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* ─── MOBILE VIEW (< md): Modern Separated Cards with Category Pill & WhatsApp Share ─── */}
+          <div className="flex md:hidden flex-col gap-3.5">
+            {articles.map((art, idx) => (
+              <MobileModernArticleCard
+                key={art.id || art.slug || idx}
+                article={art as any}
+                language={language as any}
+                index={idx}
+                catLabel={art.customCategoryLabel}
+              />
+            ))}
+          </div>
+        </>
       ) : (
         <div className="py-8 text-center text-xs text-muted-foreground bg-muted/20 rounded-xl">
           {loading

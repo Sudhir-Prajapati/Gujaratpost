@@ -228,8 +228,8 @@ export default function SavedPage() {
                     alt={article.title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    className="object-contain transition duration-300 group-hover:scale-103"
-                    style={{ objectFit: 'contain', objectPosition: 'center' }}
+                    className="object-cover transition duration-300 group-hover:scale-103"
+                    style={{ objectFit: 'cover', objectPosition: 'center' }}
                   />
                   {article.isBreaking && (
                     <span className="absolute left-2.5 top-2.5 rounded bg-accent px-2 py-0.5 text-[9.5px] font-black text-white shadow-sm">

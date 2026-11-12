@@ -143,22 +143,11 @@ export default function ArticleMedia({
   const rootPos = isAbsolute || !className.includes('relative') ? 'absolute inset-0' : 'relative';
   return (
     <div className={`${rootPos} w-full h-full overflow-hidden bg-zinc-100 dark:bg-neutral-900`}>
-      {/* Ambient blurred backdrop for letterbox areas */}
-      <img
-        src={cleanSrc}
-        alt=""
-        aria-hidden="true"
-        className="absolute inset-0 w-full h-full object-cover scale-125 blur-2xl opacity-60 dark:opacity-40 pointer-events-none"
-      />
-      {/* Light / Dark tint wash overlay */}
-      <div className="absolute inset-0 bg-white/70 dark:bg-black/70 backdrop-blur-md pointer-events-none" aria-hidden="true" />
-
-      {/* Main crisp, uncropped foreground image */}
       <img
         src={cleanSrc}
         alt={alt}
-        className={`relative z-10 w-full h-full object-contain ${className}`}
-        style={{ ...style, width: '100%', height: '100%', objectFit: 'contain', objectPosition: 'center', transform: 'none', scale: '1' }}
+        className={`w-full h-full object-cover transition-transform duration-300 ${className}`}
+        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', ...style }}
         onError={() => setHasError(true)}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}

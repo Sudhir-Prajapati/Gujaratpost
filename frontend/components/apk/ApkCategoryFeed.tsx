@@ -12,6 +12,8 @@ import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 import { getPublicArticles } from '@/lib/api';
 import { CATEGORY_PAIRS } from '@/app/category/[slug]/CategoryPageClient';
 import ApkAdBanner from './ApkAdBanner';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 
 interface ApkCategoryFeedProps {
   articles: Article[];
@@ -217,8 +219,8 @@ export default function ApkCategoryFeed({
                 alt={heroArticle.titleGu || heroArticle.title}
                 fill
                 priority
-                className="object-contain transition-transform duration-500 group-hover:scale-105"
-                style={{ objectFit: 'contain', objectPosition: 'center' }}
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                style={{ objectFit: 'cover', objectPosition: 'center' }}
                 sizes="(max-width: 640px) 100vw, 450px"
               />
               <span className="absolute top-2.5 left-2.5 bg-[#B3121B] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-md shadow-sm uppercase tracking-wide">
@@ -245,14 +247,11 @@ export default function ApkCategoryFeed({
                 <button
                   type="button"
                   onClick={(e) => handleShare(e, heroArticle)}
-                  className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 flex items-center justify-center text-gray-600 dark:text-gray-300 transition active:scale-90"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[12px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
                   aria-label="Share article"
                 >
-                  {copiedId === heroArticle.id ? (
-                    <Check className="w-3.5 h-3.5 text-green-600" />
-                  ) : (
-                    <Share2 className="w-3.5 h-3.5" />
-                  )}
+                  <SocialIcon platform="whatsapp" className="w-3.5 h-3.5 fill-current" />
+                  <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
                 </button>
               </div>
             </div>
@@ -264,55 +263,17 @@ export default function ApkCategoryFeed({
       <ApkAdBanner slotIndex={0} className="px-3 my-2" />
 
       {/* ── 4. VERTICAL STREAM OF NEWS CARDS ───────────────────────────── */}
-      <div className="px-3 space-y-2.5">
+      <div className="px-3 space-y-3">
         {streamArticles.map((art, idx) => (
           <Fragment key={`apk-cat-wrap-${art.id || art.slug || idx}`}>
-            <Link
+            <MobileModernArticleCard
               key={`apk-cat-${art.id || art.slug}`}
-              href={`/news/${art.slug || art.id}`}
-              prefetch={true}
-              className="group flex gap-3 p-3 bg-white dark:bg-[#18181b] rounded-2xl border border-gray-400/80 dark:border-gray-800 shadow-2xs hover:shadow-xs transition active:scale-[0.99] items-start"
-            >
-              {/* Left: Text Information */}
-              <div className="flex-1 min-w-0 flex flex-col justify-between self-stretch">
-                <div>
-                  <span className="text-[10px] font-black text-[#B3121B] uppercase tracking-wide">
-                    {categoryTitle}
-                  </span>
-                  <h3 className="mt-0.5 text-[13.5px] font-extrabold leading-snug text-gray-900 dark:text-gray-100 group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                    <AutoArticleTitle article={art} language={language} />
-                  </h3>
-                </div>
-
-                <div className="mt-2 flex items-center justify-end text-[10px] text-gray-500 dark:text-gray-400 font-semibold">
-
-                  <button
-                    type="button"
-                    onClick={(e) => handleShare(e, art)}
-                    className="w-6 h-6 rounded-full bg-gray-50 dark:bg-gray-800 hover:bg-gray-200 flex items-center justify-center text-gray-500 dark:text-gray-400 transition active:scale-90"
-                    aria-label="Share article"
-                  >
-                    {copiedId === art.id ? (
-                      <Check className="w-3 h-3 text-green-600" />
-                    ) : (
-                      <Share2 className="w-3.5 h-3.5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              {/* Right: Crisp Rounded Thumbnail */}
-              <div className="relative w-24 h-20 shrink-0 rounded-xl overflow-hidden bg-neutral-950 dark:bg-black shadow-2xs">
-                <Image
-                  src={art.image || (art as any).featuredImage || '/logo.png'}
-                  alt={art.titleGu || art.title}
-                  fill
-                  className="object-contain group-hover:scale-105 transition-transform duration-300"
-                  style={{ objectFit: 'contain', objectPosition: 'center' }}
-                  sizes="96px"
-                />
-              </div>
-            </Link>
+              article={art}
+              language={language}
+              index={idx}
+              catSlug={slug}
+              catLabel={categoryTitle}
+            />
           </Fragment>
         ))}
       </div>

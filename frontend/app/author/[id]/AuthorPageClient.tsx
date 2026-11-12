@@ -118,8 +118,8 @@ export default function AuthorPageClient({ author, articles }: AuthorPageClientP
                   alt={article.title}
                   fill
                   sizes="(max-width: 768px) 100vw, 33vw"
-                  className="object-contain transition duration-300 group-hover:scale-103"
-                  style={{ objectFit: 'contain', objectPosition: 'center' }}
+                  className="object-cover transition duration-300 group-hover:scale-103"
+                  style={{ objectFit: 'cover', objectPosition: 'center' }}
                 />
                 {article.isBreaking && (
                   <span className="absolute left-2 top-2 rounded bg-accent px-1.5 py-0.5 text-[9px] font-black text-white">

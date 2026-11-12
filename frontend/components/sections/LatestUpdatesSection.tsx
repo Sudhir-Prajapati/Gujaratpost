@@ -14,6 +14,8 @@ import ArticleMedia from '@/components/ui/ArticleMedia';
 import { getArticleImage } from '@/components/sections/HeroSection';
 import Advertisement from '@/components/ads/Advertisement';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
+import { SocialIcon } from '@/components/ui/SocialLinks';
 
 const sortArticlesByLatest = (items: Article[]): Article[] => {
   return [...(items || [])].sort((a: any, b: any) => {
@@ -237,8 +239,8 @@ export default function LatestUpdatesSection({
         </span>
       </div>
 
-      {/* 2-Column Grid with vertical timeline lines */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-2">
+      {/* ─── DESKTOP VIEW (>= md): 2-Column Grid with vertical timeline lines ─── */}
+      <div className="hidden md:grid md:grid-cols-2 gap-x-12 gap-y-2">
 
         {/* Column 1 */}
         <div className="relative pl-5 flex flex-col">
@@ -332,6 +334,18 @@ export default function LatestUpdatesSection({
 
       </div>
 
+      {/* ─── MOBILE VIEW (< md): Modern Separated Cards with Category Pill & WhatsApp Share ─── */}
+      <div className="flex md:hidden flex-col gap-3.5">
+        {latestNews.slice(0, 10).map((art, idx) => (
+          <MobileModernArticleCard
+            key={art.id || art.slug || idx}
+            article={art}
+            language={language}
+            index={idx}
+          />
+        ))}
+      </div>
+
       {/* ── 2. POPULAR NEWS SECTION (લોકપ્રિય સમાચાર - Admin Managed) ── */}
       <div className="mt-2.5 md:mt-3 pt-2 md:pt-2.5 border-t border-border/60">
         <div className="flex items-center justify-between border-b-[3px] border-slate-950 dark:border-slate-800 pb-2 mb-2.5 md:mb-3">
@@ -350,7 +364,7 @@ export default function LatestUpdatesSection({
         <div className="md:hidden">
           {currentMobileCard && (
             <div
-              className="relative select-none"
+              className="relative select-none bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
@@ -359,8 +373,8 @@ export default function LatestUpdatesSection({
                 href={`/news/${currentMobileCard.slug}`}
                 className="group flex flex-col min-w-0"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-md border border-border/10 bg-muted mb-2 shadow-xs">
-                  <span className="absolute top-2 left-2 z-10 bg-black/85 text-white font-black text-[13px] px-2.5 py-0.5 rounded-sm select-none shadow">
+                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-xs">
+                  <span className="absolute top-2 left-2 z-10 bg-black/85 text-white font-black text-[13px] px-2.5 py-0.5 rounded-md select-none shadow">
                     {language === 'gu' ? toGuDigits(mobileCardRank) : mobileCardRank}
                   </span>
 
@@ -405,6 +419,41 @@ export default function LatestUpdatesSection({
                   <AutoArticleTitle article={currentMobileCard} language={language} />
                 </h3>
               </Link>
+
+              {/* Bottom Row: Category Pill (Left) & WhatsApp Share Button (Right) */}
+              <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
+                <Link
+                  href={`/category/${(currentMobileCard as any).category?.slug || (currentMobileCard as any).categorySlug || 'trending'}`}
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                  <span>{getCategoryLabel(currentMobileCard, language)}</span>
+                  <ChevronRight className="w-3 h-3 text-slate-400" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const title = getArticleTitle(currentMobileCard, language);
+                    const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${currentMobileCard.slug}`;
+                    const text = `${title}\n\n${url}`;
+                    if (typeof navigator !== 'undefined' && navigator.share) {
+                      navigator.share({ title, url, text }).catch(() => {
+                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                      });
+                    } else {
+                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[12px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                  aria-label="Share"
+                >
+                  <SocialIcon platform="whatsapp" className="w-3.5 h-3.5 fill-current" />
+                  <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                </button>
+              </div>
             </div>
           )}
 
