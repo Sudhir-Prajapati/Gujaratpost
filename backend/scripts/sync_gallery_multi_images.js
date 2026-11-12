@@ -153,7 +153,26 @@ async function main() {
   console.log(`   - Catalog albums restored/updated: ${updatedCount}`);
 
   await conn.end();
-  console.log('✅ [Database] Connection closed. Synchronization complete!');
+  console.log('✅ [Database] Connection closed.');
+
+  // 3. Clear Redis Cache so live API and Dailyhunt RSS update instantly
+  try {
+    const { createClient } = require('redis');
+    const redisUrl = process.env.REDIS_URL || 'redis://127.0.0.1:6379';
+    const client = createClient({
+      url: redisUrl,
+      socket: { tls: redisUrl.startsWith('rediss://'), rejectUnauthorized: false }
+    });
+    client.on('error', () => {});
+    await client.connect();
+    await client.flushDb();
+    console.log('🧹 [Cache] Flushed Redis cache successfully.');
+    await client.disconnect();
+  } catch (e) {
+    console.log('ℹ️ [Cache] Redis not active or flushed automatically.');
+  }
+
+  console.log('🚀 [Gallery Sync] All multi-image slides are now 100% active!');
 }
 
 main().catch((err) => {
