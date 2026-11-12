@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 
 const realCwd = fs.realpathSync.native(process.cwd());
 
@@ -46,7 +46,7 @@ if (!hasExplicitTurbo) {
 }
 buildArgs.push(...process.argv.slice(2));
 
-const result = spawnSync(process.execPath, [nextBin, ...buildArgs], {
+const child = spawn(process.execPath, [nextBin, ...buildArgs], {
   cwd: realCwd,
   stdio: 'inherit',
   env: {
@@ -57,10 +57,31 @@ const result = spawnSync(process.execPath, [nextBin, ...buildArgs], {
   }
 });
 
-if (result.status !== 0) {
-  console.error(`\n❌ [Build] Next.js frontend build failed with exit code ${result.status}`);
-  process.exit(result.status || 1);
-}
+// Guard against manifest write race conditions:
+// Next.js finalizes static routes by writing _ssgManifest.js into .next/static/<buildId>/_ssgManifest.js.
+// If the static/<buildId> folder is not created in advance or was removed during concurrent operations,
+// fs.writeFile throws ENOENT. This active watcher guarantees that static/<buildId> exists as soon as BUILD_ID is generated.
+const guardInterval = setInterval(() => {
+  try {
+    const buildIdFile = path.join(nextDir, 'BUILD_ID');
+    if (fs.existsSync(buildIdFile)) {
+      const buildId = fs.readFileSync(buildIdFile, 'utf-8').trim();
+      if (buildId) {
+        const staticBuildDir = path.join(nextDir, 'static', buildId);
+        if (!fs.existsSync(staticBuildDir)) {
+          fs.mkdirSync(staticBuildDir, { recursive: true });
+        }
+      }
+    }
+  } catch (_) {}
+}, 300);
 
-console.log('\n✅ [Build] Next.js frontend build completed successfully.');
-process.exit(0);
+child.on('close', (code) => {
+  clearInterval(guardInterval);
+  if (code !== 0) {
+    console.error(`\n❌ [Build] Next.js frontend build failed with exit code ${code}`);
+    process.exit(code || 1);
+  }
+  console.log('\n✅ [Build] Next.js frontend build completed successfully.');
+  process.exit(0);
+});

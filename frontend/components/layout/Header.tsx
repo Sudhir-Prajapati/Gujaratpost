@@ -52,6 +52,8 @@ import { getPublicCategories } from '@/lib/api';
 import { isHiddenFromNavbar } from '@/lib/header-navigation';
 import UserAuthModal from '@/components/ui/UserAuthModal';
 import { prefetchSupportDetails } from '@/components/ui/SupportModal';
+import DynamicCalendarIcon from '@/components/ui/DynamicCalendarIcon';
+import CalendarModal from '@/components/ui/CalendarModal';
 
 const languageLabels = {
   gu: 'ગુજરાતી',
@@ -326,6 +328,7 @@ export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [selectedCity, setSelectedCity] = useState('અમદાવાદ');
   const [cityModalOpen, setCityModalOpen] = useState(false);
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [otherMenuOpen, setOtherMenuOpen] = useState(false);
   const [liveTemp, setLiveTemp] = useState('28°C');
@@ -667,16 +670,27 @@ export default function Header() {
           <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-1.5 min-h-[38px]">
             {/* Left: Date + City + Weather */}
             <div className="min-w-0 flex items-center gap-1.5 sm:gap-3 truncate text-xs sm:text-sm font-semibold opacity-95">
-              {/* Desktop full date */}
-              <span className="hidden sm:inline font-bold">
-                {mounted ? formatDateLong(language) : 'Sunday, 21 June 2026'}
-              </span>
+              {/* Desktop full date with dynamic calendar icon */}
+              <button
+                type="button"
+                onClick={() => setCalendarModalOpen(true)}
+                className="hidden sm:inline-flex items-center gap-2 hover:text-red-200 transition-colors cursor-pointer select-none font-bold text-left group"
+                title={language === 'en' ? 'Open Calendar' : 'કેલેન્ડર જુઓ'}
+              >
+                <DynamicCalendarIcon size="sm" language={language} className="group-hover:scale-105 transition-transform" />
+                <span>{mounted ? formatDateLong(language) : 'Sunday, 21 June 2026'}</span>
+              </button>
 
-              {/* Mobile compact date with calendar icon */}
-              <span className="sm:hidden text-[12px] font-black text-white tracking-tight whitespace-nowrap flex items-center gap-1">
-                <span>📅</span>
+              {/* Mobile compact date with dynamic calendar icon */}
+              <button
+                type="button"
+                onClick={() => setCalendarModalOpen(true)}
+                className="sm:hidden text-[12px] font-black text-white tracking-tight whitespace-nowrap flex items-center gap-1.5 hover:text-red-200 transition-colors cursor-pointer select-none group"
+                title={language === 'en' ? 'Open Calendar' : 'કેલેન્ડર જુઓ'}
+              >
+                <DynamicCalendarIcon size="sm" language={language} className="group-hover:scale-105 transition-transform" />
                 <span>{mounted ? formatTopBarDate(language) : '12 નવે, 2026'}</span>
-              </span>
+              </button>
 
               <span className="opacity-40">|</span>
 
@@ -1604,6 +1618,13 @@ export default function Header() {
       <UserAuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
+        language={language}
+      />
+
+      {/* Calendar & Date Modal */}
+      <CalendarModal
+        isOpen={calendarModalOpen}
+        onClose={() => setCalendarModalOpen(false)}
         language={language}
       />
     </>
