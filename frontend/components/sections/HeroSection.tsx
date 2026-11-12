@@ -354,7 +354,7 @@ function makeHomeImagesUnique<T extends Article>(sections: T[][]): T[][] {
 }
 
 /* ===========================================================================
-   MobileHorizontalCardStrip -- Auto-scrolling horizontal cards strip on Mobile
+   MobileHorizontalCardStrip -- Vertical featured cards directly below news on Mobile
 =========================================================================== */
 function MobileHorizontalCardStrip({
   cards,
@@ -364,191 +364,85 @@ function MobileHorizontalCardStrip({
   language: Language;
 }) {
   const displayCards = cards.slice(0, 3);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
-  const isInteractingRef = useRef<boolean>(false);
-  const resumeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const updateActiveIndex = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const cardElements = container.querySelectorAll<HTMLElement>('a');
-    if (!cardElements.length) return;
-    const containerCenter = container.scrollLeft + container.clientWidth / 2;
-    let closestIndex = 0;
-    let minDistance = Infinity;
-    cardElements.forEach((card, idx) => {
-      const cardCenter = card.offsetLeft + card.clientWidth / 2;
-      const distance = Math.abs(cardCenter - containerCenter);
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestIndex = idx;
-      }
-    });
-    setActiveIndex(closestIndex);
-  };
-
-  useEffect(() => {
-    if (!displayCards || displayCards.length <= 1) return;
-
-    const interval = setInterval(() => {
-      if (isInteractingRef.current) return;
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      const cardElements = container.querySelectorAll<HTMLElement>('a');
-      if (cardElements.length <= 1) return;
-
-      const nextIdx = (activeIndex + 1) % cardElements.length;
-      const nextCard = cardElements[nextIdx];
-      if (nextCard) {
-        const targetLeft = nextCard.offsetLeft - (container.clientWidth - nextCard.clientWidth) / 2;
-        container.scrollTo({
-          left: Math.max(0, targetLeft),
-          behavior: 'smooth',
-        });
-        setActiveIndex(nextIdx);
-      }
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [displayCards.length, activeIndex]);
-
-  const handleTouchStart = () => {
-    isInteractingRef.current = true;
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-  };
-
-  const handleTouchEnd = () => {
-    if (resumeTimeoutRef.current) clearTimeout(resumeTimeoutRef.current);
-    resumeTimeoutRef.current = setTimeout(() => {
-      isInteractingRef.current = false;
-    }, 3500);
-  };
-
-  const scrollToIndex = (idx: number) => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-    const cardElements = container.querySelectorAll<HTMLElement>('a');
-    if (cardElements[idx]) {
-      const card = cardElements[idx];
-      const targetLeft = card.offsetLeft - (container.clientWidth - card.clientWidth) / 2;
-      container.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
-      setActiveIndex(idx);
-    }
-  };
 
   if (!displayCards || displayCards.length === 0) return null;
 
   return (
-    <div className="md:hidden flex flex-col gap-2">
-      <div
-        ref={scrollContainerRef}
-        onScroll={updateActiveIndex}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onMouseEnter={handleTouchStart}
-        onMouseLeave={handleTouchEnd}
-        className="-mx-4 overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth"
-      >
-        <div className="flex gap-4 px-[8vw] sm:px-6 pb-1 pt-0.5 items-stretch">
-          {displayCards.map((art, idx) => (
-            <Link
-              key={art.id || idx}
-              href={`/news/${art.slug}`}
-              className="group relative shrink-0 snap-center w-[84vw] sm:w-[325px] rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden select-none active:scale-[0.99] transition-all duration-200"
-            >
-              {/* Top Image Container matching Fact Check UI (Image 2) */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
-                <ArticleMedia
-                  src={art.image || (art as any).featuredImage || getArticleImage(art)}
-                  alt={art.title || ''}
-                  showPlayBadge={false}
-                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                />
-
-                {/* Rank Badge top-left matching Fact Check */}
-                <div
-                  className="absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white shadow-md z-10 select-none"
-                  style={{ backgroundColor: idx === 0 ? '#B3121B' : 'rgba(15, 23, 42, 0.8)' }}
-                >
-                  {idx + 1}
-                </div>
-
-                {/* Badge top-right matching Fact Check style */}
-                <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded bg-[#B3121B] backdrop-blur-sm px-2 py-0.5 text-[10px] font-black text-white shadow-md z-10 select-none">
-                  <span>✔</span>
-                  <span>{getCategoryLabel(art, language)}</span>
-                </div>
-
-                
-              </div>
-
-              {/* Bottom Content Container */}
-              <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
-                <h4 className="text-[15.5px] sm:text-[16.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
-                  <AutoArticleTitle article={art} language={language} />
-                </h4>
-
-                {/* Bottom Row: Category Pill & WhatsApp Share */}
-                <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
-                  {(() => {
-                    const heroPill = getCategoryBadgeStyle(art, getCategoryLabel(art, language));
-                    return (
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold ${heroPill.pill}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${heroPill.dot}`} />
-                        <span>{getCategoryLabel(art, language)}</span>
-                      </span>
-                    );
-                  })()}
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const title = getArticleTitle(art, language);
-                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${art.slug}`;
-                      const text = `${title}\n\n${url}`;
-                      if (typeof navigator !== 'undefined' && navigator.share) {
-                        navigator.share({ title, url, text }).catch(() => {
-                          window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                        });
-                      } else {
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[12px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
-                    aria-label="Share"
-                  >
-                    <SocialIcon platform="whatsapp" className="w-3.5 h-3.5 fill-current" />
-                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
-                  </button>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-
-      {/* 3-Page Pagination Dots for Mobile Slider */}
-      {displayCards.length > 1 && (
-        <div className="flex items-center justify-center gap-1.5 pt-1 pb-1">
-          {displayCards.map((_, idx) => (
-            <button
-              key={idx}
-              type="button"
-              onClick={() => scrollToIndex(idx)}
-              aria-label={`Go to slide ${idx + 1}`}
-              className={`transition-all duration-300 rounded-full cursor-pointer ${
-                idx === activeIndex
-                  ? 'w-5 h-1.5 bg-[#B3121B]'
-                  : 'w-1.5 h-1.5 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
-              }`}
+    <div className="md:hidden flex flex-col gap-3.5">
+      {displayCards.map((art, idx) => (
+        <Link
+          key={art.id || idx}
+          href={`/news/${art.slug}`}
+          className="group relative w-full rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden select-none active:scale-[0.99] transition-all duration-200"
+        >
+          {/* Top Image Container matching Fact Check UI */}
+          <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+            <ArticleMedia
+              src={art.image || (art as any).featuredImage || getArticleImage(art)}
+              alt={art.title || ''}
+              showPlayBadge={false}
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
-          ))}
-        </div>
-      )}
+
+            {/* Rank Badge top-left matching Fact Check */}
+            <div
+              className="absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white shadow-md z-10 select-none"
+              style={{ backgroundColor: idx === 0 ? '#B3121B' : 'rgba(15, 23, 42, 0.8)' }}
+            >
+              {idx + 1}
+            </div>
+
+            {/* Badge top-right matching Fact Check style */}
+            <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded bg-[#B3121B] backdrop-blur-sm px-2 py-0.5 text-[10px] font-black text-white shadow-md z-10 select-none">
+              <span>✔</span>
+              <span>{getCategoryLabel(art, language)}</span>
+            </div>
+          </div>
+
+          {/* Bottom Content Container */}
+          <div className="p-3.5 sm:p-4 flex flex-col justify-between flex-1 min-w-0">
+            <h4 className="text-[15.5px] sm:text-[16.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+              <AutoArticleTitle article={art} language={language} />
+            </h4>
+
+            {/* Bottom Row: Category Pill & WhatsApp Share */}
+            <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
+              {(() => {
+                const heroPill = getCategoryBadgeStyle(art, getCategoryLabel(art, language));
+                return (
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold ${heroPill.pill}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${heroPill.dot}`} />
+                    <span>{getCategoryLabel(art, language)}</span>
+                  </span>
+                );
+              })()}
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const title = getArticleTitle(art, language);
+                  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${art.slug}`;
+                  const text = `${title}\n\n${url}`;
+                  if (typeof navigator !== 'undefined' && navigator.share) {
+                    navigator.share({ title, url, text }).catch(() => {
+                      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                    });
+                  } else {
+                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[12px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                aria-label="Share"
+              >
+                <SocialIcon platform="whatsapp" className="w-3.5 h-3.5 fill-current" />
+                <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+              </button>
+            </div>
+          </div>
+        </Link>
+      ))}
     </div>
   );
 }
