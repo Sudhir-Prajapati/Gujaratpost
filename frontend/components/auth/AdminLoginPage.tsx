@@ -103,16 +103,23 @@ function EmailGateStep({
   };
 
   return (
-    <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white/70 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-900/80">
+    <div
+      className="relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white/70 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-900/80"
+      style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '28rem' }}
+    >
       {/* Brand Header */}
       <div className="mb-8 text-center">
-        <div className="relative mx-auto mb-3 h-10 w-32">
+        <div
+          className="relative mx-auto mb-3 h-10 w-32"
+          style={{ position: 'relative', width: '136px', height: '42px', margin: '0 auto 12px auto' }}
+        >
           <Image
             src="/GujaratpostFinalLogo.png"
             alt="Gujarat Post"
             fill
             priority
             className="object-contain"
+            style={{ objectFit: 'contain' }}
           />
         </div>
         <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">
@@ -336,16 +343,23 @@ function PasswordLoginStep({
   };
 
   return (
-    <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white/70 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-900/80">
+    <div
+      className="relative z-10 w-full max-w-md rounded-2xl border border-white/20 bg-white/70 p-8 shadow-2xl backdrop-blur-md transition-all duration-300 dark:border-white/10 dark:bg-zinc-900/80"
+      style={{ position: 'relative', zIndex: 10, width: '100%', maxWidth: '28rem' }}
+    >
       {/* Brand Header */}
       <div className="mb-8 text-center">
-        <div className="relative mx-auto mb-3 h-10 w-32">
+        <div
+          className="relative mx-auto mb-3 h-10 w-32"
+          style={{ position: 'relative', width: '136px', height: '42px', margin: '0 auto 12px auto' }}
+        >
           <Image
             src="/GujaratpostFinalLogo.png"
             alt="Gujarat Post"
             fill
             priority
             className="object-contain"
+            style={{ objectFit: 'contain' }}
           />
         </div>
         <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">

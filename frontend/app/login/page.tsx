@@ -1,7 +1,7 @@
 ﻿export const dynamic = 'force-dynamic';
 
-import NotFoundClient from '@/components/ui/NotFoundClient';
+import { redirect } from 'next/navigation';
 
 export default function LoginPage() {
-  return <NotFoundClient />;
+  redirect('/cms-admin');
 }
