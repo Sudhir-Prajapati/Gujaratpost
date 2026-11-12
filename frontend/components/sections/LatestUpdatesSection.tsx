@@ -7,7 +7,7 @@ import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getArticleTitle, getCategoryLabel, formatViews, getLocalized, formatDate } from '@/data';
 import { getPublicArticles, getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
-import { toGuDigits } from '@/lib/utils';
+import { toGuDigits, getCategoryBadgeStyle } from '@/lib/utils';
 import type { Article, Language } from '@/types';
 
 import ArticleMedia from '@/components/ui/ArticleMedia';
@@ -422,14 +422,19 @@ export default function LatestUpdatesSection({
 
               {/* Bottom Row: Category Pill (Left) & WhatsApp Share Button (Right) */}
               <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
-                <Link
-                  href={`/category/${(currentMobileCard as any).category?.slug || (currentMobileCard as any).categorySlug || 'trending'}`}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[11px] font-bold hover:bg-slate-200 dark:hover:bg-white/[0.1] transition-colors"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
-                  <span>{getCategoryLabel(currentMobileCard, language)}</span>
-                  <ChevronRight className="w-3 h-3 text-slate-400" />
-                </Link>
+                {(() => {
+                  const badge = getCategoryBadgeStyle(currentMobileCard, getCategoryLabel(currentMobileCard, language));
+                  return (
+                    <Link
+                      href={`/category/${(currentMobileCard as any).category?.slug || (currentMobileCard as any).categorySlug || 'trending'}`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold transition-all shadow-2xs select-none active:scale-95 ${badge.pill}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${badge.dot}`} />
+                      <span>{getCategoryLabel(currentMobileCard, language)}</span>
+                      <ChevronRight className={`w-3 h-3 ${badge.chevron}`} />
+                    </Link>
+                  );
+                })()}
 
                 <button
                   type="button"

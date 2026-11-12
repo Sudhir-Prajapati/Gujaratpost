@@ -11,6 +11,7 @@ import {
   AutoTranslateString,
 } from '@/components/ui/AutoTranslatedArticleText';
 import { getArticleTitle, getCategoryLabel } from '@/data';
+import { getCategoryBadgeStyle } from '@/lib/utils';
 
 export interface MobileModernArticleCardProps {
   article: any;
@@ -96,6 +97,8 @@ export default function MobileModernArticleCard({
     }
   };
 
+  const badgeStyle = getCategoryBadgeStyle(catSlug, catLabel);
+
   return (
     <div
       className={`group relative flex flex-col p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg hover:border-accent/40 transition-all duration-200 min-w-0 ${className}`}
@@ -142,11 +145,11 @@ export default function MobileModernArticleCard({
         {/* Left: Category Pill */}
         <Link
           href={`/category/${catSlug}`}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100/90 hover:bg-slate-200/80 dark:bg-white/[0.06] dark:hover:bg-white/[0.1] border border-slate-200/70 dark:border-white/[0.08] text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-all shadow-2xs select-none active:scale-95"
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12px] font-extrabold transition-all shadow-2xs select-none active:scale-95 ${badgeStyle.pill}`}
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+          <span className={`w-1.5 h-1.5 rounded-full ${badgeStyle.dot}`} />
           <span>{catLabel}</span>
-          <ChevronRight className="w-3 h-3 text-muted-foreground/80" />
+          <ChevronRight className={`w-3 h-3 ${badgeStyle.chevron}`} />
         </Link>
 
         {/* Right Bottom Corner: Modern Share Option (WhatsApp / Native Share) */}

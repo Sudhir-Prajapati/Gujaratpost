@@ -18,7 +18,7 @@ import {
   getArticlesByCategory,
   PHOTOS,
 } from '@/data';
-import { getCategoryColor, getTrendingTopicHref } from '@/lib/utils';
+import { getCategoryColor, getTrendingTopicHref, getCategoryBadgeStyle } from '@/lib/utils';
 import { safeYouTubeId } from '@/lib/youtube';
 import { getPublicArticles, getPublicVideos, getHeroSettings, getMarketRates, getPublicWeather, getPublicCategories, getLiveCenterData, getPublicGallery, getPublicAstrology } from '@/lib/api';
 
@@ -492,10 +492,15 @@ function MobileHorizontalCardStrip({
 
                 {/* Bottom Row: Category Pill & WhatsApp Share */}
                 <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-slate-100 dark:border-white/[0.06]">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[11px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
-                    <span>{getCategoryLabel(art, language)}</span>
-                  </span>
+                  {(() => {
+                    const heroPill = getCategoryBadgeStyle(art, getCategoryLabel(art, language));
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold ${heroPill.pill}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${heroPill.dot}`} />
+                        <span>{getCategoryLabel(art, language)}</span>
+                      </span>
+                    );
+                  })()}
 
                   <button
                     type="button"
@@ -705,13 +710,19 @@ function HeroStorySlider({
 
         {/* 3. Bottom Row: Category Pill (Left) + WhatsApp Share Button (Right) */}
         <div className="flex items-center justify-between mt-3.5 mb-2 pt-0.5">
-          <Link
-            href={`/category/${(current as any).category?.slug || (current as any).categorySlug || 'news'}`}
-            className="inline-flex items-center gap-1 px-3 py-1 rounded-full border border-zinc-300 dark:border-zinc-700 bg-muted/30 hover:bg-muted text-[12px] font-extrabold text-foreground/80 hover:text-foreground transition-colors shadow-2xs"
-          >
-            <span>{getCategoryLabel(current, language)}</span>
-            <ChevronRight className="w-3 h-3 text-muted-foreground" />
-          </Link>
+          {(() => {
+            const heroSliderBadge = getCategoryBadgeStyle(current, getCategoryLabel(current, language));
+            return (
+              <Link
+                href={`/category/${(current as any).category?.slug || (current as any).categorySlug || 'news'}`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12px] font-extrabold transition-all shadow-2xs select-none active:scale-95 ${heroSliderBadge.pill}`}
+              >
+                <span className={`w-1.5 h-1.5 rounded-full ${heroSliderBadge.dot}`} />
+                <span>{getCategoryLabel(current, language)}</span>
+                <ChevronRight className={`w-3 h-3 ${heroSliderBadge.chevron}`} />
+              </Link>
+            );
+          })()}
 
           <button
             type="button"
