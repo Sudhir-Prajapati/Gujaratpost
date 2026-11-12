@@ -3,12 +3,13 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Eye, Play, ChevronRight, ChevronLeft, Shield, Sun, Cloud, CloudRain, Flame, Thermometer, Droplet, Wind, Sparkles } from 'lucide-react';
+import { Eye, Play, ChevronRight, ChevronLeft, Shield, Sun, Cloud, CloudRain, Flame, Thermometer, Droplet, Wind, Sparkles, MapPin } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime, getLocationLabel, getLocalized } from '@/data';
 import { getPublicArticles, getPublicWeather, getPublicAstrology } from '@/lib/api';
 import { ZODIAC_SIGNS, ZodiacSign } from '@/components/sections/AstrologySection';
 import { ZodiacIcon, GUJARAT_ZODIAC_LETTERS } from '@/components/ui/ZodiacIcon';
+import { RedZodiacIcon, GUJARATI_ZODIAC_DATES, HINDI_ZODIAC_DATES, ENGLISH_ZODIAC_DATES } from '@/components/ui/RedZodiacIcon';
 import ZodiacDetailModal from '@/components/sections/ZodiacDetailModal';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
@@ -50,11 +51,44 @@ export default function CrimeSection({
     city: 'અમદાવાદ',
     cityEn: 'Ahmedabad',
     temp: 32,
-    humidity: 68,
-    windSpeed: 14,
+    humidity: 56,
+    windSpeed: 12,
     conditionGu: 'આંશિક વાદળછાયું',
     conditionEn: 'Partly cloudy',
   });
+
+  const [liveAqiVal, setLiveAqiVal] = useState<number>(72);
+
+  useEffect(() => {
+    // Live US AQI for Ahmedabad (lat: 23.0225, lon: 72.5714)
+    fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=23.0225&longitude=72.5714&current=us_aqi')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.current?.us_aqi && typeof data.current.us_aqi === 'number') {
+          setLiveAqiVal(Math.round(data.current.us_aqi));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const aqiStatusText = useMemo(() => {
+    if (language === 'gu') {
+      if (liveAqiVal <= 100) return 'સારું';
+      if (liveAqiVal <= 150) return 'મધ્યમ';
+      if (liveAqiVal <= 200) return 'નબળું';
+      return 'અસ્વસ્થ';
+    }
+    if (language === 'hi') {
+      if (liveAqiVal <= 100) return 'अच्छा';
+      if (liveAqiVal <= 150) return 'मध्यम';
+      if (liveAqiVal <= 200) return 'खराब';
+      return 'अस्वस्थ';
+    }
+    if (liveAqiVal <= 100) return 'Good';
+    if (liveAqiVal <= 150) return 'Moderate';
+    if (liveAqiVal <= 200) return 'Poor';
+    return 'Unhealthy';
+  }, [liveAqiVal, language]);
 
   // Sync state if initialArticles prop changes from parent
   useEffect(() => {
@@ -643,100 +677,186 @@ export default function CrimeSection({
   const sidebarContent = (
     <div className="flex flex-col gap-6 select-none">
 
-      {/* Weather Widget -> Click to open AQI page */}
+      {/* Redesigned AQI & Weather Container -> Click to open AQI page */}
       <Link
         href={weatherData.cityEn ? `/aqi?city=${encodeURIComponent(weatherData.cityEn)}` : '/aqi'}
-        className="block rounded-sm bg-[#1A1A1A] hover:bg-[#242424] text-white p-5 border border-border/10 shadow-md transition-all duration-200 cursor-pointer group hover:border-amber-400/40"
+        className="relative block rounded-[18px] text-white overflow-hidden shadow-lg border border-red-700/40 transition-all duration-300 hover:shadow-xl group select-none cursor-pointer"
+        style={{
+          background: 'linear-gradient(135deg, #B3121B 0%, #D71914 45%, #6A080B 100%)',
+        }}
       >
-        <div className="flex items-center justify-between gap-1.5 mb-4 select-none">
-          <div className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse" />
-            <span className="text-[12px] md:text-[13px] font-black uppercase tracking-wider text-white/90 group-hover:text-white transition-colors">
-              {language === 'gu' ? `હવામાન - ${weatherData.city || 'અમદાવાદ'}` : `Weather - ${weatherData.cityEn || 'Ahmedabad'}`}
-            </span>
-          </div>
-          <span className="text-[11px] font-bold text-white/60 group-hover:text-amber-400 flex items-center gap-1 transition-colors">
-            AQI &rarr;
-          </span>
+        {/* Right Landmark Graphic (Ahmedabad heritage clock tower by the lake with reflection) */}
+        <div
+          className="absolute right-0 top-0 bottom-0 w-[55%] sm:w-[52%] pointer-events-none z-0 overflow-hidden"
+          aria-hidden="true"
+        >
+          {/* Smooth high-res landmark with left alpha fade */}
+          <img
+            src="/assets/ahmedabad-weather-monument.png"
+            alt=""
+            className="w-full h-full object-cover object-right opacity-95 transition-transform duration-500 group-hover:scale-105"
+          />
+          {/* Warm sunset dusk glow behind tower */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(circle at 65% 35%, rgba(255, 130, 45, 0.22) 0%, transparent 70%)',
+            }}
+          />
         </div>
 
-        <div className="flex justify-between items-center">
-          <div>
-            <span className="text-4xl font-extrabold tracking-tight select-none">
-              {language === 'gu' ? toGuLocal(weatherData.temp ?? 32) : (weatherData.temp ?? 32)}°
+        {/* Top Information: City & State */}
+        <div className="relative z-10 px-4 pt-3.5 pb-2.5">
+          <div className="flex items-center gap-1.5 text-white/95">
+            <MapPin className="h-3.5 w-3.5 fill-white text-white drop-shadow-xs" />
+            <span className="text-[13px] sm:text-[13.5px] font-bold tracking-wide drop-shadow-xs">
+              {language === 'gu'
+                ? `${weatherData.city || 'અમદાવાદ'}, ગુજરાત`
+                : language === 'hi'
+                ? `${weatherData.city || 'अहमदाबाद'}, गुजरात`
+                : `${weatherData.cityEn || 'Ahmedabad'}, Gujarat`}
             </span>
-            <p className="text-[12px] text-white/70 font-bold mt-1.5 select-none">
-              {language === 'gu' ? (weatherData.conditionGu || 'આંશિક વાદળછાયું') : (weatherData.conditionEn || 'Partly cloudy')}
-            </p>
           </div>
 
-          <div className="relative h-12 w-12 text-yellow-400 select-none group-hover:scale-105 transition-transform">
-            <svg viewBox="0 0 24 24" className="h-full w-full fill-current">
-              <path d="M19 12a7 7 0 1 0-7 7 7 7 0 0 0 7-7zm-7 5a5 5 0 1 1 5-5 5 5 0 0 1-5 5z" />
-              <path d="M12 2a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0V3a1 1 0 0 0-1-1zm0 16a1 1 0 0 0-1 1v1a1 1 0 0 0 2 0v-1a1 1 0 0 0-1-1zm10-7h-1a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2zM4 11H3a1 1 0 0 0 0 2h1a1 1 0 0 0 0-2zm15.07-5.07a1 1 0 0 0-1.42 0l-.7.7a1 1 0 0 0 1.42 1.42l.7-.7a1 1 0 0 0 0-1.42zm-12.73 12.7a1 1 0 0 0-1.42 0l-.7.7a1 1 0 0 0 1.42 1.42l.7-.7a1 1 0 0 0 0-1.42zm12.73 0a1 1 0 0 0 0-1.42l-.7-.7a1 1 0 0 0-1.42 1.42l.7.7a1 1 0 0 0 1.42 0zm-12.73-12.7a1 1 0 0 0 0-1.42l-.7-.7a1 1 0 0 0-1.42 1.42l.7.7a1 1 0 0 0 1.42 0z" />
-            </svg>
+          {/* Temperature & Radiant Sun + Cloud Icon */}
+          <div className="flex items-center gap-3 mt-1">
+            <span className="text-[34px] sm:text-[38px] font-extrabold tracking-tight text-white leading-none drop-shadow-sm">
+              {language === 'gu' ? toGuLocal(weatherData.temp ?? 32) : (weatherData.temp ?? 32)}°C
+            </span>
+
+            {/* Weather Icon (Golden Sun with Rays + White Cloud) */}
+            <div className="relative h-9 w-10 flex-shrink-0 group-hover:scale-110 transition-transform">
+              <svg viewBox="0 0 36 32" className="h-full w-full drop-shadow-md">
+                {/* Sun */}
+                <circle cx="23" cy="12" r="7" fill="#FDB813" />
+                <g stroke="#FDB813" strokeWidth="2" strokeLinecap="round">
+                  <line x1="23" y1="2" x2="23" y2="4.5" />
+                  <line x1="23" y1="19.5" x2="23" y2="22" />
+                  <line x1="13" y1="12" x2="15.5" y2="12" />
+                  <line x1="30.5" y1="12" x2="33" y2="12" />
+                  <line x1="16" y1="5" x2="17.8" y2="6.8" />
+                  <line x1="28.2" y1="17.2" x2="30" y2="19" />
+                  <line x1="16" y1="19" x2="17.8" y2="17.2" />
+                  <line x1="28.2" y1="6.8" x2="30" y2="5" />
+                </g>
+                {/* White Cloud */}
+                <path
+                  d="M10 26h16a5 5 0 0 0 1-9.9 7 7 0 0 0-13.6-2.1A5.5 5.5 0 0 0 10 26z"
+                  fill="#FFFFFF"
+                />
+              </svg>
+            </div>
           </div>
+
+          {/* Condition Text */}
+          <p className="text-[12px] font-semibold text-white/90 mt-1 drop-shadow-xs">
+            {language === 'gu'
+              ? (weatherData.conditionGu || 'આંશિક વાદળછાયું')
+              : language === 'hi'
+              ? (weatherData.conditionHi || 'आंशिक बादल')
+              : (weatherData.conditionEn || 'Partly cloudy')}
+          </p>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-white/10 flex items-center gap-6 text-[12px] font-bold text-white/80">
-          <span className="flex items-center gap-1.5 select-none">
-            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 fill-none stroke-current stroke-2">
-              <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-13-7-13S5 10.7 5 15a7 7 0 0 0 7 7z" />
+        {/* Bottom Information Row: Humidity | Wind | AQI Badge */}
+        <div className="relative z-10 flex items-center justify-between px-3.5 py-2.5 bg-black/25 backdrop-blur-xs border-t border-white/15 text-[11.5px] font-bold text-white">
+          {/* Humidity */}
+          <div className="flex items-center gap-1.5 select-none">
+            <Droplet className="h-3.5 w-3.5 fill-white/80 text-white stroke-[2.2]" />
+            <span>
+              {language === 'gu'
+                ? `ભેજ ${toGuLocal(weatherData.humidity ?? 56)}%`
+                : language === 'hi'
+                ? `नमी ${weatherData.humidity ?? 56}%`
+                : `Humidity ${weatherData.humidity ?? 56}%`}
+            </span>
+          </div>
+
+          {/* Vertical Divider */}
+          <div className="h-3.5 w-px bg-white/25" />
+
+          {/* Wind Speed */}
+          <div className="flex items-center gap-1.5 select-none">
+            <Wind className="h-3.5 w-3.5 text-white stroke-[2.2]" />
+            <span>
+              {language === 'gu'
+                ? `પવન ${toGuLocal(weatherData.windSpeed ?? 12)} કિમી/ક`
+                : language === 'hi'
+                ? `हवा ${weatherData.windSpeed ?? 12} किमी/घં`
+                : `Wind ${weatherData.windSpeed ?? 12} km/h`}
+            </span>
+          </div>
+
+          {/* Vertical Divider */}
+          <div className="h-3.5 w-px bg-white/25" />
+
+          {/* AQI Indicator with Pill Badge */}
+          <div className="flex items-center gap-1.5 select-none">
+            {/* Leaf vector icon matching reference */}
+            <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 fill-none stroke-white stroke-[2.2]" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+              <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
             </svg>
-            {language === 'gu' ? `ભેજ ${toGuLocal(weatherData.humidity ?? 68)}%` : `Humidity ${weatherData.humidity ?? 68}%`}
-          </span>
-          <span className="flex items-center gap-1.5 select-none">
-            <svg viewBox="0 0 24 24" className="h-4.5 w-4.5 fill-none stroke-current stroke-2">
-              <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.59-6.59A2 2 0 1 1 19 12H2" />
-            </svg>
-            {language === 'gu' ? `પવન ${toGuLocal(weatherData.windSpeed ?? 14)} કિમી` : `Wind ${weatherData.windSpeed ?? 14} km/h`}
-          </span>
+            <span className="text-white/95 tracking-wide">AQI</span>
+            <span className="bg-black/40 text-white px-2 py-0.5 rounded-full text-[10.5px] font-extrabold tracking-tight border border-white/15 backdrop-blur-xs">
+              {language === 'gu'
+                ? `${toGuLocal(liveAqiVal)} (${aqiStatusText})`
+                : `${liveAqiVal} (${aqiStatusText})`}
+            </span>
+          </div>
         </div>
       </Link>
 
-
-      {/* Today's Horoscope Widget */}
-      <div>
-        <div className="flex items-center justify-between border-b border-border pb-1.5 mb-2.5">
-          <span className="text-[#B3121B] font-black text-[17px] md:text-[15.5px] flex items-center gap-2 md:gap-1.5">
-            <Sparkles className="h-5 w-5 md:h-4 md:w-4 text-purple-600 dark:text-purple-400 animate-pulse" />
-            {language === 'gu' ? '• આજનું રાશિફળ' : language === 'hi' ? '• आज का राशिफल' : '• Today\'s Horoscope'}
-          </span>
+      {/* Redesigned Today's Rashifal Container */}
+      <div className="select-none">
+        {/* Section Heading with Red Sparkle Icon */}
+        <div className="flex items-center gap-2 mb-2.5">
+          <svg viewBox="0 0 24 24" className="h-5 w-5 fill-[#D71914] text-[#D71914]">
+            <path d="M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z" />
+          </svg>
+          <h3 className="text-[19px] sm:text-[20px] font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
+            {language === 'gu' ? 'રાશિફળ' : language === 'hi' ? 'राशिफल' : 'Horoscope'}
+          </h3>
         </div>
-        <div className="border border-purple-500/20 dark:border-purple-500/30 rounded-2xl md:rounded-xl bg-card p-2.5 md:p-1.5 lg:p-2 shadow-sm">
-          <div className="grid grid-cols-4 gap-2 md:gap-1 lg:gap-1.5">
+
+        {/* 4-Column Zodiac Grid Container */}
+        <div className="rounded-[18px] bg-white dark:bg-card p-2.5 sm:p-3 border border-[#F0DADA] dark:border-red-950/40 shadow-xs">
+          <div className="grid grid-cols-4 gap-2 sm:gap-2.5">
             {astrologySigns.map((sign) => {
               const isSelected = selectedZodiac?.id === sign.id;
-              const letters = (sign as any).lettersGu ? `(${(sign as any).lettersGu})` : GUJARAT_ZODIAC_LETTERS[sign.id] || `(${sign.name})`;
+              const dateRange = (language === 'gu'
+                ? GUJARATI_ZODIAC_DATES[sign.id]
+                : language === 'hi'
+                ? HINDI_ZODIAC_DATES[sign.id]
+                : ENGLISH_ZODIAC_DATES[sign.id]) || '';
               const primaryName = language === 'gu' ? sign.nameGu : language === 'hi' ? sign.nameHi : sign.name;
-              const subName = language === 'gu' ? letters : language === 'hi' ? letters : `(${sign.name})`;
 
               return (
-                <div
+                <button
                   key={sign.id}
+                  type="button"
                   onClick={() => setSelectedZodiac(sign)}
-                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 md:py-1 md:px-0.5 lg:py-1.5 lg:px-1 min-h-[92px] md:min-h-0 rounded-xl md:rounded-lg border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden ${isSelected
-                      ? 'bg-[#FFF8F0] dark:bg-amber-950/40 border-amber-300 dark:border-amber-700/60 shadow-xs'
-                      : 'bg-background hover:bg-amber-50/50 dark:hover:bg-amber-950/20 border-border/60 hover:border-amber-300/60'
-                    }`}
+                  className={`relative flex flex-col items-center justify-center py-2.5 px-1 min-h-[90px] sm:min-h-[96px] rounded-xl border transition-all duration-200 cursor-pointer select-none text-center overflow-hidden group ${
+                    isSelected
+                      ? 'bg-[#FFEBEB] dark:bg-red-950/40 border-[#D71914] shadow-xs ring-1 ring-[#D71914]'
+                      : 'bg-[#FFF5F5] dark:bg-red-950/15 hover:bg-[#FFEBEB] dark:hover:bg-red-950/30 border-[#F0DADA] dark:border-red-900/30 hover:border-[#D71914]/50'
+                  }`}
                 >
-                  {/* SVG Illustration Icon */}
-                  <div className="relative flex h-9 w-9 md:h-7 md:w-7 lg:h-7.5 lg:w-7.5 items-center justify-center mb-1 md:mb-0.5 select-none">
-                    <ZodiacIcon id={sign.id} className="h-8 w-8 md:h-6 md:w-6 lg:h-6.5 lg:w-6.5" />
+                  {/* Red Zodiac Vector Icon */}
+                  <div className="flex h-7 w-7 items-center justify-center mb-1 select-none transition-transform duration-200 group-hover:scale-110">
+                    <RedZodiacIcon id={sign.id} className="h-7 w-7" />
                   </div>
 
-                  {/* Gujarati Name */}
-                  <span className={`text-[15.5px] md:text-[13.5px] lg:text-[14.5px] font-black leading-tight select-none ${isSelected ? 'text-amber-700 dark:text-amber-400' : 'text-foreground'
-                    }`}>
+                  {/* Gujarati Zodiac Name */}
+                  <span className="text-[14px] font-black leading-tight text-gray-900 dark:text-gray-100 select-none">
                     {primaryName}
                   </span>
 
-                  {/* Gujarati Initial Letters (અ, લ, ઈ) */}
-                  <span className={`text-[11.5px] md:text-[10.5px] lg:text-[11px] font-bold leading-tight select-none mt-0.5 tracking-tight ${isSelected ? 'text-amber-600 dark:text-amber-300 font-extrabold' : 'text-muted-foreground'
-                    }`}>
-                    {subName}
+                  {/* Date Range in Parentheses */}
+                  <span className="text-[10px] sm:text-[10.5px] font-medium leading-tight text-gray-500 dark:text-gray-400 select-none mt-1 tracking-tight whitespace-nowrap">
+                    {dateRange}
                   </span>
-                </div>
+                </button>
               );
             })}
           </div>

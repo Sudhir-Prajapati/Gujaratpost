@@ -20,13 +20,17 @@ try {
 
 const nodeOptions = process.env.NODE_OPTIONS || '--max-old-space-size=4096';
 
-// Safely clear previous .next build artifacts with retry to prevent Windows file locking issues
+// Zero-Downtime Safe Build:
+// Never wipe .next in production while the server is live to prevent 404/500 downtime during builds.
+const isWindows = process.platform === 'win32';
 const nextDir = path.join(realCwd, '.next');
-try {
-  if (fs.existsSync(nextDir)) {
-    fs.rmSync(nextDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
-  }
-} catch (_) {}
+if (isWindows && process.env.NODE_ENV !== 'production' && process.argv.includes('--clean')) {
+  try {
+    if (fs.existsSync(nextDir)) {
+      fs.rmSync(nextDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 300 });
+    }
+  } catch (_) {}
+}
 
 console.log('🚀 [Build] Starting Next.js frontend build (single-pass)...');
 

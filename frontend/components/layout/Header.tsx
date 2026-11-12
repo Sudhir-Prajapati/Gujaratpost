@@ -567,18 +567,22 @@ export default function Header() {
   }, [dbCategories]);
 
   const allDrawerCategories = useMemo(() => {
-    const combined = [...navLinks.filter((l) => l.href !== '/'), ...otherLinks];
-    const seen = new Set<string>();
-    const list: { label: string; labelGu?: string; labelHi?: string; href: string; slug?: string }[] = [];
-    for (const item of combined) {
-      if (!seen.has(item.href)) {
-        seen.add(item.href);
-        const slug = item.href.replace('/category/', '').replace('/', '');
-        list.push({ ...item, slug });
-      }
-    }
-    return list;
-  }, [navLinks, otherLinks]);
+    // 12 categories matching mobile 2-column reference layout (11 primary + 'વધુ' linking to /categories)
+    return [
+      { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'गुजरात', href: '/category/gujarat', slug: 'gujarat' },
+      { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national', slug: 'national' },
+      { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world', slug: 'world' },
+      { label: 'Politics', labelGu: 'રાજનીતિ', labelHi: 'राजनीति', href: '/category/politics', slug: 'politics' },
+      { label: 'Business', labelGu: 'બિઝનેસ', labelHi: 'बिजनेस', href: '/category/business', slug: 'business' },
+      { label: 'Sports', labelGu: 'ક્રીડા', labelHi: 'खेल', href: '/category/sports', slug: 'sports' },
+      { label: 'Technology', labelGu: 'ટેકનોલોજી', labelHi: 'तकनीक', href: '/category/technology', slug: 'technology' },
+      { label: 'Entertainment', labelGu: 'મનોરંજન', labelHi: 'मनोरंजन', href: '/category/entertainment', slug: 'entertainment' },
+      { label: 'Health', labelGu: 'હેલ્થ', labelHi: 'स्वास्थ्य', href: '/category/health', slug: 'health' },
+      { label: 'Agriculture', labelGu: 'કૃષિ', labelHi: 'कृषि', href: '/category/agriculture', slug: 'agriculture' },
+      { label: 'Education', labelGu: 'શિક્ષણ', labelHi: 'शिक्षा', href: '/category/education', slug: 'education' },
+      { label: 'More', labelGu: 'વધુ', labelHi: 'अधिक', href: '/categories', slug: 'more' },
+    ];
+  }, []);
 
   // Determine active link: exact match for home, startsWith for others
   const isActive = (href: string) => {
