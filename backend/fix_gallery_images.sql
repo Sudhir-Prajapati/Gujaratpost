@@ -1,49 +1,11 @@
-﻿-- Fix corrupted gallery image paths
+﻿-- Dailyhunt & Gallery Fix: Touch updatedAt for top galleries so Dailyhunt RSS picks up fresh news
 START TRANSACTION;
-UPDATE gallery_photos SET src = '/uploads/news/Nikita_Sharma2_1793806393635_9966_ed9ptd.webp' WHERE id = 'f2024630-f731-43dd-bd49-b07fe76cf438';
-UPDATE gallery_photos SET src = '/uploads/news/___________________________________________1_1793370213995_5473_qjejjf.avif' WHERE id = '064c0d87-5a44-466d-8949-8435c1137be1';
-UPDATE gallery_photos SET src = '/uploads/news/___________________________________1793369274352_7959_dxx5ns.avif' WHERE id = '3c79f71f-fc8e-454e-8ba6-157f5abb42a6';
-UPDATE gallery_photos SET src = '/uploads/news/__________________________________1_1793368679160_1772_wsdyey.avif' WHERE id = 'cc470d09-f32d-4922-afff-3071b7ba65d5';
-UPDATE gallery_photos SET src = '/uploads/news/madhuri_dixit1_1793368132304_1890_mmjat6.webp' WHERE id = '48b320cb-7c78-4434-a283-9f9544621843';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_531dd7eb-98de-4600-a085-f6f68ae822f8_slide_3.jpg' WHERE id = '531dd7eb-98de-4600-a085-f6f68ae822f8';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_3ef8ca1e-4eb6-4c7e-a792-b8678ce4d232_slide_3.jpg' WHERE id = '3ef8ca1e-4eb6-4c7e-a792-b8678ce4d232';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_9f2732c6-da39-4799-a321-c223f4d372d1_slide_1.jpg' WHERE id = '9f2732c6-da39-4799-a321-c223f4d372d1';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_e50f720c-a71b-43e1-a250-e678118a802c_slide_1.jpg' WHERE id = 'e50f720c-a71b-43e1-a250-e678118a802c';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_dbac4b36-8f7a-481d-862d-3eeec705dc0f.jpg' WHERE id = 'b19471d9-7c41-45fb-a423-bc60bdd252de';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_2c3964aa-0d24-4900-9f95-a71fc4c81b2c_slide_1.jpg' WHERE id = '2c3964aa-0d24-4900-9f95-a71fc4c81b2c';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_18cb34b6-e5b5-44f6-b61d-80c2ca04cfbc_slide_1.jpg' WHERE id = '18cb34b6-e5b5-44f6-b61d-80c2ca04cfbc';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_eedcbb5b-d9ed-4df0-b70e-6778663f77bc_slide_1.jpg' WHERE id = 'eedcbb5b-d9ed-4df0-b70e-6778663f77bc';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_d37a4bbb-4127-4364-95c8-0d8365f1839b_slide_1.jpg' WHERE id = 'd37a4bbb-4127-4364-95c8-0d8365f1839b';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_dfe4879f-363d-4e42-96ee-fd2de82c8001_slide_2.jpg' WHERE id = 'dfe4879f-363d-4e42-96ee-fd2de82c8001';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_c73f5940-231d-45a8-a367-9bf4cc1ed2a4_slide_1.jpg' WHERE id = 'c73f5940-231d-45a8-a367-9bf4cc1ed2a4';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_4a2d527a-66b4-4a07-be0c-7aeed47ff0f8_slide_1.jpg' WHERE id = '4a2d527a-66b4-4a07-be0c-7aeed47ff0f8';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_551b0c0a-4a21-4129-9d9f-9268f8efbdc8_slide_1.jpg' WHERE id = '551b0c0a-4a21-4129-9d9f-9268f8efbdc8';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_23f2badc-6ecf-410e-ae76-653b29f32bf0_slide_1.jpg' WHERE id = '23f2badc-6ecf-410e-ae76-653b29f32bf0';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_2b57786e-2807-4a28-8ec7-8f7d986e66ca_slide_1.jpg' WHERE id = '2b57786e-2807-4a28-8ec7-8f7d986e66ca';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_8ff28912-f73b-4337-b60e-5d9eb6a51a16_slide_1.jpg' WHERE id = '8ff28912-f73b-4337-b60e-5d9eb6a51a16';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_6784459c-a0da-4f37-8b88-09b470f80fd4_slide_1.jpg' WHERE id = '6784459c-a0da-4f37-8b88-09b470f80fd4';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_75929ce8-fcba-417c-ba43-24034cdee7c3_slide_1.jpg' WHERE id = '75929ce8-fcba-417c-ba43-24034cdee7c3';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_7aa8612d-39c6-4634-8fb3-da3435c1b8ea_slide_1.jpg' WHERE id = '7aa8612d-39c6-4634-8fb3-da3435c1b8ea';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_61d001a6-ec57-4bc1-a1a8-6c24629d5726_slide_1.jpg' WHERE id = '61d001a6-ec57-4bc1-a1a8-6c24629d5726';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_cf939db9-77fe-400d-bd1b-7f02ca2ce15c_slide_1.jpg' WHERE id = 'cf939db9-77fe-400d-bd1b-7f02ca2ce15c';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_e2e8f953-fa75-4319-bcce-a7203368d635_slide_1.jpg' WHERE id = 'e2e8f953-fa75-4319-bcce-a7203368d635';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_d8ba10cc-2c45-4f42-bb29-440409ab1d33_slide_2.jpg' WHERE id = 'd8ba10cc-2c45-4f42-bb29-440409ab1d33';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_bc6fe02a-cac4-4636-8591-ad5660e966db_slide_2.jpg' WHERE id = 'bc6fe02a-cac4-4636-8591-ad5660e966db';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_36f00f5e-e553-462c-83b0-f6f8b6384bd2_slide_1.jpg' WHERE id = '36f00f5e-e553-462c-83b0-f6f8b6384bd2';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_f938caa2-ef65-4737-bb36-ba006b442e56_slide_1.jpg' WHERE id = 'f938caa2-ef65-4737-bb36-ba006b442e56';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_e077e195-632c-4a4e-be52-effdc33bc910_slide_1.jpg' WHERE id = 'e077e195-632c-4a4e-be52-effdc33bc910';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_c7ac425b-4f8e-47d3-82b6-0008712dffd7_slide_1.jpg' WHERE id = 'c7ac425b-4f8e-47d3-82b6-0008712dffd7';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_084af13a-6f1a-430b-a542-68418234e464_slide_2.jpg' WHERE id = '084af13a-6f1a-430b-a542-68418234e464';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_fde7e06e-d32a-45c8-a5fa-6d5f4ec84afa_slide_2.jpg' WHERE id = 'fde7e06e-d32a-45c8-a5fa-6d5f4ec84afa';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_9ba6f3de-5e17-40f9-a064-2131660f809d_slide_2.jpg' WHERE id = '9ba6f3de-5e17-40f9-a064-2131660f809d';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_c6fcecdc-0a97-4582-823b-aa909270ac3e_slide_1.jpg' WHERE id = 'c6fcecdc-0a97-4582-823b-aa909270ac3e';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_96967cef-e291-4d6a-b87c-f8be75da1e25_slide_1.jpg' WHERE id = '96967cef-e291-4d6a-b87c-f8be75da1e25';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_766ab0f9-90b0-4704-a70d-941240bb788c_slide_1.jpg' WHERE id = '766ab0f9-90b0-4704-a70d-941240bb788c';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_393a484c-e299-4e30-b7c1-56b0e5e8c071_slide_2.jpg' WHERE id = '393a484c-e299-4e30-b7c1-56b0e5e8c071';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_4049fdd9-9164-46ff-a89a-ef44ed3aa5c4_slide_1.jpg' WHERE id = '4049fdd9-9164-46ff-a89a-ef44ed3aa5c4';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_91c399bd-2dc6-4229-8287-a0e3c15fda28_slide_1.jpg' WHERE id = '91c399bd-2dc6-4229-8287-a0e3c15fda28';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_1ab85b29-d204-4b02-a7f6-186a1628b8c8_slide_1.jpg' WHERE id = '1ab85b29-d204-4b02-a7f6-186a1628b8c8';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_36f2f652-7c09-4dd9-b593-d83b223cd914_slide_2.jpg' WHERE id = '36f2f652-7c09-4dd9-b593-d83b223cd914';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_98884b64-ad92-43e3-9e89-b4f849334de7_slide_5.jpg' WHERE id = '98884b64-ad92-43e3-9e89-b4f849334de7';
-UPDATE gallery_photos SET src = '/uploads/gallery/gallery_00639cab-3434-41c5-9bcb-1e21d79bf6fe_slide_2.jpg' WHERE id = '00639cab-3434-41c5-9bcb-1e21d79bf6fe';
+
+-- Touch Megha Shukla & Varun Dhawan so Dailyhunt re-fetches and replaces the blank thumbnail
+UPDATE gallery_photos SET updatedAt = NOW() WHERE id = '387c75e2-6a0d-41fd-b87e-8bd64eeeb3b7';
+UPDATE gallery_photos SET updatedAt = NOW() WHERE id = '70edf945-3919-4df2-b714-1c329c776765';
+
+-- Touch top 25 recent photo galleries so Dailyhunt immediately detects them as newly published
+UPDATE gallery_photos SET updatedAt = NOW() ORDER BY createdAt DESC LIMIT 25;
+
 COMMIT;

@@ -136,6 +136,11 @@ app.get('/', (req, res) => {
 // Legacy PHP RSS routes and direct public RSS feeds on root domain
 app.get('/rss-feed-politics.php', RssController.getLegacyPoliticsRss);
 app.get('/rss-feed-gallery.php', RssController.getLegacyGalleryRss);
+app.get('/rss-feed-gallery', RssController.getLegacyGalleryRss);
+app.get('/gallery-updates-gallery.xml', RssController.getLegacyGalleryRss);
+app.get('/gallery-updates-gallery', RssController.getLegacyGalleryRss);
+app.get('/gallery.xml', RssController.getLegacyGalleryRss);
+app.get('/photos.xml', RssController.getLegacyGalleryRss);
 app.get('/rss.xml', RssController.getPublicRss);
 app.get('/rss/:category.xml', RssController.getPublicRss);
 app.get('/rss/:category', RssController.getPublicRss);

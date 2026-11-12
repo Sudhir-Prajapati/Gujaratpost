@@ -44,6 +44,20 @@ export function getSiteBaseUrl(): string {
 export function ensureJpegUrl(url?: string | null): string {
   if (!url) return '';
   let u = url.trim();
+
+  // Strip trailing JSON quote fragments (e.g. /uploads/gallery/foo.jpg","title":"...)
+  const qIdx = u.indexOf('"');
+  if (qIdx !== -1) {
+    u = u.substring(0, qIdx).trim();
+  }
+  u = u.replace(/[,\}\]]+$/, '').trim();
+
+  // Ensure absolute URL with canonical site base URL if relative path
+  if (u.startsWith('/')) {
+    const baseUrl = getSiteBaseUrl();
+    u = `${baseUrl}${u}`;
+  }
+
   if (u.includes('res.cloudinary.com') && u.includes('/upload/')) {
     if (!u.includes('/f_jpg') && !u.includes('/f_auto')) {
       u = u.replace('/upload/', '/upload/f_jpg,q_auto/');
@@ -177,7 +191,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
   if (categorySlug === 'photos' || categorySlug === 'gallery' || categorySlug === 'photo-gallery' || categorySlug === 'photo') {
     const photos = await prisma.galleryPhoto.findMany({
       take: limit,
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
       select: {
         id: true,
         src: true,
@@ -221,7 +235,13 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         description?: string;
       }
       const slides: GallerySlideItem[] = [];
-      const rawSrc = (photo.src || '').trim();
+      let rawSrc = (photo.src || '').trim();
+
+      // Clean rawSrc if it has quotes or JSON metadata appended
+      if (rawSrc.includes('"') && !rawSrc.startsWith('[')) {
+        rawSrc = rawSrc.substring(0, rawSrc.indexOf('"')).trim();
+      }
+      rawSrc = rawSrc.replace(/[,\}\]]+$/, '').trim();
 
       if (rawSrc.startsWith('[')) {
         try {
@@ -247,14 +267,18 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       if (slides.length === 0) {
         if (rawSrc.includes('\n') || (rawSrc.includes(',') && !rawSrc.startsWith('data:'))) {
           const delimiter = rawSrc.includes('\n') ? '\n' : ',';
-          const splitUrls = rawSrc.split(delimiter).map((s) => s.trim()).filter((s) => s.startsWith('http://') || s.startsWith('https://'));
+          const splitUrls = rawSrc.split(delimiter).map((s) => s.trim()).filter(Boolean);
           for (const u of splitUrls) {
             const converted = ensureJpegUrl(u);
-            if (converted) slides.push({ src: converted });
+            if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
+              slides.push({ src: converted });
+            }
           }
-        } else if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://')) {
+        } else if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://') || rawSrc.startsWith('/')) {
           const converted = ensureJpegUrl(rawSrc);
-          if (converted) slides.push({ src: converted });
+          if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
+            slides.push({ src: converted });
+          }
         }
       }
 
@@ -332,6 +356,19 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       <media:content url="${escapedLeadImg}" medium="image">
         <media:title>${wrapCdata(rawTitle)}</media:title>
       </media:content>`;
+
+        if (slides.length > 1) {
+          for (let i = 1; i < slides.length; i++) {
+            const s = slides[i];
+            if (s.src && (s.src.startsWith('http://') || s.src.startsWith('https://'))) {
+              const escapedSlideSrc = escapeXml(s.src);
+              itemsXml += `
+      <media:content url="${escapedSlideSrc}" medium="image">
+        <media:title>${wrapCdata(s.title || rawTitle)}</media:title>
+      </media:content>`;
+            }
+          }
+        }
       }
 
       itemsXml += `
