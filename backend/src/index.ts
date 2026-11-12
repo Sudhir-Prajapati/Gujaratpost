@@ -102,19 +102,21 @@ app.use('/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   express_static(req, res, () => {
     // If not found at requested path, check fallback subdirectories (news vs gallery vs root)
+    // and alternate image extensions (.webp, .jpg, .jpeg, .png, .avif)
     const baseFile = path.basename(req.path);
     if (baseFile && baseFile.length > 3) {
-      const newsPath = path.join(process.cwd(), 'uploads', 'news', baseFile);
-      if (fs.existsSync(newsPath)) {
-        return res.sendFile(newsPath);
-      }
-      const galleryPath = path.join(process.cwd(), 'uploads', 'gallery', baseFile);
-      if (fs.existsSync(galleryPath)) {
-        return res.sendFile(galleryPath);
-      }
-      const rootPath = path.join(process.cwd(), 'uploads', baseFile);
-      if (fs.existsSync(rootPath)) {
-        return res.sendFile(rootPath);
+      const ext = path.extname(baseFile);
+      const stem = path.basename(baseFile, ext);
+      const candidateExts = Array.from(new Set([ext, '.webp', '.jpg', '.jpeg', '.png', '.avif'])).filter(Boolean);
+      const folders = ['news', 'gallery', ''];
+
+      for (const folder of folders) {
+        for (const candidateExt of candidateExts) {
+          const testPath = path.join(process.cwd(), 'uploads', folder, `${stem}${candidateExt}`);
+          if (fs.existsSync(testPath)) {
+            return res.sendFile(testPath);
+          }
+        }
       }
     }
     return res.status(404).send('Not Found');
