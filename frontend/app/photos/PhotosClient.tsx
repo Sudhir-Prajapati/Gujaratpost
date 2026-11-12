@@ -25,23 +25,30 @@ function resolvePhotoUrl(val: any, fallback: string = ''): string {
   if (!val) return fallback;
   let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
   if (typeof raw === 'string') {
-    const trimmed = raw.trim();
+    let trimmed = raw.trim();
     if (trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed);
         if (Array.isArray(parsed) && parsed.length > 0) {
           const first = parsed[0];
-          return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+          raw = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+          trimmed = String(raw).trim();
         }
       } catch {}
     }
+    const qIdx = trimmed.indexOf('"');
+    if (qIdx !== -1) {
+      trimmed = trimmed.substring(0, qIdx).trim();
+    }
+    trimmed = trimmed.replace(/[,\}\]]+$/, '').trim();
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
       return trimmed;
     }
   }
   if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
     const first = val.images[0];
-    return typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+    const firstSrc = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+    return resolvePhotoUrl(firstSrc, fallback);
   }
   return fallback;
 }

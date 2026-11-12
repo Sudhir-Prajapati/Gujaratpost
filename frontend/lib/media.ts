@@ -117,7 +117,14 @@ export function optimizeCloudinaryUrl(url?: string | null): string {
 }
 
 export function sanitizeImageUrl(url?: string | null): string {
-  return optimizeCloudinaryUrl(url);
+  if (!url || typeof url !== 'string') return '';
+  let clean = url.trim();
+  const qIdx = clean.indexOf('"');
+  if (qIdx !== -1) {
+    clean = clean.substring(0, qIdx).trim();
+  }
+  clean = clean.replace(/[,\}\]]+$/, '').trim();
+  return optimizeCloudinaryUrl(clean);
 }
 
 function getBackendOrigin(): string {

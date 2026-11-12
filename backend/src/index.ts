@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import path from 'path';
+import fs from 'fs';
 import { execSync } from 'child_process';
 import type { Server } from 'http';
 import { connectRedis, redisClient } from './config/redis.js';
@@ -99,14 +100,25 @@ const express_static = express.static(path.join(process.cwd(), 'uploads'), {
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  express_static(req, res, next);
-});
-
-// Fallback for missing uploads: seamlessly redirect to original media on gujaratpost.in
-app.use('/uploads/:filename', (req, res) => {
-  const filename = req.params.filename;
-  if (!filename) return res.status(404).send('Not Found');
-  return res.redirect(302, `https://gujaratpost.in/news/${encodeURIComponent(filename)}`);
+  express_static(req, res, () => {
+    // If not found at requested path, check fallback subdirectories (news vs gallery vs root)
+    const baseFile = path.basename(req.path);
+    if (baseFile && baseFile.length > 3) {
+      const newsPath = path.join(process.cwd(), 'uploads', 'news', baseFile);
+      if (fs.existsSync(newsPath)) {
+        return res.sendFile(newsPath);
+      }
+      const galleryPath = path.join(process.cwd(), 'uploads', 'gallery', baseFile);
+      if (fs.existsSync(galleryPath)) {
+        return res.sendFile(galleryPath);
+      }
+      const rootPath = path.join(process.cwd(), 'uploads', baseFile);
+      if (fs.existsSync(rootPath)) {
+        return res.sendFile(rootPath);
+      }
+    }
+    return res.status(404).send('Not Found');
+  });
 });
 
 // Root endpoint status check

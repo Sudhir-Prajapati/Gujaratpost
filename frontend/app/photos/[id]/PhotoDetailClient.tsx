@@ -96,7 +96,7 @@ function resolvePhotoUrl(val: any, fallback: string = ''): string {
   if (!val) return fallback;
   let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
   if (typeof raw === 'string') {
-    const trimmed = raw.trim();
+    let trimmed = raw.trim();
     if (trimmed.startsWith('[')) {
       try {
         const parsed = JSON.parse(trimmed);
@@ -107,6 +107,11 @@ function resolvePhotoUrl(val: any, fallback: string = ''): string {
         }
       } catch {}
     }
+    const qIdx = trimmed.indexOf('"');
+    if (qIdx !== -1) {
+      trimmed = trimmed.substring(0, qIdx).trim();
+    }
+    trimmed = trimmed.replace(/[,\}\]]+$/, '').trim();
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
       return sanitizeImageUrl(trimmed);
     }

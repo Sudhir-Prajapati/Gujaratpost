@@ -67,17 +67,31 @@ const DEFAULT_5_PHOTOS = [
   },
 ];
 
+function cleanPhotoSrc(srcVal: any): string {
+  if (!srcVal || typeof srcVal !== 'string') return '';
+  let s = srcVal.trim();
+  const quoteIdx = s.indexOf('"');
+  if (quoteIdx !== -1) {
+    s = s.substring(0, quoteIdx).trim();
+  }
+  s = s.replace(/[,\}\]]+$/, '').trim();
+  return s;
+}
+
 export function formatGalleryPhoto(photo: any) {
   if (!photo) return photo;
   const p = { ...photo };
-  if (typeof p.src === 'string' && p.src.trim().startsWith('[')) {
-    try {
-      const parsed = JSON.parse(p.src);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        p.images = parsed;
-        p.src = parsed[0]?.src || parsed[0]?.url || (typeof parsed[0] === 'string' ? parsed[0] : p.src);
-      }
-    } catch {}
+  if (typeof p.src === 'string') {
+    if (p.src.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(p.src);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          p.images = parsed;
+          p.src = parsed[0]?.src || parsed[0]?.url || (typeof parsed[0] === 'string' ? parsed[0] : p.src);
+        }
+      } catch {}
+    }
+    p.src = cleanPhotoSrc(p.src);
   }
   if (!p.images || !Array.isArray(p.images) || p.images.length === 0) {
     p.images = [
@@ -90,6 +104,12 @@ export function formatGalleryPhoto(photo: any) {
         photographer: p.photographer || 'Gujarat Post Team'
       }
     ];
+  } else {
+    p.images = p.images.map((img: any) => {
+      if (!img) return img;
+      if (typeof img === 'string') return { src: cleanPhotoSrc(img) };
+      return { ...img, src: cleanPhotoSrc(img.src || img.url || '') };
+    });
   }
   return p;
 }
