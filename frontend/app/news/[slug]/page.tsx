@@ -248,6 +248,11 @@ export default async function NewsDetailPage(
     .split('-')
     .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
 
+  const referenceTime = Math.max(
+    ...uniqueCandidates.map((c) => new Date(c.publishedAt || (c as any).createdAt || 0).getTime()),
+    Date.now()
+  );
+
   const scoredRelated = uniqueCandidates.map((item) => {
     let score = 0;
 
@@ -288,21 +293,29 @@ export default async function NewsDetailPage(
     if (item.isFeatured) score += 3;
     if (item.views) score += Math.min(item.views / 200, 5);
 
-    // 6. Recency bonus
+    // 6. Recency Priority (Strictly favor fresh stories from last 5-6 days)
     const pubTime = new Date(item.publishedAt || (item as any).createdAt || 0).getTime();
-    if (pubTime > 0) {
-      const daysDiff = (Date.now() - pubTime) / (1000 * 60 * 60 * 24);
-      if (daysDiff >= 0 && daysDiff <= 7) {
-        score += (7 - daysDiff) * 0.5;
-      }
+    const ageDays = pubTime > 0 ? Math.max(0, (referenceTime - pubTime) / (1000 * 60 * 60 * 24)) : 999;
+    if (ageDays <= 6) {
+      score += 150 + Math.max(0, (6 - ageDays) * 10);
+    } else if (ageDays <= 10) {
+      score += 35;
+    } else if (ageDays > 14) {
+      score -= 250;
     }
 
-    return { item, score };
+    return { item, score, ageDays };
   });
 
-  scoredRelated.sort((a, b) => b.score - a.score);
+  const freshRelated = scoredRelated.filter((entry) => entry.ageDays <= 7);
+  const olderRelated = scoredRelated.filter((entry) => entry.ageDays > 7);
 
-  const related = scoredRelated.map((entry) => entry.item);
+  freshRelated.sort((a, b) => b.score - a.score);
+  olderRelated.sort((a, b) => b.score - a.score);
+
+  // Fresh stories from the last 5-6 days always take precedence
+  const finalSorted = [...freshRelated, ...olderRelated];
+  const related = finalSorted.map((entry) => entry.item);
 
   const articleUrl = `${SITE_URL}/news/${article.slug}`;
   const rawCandidateHeadline = (initialLang === 'hi' && article.titleHi && /[\u0900-\u097F]/.test(article.titleHi))

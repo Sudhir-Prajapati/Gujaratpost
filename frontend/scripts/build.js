@@ -34,15 +34,14 @@ if (isWindows && process.env.NODE_ENV !== 'production' && process.argv.includes(
 
 console.log('🚀 [Build] Starting Next.js frontend build (single-pass)...');
 
-// Smart Hybrid Bundler:
-// - On Linux / Live Production Server: Uses Next.js native default (Turbopack) for maximum build speed.
-// - On Windows: Next.js 16 has an open bug with Google Fonts in Turbopack, so default to --webpack
-//   unless the developer explicitly passes --turbo or --turbopack.
+// Production Bundler:
+// Always default to --webpack for 100% stability with Google Fonts and CSS chunk serving across Linux and Windows.
+// Pass --turbo explicitly if experimental Turbopack build is desired.
 const hasExplicitTurbo = process.argv.includes('--turbo') || process.argv.includes('--turbopack');
 const hasExplicitWebpack = process.argv.includes('--webpack');
 
 const buildArgs = ['build'];
-if (isWindows && !hasExplicitTurbo && !hasExplicitWebpack) {
+if (!hasExplicitTurbo) {
   buildArgs.push('--webpack');
 }
 buildArgs.push(...process.argv.slice(2));

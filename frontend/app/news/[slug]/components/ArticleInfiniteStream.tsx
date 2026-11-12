@@ -604,8 +604,20 @@ export default function ArticleInfiniteStream({
                 (cand) => !usedReadAlsoIds.has(String(cand.id)) && String(cand.id) !== streamArtId
               );
 
-              // Fallback to remaining masterCandidatePool if unused candidates run low (still STRICTLY excludes all stream articles, main article, etc.)
-              if (candidatePool.length < 4) {
+              const getCandAgeDays = (cand: Article) => {
+                const pubDateStr = cand.publishedAt || (cand as any).createdAt;
+                if (!pubDateStr) return 999;
+                const pubTime = new Date(pubDateStr).getTime();
+                if (isNaN(pubTime) || pubTime <= 0) return 999;
+                return Math.max(0, (Date.now() - pubTime) / (1000 * 60 * 60 * 24));
+              };
+
+              // Strictly prefer fresh candidates from the last 5-6 days
+              const freshCandidates = candidatePool.filter((cand) => getCandAgeDays(cand) <= 6);
+              if (freshCandidates.length >= 4) {
+                candidatePool = freshCandidates;
+              } else if (candidatePool.length < 4) {
+                // Fallback to remaining masterCandidatePool if unused candidates run low
                 candidatePool = masterCandidatePool.filter((cand) => String(cand.id) !== streamArtId);
               }
 
@@ -654,7 +666,14 @@ export default function ArticleInfiniteStream({
                   score += 10;
                 }
 
-                // 6. Popularity & recency
+                // 6. Recency Priority (Strictly favor fresh stories from last 5-6 days)
+                const candAge = getCandAgeDays(cand);
+                if (candAge <= 6) {
+                  score += 100 + Math.max(0, (6 - candAge) * 10);
+                } else if (candAge > 14) {
+                  score -= 150;
+                }
+
                 if (cand.isTrending) score += 3;
                 if (cand.isFeatured) score += 2;
 

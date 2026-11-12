@@ -1436,10 +1436,29 @@ export default function NewsDetailClient({ article, related, trending, articleUr
   const authorBio = getLocalized(language, { en: article.author.bio, gu: article.author.bioGu, hi: article.author.bioHi });
   const tags = (language === 'en' ? article.tags : language === 'hi' ? (article.tagsHi?.length ? article.tagsHi : article.tags) : (article.tagsGu?.length ? article.tagsGu : article.tags)) || article.tags || [];
 
+  const getArticleAgeDays = (art: Article | null | undefined, refTime = Date.now()): number => {
+    if (!art) return 999;
+    const pubDateStr = art.publishedAt || (art as any).createdAt;
+    if (!pubDateStr) return 999;
+    const pubTime = new Date(pubDateStr).getTime();
+    if (isNaN(pubTime) || pubTime <= 0) return 999;
+    return Math.max(0, (refTime - pubTime) / (1000 * 60 * 60 * 24));
+  };
+
   const readAlsoPool = useMemo(() => {
     const topMostRead = (mostReadArticles || []).slice(0, 3);
     const pool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
-    return filterUniqueArticles(pool, [article, ...topMostRead]).slice(0, 4);
+    const uniquePool = filterUniqueArticles(pool, [article, ...topMostRead]);
+    // Strictly prioritize fresh news from the last 5-6 days
+    const freshArticles = uniquePool.filter((a) => getArticleAgeDays(a) <= 6);
+    if (freshArticles.length >= 4) {
+      return freshArticles.slice(0, 4);
+    }
+    const mediumFreshArticles = uniquePool.filter((a) => getArticleAgeDays(a) <= 10);
+    if (mediumFreshArticles.length >= 4) {
+      return mediumFreshArticles.slice(0, 4);
+    }
+    return [...freshArticles, ...uniquePool.filter((a) => !freshArticles.includes(a))].slice(0, 4);
   }, [article, related, trending, mostReadArticles]);
 
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
@@ -1728,6 +1747,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   // 2. Top Sidebar Recommended Pool (For Main Article Sidebar)
   // Strictly excludes main article, Most Read top 3 articles, and Also Read articles
+  // Strictly prioritizes fresh news from the last 5-6 days
   const sidebarRecommendedPool = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [article, ...mostReadSubset, ...readAlsoPool];
@@ -1737,13 +1757,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     );
     const uniquePool = filterUniqueArticles(pool, excludeList);
 
+    // Strictly prioritize fresh articles within 6 days
+    const freshPool = uniquePool.filter((a) => getArticleAgeDays(a) <= 6);
+    const poolForSelection = freshPool.length >= 4 ? freshPool : uniquePool;
+
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
-    const stateNationalCandidates = uniquePool.filter((cand) => {
+    const stateNationalCandidates = poolForSelection.filter((cand) => {
       const cat = String(cand.category || '').toLowerCase().trim();
       return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
     });
 
-    const poolToUse = [...stateNationalCandidates, ...uniquePool.filter((cand) => !stateNationalCandidates.includes(cand))];
+    const poolToUse = [...stateNationalCandidates, ...poolForSelection.filter((cand) => !stateNationalCandidates.includes(cand))];
 
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
@@ -1760,6 +1784,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   // 3. Stream Continuation Articles (For Infinite Stream below main article)
   // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
+  // Streams strictly fresh news from the last 5-6 days
   const streamList = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [
@@ -1770,24 +1795,24 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     ];
 
     const remainingRelated = filterUniqueArticles(related || [], excludeList);
-    const shownInRelated = remainingRelated.slice(0, relatedLimit);
+    // Strictly prioritize articles within 6 days so infinite stream never drags reader into 20-40 day old news
+    const freshRelated = remainingRelated.filter((a) => getArticleAgeDays(a) <= 6);
+    const freshTrending = (trending || []).filter((a) => getArticleAgeDays(a) <= 6);
 
     const pool = [
-      ...remainingRelated.slice(relatedLimit),
-      ...(trending || []),
-      ...(related || []),
+      ...freshRelated,
+      ...freshTrending,
+      ...remainingRelated,
     ];
 
-    const finalStreamPool = filterUniqueArticles(pool, [
-      ...excludeList,
-      ...shownInRelated,
-    ]);
+    const finalStreamPool = filterUniqueArticles(pool, excludeList);
 
     return finalStreamPool.slice(0, 8);
   }, [related, trending, article, readAlsoPool, relatedLimit, mostReadArticles, trendingLimit, sidebarRecommendedPool]);
 
   // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
   // Strictly excludes ALL articles already displayed anywhere on the page!
+  // Strictly prioritizes fresh news from the last 5-6 days
   const streamSidebarRecommendedPool = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [
@@ -1803,13 +1828,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     );
     const uniquePool = filterUniqueArticles(pool, excludeList);
 
+    // Strictly prioritize fresh articles within 6 days
+    const freshPool = uniquePool.filter((a) => getArticleAgeDays(a) <= 6);
+    const poolForSelection = freshPool.length >= 4 ? freshPool : uniquePool;
+
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
-    const stateNationalCandidates = uniquePool.filter((cand) => {
+    const stateNationalCandidates = poolForSelection.filter((cand) => {
       const cat = String(cand.category || '').toLowerCase().trim();
       return priorityCatKeywords.some((kw) => cat.includes(kw) || kw.includes(cat));
     });
 
-    const poolToUse = [...stateNationalCandidates, ...uniquePool.filter((cand) => !stateNationalCandidates.includes(cand))];
+    const poolToUse = [...stateNationalCandidates, ...poolForSelection.filter((cand) => !stateNationalCandidates.includes(cand))];
 
     const byCategory = new Map<string, Article>();
     for (const cand of poolToUse) {
