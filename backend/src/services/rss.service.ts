@@ -218,13 +218,12 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       // Prefer updatedAt so aggregators (Dailyhunt) immediately detect updated galleries
       const photoTimestamp = new Date(photo.updatedAt || photo.createdAt);
       const pubDate = photoTimestamp.toUTCString();
+      const guidValue = `${photoUrl}?v=${photoTimestamp.getTime()}`;
 
-      // Heading / Title
-      const titleCandidate = lang === 'en'
-        ? (photo.caption || photo.captionGu || photo.alt || 'Gujarat Post Photo Gallery')
-        : lang === 'hi'
-        ? (photo.captionHi || photo.captionGu || photo.caption || photo.alt || 'गुजरात पोस्ट फोटो गैलरी')
-        : (photo.captionGu || photo.caption || photo.alt || 'Gujarat Post Photo Gallery');
+      // Heading / Title (captionGu is always the primary headline in Gujarati)
+      const titleCandidate = lang === 'hi' && photo.captionHi
+        ? (photo.captionHi || photo.captionGu || photo.alt || 'गुजरात पोस्ट फोटो गैलरी')
+        : (photo.captionGu || photo.alt || photo.caption || 'Gujarat Post Photo Gallery');
       const rawTitle = stripHtmlTags(titleCandidate).trim();
 
       // Extract all gallery slides / images
@@ -286,8 +285,6 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       let storyDesc = '';
       if (photo.caption && photo.caption.trim() && photo.caption.trim() !== rawTitle) {
         storyDesc = photo.caption.trim();
-      } else if (photo.captionGu && photo.captionGu.trim() && photo.captionGu.trim() !== rawTitle) {
-        storyDesc = photo.captionGu.trim();
       } else if (slides[0]?.description && slides[0].description !== rawTitle) {
         storyDesc = slides[0].description;
       } else if (slides[0]?.caption && slides[0].caption !== rawTitle) {
@@ -296,8 +293,19 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         storyDesc = photo.alt.trim();
       }
 
+      // Check all slides if storyDesc is still empty
+      if (!storyDesc) {
+        for (const s of slides) {
+          const cand = (s.description || s.caption || '').trim();
+          if (cand && cand !== rawTitle) {
+            storyDesc = cand;
+            break;
+          }
+        }
+      }
+
       // If description starts with title, strip duplicate title prefix
-      if (storyDesc.startsWith(rawTitle)) {
+      if (storyDesc && storyDesc.startsWith(rawTitle)) {
         storyDesc = storyDesc.substring(rawTitle.length).replace(/^[:\s\-]+/, '').trim();
       }
 
@@ -328,7 +336,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
 
         fullHtml += `\n<p><img src="${escapeXml(slide.src)}" alt="${slideAlt}" /></p>`;
         if (hasUniqueCaption) {
-          fullHtml += `\n<p><strong>${escapeXml(slideCaption)}</strong></p>`;
+          fullHtml += `\n<p>${escapeXml(slideCaption)}</p>`;
         }
       }
 
@@ -339,7 +347,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>
       <link>${photoUrl}</link>
-      <guid isPermaLink="true">${photoUrl}</guid>
+      <guid isPermaLink="false">${guidValue}</guid>
       <description>${wrapCdata(rawDesc)}</description>
       <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
       <category>${wrapCdata(catName)}</category>
@@ -353,8 +361,9 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         const escapedLeadImg = escapeXml(leadImg);
         itemsXml += `
       <enclosure url="${escapedLeadImg}" type="image/jpeg" length="0" />
-      <media:content url="${escapedLeadImg}" medium="image">
+      <media:content url="${escapedLeadImg}" medium="image" type="image/jpeg">
         <media:title>${wrapCdata(rawTitle)}</media:title>
+        <media:description>${wrapCdata(rawDesc)}</media:description>
       </media:content>`;
 
         if (slides.length > 1) {
@@ -362,9 +371,12 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
             const s = slides[i];
             if (s.src && (s.src.startsWith('http://') || s.src.startsWith('https://'))) {
               const escapedSlideSrc = escapeXml(s.src);
+              const slideTitle = s.title || rawTitle;
+              const slideCaption = (s.caption || s.description || '').trim();
+              const hasSlideDesc = slideCaption && slideCaption !== rawTitle && slideCaption !== storyDesc;
               itemsXml += `
-      <media:content url="${escapedSlideSrc}" medium="image">
-        <media:title>${wrapCdata(s.title || rawTitle)}</media:title>
+      <media:content url="${escapedSlideSrc}" medium="image" type="image/jpeg">
+        <media:title>${wrapCdata(slideTitle)}</media:title>${hasSlideDesc ? `\n        <media:description>${wrapCdata(slideCaption)}</media:description>` : ''}
       </media:content>`;
             }
           }
