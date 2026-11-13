@@ -12,6 +12,9 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  // Support zero-downtime builds via atomic directory swapping
+  distDir: process.env.NEXT_DIST_DIR || '.next',
+
   // Allow HMR connections from 127.0.0.1 and tunnel domains
   allowedDevOrigins: [
     '127.0.0.1',

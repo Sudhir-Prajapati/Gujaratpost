@@ -68,8 +68,8 @@ jobs:
             echo "---------- Building Backend ----------"
             npm run build
 
-            echo "---------- Restarting Backend ----------"
-            pm2 restart gujarat-post-backend --update-env > /dev/null 2>&1
+            echo "---------- Restarting Backend Gracefully ----------"
+            pm2 reload gujarat-post-backend --update-env > /dev/null 2>&1 || pm2 restart gujarat-post-backend --update-env > /dev/null 2>&1
 
             echo "========== BACKEND DEPLOYMENT SUCCESSFUL =========="
 
@@ -80,11 +80,20 @@ jobs:
             echo "---------- Installing Frontend Dependencies ----------"
             npm install
 
-            echo "---------- Building Frontend ----------"
-            npm run build
+            echo "---------- Building Frontend (Zero-Downtime Atomic Build) ----------"
+            rm -rf .next-new
+            NEXT_DIST_DIR=.next-new npm run build
 
-            echo "---------- Restarting Frontend ----------"
-            pm2 restart gujarat-post-frontend --update-env > /dev/null 2>&1
+            if [ -d ".next-new" ]; then
+              echo "---------- Swapping Build Directories Atomically ----------"
+              rm -rf .next-old
+              [ -d ".next" ] && mv .next .next-old
+              mv .next-new .next
+              rm -rf .next-old
+            fi
+
+            echo "---------- Reloading Frontend Gracefully ----------"
+            pm2 reload gujarat-post-frontend --update-env > /dev/null 2>&1 || pm2 restart gujarat-post-frontend --update-env > /dev/null 2>&1
 
             echo "========== DEPLOYMENT SUCCESSFUL - DevOps Team =========="
 
