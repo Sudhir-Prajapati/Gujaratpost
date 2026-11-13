@@ -526,18 +526,20 @@ function HeroStorySlider({
     >
       {/* ─── MOBILE VIEW (< md): Header First, then Image, then Category & Share (matches Image 2) ─── */}
       <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4 mb-2">
-        {/* 1. Header on Top: LIVE badge inline with Headline */}
+        {/* 1. Header on Top: LIVE badge inline with Headline (Fixed 3-line vertical height prevents layout shift/jerking) */}
         <Link href={`/news/${current.slug}`} className="group block mb-3">
-          <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
-            <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
-              LIVE
-            </span>
-            <AutoArticleTitleWithPrefix
-              article={current}
-              language={language}
-              prefixClassName="text-[#B3121B] font-black mr-1"
-            />
-          </h1>
+          <div className="h-[4.4rem] sm:h-[4.75rem] min-h-[4.4rem] sm:min-h-[4.75rem] overflow-hidden flex items-start">
+            <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
+              <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
+                LIVE
+              </span>
+              <AutoArticleTitleWithPrefix
+                article={current}
+                language={language}
+                prefixClassName="text-[#B3121B] font-black mr-1"
+              />
+            </h1>
+          </div>
         </Link>
 
         {/* 2. Image in the Middle with Slider Controls */}
@@ -712,10 +714,12 @@ function HeroStorySlider({
           </span>
         </div>
 
-        {/* Headline */}
-        <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[23.5px] leading-[1.24] tracking-tight mt-1.5 group-hover:text-accent transition-colors line-clamp-2">
-          <AutoArticleTitle article={current} language={language} />
-        </h1>
+        {/* Headline - Exactly 2 lines, reserving 2-line vertical space to prevent layout shifts when slides transition */}
+        <div className="h-[54px] sm:h-[58px] md:h-[62px] min-h-[54px] sm:min-h-[58px] md:min-h-[62px] overflow-hidden flex items-start mt-1.5">
+          <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[23.5px] leading-[1.24] tracking-tight group-hover:text-accent transition-colors line-clamp-2">
+            <AutoArticleTitle article={current} language={language} />
+          </h1>
+        </div>
 
         {/* Excerpt - Exactly 3 lines, reserving 3-line vertical space even if article has fewer lines */}
         <p className="text-muted-foreground text-[13.5px] sm:text-[14px] leading-[21px] sm:leading-[23px] min-h-[63px] sm:min-h-[69px] mt-1.5 line-clamp-3 font-medium">

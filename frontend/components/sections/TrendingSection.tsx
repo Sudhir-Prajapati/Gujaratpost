@@ -321,9 +321,11 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
 
               {/* Info Text below image */}
               <div className="p-2.5 sm:p-2 flex flex-col justify-between flex-1 min-w-0">
-                <h3 className="line-clamp-3 text-[14px] sm:text-[12px] md:text-[12.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
-                  <AutoArticleTitle article={article} language={language} />
-                </h3>
+                <div className="h-[54px] sm:h-[48px] min-h-[54px] sm:min-h-[48px] overflow-hidden flex items-start">
+                  <h3 className="line-clamp-3 text-[14px] sm:text-[12px] md:text-[12.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors">
+                    <AutoArticleTitle article={article} language={language} />
+                  </h3>
+                </div>
                 <div className="mt-1.5 flex items-center text-[10.5px] sm:text-[10px] text-muted-foreground">
                   <span className="font-semibold text-emerald-600 dark:text-emerald-400">
                     {language === 'gu' ? 'તપાસેલ સત્ય' : language === 'hi' ? 'सत्यापित' : 'Verified'}
