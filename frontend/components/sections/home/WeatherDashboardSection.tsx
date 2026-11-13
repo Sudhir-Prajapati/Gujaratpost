@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useTransition } from 'react';
+import React, { useState, useEffect, useCallback, useTransition, useRef } from 'react';
 import Link from 'next/link';
 import {
   Sun,
@@ -17,7 +17,9 @@ import {
   RotateCw,
   AlertCircle,
   Activity,
+  Check,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import type { Language } from '@/types';
 
 interface WeatherCity {
@@ -188,14 +190,46 @@ const INITIAL_AQI: Record<string, AqiCity> = {
 
 const CITIES = ['Ahmedabad', 'Vadodara', 'Surat', 'Rajkot'];
 
+const CITY_METADATA: Record<string, { gu: string; hi: string }> = {
+  Ahmedabad: { gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
+  Vadodara: { gu: 'વડોદરા', hi: 'वडोदरा' },
+  Surat: { gu: 'સુરત', hi: 'सूरत' },
+  Rajkot: { gu: 'રાજકોટ', hi: 'રાજકોટ' },
+};
+
 export default function WeatherDashboardSection({ language }: { language: Language }) {
   const [activeTab, setActiveTab] = useState<'weather' | 'aqi'>('weather');
   const [selectedCity, setSelectedCity] = useState('Ahmedabad');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [weatherData, setWeatherData] = useState<Record<string, WeatherCity>>(INITIAL_WEATHER);
   const [aqiData, setAqiData] = useState<Record<string, AqiCity>>(INITIAL_AQI);
   const [lastUpdateStr, setLastUpdateStr] = useState<string>('');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [, startTransition] = useTransition();
+
+  // Close custom dropdown on click outside or escape key
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isDropdownOpen]);
 
   const isGu = language === 'gu';
   const isHi = language === 'hi';
@@ -337,24 +371,144 @@ export default function WeatherDashboardSection({ language }: { language: Langua
             </span>
           </div>
 
-          {/* Quick City Switcher Dropdown */}
-          <div className="relative">
-            <div className="flex items-center gap-1.5 bg-white dark:bg-[#1f2233] text-[#171B2D] dark:text-white border-[1.5px] border-slate-300/90 dark:border-slate-700 hover:border-[#C8101E] rounded-full px-3 py-1 shadow-xs transition-all cursor-pointer">
-              <MapPin className="h-3.5 w-3.5 text-[#C8101E] shrink-0" />
-              <select
-                id="weather-city-select"
-                aria-label="Select City"
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="appearance-none bg-transparent text-xs sm:text-sm font-black pr-5 focus:outline-none cursor-pointer"
+          {/* Quick City Switcher Modern Custom Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              type="button"
+              id="weather-city-select"
+              aria-label="Select City"
+              aria-expanded={isDropdownOpen}
+              aria-haspopup="listbox"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className={cn(
+                "group flex items-center gap-2 bg-white dark:bg-[#1f2233] text-[#171B2D] dark:text-white border-[1.5px] rounded-full px-3.5 py-1.5 shadow-xs hover:shadow-md transition-all duration-200 cursor-pointer select-none",
+                isDropdownOpen
+                  ? "border-[#C8101E] ring-2 ring-[#C8101E]/20"
+                  : "border-slate-300/90 dark:border-slate-700 hover:border-[#C8101E]"
+              )}
+            >
+              <div className="w-5 h-5 rounded-full bg-[#C8101E]/10 dark:bg-[#C8101E]/20 flex items-center justify-center shrink-0">
+                <MapPin className="h-3 w-3 text-[#C8101E]" />
+              </div>
+              <div className="flex items-center gap-1.5 text-xs sm:text-sm">
+                <span className="font-black tracking-tight">{selectedCity}</span>
+                <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                  ({CITY_METADATA[selectedCity]?.gu || selectedCity})
+                </span>
+              </div>
+              <ChevronDown
+                className={cn(
+                  "h-3.5 w-3.5 text-slate-500 dark:text-slate-400 transition-transform duration-200 group-hover:text-[#C8101E]",
+                  isDropdownOpen && "rotate-180 text-[#C8101E]"
+                )}
+              />
+            </button>
+
+            {/* Custom Glassmorphism Dropdown Menu */}
+            {isDropdownOpen && (
+              <div
+                role="listbox"
+                className="absolute right-0 top-full mt-2 z-50 w-64 bg-white/95 dark:bg-[#1a1c29]/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-700/90 rounded-2xl shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-150 origin-top-right select-none"
               >
-                <option value="Ahmedabad" className="text-slate-900 dark:text-slate-100">Ahmedabad</option>
-                <option value="Vadodara" className="text-slate-900 dark:text-slate-100">Vadodara</option>
-                <option value="Surat" className="text-slate-900 dark:text-slate-100">Surat</option>
-                <option value="Rajkot" className="text-slate-900 dark:text-slate-100">Rajkot</option>
-              </select>
-              <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400 absolute right-2.5 pointer-events-none" />
-            </div>
+                {/* Header label */}
+                <div className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+                  <span>{isGu ? 'શહેર પસંદ કરો' : isHi ? 'शहर चुनें' : 'Select City'}</span>
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500">
+                    {CITIES.length} {isGu ? 'શહેરો' : 'Cities'}
+                  </span>
+                </div>
+
+                {/* Cities List */}
+                <div className="space-y-1">
+                  {CITIES.map((city) => {
+                    const isSelected = city === selectedCity;
+                    const cWeather = weatherData[city] || INITIAL_WEATHER[city];
+                    const cAqi = aqiData[city] || INITIAL_AQI[city];
+                    const meta = CITY_METADATA[city];
+
+                    return (
+                      <button
+                        key={city}
+                        type="button"
+                        role="option"
+                        aria-selected={isSelected}
+                        onClick={() => {
+                          setSelectedCity(city);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={cn(
+                          "w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl text-left transition-all duration-150 cursor-pointer",
+                          isSelected
+                            ? "bg-gradient-to-r from-[#C8101E]/10 via-[#C8101E]/5 to-transparent text-[#C8101E] dark:text-[#f87171] border-l-2 border-[#C8101E]"
+                            : "hover:bg-slate-100/80 dark:hover:bg-white/5 text-slate-700 dark:text-slate-200"
+                        )}
+                      >
+                        {/* City Details */}
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div
+                            className={cn(
+                              "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-colors",
+                              isSelected
+                                ? "bg-[#C8101E] text-white shadow-xs shadow-[#C8101E]/30"
+                                : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                            )}
+                          >
+                            {cWeather?.icon === 'rain' ? (
+                              <CloudRain className="w-4 h-4" />
+                            ) : (
+                              <Sun className="w-4 h-4" />
+                            )}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5 leading-tight">
+                              <span
+                                className={cn(
+                                  "text-xs sm:text-sm truncate",
+                                  isSelected ? "font-black" : "font-bold"
+                                )}
+                              >
+                                {city}
+                              </span>
+                              <span className="text-[11px] font-semibold text-slate-400 dark:text-slate-500 shrink-0">
+                                {meta?.gu}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium truncate mt-0.5">
+                              {isGu ? (cWeather?.descGu || 'સ્પષ્ટ આકાશ') : (cWeather?.desc || 'Clear sky')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Temp & AQI Pill + Checkmark */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex flex-col items-end leading-none">
+                            <span
+                              className={cn(
+                                "text-xs font-black",
+                                isSelected ? "text-[#C8101E] dark:text-[#f87171]" : "text-slate-800 dark:text-white"
+                              )}
+                            >
+                              {cWeather?.temp || '28'}°C
+                            </span>
+                            <span
+                              style={{ color: cAqi?.color || '#16a34a' }}
+                              className="text-[9px] font-black mt-0.5"
+                            >
+                              AQI {cAqi?.value || 42}
+                            </span>
+                          </div>
+                          {isSelected ? (
+                            <Check className="h-4 w-4 text-[#C8101E] shrink-0 stroke-[2.5]" />
+                          ) : (
+                            <div className="w-4 h-4" />
+                          )}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
