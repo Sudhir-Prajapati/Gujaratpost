@@ -181,45 +181,42 @@ const MorePhotoCard = memo(function MorePhotoCard({
   return (
     <Link
       href={`/photos/${item.id || item._id}`}
-      className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-neutral-900 border border-neutral-200/60 dark:border-neutral-800 shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 select-none"
+      className="group relative flex flex-col w-full overflow-hidden rounded-2xl bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40 select-none"
     >
-      <Image
-        src={src}
-        alt={rawItemTitle}
-        fill
-        sizes="(max-width: 640px) 100vw, 400px"
-        className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.06]"
-        onError={() => setSrc(fallback)}
-      />
+      {/* 1. Top Section: Full Photo */}
+      <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+        <Image
+          src={src}
+          alt={rawItemTitle}
+          fill
+          sizes="(max-width: 640px) 100vw, 400px"
+          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          onError={() => setSrc(fallback)}
+        />
 
-      {/* Top subtle gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
-
-      {/* Bottom deep gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
-
-      {/* Photo count badge top-right */}
-      {Array.isArray(item.images) && item.images.length > 1 && (
-        <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
-          <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
-            <Camera className="w-3 h-3 text-red-400" />
-            <span>{item.images.length}</span>
-          </span>
-        </div>
-      )}
-
-      {/* Title at bottom matching reference image */}
-      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-5 z-10 pointer-events-none">
-        <h4 className="text-white text-[15px] sm:text-[16.5px] font-bold leading-snug line-clamp-2 drop-shadow-lg group-hover:text-red-200 transition-colors">
-          <AutoTranslateString text={rawItemTitle} language={language} />
-        </h4>
+        {/* Photo count badge top-right */}
+        {Array.isArray(item.images) && item.images.length > 1 && (
+          <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+            <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
+              <Camera className="w-3 h-3 text-red-400" />
+              <span>{item.images.length}</span>
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Border glow on hover matching home screen */}
-      <div
-        className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-        style={{ boxShadow: 'inset 0 0 0 2px #B3121B' }}
-      />
+      {/* 2. Bottom Section: Heading & Link below photo */}
+      <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+        <h4 className="text-foreground group-hover:text-[#B3121B] text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 transition-colors">
+          <AutoTranslateString text={rawItemTitle} language={language} />
+        </h4>
+
+        <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
+          <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
+          <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
+          <span>→</span>
+        </div>
+      </div>
     </Link>
   );
 });

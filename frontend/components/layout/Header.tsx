@@ -277,6 +277,25 @@ const OTHER_LINKS = [
 // Slugs explicitly hidden from the navbar / "અન્ય" dropdown (accessible directly via category pages)
 export { HIDDEN_NAVBAR_SLUGS, isHiddenFromNavbar } from '@/lib/header-navigation';
 
+const formatOnlyMonthYear = (lang: string) => {
+  const d = new Date();
+  if (lang === 'gu') {
+    const monthsGu = [
+      'જાન્યુઆરી', 'ફેબ્રુઆરી', 'માર્ચ', 'એપ્રિલ', 'મે', 'જૂન',
+      'જુલાઈ', 'ઓગસ્ટ', 'સપ્ટેમ્બર', 'ઓક્ટોબર', 'નવેમ્બર', 'ડિસેમ્બર',
+    ];
+    return `${monthsGu[d.getMonth()]}, ${d.getFullYear()}`;
+  }
+  if (lang === 'hi') {
+    const monthsHi = [
+      'जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून',
+      'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर',
+    ];
+    return `${monthsHi[d.getMonth()]}, ${d.getFullYear()}`;
+  }
+  return `${d.toLocaleDateString('en-GB', { month: 'long' })}, ${d.getFullYear()}`;
+};
+
 const formatDateLong = (lang: string) => {
   const locale = lang === 'gu' ? 'gu-IN' : lang === 'hi' ? 'hi-IN' : 'en-GB';
   return new Date().toLocaleDateString(locale, {
@@ -707,41 +726,33 @@ export default function Header() {
         {/* Top bar: date + weather/city + quick actions */}
         <div className="bg-black text-white select-none">
           <div className="mx-auto flex max-w-screen-xl max-w-header-layout items-center justify-between gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-1.5 min-h-[38px]">
-            {/* Left: Date + City + Weather */}
-            <div className="min-w-0 flex items-center gap-1.5 sm:gap-3 truncate text-xs sm:text-sm font-semibold opacity-95">
-              {/* Desktop full date with dynamic calendar icon */}
+            {/* Left: Date with Dynamic Calendar Icon & Red Divider */}
+            <div className="min-w-0 flex items-center gap-2 sm:gap-3 text-sm font-semibold opacity-95">
               <button
                 type="button"
                 onClick={() => setCalendarModalOpen(true)}
-                className="hidden sm:inline-flex items-center gap-2 hover:text-red-200 transition-colors cursor-pointer select-none font-bold text-left group"
+                className="flex items-center hover:opacity-90 transition-opacity cursor-pointer select-none group tracking-tight"
                 title={language === 'en' ? 'Open Calendar' : 'કેલેન્ડર જુઓ'}
               >
-                <DynamicCalendarIcon size="sm" language={language} className="group-hover:scale-105 transition-transform" />
-                <span>{mounted ? formatDateLong(language) : 'Sunday, June 2026'}</span>
+                <DynamicCalendarIcon size="md" language={language} className="group-hover:scale-105 transition-transform" />
+                <span className="w-[2px] h-[22px] bg-[#C8101E] mx-2.5 rounded-full inline-block shrink-0" />
+                <span className="text-[14.5px] sm:text-[16px] font-black text-white whitespace-nowrap">
+                  {mounted ? formatOnlyMonthYear(language) : 'નવેમ્બર, 2026'}
+                </span>
               </button>
 
-              {/* Mobile compact date with dynamic calendar icon */}
-              <button
-                type="button"
-                onClick={() => setCalendarModalOpen(true)}
-                className="sm:hidden text-[12px] font-black text-white tracking-tight whitespace-nowrap flex items-center gap-1.5 hover:text-red-200 transition-colors cursor-pointer select-none group"
-                title={language === 'en' ? 'Open Calendar' : 'કેલેન્ડર જુઓ'}
-              >
-                <DynamicCalendarIcon size="sm" language={language} className="group-hover:scale-105 transition-transform" />
-                <span>{mounted ? formatTopBarDate(language) : 'નવેમ્બર, 2026'}</span>
-              </button>
-
-              <span className="opacity-40">|</span>
-
-              {/* City location badge */}
-              <button
-                type="button"
-                onClick={() => setCityModalOpen(true)}
-                className="inline-flex items-center gap-1 text-[11.5px] sm:text-xs font-black text-white hover:text-red-200 transition duration-150 cursor-pointer bg-zinc-800/90 hover:bg-zinc-700 px-2 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0 border border-zinc-700 shadow-2xs"
-              >
-                <span>📍</span>
-                <span>{cityTranslations[selectedCity]?.[language] || selectedCity}</span>
-              </button>
+              {/* City location badge (desktop only, hidden on mobile matching reference) */}
+              <div className="hidden sm:inline-flex items-center gap-2 sm:gap-3">
+                <span className="opacity-40 select-none">|</span>
+                <button
+                  type="button"
+                  onClick={() => setCityModalOpen(true)}
+                  className="inline-flex items-center gap-1 text-[11.5px] sm:text-xs font-black text-white hover:text-red-200 transition duration-150 cursor-pointer bg-zinc-800/90 hover:bg-zinc-700 px-2 sm:px-2.5 py-0.5 rounded-full select-none font-sans shrink-0 border border-zinc-700 shadow-2xs"
+                >
+                  <span>📍</span>
+                  <span>{cityTranslations[selectedCity]?.[language] || selectedCity}</span>
+                </button>
+              </div>
             </div>
 
             {/* Right: Desktop App buttons & Social links */}
@@ -771,26 +782,26 @@ export default function Header() {
             </div>
 
             {/* Right: Mobile quick access badges (BRIEF & AQI matching reference pills) */}
-            <div className="flex md:hidden items-center gap-1.5 shrink-0">
+            <div className="flex md:hidden items-center gap-2 shrink-0">
               <Link
                 href="/news-brief"
-                className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black border border-red-600/80 hover:bg-zinc-900 active:bg-zinc-800 text-white text-[11.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 shadow-sm"
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black border-[1.8px] border-[#E5201E] hover:bg-zinc-900 active:bg-zinc-800 text-white transition-all duration-150 active:scale-95 shadow-sm"
                 title="News Brief"
               >
-                <Zap className="h-3 w-3 text-red-500 fill-red-500 shrink-0 group-hover:scale-110 transition-transform" />
-                <span className="text-white font-black tracking-wide">BRIEF</span>
+                <Zap className="h-3.5 w-3.5 text-[#E5201E] fill-[#E5201E] shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="text-white text-[12.5px] font-black uppercase tracking-wider leading-none">BRIEF</span>
               </Link>
               <Link
                 href="/aqi"
-                className="group inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-black border border-amber-500/80 hover:bg-zinc-900 active:bg-zinc-800 text-white text-[11.5px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 shadow-sm"
+                className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black border-[1.8px] border-[#F59E0B] hover:bg-zinc-900 active:bg-zinc-800 text-white transition-all duration-150 active:scale-95 shadow-sm"
                 title="Weather & AQI"
               >
                 <svg
                   viewBox="0 0 24 24"
-                  className="w-3.5 h-3.5 text-amber-400 shrink-0 group-hover:scale-110 transition-transform"
+                  className="w-3.5 h-3.5 text-[#F59E0B] shrink-0 group-hover:scale-110 transition-transform"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2.4"
+                  strokeWidth="2.3"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 >
@@ -801,7 +812,7 @@ export default function Header() {
                   <path d="M15.9 16A5 5 0 1 0 9 10.45" />
                   <path d="M17 20h-9a4 4 0 0 1 0-8h.4" />
                 </svg>
-                <span className="text-white font-black tracking-wide">AQI</span>
+                <span className="text-white text-[12.5px] font-black uppercase tracking-wider leading-none">AQI</span>
               </Link>
             </div>
           </div>

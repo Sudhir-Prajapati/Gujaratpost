@@ -87,13 +87,13 @@ export default function MainLayoutWrapper({ children }: Props) {
 
   // STANDARD WEB & MOBILE BROWSER VIEW:
   return (
-    <div className="flex min-h-screen min-h-[100dvh] flex-col justify-between bg-background">
+    <div className="flex min-h-screen min-h-[100dvh] flex-1 flex-[1_0_auto] w-full flex-col bg-background">
       {pathname === '/' && <SplashLoader />}
       <div className="flex-shrink-0">
         <Header />
         <BreakingTicker />
       </div>
-      <main className="flex-1 w-full flex flex-col">{children}</main>
+      <main className="flex-1 flex-[1_0_auto] min-h-0 w-full flex flex-col">{children}</main>
       <Footer />
       <TajSamacharDrawer />
       <FontSizeFloatingControl />

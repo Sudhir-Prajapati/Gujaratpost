@@ -14,7 +14,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Check Deployment Secrets
+        id: check_secrets
+        run: |
+          if [ -n "${{ secrets.SSH_HOST }}" ] && [ -n "${{ secrets.SSH_USER }}" ] && [ -n "${{ secrets.SSH_PRIVATE_KEY }}" ]; then
+            echo "has_ssh=true" >> $GITHUB_OUTPUT
+            echo "SSH deployment secrets configured."
+          else
+            echo "has_ssh=false" >> $GITHUB_OUTPUT
+            echo "::warning::SSH deployment secrets (SSH_HOST, SSH_USER, SSH_PRIVATE_KEY) are incomplete or not configured in repository secrets."
+          fi
+
       - name: Install SSH keys
+        if: steps.check_secrets.outputs.has_ssh == 'true'
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
@@ -27,6 +39,7 @@ jobs:
           ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Connect SSH and deploy Backend and Frontend
+        if: steps.check_secrets.outputs.has_ssh == 'true'
         run: |
           SSH_PORT="${{ secrets.SSH_PORT || '1186' }}"
 
@@ -76,6 +89,18 @@ jobs:
             echo "========== DEPLOYMENT SUCCESSFUL - DevOps Team =========="
 
           EOF
+
+      - name: Build Verification (Fallback when SSH secrets not set)
+        if: steps.check_secrets.outputs.has_ssh != 'true'
+        run: |
+          echo "Running build validation for backend and frontend..."
+          cd backend
+          npm install --no-audit --no-fund
+          npm run build
+          cd ../frontend
+          npm install --no-audit --no-fund
+          npm run build
+          echo "Build validation completed successfully!"
 
       - name: Cleanup
         if: always()

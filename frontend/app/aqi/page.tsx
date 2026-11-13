@@ -323,8 +323,8 @@ function AqiPageContent() {
   // Fetch real-time live API data from Open-Meteo for selected city
   useEffect(() => {
     setLoadingAqi(true);
-    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${selectedCity.lat}&longitude=${selectedCity.lon}&current=us_aqi,pm10,pm2_5`;
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${selectedCity.lat}&longitude=${selectedCity.lon}&current_weather=true&hourly=relative_humidity_2m`;
+    const url = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${selectedCity.lat}&longitude=${selectedCity.lon}&current=us_aqi,pm10,pm2_5&timezone=Asia%2FKolkata`;
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${selectedCity.lat}&longitude=${selectedCity.lon}&current_weather=true&hourly=relative_humidity_2m&timezone=Asia%2FKolkata`;
 
     Promise.all([
       fetch(url).then(res => res.json()).catch(() => null),
@@ -368,7 +368,7 @@ function AqiPageContent() {
   // Pre-fetch live AQI for all popular cities
   useEffect(() => {
     POPULAR_CITIES.forEach(city => {
-      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=us_aqi`)
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lon}&current=us_aqi&timezone=Asia%2FKolkata`)
         .then(res => res.json())
         .then(data => {
           if (data?.current?.us_aqi) {
@@ -384,7 +384,7 @@ function AqiPageContent() {
     // Fetch Most Polluted Cities Live API
     Promise.all(
       MOST_POLLUTED_CITIES_DEF.map(item =>
-        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${item.lat}&longitude=${item.lon}&current=us_aqi`)
+        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${item.lat}&longitude=${item.lon}&current=us_aqi&timezone=Asia%2FKolkata`)
           .then(res => res.json())
           .then(data => ({ city: item.city, aqi: Math.round(data?.current?.us_aqi || item.defaultAqi) }))
           .catch(() => ({ city: item.city, aqi: item.defaultAqi }))
@@ -397,7 +397,7 @@ function AqiPageContent() {
     // Fetch Least Polluted Cities Live API
     Promise.all(
       LEAST_POLLUTED_CITIES_DEF.map(item =>
-        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${item.lat}&longitude=${item.lon}&current=us_aqi`)
+        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${item.lat}&longitude=${item.lon}&current=us_aqi&timezone=Asia%2FKolkata`)
           .then(res => res.json())
           .then(data => ({ city: item.city, aqi: Math.round(data?.current?.us_aqi || item.defaultAqi) }))
           .catch(() => ({ city: item.city, aqi: item.defaultAqi }))

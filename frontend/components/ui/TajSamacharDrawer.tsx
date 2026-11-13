@@ -242,17 +242,29 @@ export default function TajSamacharDrawer() {
         }
       `}</style>
 
-      {/* Floating Megaphone Button (Bottom Left) */}
-      <div className={`fixed ${isApk ? 'bottom-[72px] left-4 z-45' : 'bottom-6 left-6 z-[9990]'} flex items-center gap-3`}>
+      {/* Floating Megaphone Button (Bottom Left - Fixed px positioning so font size changes never break alignment) */}
+      <div
+        style={{
+          position: 'fixed',
+          bottom: isApk ? '72px' : '24px',
+          left: isApk ? '16px' : '24px',
+          zIndex: isApk ? 45 : 9990,
+          width: '44px',
+          height: '44px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          aria-label={language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'ताज़ा समाचार' : 'Latest News'}
-          title={language === 'gu' ? 'લેટેસ્ટ સમાચાર જુઓ' : language === 'hi' ? 'ताज़ा समाचार देखें' : 'View Latest News'}
-          className="relative group flex items-center justify-center rounded-full bg-gradient-to-br from-red-600 via-red-700 to-black text-white shadow-xl shadow-red-900/40 border-2 border-white/30 hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
-          style={{ width: '44px', height: '44px' }}
+          aria-label={language === 'gu' ? 'લેટેસ્ટ સમાચાર' : language === 'hi' ? 'તાઝા સમાચાર' : 'Latest News'}
+          title={language === 'gu' ? 'લેટેસ્ટ સમાચાર જુઓ' : language === 'hi' ? 'તાઝા સમાચાર જુઓ' : 'View Latest News'}
+          className="relative group flex items-center justify-center rounded-full bg-[#C8101E] text-white shadow-[0_4px_16px_rgba(0,0,0,0.35)] border-[2.5px] border-white hover:scale-105 active:scale-95 transition-all duration-300 focus:outline-none"
+          style={{ width: '44px', height: '44px', boxSizing: 'border-box' }}
         >
           {/* Periodic pulse ring animation (expands every 4 seconds) */}
-          <span className="absolute -inset-1 rounded-full bg-red-600/60 animate-periodic-ping pointer-events-none" />
+          <span className="absolute -inset-1 rounded-full bg-[#C8101E]/40 animate-periodic-ping pointer-events-none" />
           <Megaphone className="text-white relative z-10 transition-transform group-hover:rotate-12" style={{ width: '20px', height: '20px' }} />
         </button>
       </div>
@@ -266,7 +278,17 @@ export default function TajSamacharDrawer() {
               onClick={() => setIsOpen(false)}
             />
           )}
-          <div className={`fixed ${isApk ? 'bottom-[72px] left-3 right-3 max-h-[76vh]' : 'bottom-24 left-4 sm:left-6 w-[calc(100vw-32px)] sm:w-[410px] max-h-[82vh]'} z-[9995] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-red-900/20 overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-4`}>
+          <div
+            className="z-[9995] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-red-900/20 overflow-hidden flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-4"
+            style={{
+              position: 'fixed',
+              bottom: isApk ? '72px' : '78px',
+              left: isApk ? '12px' : '24px',
+              right: isApk ? '12px' : 'auto',
+              width: isApk ? 'calc(100vw - 24px)' : 'min(calc(100vw - 32px), 410px)',
+              maxHeight: isApk ? '76vh' : '82vh',
+            }}
+          >
 
             {/* Header Bar - Red & Black Theme (Bigger & Vertically Centered) */}
             <div className="bg-gradient-to-r from-red-700 via-red-600 to-black text-white px-5 py-3 flex items-center justify-between shadow-md relative overflow-hidden min-h-[48px]">

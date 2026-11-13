@@ -30,9 +30,9 @@ export const CITY_COORDS: Record<string, { lat: number; lon: number; stationGu: 
   },
 };
 
-function parseWmoCode(code: number) {
-  if (code === 0) return { desc: 'Clear sky', descGu: 'સ્પષ્ટ આકાશ', icon: 'sun' };
-  if (code <= 3) return { desc: 'Partly cloudy', descGu: 'આંશિક વાદળછાઈ', icon: 'cloud' };
+function parseWmoCode(code: number, isDay: number = 1) {
+  if (code === 0) return { desc: isDay ? 'Clear sky' : 'Clear night', descGu: isDay ? 'સ્પષ્ટ આકાશ' : 'ચોખ્ખી રાત', icon: isDay ? 'sun' : 'moon' };
+  if (code <= 3) return { desc: isDay ? 'Partly cloudy' : 'Partly cloudy night', descGu: 'આંશિક વાદળછાઈ', icon: isDay ? 'cloud-sun' : 'cloud' };
   if (code <= 48) return { desc: 'Foggy', descGu: 'ધુમ્મસ', icon: 'cloud' };
   if (code <= 55) return { desc: 'Drizzle', descGu: 'ઝરમર વરસાદ', icon: 'rain' };
   if (code <= 65) return { desc: 'Heavy Rain', descGu: 'ભારે વરસાદ', icon: 'rain' };
@@ -246,17 +246,18 @@ export async function GET(req: Request) {
         const coords = CITY_COORDS[city];
         if (!coords) return;
 
-        // 1. Live Weather API (Open-Meteo)
+        // 1. Live Weather API (Open-Meteo with Asia/Kolkata timezone & is_day)
         try {
           const wRes = await fetch(
-            `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKolkata`,
+            `https://api.open-meteo.com/v1/forecast?latitude=${coords.lat}&longitude=${coords.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FKolkata`,
             { next: { revalidate: 600 } }
           );
           if (wRes.ok) {
             const wJson = await wRes.json();
             if (wJson?.current) {
               const c = wJson.current;
-              const parsed = parseWmoCode(c.weather_code);
+              const isDay = c.is_day !== undefined ? c.is_day : 1;
+              const parsed = parseWmoCode(c.weather_code, isDay);
               const maxTemp = wJson?.daily?.temperature_2m_max?.[0];
               const minTemp = wJson?.daily?.temperature_2m_min?.[0];
 
@@ -271,6 +272,7 @@ export async function GET(req: Request) {
                 humidity: `${c.relative_humidity_2m}%`,
                 wind: `${Math.round(c.wind_speed_10m)} km/h`,
                 weatherCode: c.weather_code,
+                isDay,
                 observationTime: c.time,
               };
             }
@@ -282,7 +284,7 @@ export async function GET(req: Request) {
         // 2. Real Atmospheric AQI Pollutants API (Open-Meteo Air Quality)
         try {
           const aRes = await fetch(
-            `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${coords.lat}&longitude=${coords.lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone`,
+            `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${coords.lat}&longitude=${coords.lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&timezone=Asia%2FKolkata`,
             { next: { revalidate: 600 } }
           );
           if (aRes.ok) {
@@ -338,13 +340,30 @@ export async function GET(req: Request) {
     );
 
     const nowD = new Date();
-    const formatted = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(nowD.getDate()).padStart(2, '0')} ${String(nowD.getHours()).padStart(2, '0')}:${String(nowD.getMinutes()).padStart(2, '0')}`;
+    let formatted = '';
+    try {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(nowD);
+      const getP = (type: string) => parts.find((p) => p.type === type)?.value || '';
+      formatted = `${getP('year')}-${getP('month')}-${getP('day')} ${getP('hour')}:${getP('minute')}`;
+    } catch {
+      formatted = `${nowD.getFullYear()}-${String(nowD.getMonth() + 1).padStart(2, '0')}-${String(nowD.getDate()).padStart(2, '0')} ${String(nowD.getHours()).padStart(2, '0')}:${String(nowD.getMinutes()).padStart(2, '0')}`;
+    }
 
     const payload = {
       weatherData,
       aqiData,
       updatedAt: nowD.toISOString(),
       updatedAtFormatted: formatted,
+      timezone: 'Asia/Kolkata',
     };
 
     memoryCache = { timestamp: Date.now(), data: payload };

@@ -16,6 +16,7 @@ import { playArticleAudio, stopArticleAudio, cleanTextForSpeech } from '@/lib/ar
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
+import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays as calcArticleAgeDays } from '@/lib/articleCategory';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
@@ -1447,18 +1448,20 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   const readAlsoPool = useMemo(() => {
     const topMostRead = (mostReadArticles || []).slice(0, 3);
-    const pool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
+    const pool = [...(trending || []), ...(mostReadArticles || []), ...(related || [])];
     const uniquePool = filterUniqueArticles(pool, [article, ...topMostRead]);
-    // Strictly prioritize fresh news from the last 5-6 days
-    const freshArticles = uniquePool.filter((a) => getArticleAgeDays(a) <= 6);
+    const sortedPool = sortArticlesByNewest(uniquePool);
+
+    // Strictly prioritize fresh news from the last 3-4 days (<= 4.0 days)
+    const freshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
     if (freshArticles.length >= 4) {
       return freshArticles.slice(0, 4);
     }
-    const mediumFreshArticles = uniquePool.filter((a) => getArticleAgeDays(a) <= 10);
+    const mediumFreshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 7.0);
     if (mediumFreshArticles.length >= 4) {
       return mediumFreshArticles.slice(0, 4);
     }
-    return [...freshArticles, ...uniquePool.filter((a) => !freshArticles.includes(a))].slice(0, 4);
+    return [...freshArticles, ...sortedPool.filter((a) => !freshArticles.includes(a))].slice(0, 4);
   }, [article, related, trending, mostReadArticles]);
 
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
@@ -1784,7 +1787,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   // 3. Stream Continuation Articles (For Infinite Stream below main article)
   // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
-  // Streams strictly fresh news from the last 5-6 days
+  // Streams strictly fresh news from the last 3-4 days, sorted newest first
   const streamList = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [
@@ -1794,21 +1797,17 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       ...sidebarRecommendedPool,
     ];
 
-    const remainingRelated = filterUniqueArticles(related || [], excludeList);
-    // Strictly prioritize articles within 6 days so infinite stream never drags reader into 20-40 day old news
-    const freshRelated = remainingRelated.filter((a) => getArticleAgeDays(a) <= 6);
-    const freshTrending = (trending || []).filter((a) => getArticleAgeDays(a) <= 6);
+    const rawPool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
+    const uniquePool = filterUniqueArticles(rawPool, excludeList);
+    const sortedPool = sortArticlesByNewest(uniquePool);
 
-    const pool = [
-      ...freshRelated,
-      ...freshTrending,
-      ...remainingRelated,
-    ];
+    // Strictly prioritize articles within 3-4 days (<= 4.0 days) so infinite stream never drags reader into 10-20 day old news
+    const freshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
+    const olderArticles = sortedPool.filter((a) => calcArticleAgeDays(a) > 4.0);
 
-    const finalStreamPool = filterUniqueArticles(pool, excludeList);
-
+    const finalStreamPool = [...freshArticles, ...olderArticles];
     return finalStreamPool.slice(0, 8);
-  }, [related, trending, article, readAlsoPool, relatedLimit, mostReadArticles, trendingLimit, sidebarRecommendedPool]);
+  }, [related, trending, article, readAlsoPool, sidebarRecommendedPool, mostReadArticles, trendingLimit]);
 
   // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
   // Strictly excludes ALL articles already displayed anywhere on the page!
@@ -2751,8 +2750,8 @@ export default function NewsDetailClient({ article, related, trending, articleUr
         <RelatedStoriesSection
           article={article}
           related={related}
-          excludeArticles={[...readAlsoPool, ...sidebarRecommendedPool]}
-          fallbackArticles={trending}
+          excludeArticles={(related || []).length >= 12 ? readAlsoPool : undefined}
+          fallbackArticles={undefined}
           language={language}
           savedIds={savedIds}
           relatedLimit={relatedLimit}

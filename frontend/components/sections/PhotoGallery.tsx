@@ -225,51 +225,52 @@ export default function PhotoGallery() {
             onScroll={handleNativeScroll}
             className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide"
           >
-            {[...gallery, ...gallery].map((photo, index) => (
-              <div
-                key={`${photo.id}-${index}`}
-                className="group relative flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] h-[280px] md:h-[350px]"
-              >
-                <Link
-                  href={`/photos/${photo.id}`}
-                  className="group relative flex h-full w-full overflow-hidden rounded-2xl shadow-lg border border-border/10 hover:border-[#B3121B]/40 transition-all duration-300 bg-neutral-900"
-                  onMouseEnter={() => setHoveredId(`${photo.id}-${index}`)}
-                  onMouseLeave={() => setHoveredId(null)}
+            {[...gallery, ...gallery].map((photo, index) => {
+              const photoTitle = getLocalized(language, {
+                en: photo.caption || photo.alt || '',
+                gu: photo.captionGu || photo.caption || photo.alt || '',
+                hi: photo.captionHi || photo.caption || photo.alt || '',
+              });
+
+              return (
+                <div
+                  key={`${photo.id}-${index}`}
+                  className="group relative flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px]"
                 >
-                  {/* Shimmer Placeholder */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 via-neutral-700 to-neutral-900 animate-pulse" />
-
-                  {/* Image */}
-                  <SafeGalleryImage src={hqSrc(photo.src)} alt={photo.alt} index={index} />
-
-                  {/* Dark Gradient Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-
-{/* Category Chip removed per user request */}
-
-                  {/* Caption (bottom) */}
-                  <div className="absolute inset-x-0 bottom-0 z-10 p-4">
-                    <p className="text-white font-bold leading-snug line-clamp-2 drop-shadow-md text-[14.5px] md:text-[16.5px]">
-                      {getLocalized(language, {
-                        en: photo.caption || photo.alt,
-                        gu: photo.captionGu || photo.caption || photo.alt,
-                        hi: photo.captionHi || photo.caption || photo.alt,
-                      })}
-                    </p>
-                    <div
-                      className="flex items-center gap-1.5 mt-2 overflow-hidden transition-all duration-300"
-                      style={{
-                        maxHeight: hoveredId === `${photo.id}-${index}` ? '24px' : '0px',
-                        opacity: hoveredId === `${photo.id}-${index}` ? 1 : 0,
-                      }}
-                    >
-                      <span className="text-white/80 text-[10px] font-semibold tracking-wider uppercase select-none">View Gallery</span>
-                      <ChevronRight className="h-3.5 w-3.5 text-[#B3121B] stroke-[3.5]" />
+                  <Link
+                    href={`/photos/${photo.id}`}
+                    className="group relative flex flex-col h-full w-full overflow-hidden rounded-2xl shadow-md hover:shadow-xl border border-border/80 dark:border-white/[0.08] hover:border-[#B3121B]/40 transition-all duration-300 bg-card dark:bg-[#161822]"
+                    onMouseEnter={() => setHoveredId(`${photo.id}-${index}`)}
+                    onMouseLeave={() => setHoveredId(null)}
+                  >
+                    {/* Top Section: Photo */}
+                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                      <SafeGalleryImage src={hqSrc(photo.src)} alt={photo.alt} index={index} />
+                      {Array.isArray(photo.images) && photo.images.length > 1 && (
+                        <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                          <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
+                            <span className="text-red-400">📷</span>
+                            <span>{photo.images.length}</span>
+                          </span>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </Link>
-              </div>
-            ))}
+
+                    {/* Bottom Section: Heading & Link below photo */}
+                    <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                      <p className="text-foreground group-hover:text-[#B3121B] font-extrabold leading-snug line-clamp-2 text-[14.5px] md:text-[15.5px] transition-colors">
+                        {photoTitle}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
+                        <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
+                        <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
+                        <span>→</span>
+                      </div>
+                    </div>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

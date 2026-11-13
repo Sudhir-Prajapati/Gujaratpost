@@ -84,31 +84,34 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
   return (
     <Link
       href={`/photos/${photo.id}`}
-      className="group relative h-[280px] md:h-[350px] w-full rounded-2xl overflow-hidden bg-card border border-border/20 shadow-xs cursor-pointer block select-none transition-transform duration-300 hover:-translate-y-0.5"
+      className="group relative flex flex-col w-full rounded-2xl overflow-hidden bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-xs hover:shadow-md hover:border-[#B3121B]/40 cursor-pointer block select-none transition-all duration-300 hover:-translate-y-0.5"
     >
-      <SidebarPhotoCardImage
-        src={photo.image}
-        alt={photo.titleGu || photo.title || 'ફોટો ગેલેરી'}
-        index={index}
-      />
-      {/* Top subtle ambient shadow */}
-      <div className="absolute inset-x-0 top-0 h-12 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
+      {/* 1. Top Section: Full Photo */}
+      <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+        <SidebarPhotoCardImage
+          src={photo.image}
+          alt={photo.titleGu || photo.title || 'ફોટો ગેલેરી'}
+          index={index}
+        />
 
-      {/* Dark subtle gradient overlay at bottom for clear text contrast */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/45 to-transparent pointer-events-none" />
-
-      {/* Top-Left Red Pill Badge: "ફોટો ગેલેરી" matching homepage */}
-      <div className="absolute top-2.5 left-2.5 z-10">
-        <span className="bg-[#B3121B] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs select-none">
-          {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
-        </span>
+        {/* Top-Left Red Pill Badge: "ફોટો ગેલેરી" matching homepage */}
+        <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+          <span className="bg-[#B3121B] text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide shadow-xs select-none">
+            {language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photo Gallery'}
+          </span>
+        </div>
       </div>
 
-      {/* Bottom title text overlaid inside */}
-      <div className="absolute inset-x-0 bottom-0 p-3 z-10 pointer-events-none">
-        <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md group-hover:text-amber-300 transition-colors">
+      {/* 2. Bottom Section: Heading & Action below photo */}
+      <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+        <p className="text-foreground group-hover:text-[#B3121B] text-[12.5px] sm:text-[13.5px] font-extrabold leading-snug line-clamp-2 transition-colors">
           <AutoTranslateString text={photo.titleGu || photo.title || ''} language={language as any} />
         </p>
+
+        <div className="flex items-center gap-1.5 mt-2 text-[#B3121B] font-bold text-[12px]">
+          <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
+          <span>→</span>
+        </div>
       </div>
     </Link>
   );

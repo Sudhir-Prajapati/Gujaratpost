@@ -1658,7 +1658,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               )}
             </div>
 
-            {/* Mobile view (< md): Full-width and full-height single cards like user reference image */}
+            {/* Mobile view (< md): Photo on top, heading below */}
             <div className="md:hidden flex flex-col gap-4">
               {galleryPhotos.map((photo: any, idx: number) => {
                 const photoTitle = language === 'gu'
@@ -1676,46 +1676,48 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   <Link
                     key={photo.id || idx}
                     href={`/photos/${photo.id || ''}`}
-                    className="group relative block w-full aspect-square overflow-hidden rounded-2xl bg-black shadow-md transition-all duration-300 active:scale-[0.99]"
+                    className="group relative flex flex-col w-full overflow-hidden rounded-2xl bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-md hover:shadow-xl transition-all duration-300 hover:border-[#B3121B]/40 active:scale-[0.99]"
                   >
-                    {/* Main image - object-cover matching clean rectangle */}
-                    <img
-                      src={photoSrc}
-                      alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
-                      loading="lazy"
-                    />
+                    {/* Top Section: Photo */}
+                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                      <img
+                        src={photoSrc}
+                        alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
+                        loading="lazy"
+                      />
 
-                    {/* Top ambient gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none z-10" />
+                      {/* Top photo count badge */}
+                      {photoCount > 1 && (
+                        <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-sm px-2.5 py-1 text-[10.5px] font-black text-white shadow-md border border-white/20">
+                            <Camera className="w-3 h-3 text-red-400" />
+                            <span>{photoCount}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Dark gradient overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none z-10" />
-
-                    {/* Top photo count badge */}
-                    {photoCount > 1 && (
-                      <div className="absolute top-3.5 right-3.5 z-20 pointer-events-none">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[11px] font-black text-white shadow-md border border-white/20">
-                          <Camera className="w-3 h-3 text-red-400" />
-                          <span>{photoCount}</span>
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Title inside card at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-4 z-20 pointer-events-none">
-                      <p className="text-white text-[16px] sm:text-[17px] font-black leading-snug line-clamp-2 drop-shadow-md">
+                    {/* Bottom Section: Title below photo */}
+                    <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                      <p className="text-foreground group-hover:text-[#B3121B] text-[15px] sm:text-[16px] font-extrabold leading-snug line-clamp-2 transition-colors">
                         <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
+
+                      <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
+                        <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
+                        <span>{getLocalized(language, { en: 'View Photo', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}</span>
+                        <span>→</span>
+                      </div>
                     </div>
                   </Link>
                 );
               })}
             </div>
 
-            {/* Desktop view (>= md): 4-column photo grid with red border */}
-            <div className="hidden md:grid sm:grid-cols-4 gap-3.5">
+            {/* Desktop view (>= md): 4-column photo grid with photo on top and title below */}
+            <div className="hidden md:grid sm:grid-cols-4 gap-4 sm:gap-5">
               {galleryPhotos.map((photo: any, idx: number) => {
                 const photoTitle = language === 'gu'
                   ? (photo.captionGu || photo.caption || photo.titleGu || photo.title || photo.alt || '')
@@ -1732,45 +1734,40 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   <Link
                     key={photo.id || idx}
                     href={`/photos/${photo.id || ''}`}
-                    className="group relative block overflow-hidden rounded-2xl border-2 border-[#b31217] bg-black shadow-md transition-all duration-300 hover:shadow-xl hover:scale-[1.02]"
-                    style={{ aspectRatio: '1/1' }}
+                    className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/80 dark:border-white/[0.08] hover:border-[#B3121B]/40 bg-card dark:bg-[#161822] shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                   >
-                    {/* Main image - object-cover matching clean rectangle */}
-                    <img
-                      src={photoSrc}
-                      alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
-                      onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
-                      loading="lazy"
-                    />
+                    {/* Top Section: Photo */}
+                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                      <img
+                        src={photoSrc}
+                        alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
+                        loading="lazy"
+                      />
 
-                    {/* Top ambient gradient */}
-                    <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none z-10" />
+                      {/* Top photo count badge */}
+                      {photoCount > 1 && (
+                        <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-sm px-2.5 py-1 text-[10.5px] font-black text-white shadow-md border border-white/20">
+                            <Camera className="w-3 h-3 text-red-400" />
+                            <span>{photoCount}</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
 
-                    {/* Dark gradient overlay for text readability */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent pointer-events-none z-10" />
-
-                    {/* Top photo count badge */}
-                    {photoCount > 1 && (
-                      <div className="absolute top-2.5 right-2.5 z-20 pointer-events-none">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[10.5px] font-black text-white shadow-md border border-white/20">
-                          <Camera className="w-3 h-3 text-red-400" />
-                          <span>{photoCount}</span>
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Title + "― ફોટો જુઓ >" inside the card at bottom */}
-                    <div className="absolute bottom-0 left-0 right-0 p-3 z-20 flex flex-col pointer-events-none">
-                      <p className="text-white text-[12.5px] sm:text-[13.5px] font-bold leading-snug line-clamp-2 drop-shadow-md mb-2">
+                    {/* Bottom Section: Title below photo */}
+                    <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                      <p className="text-foreground group-hover:text-[#B3121B] text-[13.5px] sm:text-[14.5px] font-extrabold leading-snug line-clamp-2 transition-colors mb-2">
                         <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
-                      <div className="flex items-center gap-1.5 text-white">
-                        <span className="w-5 h-[2px] bg-[#b31217] inline-block" />
-                        <span className="text-[11px] font-bold text-white tracking-wide">
+                      <div className="flex items-center gap-1.5 text-[#B3121B] font-bold text-[12px] sm:text-[12.5px] tracking-wide">
+                        <span className="w-5 h-[2px] bg-[#B3121B] inline-block" />
+                        <span>
                           {getLocalized(language, { en: 'View Photo', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}
                         </span>
-                        <ChevronRight className="w-3.5 h-3.5 text-[#b31217] stroke-[3]" />
+                        <span>→</span>
                       </div>
                     </div>
                   </Link>

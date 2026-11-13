@@ -12,6 +12,7 @@ import { SocialIcon } from '@/components/ui/SocialLinks';
 import ArticleShareAudioBar from './ArticleShareAudioBar';
 import { getPublicArticleBySlug } from '@/lib/api';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
+import { isSameCategory, sortArticlesByNewest, getArticleAgeDays } from '@/lib/articleCategory';
 
 interface ArticleInfiniteStreamProps {
   mounted: boolean;
@@ -578,112 +579,30 @@ export default function ArticleInfiniteStream({
               const mainId = String(article.id);
               const streamArtId = String(streamArticle.id);
 
-              // Calculate 4 Read Also articles that are TRULY RELATED to this streamArticle
-              const streamCatSlug = (streamArticle.category || '').toLowerCase().replace(/\s+/g, '-');
-              const streamCatName = (streamArticle.category || '').toLowerCase().trim();
-              const streamLoc = (streamArticle.location || '').toLowerCase().trim();
-
-              const streamGenericTags = new Set([
-                'news', 'popular stories', 'popular-stories', 'popularstories',
-                'trending', 'breaking', 'breaking news', 'national', 'સમાચાર',
-                'ન્યૂઝ', 'લાઇવ', 'વિશેષ', 'ગુજરાત', 'ભારત'
-              ]);
-
-              const streamTags = [
-                ...(streamArticle.tags || []),
-                ...(streamArticle.tagsGu || []),
-                ...(streamArticle.tagsHi || []),
-              ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
-
-              const streamSlugWords = (streamArticle.slug || '')
-                .split('-')
-                .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
-
-              // Strictly exclude the current stream article and any article already used in a previous stream Read Also card
-              let candidatePool = masterCandidatePool.filter(
+              // Calculate 4 Read Also articles that are strictly latest (within 3-4 days) and related to streamArticle
+              const candidatePool = masterCandidatePool.filter(
                 (cand) => !usedReadAlsoIds.has(String(cand.id)) && String(cand.id) !== streamArtId
               );
 
-              const getCandAgeDays = (cand: Article) => {
-                const pubDateStr = cand.publishedAt || (cand as any).createdAt;
-                if (!pubDateStr) return 999;
-                const pubTime = new Date(pubDateStr).getTime();
-                if (isNaN(pubTime) || pubTime <= 0) return 999;
-                return Math.max(0, (Date.now() - pubTime) / (1000 * 60 * 60 * 24));
-              };
+              // 1. Sort all candidates strictly newest first
+              const sortedCandidates = sortArticlesByNewest(candidatePool);
 
-              // Strictly prefer fresh candidates from the last 5-6 days
-              const freshCandidates = candidatePool.filter((cand) => getCandAgeDays(cand) <= 6);
-              if (freshCandidates.length >= 4) {
-                candidatePool = freshCandidates;
-              } else if (candidatePool.length < 4) {
-                // Fallback to remaining masterCandidatePool if unused candidates run low
-                candidatePool = masterCandidatePool.filter((cand) => String(cand.id) !== streamArtId);
-              }
+              // 2. Separate into fresh (last 3-4 days, <= 4.0 days) and older (> 4.0 days)
+              const freshCandidates = sortedCandidates.filter((cand) => getArticleAgeDays(cand) <= 4.0);
+              const olderCandidates = sortedCandidates.filter((cand) => getArticleAgeDays(cand) > 4.0);
 
-              const scoredCandidates = candidatePool.map((cand) => {
-                let score = 0;
-                const candCatSlug = (cand.category || '').toLowerCase().replace(/\s+/g, '-');
-                const candCatName = (cand.category || '').toLowerCase().trim();
+              // 3. For the fresh candidates, prioritize those matching the category of this streamArticle,
+              // while strictly preserving the newest-first order within each group!
+              const sameCatFresh = freshCandidates.filter((cand) => isSameCategory(cand, streamArticle));
+              const otherFresh = freshCandidates.filter((cand) => !isSameCategory(cand, streamArticle));
+              const prioritizedFresh = [...sameCatFresh, ...otherFresh];
 
-                // 1. Same category bonus (primary relevance factor!)
-                if (
-                  candCatSlug === streamCatSlug ||
-                  (streamCatName && candCatName && (streamCatName === candCatName || streamCatName.includes(candCatName) || candCatName.includes(streamCatName)))
-                ) {
-                  score += 35;
-                }
+              // 4. If fewer than 4 fresh candidates are available in pool, supplement with newest older candidates
+              const finalCandidates = prioritizedFresh.length >= 4
+                ? prioritizedFresh
+                : [...prioritizedFresh, ...olderCandidates];
 
-                // 2. Tag overlap (specific tags scored heavily, generic tags minimally)
-                const candTags = [
-                  ...(cand.tags || []),
-                  ...(cand.tagsGu || []),
-                  ...(cand.tagsHi || []),
-                ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
-
-                candTags.forEach((t) => {
-                  if (streamTags.includes(t)) {
-                    score += streamGenericTags.has(t) ? 3 : 18;
-                  }
-                });
-
-                // 3. Title / Slug keyword similarity
-                const candSlug = (cand.slug || '').toLowerCase();
-                streamSlugWords.forEach((word) => {
-                  if (candSlug.includes(word)) {
-                    score += 15;
-                  }
-                });
-
-                // 4. Same location bonus
-                const candLoc = (cand.location || '').toLowerCase().trim();
-                if (streamLoc && candLoc && streamLoc === candLoc) {
-                  score += 20;
-                }
-
-                // 5. Prefer unused in this session
-                if (!usedReadAlsoIds.has(String(cand.id))) {
-                  score += 10;
-                }
-
-                // 6. Recency Priority (Strictly favor fresh stories from last 5-6 days)
-                const candAge = getCandAgeDays(cand);
-                if (candAge <= 6) {
-                  score += 100 + Math.max(0, (6 - candAge) * 10);
-                } else if (candAge > 14) {
-                  score -= 150;
-                }
-
-                if (cand.isTrending) score += 3;
-                if (cand.isFeatured) score += 2;
-
-                return { cand, score };
-              });
-
-              scoredCandidates.sort((a, b) => b.score - a.score);
-
-              const readAlsoArticles = scoredCandidates.slice(0, 4).map((entry) => entry.cand);
-
+              const readAlsoArticles = finalCandidates.slice(0, 4);
               readAlsoArticles.forEach((a) => usedReadAlsoIds.add(String(a.id)));
 
               return (

@@ -977,6 +977,8 @@ router.get('/articles/:slug', cacheResponse(60), async (req, res, next) => {
       contentHi: sanitizeUrlInContent(p.contentHi || rawContentGu),
       image: sanitizeSingleUrl(p.featuredImage),
       featuredImage: sanitizeSingleUrl(p.featuredImage),
+      categoryId: p.categoryId || p.category?.id || '',
+      categorySlug: p.category?.slug || (Array.isArray((p as any).categories) && (p as any).categories[0]?.category?.slug) || '',
       category: p.category?.name || '',
       categoryGu: p.category?.nameGu || p.category?.name || '',
       categoryHi: p.category?.nameHi || p.category?.name || '',

@@ -20,13 +20,13 @@ export default function DynamicCalendarIcon({
   // Size configurations
   const dimensions = {
     sm: 'w-[18px] h-[19px] rounded-[3.5px]',
-    md: 'w-[22px] h-[23px] rounded-[4.5px]',
+    md: 'w-[24px] h-[25px] rounded-[5px]',
     lg: 'w-[28px] h-[30px] rounded-[6px]',
   }[size];
 
   const headerHeight = {
     sm: 'h-[5px]',
-    md: 'h-[6.5px]',
+    md: 'h-[7px]',
     lg: 'h-[8.5px]',
   }[size];
 
@@ -50,7 +50,7 @@ export default function DynamicCalendarIcon({
 
   const dayText = {
     sm: 'text-[10.5px]',
-    md: 'text-[12.5px]',
+    md: 'text-[13.5px]',
     lg: 'text-[16px]',
   }[size];
 
@@ -69,7 +69,7 @@ export default function DynamicCalendarIcon({
       />
 
       {/* Solid Red header banner without month text */}
-      <span className={`w-full bg-[#D71914] shrink-0 ${headerHeight}`} />
+      <span className={`w-full bg-[#C8101E] shrink-0 ${headerHeight}`} />
 
       {/* White body with Day Number only */}
       <span

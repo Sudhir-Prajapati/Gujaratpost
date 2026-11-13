@@ -6,6 +6,7 @@ import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
 import { filterUniqueArticles } from "@/lib/articleDeduplication";
+import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays } from "@/lib/articleCategory";
 
 export const revalidate = 30;
 
@@ -188,134 +189,75 @@ export default async function NewsDetailPage(
     };
   }
 
-  // Dynamically fetch related articles and calculate smart relevance scores
-  const categorySlug = (article.category || '').toLowerCase().replace(/\s+/g, '-');
-  const [catRes, fallbackRes, trendingRes] = await Promise.all([
-    getPublicArticles({ categorySlug, limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ limit: 100 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ isTrending: true, limit: 50 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+  // Dynamically fetch related articles prioritizing strict same-category & recency
+  const rawCatSlug = (article.categorySlug || article.category || '').toLowerCase().trim();
+  const canonicalCat = normalizeCategory(rawCatSlug);
+
+  const catQueries = [
+    getPublicArticles({ categorySlug: canonicalCat || rawCatSlug, limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+  ];
+  if (article.categoryId) {
+    catQueries.push(
+      getPublicArticles({ categorySlug: article.categoryId, limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
+    );
+  }
+  if (article.category && article.category.toLowerCase().trim() !== canonicalCat) {
+    catQueries.push(
+      getPublicArticles({ categorySlug: article.category.toLowerCase().trim(), limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
+    );
+  }
+
+  const [catResponses, fallbackRes, trendingRes] = await Promise.all([
+    Promise.all(catQueries),
+    getPublicArticles({ limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ isTrending: true, limit: 50, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
-  const categoryArticles = catRes?.articles || [];
+  const categoryArticles = catResponses.flatMap((r) => r?.articles || []);
   const fallbackArticles = fallbackRes?.articles || [];
   const trending = filterUniqueArticles(trendingRes?.articles || [], [article]);
 
-  const currentTags = new Set([
-    ...(article.tags || []),
-    ...(article.tagsGu || []),
-    ...(article.tagsHi || []),
-  ].map((t) => t?.toLowerCase().trim()).filter(Boolean));
-
+  // Deep deduplication against current active article
   const currentId = String(article.id || '');
   const currentSlug = String(article.slug || '').trim().toLowerCase();
   const currentTitle = String(article.title || article.titleGu || '').trim().toLowerCase();
 
-  const allCandidates = [...categoryArticles, ...fallbackArticles];
-  const seenIds = new Set<string>();
-  const seenSlugs = new Set<string>();
-  const seenTitles = new Set<string>();
-
-  const uniqueCandidates: typeof allCandidates = [];
-  for (const a of allCandidates) {
-    if (!a) continue;
+  const isCurrentArticle = (a: any) => {
+    if (!a) return true;
     const aId = String(a.id || '');
     const aSlug = String(a.slug || '').trim().toLowerCase();
     const aTitle = String(a.title || a.titleGu || '').trim().toLowerCase();
+    if (currentId && aId === currentId) return true;
+    if (currentSlug && aSlug === currentSlug) return true;
+    if (currentTitle && aTitle === currentTitle) return true;
+    return false;
+  };
 
-    // Strictly skip if it matches the current active article
-    if (aId === currentId || (currentSlug && aSlug === currentSlug) || (currentTitle && aTitle === currentTitle)) {
-      continue;
-    }
+  const allRawCandidates = [...categoryArticles, ...fallbackArticles];
+  const uniquePool = filterUniqueArticles(allRawCandidates, [article]).filter((a) => !isCurrentArticle(a));
 
-    // Strictly skip if already seen by ID, slug, or title
-    if ((aId && seenIds.has(aId)) || (aSlug && seenSlugs.has(aSlug)) || (aTitle && seenTitles.has(aTitle))) {
-      continue;
-    }
-
-    if (aId) seenIds.add(aId);
-    if (aSlug) seenSlugs.add(aSlug);
-    if (aTitle) seenTitles.add(aTitle);
-    uniqueCandidates.push(a);
-  }
-
-  const GENERIC_TAGS = new Set([
-    'news', 'popular stories', 'popular-stories', 'popularstories',
-    'trending', 'breaking', 'breaking news', 'national', 'સમાચાર',
-    'ન્યૂઝ', 'લાઇવ', 'વિશેષ', 'ગુજરાત', 'ભારત'
-  ]);
-
-  const articleSlugWords = (article.slug || '')
-    .split('-')
-    .filter((w) => w.length > 3 && !['gujaratpost', 'news', 'from', 'with', 'turns', 'into'].includes(w));
-
-  const referenceTime = Math.max(
-    ...uniqueCandidates.map((c) => new Date(c.publishedAt || (c as any).createdAt || 0).getTime()),
-    Date.now()
+  // 1. Filter strictly for SAME CATEGORY articles and sort newest first
+  const sameCategoryCandidates = sortArticlesByNewest(
+    uniquePool.filter((item) => isSameCategory(item, article))
   );
 
-  const scoredRelated = uniqueCandidates.map((item) => {
-    let score = 0;
+  // 2. Partition same-category articles by freshness:
+  // Fresh news: last 3-4 days (<= 4.0 days)
+  const freshSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item) <= 4.0);
+  const olderSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item) > 4.0);
 
-    // 1. Same category bonus (primary relevance factor)
-    const itemCatSlug = (item.category || '').toLowerCase().replace(/\s+/g, '-');
-    if (itemCatSlug === categorySlug && categorySlug !== '') {
-      score += 25;
-    }
+  // 3. Related list: fresh same-category first (newest to oldest), then older same-category (newest to oldest)
+  let related: typeof uniquePool = [...freshSameCategory, ...olderSameCategory];
 
-    // 2. Tag overlap bonus (specific tags heavily weighted, generic tags minimally weighted)
-    const itemTags = [
-      ...(item.tags || []),
-      ...(item.tagsGu || []),
-      ...(item.tagsHi || []),
-    ].map((t) => t?.toLowerCase().trim()).filter(Boolean);
-
-    itemTags.forEach((t) => {
-      if (currentTags.has(t)) {
-        score += GENERIC_TAGS.has(t) ? 2 : 15;
-      }
-    });
-
-    // 3. Title / Slug keyword similarity (e.g. "cjp", "sharma", "murder", "brics", etc.)
-    const itemSlug = (item.slug || '').toLowerCase();
-    articleSlugWords.forEach((word) => {
-      if (itemSlug.includes(word)) {
-        score += 12;
-      }
-    });
-
-    // 4. Same location bonus
-    if (item.location && article.location && item.location.toLowerCase().trim() === article.location.toLowerCase().trim()) {
-      score += 15;
-    }
-
-    // 5. Popularity & Featured status
-    if (item.isTrending) score += 4;
-    if (item.isFeatured) score += 3;
-    if (item.views) score += Math.min(item.views / 200, 5);
-
-    // 6. Recency Priority (Strictly favor fresh stories from last 5-6 days)
-    const pubTime = new Date(item.publishedAt || (item as any).createdAt || 0).getTime();
-    const ageDays = pubTime > 0 ? Math.max(0, (referenceTime - pubTime) / (1000 * 60 * 60 * 24)) : 999;
-    if (ageDays <= 6) {
-      score += 150 + Math.max(0, (6 - ageDays) * 10);
-    } else if (ageDays <= 10) {
-      score += 35;
-    } else if (ageDays > 14) {
-      score -= 250;
-    }
-
-    return { item, score, ageDays };
-  });
-
-  const freshRelated = scoredRelated.filter((entry) => entry.ageDays <= 7);
-  const olderRelated = scoredRelated.filter((entry) => entry.ageDays > 7);
-
-  freshRelated.sort((a, b) => b.score - a.score);
-  olderRelated.sort((a, b) => b.score - a.score);
-
-  // Fresh stories from the last 5-6 days always take precedence
-  const finalSorted = [...freshRelated, ...olderRelated];
-  const related = finalSorted.map((entry) => entry.item);
+  // 4. Safety fallback: ONLY if the database has fewer than 4 articles in this entire category, fill up to 8 with fresh articles from other categories
+  if (related.length < 4) {
+    const otherCandidates = sortArticlesByNewest(
+      uniquePool.filter((item) => !isSameCategory(item, article))
+    );
+    const freshOther = otherCandidates.filter((item) => getArticleAgeDays(item) <= 4.0);
+    const needed = 8 - related.length;
+    related = [...related, ...freshOther.slice(0, needed)];
+  }
 
   const articleUrl = `${SITE_URL}/news/${article.slug}`;
   const rawCandidateHeadline = (initialLang === 'hi' && article.titleHi && /[\u0900-\u097F]/.test(article.titleHi))

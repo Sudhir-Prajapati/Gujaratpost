@@ -384,14 +384,6 @@ function MobileHorizontalCardStrip({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
 
-            {/* Rank Badge top-left matching Fact Check */}
-            <div
-              className="absolute left-2.5 top-2.5 flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-black text-white shadow-md z-10 select-none"
-              style={{ backgroundColor: idx === 0 ? '#B3121B' : 'rgba(15, 23, 42, 0.8)' }}
-            >
-              {idx + 1}
-            </div>
-
             {/* Badge top-right matching Fact Check style */}
             <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded bg-[#B3121B] backdrop-blur-sm px-2 py-0.5 text-[10px] font-black text-white shadow-md z-10 select-none">
               <span>✔</span>
@@ -526,10 +518,10 @@ function HeroStorySlider({
     >
       {/* ─── MOBILE VIEW (< md): Header First, then Image, then Category & Share (matches Image 2) ─── */}
       <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4 mb-2">
-        {/* 1. Header on Top: LIVE badge inline with Headline (Fixed 3-line vertical height prevents layout shift/jerking) */}
+        {/* 1. Header on Top: LIVE badge inline with Headline (Reserved min-height to prevent layout shifts without clipping) */}
         <Link href={`/news/${current.slug}`} className="group block mb-3">
-          <div className="h-[4.4rem] sm:h-[4.75rem] min-h-[4.4rem] sm:min-h-[4.75rem] overflow-hidden flex items-start">
-            <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.32] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3">
+          <div className="min-h-[4.6rem] sm:min-h-[5.2rem] flex items-start">
+            <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.38] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-4">
               <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
                 LIVE
               </span>
@@ -714,15 +706,15 @@ function HeroStorySlider({
           </span>
         </div>
 
-        {/* Headline - Exactly 2 lines, reserving 2-line vertical space to prevent layout shifts when slides transition */}
-        <div className="h-[54px] sm:h-[58px] md:h-[62px] min-h-[54px] sm:min-h-[58px] md:min-h-[62px] overflow-hidden flex items-start mt-1.5">
-          <h1 className="text-foreground font-extrabold text-[20px] sm:text-[22px] md:text-[23.5px] leading-[1.24] tracking-tight group-hover:text-accent transition-colors line-clamp-2">
+        {/* Headline - Full heading readable up to 4 lines with clean Gujarati line-height and reserved min-height to prevent vertical shift */}
+        <div className="min-h-[82px] sm:min-h-[88px] md:min-h-[92px] flex items-start mt-2">
+          <h1 className="text-foreground font-black text-[19px] sm:text-[21px] md:text-[22.5px] leading-[1.38] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-3 md:line-clamp-4">
             <AutoArticleTitle article={current} language={language} />
           </h1>
         </div>
 
-        {/* Excerpt - Exactly 3 lines, reserving 3-line vertical space even if article has fewer lines */}
-        <p className="text-muted-foreground text-[13.5px] sm:text-[14px] leading-[21px] sm:leading-[23px] min-h-[63px] sm:min-h-[69px] mt-1.5 line-clamp-3 font-medium">
+        {/* Excerpt - Clean 2-line summary with adequate breathing space so text never collides */}
+        <p className="text-muted-foreground text-[13.5px] sm:text-[14px] leading-[1.48] min-h-[40px] sm:min-h-[44px] mt-2 line-clamp-2 font-medium">
           <AutoArticleExcerpt article={current} language={language} />
         </p>
 
@@ -1946,7 +1938,7 @@ export default function HeroSection({
                                 <span className="text-[#B3121B] font-extrabold text-[13px] mb-1 select-none uppercase tracking-wide">
                                   {getCategoryLabel(art, language)}
                                 </span>
-                                <h3 className="text-[14.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                                <h3 className="text-[14.5px] font-black leading-[1.38] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3">
                                   <AutoArticleTitle article={art} language={language} />
                                 </h3>
                               </div>

@@ -228,7 +228,7 @@ export default function Footer({ isInline = false }: { isInline?: boolean }) {
     const wrap = isInline ? 'pt-2 pb-1.5' : 'pt-3 pb-2.5';
 
     return (
-        <div className={!isInline ? 'mt-1 md:mt-3 mt-auto w-full flex-shrink-0' : 'w-full'}>
+        <div className={!isInline ? 'mt-auto w-full flex-shrink-0' : 'w-full'}>
             <style dangerouslySetInnerHTML={{
                 __html: `
 @keyframes footerTitleShimmer {

@@ -61,7 +61,7 @@ export default function CrimeSection({
 
   useEffect(() => {
     // Live US AQI for Ahmedabad (lat: 23.0225, lon: 72.5714)
-    fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=23.0225&longitude=72.5714&current=us_aqi')
+    fetch('https://air-quality-api.open-meteo.com/v1/air-quality?latitude=23.0225&longitude=72.5714&current=us_aqi&timezone=Asia%2FKolkata')
       .then((res) => res.json())
       .then((data) => {
         if (data?.current?.us_aqi && typeof data.current.us_aqi === 'number') {

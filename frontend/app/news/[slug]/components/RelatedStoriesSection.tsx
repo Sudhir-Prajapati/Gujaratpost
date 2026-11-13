@@ -41,12 +41,6 @@ export default function RelatedStoriesSection({
     const excludeList = [article, ...(excludeArticles || [])];
     const candidatePool = [...(related || []), ...(fallbackArticles || [])];
     const result = filterUniqueArticles(candidatePool, excludeList);
-
-    // Safety fallback: if no excludeArticles was provided and pool has > 4 items, start from the 5th item
-    if ((!excludeArticles || excludeArticles.length === 0) && result.length > 4) {
-      return result.slice(4);
-    }
-
     return result;
   }, [related, fallbackArticles, excludeArticles, article]);
 

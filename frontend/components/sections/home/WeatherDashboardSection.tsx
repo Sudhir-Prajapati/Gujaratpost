@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useTransition } from 'react';
 import Link from 'next/link';
 import {
   Sun,
+  Moon,
   Cloud,
   CloudRain,
   Wind,
@@ -199,9 +200,25 @@ export default function WeatherDashboardSection({ language }: { language: Langua
   const isGu = language === 'gu';
   const isHi = language === 'hi';
 
-  const formatCurrentTimestamp = useCallback(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const formatCurrentTimestamp = useCallback((dateInput?: Date | string | number) => {
+    const d = dateInput ? new Date(dateInput) : new Date();
+    if (isNaN(d.getTime())) return '';
+    try {
+      const formatter = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'Asia/Kolkata',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(d);
+      const getP = (type: string) => parts.find((p) => p.type === type)?.value || '';
+      return `${getP('year')}-${getP('month')}-${getP('day')} ${getP('hour')}:${getP('minute')}`;
+    } catch {
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+    }
   }, []);
 
   const fetchLiveData = useCallback(async (forceRefresh = false) => {
@@ -212,7 +229,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
       if (res.ok) {
         const json = await res.json();
         if (json?.success && json?.data) {
-          const { weatherData: wData, aqiData: aData, updatedAtFormatted } = json.data;
+          const { weatherData: wData, aqiData: aData, updatedAtFormatted, updatedAt } = json.data;
           startTransition(() => {
             if (wData && Object.keys(wData).length > 0) {
               setWeatherData((prev) => ({ ...prev, ...wData }));
@@ -222,6 +239,8 @@ export default function WeatherDashboardSection({ language }: { language: Langua
             }
             if (updatedAtFormatted) {
               setLastUpdateStr(updatedAtFormatted);
+            } else if (updatedAt) {
+              setLastUpdateStr(formatCurrentTimestamp(updatedAt));
             } else {
               setLastUpdateStr(formatCurrentTimestamp());
             }
@@ -236,8 +255,8 @@ export default function WeatherDashboardSection({ language }: { language: Langua
   }, [formatCurrentTimestamp]);
 
   useEffect(() => {
-    fetchLiveData(false);
     setLastUpdateStr(formatCurrentTimestamp());
+    fetchLiveData(false);
 
     const interval = setInterval(() => {
       fetchLiveData(false);
@@ -261,113 +280,110 @@ export default function WeatherDashboardSection({ language }: { language: Langua
       : `${mainAqi.label || 'Good'}`;
 
   return (
-    <section className="mx-auto max-w-screen-xl px-2.5 sm:px-4 py-2 mt-2 select-none" aria-label="Gujarat Post Weather and AQI Dashboard">
-      {/* ─── TOP TABS (Connected Directly to Main Card, Matching Reference Image 2) ─── */}
+    <section className="mx-auto max-w-screen-xl px-4 mt-2 mb-3 select-none" aria-label="Gujarat Post Weather and AQI Dashboard">
+      {/* ─── TOP TABS (Connected Directly to Main Card) ─── */}
       <div className="flex items-end">
         <div className="inline-flex items-end relative z-10 -mb-[1px]">
-          {/* Tab 1: Weather (Active: Solid Red #C8101E, Rounded Top, Seamless Shoulder) */}
+          {/* Tab 1: Weather */}
           <button
             type="button"
             onClick={() => setActiveTab('weather')}
-            className={`flex items-center gap-2 px-6 sm:px-8 py-3 text-sm sm:text-[15px] font-black transition-all rounded-t-2xl tracking-wide select-none cursor-pointer ${
+            className={`flex items-center gap-2 px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-black transition-all rounded-t-xl tracking-wide select-none cursor-pointer ${
               activeTab === 'weather'
-                ? 'bg-[#C8101E] text-white shadow-md border-t-2 border-x-2 border-[#C8101E]'
+                ? 'bg-[#C8101E] text-white shadow-xs border-t border-x border-[#C8101E]'
                 : 'bg-white dark:bg-[#1a1c29] text-[#171B2D] dark:text-slate-200 border-t border-x border-slate-300 dark:border-slate-800 hover:text-[#C8101E]'
             }`}
           >
-            <Sun className={`h-4.5 w-4.5 ${activeTab === 'weather' ? 'text-white' : 'text-[#C8101E]'}`} />
+            <Sun className={`h-4 w-4 ${activeTab === 'weather' ? 'text-white' : 'text-[#C8101E]'}`} />
             <span>{isGu ? 'હવામાન' : isHi ? 'मौसम' : 'WEATHER'}</span>
           </button>
 
-          {/* Tab 2: AQI (Inactive: Clean White Surface, Dark Text) */}
+          {/* Tab 2: AQI */}
           <button
             type="button"
             onClick={() => setActiveTab('aqi')}
-            className={`flex items-center gap-2 px-6 sm:px-8 py-3 text-sm sm:text-[15px] font-black transition-all rounded-t-2xl tracking-wide select-none cursor-pointer ${
+            className={`flex items-center gap-2 px-5 sm:px-7 py-2.5 text-xs sm:text-sm font-black transition-all rounded-t-xl tracking-wide select-none cursor-pointer ${
               activeTab === 'aqi'
-                ? 'bg-[#C8101E] text-white shadow-md border-t-2 border-x-2 border-[#C8101E]'
+                ? 'bg-[#C8101E] text-white shadow-xs border-t border-x border-[#C8101E]'
                 : 'bg-white dark:bg-[#1a1c29] text-[#171B2D] dark:text-slate-200 border-t border-x border-slate-300 dark:border-slate-800 hover:text-[#C8101E]'
             }`}
           >
-            <Wind className={`h-4.5 w-4.5 ${activeTab === 'aqi' ? 'text-white' : 'text-[#C8101E]'}`} />
+            <Wind className={`h-4 w-4 ${activeTab === 'aqi' ? 'text-white' : 'text-[#C8101E]'}`} />
             <span>{isGu ? 'હવા ગુણવત્તા (AQI)' : isHi ? 'वायु गुणवत्ता (AQI)' : 'AIR QUALITY (AQI)'}</span>
           </button>
         </div>
       </div>
 
-      {/* ─── MAIN DASHBOARD CONTAINER (White Card with Thin Red Outline & Curved Red Accents) ─── */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#151722] rounded-[24px] sm:rounded-[28px] rounded-tl-none border-[1.5px] border-[#FCA5A5]/80 dark:border-white/10 shadow-[0_6px_30px_rgba(200,16,30,0.07)] dark:shadow-[0_6px_30px_rgba(0,0,0,0.5)] p-5 sm:p-7 md:p-8 transition-all">
-        {/* ── Top-Right Curved Red Gradient Swoosh Banner (Exact Match to Reference Image 2) ── */}
+      {/* ─── MAIN DASHBOARD CONTAINER (Compact, High-Density White Card) ─── */}
+      <div className="relative overflow-hidden bg-white dark:bg-[#151722] rounded-2xl rounded-tl-none border-[1.5px] border-[#FCA5A5]/80 dark:border-white/10 shadow-[0_4px_20px_rgba(200,16,30,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-4 sm:p-5 transition-all">
+        {/* Subtle Top-Right Red Gradient Accent */}
         <div
-          className="pointer-events-none absolute top-0 right-0 w-80 sm:w-96 md:w-[460px] h-20 sm:h-24 bg-gradient-to-l from-[#C8101E] via-[#A80F19] to-transparent rounded-tr-[24px] sm:rounded-tr-[28px] opacity-95 select-none z-0"
-          style={{ clipPath: 'ellipse(100% 100% at 100% 0%)' }}
+          className="pointer-events-none absolute top-0 right-0 w-64 sm:w-80 h-16 sm:h-20 bg-gradient-to-l from-[#C8101E]/15 via-[#C8101E]/5 to-transparent rounded-tr-2xl select-none z-0"
           aria-hidden="true"
         />
 
-        {/* ── City Selector Dropdown (Top Right, Framing the Red Header Banner) ── */}
-        <div className="relative z-10 flex items-center justify-end mb-4 sm:mb-6">
+        {/* ── Header Row: City Name & Status (Left) + City Dropdown (Right) ── */}
+        <div className="relative z-10 flex flex-wrap items-center justify-between gap-2.5 mb-3.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <MapPin className="h-5 w-5 text-[#C8101E] fill-[#C8101E] shrink-0" />
+              <h2 className="text-xl sm:text-2xl font-black text-[#171B2D] dark:text-white tracking-tight">
+                {selectedCity}
+              </h2>
+            </div>
+            <span className="hidden sm:inline-block text-slate-300 dark:text-slate-700 font-light select-none">|</span>
+            <span className="text-xs sm:text-sm font-semibold text-[#64748B] dark:text-slate-400">
+              {isGu ? 'વર્તમાન હવામાનની સ્થિતિ' : isHi ? 'वर्तमान मौसम की स्थिति' : 'Current Weather Conditions'}
+            </span>
+          </div>
+
+          {/* Quick City Switcher Dropdown */}
           <div className="relative">
-            <div className="flex items-center gap-2 bg-white dark:bg-[#1f2233] text-[#171B2D] dark:text-white border-[1.5px] border-slate-300/90 dark:border-slate-700 hover:border-[#C8101E] rounded-full px-4 sm:px-5 py-2 shadow-sm transition-all cursor-pointer">
-              <MapPin className="h-4 w-4 text-[#C8101E] shrink-0" />
+            <div className="flex items-center gap-1.5 bg-white dark:bg-[#1f2233] text-[#171B2D] dark:text-white border-[1.5px] border-slate-300/90 dark:border-slate-700 hover:border-[#C8101E] rounded-full px-3 py-1 shadow-xs transition-all cursor-pointer">
+              <MapPin className="h-3.5 w-3.5 text-[#C8101E] shrink-0" />
               <select
                 id="weather-city-select"
                 aria-label="Select City"
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
-                className="appearance-none bg-transparent text-sm sm:text-[15px] font-black pr-6 focus:outline-none cursor-pointer"
+                className="appearance-none bg-transparent text-xs sm:text-sm font-black pr-5 focus:outline-none cursor-pointer"
               >
                 <option value="Ahmedabad" className="text-slate-900 dark:text-slate-100">Ahmedabad</option>
                 <option value="Vadodara" className="text-slate-900 dark:text-slate-100">Vadodara</option>
                 <option value="Surat" className="text-slate-900 dark:text-slate-100">Surat</option>
                 <option value="Rajkot" className="text-slate-900 dark:text-slate-100">Rajkot</option>
               </select>
-              <ChevronDown className="h-4 w-4 text-slate-600 dark:text-slate-400 absolute right-4 pointer-events-none" />
+              <ChevronDown className="h-3.5 w-3.5 text-slate-600 dark:text-slate-400 absolute right-2.5 pointer-events-none" />
             </div>
           </div>
         </div>
 
-        {/* ─── TAB 1: WEATHER & AQI DUAL DASHBOARD (Exact Composition of Image 2) ─── */}
+        {/* ─── TAB 1: WEATHER & AQI DUAL DASHBOARD ─── */}
         {activeTab === 'weather' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-stretch relative z-10">
             {/* ═════════════════════════════════════════════════════════════════ */}
-            {/* ── LEFT SIDE (~48% Width): LARGE PROMINENT WEATHER PRESENTATION ── */}
+            {/* ── LEFT SIDE (lg:col-span-6): COMPACT WEATHER CARD ── */}
             {/* ═════════════════════════════════════════════════════════════════ */}
-            <div className="lg:col-span-6 relative flex flex-col justify-between min-h-[320px] sm:min-h-[350px]">
-              {/* Soft Pink Gujarat State Map Outline Watermark behind city header */}
-              <div className="pointer-events-none absolute right-4 sm:right-10 top-0 w-36 sm:w-44 h-36 sm:h-44 opacity-25 select-none z-0">
-                <img
-                  src="/assets/GujaratLogo.png"
-                  alt=""
-                  className="w-full h-full object-contain filter drop-shadow-xs"
-                />
+            <div className="lg:col-span-6 relative bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/90 dark:border-white/10 rounded-xl p-3.5 sm:p-4 flex flex-col justify-between overflow-hidden">
+              {/* Soft Watermark in Background */}
+              <div className="pointer-events-none absolute right-2 bottom-1 w-28 h-28 opacity-10 select-none z-0">
+                <img src="/assets/GujaratLogo.png" alt="" className="w-full h-full object-contain" />
               </div>
 
-              {/* City Title and Gujarati Subtitle */}
-              <div className="relative z-10">
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-6 w-6 text-[#C8101E] fill-[#C8101E] shrink-0" />
-                  <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-black text-[#171B2D] dark:text-white tracking-tight">
-                    {selectedCity}
-                  </h2>
-                </div>
-                <p className="text-sm sm:text-base font-semibold text-[#64748B] dark:text-slate-400 mt-1 pl-8">
-                  {isGu ? 'વર્તમાન હવામાનની સ્થિતિ' : isHi ? 'वर्तमान मौसम की स्थिति' : 'Current Weather Conditions'}
-                </p>
-              </div>
-
-              {/* Center Row: Massive Temperature + Sun/Cloud Icon + 4 Vertical Metrics */}
-              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-5 sm:gap-6 items-center my-4 sm:my-6">
-                {/* Left Part: 3D Sun Icon + Giant Temperature + Red Badge */}
-                <div className="sm:col-span-7 flex items-center gap-4 sm:gap-5">
-                  {/* Big Vibrant 3D Sun with Soft Overlapping Cloud */}
-                  <div className="relative shrink-0 w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 flex items-center justify-center">
+              <div className="relative z-10 grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                {/* Left: Weather Icon + Temperature + Badge */}
+                <div className="sm:col-span-7 flex items-center gap-3">
+                  <div className="relative shrink-0 w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center">
                     {mainWeather.icon === 'rain' ? (
-                      <CloudRain className="w-full h-full text-[#0284c7] drop-shadow-lg" />
+                      <CloudRain className="w-full h-full text-[#0284c7] drop-shadow-md" />
+                    ) : mainWeather.icon === 'moon' ? (
+                      <div className="w-full h-full flex items-center justify-center p-1">
+                        <Moon className="w-full h-full text-indigo-500 fill-indigo-100 dark:fill-indigo-950/60 drop-shadow-[0_4px_12px_rgba(99,102,241,0.35)]" />
+                      </div>
                     ) : mainWeather.icon === 'cloud' ? (
-                      <Cloud className="w-full h-full text-slate-500 drop-shadow-lg" />
+                      <Cloud className="w-full h-full text-slate-500 drop-shadow-md" />
                     ) : (
-                      <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-[0_4px_16px_rgba(245,158,11,0.45)]">
-                        {/* Radiant Sun Rays */}
+                      <svg viewBox="0 0 64 64" className="w-full h-full drop-shadow-[0_4px_12px_rgba(245,158,11,0.35)]">
                         <circle cx="32" cy="28" r="14" fill="#F59E0B" />
                         <g stroke="#F59E0B" strokeWidth="3.2" strokeLinecap="round">
                           <line x1="32" y1="8" x2="32" y2="3" />
@@ -379,7 +395,6 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                           <line x1="18" y1="42" x2="14" y2="46" />
                           <line x1="46" y1="14" x2="50" y2="10" />
                         </g>
-                        {/* Soft Fluffy 3D Cloud Overlapping Lower Sun */}
                         <path
                           d="M24 44h22a8 8 0 0 0 0-16 10 10 0 0 0-19-2 7 7 0 0 0-3 18z"
                           fill="#FFFFFF"
@@ -390,136 +405,101 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                     )}
                   </div>
 
-                  {/* Giant Temperature & Solid Red Pill Badge */}
                   <div className="flex flex-col">
-                    <span className="text-5xl sm:text-6xl lg:text-[72px] font-black text-[#171B2D] dark:text-white leading-none tracking-tight">
+                    <span className="text-4xl sm:text-5xl font-black text-[#171B2D] dark:text-white leading-none tracking-tight">
                       {mainWeather.temp}°C
                     </span>
-                    <span className="mt-2.5 self-start bg-[#C8101E] text-white text-xs sm:text-[13px] font-black px-4 sm:px-5 py-1.5 rounded-full uppercase leading-none shadow-sm">
+                    <span className="mt-1.5 self-start bg-[#C8101E] text-white text-[11px] sm:text-xs font-black px-3 py-1 rounded-full uppercase leading-none shadow-xs">
                       {isGu ? mainWeather.descGu : mainWeather.desc}
                     </span>
                   </div>
                 </div>
 
-                {/* Right Part: 4 Large Supporting Weather Metrics */}
-                <div className="sm:col-span-5 flex flex-col justify-center gap-2.5 sm:border-l border-slate-200/90 dark:border-slate-800 sm:pl-5">
-                  {/* Metric 1: Max Temp */}
-                  <div className="flex items-center justify-between text-sm sm:text-base">
-                    <span className="flex items-center gap-2 text-[#171B2D] dark:text-slate-300 font-bold">
-                      <Thermometer className="h-4.5 w-4.5 text-[#C8101E] shrink-0" />
-                      <span>{isGu ? 'મહત્તમ (Max)' : 'Max'}</span>
+                {/* Right: 4 Metrics in Compact 2x2 Grid */}
+                <div className="sm:col-span-5 grid grid-cols-2 gap-2 sm:border-l border-slate-200 dark:border-slate-800 sm:pl-3">
+                  <div className="flex flex-col bg-white dark:bg-[#1a1c29] p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <Thermometer className="h-3 w-3 text-[#C8101E]" />
+                      <span>{isGu ? 'મહત્તમ' : 'Max'}</span>
                     </span>
-                    <span className="font-black text-[#171B2D] dark:text-white text-base sm:text-lg">
+                    <span className="font-black text-[#171B2D] dark:text-white text-xs sm:text-sm mt-0.5">
                       {mainWeather.tempMax || '32.7'}°C
                     </span>
                   </div>
 
-                  {/* Metric 2: Min Temp */}
-                  <div className="flex items-center justify-between text-sm sm:text-base">
-                    <span className="flex items-center gap-2 text-[#171B2D] dark:text-slate-300 font-bold">
-                      <Thermometer className="h-4.5 w-4.5 text-[#0284c7] shrink-0" />
-                      <span>{isGu ? 'ન્યૂનતમ (Min)' : 'Min'}</span>
+                  <div className="flex flex-col bg-white dark:bg-[#1a1c29] p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <Thermometer className="h-3 w-3 text-[#0284c7]" />
+                      <span>{isGu ? 'ન્યૂનતમ' : 'Min'}</span>
                     </span>
-                    <span className="font-black text-[#171B2D] dark:text-white text-base sm:text-lg">
+                    <span className="font-black text-[#171B2D] dark:text-white text-xs sm:text-sm mt-0.5">
                       {mainWeather.tempMin || '20.4'}°C
                     </span>
                   </div>
 
-                  {/* Metric 3: Humidity */}
-                  <div className="flex items-center justify-between text-sm sm:text-base">
-                    <span className="flex items-center gap-2 text-[#171B2D] dark:text-slate-300 font-bold">
-                      <Droplets className="h-4.5 w-4.5 text-[#C8101E] shrink-0" />
-                      <span>{isGu ? 'ભેજ (Humidity)' : 'Humidity'}</span>
+                  <div className="flex flex-col bg-white dark:bg-[#1a1c29] p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <Droplets className="h-3 w-3 text-[#C8101E]" />
+                      <span>{isGu ? 'ભેજ' : 'Humidity'}</span>
                     </span>
-                    <span className="font-black text-[#171B2D] dark:text-white text-base sm:text-lg">
+                    <span className="font-black text-[#171B2D] dark:text-white text-xs sm:text-sm mt-0.5">
                       {mainWeather.humidity}
                     </span>
                   </div>
 
-                  {/* Metric 4: Wind */}
-                  <div className="flex items-center justify-between text-sm sm:text-base">
-                    <span className="flex items-center gap-2 text-[#171B2D] dark:text-slate-300 font-bold">
-                      <Wind className="h-4.5 w-4.5 text-[#64748B] shrink-0" />
-                      <span>{isGu ? 'પવન (Wind)' : 'Wind'}</span>
+                  <div className="flex flex-col bg-white dark:bg-[#1a1c29] p-2 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                      <Wind className="h-3 w-3 text-[#64748B]" />
+                      <span>{isGu ? 'પવન' : 'Wind'}</span>
                     </span>
-                    <span className="font-black text-[#171B2D] dark:text-white text-base sm:text-lg">
+                    <span className="font-black text-[#171B2D] dark:text-white text-xs sm:text-sm mt-0.5">
                       {mainWeather.wind}
                     </span>
                   </div>
                 </div>
               </div>
-
-              {/* Bottom Architectural Illustration & Sweeping Red/Gold Ribbon Wave */}
-              <div className="relative mt-2 flex items-end justify-between overflow-visible">
-                <div className="flex-1" />
-                {/* Gujarat Heritage Architectural Monument (Positioned behind/above the wave) */}
-                <div className="relative h-16 sm:h-20 lg:h-24 w-auto shrink-0 select-none pointer-events-none -mb-3 z-10">
-                  <img
-                    src="/assets/ahmedabad-weather-monument.png"
-                    alt="Gujarat Monument"
-                    className="h-full w-auto object-contain opacity-90 dark:opacity-75 filter contrast-125"
-                  />
-                </div>
-              </div>
-
-              {/* Lower-Left Elegant Curved Red and Gold Ribbon Wave (Matching Image 2) */}
-              <div
-                className="pointer-events-none absolute -bottom-5 sm:-bottom-7 -left-5 sm:-left-7 w-72 sm:w-96 md:w-[420px] h-10 sm:h-12 bg-gradient-to-r from-[#F59E0B] via-[#C8101E] to-[#A80F19] rounded-bl-[24px] sm:rounded-bl-[28px] opacity-95 select-none z-0"
-                style={{ clipPath: 'ellipse(100% 100% at 0% 100%)' }}
-                aria-hidden="true"
-              />
             </div>
 
             {/* ══════════════════════════════════════════════════════════════════ */}
-            {/* ── RIGHT SIDE (~52% Width): PROMINENT AQI PANEL + 3 CITY CARDS ── */}
+            {/* ── RIGHT SIDE (lg:col-span-6): AQI + 3 OTHER CITIES ── */}
             {/* ══════════════════════════════════════════════════════════════════ */}
-            <div className="lg:col-span-6 flex flex-col justify-between gap-5 sm:gap-6">
-              {/* ── Top Prominent AQI Panel Card ── */}
-              <div className="relative bg-white dark:bg-[#1a1c29] rounded-[20px] border-[1.5px] border-slate-200/90 dark:border-white/10 p-5 sm:p-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  {/* Left: AQI Heading + Category Pill Badge */}
-                  <div className="flex flex-col gap-2">
-                    <span className="flex items-center gap-2 font-black text-base sm:text-lg text-[#171B2D] dark:text-white">
-                      <Leaf className="h-5 w-5 text-[#C8101E]" />
+            <div className="lg:col-span-6 flex flex-col justify-between gap-2.5">
+              {/* Top AQI Compact Card */}
+              <div className="bg-white dark:bg-[#1a1c29] rounded-xl border border-slate-200/90 dark:border-white/10 p-3 sm:p-3.5 shadow-xs">
+                <div className="flex items-center justify-between gap-3">
+                  {/* Left: Heading + Badge */}
+                  <div className="flex flex-col gap-1">
+                    <span className="flex items-center gap-1.5 font-black text-xs sm:text-sm text-[#171B2D] dark:text-white">
+                      <Leaf className="h-4 w-4 text-[#C8101E]" />
                       <span>{isGu ? 'હવા ગુણવત્તા (AQI)' : 'Air Quality (AQI)'}</span>
                     </span>
-
-                    {/* Category Badge Pill with dynamic CPCB color */}
                     <span
                       style={{ backgroundColor: aqiColor }}
-                      className="self-start flex items-center gap-1.5 text-white text-xs sm:text-[13px] font-black px-3.5 py-1 rounded-full shadow-xs uppercase tracking-wide"
+                      className="self-start flex items-center gap-1 text-white text-[10px] sm:text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase"
                     >
-                      <Leaf className="h-3.5 w-3.5 fill-white" />
+                      <Leaf className="h-2.5 w-2.5 fill-white" />
                       <span>{aqiBadgeLabel}</span>
                     </span>
                   </div>
 
-                  {/* Vertical Separator Divider */}
-                  <span className="hidden sm:inline-block h-12 w-[1.5px] bg-slate-200 dark:bg-slate-700 select-none" aria-hidden="true" />
-
-                  {/* Center: Large AQI Value */}
-                  <div className="flex items-baseline gap-1.5 self-start sm:self-auto">
-                    <span className="text-4xl sm:text-5xl font-black text-[#171B2D] dark:text-white leading-none">
+                  {/* Center: AQI Number */}
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl sm:text-4xl font-black text-[#171B2D] dark:text-white leading-none">
                       {mainAqi.value}
                     </span>
-                    <span className="text-sm sm:text-base font-extrabold text-[#171B2D] dark:text-white uppercase tracking-wider">
-                      AQI
-                    </span>
+                    <span className="text-xs font-black text-slate-500 uppercase">AQI</span>
                   </div>
 
-                  {/* Right: Horizontal Color Scale with Indicator Marker */}
-                  <div className="w-full sm:w-44 md:w-52 lg:w-48 xl:w-56 flex flex-col justify-center">
+                  {/* Right: Color Scale */}
+                  <div className="w-28 sm:w-36 md:w-44 flex flex-col justify-center">
                     <div className="relative w-full">
-                      {/* Gradient Bar: Green -> Light Green -> Yellow -> Orange -> Red -> Purple */}
-                      <div className="h-3 sm:h-3.5 w-full rounded-full bg-gradient-to-r from-[#22c55e] via-[#84cc16] via-[#eab308] via-[#f97316] via-[#ef4444] to-[#a855f7] shadow-inner" />
-
-                      {/* Triangle Pointer Marker pointing up into the bar */}
+                      <div className="h-2.5 w-full rounded-full bg-gradient-to-r from-[#22c55e] via-[#84cc16] via-[#eab308] via-[#f97316] via-[#ef4444] to-[#a855f7]" />
                       <div
-                        className="absolute -bottom-3.5 transition-all duration-500 ease-out flex flex-col items-center"
+                        className="absolute -bottom-2.5 transition-all duration-500 ease-out flex flex-col items-center"
                         style={{ left: `${aqiPercentage}%`, transform: 'translateX(-50%)' }}
                       >
                         <div
-                          className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[8px]"
+                          className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-b-[6px]"
                           style={{ borderBottomColor: aqiColor }}
                         />
                       </div>
@@ -528,8 +508,8 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                 </div>
               </div>
 
-              {/* ── Three Large Horizontal City Cards (Vadodara, Surat, Rajkot) ── */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+              {/* Bottom: 3 City Cards (Vadodara, Surat, Rajkot) */}
+              <div className="grid grid-cols-3 gap-2">
                 {otherCities.map((city) => {
                   const item = weatherData[city] || INITIAL_WEATHER[city];
                   return (
@@ -537,35 +517,37 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                       key={city}
                       type="button"
                       onClick={() => setSelectedCity(city)}
-                      className="group text-left bg-white dark:bg-[#1a1c29] border-[1.5px] border-red-100/90 dark:border-slate-800 hover:border-[#C8101E] rounded-[20px] p-4 sm:p-4.5 shadow-sm hover:shadow-md transition-all cursor-pointer select-none"
+                      className="group text-left bg-white dark:bg-[#1a1c29] border border-slate-200/90 dark:border-slate-800 hover:border-[#C8101E] rounded-xl p-2.5 shadow-2xs hover:shadow-xs transition-all cursor-pointer select-none"
                       title={isGu ? `${city} માટે હવામાન જુઓ` : `Select ${city}`}
                     >
-                      {/* Card Header: City Name + Red Round Arrow */}
                       <div className="flex items-center justify-between">
-                        <span className="text-base sm:text-[17px] font-black text-[#171B2D] dark:text-white group-hover:text-[#C8101E] transition-colors">
+                        <span className="text-xs sm:text-[13px] font-black text-[#171B2D] dark:text-white group-hover:text-[#C8101E] transition-colors truncate">
                           {city}
                         </span>
-                        <span className="h-6 w-6 rounded-full bg-[#C8101E] text-white flex items-center justify-center text-xs group-hover:scale-110 transition-transform shadow-xs">
-                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        <span className="h-4.5 w-4.5 rounded-full bg-[#C8101E] text-white flex items-center justify-center text-[10px] group-hover:scale-110 transition-transform shrink-0">
+                          <ArrowUpRight className="h-3 w-3" />
                         </span>
                       </div>
 
-                      {/* Card Body: Sun Icon + Temp & Humidity */}
-                      <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-                        {/* Weather Sun Icon in warm amber */}
-                        <div className="text-amber-500 shrink-0">
-                          <Sun className="h-8 w-8 sm:h-9 sm:w-9 stroke-[2.2] animate-[spin_20s_linear_infinite]" />
+                      <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-slate-800">
+                        <div className="shrink-0">
+                          {item.icon === 'moon' ? (
+                            <Moon className="h-5 w-5 sm:h-6 sm:w-6 text-indigo-500 fill-indigo-100 dark:fill-indigo-950/60 stroke-[2]" />
+                          ) : item.icon === 'rain' ? (
+                            <CloudRain className="h-5 w-5 sm:h-6 sm:w-6 text-sky-500 stroke-[2]" />
+                          ) : item.icon === 'cloud' ? (
+                            <Cloud className="h-5 w-5 sm:h-6 sm:w-6 text-slate-500 stroke-[2]" />
+                          ) : (
+                            <Sun className="h-5 w-5 sm:h-6 sm:w-6 text-amber-500 stroke-[2] animate-[spin_20s_linear_infinite]" />
+                          )}
                         </div>
 
-                        {/* Temp and Humidity Stack */}
-                        <div className="flex flex-col items-end text-right gap-1">
-                          <span className="text-sm sm:text-base font-black text-[#171B2D] dark:text-slate-100 flex items-center gap-1">
-                            <Thermometer className="h-4 w-4 text-[#C8101E]" />
+                        <div className="flex flex-col items-end text-right">
+                          <span className="text-xs sm:text-sm font-black text-[#171B2D] dark:text-slate-100">
                             {item.temp}°C
                           </span>
-                          <span className="text-xs sm:text-[13px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                            <Droplets className="h-3.5 w-3.5 text-[#C8101E]" />
-                            {item.humidity}
+                          <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                            💧 {item.humidity}
                           </span>
                         </div>
                       </div>
@@ -577,124 +559,73 @@ export default function WeatherDashboardSection({ language }: { language: Langua
           </div>
         ) : (
           /* ─── TAB 2: DETAILED AIR QUALITY (AQI) VIEW ─── */
-          <div className="flex flex-col gap-5 relative z-10">
+          <div className="flex flex-col gap-3 relative z-10">
             {/* Top Station & City Details */}
-            <div className="bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-[20px] p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="p-3 rounded-xl bg-[#C8101E] text-white shadow-sm">
-                  <Activity className="h-6 w-6" />
+            <div className="bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 rounded-lg bg-[#C8101E] text-white shadow-xs">
+                  <Activity className="h-5 w-5" />
                 </span>
                 <div>
-                  <h3 className="text-xl sm:text-2xl font-black text-[#171B2D] dark:text-white flex items-center gap-2 flex-wrap">
+                  <h3 className="text-base sm:text-lg font-black text-[#171B2D] dark:text-white flex items-center gap-2 flex-wrap">
                     <span>{selectedCity} {isGu ? 'હવા ગુણવત્તા સૂચકાંક (NAQI)' : 'National Air Quality Index'}</span>
                     <span
                       style={{ backgroundColor: aqiColor }}
-                      className="text-white text-xs font-black px-3 py-1 rounded-full uppercase"
+                      className="text-white text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase"
                     >
                       {aqiBadgeLabel}
                     </span>
                   </h3>
-                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5 font-medium">
-                    <MapPin className="h-4 w-4 text-[#C8101E] shrink-0" />
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-1 font-medium">
+                    <MapPin className="h-3.5 w-3.5 text-[#C8101E] shrink-0" />
                     <span>{mainAqi.station || `${selectedCity} Central CAAQM Station`}</span>
                   </p>
                 </div>
               </div>
 
               {/* Big Score Box */}
-              <div className="flex items-center gap-3 self-start md:self-auto">
+              <div className="flex items-center gap-2 self-start md:self-auto">
                 <div
                   style={{ borderColor: aqiColor }}
-                  className="px-5 py-2.5 rounded-2xl border-2 bg-white dark:bg-slate-900 flex items-baseline gap-2 shadow-xs"
+                  className="px-4 py-1.5 rounded-xl border-2 bg-white dark:bg-slate-900 flex items-baseline gap-1.5 shadow-2xs"
                 >
-                  <span style={{ color: aqiColor }} className="text-4xl sm:text-5xl font-black">
+                  <span style={{ color: aqiColor }} className="text-3xl sm:text-4xl font-black">
                     {mainAqi.value}
                   </span>
-                  <span className="text-sm font-black text-slate-500 uppercase">AQI</span>
+                  <span className="text-xs font-black text-slate-500 uppercase">AQI</span>
                 </div>
               </div>
             </div>
 
             {/* 6 Real CPCB Pollutants Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
-              <div className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">PM 2.5</span>
-                  <span className="text-[11px] text-slate-400 font-medium block">{isGu ? 'અતિ સૂક્ષ્મ કણો' : 'Fine Particles'}</span>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+              {[
+                { key: 'pm25', name: 'PM 2.5', label: isGu ? 'અતિ સૂક્ષ્મ કણો' : 'Fine Particles', val: mainAqi.pm25, unit: 'µg/m³' },
+                { key: 'pm10', name: 'PM 10', label: isGu ? 'ધૂળ અને રજકણ' : 'Coarse Particles', val: mainAqi.pm10, unit: 'µg/m³' },
+                { key: 'no2', name: 'NO₂', label: isGu ? 'નાઇટ્રોજન ડાયોક્સાઇડ' : 'Nitrogen Dioxide', val: mainAqi.no2 || '15.2', unit: 'µg/m³' },
+                { key: 'so2', name: 'SO₂', label: isGu ? 'સલ્ફર ડાયોક્સાઇડ' : 'Sulphur Dioxide', val: mainAqi.so2 || '12.1', unit: 'µg/m³' },
+                { key: 'co', name: 'CO', label: isGu ? 'કાર્બન મોનોક્સાઇડ' : 'Carbon Monoxide', val: mainAqi.co || '0.40', unit: 'mg/m³' },
+                { key: 'o3', name: 'O₃', label: isGu ? 'ઓઝોન વાયુ' : 'Ozone', val: mainAqi.o3 || '45.0', unit: 'µg/m³' },
+              ].map((p) => (
+                <div key={p.key} className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 shadow-2xs flex flex-col justify-between">
+                  <div>
+                    <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">{p.name}</span>
+                    <span className="text-[10px] text-slate-400 font-medium block truncate">{p.label}</span>
+                  </div>
+                  <div className="mt-2">
+                    <span className="text-base sm:text-lg font-black text-[#171B2D] dark:text-white">
+                      {p.val} <span className="text-[10px] font-semibold text-slate-400">{p.unit}</span>
+                    </span>
+                  </div>
                 </div>
-                <div className="mt-3">
-                  <span className="text-xl font-black text-[#171B2D] dark:text-white">
-                    {mainAqi.pm25} <span className="text-xs font-semibold text-slate-400">µg/m³</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">PM 10</span>
-                  <span className="text-[11px] text-slate-400 font-medium block">{isGu ? 'ધૂળ અને રજકણ' : 'Coarse Particles'}</span>
-                </div>
-                <div className="mt-3">
-                  <span className="text-xl font-black text-[#171B2D] dark:text-white">
-                    {mainAqi.pm10} <span className="text-xs font-semibold text-slate-400">µg/m³</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">NO₂</span>
-                  <span className="text-[11px] text-slate-400 font-medium block">{isGu ? 'નાઇટ્રોજન ડાયોક્સાઇડ' : 'Nitrogen Dioxide'}</span>
-                </div>
-                <div className="mt-3">
-                  <span className="text-xl font-black text-[#171B2D] dark:text-white">
-                    {mainAqi.no2 || '15.2'} <span className="text-xs font-semibold text-slate-400">µg/m³</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">SO₂</span>
-                  <span className="text-[11px] text-slate-400 font-medium block">{isGu ? 'સલ્ફર ડાયોક્સાઇડ' : 'Sulphur Dioxide'}</span>
-                </div>
-                <div className="mt-3">
-                  <span className="text-xl font-black text-[#171B2D] dark:text-white">
-                    {mainAqi.so2 || '12.1'} <span className="text-xs font-semibold text-slate-400">µg/m³</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">CO</span>
-                  <span className="text-[11px] text-slate-400 font-medium block">{isGu ? 'કાર્બન મોનોક્સાઇડ' : 'Carbon Monoxide'}</span>
-                </div>
-                <div className="mt-3">
-                  <span className="text-xl font-black text-[#171B2D] dark:text-white">
-                    {mainAqi.co || '0.40'} <span className="text-xs font-semibold text-slate-400">mg/m³</span>
-                  </span>
-                </div>
-              </div>
-
-              <div className="bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-800 rounded-2xl p-3.5 shadow-xs flex flex-col justify-between">
-                <div>
-                  <span className="text-xs font-black text-[#C8101E] uppercase tracking-wider block">O₃</span>
-                  <span className="text-[11px] text-slate-400 font-medium block">{isGu ? 'ઓઝોન વાયુ' : 'Ozone'}</span>
-                </div>
-                <div className="mt-3">
-                  <span className="text-xl font-black text-[#171B2D] dark:text-white">
-                    {mainAqi.o3 || '45.0'} <span className="text-xs font-semibold text-slate-400">µg/m³</span>
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* Health Advisory Banner */}
-            <div className="bg-[#FFF1F2] dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-2xl p-4 flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-[#C8101E] shrink-0 mt-0.5" />
-              <div className="text-sm text-slate-800 dark:text-slate-200">
-                <span className="font-black text-[#C8101E] mr-1.5">
+            <div className="bg-[#FFF1F2] dark:bg-red-950/20 border border-red-200 dark:border-red-900/40 rounded-xl p-2.5 sm:p-3 flex items-start gap-2.5">
+              <AlertCircle className="h-4 w-4 text-[#C8101E] shrink-0 mt-0.5" />
+              <div className="text-xs text-slate-800 dark:text-slate-200">
+                <span className="font-black text-[#C8101E] mr-1">
                   {isGu ? 'આરોગ્ય સલાહ:' : 'Health Advisory:'}
                 </span>
                 <span>{mainAqi.advisoryGu || 'હવાની ગુણવત્તા સ્વીકાર્ય છે. સંવેદનશીલ લોકોએ સાવચેતી રાખવી.'}</span>
@@ -703,37 +634,34 @@ export default function WeatherDashboardSection({ language }: { language: Langua
           </div>
         )}
 
-        {/* ─── BOTTOM INFORMATION BAR (Exact Match to Reference Image 2) ─── */}
-        <div className="relative z-10 border-t border-slate-200/90 dark:border-white/10 pt-4 mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 select-none">
+        {/* ─── BOTTOM INFORMATION BAR (Compact, Single-Line) ─── */}
+        <div className="relative z-10 border-t border-slate-100 dark:border-white/10 pt-2.5 mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs select-none">
           {/* Left: Link to Full Details */}
           <Link
             href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
-            className="group flex items-center gap-1.5 text-sm sm:text-base font-black text-[#C8101E] hover:text-[#A80F19] transition-colors cursor-pointer"
+            className="group flex items-center gap-1 font-black text-[#C8101E] hover:text-[#A80F19] transition-colors cursor-pointer"
             title={isGu ? `${selectedCity} માટે સંપૂર્ણ હવામાન અને AQI વિગતો જુઓ` : `View complete Weather & AQI details for ${selectedCity}`}
           >
             <span>{isGu ? 'સંપૂર્ણ હવામાન & AQI વિગતો જુઓ' : 'View Full Weather & AQI Details'}</span>
-            <ArrowUpRight className="h-4 w-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <ArrowUpRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </Link>
 
-          {/* Center Vertical Separator (Desktop) */}
-          <span className="hidden sm:inline-block text-slate-300 dark:text-slate-700 font-light select-none">|</span>
-
           {/* Right: Refresh Icon + Last Updated Timestamp */}
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
+          <div className="flex items-center gap-2 font-medium text-slate-500 dark:text-slate-400">
             <button
               type="button"
               onClick={() => fetchLiveData(true)}
               disabled={isRefreshing}
-              className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 text-[#C8101E] font-black transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#C8101E] font-bold transition-colors cursor-pointer disabled:opacity-50"
               title={isGu ? 'તાજી માહિતી રિફ્રેશ કરો' : 'Refresh live data'}
             >
-              <RotateCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              <RotateCw className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>{isRefreshing ? (isGu ? 'અપડેટ થાય છે...' : 'Refreshing...') : isGu ? 'છેલ્લું અપડેટ:' : 'Last Update:'}</span>
             </button>
             <span className="font-bold text-[#171B2D] dark:text-white">
-              {lastUpdateStr || '2026-11-13 10:22'}
+              {lastUpdateStr || formatCurrentTimestamp()}
             </span>
-            <span className="text-xs text-slate-400 font-medium">(local time)</span>
+            <span className="text-[11px] text-slate-400 font-medium">({isGu ? 'સ્થાનિક સમય IST' : 'IST'})</span>
           </div>
         </div>
       </div>

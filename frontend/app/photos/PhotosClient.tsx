@@ -153,7 +153,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
       </header>
 
       {/* Photo Gallery Grid matching Home Page Card Dimensions */}
-      <div className="w-full flex flex-col items-center sm:flex-row sm:flex-wrap sm:justify-center gap-5 sm:gap-6 mx-auto">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
         {gallery.map((photo, index) => {
           const captionSource = photo.caption || photo.captionGu || photo.alt || '';
 
@@ -161,55 +161,39 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
             <Link
               key={`${photo.id}-${index}`}
               href={`/photos/${photo.id}`}
-              className="group relative flex flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] h-[280px] md:h-[350px] mx-auto sm:mx-0 overflow-hidden rounded-2xl shadow-lg border border-border/10 bg-card select-none transition-transform duration-300 hover:-translate-y-1"
+              className="group relative flex flex-col overflow-hidden rounded-2xl shadow-md hover:shadow-xl border border-border/80 dark:border-white/[0.08] bg-card dark:bg-[#161822] select-none transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40"
             >
-              <PhotoCardImage
-                src={photo.src}
-                alt={captionSource || 'Gallery Photo'}
-                index={index}
-              />
+              {/* 1. Top Section: Full Photo */}
+              <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                <PhotoCardImage
+                  src={photo.src}
+                  alt={captionSource || 'Gallery Photo'}
+                  index={index}
+                />
 
-              {/* Top ambient gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
+                {/* Photo count badge top-right */}
+                {Array.isArray(photo.images) && photo.images.length > 1 && (
+                  <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-sm px-2.5 py-1 text-[10.5px] font-black text-white shadow-md border border-white/20">
+                      <Camera className="w-3 h-3 text-red-400" />
+                      <span>{photo.images.length}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
 
-              {/* Bottom dark gradient overlay */}
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
-                style={{ opacity: 0.88 }}
-              />
-
-              {/* Category Badge & Photo Count Badge */}
-              {/* Photo count badge top-right */}
-              {Array.isArray(photo.images) && photo.images.length > 1 && (
-                <div className="absolute top-3.5 right-3.5 z-10 pointer-events-none">
-                  <span className="inline-flex items-center gap-1 rounded-md bg-black/75 backdrop-blur-sm px-2 py-0.5 text-[11px] font-black text-white shadow-md border border-white/20">
-                    <Camera className="w-3 h-3 text-red-400" />
-                    <span>{photo.images.length}</span>
-                  </span>
-                </div>
-              )}
-
-              {/* Title & Call-to-action overlay matching Image 2 */}
-              <div className="absolute bottom-0 inset-x-0 p-4 pt-8 z-10 pointer-events-none">
-                <h2 className="text-white text-[14px] sm:text-[15px] font-black leading-snug line-clamp-2 drop-shadow-md select-none transition-transform duration-300 group-hover:-translate-y-0.5">
+              {/* 2. Bottom Section: Heading & Link below photo */}
+              <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                <h2 className="text-foreground group-hover:text-[#B3121B] text-[14.5px] md:text-[15.5px] font-extrabold leading-snug line-clamp-2 select-none transition-colors">
                   <AutoTranslateString text={captionSource} language={language} />
                 </h2>
 
-                {/* "— ફોટો જુઓ >" Link matching Home page */}
-                <div className="flex items-center gap-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="h-[2.5px] w-7 rounded-full bg-[#B3121B]" />
-                  <span className="text-white text-[13.5px] md:text-[14.5px] font-extrabold tracking-wide">
-                    {language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-[#B3121B] stroke-[3]" />
+                <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
+                  <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
+                  <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
+                  <span>→</span>
                 </div>
               </div>
-
-              {/* Border glow on hover matching Home page */}
-              <div
-                className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ boxShadow: 'inset 0 0 0 2px #B3121B' }}
-              />
             </Link>
           );
         })}

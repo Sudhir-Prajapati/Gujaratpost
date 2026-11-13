@@ -339,52 +339,36 @@ function GalleryScrollStrip({
                   e.stopPropagation();
                 }
               }}
-              className="group relative flex flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] h-[280px] md:h-[350px] overflow-hidden rounded-2xl shadow-lg border border-border/10 bg-card select-none transition-transform duration-300 hover:-translate-y-1"
+              className="group relative flex flex-col flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] overflow-hidden rounded-2xl shadow-md hover:shadow-xl border border-border/80 dark:border-white/[0.08] bg-card dark:bg-[#161822] select-none transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <GalleryStripImage src={item.src} alt={title} index={absIdx} />
+              {/* 1. Top Section: Full Photo */}
+              <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                <GalleryStripImage src={item.src} alt={title} index={absIdx} />
 
-              {/* Top ambient gradient */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-transparent to-transparent pointer-events-none" />
-
-              {/* Bottom read gradient */}
-              <div
-                className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
-                style={{ opacity: 0.88 }}
-              />
-
-              {/* Photo count badge */}
-              {Array.isArray(item.images) && item.images.length > 1 && (
-                <div className="absolute top-3 right-3 z-10 pointer-events-none">
-                  <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
-                    <Camera className="w-3 h-3 text-red-400" />
-                    <span>{item.images.length}</span>
-                  </span>
-                </div>
-              )}
-
-              {/* Caption & View link */}
-              <div className="absolute inset-x-0 bottom-0 z-10 p-4 translate-y-0 group-hover:-translate-y-1 transition-transform duration-300 pointer-events-none">
-                <p className="text-white font-bold leading-snug line-clamp-2 drop-shadow-lg text-[14.5px] md:text-[16.5px]">
-                  <AutoTranslateString text={title} language={language} />
-                </p>
-
-                <div className="flex items-center gap-2 mt-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="h-[2.5px] w-7 rounded-full" style={{ backgroundColor: accentColor }} />
-                  <span className="text-white text-[13.5px] md:text-[14.5px] font-extrabold tracking-wide">
-                    {language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}
-                  </span>
-                  <svg className="h-4 w-4" style={{ color: accentColor }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
+                {/* Photo count badge */}
+                {Array.isArray(item.images) && item.images.length > 1 && (
+                  <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">
+                    <span className="text-white text-[10.5px] font-black px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-sm border border-white/20 shadow-md flex items-center gap-1.5">
+                      <Camera className="w-3 h-3 text-red-400" />
+                      <span>{item.images.length}</span>
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Border glow on hover */}
-              <div
-                className="absolute inset-0 rounded-2xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ boxShadow: `inset 0 0 0 2px ${accentColor}` }}
-              />
+              {/* 2. Bottom Section: Heading & Link below photo */}
+              <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                <h3 className="text-foreground group-hover:text-[#B3121B] font-extrabold leading-snug line-clamp-2 text-[14.5px] md:text-[15.5px] transition-colors">
+                  <AutoTranslateString text={title} language={language} />
+                </h3>
+
+                <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
+                  <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
+                  <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
+                  <span>→</span>
+                </div>
+              </div>
             </Link>
           );
         })}

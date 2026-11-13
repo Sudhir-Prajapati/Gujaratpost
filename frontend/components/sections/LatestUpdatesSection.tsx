@@ -413,9 +413,9 @@ export default function LatestUpdatesSection({
                   />
                 </div>
 
-                {/* Title with fixed height to prevent mobile auto-rotate layout shifts */}
-                <div className="h-[46px] sm:h-[50px] min-h-[46px] sm:min-h-[50px] overflow-hidden flex items-start">
-                  <h3 className="font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 text-[16.5px] sm:text-[18px]">
+                {/* Title with reserved min-height to prevent mobile auto-rotate layout shifts */}
+                <div className="min-h-[50px] sm:min-h-[54px] flex items-start">
+                  <h3 className="font-black leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3 text-[16.5px] sm:text-[18px]">
                     <AutoArticleTitle article={currentMobileCard} language={language} />
                   </h3>
                 </div>
@@ -503,8 +503,8 @@ export default function LatestUpdatesSection({
                       className="transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
-                  <div className="h-[42px] min-h-[42px] overflow-hidden flex items-start">
-                    <h3 className="font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2 text-[14.5px]">
+                  <div className="min-h-[46px] flex items-start">
+                    <h3 className="font-black leading-[1.36] text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-3 text-[14.5px]">
                       <AutoArticleTitle article={art} language={language} />
                     </h3>
                   </div>
