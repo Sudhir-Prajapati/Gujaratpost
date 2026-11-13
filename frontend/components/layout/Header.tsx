@@ -85,7 +85,7 @@ function getCategoryIcon(slug: string, name?: string) {
   const n = (name || '').toLowerCase();
 
   // Cities
-  if (s === 'ahmedabad' || s === 'surat' || s === 'rajkot' || s === 'vadodara' || s === 'gandhinagar') {
+  if (s === 'ahmedabad' || s === 'surat' || s === 'rajkot' || s === 'vadodara' || s === 'gandhinagar' || s === 'other-cities' || s === 'othercities' || s === 'other' || n.includes('શહેરો')) {
     return <MapPin className="h-5 w-5 text-red-600 shrink-0" />;
   }
 
@@ -240,13 +240,14 @@ function PlayStoreIcon({ className = 'h-4 w-4' }: { className?: string }) {
   );
 }
 
-// The 12 flat navigation links shown in the nav bar
+// The city navigation links shown in the nav bar and mobile drawer
 const CITY_NAV_LINKS = [
   { label: 'Ahmedabad', labelGu: 'અમદાવાદ', labelHi: 'अहमदाबाद', href: '/category/ahmedabad', slug: 'ahmedabad' },
   { label: 'Surat', labelGu: 'સુરત', labelHi: 'सूरत', href: '/category/surat', slug: 'surat' },
   { label: 'Rajkot', labelGu: 'રાજકોટ', labelHi: 'राजकोट', href: '/category/rajkot', slug: 'rajkot' },
   { label: 'Vadodara', labelGu: 'વડોદરા', labelHi: 'वडोदरा', href: '/category/vadodara', slug: 'vadodara' },
   { label: 'Gandhinagar', labelGu: 'ગાંધીનગર', labelHi: 'गांधीनगर', href: '/category/gandhinagar', slug: 'gandhinagar' },
+  { label: 'Other Cities', labelGu: 'અન્ય શહેરો', labelHi: 'अन्य शहर', href: '/category/other-cities', slug: 'other-cities' },
 ];
 
 const NAV_LINKS = [
@@ -258,6 +259,7 @@ const NAV_LINKS = [
   { label: 'Rajkot', labelGu: 'રાજકોટ', labelHi: 'राजकोट', href: '/category/rajkot' },
   { label: 'Vadodara', labelGu: 'વડોદરા', labelHi: 'वडोदरा', href: '/category/vadodara' },
   { label: 'Gandhinagar', labelGu: 'ગાંધીનગર', labelHi: 'गांधीनगर', href: '/category/gandhinagar' },
+  { label: 'Other Cities', labelGu: 'અન્ય શહેરો', labelHi: 'अन्य शहर', href: '/category/other-cities' },
   { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national' },
   { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world' },
   { label: 'Politics', labelGu: 'રાજકારણ', labelHi: 'राजनीति', href: '/category/politics' },
@@ -598,9 +600,9 @@ export default function Header() {
     const videoLink = { label: 'Video', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos' };
     const gujaratLink = { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'ગુજરાત', href: '/category/gujarat' };
 
-    // Explicit 5 major cities in exact user-requested sequence:
-    // Ahmedabad -> Surat -> Rajkot -> Vadodara -> Gandhinagar
-    const citySequence = ['ahmedabad', 'surat', 'rajkot', 'vadodara', 'gandhinagar'];
+    // Explicit major cities in exact user-requested sequence:
+    // Ahmedabad -> Surat -> Rajkot -> Vadodara -> Gandhinagar -> Other Cities
+    const citySequence = ['ahmedabad', 'surat', 'rajkot', 'vadodara', 'gandhinagar', 'other-cities'];
     const cityLinks = citySequence.map((slug) => {
       const foundInDb = dbCategories.find((c) => (c.slug || '').toLowerCase() === slug);
       if (foundInDb) return mapCategory(foundInDb);
@@ -633,18 +635,16 @@ export default function Header() {
   }, [dbCategories]);
 
   const allDrawerCategories = useMemo(() => {
-    // 12 categories matching mobile 2-column reference layout (11 primary + 'વધુ' linking to /categories)
+    // Categories matching mobile 2-column layout (without business, sports, and agriculture)
     return [
       { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'गुजरात', href: '/category/gujarat', slug: 'gujarat' },
       { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national', slug: 'national' },
       { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world', slug: 'world' },
       { label: 'Politics', labelGu: 'રાજનીતિ', labelHi: 'राजनीति', href: '/category/politics', slug: 'politics' },
-      { label: 'Business', labelGu: 'બિઝનેસ', labelHi: 'बिजनेस', href: '/category/business', slug: 'business' },
-      { label: 'Sports', labelGu: 'ક્રીડા', labelHi: 'खेल', href: '/category/sports', slug: 'sports' },
       { label: 'Technology', labelGu: 'ટેકનોલોજી', labelHi: 'तकनीक', href: '/category/technology', slug: 'technology' },
       { label: 'Entertainment', labelGu: 'મનોરંજન', labelHi: 'मनोरंजन', href: '/category/entertainment', slug: 'entertainment' },
       { label: 'Health', labelGu: 'હેલ્થ', labelHi: 'स्वास्थ्य', href: '/category/health', slug: 'health' },
-      { label: 'Agriculture', labelGu: 'કૃષિ', labelHi: 'कृषि', href: '/category/agriculture', slug: 'agriculture' },
+      { label: 'Crime', labelGu: 'ક્રાઇમ', labelHi: 'क्राइम', href: '/category/crime', slug: 'crime' },
       { label: 'Education', labelGu: 'શિક્ષણ', labelHi: 'शिक्षा', href: '/category/education', slug: 'education' },
       { label: 'More', labelGu: 'વધુ', labelHi: 'अधिक', href: '/categories', slug: 'more' },
     ];
