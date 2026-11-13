@@ -23,7 +23,8 @@ const nodeOptions = process.env.NODE_OPTIONS || '--max-old-space-size=4096';
 // Zero-Downtime Safe Build:
 // Never wipe .next in production while the server is live to prevent 404/500 downtime during builds.
 const isWindows = process.platform === 'win32';
-const nextDir = path.join(realCwd, '.next');
+const distDirName = process.env.NEXT_DIST_DIR || '.next';
+const nextDir = path.join(realCwd, distDirName);
 if (isWindows && process.env.NODE_ENV !== 'production' && process.argv.includes('--clean')) {
   try {
     if (fs.existsSync(nextDir)) {

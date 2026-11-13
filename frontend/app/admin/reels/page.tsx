@@ -32,7 +32,7 @@ interface ReelData {
   createdAt: string;
 }
 
-export function getAdminReelThumbnail(reel: ReelData): string | null {
+function getAdminReelThumbnail(reel: ReelData): string | null {
   const url = (reel.videoUrl || reel.instaUrl || '').trim();
   const instaMatch = url.match(/instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
   const shortcode = instaMatch?.[1] || '';

@@ -87,7 +87,7 @@ const GUJARATI_TRANSLIT_MAP: Record<string, string> = {
   'ં': 'n', 'ઃ': 'h', '્': ''
 };
 
-export const slugifyText = (text: string): string => {
+const slugifyText = (text: string): string => {
   if (!text) return '';
   const trimmed = text.trim();
   if (GUJARATI_TRANSLIT_MAP[trimmed]) {
