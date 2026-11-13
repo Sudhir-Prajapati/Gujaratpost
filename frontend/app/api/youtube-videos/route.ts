@@ -228,6 +228,15 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
                 }
               }
 
+              // Skip old videos (e.g. 1+ years old, 4 years old)
+              if (publishedTime && (publishedTime.includes('year') || publishedTime.includes('yr'))) {
+                return;
+              }
+              const parsedDate = parseRelativeTime(publishedTime);
+              if (new Date(parsedDate).getTime() < Date.now() - 365 * 24 * 60 * 60 * 1000) {
+                return;
+              }
+
               const thumb = extractThumbnail(vm, videoId, tab === 'shorts');
 
               items.push({
@@ -238,7 +247,7 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
                 titleHi: title || 'Gujarat Post News',
                 description: title,
                 thumbnail: thumb,
-                publishedAt: parseRelativeTime(publishedTime),
+                publishedAt: parsedDate,
                 type: tab === 'shorts' ? 'short' : 'video',
                 views: parseNumericViews(viewsText, videoId),
                 duration,
@@ -263,6 +272,15 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
               const viewsText = v.viewCountText?.simpleText || v.viewCountText?.runs?.[0]?.text || '';
               const publishedTime = v.publishedTimeText?.simpleText || v.publishedTimeText?.runs?.[0]?.text || '';
 
+              // Skip old videos (e.g. 1+ years old, 4 years old)
+              if (publishedTime && (publishedTime.includes('year') || publishedTime.includes('yr'))) {
+                return;
+              }
+              const parsedDate = parseRelativeTime(publishedTime);
+              if (new Date(parsedDate).getTime() < Date.now() - 365 * 24 * 60 * 60 * 1000) {
+                return;
+              }
+
               const thumb = extractThumbnail(v, videoId, tab === 'shorts');
 
               items.push({
@@ -273,7 +291,7 @@ async function fetchChannelTab(tab: 'videos' | 'shorts'): Promise<any[]> {
                 titleHi: title || 'Gujarat Post News',
                 description: title,
                 thumbnail: thumb,
-                publishedAt: parseRelativeTime(publishedTime),
+                publishedAt: parsedDate,
                 type: tab === 'shorts' ? 'short' : 'video',
                 views: parseNumericViews(viewsText, videoId),
                 duration,

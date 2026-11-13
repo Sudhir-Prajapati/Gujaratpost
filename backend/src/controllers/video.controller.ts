@@ -573,6 +573,10 @@ export class VideoController {
 
       const where: any = {};
 
+      // Exclude old videos (older than 1 year) so legacy or stale videos never appear
+      const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+      where.publishedAt = { gte: oneYearAgo };
+
       if (query) {
         where.OR = [
           { title: { contains: query } },

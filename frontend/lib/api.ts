@@ -670,7 +670,16 @@ export async function getPublicVideos(type?: string): Promise<Video[]> {
     }
   }
 
-  return combined;
+  // Strict filter: Exclude any video older than 1 year (never show 4-year old or legacy videos)
+  const oneYearAgoMs = Date.now() - 365 * 24 * 60 * 60 * 1000;
+  return combined.filter((v: any) => {
+    if (!v) return false;
+    if (v.publishedAt) {
+      const t = new Date(v.publishedAt).getTime();
+      if (!isNaN(t) && t > 0 && t < oneYearAgoMs) return false;
+    }
+    return true;
+  });
 }
 
 

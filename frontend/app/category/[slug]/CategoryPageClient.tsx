@@ -663,6 +663,22 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     ? getLocalized(language, { en: pairedCategory.name, gu: pairedCategory.gu, hi: pairedCategory.hi })
     : categoryName;
 
+  const getCategoryNewsTitle = () => {
+    const baseName = currentActiveCatLabel;
+    if (language === 'gu') {
+      if (baseName.includes('સમાચાર')) return baseName;
+      if (baseName === 'અન્ય શહેરો') return 'અન્ય શહેરોના સમાચાર';
+      return `${baseName} સમાચાર`;
+    }
+    if (language === 'hi') {
+      if (baseName.includes('समाचार')) return baseName;
+      if (baseName === 'अन्य शहर') return 'अन्य शहरों के समाचार';
+      return `${baseName} समाचार`;
+    }
+    if (baseName.toLowerCase().includes('news')) return baseName;
+    return `${baseName} News`;
+  };
+
   /* Get localized location */
   const getArticleLocation = (art: Article) => {
     if (activeTab === 'video') {
@@ -727,8 +743,26 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         isArticle: true,
       }));
 
+    // Freshness filter: Drop any video older than 1 year (strictly exclude 4-year-old or legacy videos)
+    const oneYearAgoMs = Date.now() - 365 * 24 * 60 * 60 * 1000;
+    const isFreshVideo = (v: any) => {
+      if (!v) return false;
+      if (v.publishedAt) {
+        const t = new Date(v.publishedAt).getTime();
+        if (!isNaN(t) && t > 0 && t < oneYearAgoMs) return false;
+      }
+      const rel = `${v.relativeTime || ''} ${v.relativeTimeGu || ''}`.toLowerCase();
+      if (rel.includes('year') || rel.includes('વર્ષ')) {
+        const m = rel.match(/(\d+)\s*(?:year|વર્ષ)/);
+        if (m && parseInt(m[1]) >= 1) return false;
+      }
+      return true;
+    };
+
+    const freshVideos = (videos || []).filter(isFreshVideo);
+
     // YouTube videos ONLY if title/description contains category title/slug (e.g. Surat / સુરત, Bharat / ભારત, etc.)
-    const categoryMatchingYouTubeVideos = (videos || [])
+    const categoryMatchingYouTubeVideos = freshVideos
       .filter((v: any) => {
         if (!v) return false;
         const textToSearch = `${v.title || ''} ${v.titleGu || ''} ${v.description || ''} ${v.categoryName || ''} ${v.category || ''}`.toLowerCase();
@@ -759,7 +793,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       }));
 
     // Other YouTube videos from the channel to ensure the top section has 6 REAL videos in EVERY category
-    const otherYouTubeVideos = (videos || [])
+    const otherYouTubeVideos = freshVideos
       .filter((v: any) => !categoryMatchingYouTubeVideos.some((mv: any) => (mv.youtubeId || mv.id) === (v.youtubeId || v.id)))
       .map((v: any) => ({
         id: v.id || v.youtubeId || v.videoId,
@@ -781,8 +815,18 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         isYouTube: true,
       }));
 
-    // 1. Top Section (Image 1): Exactly 6 real videos
-    const allAvailableVideos = [...videoArticles, ...categoryMatchingYouTubeVideos, ...otherYouTubeVideos];
+    const sortByDateDesc = (a: any, b: any) => {
+      const ta = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const tb = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return tb - ta;
+    };
+
+    // Sort videos newest-first
+    categoryMatchingYouTubeVideos.sort(sortByDateDesc);
+    otherYouTubeVideos.sort(sortByDateDesc);
+
+    // 1. Top Section (Image 1): Exactly 6 real fresh videos
+    const allAvailableVideos = [...videoArticles, ...categoryMatchingYouTubeVideos, ...otherYouTubeVideos].sort(sortByDateDesc);
     const top6Videos = allAvailableVideos.slice(0, 6);
     const top6Ids = new Set(top6Videos.map((item) => item.id).filter(Boolean));
 
@@ -1438,8 +1482,30 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           </div>
         </div>
 
+        {/* CATEGORY NEWS ARTICLES SECTION HEADER (Separates News from Videos above) */}
+        {displayArticles.length > 0 && (
+          <div className={`mt-7 md:mt-10 mb-4 md:mb-5 ${activeTab === 'video' ? 'pt-6 border-t-2 border-border/80' : 'pt-4 border-t border-border/40'}`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-1 my-0.5" style={{ minHeight: '1.2em' }} aria-hidden="true" />
+                <h2 className="text-[20px] sm:text-[22px] md:text-[23px] font-black tracking-tight text-foreground flex items-center flex-wrap gap-2">
+                  <span>{getCategoryNewsTitle()}</span>
+                  {activeTab === 'video' && (
+                    <span className="text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-[#B3121B] dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                      {getLocalized(language, { gu: 'વાંચવા માટેના સમાચાર', hi: 'पढ़ने के लिए समाचार', en: 'News Articles' })}
+                    </span>
+                  )}
+                </h2>
+              </div>
+              <span className="text-xs font-semibold text-muted-foreground hidden sm:inline-block">
+                {getLocalized(language, { gu: 'બધા સમાચાર અને વિગતો', hi: 'सभी समाचार और विवरण', en: 'All News & Updates' })}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* POPULAR ARTICLES GRID */}
-        <div className="mt-6" ref={articlesGridRef}>
+        <div className="mt-2" ref={articlesGridRef}>
           {/* Loading spinner during page fetch */}
           {(pageLoading || (activeTab === 'paired' && pairedLoading && pairedArticles.length === 0)) && (
             <div className="flex justify-center items-center py-16">
