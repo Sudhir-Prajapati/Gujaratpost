@@ -28,13 +28,14 @@ export async function syncArticleToHeroSettings(postId: string, isFeatured?: boo
 
     const heroSetting = await prisma.heroSetting.findUnique({ where: { id: 'default' } });
     if (!heroSetting) {
-      if (effectiveFeatured) {
+      if (effectiveFeatured || effectiveTrending) {
         await prisma.heroSetting.create({
           data: {
             id: 'default',
-            slot1Id: postId,
-            heroGridIds: JSON.stringify([postId]),
+            slot1Id: effectiveFeatured ? postId : undefined,
+            heroGridIds: effectiveFeatured ? JSON.stringify([postId]) : undefined,
             trendingNewsIds: effectiveTrending ? JSON.stringify([postId]) : undefined,
+            popularNewsIds: effectiveTrending ? JSON.stringify([postId]) : undefined,
           },
         });
       }
@@ -49,6 +50,11 @@ export async function syncArticleToHeroSettings(postId: string, isFeatured?: boo
     let trendingNewsIds: string[] = [];
     if (heroSetting.trendingNewsIds) {
       try { trendingNewsIds = JSON.parse(heroSetting.trendingNewsIds); } catch { trendingNewsIds = []; }
+    }
+
+    let popularNewsIds: string[] = [];
+    if (heroSetting.popularNewsIds) {
+      try { popularNewsIds = JSON.parse(heroSetting.popularNewsIds); } catch { popularNewsIds = []; }
     }
 
     let updated = false;
@@ -66,9 +72,11 @@ export async function syncArticleToHeroSettings(postId: string, isFeatured?: boo
 
     if (effectiveTrending) {
       trendingNewsIds = [postId, ...trendingNewsIds.filter((id) => id !== postId)].slice(0, 15);
+      popularNewsIds = [postId, ...popularNewsIds.filter((id) => id !== postId)].slice(0, 15);
       updated = true;
     } else {
       trendingNewsIds = trendingNewsIds.filter((id) => id !== postId);
+      popularNewsIds = popularNewsIds.filter((id) => id !== postId);
       updated = true;
     }
 
@@ -81,6 +89,7 @@ export async function syncArticleToHeroSettings(postId: string, isFeatured?: boo
           slot3Id,
           heroGridIds: JSON.stringify(heroGridIds),
           trendingNewsIds: JSON.stringify(trendingNewsIds),
+          popularNewsIds: JSON.stringify(popularNewsIds),
         },
       });
       invalidateHeroSettingsCache();

@@ -137,6 +137,21 @@ export async function ensureHeroSettingsTableColumns() {
 
 export async function getAutoPopularNewsArticles(): Promise<any[]> {
   try {
+    // 1. Fetch newest published trending articles (up to 6)
+    const trendingPosts: any[] = await prisma.post.findMany({
+      where: {
+        status: 'PUBLISHED',
+        OR: [
+          { isTrending: true },
+          { category: { slug: 'trending' } },
+          { categories: { some: { category: { slug: 'trending' } } } },
+        ],
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+      select: heroPostSelect,
+    }).catch(() => []);
+
     const activeNewsCategories: any[] = await prisma.category.findMany({
       where: {
         isActive: true,
@@ -157,7 +172,7 @@ export async function getAutoPopularNewsArticles(): Promise<any[]> {
           categoryId: cat.id,
           status: 'PUBLISHED',
         },
-        orderBy: { articleNumber: 'desc' },
+        orderBy: { createdAt: 'desc' },
         take: 2,
         select: heroPostSelect,
       }).catch(() => [])
@@ -168,6 +183,14 @@ export async function getAutoPopularNewsArticles(): Promise<any[]> {
     const round1: any[] = [];
     const round2: any[] = [];
     const seenAutoIds = new Set<string>();
+
+    // Prioritize trending articles at the top of Popular News
+    trendingPosts.forEach((tp) => {
+      if (tp && !seenAutoIds.has(tp.id)) {
+        seenAutoIds.add(tp.id);
+        round1.push(formatPost(tp));
+      }
+    });
 
     categoryPostsResults.forEach((posts) => {
       if (posts[0] && !seenAutoIds.has(posts[0].id)) {
@@ -377,6 +400,7 @@ export class HeroController {
           activeTrendingRes,
           popularFallbackRes,
           mostReadFallbackRes,
+          activeTrendingPostsRes,
         ] = await Promise.all([
           // Query A: All target IDs in 1 query
           allTargetIds.length > 0
@@ -469,11 +493,33 @@ export class HeroController {
               select: heroPostSelect,
             });
           }).catch(() => []),
+
+          // Query G: Real published trending articles (marked with isTrending = true or category = trending)
+          withDbRetry(() =>
+            prisma.post.findMany({
+              where: {
+                status: 'PUBLISHED',
+                OR: [
+                  { isTrending: true },
+                  { category: { slug: 'trending' } },
+                  { categories: { some: { category: { slug: 'trending' } } } },
+                ],
+              },
+              orderBy: { createdAt: 'desc' },
+              take: 12,
+              select: heroPostSelect,
+            })
+          ).catch(() => []),
         ]);
 
         // 4. Assemble lookups in memory
         const postsMap = new Map<string, any>();
         targetPostsRes.forEach((p: any) => postsMap.set(p.id, formatPost(p)));
+        activeTrendingPostsRes.forEach((p: any) => {
+          if (!postsMap.has(p.id)) {
+            postsMap.set(p.id, formatPost(p));
+          }
+        });
         featuredFallbackRes.forEach((p: any) => {
           if (!postsMap.has(p.id)) {
             postsMap.set(p.id, formatPost(p));
@@ -529,30 +575,59 @@ export class HeroController {
           .sort((a: any, b: any) => (b.articleNumber || 0) - (a.articleNumber || 0))
           .slice(0, 10);
 
-        // Resolve Popular News (Automatic top 1-2 per category vs Manual 12 positions)
+        // Resolve Popular News ("લોકપ્રિય સમાચાર" slider on homepage)
+        // Dynamically prioritizes newly published trending articles, merges fresh curated positions,
+        // and eliminates stale/old articles (> 14 days old).
         const autoPopularNewsArticles = await getAutoPopularNewsArticles();
+        const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+        const formattedTrendingPosts = (activeTrendingPostsRes || []).map(formatPost);
 
         let popularNewsArticles: any[] = [];
-        if (popularNewsMode === 'auto') {
-          popularNewsArticles = autoPopularNewsArticles;
-          if (popularNewsArticles.length === 0) {
-            popularNewsArticles = (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted.slice(0, 12)).map(formatPost);
-          }
-          parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
-        } else {
-          // Manual mode: use admin curated list
-          if (parsedPopularNewsIds.length > 0) {
-            popularNewsArticles = parsedPopularNewsIds
-              .map((id) => postsMap.get(id))
-              .filter(Boolean);
-          }
-          if (popularNewsArticles.length === 0) {
-            popularNewsArticles = autoPopularNewsArticles.length > 0
-              ? autoPopularNewsArticles
-              : (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted.slice(0, 12)).map(formatPost);
-            parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+        const seenPopIds = new Set<string>();
+        const combinedPopular: any[] = [];
+
+        // 1. Newly published articles marked with Trending (isTrending = true or category = trending)
+        for (const art of formattedTrendingPosts) {
+          if (art && art.id && !seenPopIds.has(art.id)) {
+            seenPopIds.add(art.id);
+            combinedPopular.push(art);
           }
         }
+
+        // 2. Curated popularNewsIds from Admin Settings, excluding stale articles (> 14 days old)
+        if (popularNewsMode === 'manual' && parsedPopularNewsIds.length > 0) {
+          for (const id of parsedPopularNewsIds) {
+            const art = postsMap.get(id);
+            if (art && art.id && !seenPopIds.has(art.id)) {
+              const artDate = art.createdAt ? new Date(art.createdAt) : null;
+              if (!artDate || artDate >= fourteenDaysAgo) {
+                seenPopIds.add(art.id);
+                combinedPopular.push(art);
+              }
+            }
+          }
+        }
+
+        // 3. Complete remaining slots up to 12 from autoPopularNewsArticles
+        for (const art of autoPopularNewsArticles) {
+          if (combinedPopular.length >= 12) break;
+          if (art && art.id && !seenPopIds.has(art.id)) {
+            seenPopIds.add(art.id);
+            combinedPopular.push(art);
+          }
+        }
+
+        // 4. Fallback published posts if still < 12
+        for (const art of (popularFallbackRes.length > 0 ? popularFallbackRes : fallbackFormatted).map(formatPost)) {
+          if (combinedPopular.length >= 12) break;
+          if (art && art.id && !seenPopIds.has(art.id)) {
+            seenPopIds.add(art.id);
+            combinedPopular.push(art);
+          }
+        }
+
+        popularNewsArticles = combinedPopular.slice(0, 12);
+        parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
 
         // Resolve Hero Grid (strictly 9 articles for top hero section)
         const heroGridMode = (heroSetting as any)?.heroGridMode || 'auto';
@@ -957,30 +1032,72 @@ export class HeroController {
       finalPopularNewsMode = finalPopularNewsMode || 'manual';
 
       const autoPopularNewsArticles = await getAutoPopularNewsArticles();
+      const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
+      const trendingPostsForUpdate = await withDbRetry(() =>
+        prisma.post.findMany({
+          where: {
+            status: 'PUBLISHED',
+            OR: [
+              { isTrending: true },
+              { category: { slug: 'trending' } },
+              { categories: { some: { category: { slug: 'trending' } } } },
+            ],
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 12,
+          select: heroPostSelect,
+        })
+      ).catch(() => []);
+
+      const formattedTrendingForUpdate = trendingPostsForUpdate.map(formatPost);
 
       let popularNewsArticles: any[] = [];
-      if (finalPopularNewsMode === 'auto') {
-        popularNewsArticles = autoPopularNewsArticles;
-        parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
-      } else {
-        if (parsedPopularNewsIds.length > 0) {
-          const posts = await withDbRetry(() =>
-            prisma.post.findMany({
-              where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
-              select: heroPostSelect,
-            })
-          ).catch(() => []);
-          const map = new Map<string, any>();
-          posts.forEach((p) => map.set(p.id, formatPost(p)));
-          popularNewsArticles = parsedPopularNewsIds
-            .map((id) => map.get(id))
-            .filter(Boolean);
-        }
-        if (popularNewsArticles.length === 0) {
-          popularNewsArticles = autoPopularNewsArticles;
-          parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
+      const seenPopUpdateIds = new Set<string>();
+      const combinedPopUpdate: any[] = [];
+
+      // 1. Newly published articles marked with Trending (isTrending = true or category = trending)
+      for (const art of formattedTrendingForUpdate) {
+        if (art && art.id && !seenPopUpdateIds.has(art.id)) {
+          seenPopUpdateIds.add(art.id);
+          combinedPopUpdate.push(art);
         }
       }
+
+      // 2. Curated popularNewsIds from Admin Settings, excluding stale articles (> 14 days old)
+      if (finalPopularNewsMode === 'manual' && parsedPopularNewsIds.length > 0) {
+        const posts = await withDbRetry(() =>
+          prisma.post.findMany({
+            where: { id: { in: parsedPopularNewsIds }, status: 'PUBLISHED' },
+            select: heroPostSelect,
+          })
+        ).catch(() => []);
+        const map = new Map<string, any>();
+        posts.forEach((p) => map.set(p.id, formatPost(p)));
+
+        for (const id of parsedPopularNewsIds) {
+          const art = map.get(id);
+          if (art && art.id && !seenPopUpdateIds.has(art.id)) {
+            const artDate = art.createdAt ? new Date(art.createdAt) : null;
+            if (!artDate || artDate >= fourteenDaysAgo) {
+              seenPopUpdateIds.add(art.id);
+              combinedPopUpdate.push(art);
+            }
+          }
+        }
+      }
+
+      // 3. Complete remaining slots up to 12 from autoPopularNewsArticles
+      for (const art of autoPopularNewsArticles) {
+        if (combinedPopUpdate.length >= 12) break;
+        if (art && art.id && !seenPopUpdateIds.has(art.id)) {
+          seenPopUpdateIds.add(art.id);
+          combinedPopUpdate.push(art);
+        }
+      }
+
+      popularNewsArticles = combinedPopUpdate.slice(0, 12);
+      parsedPopularNewsIds = popularNewsArticles.map((a: any) => a.id);
 
       let finalMostReadMode = (updatedSetting as any)?.mostReadMode || mostReadMode;
       if (!finalMostReadMode) {
