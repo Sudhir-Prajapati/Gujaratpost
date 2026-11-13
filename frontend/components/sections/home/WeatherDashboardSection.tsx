@@ -349,7 +349,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
       </div>
 
       {/* ─── MAIN DASHBOARD CONTAINER (Compact, High-Density White Card) ─── */}
-      <div className="relative overflow-hidden bg-white dark:bg-[#151722] rounded-2xl rounded-tl-none border-[1.5px] border-[#FCA5A5]/80 dark:border-white/10 shadow-[0_4px_20px_rgba(200,16,30,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-4 sm:p-5 transition-all">
+      <div className="relative bg-white dark:bg-[#151722] rounded-2xl rounded-tl-none border-[1.5px] border-[#FCA5A5]/80 dark:border-white/10 shadow-[0_4px_20px_rgba(200,16,30,0.06)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-4 sm:p-5 transition-all">
         {/* Subtle Top-Right Red Gradient Accent */}
         <div
           className="pointer-events-none absolute top-0 right-0 w-64 sm:w-80 h-16 sm:h-20 bg-gradient-to-l from-[#C8101E]/15 via-[#C8101E]/5 to-transparent rounded-tr-2xl select-none z-0"
@@ -357,7 +357,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
         />
 
         {/* ── Header Row: City Name & Status (Left) + City Dropdown (Right) ── */}
-        <div className="relative z-10 flex flex-wrap items-center justify-between gap-2.5 mb-3.5 pb-2.5 border-b border-slate-100 dark:border-slate-800">
+        <div className={cn("relative flex flex-wrap items-center justify-between gap-2.5 mb-3.5 pb-2.5 border-b border-slate-100 dark:border-slate-800 transition-all", isDropdownOpen ? "z-40" : "z-20")}>
           <div className="flex items-center gap-2 flex-wrap">
             <div className="flex items-center gap-1.5">
               <MapPin className="h-5 w-5 text-[#C8101E] fill-[#C8101E] shrink-0" />
@@ -372,7 +372,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
           </div>
 
           {/* Quick City Switcher Modern Custom Dropdown */}
-          <div className="relative" ref={dropdownRef}>
+          <div className={cn("relative", isDropdownOpen ? "z-50" : "z-20")} ref={dropdownRef}>
             <button
               type="button"
               id="weather-city-select"
@@ -408,7 +408,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
             {isDropdownOpen && (
               <div
                 role="listbox"
-                className="absolute right-0 top-full mt-2 z-50 w-64 bg-white/95 dark:bg-[#1a1c29]/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-700/90 rounded-2xl shadow-2xl p-1.5 animate-in fade-in zoom-in-95 duration-150 origin-top-right select-none"
+                className="absolute right-0 top-full mt-2 z-50 w-64 sm:w-72 bg-white dark:bg-[#1a1c29] border border-slate-200 dark:border-slate-700 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.22)] dark:shadow-[0_16px_50px_rgba(0,0,0,0.7)] p-1.5 animate-in fade-in zoom-in-95 duration-150 origin-top-right select-none"
               >
                 {/* Header label */}
                 <div className="px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wider text-slate-400 dark:text-slate-500 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
@@ -514,7 +514,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
 
         {/* ─── TAB 1: WEATHER & AQI DUAL DASHBOARD ─── */}
         {activeTab === 'weather' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-stretch relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 sm:gap-4 items-stretch relative z-0">
             {/* ═════════════════════════════════════════════════════════════════ */}
             {/* ── LEFT SIDE (lg:col-span-6): COMPACT WEATHER CARD ── */}
             {/* ═════════════════════════════════════════════════════════════════ */}
@@ -713,7 +713,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
           </div>
         ) : (
           /* ─── TAB 2: DETAILED AIR QUALITY (AQI) VIEW ─── */
-          <div className="flex flex-col gap-3 relative z-10">
+          <div className="flex flex-col gap-3 relative z-0">
             {/* Top Station & City Details */}
             <div className="bg-slate-50/80 dark:bg-white/[0.02] border border-slate-200 dark:border-white/10 rounded-xl p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
@@ -789,7 +789,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
         )}
 
         {/* ─── BOTTOM INFORMATION BAR (Compact, Single-Line) ─── */}
-        <div className="relative z-10 border-t border-slate-100 dark:border-white/10 pt-2.5 mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs select-none">
+        <div className="relative z-0 border-t border-slate-100 dark:border-white/10 pt-2.5 mt-3 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs select-none">
           {/* Left: Link to Full Details */}
           <Link
             href={`/aqi?city=${encodeURIComponent(selectedCity)}`}
