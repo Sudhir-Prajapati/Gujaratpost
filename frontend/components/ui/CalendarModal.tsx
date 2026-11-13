@@ -183,7 +183,19 @@ export default function CalendarModal({
 
   const handleOpenNews = () => {
     onClose();
-    router.push('/');
+    // 1. Immediately pop open the dedicated Latest News (લેટેસ્ટ સમાચાર) drawer
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('gp-open-taj-samachar'));
+    }
+    // 2. If already on homepage, smoothly scroll to Latest Updates; otherwise navigate to homepage
+    if (typeof window !== 'undefined' && window.location.pathname === '/') {
+      const el = document.getElementById('latest-news-section');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      router.push('/#latest-news-section');
+    }
   };
 
   // Selected date details
@@ -335,10 +347,11 @@ export default function CalendarModal({
           <button
             type="button"
             onClick={handleOpenNews}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card text-foreground font-bold text-xs sm:text-sm hover:bg-muted transition-all active:scale-95"
+            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card text-foreground font-bold text-xs sm:text-sm hover:bg-muted hover:border-[#D71914] transition-all active:scale-95 cursor-pointer shadow-2xs"
+            title={language === 'en' ? 'View Latest News' : language === 'hi' ? 'लेटेस्ट समाचार देखें' : 'લેટેસ્ટ સમાચાર જુઓ'}
           >
             <CalendarIcon className="w-4 h-4 text-[#D71914]" />
-            <span>તાજા સમાચાર</span>
+            <span>{language === 'en' ? 'Latest News' : language === 'hi' ? 'लेटेस्ट समाचार' : 'લેટેસ્ટ સમાચાર'}</span>
           </button>
         </div>
       </div>

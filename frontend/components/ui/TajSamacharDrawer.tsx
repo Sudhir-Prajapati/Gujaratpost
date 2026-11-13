@@ -148,6 +148,13 @@ export default function TajSamacharDrawer() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  // Listen for external open requests (e.g. from CalendarModal)
+  useEffect(() => {
+    const handleOpen = () => setIsOpen(true);
+    window.addEventListener('gp-open-taj-samachar', handleOpen);
+    return () => window.removeEventListener('gp-open-taj-samachar', handleOpen);
+  }, []);
+
   // Lazy load latest news only when user opens drawer
   useEffect(() => {
     if (!isOpen || hasFetched) return;

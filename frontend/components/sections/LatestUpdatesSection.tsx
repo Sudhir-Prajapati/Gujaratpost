@@ -210,9 +210,9 @@ export default function LatestUpdatesSection({
 
   // Localized string selectors
   const labelLatest = getLocalized(language, {
-    en: "Latest  News",
-    gu: "Latest  સમાચાર",
-    hi: "ताजा  समाचार"
+    en: "Latest News",
+    gu: "લેટેસ્ટ સમાચાર",
+    hi: "लेटेस्ट समाचार"
   });
 
   const labelContinuous = getLocalized(language, {
@@ -650,7 +650,7 @@ export default function LatestUpdatesSection({
   }
 
   return (
-    <section className="mx-auto max-w-screen-xl px-4 mt-2.5">
+    <section id="latest-news-section" className="mx-auto max-w-screen-xl px-4 mt-2.5 scroll-mt-20">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_336px] gap-4 lg:gap-8 items-start border-t border-border/60 pt-2">
         {timelineContent}
         {sidebarContent}
