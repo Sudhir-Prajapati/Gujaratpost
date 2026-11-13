@@ -125,11 +125,11 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   'international': ['international', 'world'],
   'trending': ['trending', 'popular-stories'],
   'popular-stories': ['popular-stories', 'trending'],
-  'entertainment-life-style': ['entertainment-life-style', 'entertainment', 'lifestyle', 'entertainmentlifestyle'],
-  'entertainmentlifestyle': ['entertainment', 'entertainment-life-style', 'lifestyle'],
-  'entertainment-lifestyle': ['entertainment', 'entertainment-life-style', 'lifestyle'],
+  'entertainment-life-style': ['entertainment-life-style', 'entertainment', 'lifestyle', 'entertainmentlifestyle', 'entertainment-lifestyle'],
+  'entertainmentlifestyle': ['entertainment-life-style', 'entertainment', 'lifestyle', 'entertainmentlifestyle', 'entertainment-lifestyle'],
+  'entertainment-lifestyle': ['entertainment-life-style', 'entertainment', 'lifestyle', 'entertainmentlifestyle', 'entertainment-lifestyle'],
   'entertainment': ['entertainment', 'entertainment-life-style', 'lifestyle', 'entertainmentlifestyle', 'entertainment-lifestyle'],
-  'lifestyle': ['lifestyle', 'entertainment-life-style', 'entertainment'],
+  'lifestyle': ['lifestyle', 'entertainment-life-style', 'entertainment', 'entertainmentlifestyle', 'entertainment-lifestyle'],
   'national': ['national', 'india'],
   'india': ['india', 'national'],
   'politics': ['politics'],
@@ -629,7 +629,7 @@ ${itemsXml}  </channel>
 
     where.AND.push({ OR: orConditions });
 
-    const primaryCat = categoryRecords[0];
+    const primaryCat = categoryRecords.find((c) => c.slug === categorySlug) || categoryRecords[0];
     if (primaryCat) {
       const catName = lang === 'en' ? primaryCat.name : lang === 'hi' ? (primaryCat.nameHi || primaryCat.name) : (primaryCat.nameGu || primaryCat.name);
       channelTitle = lang === 'en'
@@ -682,7 +682,7 @@ ${itemsXml}  </channel>
   const articles = await prisma.post.findMany({
     where,
     take: limit,
-    orderBy: [{ articleNumber: 'desc' }, { createdAt: 'desc' }],
+    orderBy: { createdAt: 'desc' },
     select: {
       id: true,
       slug: true,
@@ -776,8 +776,9 @@ ${itemsXml}  </channel>
       const escapedImg = escapeXml(imageUrl);
       itemsXml += `
       <enclosure url="${escapedImg}" type="image/jpeg" length="0" />
-      <media:content url="${escapedImg}" medium="image">
+      <media:content url="${escapedImg}" medium="image" type="image/jpeg">
         <media:title>${wrapCdata(rawTitle)}</media:title>
+        <media:description>${wrapCdata(rawExcerpt)}</media:description>
       </media:content>`;
     }
 

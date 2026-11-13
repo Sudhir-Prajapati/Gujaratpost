@@ -9,13 +9,14 @@ export async function GET(request: NextRequest) {
     const headers: Record<string, string> = {};
 
     // Aggregators like Dailyhunt must always receive 200 OK with full XML (never 304)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     const res = await fetch(backendUrl, {
       headers,
       cache: 'no-store',
-    });
-
-    
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timeoutId));
 
     const xmlText = await res.text();
     const responseHeaders: Record<string, string> = {
@@ -29,14 +30,15 @@ export async function GET(request: NextRequest) {
     if (lastModified) responseHeaders['Last-Modified'] = lastModified;
 
     return new Response(xmlText, {
-      status: res.status,
+      status: res.ok ? res.status : 200,
       headers: responseHeaders,
     });
   } catch (error) {
+    console.error('[RSS XML Route Error]', error);
     return new Response(
       '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>Gujarat Post</title><description>News Feed</description></channel></rss>',
       {
-        status: 500,
+        status: 200,
         headers: { 'Content-Type': 'application/rss+xml; charset=utf-8' },
       }
     );

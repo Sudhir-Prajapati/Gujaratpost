@@ -2,10 +2,28 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/prisma.js';
 import { sendSuccess } from '../utils/response.js';
 import { BadRequestError, NotFoundError } from '../utils/errors.js';
-import { generatePublicRssFeed, invalidatePublicRssCache } from '../services/rss.service.js';
+import { generatePublicRssFeed, invalidatePublicRssCache, getSiteBaseUrl } from '../services/rss.service.js';
 import { testExternalFeed, syncRssSource } from '../services/rssImport.service.js';
 import { validateSafeUrl } from '../utils/ssrf.js';
 import { clearPublicRoutesCache } from '../utils/publicCache.js';
+
+function getFallbackRssXml(title = 'Gujarat Post - ગુજરાત સમાચાર'): string {
+  const baseUrl = getSiteBaseUrl();
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" 
+  xmlns:atom="http://www.w3.org/2005/Atom" 
+  xmlns:media="http://search.yahoo.com/mrss/" 
+  xmlns:dc="http://purl.org/dc/elements/1.1/"
+  xmlns:content="http://purl.org/rss/1.0/modules/content/">
+  <channel>
+    <title>${title}</title>
+    <link>${baseUrl}</link>
+    <description>Latest Gujarati Breaking News from Gujarat Post</description>
+    <language>gu-IN</language>
+    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
+  </channel>
+</rss>`;
+}
 
 function slugify(text: string): string {
   const s = text
@@ -42,7 +60,12 @@ export class RssController {
 
       return res.status(200).send(feed.xml);
     } catch (error) {
-      next(error);
+      console.error('[RSS Controller Error - getPublicRss]', error);
+      res.set({
+        'Content-Type': 'application/rss+xml; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+      });
+      return res.status(200).send(getFallbackRssXml());
     }
   }
 
@@ -129,7 +152,12 @@ export class RssController {
 
       return res.status(200).send(feed.xml);
     } catch (error) {
-      next(error);
+      console.error('[RSS Controller Error - getLegacyPoliticsRss]', error);
+      res.set({
+        'Content-Type': 'application/rss+xml; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+      });
+      return res.status(200).send(getFallbackRssXml());
     }
   }
 
@@ -156,7 +184,12 @@ export class RssController {
 
       return res.status(200).send(feed.xml);
     } catch (error) {
-      next(error);
+      console.error('[RSS Controller Error - getLegacyGalleryRss]', error);
+      res.set({
+        'Content-Type': 'application/rss+xml; charset=utf-8',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+      });
+      return res.status(200).send(getFallbackRssXml('Gujarat Post Photo Gallery - ફોટો ગેલેરી'));
     }
   }
 
