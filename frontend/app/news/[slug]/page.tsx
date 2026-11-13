@@ -6,7 +6,7 @@ import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
 import { filterUniqueArticles } from "@/lib/articleDeduplication";
-import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays } from "@/lib/articleCategory";
+import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays, getArticleTimestamp } from "@/lib/articleCategory";
 
 export const revalidate = 30;
 
@@ -236,28 +236,50 @@ export default async function NewsDetailPage(
   const allRawCandidates = [...categoryArticles, ...fallbackArticles];
   const uniquePool = filterUniqueArticles(allRawCandidates, [article]).filter((a) => !isCurrentArticle(a));
 
-  // 1. Filter strictly for SAME CATEGORY articles and sort newest first
+  // Determine dynamic reference time to protect against client/server clock discrepancies
+  const maxCandidateTime = Math.max(0, ...uniquePool.map((a) => getArticleTimestamp(a)).filter((t) => t > 0));
+  const effectiveRefTime = maxCandidateTime > 0 ? Math.max(Date.now(), maxCandidateTime) : Date.now();
+
+  // 1. Separate candidates into same-category and other-categories, sorted newest first
   const sameCategoryCandidates = sortArticlesByNewest(
     uniquePool.filter((item) => isSameCategory(item, article))
   );
+  const otherCategoryCandidates = sortArticlesByNewest(
+    uniquePool.filter((item) => !isSameCategory(item, article))
+  );
 
-  // 2. Partition same-category articles by freshness:
+  // 2. Partition by freshness:
   // Fresh news: last 3-4 days (<= 4.0 days)
-  const freshSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item) <= 4.0);
-  const olderSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item) > 4.0);
+  const freshSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) <= 4.0);
+  const freshOtherCategory = otherCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) <= 4.0);
 
-  // 3. Related list: fresh same-category first (newest to oldest), then older same-category (newest to oldest)
-  let related: typeof uniquePool = [...freshSameCategory, ...olderSameCategory];
+  // 3. Medium fresh news: 4 to 7 days
+  const mediumSameCategory = sameCategoryCandidates.filter((item) => {
+    const age = getArticleAgeDays(item, effectiveRefTime);
+    return age > 4.0 && age <= 7.0;
+  });
+  const mediumOtherCategory = otherCategoryCandidates.filter((item) => {
+    const age = getArticleAgeDays(item, effectiveRefTime);
+    return age > 4.0 && age <= 7.0;
+  });
 
-  // 4. Safety fallback: ONLY if the database has fewer than 4 articles in this entire category, fill up to 8 with fresh articles from other categories
-  if (related.length < 4) {
-    const otherCandidates = sortArticlesByNewest(
-      uniquePool.filter((item) => !isSameCategory(item, article))
-    );
-    const freshOther = otherCandidates.filter((item) => getArticleAgeDays(item) <= 4.0);
-    const needed = 8 - related.length;
-    related = [...related, ...freshOther.slice(0, needed)];
-  }
+  // 4. Older articles: > 7 days
+  const olderSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) > 7.0);
+  const olderOtherCategory = otherCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) > 7.0);
+
+  // 5. Construct related list strictly prioritizing fresh news:
+  // Fresh same-category first, then fresh news across the site, then medium fresh, then older
+  let related: typeof uniquePool = [
+    ...freshSameCategory,
+    ...freshOtherCategory,
+    ...mediumSameCategory,
+    ...mediumOtherCategory,
+    ...olderSameCategory,
+    ...olderOtherCategory,
+  ];
+
+  // Deep deduplicate related list
+  related = filterUniqueArticles(related, [article]).filter((a) => !isCurrentArticle(a));
 
   const articleUrl = `${SITE_URL}/news/${article.slug}`;
   const rawCandidateHeadline = (initialLang === 'hi' && article.titleHi && /[\u0900-\u097F]/.test(article.titleHi))
@@ -304,6 +326,7 @@ export default async function NewsDetailPage(
         article={article}
         related={related}
         trending={trending}
+        latestArticles={fallbackArticles}
         articleUrl={articleUrl}
         initialLanguage={initialLang}
       />

@@ -917,6 +917,7 @@ interface Props {
   article: Article;
   related: Article[];
   trending: Article[];
+  latestArticles?: Article[];
   articleUrl: string;
   initialLanguage?: Language;
 }
@@ -1102,7 +1103,7 @@ function splitArticleContent(html: string, atPara = 4): [string, string] {
   return [balanceHtmlTags(trimmed.slice(0, splitIndex).trim()), balanceHtmlTags(trimmed.slice(splitIndex).trim())];
 }
 
-export default function NewsDetailClient({ article, related, trending, articleUrl, initialLanguage }: Props) {
+export default function NewsDetailClient({ article, related, trending, latestArticles = [], articleUrl, initialLanguage }: Props) {
   const { language } = useApp();
   const router = useRouter();
   const { isApk } = useIsApk();
@@ -1448,7 +1449,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   const readAlsoPool = useMemo(() => {
     const topMostRead = (mostReadArticles || []).slice(0, 3);
-    const pool = [...(trending || []), ...(mostReadArticles || []), ...(related || [])];
+    const pool = [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])];
     const uniquePool = filterUniqueArticles(pool, [article, ...topMostRead]);
     const sortedPool = sortArticlesByNewest(uniquePool);
 
@@ -1462,7 +1463,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       return mediumFreshArticles.slice(0, 4);
     }
     return [...freshArticles, ...sortedPool.filter((a) => !freshArticles.includes(a))].slice(0, 4);
-  }, [article, related, trending, mostReadArticles]);
+  }, [article, related, trending, latestArticles, mostReadArticles]);
 
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
 
@@ -1750,19 +1751,21 @@ export default function NewsDetailClient({ article, related, trending, articleUr
 
   // 2. Top Sidebar Recommended Pool (For Main Article Sidebar)
   // Strictly excludes main article, Most Read top 3 articles, and Also Read articles
-  // Strictly prioritizes fresh news from the last 5-6 days
+  // Strictly prioritizes fresh news from the last 3-6 days, sorted newest first
   const sidebarRecommendedPool = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [article, ...mostReadSubset, ...readAlsoPool];
 
-    const pool = [...trending, ...related, ...mostReadArticles].filter(
+    const pool = [...(latestArticles || []), ...trending, ...related, ...mostReadArticles].filter(
       (item) => !isHealthArticle(item)
     );
     const uniquePool = filterUniqueArticles(pool, excludeList);
+    const sortedPool = sortArticlesByNewest(uniquePool);
 
-    // Strictly prioritize fresh articles within 6 days
-    const freshPool = uniquePool.filter((a) => getArticleAgeDays(a) <= 6);
-    const poolForSelection = freshPool.length >= 4 ? freshPool : uniquePool;
+    // Strictly prioritize fresh articles (<= 4.0 days), then medium (<= 7.0 days)
+    const freshPool = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
+    const mediumPool = sortedPool.filter((a) => calcArticleAgeDays(a) <= 7.0);
+    const poolForSelection = freshPool.length >= 4 ? freshPool : mediumPool.length >= 4 ? mediumPool : sortedPool;
 
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
     const stateNationalCandidates = poolForSelection.filter((cand) => {
@@ -1783,7 +1786,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const distinctCatArts = Array.from(byCategory.values());
     const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
     return combinedPool.slice(0, 8);
-  }, [article, trending, related, mostReadArticles, trendingLimit, readAlsoPool]);
+  }, [article, trending, related, latestArticles, mostReadArticles, trendingLimit, readAlsoPool]);
 
   // 3. Stream Continuation Articles (For Infinite Stream below main article)
   // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
@@ -1797,21 +1800,27 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       ...sidebarRecommendedPool,
     ];
 
-    const rawPool = [...(related || []), ...(trending || []), ...(mostReadArticles || [])];
+    const rawPool = [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])];
     const uniquePool = filterUniqueArticles(rawPool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
 
     // Strictly prioritize articles within 3-4 days (<= 4.0 days) so infinite stream never drags reader into 10-20 day old news
     const freshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
-    const olderArticles = sortedPool.filter((a) => calcArticleAgeDays(a) > 4.0);
+    const mediumArticles = sortedPool.filter((a) => {
+      const age = calcArticleAgeDays(a);
+      return age > 4.0 && age <= 7.0;
+    });
+    const olderArticles = sortedPool.filter((a) => calcArticleAgeDays(a) > 7.0);
 
-    const finalStreamPool = [...freshArticles, ...olderArticles];
+    const finalStreamPool = freshArticles.length >= 8
+      ? freshArticles
+      : [...freshArticles, ...mediumArticles, ...olderArticles];
     return finalStreamPool.slice(0, 8);
-  }, [related, trending, article, readAlsoPool, sidebarRecommendedPool, mostReadArticles, trendingLimit]);
+  }, [latestArticles, related, trending, article, readAlsoPool, sidebarRecommendedPool, mostReadArticles, trendingLimit]);
 
   // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
   // Strictly excludes ALL articles already displayed anywhere on the page!
-  // Strictly prioritizes fresh news from the last 5-6 days
+  // Strictly prioritizes fresh news from the last 3-6 days, sorted newest first
   const streamSidebarRecommendedPool = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [
@@ -1822,14 +1831,16 @@ export default function NewsDetailClient({ article, related, trending, articleUr
       ...streamList,
     ];
 
-    const pool = [...trending, ...related, ...mostReadArticles].filter(
+    const pool = [...(latestArticles || []), ...trending, ...related, ...mostReadArticles].filter(
       (item) => !isHealthArticle(item)
     );
     const uniquePool = filterUniqueArticles(pool, excludeList);
+    const sortedPool = sortArticlesByNewest(uniquePool);
 
-    // Strictly prioritize fresh articles within 6 days
-    const freshPool = uniquePool.filter((a) => getArticleAgeDays(a) <= 6);
-    const poolForSelection = freshPool.length >= 4 ? freshPool : uniquePool;
+    // Strictly prioritize fresh articles (<= 4.0 days), then medium (<= 7.0 days)
+    const freshPool = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
+    const mediumPool = sortedPool.filter((a) => calcArticleAgeDays(a) <= 7.0);
+    const poolForSelection = freshPool.length >= 4 ? freshPool : mediumPool.length >= 4 ? mediumPool : sortedPool;
 
     const priorityCatKeywords = ['gujarat', 'india', 'world', 'politics', 'business', 'ગુજરાત', 'ભારત', 'વિશ્વ', 'રાજનીતિ', 'વેપાર'];
     const stateNationalCandidates = poolForSelection.filter((cand) => {
@@ -1850,7 +1861,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
     const distinctCatArts = Array.from(byCategory.values());
     const combinedPool = [...distinctCatArts, ...poolToUse.filter((a) => !distinctCatArts.includes(a))];
     return combinedPool.slice(0, 8);
-  }, [article, trending, related, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
+  }, [article, trending, related, latestArticles, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -2751,7 +2762,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           article={article}
           related={related}
           excludeArticles={(related || []).length >= 12 ? readAlsoPool : undefined}
-          fallbackArticles={undefined}
+          fallbackArticles={latestArticles}
           language={language}
           savedIds={savedIds}
           relatedLimit={relatedLimit}
@@ -2769,6 +2780,7 @@ export default function NewsDetailClient({ article, related, trending, articleUr
           mostReadArticles={mostReadArticles}
           trending={trending}
           related={related}
+          latestArticles={latestArticles}
           readAlsoPool={readAlsoPool}
           savedIds={savedIds}
           getCardThumbnail={getCardThumbnail}

@@ -22,6 +22,7 @@ interface ArticleInfiniteStreamProps {
   mostReadArticles: Article[];
   trending: Article[];
   related: Article[];
+  latestArticles?: Article[];
   readAlsoPool?: Article[];
   savedIds: string[];
   getCardThumbnail: (item: Article, index: number) => string;
@@ -536,6 +537,7 @@ export default function ArticleInfiniteStream({
   mostReadArticles,
   trending,
   related,
+  latestArticles = [],
   readAlsoPool = [],
   savedIds,
   getCardThumbnail,
@@ -571,7 +573,7 @@ export default function ArticleInfiniteStream({
 
             // Master candidate pool strictly pre-filtered using deep deduplication (ID, slug, title)
             const masterCandidatePool = filterUniqueArticles(
-              [...(related || []), ...(trending || []), ...(mostReadArticles || [])],
+              [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])],
               globalForbiddenArticles
             );
 

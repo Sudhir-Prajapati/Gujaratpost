@@ -86,6 +86,7 @@ export function getArticleTimestamp(art: Article | null | undefined): number {
   if (!art) return 0;
   const pubDateStr = art.publishedAt || (art as any).createdAt;
   if (!pubDateStr) return 0;
+  if (pubDateStr instanceof Date) return (pubDateStr as Date).getTime();
   const time = new Date(pubDateStr).getTime();
   return isNaN(time) ? 0 : time;
 }
