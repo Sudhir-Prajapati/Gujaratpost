@@ -384,9 +384,8 @@ function MobileHorizontalCardStrip({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
 
-            {/* Badge top-right matching Fact Check style */}
-            <div className="absolute right-2.5 top-2.5 flex items-center gap-1 rounded bg-[#B3121B] backdrop-blur-sm px-2 py-0.5 text-[10px] font-black text-white shadow-md z-10 select-none">
-              <span>✔</span>
+            {/* Category badge top-right */}
+            <div className="absolute right-2.5 top-2.5 flex items-center rounded bg-[#B3121B] backdrop-blur-sm px-2 py-0.5 text-[10px] font-black text-white shadow-md z-10 select-none">
               <span>{getCategoryLabel(art, language)}</span>
             </div>
           </div>
