@@ -289,18 +289,18 @@ export default function YouTubeShorts() {
           aria-hidden="true"
         />
 
-        {/* ─── HEADER ROW: Logo + Divider + Shorts Title + Subtitle + All Shorts Button ─── */}
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 pb-3 sm:pb-4 border-b border-slate-100 dark:border-white/5 mb-4 sm:mb-5">
+        {/* ─── HEADER ROW: Logo + Divider + Shorts Title + Subtitle + All Shorts Button (Right Aligned on Mobile) ─── */}
+        <div className="relative z-10 flex flex-row items-center justify-between gap-2 sm:gap-4 pb-3 sm:pb-4 border-b border-slate-100 dark:border-white/5 mb-3.5 sm:mb-5">
           {/* Left: Brand and Title Group */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
             {/* 1. Official Gujarat Post Logo Asset */}
             <Link href="/" className="flex shrink-0 items-center">
-              <div className="relative h-6 sm:h-7 md:h-8 w-24 sm:w-28 md:w-32 overflow-hidden">
+              <div className="relative h-5 sm:h-7 md:h-8 w-20 sm:w-28 md:w-32 overflow-hidden">
                 <Image
                   src="/assets/gujarat-post-logo.png"
                   alt="Gujarat Post"
                   fill
-                  sizes="(max-width: 640px) 96px, 128px"
+                  sizes="(max-width: 640px) 80px, 128px"
                   className="object-contain object-left"
                   priority
                   unoptimized
@@ -309,27 +309,27 @@ export default function YouTubeShorts() {
             </Link>
 
             {/* Vertical Divider Line */}
-            <span className="hidden sm:inline-block h-6 sm:h-7 w-[1.5px] bg-slate-300 dark:bg-slate-700" aria-hidden="true" />
+            <span className="inline-block h-4 sm:h-6 md:h-7 w-[1.5px] bg-slate-300 dark:bg-slate-700 shrink-0" aria-hidden="true" />
 
             {/* 2. Red YouTube Shorts Glyph + Gujarati Title: શોર્ટ્સ */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <div className="relative flex items-center justify-center shrink-0">
-                <svg viewBox="0 0 24 24" className="w-7 h-7 sm:w-8 sm:h-8 fill-[#C8101E] drop-shadow-xs">
+                <svg viewBox="0 0 24 24" className="w-5.5 h-5.5 sm:w-7 sm:h-7 md:w-8 md:h-8 fill-[#C8101E] drop-shadow-xs">
                   <path d="M17.77 10.32l-1.2-.5a3.86 3.86 0 00-4.9-2.31 3.94 3.94 0 00-2.34 4.95l.48 1.22-1.2.5a3.86 3.86 0 00-2.31 4.9 3.94 3.94 0 004.95 2.34l1.2-.5.48 1.22a3.86 3.86 0 004.9 2.31 3.94 3.94 0 002.34-4.95l-.48-1.22 1.2-.5a3.86 3.86 0 002.31-4.9 3.94 3.94 0 00-4.95-2.34l-1.2.5-.48-1.22a3.86 3.86 0 00-4.9-2.31 3.94 3.94 0 00-2.34 4.95l.48 1.22z" />
                   <polygon points="10 8.5 15.5 12 10 15.5 10 8.5" fill="#FFFFFF" />
                 </svg>
               </div>
 
-              <h2 className="text-xl sm:text-2xl md:text-[26px] font-black text-[#171B2D] dark:text-white tracking-tight">
+              <h2 className="text-lg sm:text-2xl md:text-[26px] font-black text-[#171B2D] dark:text-white tracking-tight">
                 {getLocalized(language, { en: 'Shorts', gu: 'શોર્ટ્સ', hi: 'शॉर्ट्स' })}
               </h2>
             </div>
 
             {/* Vertical Divider Line */}
-            <span className="hidden lg:inline-block h-6 sm:h-7 w-[1.5px] bg-slate-300 dark:bg-slate-700" aria-hidden="true" />
+            <span className="hidden lg:inline-block h-6 sm:h-7 w-[1.5px] bg-slate-300 dark:bg-slate-700 shrink-0" aria-hidden="true" />
 
-            {/* 3. Subtitle (Matching Reference Image 2) */}
-            <p className="hidden md:block text-xs sm:text-[13px] font-semibold text-[#64748B] dark:text-slate-400">
+            {/* 3. Subtitle (Matching Reference Image) */}
+            <p className="hidden lg:block text-xs sm:text-[13px] font-semibold text-[#64748B] dark:text-slate-400">
               {getLocalized(language, {
                 en: 'Short videos of important events in Gujarat, India & World',
                 gu: 'ગુજરાત, દેશ અને વિદેશની મહત્વની ઘટનાઓના ટૂંકા વીડિયો',
@@ -338,10 +338,10 @@ export default function YouTubeShorts() {
             </p>
           </div>
 
-          {/* Right Button: બધા શોર્ટ્સ જુઓ → (Preserving exact destination /shorts) */}
+          {/* Right Button: બધા શોર્ટ્સ જુઓ → (Right-aligned in both mobile and desktop) */}
           <Link
             href="/shorts"
-            className="self-start md:self-auto bg-[#C8101E] hover:bg-[#A80F19] text-white text-xs sm:text-sm font-black px-5 py-2.5 rounded-full shadow-sm hover:shadow-md transition-all shrink-0 flex items-center gap-1.5"
+            className="shrink-0 ml-auto bg-[#C8101E] hover:bg-[#A80F19] text-white text-[11px] sm:text-xs md:text-sm font-black px-3 py-1.5 sm:px-4 sm:py-2 md:px-5 md:py-2.5 rounded-full shadow-xs hover:shadow-md transition-all flex items-center gap-1 whitespace-nowrap"
             title={getLocalized(language, { en: 'View All Shorts', gu: 'બધા શોર્ટ્સ જુઓ', hi: 'सभी शॉर्ट्स देखें' })}
           >
             <span>{getLocalized(language, { en: 'View All Shorts →', gu: 'બધા શોર્ટ્સ જુઓ →', hi: 'सभी शॉर्ट્સ देखें →' })}</span>
