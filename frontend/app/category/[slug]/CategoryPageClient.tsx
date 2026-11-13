@@ -1700,16 +1700,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     </div>
 
                     {/* Bottom Section: Title below photo */}
-                    <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
-                      <p className="text-foreground group-hover:text-[#B3121B] text-[15px] sm:text-[16px] font-extrabold leading-snug line-clamp-2 transition-colors">
+                    <div className="p-3 sm:p-3.5 flex flex-col justify-center flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                      <p className="text-foreground group-hover:text-[#B3121B] text-[15px] sm:text-[16px] font-extrabold leading-snug line-clamp-2 transition-colors cursor-pointer">
                         <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
-
-                      <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
-                        <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
-                        <span>{getLocalized(language, { en: 'View Photo', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}</span>
-                        <span>→</span>
-                      </div>
                     </div>
                   </Link>
                 );
@@ -1758,17 +1752,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     </div>
 
                     {/* Bottom Section: Title below photo */}
-                    <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
-                      <p className="text-foreground group-hover:text-[#B3121B] text-[13.5px] sm:text-[14.5px] font-extrabold leading-snug line-clamp-2 transition-colors mb-2">
+                    <div className="p-3 sm:p-3.5 flex flex-col justify-center flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                      <p className="text-foreground group-hover:text-[#B3121B] text-[13.5px] sm:text-[14.5px] font-extrabold leading-snug line-clamp-2 transition-colors cursor-pointer">
                         <AutoTranslateString text={photoTitle} language={language as any} />
                       </p>
-                      <div className="flex items-center gap-1.5 text-[#B3121B] font-bold text-[12px] sm:text-[12.5px] tracking-wide">
-                        <span className="w-5 h-[2px] bg-[#B3121B] inline-block" />
-                        <span>
-                          {getLocalized(language, { en: 'View Photo', gu: 'ફોટો જુઓ', hi: 'फोटो देखें' })}
-                        </span>
-                        <span>→</span>
-                      </div>
                     </div>
                   </Link>
                 );

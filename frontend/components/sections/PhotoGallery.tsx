@@ -256,16 +256,11 @@ export default function PhotoGallery() {
                       )}
                     </div>
 
-                    {/* Bottom Section: Heading & Link below photo */}
-                    <div className="p-3.5 sm:p-3 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
-                      <p className="text-foreground group-hover:text-[#B3121B] font-extrabold leading-snug line-clamp-2 text-[14.5px] md:text-[15.5px] transition-colors">
+                    {/* Bottom Section: Heading below photo */}
+                    <div className="p-3 sm:p-3.5 flex flex-col justify-center flex-1 min-w-0 bg-card dark:bg-[#161822]">
+                      <p className="text-foreground group-hover:text-[#B3121B] font-extrabold leading-snug line-clamp-2 text-[14.5px] md:text-[15.5px] transition-colors cursor-pointer">
                         {photoTitle}
                       </p>
-                      <div className="flex items-center gap-1.5 mt-2.5 text-[#B3121B] font-bold text-[12.5px] sm:text-[13px] tracking-wide">
-                        <div className="h-[2px] w-5 rounded-full bg-[#B3121B]" />
-                        <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
-                        <span>→</span>
-                      </div>
                     </div>
                   </Link>
                 </div>

@@ -102,16 +102,11 @@ function SidebarPhotoCard({ photo, index, language }: { photo: any; index: numbe
         </div>
       </div>
 
-      {/* 2. Bottom Section: Heading & Action below photo */}
-      <div className="p-3 sm:p-3.5 flex flex-col justify-between flex-1 min-w-0 bg-card dark:bg-[#161822]">
-        <p className="text-foreground group-hover:text-[#B3121B] text-[12.5px] sm:text-[13.5px] font-extrabold leading-snug line-clamp-2 transition-colors">
+      {/* 2. Bottom Section: Heading below photo */}
+      <div className="p-3 sm:p-3.5 flex flex-col justify-center flex-1 min-w-0 bg-card dark:bg-[#161822]">
+        <p className="text-foreground group-hover:text-[#B3121B] text-[12.5px] sm:text-[13.5px] font-extrabold leading-snug line-clamp-2 transition-colors cursor-pointer">
           <AutoTranslateString text={photo.titleGu || photo.title || ''} language={language as any} />
         </p>
-
-        <div className="flex items-center gap-1.5 mt-2 text-[#B3121B] font-bold text-[12px]">
-          <span>{language === 'gu' ? 'ફોટો જુઓ' : language === 'hi' ? 'फोटो देखें' : 'View Photos'}</span>
-          <span>→</span>
-        </div>
       </div>
     </Link>
   );
