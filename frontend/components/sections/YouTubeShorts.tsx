@@ -331,9 +331,9 @@ export default function YouTubeShorts() {
             {/* 3. Subtitle (Matching Reference Image 2) */}
             <p className="hidden md:block text-xs sm:text-[13px] font-semibold text-[#64748B] dark:text-slate-400">
               {getLocalized(language, {
-                en: "Gujarat's latest & trending short videos (Shorts)",
-                gu: 'ગુજરાતની તાજી અને મહત્વપૂર્ણ ઘટનાઓના ટૂંકા વિડિયો (Shorts)',
-                hi: 'गुजरात की ताज़ा और महत्वपूर्ण घटनाओं के छोटे वीडियो (Shorts)',
+                en: 'Short videos of important events in Gujarat, India & World',
+                gu: 'ગુજરાત, દેશ અને વિદેશની મહત્વની ઘટનાઓના ટૂંકા વીડિયો',
+                hi: 'गुजरात, देश और विदेश की महत्वपूर्ण घटनाओं के छोटे वीडियो',
               })}
             </p>
           </div>

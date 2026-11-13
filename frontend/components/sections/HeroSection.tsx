@@ -877,12 +877,47 @@ export default function HeroSection({
       });
   }, [initialArticles]);
 
+  // Helper to ensure an article was designated for the Home / News section (isFeatured or news category)
+  const isHomeArticle = (a: any): boolean => {
+    if (!a || !isPublicArticle(a) || isExcludedFromHeroTop(a)) return false;
+    if (a.isFeatured) return true;
+    if (articleMatchesCat(a, 'news', 'latest-news', 'મુખ્ય સમાચાર')) return true;
+    const catSlug = (
+      a.categorySlug ||
+      (typeof a.category === 'string' ? a.category : a.category?.slug) ||
+      ''
+    ).toLowerCase().trim();
+    if (catSlug === 'news' || catSlug === 'latest-news') return true;
+    if (Array.isArray(a.categories)) {
+      if (a.categories.some((c: any) => {
+        const s = (c?.slug || c?.category?.slug || '').toLowerCase().trim();
+        return s === 'news' || s === 'latest-news';
+      })) return true;
+    }
+    return false;
+  };
+
   // Helper to compute heroPool identically for both initial SSR state and client useEffect:
-  // Strictly latest-first chronological FIFO order
-  const computeHeroPoolList = (arts: Article[], _heroSettingsData?: any) => {
-    const pubArts = (arts || [])
-      .filter(isPublicArticle)
-      .filter((a) => !isExcludedFromHeroTop(a));
+  // Strictly latest-first chronological FIFO order for articles designated for Home
+  const computeHeroPoolList = (arts: Article[], heroSettingsData?: any) => {
+    const manualGridArts: Article[] = (
+      heroSettingsData?.heroGridArticles ||
+      heroSettingsData?.setting?.heroGridArticles ||
+      []
+    ).filter(isPublicArticle);
+
+    const candidates = [...manualGridArts, ...(arts || [])];
+    const seen = new Set<string>();
+    const pubArts: Article[] = [];
+    for (const a of candidates) {
+      if (!a) continue;
+      const key = a.id || a.slug;
+      if (!key || seen.has(key)) continue;
+      if (manualGridArts.some((m) => m.id === a.id) || isHomeArticle(a)) {
+        seen.add(key);
+        pubArts.push(a);
+      }
+    }
 
     // Sort strictly latest first: articleNumber desc, then publishedAt/createdAt desc
     const sortedLatest = [...pubArts].sort((a: Article, b: Article) => {
@@ -956,7 +991,7 @@ export default function HeroSection({
 
   // DB-backed article state (latest news first)
   const [heroSettingsState, setHeroSettingsState] = useState<any>(initialHeroSettings);
-  const [topNews, setTopNews] = useState<Article[]>(publishedInitialArticles.slice(0, 6));
+  const [topNews, setTopNews] = useState<Article[]>(initialHeroPool.slice(0, 6));
   const [topStories, setTopStories] = useState<Article[]>(initialHeroPool);
   const [bottomFeatured, setBottomFeatured] = useState<Article[]>(() =>
     getBottomCards(initialHeroPool, initialHeroSettings)
@@ -1065,8 +1100,8 @@ export default function HeroSection({
             return bTime - aTime;
           });
           setArticlesList(sorted);
-          setTopNews(sorted.slice(0, 6));
           const pool = computeHeroPoolList(sorted, heroRes || initialHeroSettings);
+          setTopNews(pool.slice(0, 6));
           setTopStories(pool);
           setBottomFeatured(getBottomCards(pool, heroRes || initialHeroSettings));
           setGujaratArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'gujarat', 'state', 'ગુજરાત')).slice(0, 16));
@@ -1188,9 +1223,8 @@ export default function HeroSection({
           return new Date(b.publishedAt || (b as any).createdAt || 0).getTime() - new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
         });
         setArticlesList(sortedArts);
-        setTopNews(sortedArts.slice(0, 6));
-
         const heroPool = computeHeroPoolList(sortedArts, heroRes);
+        setTopNews(heroPool.slice(0, 6));
         setTopStories(heroPool);
         if (heroRes) {
           setHeroSettingsState(heroRes);
@@ -1757,20 +1791,23 @@ export default function HeroSection({
 
               // 1. Gather all candidates and strictly deduplicate by id & slug
               const allCandidates = [
+                ...manualGridArts,
+                ...(uniqueTopStories || []),
                 ...(articlesList || []),
                 ...(initialArticles || []),
-                ...(uniqueTopStories || []),
               ];
 
               const seenHeroIds = new Set<string>();
               const allPublicArticles: Article[] = [];
 
               for (const a of allCandidates) {
-                if (!a || !isPublicArticle(a) || isExcludedFromHeroTop(a)) continue;
+                if (!a) continue;
                 const key = a.id || a.slug;
                 if (!key || seenHeroIds.has(key)) continue;
-                seenHeroIds.add(key);
-                allPublicArticles.push(a);
+                if (manualGridArts.some((m) => m.id === a.id) || isHomeArticle(a)) {
+                  seenHeroIds.add(key);
+                  allPublicArticles.push(a);
+                }
               }
 
               // 2. Sort strictly by latest (chronological FIFO):

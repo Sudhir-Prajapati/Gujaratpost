@@ -401,7 +401,14 @@ export class HeroController {
           // Query C: Active featured posts (marked Home / News)
           withDbRetry(() =>
             prisma.post.findMany({
-              where: { isFeatured: true, status: 'PUBLISHED' },
+              where: {
+                status: 'PUBLISHED',
+                OR: [
+                  { isFeatured: true },
+                  { category: { slug: 'news' } },
+                  { categories: { some: { category: { slug: 'news' } } } },
+                ],
+              },
               orderBy: [{ articleNumber: 'desc' }],
               take: 20,
               select: heroPostSelect,
@@ -558,11 +565,17 @@ export class HeroController {
               .slice(0, 9);
           }
         } else {
-          // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true), followed by latest published
+          // AUTO MODE: Strictly use articles where admin selected "Home / News" (isFeatured = true or category = news)
           const featuredFormatted = (activeFeaturedRes || []).map(formatPost);
-          const combined = [...featuredFormatted, ...fallbackFormatted].filter(
-            (art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx
-          );
+          let combined = [...featuredFormatted];
+          if (combined.length < 9) {
+            const fallbackHomeOnly = fallbackFormatted.filter(
+              (p: any) => p.isFeatured || (p.category?.slug === 'news' || (Array.isArray(p.categories) && p.categories.some((c: any) => c.slug === 'news' || c.category?.slug === 'news')))
+            );
+            combined = [...combined, ...fallbackHomeOnly].filter(
+              (art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx
+            );
+          }
           heroGridArticles = combined.slice(0, 9);
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }
@@ -1082,19 +1095,33 @@ export class HeroController {
             .slice(0, 9);
         }
       } else {
-        // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true), followed by latest published
+        // AUTO MODE: Prioritize articles where admin selected "Home / News" (isFeatured = true or category = news)
         const [featuredPosts, fallbackPosts] = await Promise.all([
           withDbRetry(() =>
             prisma.post.findMany({
-              where: { isFeatured: true, status: 'PUBLISHED' },
+              where: {
+                status: 'PUBLISHED',
+                OR: [
+                  { isFeatured: true },
+                  { category: { slug: 'news' } },
+                  { categories: { some: { category: { slug: 'news' } } } },
+                ],
+              },
               orderBy: { articleNumber: 'desc' },
-              take: 9,
+              take: 12,
               select: heroPostSelect,
             })
           ).catch(() => []),
           withDbRetry(() =>
             prisma.post.findMany({
-              where: { status: 'PUBLISHED' },
+              where: {
+                status: 'PUBLISHED',
+                OR: [
+                  { isFeatured: true },
+                  { category: { slug: 'news' } },
+                  { categories: { some: { category: { slug: 'news' } } } },
+                ],
+              },
               orderBy: { articleNumber: 'desc' },
               take: 16,
               select: heroPostSelect,
