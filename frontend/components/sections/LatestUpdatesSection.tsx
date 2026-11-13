@@ -260,9 +260,8 @@ export default function LatestUpdatesSection({
                 {idx === 4 && <div className="absolute left-[-14px] top-0 bottom-0 md:bottom-auto md:h-[18px] w-[1.5px] bg-[#d6c7b5]/85" />}
 
                 <div
-                  className={`absolute left-[-19.5px] top-[18px] z-10 w-[12px] h-[12px] rounded-full transition-transform duration-200 group-hover:scale-110 ${
-                    isRedBullet ? 'bg-[#B3121B]' : 'bg-white border-2 border-[#d6c7b5]'
-                  }`}
+                  className={`absolute left-[-19.5px] top-[18px] z-10 w-[12px] h-[12px] rounded-full transition-transform duration-200 group-hover:scale-110 ${isRedBullet ? 'bg-[#B3121B]' : 'bg-white border-2 border-[#d6c7b5]'
+                    }`}
                 />
 
                 <div className="flex-1 min-w-0">
@@ -305,9 +304,8 @@ export default function LatestUpdatesSection({
                 {idx === 4 && <div className="absolute left-[-14px] top-0 h-[18px] w-[1.5px] bg-[#d6c7b5]/85" />}
 
                 <div
-                  className={`absolute left-[-19.5px] top-[18px] z-10 w-[12px] h-[12px] rounded-full transition-transform duration-200 group-hover:scale-110 ${
-                    isRedBullet ? 'bg-[#B3121B]' : 'bg-white border-2 border-[#d6c7b5]'
-                  }`}
+                  className={`absolute left-[-19.5px] top-[18px] z-10 w-[12px] h-[12px] rounded-full transition-transform duration-200 group-hover:scale-110 ${isRedBullet ? 'bg-[#B3121B]' : 'bg-white border-2 border-[#d6c7b5]'
+                    }`}
                 />
 
                 <div className="flex-1 min-w-0">
@@ -473,11 +471,10 @@ export default function LatestUpdatesSection({
                   key={dotIdx}
                   type="button"
                   onClick={() => setMobilePopularIdx(dotIdx)}
-                  className={`h-2 rounded-full transition-all cursor-pointer ${
-                    (mobilePopularIdx % popularPool.length) === dotIdx
+                  className={`h-2 rounded-full transition-all cursor-pointer ${(mobilePopularIdx % popularPool.length) === dotIdx
                       ? 'bg-[#B3121B] w-5'
                       : 'bg-zinc-300 dark:bg-zinc-700 w-2 hover:bg-zinc-400'
-                  }`}
+                    }`}
                   aria-label={`Go to article ${dotIdx + 1}`}
                 />
               ))}
@@ -524,9 +521,8 @@ export default function LatestUpdatesSection({
                   key={dotIdx}
                   type="button"
                   onClick={() => setCurrentPopularIdx(dotIdx)}
-                  className={`h-2.5 rounded-full transition-all cursor-pointer ${
-                    currentPopularIdx === dotIdx ? 'bg-[#B3121B] w-6' : 'bg-zinc-300 dark:bg-zinc-700 w-2.5'
-                  }`}
+                  className={`h-2.5 rounded-full transition-all cursor-pointer ${currentPopularIdx === dotIdx ? 'bg-[#B3121B] w-6' : 'bg-zinc-300 dark:bg-zinc-700 w-2.5'
+                    }`}
                   aria-label={`Go to slide ${dotIdx + 1}`}
                 />
               ))}

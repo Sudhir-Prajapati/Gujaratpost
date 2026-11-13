@@ -589,8 +589,8 @@ function HeroStorySlider({
                     onClick={(e) => handleDotClick(idx, e)}
                     aria-label={`Go to slide ${idx + 1}`}
                     className={`transition-all duration-300 rounded-full cursor-pointer ${idx === slideIndex
-                        ? 'w-5 h-1.5 bg-[#B3121B]'
-                        : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
+                      ? 'w-5 h-1.5 bg-[#B3121B]'
+                      : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
                       }`}
                   />
                 ))}
@@ -688,8 +688,8 @@ function HeroStorySlider({
                     onClick={(e) => handleDotClick(idx, e)}
                     aria-label={`Go to slide ${idx + 1}`}
                     className={`transition-all duration-300 rounded-full cursor-pointer ${idx === slideIndex
-                        ? 'w-5 h-1.5 bg-[#B3121B]'
-                        : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
+                      ? 'w-5 h-1.5 bg-[#B3121B]'
+                      : 'w-1.5 h-1.5 bg-white/60 hover:bg-white'
                       }`}
                   />
                 ))}
@@ -1257,7 +1257,7 @@ export default function HeroSection({
             setMarketRates(fresh);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     };
 
     const intervalId = setInterval(refreshLiveRates, 60 * 1000);
