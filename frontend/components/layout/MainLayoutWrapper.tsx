@@ -5,6 +5,7 @@ import Header from './Header';
 import BreakingTicker from './BreakingTicker';
 import Footer from './Footer';
 import SplashLoader from '@/components/ui/SplashLoader';
+import PullToRefresh from '@/components/ui/PullToRefresh';
 import TajSamacharDrawer from '@/components/ui/TajSamacharDrawer';
 import FontSizeFloatingControl from '@/components/ui/FontSizeFloatingControl';
 import { useIsApk } from '@/lib/useIsApk';
@@ -76,6 +77,7 @@ export default function MainLayoutWrapper({ children }: Props) {
         className={`min-h-screen ${apkTheme === 'dark' ? 'dark bg-[#0f1015] text-gray-100' : 'bg-[#F8F9FA] text-gray-900'} transition-colors duration-200`}
         data-theme={apkTheme}
       >
+        <PullToRefresh />
         <ApkHeader />
         <main className={`min-h-[80vh] pb-16 ${apkTheme === 'dark' ? 'bg-[#0f1015]' : 'bg-[#F8F9FA]'}`}>{children}</main>
         <TajSamacharDrawer />
@@ -88,6 +90,7 @@ export default function MainLayoutWrapper({ children }: Props) {
   // STANDARD WEB & MOBILE BROWSER VIEW:
   return (
     <div className="flex min-h-screen min-h-[100dvh] flex-1 flex-[1_0_auto] w-full flex-col bg-background">
+      <PullToRefresh />
       {pathname === '/' && <SplashLoader />}
       <div className="flex-shrink-0">
         <Header />

@@ -1054,7 +1054,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   }
 
   return (
-    <div className="bg-background min-h-0">
+    <div className="bg-background min-h-screen">
       {/* Search Engine Optimization Headings (Crawlable by Googlebot / Bingbot, invisible to users so design remains untouched) */}
       {customSeo && (customSeo.h1 || customSeo.h2) && (
         <div

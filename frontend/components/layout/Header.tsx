@@ -416,6 +416,13 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [pathname]);
 
+  // Close menu and release any scroll lock on navigation
+  useEffect(() => {
+    setMenuOpen(false);
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }, [pathname]);
+
   // Measure header height so mobile menu overlay starts right below it
   useEffect(() => {
     const updateHeight = () => {
@@ -434,8 +441,12 @@ export default function Header() {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
     }
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+    };
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
@@ -515,21 +526,6 @@ export default function Header() {
   const [languageOpen, setLanguageOpen] = useState(false);
   const [languageChosen, setLanguageChosen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  // Lock background body scroll when mobile menu drawer is open
-  useEffect(() => {
-    if (menuOpen) {
-      document.body.style.overflow = 'hidden';
-      document.documentElement.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.documentElement.style.overflow = '';
-    };
-  }, [menuOpen]);
 
   // On mount: check if user has explicitly chosen a language this session
   useEffect(() => {
@@ -1184,9 +1180,11 @@ export default function Header() {
           style={{
             top: `${headerHeight}px`,
             opacity: menuOpen ? 1 : 0,
+            visibility: menuOpen ? 'visible' : 'hidden',
+            display: menuOpen ? 'flex' : 'none',
             transform: menuOpen ? 'translateY(0)' : 'translateY(-10px)',
             pointerEvents: menuOpen ? 'auto' : 'none',
-            transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1)',
+            transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1), visibility 0.2s',
           }}
         >
           {/* Menu Drawer Content Container */}

@@ -30,21 +30,24 @@ body::-webkit-scrollbar {
 }
 
 html {
-  height: 100%;
   min-height: 100%;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  overflow-x: clip;
-  overscroll-behavior-y: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }
 
 body {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  overflow-x: clip;
+  overflow-x: hidden;
+  overflow-y: auto;
   min-height: 100%;
   min-height: 100dvh;
-  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: auto;
 }
 
 @custom-variant dark (&:where(.dark, [data-theme="dark"], .dark *, [data-theme="dark"] *));
@@ -173,13 +176,17 @@ body {
 
 html {
   scroll-behavior: smooth;
-  overflow-x: clip;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   font-size: var(--gp-font-size, 16px);
 }
 
 body {
   margin: 0;
-  overflow-x: clip;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   background:
     radial-gradient(circle at 15% 0%, rgb(225 29 46 / 0.08), transparent 28rem),
     linear-gradient(180deg, var(--background), var(--background));
