@@ -635,20 +635,68 @@ export default function Header() {
   }, [dbCategories]);
 
   const allDrawerCategories = useMemo(() => {
-    // Categories matching mobile 2-column layout (without business, sports, and agriculture)
-    return [
-      { label: 'Gujarat', labelGu: 'ગુજરાત', labelHi: 'गुजरात', href: '/category/gujarat', slug: 'gujarat' },
-      { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national', slug: 'national' },
-      { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world', slug: 'world' },
-      { label: 'Politics', labelGu: 'રાજનીતિ', labelHi: 'राजनीति', href: '/category/politics', slug: 'politics' },
-      { label: 'Technology', labelGu: 'ટેકનોલોજી', labelHi: 'तकनीक', href: '/category/technology', slug: 'technology' },
-      { label: 'Entertainment', labelGu: 'મનોરંજન', labelHi: 'मनोरंजन', href: '/category/entertainment', slug: 'entertainment' },
-      { label: 'Health', labelGu: 'હેલ્થ', labelHi: 'स्वास्थ्य', href: '/category/health', slug: 'health' },
-      { label: 'Crime', labelGu: 'ક્રાઇમ', labelHi: 'क्राइम', href: '/category/crime', slug: 'crime' },
-      { label: 'Education', labelGu: 'શિક્ષણ', labelHi: 'शिक्षा', href: '/category/education', slug: 'education' },
-      { label: 'More', labelGu: 'વધુ', labelHi: 'अधिक', href: '/categories', slug: 'more' },
+    // Exact sequence matching top navbar slider:
+    // Gujarat -> Bharat -> World -> Politics -> Crime -> Health -> Entertainment -> Technology -> Fact Check -> Trending -> Video -> More
+    const gujaratItem = navLinks.find((l: any) => (l.slug || '').toLowerCase() === 'gujarat' || l.href === '/category/gujarat') || {
+      label: 'Gujarat',
+      labelGu: 'ગુજરાત',
+      labelHi: 'गुजरात',
+      href: '/category/gujarat',
+      slug: 'gujarat',
+    };
+
+    const preferredSlugs = [
+      'national',
+      'world',
+      'politics',
+      'crime',
+      'health',
+      'entertainment',
+      'technology',
+      'fact-check',
+      'trending',
+      'videos',
     ];
-  }, []);
+
+    const result: any[] = [{ ...gujaratItem, slug: (gujaratItem as any).slug || 'gujarat' }];
+
+    preferredSlugs.forEach((slug) => {
+      const foundInNav = navLinks.find((l: any) => {
+        const lSlug = (l.slug || (l.href ? l.href.replace(/^\/category\//, '').replace(/^\//, '') : '')).toLowerCase();
+        return lSlug === slug || (slug === 'videos' && (lSlug === 'videos' || l.href === '/videos'));
+      });
+      if (foundInNav) {
+        result.push({ ...foundInNav, slug: (foundInNav as any).slug || slug });
+      } else {
+        const fallbackMap: Record<string, any> = {
+          national: { label: 'India', labelGu: 'ભારત', labelHi: 'भारत', href: '/category/national', slug: 'national' },
+          world: { label: 'World', labelGu: 'વિશ્વ', labelHi: 'विश्व', href: '/category/world', slug: 'world' },
+          politics: { label: 'Politics', labelGu: 'રાજનીતિ', labelHi: 'राजनीति', href: '/category/politics', slug: 'politics' },
+          crime: { label: 'Crime', labelGu: 'ક્રાઇમ', labelHi: 'क्राइम', href: '/category/crime', slug: 'crime' },
+          health: { label: 'Health', labelGu: 'હેલ્થ', labelHi: 'स्वास्थ्य', href: '/category/health', slug: 'health' },
+          entertainment: { label: 'Entertainment', labelGu: 'મનોરંજન', labelHi: 'मनोरंजन', href: '/category/entertainment', slug: 'entertainment' },
+          technology: { label: 'Technology', labelGu: 'ટેકનોલોજી', labelHi: 'तकनीक', href: '/category/technology', slug: 'technology' },
+          'fact-check': { label: 'Fact Check', labelGu: 'ફેક્ટ ચેક', labelHi: 'फैक्ट चेक', href: '/category/fact-check', slug: 'fact-check' },
+          trending: { label: 'Trending', labelGu: 'ટ્રેન્ડિંગ', labelHi: 'ट्रेंडिंग', href: '/category/trending', slug: 'trending' },
+          videos: { label: 'Video', labelGu: 'વીડિયો', labelHi: 'वीडियो', href: '/videos', slug: 'videos' },
+        };
+        if (fallbackMap[slug]) {
+          result.push(fallbackMap[slug]);
+        }
+      }
+    });
+
+    // Add 'More' (વધુ) at the end
+    result.push({
+      label: 'More',
+      labelGu: 'વધુ',
+      labelHi: 'अधिक',
+      href: '/categories',
+      slug: 'more',
+    });
+
+    return result;
+  }, [navLinks]);
 
   // Determine active link: exact match for home, startsWith for others
   const isActive = (href: string) => {

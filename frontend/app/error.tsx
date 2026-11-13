@@ -12,3 +12,4 @@ export default function ErrorPage({
 }) {
   return <SiteMaintenanceError error={error} reset={reset} isGlobal={false} />;
 }
+
