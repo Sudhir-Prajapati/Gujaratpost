@@ -68,7 +68,8 @@ function PhotoCardImage({ src: rawSrc, alt, index }: { src?: any; alt: string; i
       alt={alt}
       fill
       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-      className="object-cover transition-transform duration-700 ease-out"
+      className="object-cover object-top transition-transform duration-700 ease-out"
+      style={{ objectPosition: 'top center' }}
       onError={() => setSrc(fallback)}
     />
   );
@@ -164,7 +165,7 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
               className="group relative flex flex-col overflow-hidden rounded-2xl shadow-md hover:shadow-xl border border-border/80 dark:border-white/[0.08] bg-card dark:bg-[#161822] select-none transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40"
             >
               {/* 1. Top Section: Full Photo */}
-              <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+              <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                 <PhotoCardImage
                   src={photo.src}
                   alt={captionSource || 'Gallery Photo'}

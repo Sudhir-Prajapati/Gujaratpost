@@ -65,9 +65,10 @@ function GalleryStripImage({ src: initialSrc, alt, index }: { src?: any; alt: st
       src={src}
       alt={alt}
       fill
-      sizes="(max-width: 768px) 85vw, 350px"
+      sizes="(max-width: 768px) 75vw, 320px"
       draggable={false}
-      className="object-cover pointer-events-none transition-transform duration-700 ease-out"
+      className="object-cover object-top pointer-events-none transition-transform duration-700 ease-out"
+      style={{ objectPosition: 'top center' }}
       onError={() => setSrc(fallback)}
     />
   );
@@ -146,7 +147,7 @@ function GalleryScrollStrip({
     pauseAutoScroll();
 
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const cardWidth = isMobile ? window.innerWidth * 0.82 + 16 : 370;
+    const cardWidth = isMobile ? window.innerWidth * 0.72 + 16 : 300;
     const singleSetWidth = el.scrollWidth / copies;
 
     if (dir === 'left') {
@@ -192,7 +193,7 @@ function GalleryScrollStrip({
     const checkActivePhoto = () => {
       if (!onActivePhotoChange || galleryList.length === 0 || !el) return;
       const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-      const cardWidth = isMobile ? window.innerWidth * 0.82 + 16 : 336;
+      const cardWidth = isMobile ? window.innerWidth * 0.72 + 16 : 300;
       const idx = Math.max(0, Math.floor((el.scrollLeft + cardWidth * 0.35) / cardWidth)) % galleryList.length;
       if (idx !== lastReportedIdx && galleryList[idx]) {
         lastReportedIdx = idx;
@@ -339,11 +340,11 @@ function GalleryScrollStrip({
                   e.stopPropagation();
                 }
               }}
-              className="group relative flex flex-col flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px] overflow-hidden rounded-2xl shadow-md hover:shadow-xl border border-border/80 dark:border-white/[0.08] bg-card dark:bg-[#161822] select-none transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40"
+              className="group relative flex flex-col flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[280px] lg:w-[300px] overflow-hidden rounded-2xl shadow-md hover:shadow-xl border border-border/80 dark:border-white/[0.08] bg-card dark:bg-[#161822] select-none transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
               {/* 1. Top Section: Full Photo */}
-              <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+              <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                 <GalleryStripImage src={item.src} alt={title} index={absIdx} />
 
                 {/* Photo count badge */}

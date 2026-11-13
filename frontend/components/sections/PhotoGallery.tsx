@@ -84,9 +84,10 @@ function SafeGalleryImage({ src: initialSrc, alt, index }: { src: any; alt: stri
       src={src}
       alt={alt}
       fill
-      sizes="(max-width: 768px) 100vw, 280px"
+      sizes="(max-width: 768px) 75vw, 300px"
       quality={90}
-      className="object-cover transition-transform duration-700 group-hover:scale-105"
+      className="object-cover object-top transition-transform duration-700 group-hover:scale-105"
+      style={{ objectPosition: 'top center' }}
       onError={() => setSrc(fallback)}
     />
   );
@@ -144,7 +145,7 @@ export default function PhotoGallery() {
     const el = scrollContainerRef.current;
     if (!el) return;
     isManualScrolling.current = true;
-    const scrollAmount = direction === 'left' ? -350 : 350;
+    const scrollAmount = direction === 'left' ? -300 : 300;
     scrollPosRef.current = Math.max(0, scrollPosRef.current + scrollAmount);
     el.scrollBy({
       left: scrollAmount,
@@ -235,7 +236,7 @@ export default function PhotoGallery() {
               return (
                 <div
                   key={`${photo.id}-${index}`}
-                  className="group relative flex-shrink-0 w-[82vw] sm:w-[45vw] md:w-[320px] lg:w-[350px]"
+                  className="group relative flex-shrink-0 w-[72vw] sm:w-[45vw] md:w-[280px] lg:w-[300px]"
                 >
                   <Link
                     href={`/photos/${photo.id}`}
@@ -244,7 +245,7 @@ export default function PhotoGallery() {
                     onMouseLeave={() => setHoveredId(null)}
                   >
                     {/* Top Section: Photo */}
-                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                       <SafeGalleryImage src={hqSrc(photo.src)} alt={photo.alt} index={index} />
                       {Array.isArray(photo.images) && photo.images.length > 1 && (
                         <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none">

@@ -112,7 +112,8 @@ function SidebarPhotoCardImage({
       fill
       unoptimized
       sizes="(max-width: 768px) 100vw, 360px"
-      className="object-cover transition-transform duration-500 ease-out"
+      className="object-cover object-top transition-transform duration-500 ease-out"
+      style={{ objectPosition: 'top center' }}
       onError={() => {
         if (src !== fallback) {
           setSrc(fallback);
@@ -132,7 +133,7 @@ export function SidebarPhotoCard({ photo, index, language }: { photo: any; index
       className="group relative flex flex-col w-full rounded-2xl overflow-hidden bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-xs hover:shadow-md hover:border-[#B3121B]/40 cursor-pointer block select-none transition-all duration-300 hover:-translate-y-0.5"
     >
       {/* 1. Top Section: Full Photo */}
-      <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
         <SidebarPhotoCardImage
           src={imgSrc}
           alt={title}
@@ -166,7 +167,7 @@ export function SidebarPhotoMiniCard({ photo, index, language }: { photo: any; i
       href={`/photos/${photo.id || index}`}
       className="group relative flex flex-col w-full rounded-xl overflow-hidden bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-xs hover:shadow-md hover:border-[#B3121B]/40 cursor-pointer block select-none transition-transform duration-300 hover:-translate-y-0.5"
     >
-      <div className="relative aspect-[16/10] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
         <SidebarPhotoCardImage
           src={imgSrc}
           alt={title}

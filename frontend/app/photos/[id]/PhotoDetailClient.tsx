@@ -184,13 +184,14 @@ const MorePhotoCard = memo(function MorePhotoCard({
       className="group relative flex flex-col w-full overflow-hidden rounded-2xl bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-[#B3121B]/40 select-none"
     >
       {/* 1. Top Section: Full Photo */}
-      <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+      <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
         <Image
           src={src}
           alt={rawItemTitle}
           fill
           sizes="(max-width: 640px) 100vw, 400px"
-          className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+          className="object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+          style={{ objectPosition: 'top center' }}
           onError={() => setSrc(fallback)}
         />
 

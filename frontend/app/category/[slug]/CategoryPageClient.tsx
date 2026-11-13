@@ -1679,11 +1679,12 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     className="group relative flex flex-col w-full overflow-hidden rounded-2xl bg-card dark:bg-[#161822] border border-border/80 dark:border-white/[0.08] shadow-md hover:shadow-xl transition-all duration-300 hover:border-[#B3121B]/40 active:scale-[0.99]"
                   >
                     {/* Top Section: Photo */}
-                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                       <img
                         src={photoSrc}
                         alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                        style={{ objectPosition: 'top center' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                         loading="lazy"
                       />
@@ -1731,11 +1732,12 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     className="group relative flex flex-col overflow-hidden rounded-2xl border border-border/80 dark:border-white/[0.08] hover:border-[#B3121B]/40 bg-card dark:bg-[#161822] shadow-md transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
                   >
                     {/* Top Section: Photo */}
-                    <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
+                    <div className="relative aspect-[4/5] w-full overflow-hidden bg-neutral-100 dark:bg-neutral-900">
                       <img
                         src={photoSrc}
                         alt={typeof photoTitle === 'string' ? photoTitle : 'Gallery'}
-                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                        className="w-full h-full object-cover object-top transition-transform duration-700 ease-out group-hover:scale-105"
+                        style={{ objectPosition: 'top center' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                         loading="lazy"
                       />
