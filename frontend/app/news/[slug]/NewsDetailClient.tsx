@@ -1219,7 +1219,13 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   const [mostReadArticles, setMostReadArticles] = useState<typeof trending>(trending.slice(0, 10));
 
   // Mounted guard: prevents language-dependent SSR/client HTML mismatch
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      setIsContentExpanded(true);
+      setSidebarMoreRecommended(true);
+    }
+  }, []);
 
   // Fetch hero-settings to get the same Most Read list as the home screen
   useEffect(() => {
@@ -2224,7 +2230,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   return (
     <>
       <ReadingProgressBar />
-      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2 overflow-x-clip">
+      <div className="wrap w-full max-w-[1240px] mx-auto px-3 sm:px-5 lg:px-6 py-2">
         <div key={`${article.id}-${language}`} className="article-grid" suppressHydrationWarning>
           <article ref={articleContainerRef} suppressHydrationWarning>
             <nav data-nosnippet="true" className="breadcrumb select-none flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-neutral-500 font-medium">
@@ -2489,7 +2495,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                       <AdSectionBanner section="IN_ARTICLE" className="my-6" />
 
                       {!isExpandedState && (
-                        <div className="relative pt-2 pb-2" suppressHydrationWarning>
+                        <div className="relative pt-2 pb-2 md:hidden" suppressHydrationWarning>
                           {/* Smooth gradient fade overlay */}
                           <div className="absolute -top-28 inset-x-0 h-28 bg-gradient-to-t from-white via-white/90 to-transparent dark:from-[#0d1117] dark:via-[#0d1117]/90 dark:to-transparent pointer-events-none" />
 
@@ -2514,9 +2520,11 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                     </>
                   )}
 
-                  <div className={hasSplit && !isExpandedState ? 'hidden' : 'space-y-4 transition-all duration-500 ease-in-out'} suppressHydrationWarning>
-                    {hasSplit && isExpandedState && (
-                      renderContentSection(bottomHtml)
+                  <div className={hasSplit && !isExpandedState ? 'hidden md:block space-y-4' : 'space-y-4 transition-all duration-500 ease-in-out'} suppressHydrationWarning>
+                    {hasSplit && (
+                      <div className={!isExpandedState ? 'hidden md:block' : ''}>
+                        {renderContentSection(bottomHtml)}
+                      </div>
                     )}
 
                     {/* Full PDF Page-by-Page Document Viewer (fallback if marker was not inside the body html) */}
@@ -2562,7 +2570,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
                     {/* Collapse / Read Less Button */}
                     {hasSplit && (
-                      <div className="flex justify-center pt-6 pb-2">
+                      <div className="flex md:hidden justify-center pt-6 pb-2">
                         <button
                           type="button"
                           onClick={() => {
