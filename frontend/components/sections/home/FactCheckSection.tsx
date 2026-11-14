@@ -192,9 +192,9 @@ export default function FactCheckSection({ language, initialArticles }: { langua
   const featImage = getArticleImage(featArt, '/assets/demo/5.jpg');
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2" suppressHydrationWarning>
+    <div className="mx-auto max-w-screen-xl px-4 mt-4 md:mt-6" suppressHydrationWarning>
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-2.5 md:mb-4">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-4 md:mb-6">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[19px] md:text-[21px] font-black rounded-lg select-none leading-none tracking-tight">
           {language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'तथ्य जांच' : 'Fact Check'}
         </span>

@@ -215,9 +215,9 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
 
   if (!trending.length) {
     return (
-      <div className="mx-auto max-w-screen-xl px-4 mt-2 animate-pulse">
+      <div className="mx-auto max-w-screen-xl px-4 mt-4 md:mt-6 animate-pulse">
         {/* Section Header Skeleton */}
-        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-1 mb-2">
+        <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-4 md:mb-6">
           <div className="h-9 w-32 rounded-lg bg-muted/60" />
           <div className="h-5 w-24 rounded bg-muted/60" />
         </div>
@@ -234,9 +234,9 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
   }
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 mt-2 select-none">
+    <div className="mx-auto max-w-screen-xl px-4 mt-4 md:mt-6 select-none">
       {/* Section Header */}
-      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-1 mb-2">
+      <div className="flex items-center justify-between border-b-[3.5px] border-slate-950 dark:border-slate-800 pb-2 md:pb-2.5 mb-4 md:mb-6">
         <span className="section-heading-badge bg-[#B3121B] text-white px-5 py-2.5 text-[17px] md:text-[19px] font-black rounded-lg select-none leading-none tracking-tight flex items-center gap-2">
           <span>✅</span>
           {language === 'gu' ? 'ફેક્ટ ચેક' : language === 'hi' ? 'फैक्ट चेक' : 'Fact Check'}
@@ -251,7 +251,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
 
       {/* Carousel Container */}
       <div
-        className="relative group/carousel"
+        className="relative group/carousel pt-1 md:pt-1.5"
         onMouseEnter={() => { isPaused.current = true; }}
         onMouseLeave={() => { isPaused.current = false; }}
         onTouchStart={() => {
