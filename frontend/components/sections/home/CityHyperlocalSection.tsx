@@ -1049,7 +1049,7 @@ export default function CityHyperlocalSection({
     return activeCityData.list;
   }, [realList, activeCityData]);
 
-  // Gujarat / City Highlights for Desktop sidebar to eliminate right-side whitespace
+  // Gujarat / City Highlights for Desktop sidebar to perfectly align flush with the left column
   const sidebarGujaratArticles = useMemo(() => {
     const seenIds = new Set<string>();
     realSlides.forEach((s) => seenIds.add(s.id));
@@ -1071,13 +1071,13 @@ export default function CityHyperlocalSection({
             time: formatTime(art.publishedAt || (art as any).createdAt),
             article: art,
           });
-          if (list.length >= 4) break;
+          if (list.length >= 2) break;
         }
       }
     }
 
     // 2. Pick from general articles in `articles` prop
-    if (list.length < 4 && articles && articles.length > 0) {
+    if (list.length < 2 && articles && articles.length > 0) {
       for (const art of articles) {
         if (art && art.id && !seenIds.has(art.id)) {
           seenIds.add(art.id);
@@ -1090,13 +1090,13 @@ export default function CityHyperlocalSection({
             time: formatTime(art.publishedAt || (art as any).createdAt),
             article: art,
           });
-          if (list.length >= 4) break;
+          if (list.length >= 2) break;
         }
       }
     }
 
     // 3. Fallback to activeCityData.list
-    if (list.length < 3) {
+    if (list.length < 2) {
       for (const item of activeCityData.list) {
         if (!seenIds.has(item.id)) {
           seenIds.add(item.id);
@@ -1108,12 +1108,12 @@ export default function CityHyperlocalSection({
             category: item.categoryGu,
             time: getLocalized(language, { gu: item.relativeTimeGu, en: item.relativeTime, hi: item.relativeTimeHi }),
           });
-          if (list.length >= 3) break;
+          if (list.length >= 2) break;
         }
       }
     }
 
-    return list;
+    return list.slice(0, 2);
   }, [tabApiArticles, articles, activeTab, realSlides, realList, activeCityData, language]);
 
   useEffect(() => {
@@ -1420,7 +1420,7 @@ export default function CityHyperlocalSection({
               </div>
 
               <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
-                {sidebarGujaratArticles.map((item) => (
+                {sidebarGujaratArticles.slice(0, 2).map((item) => (
                   <Link
                     key={item.id}
                     href={`/news/${item.slug}`}

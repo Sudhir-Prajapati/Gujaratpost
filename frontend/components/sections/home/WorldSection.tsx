@@ -453,10 +453,10 @@ export default function WorldSection({ language, initialArticles }: { language: 
     return list;
   }, [dbWorldArticles, language]);
 
-  // Sidebar World Articles for Desktop (displays below CurrencyRatesWidget to eliminate whitespace)
+  // Sidebar World Articles for Desktop (displays below CurrencyRatesWidget to perfectly align flush with the left column)
   const sidebarWorldArticles = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
-    dbWorldArticles.slice(5, 9).forEach((art) => {
+    dbWorldArticles.slice(5, 6).forEach((art) => {
       list.push({
         id: art.id,
         slug: art.slug,
@@ -467,9 +467,9 @@ export default function WorldSection({ language, initialArticles }: { language: 
         time: formatTime(art.publishedAt),
       });
     });
-    if (list.length < 3) {
+    if (list.length < 1) {
       mockWorldCards.slice(4).forEach((card) => {
-        if (list.length < 3 && !list.some((item) => item.id === card.id)) {
+        if (list.length < 1 && !list.some((item) => item.id === card.id)) {
           list.push({
             id: card.id,
             slug: card.slug,
@@ -482,9 +482,9 @@ export default function WorldSection({ language, initialArticles }: { language: 
         }
       });
     }
-    if (list.length < 3) {
+    if (list.length < 1) {
       mockWorldCards.forEach((card) => {
-        if (list.length < 3 && !list.some((item) => item.id === card.id)) {
+        if (list.length < 1 && !list.some((item) => item.id === card.id)) {
           list.push({
             id: card.id,
             slug: card.slug,
@@ -497,7 +497,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
         }
       });
     }
-    return list;
+    return list.slice(0, 1);
   }, [dbWorldArticles, language]);
 
   return (
@@ -642,7 +642,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
               </div>
 
               <div className="flex flex-col divide-y divide-border/50">
-                {sidebarWorldArticles.map((item) => (
+                {sidebarWorldArticles.slice(0, 1).map((item) => (
                   <Link
                     key={item.id}
                     href={`/news/${item.slug}`}
