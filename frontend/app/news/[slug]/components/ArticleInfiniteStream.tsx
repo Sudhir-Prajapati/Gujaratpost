@@ -633,10 +633,10 @@ export default function ArticleInfiniteStream({
           const readAlsoArticles = finalCandidates.slice(0, 4);
           readAlsoArticles.forEach((a) => usedReadAlsoIds.add(String(a.id)));
 
-          // Dedicated sidebar cards for this stream article
-          const sidebarItems = getStreamSidebarSlice(streamIdx, 6);
+          // Dedicated sidebar cards for this stream article (Balanced top + bottom slices)
+          const sidebarTopItems = getStreamSidebarSlice(streamIdx * 2, 4);
+          const sidebarBottomItems = getStreamSidebarSlice(streamIdx * 2 + 1, 4);
           const isFirstStream = streamIdx === 0;
-          const isEvenStream = streamIdx % 2 === 0;
 
           const sidebarTitle = isFirstStream
             ? uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })
@@ -646,6 +646,11 @@ export default function ArticleInfiniteStream({
                 ? uiLabel(language, { en: 'Trending News', gu: 'ટ્રેન્ડિંગ ન્યૂઝ', hi: 'ट्रेंडिंग न्यूज़' })
                 : uiLabel(language, { en: 'Must Read Stories', gu: 'વાંચવા જેવા સમાચાર', hi: 'ज़रूर पढ़ें' });
 
+          const sidebarBottomTitle = uiLabel(language, {
+            en: 'More Top Stories',
+            gu: 'વધુ મહત્વપૂર્ણ સમાચાર',
+            hi: 'अन्य मुख्य खबरें',
+          });
           return (
             <div
               key={streamArticle.id}
@@ -672,7 +677,8 @@ export default function ArticleInfiniteStream({
               </article>
 
               {/* Right Column: Dedicated Desktop Sidebar for this Stream Article (Hidden on mobile) */}
-              <aside className="hidden md:flex side select-none w-full max-w-[340px] min-w-0 flex-col gap-4" suppressHydrationWarning>
+              <aside className="hidden md:flex side select-none w-full max-w-[340px] min-w-0 flex-col gap-4 sticky top-4 self-start" suppressHydrationWarning>
+                {/* 1. Top Section */}
                 <div className="wtitle mb-1">
                   <span className="d"></span>
                   <span>{sidebarTitle}</span>
@@ -680,11 +686,11 @@ export default function ArticleInfiniteStream({
 
                 {/* Separated Cards with Category Pill & WhatsApp Share */}
                 <div className="flex flex-col gap-3">
-                  {sidebarItems.map((item, index) => {
+                  {sidebarTopItems.map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
                       <Link
-                        key={`stream-${streamIdx}-card-${item.id || index}`}
+                        key={`stream-${streamIdx}-top-${item.id || index}`}
                         href={`/news/${item.slug}`}
                         className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
                       >
@@ -721,9 +727,7 @@ export default function ArticleInfiniteStream({
                               e.stopPropagation();
                               const title = getArticleTitle(item, language);
                               const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
-                              const text = `${title}
-
-${url}`;
+                              const text = `${title}\n\n${url}`;
                               if (typeof navigator !== 'undefined' && navigator.share) {
                                 navigator.share({ title, url, text }).catch(() => {
                                   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
@@ -744,43 +748,111 @@ ${url}`;
                   })}
                 </div>
 
-                {/* Alternate showing WhatsApp Channel Widget */}
-                {(isFirstStream || isEvenStream) && (
-                  <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/80 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366] mt-1">
-                    <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
-                    <div className="relative z-10 flex items-center gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
-                        <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
-                            {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
-                          </h3>
-                          <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
-                        </div>
-                        <span className="text-[13px] md:text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
-                          {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
-                        </span>
-                      </div>
+                {/* 2. WhatsApp Channel Widget (Always shown on every stream article to eliminate sidebar whitespace) */}
+                <div className="relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/80 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366] my-1">
+                  <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
+                  <div className="relative z-10 flex items-center gap-3">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
+                      <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
                     </div>
-                    <p className="relative z-10 text-[14px] md:text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3 font-medium">
-                      {language === 'gu'
-                        ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
-                        : language === 'hi'
-                          ? 'अपने शहर के ताजा और महत्वपूर्ण समाचार सबसे पहले सीधे अपने फोन पर पाएं।'
-                          : 'Get breaking news and vital updates of your city first, directly on your phone.'}
-                    </p>
-                    <a
-                      href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
-                    >
-                      <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
-                      <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'ચैनल फॉलो करें' : 'Follow Channel'}</span>
-                      <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
-                    </a>
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                          {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
+                        </h3>
+                        <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                      </div>
+                      <span className="text-[13px] md:text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                        {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
+                      </span>
+                    </div>
+                  </div>
+                  <p className="relative z-10 text-[14px] md:text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3 font-medium">
+                    {language === 'gu'
+                      ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
+                      : language === 'hi'
+                        ? 'अपने शहर के ताजा और महत्वपूर्ण समाचार सबसे पहले सीधे अपने फोन पर पाएं।'
+                        : 'Get breaking news and vital updates of your city first, directly on your phone.'}
+                  </p>
+                  <a
+                    href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[13.5px] py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+                  >
+                    <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
+                    <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'ચैनल फॉलो करें' : 'Follow Channel'}</span>
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+                  </a>
+                </div>
+
+                {/* 3. Bottom Section (Additional Cards to guarantee complete vertical coverage) */}
+                {sidebarBottomItems.length > 0 && (
+                  <div className="flex flex-col gap-3 mt-1">
+                    <div className="wtitle mb-1">
+                      <span className="d"></span>
+                      <span>{sidebarBottomTitle}</span>
+                    </div>
+                    {sidebarBottomItems.map((item, index) => {
+                      const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+                      return (
+                        <Link
+                          key={`stream-${streamIdx}-bottom-${item.id || index}`}
+                          href={`/news/${item.slug}`}
+                          className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-1">
+                              <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                                {itemCategory}
+                              </span>
+                              <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                                <AutoArticleTitle article={item} language={language} />
+                              </h3>
+                            </div>
+                            <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                              <img
+                                src={getCardThumbnail(item, index)}
+                                alt={item.title || ''}
+                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Bottom Row with Category Pill & WhatsApp Share */}
+                          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                              <span>{itemCategory || 'સમાચાર'}</span>
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const title = getArticleTitle(item, language);
+                                const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
+                                const text = `${title}\n\n${url}`;
+                                if (typeof navigator !== 'undefined' && navigator.share) {
+                                  navigator.share({ title, url, text }).catch(() => {
+                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                  });
+                                } else {
+                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                              aria-label="Share"
+                            >
+                              <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
+                              <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                            </button>
+                          </div>
+                        </Link>
+                      );
+                    })}
                   </div>
                 )}
               </aside>

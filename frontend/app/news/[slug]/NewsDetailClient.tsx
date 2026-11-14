@@ -1884,6 +1884,22 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return sortedPool.slice(0, 8);
   }, [article, mostReadArticles, readAlsoPool, sidebarRecommendedPool, latestArticles, trending, related]);
 
+  // 6. Desktop Extra Must-Read Pool for bottom of <article> (below topic tags) to eliminate left column whitespace
+  const desktopExtraMustReadPool = useMemo(() => {
+    const mostReadSubset = (mostReadArticles || []).slice(0, 5);
+    const excludeList = [
+      article,
+      ...mostReadSubset,
+      ...readAlsoPool,
+      ...sidebarRecommendedPool,
+      ...desktopExtraLatestPool,
+    ];
+    const pool = [...(trending || []), ...(related || []), ...(latestArticles || []), ...(mostReadArticles || [])];
+    const uniquePool = filterUniqueArticles(pool, excludeList);
+    const sortedPool = sortArticlesByNewest(uniquePool);
+    return sortedPool.slice(0, 4);
+  }, [article, mostReadArticles, readAlsoPool, sidebarRecommendedPool, desktopExtraLatestPool, trending, related, latestArticles]);
+
   useEffect(() => {
     const onScroll = () => {
       const total = document.documentElement.scrollHeight - window.innerHeight;
@@ -2568,6 +2584,54 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                       </div>
                     )}
 
+                    {/* Desktop Extra Must-Read Stories Grid directly below Topics Tags (Eliminates Left Whitespace) */}
+                    {desktopExtraMustReadPool.length > 0 && (
+                      <div className="hidden md:flex flex-col mt-6 pt-5 border-t border-slate-200 dark:border-neutral-800">
+                        <div className="flex items-center gap-2 mb-3.5">
+                          <span className="block w-[3.5px] h-5 rounded-full bg-[#B3121B]"></span>
+                          <h3 className="text-[16px] font-black tracking-tight text-neutral-900 dark:text-white">
+                            {uiLabel(language, { en: 'Must Read Stories', gu: 'વાંચવા જેવા અન્ય સમાચાર', hi: 'ज़रूर पढ़ें' })}
+                          </h3>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3.5">
+                          {desktopExtraMustReadPool.slice(0, 4).map((item, index) => {
+                            const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+                            return (
+                              <Link
+                                key={`must-read-${item.id || index}`}
+                                href={`/news/${item.slug}`}
+                                className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-sm hover:shadow-md transition-all text-left"
+                              >
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0 flex-1 pr-1">
+                                    <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                                      {itemCategory}
+                                    </span>
+                                    <h4 className="text-[13.5px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] transition-colors line-clamp-2">
+                                      <AutoArticleTitle article={item} language={language} />
+                                    </h4>
+                                  </div>
+                                  <div className="relative w-[90px] h-[62px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                                    <Image
+                                      src={getCardThumbnail(item, index)}
+                                      alt={item.title || ''}
+                                      fill
+                                      sizes="90px"
+                                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                    />
+                                  </div>
+                                </div>
+                                <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-slate-100 dark:border-white/[0.06] text-[10.5px] text-muted-foreground font-medium">
+                                  <span>{itemCategory || 'સમાચાર'}</span>
+                                  <span>{formatDate(item.publishedAt, language)}</span>
+                                </div>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Collapse / Read Less Button */}
                     {hasSplit && (
                       <div className="flex md:hidden justify-center pt-6 pb-2">
@@ -2781,7 +2845,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                     <span>{uiLabel(language, { en: 'Latest News', gu: 'તાજા સમાચાર', hi: 'ताजा खबरें' })}</span>
                   </div>
                   <div className="flex flex-col gap-3">
-                    {desktopExtraLatestPool.slice(0, 6).map((item, index) => {
+                    {desktopExtraLatestPool.slice(0, 4).map((item, index) => {
                       const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                       return (
                         <Link
