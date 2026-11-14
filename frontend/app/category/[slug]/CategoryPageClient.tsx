@@ -55,6 +55,7 @@ interface Props {
   slug: string;
   resolvedSlug: string;
   politicsArticles?: Article[];
+  mixedArticles?: Article[];
   customSeo?: CategorySeoMeta;
 }
 
@@ -345,7 +346,7 @@ function MobileCategoryArticleCard({
   );
 }
 
-function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trending, currentPage, totalPages, politicsArticles: initialPolitics, customSeo }: Props) {
+function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trending, currentPage, totalPages, politicsArticles: initialPolitics, mixedArticles: initialMixedArticles, customSeo }: Props) {
   const { language } = useApp();
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [sortBy, setSortBy] = useState<'latest' | 'popular'>('latest');
@@ -360,6 +361,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   const [mainPage, setMainPage] = useState<number>(currentPage);
   const [mainTotalPages, setMainTotalPages] = useState<number>(totalPages);
   const [pageLoading, setPageLoading] = useState(false);
+
+  // Mixed articles stream across multiple categories for the Video tab news grid
+  const [mixedNews, setMixedNews] = useState<Article[]>(initialMixedArticles || []);
 
   // Client-side pagination cache keyed by `${categorySlug}:${page}`
   const pageCacheRef = useRef<Record<string, { articles: Article[]; totalPages: number }>>({
@@ -445,7 +449,23 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     setAlsoReadCat2Articles([]);
     setActiveTab('all');
     setPlayingVideoId(null);
-  }, [slug, resolvedSlug, currentPage, totalPages]);
+    if (initialMixedArticles && initialMixedArticles.length > 0) {
+      setMixedNews(initialMixedArticles);
+    }
+  }, [slug, resolvedSlug, currentPage, totalPages, initialMixedArticles]);
+
+  // Ensure mixed news pool across categories is loaded for Video tab
+  useEffect(() => {
+    if (mixedNews.length === 0) {
+      getPublicArticles({ page: 1, limit: 48, sort: 'latest' })
+        .then((res) => {
+          if (res?.articles?.length) {
+            setMixedNews(sortArticlesByLatest(res.articles));
+          }
+        })
+        .catch(() => { });
+    }
+  }, [mixedNews.length]);
 
   // Derived active tab state for unified article rendering and pagination
   const isPairedTab = activeTab === 'paired' && Boolean(pairedCategory?.slug);
@@ -593,7 +613,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   // Interleave Category 1 & Category 2 articles for "Also Read" (24 articles total: 12 Cat1 + 12 Cat2)
   const alsoReadArticles = useMemo(() => {
     const currentArticleIds = new Set(
-      [...(mainArticles || []), ...(pairedArticles || [])]
+      [...(mainArticles || []), ...(pairedArticles || []), ...(activeTab === 'video' ? mixedNews : [])]
         .map((a: any) => a.id)
         .filter(Boolean)
     );
@@ -613,7 +633,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       }
     }
     return combined.slice(0, 24);
-  }, [alsoReadCat1Articles, alsoReadCat2Articles, mainArticles, pairedArticles]);
+  }, [alsoReadCat1Articles, alsoReadCat2Articles, mainArticles, pairedArticles, activeTab, mixedNews]);
 
   // Get localized category name aligned exactly with header menu links
   const getCategoryTitleLocalized = () => {
@@ -715,7 +735,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   /* Filter & Sort logic based on activeTab specifically for Section (Hero + Sub-Hero + Top Stories) */
 
   // 1. Articles with Video OR YouTube videos
-  const categoryVideoItems = useMemo(() => {
+  const categoryVideoItems = useMemo<any[]>(() => {
     const catNameLower = (category?.name || '').toLowerCase().trim();
     const catGuLower = (category?.nameGu || '').toLowerCase().trim();
     const slugLower = (slug || '').toLowerCase().trim();
@@ -747,14 +767,14 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     const oneYearAgoMs = Date.now() - 365 * 24 * 60 * 60 * 1000;
     const isFreshVideo = (v: any) => {
       if (!v) return false;
-      if (v.publishedAt) {
-        const t = new Date(v.publishedAt).getTime();
+      const dateVal = v.publishedAt || v.createdAt || v.date;
+      if (dateVal) {
+        const t = new Date(dateVal).getTime();
         if (!isNaN(t) && t > 0 && t < oneYearAgoMs) return false;
       }
-      const rel = `${v.relativeTime || ''} ${v.relativeTimeGu || ''}`.toLowerCase();
-      if (rel.includes('year') || rel.includes('વર્ષ')) {
-        const m = rel.match(/(\d+)\s*(?:year|વર્ષ)/);
-        if (m && parseInt(m[1]) >= 1) return false;
+      const rel = `${v.relativeTime || ''} ${v.relativeTimeGu || ''} ${v.relativeTimeHi || ''}`.toLowerCase();
+      if (rel.includes('year') || rel.includes('વર્ષ') || rel.includes('साल')) {
+        return false;
       }
       return true;
     };
@@ -825,23 +845,106 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     categoryMatchingYouTubeVideos.sort(sortByDateDesc);
     otherYouTubeVideos.sort(sortByDateDesc);
 
-    // 1. Top Section (Image 1): Exactly 6 real fresh videos
+    // 1. Top Section: Exactly 6 real fresh videos
     const allAvailableVideos = [...videoArticles, ...categoryMatchingYouTubeVideos, ...otherYouTubeVideos].sort(sortByDateDesc);
     const top6Videos = allAvailableVideos.slice(0, 6);
-    const top6Ids = new Set(top6Videos.map((item) => item.id).filter(Boolean));
 
-    // 2. Second Section (Image 2): That category's actual articles (not videos)
-    const categoryArticles = (currentArticles || [])
-      .filter((art) => !top6Ids.has(art.id))
-      .map((art: any) => ({
-        ...art,
-        category: art.category || categoryName,
-        categoryGu: art.categoryGu || categoryName,
-        categoryHi: art.categoryHi || categoryName,
-      }));
-
-    return [...top6Videos, ...categoryArticles];
+    return top6Videos;
   }, [currentArticles, videos, category, slug, categoryName]);
+
+  // Helper to normalize category name/slug of any article
+  const getArticleNormCat = useCallback((art: any): string => {
+    const raw = (
+      (typeof art.category === 'string' ? art.category : (art.category as any)?.slug || (art.category as any)?.name) ||
+      art.categorySlug ||
+      art.categoryGu ||
+      art.categoryHi ||
+      ''
+    ).toLowerCase().trim();
+
+    if (raw.includes('gujarat') || raw.includes('ગુજરાત') || raw.includes('state')) return 'gujarat';
+    if (raw.includes('national') || raw.includes('bharat') || raw.includes('ભારત') || raw.includes('india')) return 'national';
+    if (raw.includes('world') || raw.includes('vishva') || raw.includes('વિશ્વ') || raw.includes('international')) return 'world';
+    if (raw.includes('politic') || raw.includes('rajniti') || raw.includes('રાજનીતિ')) return 'politics';
+    if (raw.includes('crime') || raw.includes('ક્રાઇમ') || raw.includes('ક્રાઈમ')) return 'crime';
+    if (raw.includes('entertain') || raw.includes('manoranjan') || raw.includes('મનોરંજન') || raw.includes('bollywood') || raw.includes('cinema')) return 'entertainment';
+    if (raw.includes('sport') || raw.includes('cricket') || raw.includes('રમત') || raw.includes('રમતો')) return 'sports';
+    if (raw.includes('tech') || raw.includes('ટેક') || raw.includes('ટેક્નોલોજી')) return 'technology';
+    if (raw.includes('business') || raw.includes('વેપાર') || raw.includes('બિઝનેસ') || raw.includes('માર્કેટ')) return 'business';
+    if (raw.includes('health') || raw.includes('lifestyle') || raw.includes('હેલ્થ') || raw.includes('લાઈફસ્ટાઈલ')) return 'health';
+    if (raw.includes('fact') || raw.includes('ફેક્ટ')) return 'fact-check';
+    return raw || 'news';
+  }, []);
+
+  // Mixed articles from different categories specifically for the Video tab news section
+  const mixedCategoryArticles = useMemo(() => {
+    if (!mixedNews || mixedNews.length === 0) {
+      return [];
+    }
+
+    const currentCatNorm = getArticleNormCat({ categorySlug: normSlug });
+    const seenIds = new Set<string>();
+    const otherCatPool: Article[] = [];
+    const sameCatPool: Article[] = [];
+
+    for (const art of mixedNews) {
+      if (!art || !art.id || seenIds.has(art.id)) continue;
+      seenIds.add(art.id);
+
+      const artCatNorm = getArticleNormCat(art);
+      if (artCatNorm !== currentCatNorm) {
+        otherCatPool.push(art);
+      } else {
+        sameCatPool.push(art);
+      }
+    }
+
+    // Group other-category articles by category for round-robin interleaving
+    const categoryBuckets: Record<string, Article[]> = {};
+    for (const art of otherCatPool) {
+      const cat = getArticleNormCat(art);
+      if (!categoryBuckets[cat]) categoryBuckets[cat] = [];
+      categoryBuckets[cat].push(art);
+    }
+
+    const bucketKeys = Object.keys(categoryBuckets);
+    const interleaved: Article[] = [];
+    let hasMore = true;
+    let round = 0;
+
+    while (hasMore && interleaved.length < 36) {
+      hasMore = false;
+      for (const catKey of bucketKeys) {
+        const bucket = categoryBuckets[catKey];
+        if (bucket && round < bucket.length) {
+          interleaved.push(bucket[round]);
+          hasMore = true;
+          if (interleaved.length >= 36) break;
+        }
+      }
+      round++;
+    }
+
+    // Fill remaining up to 36 articles from otherCatPool and then sameCatPool if needed
+    const usedInterleavedIds = new Set(interleaved.map((a) => a.id));
+    for (const art of otherCatPool) {
+      if (interleaved.length >= 36) break;
+      if (!usedInterleavedIds.has(art.id)) {
+        interleaved.push(art);
+        usedInterleavedIds.add(art.id);
+      }
+    }
+
+    for (const art of sameCatPool) {
+      if (interleaved.length >= 36) break;
+      if (!usedInterleavedIds.has(art.id)) {
+        interleaved.push(art);
+        usedInterleavedIds.add(art.id);
+      }
+    }
+
+    return interleaved;
+  }, [mixedNews, normSlug, getArticleNormCat]);
 
   // Items for category news articles (no YouTube videos injected)
   const allSectionItems = useMemo(() => {
@@ -849,7 +952,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   }, [currentArticles]);
 
   // Dynamic Section Items (Hero + Sub-Hero + Top Stories) driven by activeTab
-  const currentSectionItems = useMemo(() => {
+  const currentSectionItems = useMemo<any[]>(() => {
     if (activeTab === 'video') {
       return categoryVideoItems;
     }
@@ -858,13 +961,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   }, [activeTab, categoryVideoItems, allSectionItems]);
 
   // Section Hero Article / Item
-  const heroArticle = currentSectionItems[0] || currentArticles[0];
+  const heroArticle: any = currentSectionItems[0] || currentArticles[0];
 
   // Section Sub-Hero Small Article
-  const subHeroArticle = currentSectionItems[1];
+  const subHeroArticle: any = currentSectionItems[1];
 
   // Section 4 Top Stories (Items 3 to 6)
-  const topStories = useMemo(() => {
+  const topStories = useMemo<any[]>(() => {
     const sliced = currentSectionItems.slice(2, 6);
     if (sliced.length >= 4) return sliced;
 
@@ -874,16 +977,18 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     return [...sliced, ...fallbacks].slice(0, 4);
   }, [currentSectionItems, heroArticle, subHeroArticle]);
 
-  const topStoriesFirstThree = useMemo(() => topStories.slice(0, 3), [topStories]);
-  const fourthStory = topStories[3];
+  const topStoriesFirstThree = useMemo<any[]>(() => topStories.slice(0, 3), [topStories]);
+  const fourthStory: any = topStories[3];
 
   const topStoriesIds = useMemo(() => new Set([heroArticle?.id, subHeroArticle?.id, ...topStories.map((a: any) => a.id)].filter(Boolean)), [heroArticle, subHeroArticle, topStories]);
 
   // Remaining articles for Popular News grid (steady view)
-  const popularArticles = useMemo(() => {
-    const baseList = activeTab === 'video' ? categoryVideoItems : currentSectionItems;
-    return baseList.filter((art) => !topStoriesIds.has(art.id));
-  }, [activeTab, categoryVideoItems, currentSectionItems, topStoriesIds]);
+  const popularArticles = useMemo<any[]>(() => {
+    if (activeTab === 'video') {
+      return mixedCategoryArticles;
+    }
+    return currentSectionItems.filter((art) => !topStoriesIds.has(art.id));
+  }, [activeTab, mixedCategoryArticles, currentSectionItems, topStoriesIds]);
 
   // Fast background prefetch of adjacent pages for instant 0ms clicking
   useEffect(() => {
@@ -1028,8 +1133,20 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     } else if (tabId === 'latest') {
       setHasLoadedMore(true);
       setVisibleCount(9999);
+    } else if (tabId === 'video') {
+      setHasLoadedMore(false);
+      setVisibleCount(12);
+      if (!mixedNews || mixedNews.length === 0) {
+        getPublicArticles({ page: 1, limit: 48, sort: 'latest' })
+          .then((res) => {
+            if (res?.articles?.length) {
+              setMixedNews(sortArticlesByLatest(res.articles));
+            }
+          })
+          .catch(() => { });
+      }
     }
-  }, [activeTab, pairedCategory, resolvedSlug, slug, currentPage, articles, totalPages]);
+  }, [activeTab, pairedCategory, resolvedSlug, slug, currentPage, articles, totalPages, mixedNews]);
 
   // Handle browser back/forward buttons
   useEffect(() => {
@@ -1047,7 +1164,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   }, [activeTab, pairedCategory, pairedPage, mainPage, handlePageChange]);
 
   // Compute display articles for the grid
-  const displayArticles = useMemo(() => {
+  const displayArticles = useMemo<any[]>(() => {
     return popularArticles;
   }, [popularArticles]);
 
@@ -1489,16 +1606,26 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
               <div className="flex items-center gap-2.5">
                 <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-1 my-0.5" style={{ minHeight: '1.2em' }} aria-hidden="true" />
                 <h2 className="text-[20px] sm:text-[22px] md:text-[23px] font-black tracking-tight text-foreground flex items-center flex-wrap gap-2">
-                  <span>{getCategoryNewsTitle()}</span>
+                  <span>
+                    {activeTab === 'video'
+                      ? getLocalized(language, { gu: 'મુખ્ય સમાચાર', hi: 'प्रमुख समाचार', en: 'Top Stories' })
+                      : getCategoryNewsTitle()}
+                  </span>
                   {activeTab === 'video' && (
                     <span className="text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-[#B3121B] dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
-                      {getLocalized(language, { gu: 'વાંચવા માટેના સમાચાર', hi: 'पढ़ने के लिए समाचार', en: 'News Articles' })}
+                      {getLocalized(language, { gu: 'વિવિધ કેટેગરીના સમાચાર', hi: 'विभिन्न कैटेगरी के समाचार', en: 'Across Categories' })}
                     </span>
                   )}
                 </h2>
               </div>
               <span className="text-xs font-semibold text-muted-foreground hidden sm:inline-block">
-                {getLocalized(language, { gu: 'બધા સમાચાર અને વિગતો', hi: 'सभी समाचार और विवरण', en: 'All News & Updates' })}
+                {activeTab === 'video'
+                  ? getLocalized(language, {
+                    gu: 'ગુજરાત, દેશ અને વિશ્વના મહત્વના સમાચારો',
+                    hi: 'गुजरात, देश और दुनिया के महत्वपूर्ण समाचार',
+                    en: 'Important updates across categories',
+                  })
+                  : getLocalized(language, { gu: 'બધા સમાચાર અને વિગતો', hi: 'सभी समाचार और विवरण', en: 'All News & Updates' })}
               </span>
             </div>
           </div>
@@ -1527,8 +1654,8 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                     key={art.id || idx}
                     article={art}
                     language={language}
-                    defaultCategorySlug={currentActiveCatSlug}
-                    defaultCategoryLabel={currentActiveCatLabel}
+                    defaultCategorySlug={activeTab === 'video' ? undefined : currentActiveCatSlug}
+                    defaultCategoryLabel={activeTab === 'video' ? undefined : currentActiveCatLabel}
                     index={idx}
                     isVideo={false}
                   />
