@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useIsApk } from '@/lib/useIsApk';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, CheckCircle2, ArrowRight, Camera } from 'lucide-react';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 import { isMediaVideo, sanitizeImageUrl } from '@/lib/media';
 import { buildTwitterPostButton, normalizeTwitterPostLinks } from '@/lib/article-social-links';
@@ -447,19 +447,20 @@ import {
   getCategoryLabel,
   getLocalized,
   normalizeDisplayText,
+  PHOTOS,
 } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import { useAutoTranslate, useAutoTranslateHtml } from '@/lib/translate';
 import Advertisement from '@/components/ads/Advertisement';
 import { toGu } from '@/lib/utils';
-import { getBackendApiUrl, getHeroSettings } from '@/lib/api';
+import { getBackendApiUrl, getHeroSettings, getPublicGallery } from '@/lib/api';
 import {
   getFacebookShareHref,
   getTwitterShareHref,
   getWhatsAppShareHref,
 } from '@/lib/facebookShare';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
-import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleBreadcrumbTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const CATEGORY_SLUG_MAP: Record<string, string> = {
   'trending': 'trending',
@@ -527,6 +528,49 @@ const DEMO_THUMBNAILS = [
   'https://images.unsplash.com/photo-1495020689067-958852a7765e?w=400&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&auto=format&fit=crop&q=80',
 ];
+
+const FALLBACK_NEWS_IMAGES = [
+  'https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1509316975850-ff9c5deb0cd9?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=1200&q=90',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=90',
+];
+
+function resolvePhotoUrl(val: any, fallback: string = ''): string {
+  if (!val) return fallback;
+  let raw = typeof val === 'string' ? val : (val.src || val.coverImage || val.image || val.thumbnail);
+  if (typeof raw === 'string') {
+    let trimmed = raw.trim();
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const first = parsed[0];
+          raw = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+          trimmed = String(raw).trim();
+        }
+      } catch {}
+    }
+    const qIdx = trimmed.indexOf('"');
+    if (qIdx !== -1) {
+      trimmed = trimmed.substring(0, qIdx).trim();
+    }
+    trimmed = trimmed.replace(/[,\}\]]+$/, '').trim();
+    if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+      return trimmed;
+    }
+  }
+  if (typeof val === 'object' && Array.isArray(val.images) && val.images.length > 0) {
+    const first = val.images[0];
+    const firstSrc = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
+    return resolvePhotoUrl(firstSrc, fallback);
+  }
+  return fallback;
+}
 
 function getCardThumbnail(art: any, index: number = 0): string {
   const raw = art?.image || art?.featuredImage || art?.thumbnail;
@@ -1900,6 +1944,36 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return sortedPool.slice(0, 4);
   }, [article, mostReadArticles, readAlsoPool, sidebarRecommendedPool, desktopExtraLatestPool, trending, related, latestArticles]);
 
+  // 7. Photo Gallery Pool for Desktop Sidebar (eliminates remaining right whitespace)
+  const [galleryPhotos, setGalleryPhotos] = useState<any[]>([]);
+
+  useEffect(() => {
+    getPublicGallery({ limit: 10 })
+      .then((res) => {
+        if (res && Array.isArray(res) && res.length > 0) {
+          setGalleryPhotos(res.filter((p: any) => p && (p.src || p.id || p.image)));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const sidebarPhotos = useMemo(() => {
+    const list = galleryPhotos.length > 0 ? [...galleryPhotos] : [...PHOTOS];
+    if (list.length < 4) {
+      const fallbackList = [
+        { id: 'p1', src: FALLBACK_NEWS_IMAGES[0], captionGu: 'ગુજરાતના દર્શનીય સ્થળો અને પ્રાકૃતિક સૌંદર્ય', caption: 'Scenic places and natural beauty of Gujarat' },
+        { id: 'p2', src: FALLBACK_NEWS_IMAGES[1], captionGu: 'અમદાવાદ રિવરફ્રન્ટ ફ્લાવર શોની આકર્ષક તસવીરો', caption: 'Attractive photos of Ahmedabad Riverfront Flower Show' },
+        { id: 'p3', src: FALLBACK_NEWS_IMAGES[2], captionGu: 'ગીર નેશનલ પાર્કમાં એશિયાટીક સિંહોની અદભૂત ક્ષણો', caption: 'Stunning moments of Asiatic lions in Gir National Park' },
+        { id: 'p4', src: FALLBACK_NEWS_IMAGES[3], captionGu: 'રણોત્સવ કચ્છ: સફેદ રણની મોહક સંધ્યા અને સંસ્કૃતિ', caption: 'Rann Utsav Kutch: Enchanting dusk and culture of White Rann' },
+      ];
+      for (const f of fallbackList) {
+        if (list.length >= 4) break;
+        list.push(f);
+      }
+    }
+    return list.slice(0, 4);
+  }, [galleryPhotos]);
+
   useEffect(() => {
     const onScroll = () => {
       const total = document.documentElement.scrollHeight - window.innerHeight;
@@ -2902,6 +2976,64 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                               <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
                               <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
                             </button>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Desktop Photo Gallery Widget below Latest News (Fills remaining right-side whitespace) */}
+              {sidebarPhotos.length > 0 && (
+                <div className="hidden md:flex flex-col mt-5">
+                  <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-neutral-800 pb-2 mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="block w-[3.5px] h-5 rounded-full bg-[#B3121B]"></span>
+                      <h3 className="text-[16px] font-black tracking-tight text-neutral-900 dark:text-white">
+                        {uiLabel(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
+                      </h3>
+                    </div>
+                    <Link
+                      href="/photos"
+                      className="text-[#B3121B] hover:text-red-700 font-bold text-[12.5px] hover:underline flex items-center gap-0.5"
+                    >
+                      <span>{uiLabel(language, { en: 'View All →', gu: 'બધા જુઓ →', hi: 'सभी देखें →' })}</span>
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5">
+                    {sidebarPhotos.map((photo, index) => {
+                      const caption = photo.captionGu || photo.caption || photo.alt || 'ફોટો ગેલેરી';
+                      const photoSrc = resolvePhotoUrl(photo.src || photo.image, FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length]);
+                      const photoHref = photo.id ? `/photos/${photo.id}` : '/photos';
+                      const imgCount = Array.isArray(photo.images) && photo.images.length > 1 ? photo.images.length : (index + 4);
+
+                      return (
+                        <Link
+                          key={`sidebar-photo-${photo.id || index}`}
+                          href={photoHref}
+                          className="group flex flex-col p-2 rounded-xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-xs hover:shadow-md hover:border-[#B3121B]/40 transition-all text-left"
+                        >
+                          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900">
+                            <Image
+                              src={photoSrc}
+                              alt={caption}
+                              fill
+                              sizes="160px"
+                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                            />
+                            <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-xs px-2 py-0.5 text-[9.5px] font-black text-white shadow-sm border border-white/20">
+                                <Camera className="w-2.5 h-2.5 text-red-400" />
+                                <span>{imgCount}</span>
+                              </span>
+                            </div>
+                          </div>
+                          <div className="mt-1.5 min-w-0">
+                            <h4 className="text-[12px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                              <AutoTranslateString text={caption} language={language} />
+                            </h4>
                           </div>
                         </Link>
                       );
