@@ -96,7 +96,7 @@ export default async function CategoryPage({
     resolvedSlug === 'trending'
       ? Promise.resolve({ articles: [], total: 0, totalPages: 1 })
       : getPublicArticles({ isTrending: true, limit: 10 }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
-    getPublicArticles({ page: 1, limit: 48, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    getPublicArticles({ page: 1, limit: 90, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
   ]);
 
   const dbCat = (Array.isArray(dbCategories) ? dbCategories : []).find((c: any) => c.slug === resolvedSlug);

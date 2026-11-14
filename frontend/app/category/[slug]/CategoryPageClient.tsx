@@ -239,6 +239,50 @@ export function getAlsoReadCategories(ownSlug: string, pairedSlug?: string): [st
   return [selected[0] || 'national', selected[1] || 'world'];
 }
 
+/**
+ * Distinct complementary category preferences for each category's video tab,
+ * guaranteeing every category page presents a unique, tailored selection of mixed news.
+ */
+const CATEGORY_VIDEO_COMPLEMENTS: Record<string, string[]> = {
+  gujarat: ['national', 'world', 'crime', 'entertainment', 'health', 'technology', 'ahmedabad', 'surat', 'sports', 'politics', 'business'],
+  state: ['national', 'world', 'crime', 'entertainment', 'health', 'technology', 'ahmedabad', 'surat', 'sports', 'politics', 'business'],
+  national: ['world', 'gujarat', 'crime', 'entertainment', 'ahmedabad', 'surat', 'health', 'technology', 'sports', 'business'],
+  bharat: ['world', 'gujarat', 'crime', 'entertainment', 'ahmedabad', 'surat', 'health', 'technology', 'sports', 'business'],
+  india: ['world', 'gujarat', 'crime', 'entertainment', 'ahmedabad', 'surat', 'health', 'technology', 'sports', 'business'],
+  world: ['gujarat', 'national', 'ahmedabad', 'surat', 'entertainment', 'crime', 'health', 'technology', 'sports', 'business'],
+  international: ['gujarat', 'national', 'ahmedabad', 'surat', 'entertainment', 'crime', 'health', 'technology', 'sports', 'business'],
+  technology: ['entertainment', 'crime', 'world', 'gujarat', 'national', 'health', 'ahmedabad', 'surat', 'business', 'sports'],
+  tech: ['entertainment', 'crime', 'world', 'gujarat', 'national', 'health', 'ahmedabad', 'surat', 'business', 'sports'],
+  health: ['crime', 'entertainment', 'gujarat', 'world', 'national', 'surat', 'ahmedabad', 'technology', 'sports'],
+  lifestyle: ['health', 'entertainment', 'crime', 'gujarat', 'world', 'national', 'technology', 'surat'],
+  entertainment: ['crime', 'national', 'gujarat', 'world', 'health', 'ahmedabad', 'surat', 'technology', 'sports'],
+  manoranjan: ['crime', 'national', 'gujarat', 'world', 'health', 'ahmedabad', 'surat', 'technology', 'sports'],
+  crime: ['entertainment', 'world', 'national', 'gujarat', 'health', 'surat', 'ahmedabad', 'technology', 'sports'],
+  sports: ['entertainment', 'national', 'world', 'gujarat', 'crime', 'technology', 'health', 'ahmedabad', 'business'],
+  politics: ['world', 'gujarat', 'national', 'crime', 'entertainment', 'sports', 'technology', 'business'],
+  rajniti: ['world', 'gujarat', 'national', 'crime', 'entertainment', 'sports', 'technology', 'business'],
+  business: ['technology', 'gujarat', 'world', 'national', 'ahmedabad', 'surat', 'entertainment', 'politics'],
+  ahmedabad: ['world', 'national', 'entertainment', 'crime', 'surat', 'gujarat', 'technology', 'health'],
+  surat: ['national', 'world', 'ahmedabad', 'crime', 'entertainment', 'gujarat', 'technology', 'health'],
+  vadodara: ['world', 'national', 'crime', 'gujarat', 'entertainment', 'ahmedabad', 'technology'],
+  vadodra: ['world', 'national', 'crime', 'gujarat', 'entertainment', 'ahmedabad', 'technology'],
+  rajkot: ['national', 'world', 'entertainment', 'gujarat', 'crime', 'surat', 'technology'],
+  gandhinagar: ['world', 'gujarat', 'national', 'technology', 'crime', 'entertainment', 'ahmedabad'],
+  gandhinager: ['world', 'gujarat', 'national', 'technology', 'crime', 'entertainment', 'ahmedabad'],
+  'other-cities': ['world', 'national', 'gujarat', 'crime', 'entertainment', 'technology', 'business'],
+  trending: ['entertainment', 'sports', 'world', 'gujarat', 'national', 'crime', 'technology'],
+};
+
+function getSlugHash(slug: string): number {
+  let h = 0;
+  const s = slug || 'default';
+  for (let i = 0; i < s.length; i++) {
+    h = (h << 5) - h + s.charCodeAt(i);
+    h |= 0;
+  }
+  return Math.abs(h);
+}
+
 type FilterTab = 'all' | 'paired' | 'latest' | 'video';
 
 const GUJARAT_MOCK_TAGS = {
@@ -457,7 +501,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
   // Ensure mixed news pool across categories is loaded for Video tab
   useEffect(() => {
     if (mixedNews.length === 0) {
-      getPublicArticles({ page: 1, limit: 48, sort: 'latest' })
+      getPublicArticles({ page: 1, limit: 90, sort: 'latest' })
         .then((res) => {
           if (res?.articles?.length) {
             setMixedNews(sortArticlesByLatest(res.articles));
@@ -862,6 +906,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       ''
     ).toLowerCase().trim();
 
+    if (raw.includes('ahmedabad') || raw.includes('અમદાવાદ')) return 'ahmedabad';
+    if (raw.includes('surat') || raw.includes('સુરત')) return 'surat';
+    if (raw.includes('vadodara') || raw.includes('વડોદરા')) return 'vadodara';
+    if (raw.includes('rajkot') || raw.includes('રાજકોટ')) return 'rajkot';
     if (raw.includes('gujarat') || raw.includes('ગુજરાત') || raw.includes('state')) return 'gujarat';
     if (raw.includes('national') || raw.includes('bharat') || raw.includes('ભારત') || raw.includes('india')) return 'national';
     if (raw.includes('world') || raw.includes('vishva') || raw.includes('વિશ્વ') || raw.includes('international')) return 'world';
@@ -876,48 +924,53 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
     return raw || 'news';
   }, []);
 
-  // Mixed articles from different categories specifically for the Video tab news section
+  // Mixed articles from different categories specifically tailored for this Category's Video tab
   const mixedCategoryArticles = useMemo(() => {
     if (!mixedNews || mixedNews.length === 0) {
       return [];
     }
 
     const currentCatNorm = getArticleNormCat({ categorySlug: normSlug });
+    const slugHash = getSlugHash(normSlug);
+    const prefs = CATEGORY_VIDEO_COMPLEMENTS[normSlug] || ['national', 'world', 'gujarat', 'crime', 'entertainment', 'health', 'technology'];
+
+    // Group articles by category strictly excluding own category
+    const buckets: Record<string, Article[]> = {};
     const seenIds = new Set<string>();
-    const otherCatPool: Article[] = [];
-    const sameCatPool: Article[] = [];
 
     for (const art of mixedNews) {
       if (!art || !art.id || seenIds.has(art.id)) continue;
       seenIds.add(art.id);
 
       const artCatNorm = getArticleNormCat(art);
-      if (artCatNorm !== currentCatNorm) {
-        otherCatPool.push(art);
-      } else {
-        sameCatPool.push(art);
+      if (artCatNorm === currentCatNorm) continue; // Exclude own category articles!
+
+      if (!buckets[artCatNorm]) buckets[artCatNorm] = [];
+      buckets[artCatNorm].push(art);
+    }
+
+    // Offset each category bucket deterministically by slugHash
+    // so every category page receives a completely unique article sequence within each category!
+    const bucketKeys = Object.keys(buckets);
+    bucketKeys.forEach((catKey, idx) => {
+      const b = buckets[catKey];
+      if (b && b.length > 1) {
+        const offset = (slugHash + idx * 7) % b.length;
+        buckets[catKey] = [...b.slice(offset), ...b.slice(0, offset)];
       }
-    }
+    });
 
-    // Group other-category articles by category for round-robin interleaving
-    const categoryBuckets: Record<string, Article[]> = {};
-    for (const art of otherCatPool) {
-      const cat = getArticleNormCat(art);
-      if (!categoryBuckets[cat]) categoryBuckets[cat] = [];
-      categoryBuckets[cat].push(art);
-    }
-
-    const bucketKeys = Object.keys(categoryBuckets);
+    // Interleave following this category's distinct preference order
     const interleaved: Article[] = [];
-    let hasMore = true;
     let round = 0;
+    let hasMore = true;
 
     while (hasMore && interleaved.length < 36) {
       hasMore = false;
-      for (const catKey of bucketKeys) {
-        const bucket = categoryBuckets[catKey];
-        if (bucket && round < bucket.length) {
-          interleaved.push(bucket[round]);
+      for (const pCat of prefs) {
+        const b = buckets[pCat];
+        if (b && round < b.length) {
+          interleaved.push(b[round]);
           hasMore = true;
           if (interleaved.length >= 36) break;
         }
@@ -925,21 +978,21 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       round++;
     }
 
-    // Fill remaining up to 36 articles from otherCatPool and then sameCatPool if needed
-    const usedInterleavedIds = new Set(interleaved.map((a) => a.id));
-    for (const art of otherCatPool) {
-      if (interleaved.length >= 36) break;
-      if (!usedInterleavedIds.has(art.id)) {
-        interleaved.push(art);
-        usedInterleavedIds.add(art.id);
-      }
-    }
-
-    for (const art of sameCatPool) {
-      if (interleaved.length >= 36) break;
-      if (!usedInterleavedIds.has(art.id)) {
-        interleaved.push(art);
-        usedInterleavedIds.add(art.id);
+    // If still below 36, pick remaining from other non-empty buckets
+    if (interleaved.length < 36) {
+      const usedIds = new Set(interleaved.map((a) => a.id));
+      for (const catKey of bucketKeys) {
+        if (interleaved.length >= 36) break;
+        const b = buckets[catKey];
+        if (b) {
+          for (const art of b) {
+            if (!usedIds.has(art.id)) {
+              interleaved.push(art);
+              usedIds.add(art.id);
+              if (interleaved.length >= 36) break;
+            }
+          }
+        }
       }
     }
 
@@ -1137,7 +1190,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       setHasLoadedMore(false);
       setVisibleCount(12);
       if (!mixedNews || mixedNews.length === 0) {
-        getPublicArticles({ page: 1, limit: 48, sort: 'latest' })
+        getPublicArticles({ page: 1, limit: 90, sort: 'latest' })
           .then((res) => {
             if (res?.articles?.length) {
               setMixedNews(sortArticlesByLatest(res.articles));
