@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'rea
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, Flame, Eye, Play, ChevronRight, ChevronLeft, Camera, X, Bookmark, Sun, Cloud, CloudRain, Shield, Trophy, TrendingUp, TrendingDown, Wind, ChevronDown, ArrowUpRight, Thermometer, Droplet, MoreVertical, Fuel, Megaphone, Radio, MapPin, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Flame, Eye, Play, ChevronRight, ChevronLeft, Camera, X, Bookmark, Sun, Cloud, CloudRain, Shield, Trophy, TrendingUp, TrendingDown, Wind, ChevronDown, ArrowUpRight, Thermometer, Droplet, MoreVertical, Fuel, Megaphone, Radio, MapPin, Sparkles, Loader2 } from 'lucide-react';
 import {
   getArticleTitle,
   getArticleExcerpt,
   formatDate,
   formatViews,
+  formatTime,
   getCategoryLabel,
   getLocationLabel,
   VIDEOS,
@@ -1744,6 +1745,45 @@ export default function HeroSection({
     return Array.from(uniqueMap.values());
   }, [uniqueTopStories, articlesList, initialArticles]);
 
+  // Dedicated Trending Stories for Desktop Right Sidebar in Hero Section to eliminate whitespace
+  const heroSidebarTrending = useMemo(() => {
+    const usedIds = new Set<string>();
+    // Exclude top stories / hero articles
+    (topStories || []).slice(0, 12).forEach((a) => { if (a?.id) usedIds.add(a.id); });
+    (topNews || []).slice(0, 6).forEach((a) => { if (a?.id) usedIds.add(a.id); });
+    // Exclude top 4 from mostRead
+    const mostReadSubset = (mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, 4);
+    mostReadSubset.forEach((a) => { if (a?.id) usedIds.add(a.id); });
+
+    const list: Article[] = [];
+    for (const art of (uniqueTrendingArt || [])) {
+      if (art && art.id && !usedIds.has(art.id)) {
+        usedIds.add(art.id);
+        list.push(art);
+        if (list.length >= 3) break;
+      }
+    }
+    if (list.length < 3) {
+      for (const art of (articlesList || [])) {
+        if (art && art.id && !usedIds.has(art.id)) {
+          usedIds.add(art.id);
+          list.push(art);
+          if (list.length >= 3) break;
+        }
+      }
+    }
+    if (list.length < 3) {
+      for (const art of (initialArticles || [])) {
+        if (art && art.id && !usedIds.has(art.id)) {
+          usedIds.add(art.id);
+          list.push(art);
+          if (list.length >= 3) break;
+        }
+      }
+    }
+    return list.slice(0, 3);
+  }, [topStories, topNews, mostReadArtDB, uniqueTrendingArt, articlesList, initialArticles]);
+
   // DEDICATED ANDROID APK FEED:
   // Shows ONLY inside the installed Android APK (TWA).
   // Standard Desktop & Mobile Web Browsers render the standard portal below.
@@ -2051,28 +2091,28 @@ export default function HeroSection({
               </button>
             </div>
 
-            {/* Desktop View (>= md): 100% UNTOUCHED */}
-            <div className="hidden md:flex w-full overflow-hidden rounded-xl border border-slate-400 border-t-[3px] border-t-[#B3121B] bg-slate-50 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.14)] flex-col gap-3 dark:border-slate-600 dark:border-t-red-500 dark:bg-slate-900">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <span className="text-[#B3121B] font-black text-[13.5px] md:text-[14px] select-none">
+            {/* Desktop View (>= md): Most Read Articles */}
+            <div className="hidden md:flex w-full overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700 border-t-[3px] border-t-[#B3121B] bg-card p-3.5 shadow-sm flex-col gap-2.5">
+              <div className="flex items-center justify-between border-b border-border/80 pb-2">
+                <span className="text-[#B3121B] font-black text-[14px] select-none">
                   {language === 'gu' ? 'સૌથી વધુ વંચાયેલા' : language === 'hi' ? 'सबसे ज्यादा पढ़े गए' : 'Most Read'}
                 </span>
                 <Link
                   href="/category/trending"
-                  className="text-[13px] md:text-[13.5px] font-bold text-[#B3121B] hover:text-red-700 hover:underline"
+                  className="text-[12px] font-bold text-[#B3121B] hover:text-red-700 hover:underline"
                 >
                   {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
                 </Link>
               </div>
 
-              <div className="flex flex-col divide-y divide-border">
-                {(mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, 3).map((art, idx) => (
+              <div className="flex flex-col divide-y divide-border/60">
+                {(mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, 4).map((art, idx) => (
                   <Link
                     key={art.id}
                     href={`/news/${art.slug}`}
-                    className="group flex items-start gap-2.5 py-2.5 hover:bg-muted/10 rounded-md transition-all px-2 first:pt-1 last:pb-1"
+                    className="group flex items-start gap-2.5 py-2 hover:bg-muted/20 rounded-md transition-all px-1.5 first:pt-1 last:pb-1"
                   >
-                    <span className="text-[17px] font-black text-[#B3121B]/85 group-hover:text-[#B3121B] font-serif w-5 shrink-0 mt-0.5 transition-colors select-none text-center">
+                    <span className="text-[16px] font-black text-[#B3121B] group-hover:text-red-700 font-serif w-5 shrink-0 mt-0.5 transition-colors select-none text-center">
                       {idx + 1}
                     </span>
                     <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors flex-1 line-clamp-2">
@@ -2082,6 +2122,104 @@ export default function HeroSection({
                 ))}
               </div>
             </div>
+
+            {/* Official WhatsApp Channel Follow Card (Desktop only — eliminates blank whitespace) */}
+            <div className="hidden md:block relative w-full overflow-hidden rounded-xl border-2 border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-3 shadow-sm border-t-[3px] border-t-[#25D366]">
+              <div className="relative z-10 flex items-center gap-2.5">
+                <a
+                  href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-8.5 w-8.5 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-sm ring-2 ring-[#25D366]/10 hover:opacity-90 transition-opacity"
+                >
+                  <SocialIcon platform="whatsapp" className="h-4 w-4 text-white" />
+                </a>
+                <div className="flex flex-col min-w-0">
+                  <a
+                    href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 hover:underline"
+                  >
+                    <h3 className="font-black text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                      {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
+                    </h3>
+                    <CheckCircle2 className="h-3.5 w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
+                  </a>
+                  <span className="text-[10.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                    {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
+                  </span>
+                </div>
+              </div>
+
+              <p className="relative z-10 text-[11.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-2 font-medium">
+                {language === 'gu'
+                  ? 'ગુજરાત અને દેશ-દુનિયાના મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
+                  : language === 'hi'
+                    ? 'गुजरात और देश-दुनिया के महत्वपूर्ण समाचार सबसे पहले सीधे अपने फोन पर पाएं।'
+                    : 'Get breaking news and vital updates first, directly on your phone.'}
+              </p>
+
+              <a
+                href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative z-10 w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[12px] py-1.5 px-3 rounded-lg shadow-sm hover:shadow-md active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+              >
+                <SocialIcon platform="whatsapp" className="h-3.5 w-3.5 text-white shrink-0" />
+                <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'ચેનલ ફોલો કરો' : 'Follow Channel'}</span>
+                <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+              </a>
+            </div>
+
+            {/* Trending Stories with Thumbnails Widget (Desktop only — eliminates blank whitespace) */}
+            {heroSidebarTrending.length > 0 && (
+              <div className="hidden md:flex w-full overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700 bg-card p-3 shadow-sm flex-col gap-2 border-t-[3px] border-t-[#B3121B]">
+                <div className="flex items-center justify-between border-b border-border/80 pb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[#B3121B] text-[14px] font-extrabold">♦</span>
+                    <h3 className="text-[13.5px] font-black text-foreground tracking-tight">
+                      {language === 'gu' ? 'ટ્રેન્ડિંગ સ્ટોરીઝ' : language === 'hi' ? 'ट्रेंडिंग स्टोरीज़' : 'Trending Stories'}
+                    </h3>
+                  </div>
+                  <Link
+                    href="/category/trending"
+                    className="text-[11.5px] font-bold text-[#B3121B] hover:text-red-700 hover:underline"
+                  >
+                    {language === 'gu' ? 'વધુ જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
+                  </Link>
+                </div>
+
+                <div className="flex flex-col divide-y divide-border/50">
+                  {heroSidebarTrending.map((art, idx) => (
+                    <Link
+                      key={`hero-trend-${art.id || idx}`}
+                      href={`/news/${art.slug}`}
+                      className="group flex items-start gap-2.5 py-2 hover:bg-muted/30 transition-colors rounded-md px-0.5"
+                    >
+                      <div className="relative w-18 h-13 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
+                        <ArticleMedia
+                          src={art.image || (art as any).featuredImage || getArticleImage(art)}
+                          alt={art.title || ''}
+                          className="transition-transform duration-300 group-hover:scale-105"
+                        />
+                      </div>
+                      <div className="flex flex-col min-w-0 flex-1">
+                        <span className="text-[#B3121B] font-extrabold text-[10px] uppercase leading-none mb-1">
+                          {getCategoryLabel(art, language)}
+                        </span>
+                        <h4 className="text-[12.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                          <AutoArticleTitle article={art} language={language} />
+                        </h4>
+                        <span className="text-[9.5px] text-muted-foreground font-medium mt-0.5">
+                          {formatTime(art.publishedAt || (art as any).createdAt)}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
