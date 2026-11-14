@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -167,6 +167,46 @@ export default function LatestUpdatesSection({
   const popularPool = popularArticles.length > 0
     ? popularArticles
     : latestNews.slice(0, 3);
+
+  // Trending Highlights News for Desktop sidebar to eliminate right-side whitespace
+  const sidebarTrendingNews = useMemo(() => {
+    const seenIds = new Set<string>();
+    // Exclude articles already shown in desktop mostRead (first 5)
+    mostRead.slice(0, 5).forEach((a) => seenIds.add(a.id));
+    // Exclude articles in latestNews (first 8)
+    latestNews.slice(0, 8).forEach((a) => seenIds.add(a.id));
+
+    const list: Article[] = [];
+    // 1. Pick from popularArticles
+    for (const art of popularArticles) {
+      if (art && art.id && !seenIds.has(art.id)) {
+        seenIds.add(art.id);
+        list.push(art);
+        if (list.length >= 4) break;
+      }
+    }
+    // 2. Then from mostRead beyond top 5
+    if (list.length < 4) {
+      for (const art of mostRead.slice(5)) {
+        if (art && art.id && !seenIds.has(art.id)) {
+          seenIds.add(art.id);
+          list.push(art);
+          if (list.length >= 4) break;
+        }
+      }
+    }
+    // 3. Then from initialArticles
+    if (list.length < 4 && initialArticles) {
+      for (const art of initialArticles) {
+        if (art && art.id && !seenIds.has(art.id)) {
+          seenIds.add(art.id);
+          list.push(art);
+          if (list.length >= 4) break;
+        }
+      }
+    }
+    return list;
+  }, [mostRead, latestNews, popularArticles, initialArticles]);
 
   // Auto-rotate popular news on mobile every 4.5 seconds (1 card at a time)
   useEffect(() => {
@@ -637,6 +677,55 @@ export default function LatestUpdatesSection({
       <div className="w-full">
         <Advertisement section="SIDEBAR_HERO_TOP" />
       </div>
+
+      {/* ── 4. TRENDING STORIES WIDGET FOR DESKTOP (eliminate whitespace) ── */}
+      {sidebarTrendingNews.length > 0 && (
+        <div className="hidden lg:flex flex-col rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
+          <div className="flex items-center justify-between border-b border-border/80 pb-2 mb-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
+              <h3 className="text-[15px] font-black text-foreground">
+                {language === 'gu' ? 'ટ્રેન્ડિંગ ન્યૂઝ' : language === 'hi' ? 'ट्रेंडिंग न्यूज़' : 'Trending News'}
+              </h3>
+            </div>
+            <Link
+              href="/category/trending"
+              className="text-[#B3121B] hover:text-red-700 font-bold text-[12px] hover:underline"
+            >
+              {language === 'gu' ? 'બધા જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
+            </Link>
+          </div>
+
+          <div className="flex flex-col divide-y divide-border/50">
+            {sidebarTrendingNews.map((art: Article) => (
+              <Link
+                key={art.id}
+                href={`/news/${art.slug}`}
+                className="group flex items-start gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-md px-1"
+              >
+                <div className="relative w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
+                  <ArticleMedia
+                    src={art.image || (art as any).featuredImage}
+                    alt={getArticleTitle(art, language)}
+                    className="transition-transform duration-300 group-hover:scale-105"
+                  />
+                </div>
+                <div className="flex flex-col min-w-0 flex-1">
+                  <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase leading-none mb-1">
+                    {getCategoryLabel(art, language)}
+                  </span>
+                  <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                    <AutoArticleTitle article={art} language={language} />
+                  </h4>
+                  <span className="text-[10px] text-muted-foreground font-medium mt-1">
+                    {formatDate(art.publishedAt || (art as any).createdAt, language)}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
     </div>
   );

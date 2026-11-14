@@ -453,6 +453,53 @@ export default function WorldSection({ language, initialArticles }: { language: 
     return list;
   }, [dbWorldArticles, language]);
 
+  // Sidebar World Articles for Desktop (displays below CurrencyRatesWidget to eliminate whitespace)
+  const sidebarWorldArticles = useMemo(() => {
+    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
+    dbWorldArticles.slice(5, 9).forEach((art) => {
+      list.push({
+        id: art.id,
+        slug: art.slug,
+        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[2],
+        categoryGu: resolveWorldCategoryName(art, language),
+        article: art,
+        titleGu: art.titleGu || art.title,
+        time: formatTime(art.publishedAt),
+      });
+    });
+    if (list.length < 3) {
+      mockWorldCards.slice(4).forEach((card) => {
+        if (list.length < 3 && !list.some((item) => item.id === card.id)) {
+          list.push({
+            id: card.id,
+            slug: card.slug,
+            image: card.image,
+            categoryGu: card.categoryGu,
+            article: null,
+            titleGu: card.titleGu,
+            time: getMockRelativeTime(card.relativeTimeGu, language),
+          });
+        }
+      });
+    }
+    if (list.length < 3) {
+      mockWorldCards.forEach((card) => {
+        if (list.length < 3 && !list.some((item) => item.id === card.id)) {
+          list.push({
+            id: card.id,
+            slug: card.slug,
+            image: card.image,
+            categoryGu: card.categoryGu,
+            article: null,
+            titleGu: card.titleGu,
+            time: getMockRelativeTime(card.relativeTimeGu, language),
+          });
+        }
+      });
+    }
+    return list;
+  }, [dbWorldArticles, language]);
+
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-4 md:mt-5 pt-0">
       {/* Section Header */}
@@ -575,6 +622,57 @@ export default function WorldSection({ language, initialArticles }: { language: 
 
           {/* Dynamic Foreign Currency Widget */}
           <CurrencyRatesWidget language={language} />
+
+          {/* Dedicated Top World News Widget for Desktop to eliminate whitespace below Currency Rates */}
+          {sidebarWorldArticles.length > 0 && (
+            <div className="hidden lg:flex flex-col rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
+              <div className="flex items-center justify-between border-b border-border/80 pb-2 mb-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
+                  <h3 className="text-[15px] font-black text-foreground">
+                    {language === 'gu' ? 'વિશ્વ સમાચાર' : language === 'hi' ? 'विश्व समाचार' : 'World News'}
+                  </h3>
+                </div>
+                <Link
+                  href="/category/world"
+                  className="text-[#B3121B] hover:text-red-700 font-bold text-[12px] hover:underline"
+                >
+                  {language === 'gu' ? 'બધા જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
+                </Link>
+              </div>
+
+              <div className="flex flex-col divide-y divide-border/50">
+                {sidebarWorldArticles.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/news/${item.slug}`}
+                    className="group flex items-start gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-md px-1"
+                  >
+                    <div className="relative w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
+                      <ArticleMedia
+                        src={item.image}
+                        alt={item.titleGu}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase leading-none mb-1">
+                        <AutoTranslateString text={item.categoryGu} language={language} />
+                      </span>
+                      <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                        {item.article
+                          ? <AutoArticleTitle article={item.article} language={language} />
+                          : <AutoTranslateString text={item.titleGu} language={language} />}
+                      </h4>
+                      <span className="text-[10px] text-muted-foreground font-medium mt-1">
+                        {item.time}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
 

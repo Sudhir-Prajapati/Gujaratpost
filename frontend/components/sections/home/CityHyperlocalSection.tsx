@@ -1049,6 +1049,73 @@ export default function CityHyperlocalSection({
     return activeCityData.list;
   }, [realList, activeCityData]);
 
+  // Gujarat / City Highlights for Desktop sidebar to eliminate right-side whitespace
+  const sidebarGujaratArticles = useMemo(() => {
+    const seenIds = new Set<string>();
+    realSlides.forEach((s) => seenIds.add(s.id));
+    realList.forEach((l) => seenIds.add(l.id));
+
+    const list: Array<{ id: string; slug: string; image: string; title: string; category: string; time: string; article?: Article }> = [];
+
+    // 1. Pick from tabApiArticles beyond index 9
+    if (tabApiArticles && tabApiArticles.length > 9) {
+      for (const art of tabApiArticles.slice(9)) {
+        if (art && art.id && !seenIds.has(art.id)) {
+          seenIds.add(art.id);
+          list.push({
+            id: art.id,
+            slug: art.slug,
+            image: art.image || (art as any).featuredImage || '/assets/demo/3.jpg',
+            title: art.titleGu || art.title,
+            category: getArtCategoryNameGu(art, activeTab),
+            time: formatTime(art.publishedAt || (art as any).createdAt),
+            article: art,
+          });
+          if (list.length >= 4) break;
+        }
+      }
+    }
+
+    // 2. Pick from general articles in `articles` prop
+    if (list.length < 4 && articles && articles.length > 0) {
+      for (const art of articles) {
+        if (art && art.id && !seenIds.has(art.id)) {
+          seenIds.add(art.id);
+          list.push({
+            id: art.id,
+            slug: art.slug,
+            image: art.image || (art as any).featuredImage || '/assets/demo/4.jpg',
+            title: art.titleGu || art.title,
+            category: getArtCategoryNameGu(art, activeTab),
+            time: formatTime(art.publishedAt || (art as any).createdAt),
+            article: art,
+          });
+          if (list.length >= 4) break;
+        }
+      }
+    }
+
+    // 3. Fallback to activeCityData.list
+    if (list.length < 3) {
+      for (const item of activeCityData.list) {
+        if (!seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          list.push({
+            id: item.id,
+            slug: item.slug,
+            image: item.image,
+            title: item.titleGu,
+            category: item.categoryGu,
+            time: getLocalized(language, { gu: item.relativeTimeGu, en: item.relativeTime, hi: item.relativeTimeHi }),
+          });
+          if (list.length >= 3) break;
+        }
+      }
+    }
+
+    return list;
+  }, [tabApiArticles, articles, activeTab, realSlides, realList, activeCityData, language]);
+
   useEffect(() => {
     if (mockSlides.length <= 1) return;
     const timer = setInterval(() => {
@@ -1333,6 +1400,57 @@ export default function CityHyperlocalSection({
               </div>
             </div>
           </div>
+
+          {/* Gujarat / City Highlights Widget for Desktop (eliminates whitespace below Trending Topics) */}
+          {sidebarGujaratArticles.length > 0 && (
+            <div className="hidden lg:flex flex-col rounded-xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3.5 shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B]">
+              <div className="flex items-center justify-between border-b border-slate-200/90 dark:border-slate-800 pb-2 mb-2.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
+                  <h3 className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+                    {language === 'gu' ? 'ગુજરાત વિશેષ' : language === 'hi' ? 'गुजरात विशेष' : 'Gujarat Highlights'}
+                  </h3>
+                </div>
+                <Link
+                  href={`/category/${citySlugMap[activeTab] || 'gujarat'}`}
+                  className="text-[#B3121B] hover:text-red-700 font-bold text-[12px] hover:underline"
+                >
+                  {language === 'gu' ? 'બધા જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
+                </Link>
+              </div>
+
+              <div className="flex flex-col divide-y divide-slate-100 dark:divide-slate-800">
+                {sidebarGujaratArticles.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={`/news/${item.slug}`}
+                    className="group flex items-start gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-md px-1"
+                  >
+                    <div className="relative w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
+                      <ArticleMedia
+                        src={item.image}
+                        alt={item.title}
+                        className="transition-transform duration-300 group-hover:scale-105"
+                      />
+                    </div>
+                    <div className="flex flex-col min-w-0 flex-1">
+                      <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase leading-none mb-1">
+                        <AutoTranslateString text={item.category} language={language} />
+                      </span>
+                      <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                        {item.article
+                          ? <AutoArticleTitle article={item.article} language={language} />
+                          : <AutoTranslateString text={item.title} language={language} />}
+                      </h4>
+                      <span className="text-[10px] text-muted-foreground font-medium mt-1">
+                        {item.time}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
         </div>
 
