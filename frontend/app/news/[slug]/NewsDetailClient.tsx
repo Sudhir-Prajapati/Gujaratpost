@@ -1863,6 +1863,21 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return combinedPool.slice(0, 8);
   }, [article, trending, related, latestArticles, mostReadArticles, trendingLimit, readAlsoPool, sidebarRecommendedPool, streamList]);
 
+  // 5. Desktop Extra Sidebar Latest Pool (For Desktop Sidebar below WhatsApp channel to eliminate blank spaces)
+  const desktopExtraLatestPool = useMemo(() => {
+    const mostReadSubset = (mostReadArticles || []).slice(0, 5);
+    const excludeList = [
+      article,
+      ...mostReadSubset,
+      ...readAlsoPool,
+      ...sidebarRecommendedPool,
+    ];
+    const pool = [...(latestArticles || []), ...(trending || []), ...(related || []), ...(mostReadArticles || [])];
+    const uniquePool = filterUniqueArticles(pool, excludeList);
+    const sortedPool = sortArticlesByNewest(uniquePool);
+    return sortedPool.slice(0, 8);
+  }, [article, mostReadArticles, readAlsoPool, sidebarRecommendedPool, latestArticles, trending, related]);
+
   useEffect(() => {
     const onScroll = () => {
       const total = document.documentElement.scrollHeight - window.innerHeight;
@@ -2579,8 +2594,23 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                   <span className="d"></span>
                   <span>{uiLabel(language, { en: 'Most Read', gu: 'સૌથી વધુ વંચાયેલા', hi: 'सबसे ज्यादा पढ़े गए' })}</span>
                 </div>
-                <div className="space-y-0 mt-3">
+                {/* Mobile Most Read (trendingLimit = 3) */}
+                <div className="space-y-0 mt-3 md:hidden">
                   {mostReadArticles.slice(0, trendingLimit).map((item, index) => {
+                    const rankNum = String(index + 1);
+
+                    return (
+                      <Link key={item.id} href={`/news/${item.slug}`} className="s-rank hover:opacity-85 transition-opacity">
+                        <span className="n">{rankNum}</span>
+                        <h3><AutoArticleTitle article={item} language={language} /></h3>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                {/* Desktop Most Read (Always 5 items) */}
+                <div className="space-y-0 mt-3 hidden md:block">
+                  {mostReadArticles.slice(0, 5).map((item, index) => {
                     const rankNum = String(index + 1);
 
                     return (
@@ -2617,7 +2647,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
                 {/* Desktop view (>= md): Modern Separated Cards with Bottom Shadow & Share */}
                 <div className="hidden md:flex flex-col gap-3 mt-3 transition-all duration-300">
-                  {sidebarRecommendedPool.slice(0, isRecommendedExpanded ? 8 : 2).map((item, index) => {
+                  {sidebarRecommendedPool.slice(0, 8).map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
                       <Link
@@ -2680,11 +2710,11 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                   })}
                 </div>
 
-                {!isRecommendedExpanded && sidebarRecommendedPool.length > 2 && (
+                {!isRecommendedExpanded && sidebarRecommendedPool.length > 3 && (
                   <button
                     type="button"
                     onClick={() => setSidebarMoreRecommended(true)}
-                    className="mt-3 w-full py-2 px-3 text-center text-[12.5px] font-bold text-[#B3121B] hover:text-white hover:bg-[#B3121B] rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer select-none shadow-xs active:scale-95"
+                    className="mt-3 w-full py-2 px-3 text-center text-[12.5px] font-bold text-[#B3121B] hover:text-white hover:bg-[#B3121B] rounded-xl border border-red-200 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 transition-all flex md:hidden items-center justify-center gap-1.5 cursor-pointer select-none shadow-xs active:scale-95"
                   >
                     <span>{uiLabel(language, { en: 'View More Stories', gu: 'વધુ સમાચાર જુઓ', hi: 'और खबरें देखें' })}</span>
                     <ChevronDown className="w-4 h-4 stroke-[2.5]" />
@@ -2734,6 +2764,79 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                   <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
                 </a>
               </div>
+
+              {/* Desktop Additional Latest News Widget below WhatsApp (Eliminates Blank Whitespace) */}
+              {desktopExtraLatestPool.length > 0 && (
+                <div className="hidden md:flex flex-col mt-5">
+                  <div className="wtitle mb-3">
+                    <span className="d"></span>
+                    <span>{uiLabel(language, { en: 'Latest News', gu: 'તાજા સમાચાર', hi: 'ताजा खबरें' })}</span>
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    {desktopExtraLatestPool.slice(0, 6).map((item, index) => {
+                      const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+                      return (
+                        <Link
+                          key={`desk-latest-${item.id || index}`}
+                          href={`/news/${item.slug}`}
+                          className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0 flex-1 pr-1">
+                              <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                                {itemCategory}
+                              </span>
+                              <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                                <AutoArticleTitle article={item} language={language} />
+                              </h3>
+                            </div>
+                            <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                              <Image
+                                src={getCardThumbnail(item, index)}
+                                alt={item.title || ''}
+                                fill
+                                sizes="100px"
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                          </div>
+
+                          {/* Bottom Row with Category Pill & WhatsApp Share */}
+                          <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                              <span>{itemCategory || 'સમાચાર'}</span>
+                            </span>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                const title = getArticleTitle(item, language);
+                                const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
+                                const text = `${title}\n\n${url}`;
+                                if (typeof navigator !== 'undefined' && navigator.share) {
+                                  navigator.share({ title, url, text }).catch(() => {
+                                    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                  });
+                                } else {
+                                  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                                }
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                              aria-label="Share"
+                            >
+                              <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
+                              <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                            </button>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Trending Topics Tags */}
               {/* <div className="mt-6">

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, CheckCircle2, ArrowRight } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, formatArticleDateTime, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
 import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
@@ -553,6 +553,31 @@ export default function ArticleInfiniteStream({
   sidebarRecommendedPool = [],
   streamSidebarRecommendedPool = [],
 }: ArticleInfiniteStreamProps) {
+  const streamExtraLatestPool = React.useMemo(() => {
+    const excludeList = [
+      article,
+      ...(streamList || []),
+      ...(sidebarRecommendedPool || []),
+      ...(streamSidebarRecommendedPool || []),
+    ];
+    const pool = [...(latestArticles || []), ...(trending || []), ...(mostReadArticles || []), ...(related || [])];
+    const uniquePool = filterUniqueArticles(pool, excludeList);
+    const sortedPool = sortArticlesByNewest(uniquePool);
+    return sortedPool.slice(0, 8);
+  }, [article, streamList, sidebarRecommendedPool, streamSidebarRecommendedPool, latestArticles, trending, mostReadArticles, related]);
+
+  const effectiveStreamSidebarPool = React.useMemo(() => {
+    const primary = (streamSidebarRecommendedPool && streamSidebarRecommendedPool.length > 0)
+      ? streamSidebarRecommendedPool
+      : sidebarRecommendedPool;
+    if (primary && primary.length >= 8) return primary;
+    const combined = filterUniqueArticles(
+      [...(primary || []), ...(streamExtraLatestPool || []), ...(latestArticles || []), ...(trending || [])],
+      [article]
+    );
+    return combined.slice(0, 8);
+  }, [streamSidebarRecommendedPool, sidebarRecommendedPool, streamExtraLatestPool, latestArticles, trending, article]);
+
   return (
     <div className="article-grid mt-3.5 border-t border-neutral-200 dark:border-neutral-800 !pt-3.5" suppressHydrationWarning>
       <article className="article-stream-container select-none w-full" suppressHydrationWarning>
@@ -630,87 +655,199 @@ export default function ArticleInfiniteStream({
         </div>
       </article>
 
-      <aside className="select-none h-fit sticky top-4 w-full max-w-[340px] min-w-0 overflow-hidden" suppressHydrationWarning>
-        {/* Heading and recommended stories stick together below header */}
-        <div className="wtitle mb-3">
-          <span className="d"></span>
-          <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
-        </div>
+      <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
+        <div className="side-sticky sticky top-4 transition-all duration-300">
+          {/* Heading and recommended stories stick together below header */}
+          <div className="wtitle mb-3">
+            <span className="d"></span>
+            <span>{uiLabel(language, { en: 'Recommended Stories', gu: 'તમારા માટે ભલામણ', hi: 'आपके लिए अनुशंसित' })}</span>
+          </div>
 
-        {/* Mobile View (< md): Modern separated cards with Category Pill & WhatsApp Share (7 items) */}
-        <div className="flex flex-col gap-3.5 md:hidden mt-3">
-          {(streamSidebarRecommendedPool.length > 0 ? streamSidebarRecommendedPool : sidebarRecommendedPool).slice(0, 7).map((item, index) => (
-            <MobileHeroArticleCard
-              key={`stream-rec-mob-${item.id || index}`}
-              article={item}
-              language={language}
-              index={index}
-            />
-          ))}
-        </div>
+          {/* Mobile View (< md): Modern separated cards with Category Pill & WhatsApp Share (7 items) */}
+          <div className="flex flex-col gap-3.5 md:hidden mt-3">
+            {effectiveStreamSidebarPool.slice(0, 7).map((item, index) => (
+              <MobileHeroArticleCard
+                key={`stream-rec-mob-${item.id || index}`}
+                article={item}
+                language={language}
+                index={index}
+              />
+            ))}
+          </div>
 
-        {/* Desktop View (>= md): Modern Separated Cards with Bottom Shadow & Share */}
-        <div className="hidden md:flex flex-col gap-3 mt-3">
-          {(streamSidebarRecommendedPool.length > 0 ? streamSidebarRecommendedPool : sidebarRecommendedPool).slice(0, 6).map((item, index) => {
-            const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
-            return (
-              <Link
-                key={item.id || index}
-                href={`/news/${item.slug}`}
-                className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0 flex-1 pr-1">
-                    <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
-                      {itemCategory}
+          {/* Desktop View (>= md): Modern Separated Cards with Bottom Shadow & Share (8 items) */}
+          <div className="hidden md:flex flex-col gap-3 mt-3">
+            {effectiveStreamSidebarPool.slice(0, 8).map((item, index) => {
+              const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+              return (
+                <Link
+                  key={item.id || index}
+                  href={`/news/${item.slug}`}
+                  className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1 pr-1">
+                      <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                        {itemCategory}
+                      </span>
+                      <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                        <AutoArticleTitle article={item} language={language} />
+                      </h3>
+                    </div>
+                    <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                      <img
+                        src={getCardThumbnail(item, index)}
+                        alt={item.title || ''}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Bottom Row with Category Pill & WhatsApp Share */}
+                  <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                      <span>{itemCategory || 'સમાચાર'}</span>
                     </span>
-                    <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
-                      <AutoArticleTitle article={item} language={language} />
-                    </h3>
-                  </div>
-                  <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
-                    <img
-                      src={getCardThumbnail(item, index)}
-                      alt={item.title || ''}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
 
-                {/* Bottom Row with Category Pill & WhatsApp Share */}
-                <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
-                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
-                    <span>{itemCategory || 'સમાચાર'}</span>
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      const title = getArticleTitle(item, language);
-                      const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
-                      const text = `${title}\n\n${url}`;
-                      if (typeof navigator !== 'undefined' && navigator.share) {
-                        navigator.share({ title, url, text }).catch(() => {
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const title = getArticleTitle(item, language);
+                        const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
+                        const text = `${title}\n\n${url}`;
+                        if (typeof navigator !== 'undefined' && navigator.share) {
+                          navigator.share({ title, url, text }).catch(() => {
+                            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                          });
+                        } else {
                           window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                        });
-                      } else {
-                        window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
-                      }
-                    }}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
-                    aria-label="Share"
-                  >
-                    <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
-                    <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
-                  </button>
+                        }
+                      }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                      aria-label="Share"
+                    >
+                      <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
+                      <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                    </button>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* Desktop WhatsApp Channel widget for Stream Sidebar */}
+          <div className="hidden md:block relative w-full overflow-hidden rounded-2xl border-2 border-emerald-400/80 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/70 via-white to-emerald-50/30 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-5 shadow-[0_8px_24px_rgba(37,211,102,0.12)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_8px_28px_rgba(37,211,102,0.2)] transition-all border-t-[3px] border-t-[#25D366] mt-4">
+            <div className="pointer-events-none absolute -top-8 -right-8 h-28 w-28 rounded-full bg-[#25D366]/10 blur-2xl" />
+            <div className="relative z-10 flex items-center gap-3">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-md shadow-emerald-500/25 ring-4 ring-[#25D366]/10">
+                <SocialIcon platform="whatsapp" className="h-6 w-6 text-white" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h3 className="font-black text-[16px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                    {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
+                  </h3>
+                  <CheckCircle2 className="h-4 w-4 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
                 </div>
-              </Link>
-            );
-          })}
+                <span className="text-[13px] md:text-[11.5px] font-bold text-emerald-700 dark:text-emerald-400">
+                  {language === 'gu' ? 'સત્તાવાર ન્યૂઝ અપડેટ્સ' : language === 'hi' ? 'આधिकारिक સમાચાર અપડેટ' : 'Official News Updates'}
+                </span>
+              </div>
+            </div>
+            <p className="relative z-10 text-[14px] md:text-[12.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-3.5 font-medium">
+              {language === 'gu'
+                ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
+                : language === 'hi'
+                  ? 'अपने शहर के ताजा और महत्वपूर्ण समाचार सबसे पहले सीधे अपने फोन पर पाएं।'
+                  : 'Get breaking news and vital updates of your city first, directly on your phone.'}
+            </p>
+            <a
+              href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[13.5px] py-3 md:py-2.5 px-4 rounded-xl shadow-md shadow-emerald-500/20 hover:shadow-lg hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+            >
+              <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white shrink-0" />
+              <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'ચैनल फॉलो करें' : 'Follow Channel'}</span>
+              <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+            </a>
+          </div>
+
+          {/* Desktop Latest Stories for Infinite Stream Sidebar */}
+          {streamExtraLatestPool.length > 0 && (
+            <div className="hidden md:flex flex-col mt-5">
+              <div className="wtitle mb-3">
+                <span className="d"></span>
+                <span>{uiLabel(language, { en: 'Latest News', gu: 'તાજા સમાચાર', hi: 'ताजा खबरें' })}</span>
+              </div>
+              <div className="flex flex-col gap-3">
+                {streamExtraLatestPool.slice(0, 6).map((item, index) => {
+                  const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
+                  return (
+                    <Link
+                      key={`stream-extra-${item.id || index}`}
+                      href={`/news/${item.slug}`}
+                      className="group flex flex-col p-3 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg transition-all text-left"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1 pr-1">
+                          <span className="block text-[11px] font-black uppercase tracking-wide text-[#B3121B] dark:text-red-500 mb-1">
+                            {itemCategory}
+                          </span>
+                          <h3 className="text-[13.5px] sm:text-[14px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                            <AutoArticleTitle article={item} language={language} />
+                          </h3>
+                        </div>
+                        <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                          <img
+                            src={getCardThumbnail(item, index)}
+                            alt={item.title || ''}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                            loading="lazy"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Bottom Row with Category Pill & WhatsApp Share */}
+                      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100 dark:border-white/[0.06]">
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/[0.06] text-slate-700 dark:text-slate-300 text-[10.5px] font-bold">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#B3121B]" />
+                          <span>{itemCategory || 'સમાચાર'}</span>
+                        </span>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const title = getArticleTitle(item, language);
+                            const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/news/${item.slug}`;
+                            const text = `${title}\n\n${url}`;
+                            if (typeof navigator !== 'undefined' && navigator.share) {
+                              navigator.share({ title, url, text }).catch(() => {
+                                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                              });
+                            } else {
+                              window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+                            }
+                          }}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-[11px] font-extrabold hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors shadow-2xs cursor-pointer select-none"
+                          aria-label="Share"
+                        >
+                          <SocialIcon platform="whatsapp" className="w-3 h-3 fill-current" />
+                          <span>{language === 'gu' ? 'શેર' : language === 'hi' ? 'શેર' : 'Share'}</span>
+                        </button>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </aside>
     </div>
