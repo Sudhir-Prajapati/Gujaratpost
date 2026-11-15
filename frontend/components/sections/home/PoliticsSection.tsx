@@ -228,7 +228,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
           {top3.map((art) => (
             <div key={art.id} className="flex flex-col min-w-0">
               <Link href={`/news/${art.slug}`} className="group flex flex-col mb-2.5">
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                   <ArticleMedia
                     src={art.image || (art as any).imageUrl || '/assets/demo/1.jpg'}
                     alt={art.title}
@@ -252,7 +252,7 @@ export default function PoliticsSection({ language, initialArticles }: { languag
             {bottomGrid.map((art) => (
               <div key={art.id} className="flex flex-col min-w-0">
                 <Link href={`/news/${art.slug}`} className="group flex flex-col">
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                     <ArticleMedia
                       src={art.image || (art as any).imageUrl || '/assets/demo/2.jpg'}
                       alt={art.title}

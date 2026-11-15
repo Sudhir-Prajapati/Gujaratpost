@@ -300,7 +300,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
                   alt={article.title}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 33vw, 20vw"
-                  className="object-cover transition duration-300 group-hover:scale-105"
+                  className="object-cover object-top transition duration-300 group-hover:scale-105"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = DEMO_CARD_IMAGES[index % DEMO_CARD_IMAGES.length];
                   }}

@@ -552,13 +552,13 @@ export default function CrimeSection({
         {currentSlide && (
           <div className="group relative flex flex-col min-w-0">
             <div>
-              <div className="relative aspect-[16/9.5] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted shadow-sm">
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted shadow-sm">
                 <Image
                   src={currentSlide.image}
                   alt={currentSlide.titleGu}
                   fill
                   sizes="(max-width: 768px) 100vw, 40vw"
-                  className="object-cover transition-transform duration-300"
+                  className="object-cover object-top transition-transform duration-300"
                 />
                 <button
                   type="button"

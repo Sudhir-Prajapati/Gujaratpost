@@ -311,7 +311,7 @@ export default function NationalSection({ language, initialArticles }: { languag
           {top3.map((item) => (
             <div key={item.id} className="flex flex-col justify-between min-w-0 border-b border-border/40 pb-3">
               <Link href={`/news/${item.slug}`} className="group flex flex-col">
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                   <ArticleMedia src={item.image} alt={item.titleGu} className="transition-transform duration-300 group-hover:scale-105" />
                 </div>
                 <h3 className="text-[15px] md:text-[16.5px] font-extrabold leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2">

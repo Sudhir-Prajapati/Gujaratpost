@@ -560,7 +560,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
               </div>
 
               {/* Image Right with Watermark */}
-              <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted order-1 md:order-2 shadow-sm">
+              <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted order-1 md:order-2 shadow-sm">
                 <ArticleMedia
                   src={featured.image}
                   alt={featured.titleGu}
@@ -580,7 +580,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
                     href={`/news/${card.slug}`}
                     className="group flex flex-col"
                   >
-                    <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
+                    <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                       <ArticleMedia
                         src={card.image}
                         alt={card.titleGu}

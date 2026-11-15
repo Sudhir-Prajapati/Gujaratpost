@@ -145,7 +145,7 @@ export default function ElectionSection({
             href={`/news/${lead.slug}`}
             className="group flex flex-col h-full rounded-2xl overflow-hidden border border-border/80 bg-card hover:border-[#B3121B]/40 shadow-xs hover:shadow-md transition-all duration-300"
           >
-            <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+            <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
               <ArticleMedia
                 src={lead.image || (lead as any).featuredImage || '/assets/demo/1.jpg'}
                 alt={getArticleTitle(lead, language)}

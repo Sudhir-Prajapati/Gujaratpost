@@ -18,6 +18,9 @@ interface ArticleMediaProps {
   autoPlayOnHover?: boolean;
   videoControls?: boolean;
   sizes?: string;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  objectPosition?: string;
+  enableAmbientBackdrop?: boolean;
 }
 
 export default function ArticleMedia({
@@ -33,6 +36,9 @@ export default function ArticleMedia({
   autoPlayOnHover = false,
   videoControls = false,
   sizes,
+  objectFit,
+  objectPosition,
+  enableAmbientBackdrop = false,
 }: ArticleMediaProps) {
   const isVideo = isMediaVideo(src);
   const [hasError, setHasError] = useState(false);
@@ -139,15 +145,51 @@ export default function ArticleMedia({
     );
   }
 
+  // Derive effective objectFit and objectPosition cleanly
+  const effectiveObjectFit =
+    objectFit ||
+    style?.objectFit ||
+    (className.includes('object-contain') ? 'contain' : 'cover');
+
+  const effectiveObjectPosition =
+    objectPosition ||
+    style?.objectPosition ||
+    (className.includes('object-top')
+      ? 'top center'
+      : className.includes('object-bottom')
+      ? 'bottom center'
+      : effectiveObjectFit === 'contain'
+      ? 'center'
+      : 'center 15%');
+
+  const shouldRenderAmbient = effectiveObjectFit === 'contain' || enableAmbientBackdrop;
+
   // Handle Standard Image Media
   const rootPos = isAbsolute || !className.includes('relative') ? 'absolute inset-0' : 'relative';
   return (
     <div className={`${rootPos} w-full h-full overflow-hidden bg-zinc-100 dark:bg-neutral-900`}>
+      {shouldRenderAmbient && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+          <img
+            src={cleanSrc}
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none"
+            onError={() => {}}
+          />
+        </div>
+      )}
       <img
         src={cleanSrc}
         alt={alt}
-        className={`w-full h-full object-cover transition-transform duration-300 ${className}`}
-        style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', ...style }}
+        className={`w-full h-full transition-transform duration-300 ${shouldRenderAmbient ? 'relative z-10' : ''} ${className}`}
+        style={{
+          width: '100%',
+          height: '100%',
+          objectFit: effectiveObjectFit as any,
+          objectPosition: effectiveObjectPosition,
+          ...style,
+        }}
         onError={() => setHasError(true)}
         loading={priority ? 'eager' : 'lazy'}
         fetchPriority={priority ? 'high' : 'auto'}

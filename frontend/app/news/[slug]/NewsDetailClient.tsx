@@ -778,7 +778,7 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
         : '';
 
     const safeImgUrl = sanitizeImageUrl(cleanUrl);
-    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="w-full h-full object-cover transition-transform duration-300" style="object-fit: cover; object-position: center;" /></div>${caption}</figure>`;
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><div class="absolute inset-0 overflow-hidden pointer-events-none select-none"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none" /></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain transition-transform duration-300" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -2514,23 +2514,35 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                           onEnded={handleNextImage}
                         />
                       ) : (
-                        <Image
-                          src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
-                          alt={`${article.title} slide ${index + 1}`}
-                          fill
-                          priority={index === 0}
-                          loading={index === 0 ? 'eager' : 'lazy'}
-                          unoptimized={true}
-                          sizes="(max-width: 1024px) 100vw, 66vw"
-                          className="object-cover"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            if (target.src && !target.src.includes('placehold.co')) {
-                              target.src = 'https://placehold.co/800x500/e2e8f0/94a3b8?text=Gujarat+Post';
-                            }
-                          }}
-                        />
+                        <>
+                          {/* Ambient blurred backdrop so that portrait / 4:3 images never leave ugly blank bars */}
+                          <div className="absolute inset-0 overflow-hidden pointer-events-none select-none">
+                            <img
+                              src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
+                              alt=""
+                              aria-hidden="true"
+                              className="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none"
+                              onError={() => {}}
+                            />
+                          </div>
+                          <Image
+                            src={sanitizeImageUrl(src) || '/assets/placeholder.jpg'}
+                            alt={`${article.title} slide ${index + 1}`}
+                            fill
+                            priority={index === 0}
+                            loading={index === 0 ? 'eager' : 'lazy'}
+                            unoptimized={true}
+                            sizes="(max-width: 1024px) 100vw, 66vw"
+                            className="relative z-10 w-full h-full object-contain"
+                            style={{ objectFit: 'contain', objectPosition: 'center' }}
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              if (target.src && !target.src.includes('placehold.co')) {
+                                target.src = 'https://placehold.co/800x500/e2e8f0/94a3b8?text=Gujarat+Post';
+                              }
+                            }}
+                          />
+                        </>
                       )}
                     </div>
                   );

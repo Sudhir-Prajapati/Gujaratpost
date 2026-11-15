@@ -377,7 +377,7 @@ function MobileHorizontalCardStrip({
           className="group relative w-full rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] flex flex-col overflow-hidden select-none active:scale-[0.99] transition-all duration-200"
         >
           {/* Top Image Container matching Fact Check UI */}
-          <div className="relative aspect-[16/10] w-full overflow-hidden bg-muted">
+          <div className="relative aspect-[16/9] w-full overflow-hidden bg-muted">
             <ArticleMedia
               src={art.image || (art as any).featuredImage || getArticleImage(art)}
               alt={art.title || ''}
@@ -536,7 +536,7 @@ function HeroStorySlider({
 
         {/* 2. Image in the Middle with Slider Controls */}
         <div
-          className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[16/10] bg-muted"
+          className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[16/9] bg-muted"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
@@ -545,7 +545,9 @@ function HeroStorySlider({
               key={`mob-${current.id || slideIndex}`}
               src={current.image || (current as any).featuredImage}
               alt={current.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.02]"
+              className="w-full h-full transition-transform duration-500 group-hover:scale-[1.02]"
+              objectFit="contain"
+              enableAmbientBackdrop={true}
             />
           </Link>
 
@@ -640,12 +642,14 @@ function HeroStorySlider({
       {/* ─── DESKTOP VIEW (>= md): 100% Untouched Existing Layout (Image First, Excerpt, Author) ─── */}
       <Link href={`/news/${current.slug}`} className="group hidden md:flex flex-col w-full">
         {/* Hero image with slider controls */}
-        <div className="relative w-full overflow-hidden rounded-xl md:rounded-2xl shadow-md aspect-[16/9] md:aspect-[3/2] bg-muted border border-border/15">
+        <div className="relative w-full overflow-hidden rounded-xl md:rounded-2xl shadow-md aspect-[16/9] bg-muted border border-border/15">
           <ArticleMedia
             key={current.id || slideIndex}
             src={current.image || (current as any).featuredImage}
             alt={current.title}
             className="transition-transform duration-500 group-hover:scale-[1.02]"
+            objectFit="contain"
+            enableAmbientBackdrop={true}
           />
 
           {/* Navigation Arrows & Controls (only if more than 1 slide) */}
@@ -2003,7 +2007,7 @@ export default function HeroSection({
                               href={`/news/${art.slug}`}
                               className="group flex flex-col items-start gap-0 min-w-0"
                             >
-                              <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
+                              <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                                 <ArticleMedia
                                   src={art.image || (art as any).featuredImage || getArticleImage(art)}
                                   alt={art.title || ''}

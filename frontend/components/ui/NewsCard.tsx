@@ -60,7 +60,7 @@ export default function NewsCard({
   if (variant === 'hero') {
     return (
       <Link prefetch={false} href={`/news/${article.slug}`} className="news-card group relative block overflow-hidden rounded-xl bg-card">
-        <div className="relative aspect-[16/10] w-full lg:aspect-[16/9] overflow-hidden">
+        <div className="relative aspect-[16/9] w-full overflow-hidden">
           <ArticleMedia
             src={mediaSrc}
             alt={article.title}
@@ -159,12 +159,11 @@ export default function NewsCard({
   if (variant === 'flat') {
     return (
       <Link prefetch={false} href={`/news/${article.slug}`} className="group flex flex-col h-full">
-        <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
+        <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden rounded-lg bg-muted shadow-sm">
           <ArticleMedia
             src={mediaSrc}
             alt={article.title}
             className="absolute inset-0 h-full w-full"
-            style={{ objectFit: 'cover', objectPosition: 'center' }}
           />
         </div>
         <div className="flex flex-col flex-1 mt-2.5 justify-between">

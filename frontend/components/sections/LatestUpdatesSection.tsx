@@ -411,7 +411,7 @@ export default function LatestUpdatesSection({
                 href={`/news/${currentMobileCard.slug}`}
                 className="group flex flex-col min-w-0"
               >
-                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-xs">
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl border border-border/10 bg-muted mb-2.5 shadow-xs">
                   <span className="absolute top-2 left-2 z-10 bg-black/85 text-white font-black text-[13px] px-2.5 py-0.5 rounded-md select-none shadow">
                     {language === 'gu' ? toGuDigits(mobileCardRank) : mobileCardRank}
                   </span>
@@ -533,7 +533,7 @@ export default function LatestUpdatesSection({
                   href={`/news/${art.slug}`}
                   className="group flex flex-col min-w-0"
                 >
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-sm border border-border/10 bg-muted mb-2">
                     <span className="absolute top-1.5 left-1.5 z-10 bg-black/80 text-white font-extrabold text-[11px] px-1.5 py-0.5 rounded-sm select-none shadow">
                       {language === 'gu' ? toGuDigits(cardRank) : cardRank}
                     </span>
