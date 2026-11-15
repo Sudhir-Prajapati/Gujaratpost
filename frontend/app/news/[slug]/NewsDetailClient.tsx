@@ -1497,16 +1497,11 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return Math.max(0, (refTime - pubTime) / (1000 * 60 * 60 * 24));
   };
 
-  // Categorize article length into 4 responsive tiers to balance desktop layout and completely eliminate white space
-  const articleStoryTier = useMemo(() => {
-    const rawContent = (article.content || '') + ((article as any).contentGu || '') + (article.excerpt || '');
-    const pureText = rawContent.replace(/<[^>]*>/g, '').replace(/[#*_`\[\]()]/g, '').trim();
-    const len = pureText.length;
-    if (len < 900) return 'very_short';
-    if (len < 1800) return 'short';
-    if (len < 3200) return 'medium';
-    return 'long';
-  }, [article]);
+  // Measure clean length of the current displayed story content
+  const isShortStory = useMemo(() => {
+    const text = (rawBody || body || '').replace(/<[^>]*>/g, '').replace(/[#*_`\[\]()\-]/g, '').trim();
+    return text.length < 2400;
+  }, [rawBody, body]);
 
   const readAlsoPool = useMemo(() => {
     const topMostRead = (mostReadArticles || []).slice(0, 3);
@@ -1514,7 +1509,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     const uniquePool = filterUniqueArticles(pool, [article, ...topMostRead]);
     const sortedPool = sortArticlesByNewest(uniquePool);
 
-    const targetCount = (articleStoryTier === 'very_short' || articleStoryTier === 'short') ? 6 : 4;
+    const targetCount = 4;
 
     // Strictly prioritize fresh news from the last 3-4 days (<= 4.0 days)
     const freshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
@@ -1526,7 +1521,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       return mediumFreshArticles.slice(0, targetCount);
     }
     return [...freshArticles, ...sortedPool.filter((a) => !freshArticles.includes(a))].slice(0, targetCount);
-  }, [article, related, trending, latestArticles, mostReadArticles, articleStoryTier]);
+  }, [article, related, trending, latestArticles, mostReadArticles]);
 
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
 
@@ -1786,35 +1781,24 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   }, [article, isContentExpanded]);
 
   const desktopMostReadLimit = useMemo(() => {
-    if (articleStoryTier === 'very_short' || articleStoryTier === 'short') return 3;
-    if (articleStoryTier === 'medium') return 4;
-    return 5;
-  }, [articleStoryTier]);
+    return isShortStory ? 3 : 5;
+  }, [isShortStory]);
 
   const desktopRecommendedLimit = useMemo(() => {
-    if (articleStoryTier === 'very_short' || articleStoryTier === 'short') return 3;
-    if (articleStoryTier === 'medium') return 5;
-    return 7;
-  }, [articleStoryTier]);
+    return isShortStory ? 3 : 6;
+  }, [isShortStory]);
 
   const desktopLatestLimit = useMemo(() => {
-    if (articleStoryTier === 'very_short' || articleStoryTier === 'short') return 0; // HIDE latest news in sidebar on short articles
-    if (articleStoryTier === 'medium') return 2;
-    return 5;
-  }, [articleStoryTier]);
+    return isShortStory ? 0 : 4; // HIDE latest news in sidebar on short stories
+  }, [isShortStory]);
 
   const desktopPhotoLimit = useMemo(() => {
-    if (articleStoryTier === 'very_short') return 0; // Moves to left column on very short stories to eliminate sidebar overflow
-    if (articleStoryTier === 'short') return 1;
-    if (articleStoryTier === 'medium') return 2;
-    return 3;
-  }, [articleStoryTier]);
+    return isShortStory ? 0 : 3; // HIDE photo gallery from sidebar on short stories (shown on left instead!)
+  }, [isShortStory]);
 
   const desktopMustReadLimit = useMemo(() => {
-    if (articleStoryTier === 'very_short' || articleStoryTier === 'short') return 6;
-    if (articleStoryTier === 'medium') return 4;
     return 4;
-  }, [articleStoryTier]);
+  }, []);
 
   // 1. Helper to identify health category articles (strictly excluded from Recommended sidebars)
   const isHealthArticle = (cand: any): boolean => {
@@ -2757,8 +2741,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                       </div>
                     )}
 
-                    {/* Photo Gallery on the Left for Very Short Stories (Balances sidebar and completely eliminates whitespace) */}
-                    {articleStoryTier === 'very_short' && sidebarPhotos.length > 0 && (
+                    {/* Photo Gallery on the Left in a Row / Grid for Short Stories (Balances layout and eliminates whitespace) */}
+                    {isShortStory && sidebarPhotos.length > 0 && (
                       <div className="hidden md:flex flex-col mt-6 pt-5 border-t border-slate-200 dark:border-neutral-800">
                         <div className="flex items-center justify-between mb-3.5">
                           <div className="flex items-center gap-2">
@@ -2774,8 +2758,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                             <span>{uiLabel(language, { en: 'View All →', gu: 'બધા જુઓ →', hi: 'सभी देखें →' })}</span>
                           </Link>
                         </div>
-                        <div className="grid grid-cols-2 gap-3.5">
-                          {sidebarPhotos.slice(0, 2).map((photo, index) => {
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                          {sidebarPhotos.slice(0, 4).map((photo, index) => {
                             const caption = photo.captionGu || photo.caption || photo.alt || 'ફોટો ગેલેરી';
                             const photoSrc = resolvePhotoUrl(photo.src || photo.image, FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length]);
                             const photoHref = photo.id ? `/photos/${photo.id}` : '/photos';
@@ -2792,24 +2776,24 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                                     src={photoSrc}
                                     alt={caption}
                                     fill
-                                    sizes="300px"
+                                    sizes="220px"
                                     className="object-cover transition-transform duration-300 group-hover:scale-105"
                                   />
                                   <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#B3121B] px-2.5 py-0.5 text-[9.5px] font-black text-white shadow-xs">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-[#B3121B] px-2 py-0.5 text-[9px] font-black text-white shadow-xs">
                                       <Camera className="w-2.5 h-2.5 text-white" />
                                       <span>{language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photos'}</span>
                                     </span>
                                   </div>
                                   <div className="absolute top-2 right-2 z-10 pointer-events-none">
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-xs px-2 py-0.5 text-[9.5px] font-black text-white shadow-sm border border-white/20">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-xs px-2 py-0.5 text-[9px] font-black text-white shadow-sm border border-white/20">
                                       <Camera className="w-2.5 h-2.5 text-red-400" />
                                       <span>{imgCount}</span>
                                     </span>
                                   </div>
                                 </div>
                                 <div className="mt-2 min-w-0 px-0.5">
-                                  <h4 className="text-[13px] sm:text-[13.5px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                                  <h4 className="text-[12.5px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
                                     <AutoTranslateString text={caption} language={language} />
                                   </h4>
                                 </div>
@@ -3098,8 +3082,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                 </div>
               )}
 
-              {/* Desktop Photo Gallery Widget below Latest News (One-by-one in column & Sticky to eliminate white space) */}
-              {sidebarPhotos.length > 0 && desktopPhotoLimit > 0 && (
+              {/* Desktop Photo Gallery Widget below Latest News (One-by-one in column & Sticky to eliminate white space on LONG stories) */}
+              {!isShortStory && sidebarPhotos.length > 0 && desktopPhotoLimit > 0 && (
                 <div className="hidden md:flex flex-col mt-5 sticky top-20 z-10">
                   <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-neutral-800 pb-2 mb-3 bg-white/80 dark:bg-[#0f111a]/80 backdrop-blur-xs">
                     <div className="flex items-center gap-2">
