@@ -553,7 +553,7 @@ function resolvePhotoUrl(val: any, fallback: string = ''): string {
           raw = typeof first === 'string' ? first : (first?.src || first?.url || fallback);
           trimmed = String(raw).trim();
         }
-      } catch {}
+      } catch { }
     }
     const qIdx = trimmed.indexOf('"');
     if (qIdx !== -1) {
@@ -1989,7 +1989,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
           setGalleryPhotos(res.filter((p: any) => p && (p.src || p.id || p.image)));
         }
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const sidebarPhotos = useMemo(() => {
@@ -2524,7 +2524,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                               alt=""
                               aria-hidden="true"
                               className="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none"
-                              onError={() => {}}
+                              onError={() => { }}
                             />
                           </div>
                           <Image

@@ -25,7 +25,8 @@ import {
   ChevronsRight,
   Check,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  RotateCcw
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
 import { PHOTOS } from '@/data';
@@ -872,6 +873,21 @@ export default function GalleryPage() {
               title="Last page"
             >
               <ChevronsRight className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPage(1);
+                setPageInput('1');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              disabled={page === 1}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3 py-1.5 text-xs font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap ml-1 sm:ml-2"
+              title="Reset to Page 1 (સીધા પેજ ૧ પર પાછા જાઓ)"
+            >
+              <RotateCcw className="h-3.5 w-3.5 text-[#B3121B] group-hover:text-white transition-colors" />
+              <span>Reset (Page 1)</span>
             </button>
           </div>
         </div>

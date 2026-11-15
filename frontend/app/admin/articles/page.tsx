@@ -768,7 +768,7 @@ export default function ArticleList() {
             </div>
 
             {/* Reset All Filters button */}
-            {(query || selectedCategory || selectedStatus || selectedDate) && (
+            {(query || selectedCategory || selectedStatus || selectedDate || page > 1) && (
               <button
                 type="button"
                 onClick={() => {
@@ -776,10 +776,11 @@ export default function ArticleList() {
                   setSelectedCategory('');
                   setSelectedStatus('');
                   setSelectedDate('');
-                  setPage(1);
+                  handlePageChange(1);
+                  scrollToTop();
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/30 transition cursor-pointer border border-transparent hover:border-red-200 dark:hover:border-red-900"
-                title="Reset all filters and search"
+                title="Reset all filters, search and jump to page 1"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset</span>
@@ -1223,6 +1224,21 @@ export default function ArticleList() {
 
               {/* Divider */}
               <div className="hidden sm:block h-6 w-px bg-zinc-300 dark:bg-zinc-700" />
+
+              {/* Reset to Page 1 button */}
+              <button
+                type="button"
+                onClick={() => {
+                  handlePageChange(1);
+                  scrollToTop();
+                }}
+                disabled={page === 1}
+                className="group inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3 sm:px-3.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
+                title="Reset to Page 1 (સીધા પ્રથમ પેજ પર પાછા જાઓ)"
+              >
+                <RotateCcw className="h-4 w-4 text-[#B3121B] group-hover:text-white transition-colors" />
+                <span>Reset (Page 1)</span>
+              </button>
 
               {/* Neatly integrated To Top button */}
               <button
