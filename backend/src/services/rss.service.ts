@@ -207,7 +207,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     });
 
     const newestPhoto = photos[0];
-    const lastModified = newestPhoto?.createdAt || newestPhoto?.updatedAt || new Date();
+    const lastModified = newestPhoto?.updatedAt || newestPhoto?.createdAt || new Date();
     const lastBuildDate = lastModified.toUTCString();
     const etagSource = `photos:${photos.length}:${lastModified.getTime()}`;
     const etag = `"${crypto.createHash('md5').update(etagSource).digest('hex')}"`;
@@ -215,9 +215,11 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     let itemsXml = '';
     for (const photo of photos) {
       const photoUrl = `${baseUrl}/photos/${photo.id}`;
-      // In compliance with RSS 2.0 and Dailyhunt standards, pubDate is strictly the original publication/creation date
-      const pubDate = new Date(photo.createdAt).toUTCString();
-      const guidValue = photoUrl;
+      // Dailyhunt & RSS 2.0: Prefer updatedAt timestamp for versioned GUID and pubDate
+      // so aggregators immediately re-crawl and ingest updated story descriptions
+      const photoTimestamp = new Date(photo.updatedAt || photo.createdAt);
+      const pubDate = photoTimestamp.toUTCString();
+      const guidValue = `${photoUrl}?v=${photoTimestamp.getTime()}`;
 
       // Heading / Title (captionGu is always the primary headline in Gujarati)
       const titleCandidate = lang === 'hi' && photo.captionHi
@@ -346,7 +348,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
       itemsXml += `    <item>
       <title>${wrapCdata(rawTitle)}</title>
       <link>${photoUrl}</link>
-      <guid isPermaLink="true">${guidValue}</guid>
+      <guid isPermaLink="false">${guidValue}</guid>
       <description>${wrapCdata(rawDesc)}</description>
       <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
       <category>${wrapCdata(catName)}</category>
@@ -364,22 +366,6 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
         <media:title>${wrapCdata(rawTitle)}</media:title>
         <media:description>${wrapCdata(rawDesc)}</media:description>
       </media:content>`;
-
-        if (slides.length > 1) {
-          for (let i = 1; i < slides.length; i++) {
-            const s = slides[i];
-            if (s.src && (s.src.startsWith('http://') || s.src.startsWith('https://'))) {
-              const escapedSlideSrc = escapeXml(s.src);
-              const slideTitle = s.title || rawTitle;
-              const slideCaption = (s.caption || s.description || '').trim();
-              const hasSlideDesc = slideCaption && slideCaption !== rawTitle && slideCaption !== storyDesc;
-              itemsXml += `
-      <media:content url="${escapedSlideSrc}" medium="image" type="image/jpeg">
-        <media:title>${wrapCdata(slideTitle)}</media:title>${hasSlideDesc ? `\n        <media:description>${wrapCdata(slideCaption)}</media:description>` : ''}
-      </media:content>`;
-            }
-          }
-        }
       }
 
       itemsXml += `
