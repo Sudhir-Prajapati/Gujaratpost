@@ -167,3 +167,61 @@ export function getSavedArticleEmbedInput(body: string, platform: ArticleSocialP
 
   return '';
 }
+
+/** Thoroughly purge embedded figures, iframes, cards, blockquotes, and widgets for a given social platform (or all). */
+export function purgeSocialEmbedFromText(text: string, platform?: ArticleSocialPlatform | 'all'): string {
+  if (!text || typeof text !== 'string') return '';
+  let out = text;
+
+  const purgeTwitter = !platform || platform === 'all' || platform === 'twitter';
+  const purgeYoutube = !platform || platform === 'all' || platform === 'youtube';
+  const purgeInstagram = !platform || platform === 'all' || platform === 'instagram';
+  const purgeFacebook = !platform || platform === 'all' || platform === 'facebook';
+
+  if (purgeTwitter) {
+    out = out
+      // 1. Figures with twitter platform or twitter url
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']twitter["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*(?:twitter\.com|x\.com)[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      // 2. Custom Twitter embed wrap / card / link
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-twitter-embed-wrap|gp-x-card|gp-x-link)[^"']*["']>[\s\S]*?<\/div>/gi, '')
+      // 3. Twitter blockquote (with optional widgets.js script)
+      .replace(/<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?/gi, '')
+      // 4. Standalone widgets.js script
+      .replace(/<script[^>]*platform\.twitter\.com\/widgets\.js[^>]*><\/script>/gi, '')
+      // 5. Iframes with twitter
+      .replace(/<iframe[^>]*(?:data-social-platform=["']twitter["']|srcdoc=["'][^"']*twitter-tweet[\s\S]*?["']|src=["'][^"']*(?:twitter\.com|platform\.twitter\.com)[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  }
+
+  if (purgeYoutube) {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']youtube["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*(?:youtube\.com|youtu\.be)[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*aspect-video[^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']youtube["']|src=["'][^"']*(?:youtube\.com|youtube-nocookie\.com|youtu\.be)[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  }
+
+  if (purgeInstagram) {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']instagram["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*instagram\.com[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<blockquote[^>]*class=["'][^"']*instagram-media[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*instagram\.com\/embed\.js[^>]*><\/script>)?/gi, '')
+      .replace(/<script[^>]*instagram\.com\/embed\.js[^>]*><\/script>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']instagram["']|srcdoc=["'][^"']*instagram-media[\s\S]*?["']|src=["'][^"']*instagram\.com[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  }
+
+  if (purgeFacebook) {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']facebook["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*(?:facebook\.com|fb\.watch)[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*(?:fb-post|fb-video)[^"']*["']>[\s\S]*?<\/div>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']facebook["']|src=["'][^"']*facebook\.com[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  }
+
+  // Clean trailing empty wrappers, paragraphs, breaks, and non-breaking spaces
+  out = out
+    .replace(/(?:<p[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>\s*)+$/gi, '')
+    .trim();
+
+  return out;
+}

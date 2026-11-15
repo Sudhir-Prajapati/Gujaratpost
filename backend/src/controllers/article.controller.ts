@@ -141,6 +141,40 @@ export async function autoPublishDueArticles() {
   }
 }
 
+export function purgeSocialEmbedFromContent(text: string, platform: 'twitter' | 'youtube' | 'instagram' | 'facebook'): string {
+  if (!text || typeof text !== 'string') return '';
+  let out = text;
+  if (platform === 'twitter') {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']twitter["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*(?:twitter\.com|x\.com)[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*(?:gp-twitter-embed-wrap|gp-x-card|gp-x-link)[^"']*["']>[\s\S]*?<\/div>/gi, '')
+      .replace(/<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?/gi, '')
+      .replace(/<script[^>]*platform\.twitter\.com\/widgets\.js[^>]*><\/script>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']twitter["']|srcdoc=["'][^"']*twitter-tweet[\s\S]*?["']|src=["'][^"']*(?:twitter\.com|platform\.twitter\.com)[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  } else if (platform === 'youtube') {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']youtube["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*(?:youtube\.com|youtu\.be)[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*aspect-video[^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']youtube["']|src=["'][^"']*(?:youtube\.com|youtube-nocookie\.com|youtu\.be)[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  } else if (platform === 'instagram') {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']instagram["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*instagram\.com[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<blockquote[^>]*class=["'][^"']*instagram-media[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*instagram\.com\/embed\.js[^>]*><\/script>)?/gi, '')
+      .replace(/<script[^>]*instagram\.com\/embed\.js[^>]*><\/script>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']instagram["']|srcdoc=["'][^"']*instagram-media[\s\S]*?["']|src=["'][^"']*instagram\.com[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  } else if (platform === 'facebook') {
+    out = out
+      .replace(/<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']facebook["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<figure\b[^>]*data-article-social-url=["'][^"']*(?:facebook\.com|fb\.watch)[^"']*["'][\s\S]*?<\/figure>/gi, '')
+      .replace(/<div[^>]*class=["'][^"']*(?:fb-post|fb-video)[^"']*["']>[\s\S]*?<\/div>/gi, '')
+      .replace(/<iframe[^>]*(?:data-social-platform=["']facebook["']|src=["'][^"']*facebook\.com[^"']*)[^>]*>[\s\S]*?<\/iframe>/gi, '');
+  }
+  return out.replace(/(?:<p[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>\s*)+$/gi, '').trim();
+}
+
 export class ArticleController {
   /**
    * Fetch all articles (posts) with filters.
@@ -584,6 +618,31 @@ export class ArticleController {
       }
       const initialSelectedCatIds = Array.from(new Set(rawCreateIds));
 
+      let cleanContent = content.trim();
+      let cleanContentGu = (contentGu || content).trim();
+      let cleanContentHi = (contentHi || content).trim();
+
+      if (req.body.twitterUrl === '' || req.body.twitterUrl === null || req.body.twitterUrl === false) {
+        cleanContent = purgeSocialEmbedFromContent(cleanContent, 'twitter');
+        cleanContentGu = purgeSocialEmbedFromContent(cleanContentGu, 'twitter');
+        cleanContentHi = purgeSocialEmbedFromContent(cleanContentHi, 'twitter');
+      }
+      if (req.body.youtubeUrl === '' || req.body.youtubeUrl === null || req.body.youtubeUrl === false) {
+        cleanContent = purgeSocialEmbedFromContent(cleanContent, 'youtube');
+        cleanContentGu = purgeSocialEmbedFromContent(cleanContentGu, 'youtube');
+        cleanContentHi = purgeSocialEmbedFromContent(cleanContentHi, 'youtube');
+      }
+      if (req.body.instagramUrl === '' || req.body.instagramUrl === null || req.body.instagramUrl === false) {
+        cleanContent = purgeSocialEmbedFromContent(cleanContent, 'instagram');
+        cleanContentGu = purgeSocialEmbedFromContent(cleanContentGu, 'instagram');
+        cleanContentHi = purgeSocialEmbedFromContent(cleanContentHi, 'instagram');
+      }
+      if (req.body.facebookUrl === '' || req.body.facebookUrl === null || req.body.facebookUrl === false) {
+        cleanContent = purgeSocialEmbedFromContent(cleanContent, 'facebook');
+        cleanContentGu = purgeSocialEmbedFromContent(cleanContentGu, 'facebook');
+        cleanContentHi = purgeSocialEmbedFromContent(cleanContentHi, 'facebook');
+      }
+
       const post = await prisma.post.create({
         data: {
           slug: postSlug,
@@ -595,9 +654,9 @@ export class ArticleController {
           excerpt: (excerpt || '').trim(),
           excerptGu: (excerptGu || excerpt || '').trim(),
           excerptHi: (excerptHi || excerpt || '').trim(),
-          content: content.trim(),
-          contentGu: (contentGu || content).trim(),
-          contentHi: (contentHi || content).trim(),
+          content: cleanContent,
+          contentGu: cleanContentGu,
+          contentHi: cleanContentHi,
           featuredImage: (featuredImage || '').trim(),
           status: status || 'DRAFT',
           scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
@@ -711,6 +770,28 @@ export class ArticleController {
       if (content !== undefined) updateData.content = content.trim();
       if (contentGu !== undefined) updateData.contentGu = contentGu.trim();
       if (contentHi !== undefined) updateData.contentHi = contentHi.trim();
+
+      // If client explicitly passed empty or null social media URLs, guarantee their embed markups are completely removed from content fields
+      if (req.body.twitterUrl === '' || req.body.twitterUrl === null || req.body.twitterUrl === false) {
+        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'twitter');
+        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'twitter');
+        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'twitter');
+      }
+      if (req.body.youtubeUrl === '' || req.body.youtubeUrl === null || req.body.youtubeUrl === false) {
+        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'youtube');
+        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'youtube');
+        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'youtube');
+      }
+      if (req.body.instagramUrl === '' || req.body.instagramUrl === null || req.body.instagramUrl === false) {
+        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'instagram');
+        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'instagram');
+        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'instagram');
+      }
+      if (req.body.facebookUrl === '' || req.body.facebookUrl === null || req.body.facebookUrl === false) {
+        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'facebook');
+        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'facebook');
+        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'facebook');
+      }
       if (featuredImage !== undefined) updateData.featuredImage = featuredImage.trim();
       if (status !== undefined) updateData.status = status;
       if (scheduledAt !== undefined) {

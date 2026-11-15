@@ -10,7 +10,7 @@ import CustomSelect, { SelectOption } from '@/components/ui/CustomSelect';
 import RichTextArea from '@/components/ui/RichTextArea';
 import ArticlePdfPagesViewer from './ArticlePdfPagesViewer';
 import ArticleSocialPreview from './ArticleSocialPreview';
-import { buildArticleEmbedHtml, getSavedArticleEmbedInput } from '@/lib/article-embed-input';
+import { buildArticleEmbedHtml, getSavedArticleEmbedInput, purgeSocialEmbedFromText } from '@/lib/article-embed-input';
 
 interface ArticleFormProps {
   articleId?: string; // If present, we are in Edit mode
@@ -527,6 +527,24 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [pdfPosition, setPdfPosition] = useState<string>('end');
   const [uploadingPdf, setUploadingPdf] = useState(false);
 
+  // Helper to purge embeds of a given platform from all state fields so they never resurface
+  const purgePlatformEmbedsFromState = (platform: 'twitter' | 'youtube' | 'instagram' | 'facebook') => {
+    setDesc1((p) => purgeSocialEmbedFromText(p, platform));
+    setDesc1Gu((p) => purgeSocialEmbedFromText(p, platform));
+    setDesc1Hi((p) => purgeSocialEmbedFromText(p, platform));
+    setContent((p) => purgeSocialEmbedFromText(p, platform));
+    setContentGu((p) => purgeSocialEmbedFromText(p, platform));
+    setContentHi((p) => purgeSocialEmbedFromText(p, platform));
+    setStorySections((prev) =>
+      prev.map((item) => ({
+        ...item,
+        descEn: purgeSocialEmbedFromText(item.descEn, platform),
+        descGu: purgeSocialEmbedFromText(item.descGu, platform),
+        descHi: purgeSocialEmbedFromText(item.descHi, platform),
+      }))
+    );
+  };
+
   // Helper: Format YouTube URL or embed code to Embed URL or ID
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return '';
@@ -817,6 +835,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
       .trim();
 
+    if (!twitterUrl || !twitterUrl.trim()) cleanD1 = purgeSocialEmbedFromText(cleanD1, 'twitter');
+    if (!youtubeUrl || !youtubeUrl.trim()) cleanD1 = purgeSocialEmbedFromText(cleanD1, 'youtube');
+    if (!instagramUrl || !instagramUrl.trim()) cleanD1 = purgeSocialEmbedFromText(cleanD1, 'instagram');
+    if (!facebookUrl || !facebookUrl.trim()) cleanD1 = purgeSocialEmbedFromText(cleanD1, 'facebook');
+
     if (pdfBlockHtml && /\[PDF_DOCUMENT\]/i.test(cleanD1)) {
       cleanD1 = cleanD1.replace(/\[PDF_DOCUMENT\]/gi, `\n\n${pdfBlockHtml}\n\n`);
       pdfPlaced = true;
@@ -838,6 +861,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
+
+      if (!twitterUrl || !twitterUrl.trim()) cleanDesc = purgeSocialEmbedFromText(cleanDesc, 'twitter');
+      if (!youtubeUrl || !youtubeUrl.trim()) cleanDesc = purgeSocialEmbedFromText(cleanDesc, 'youtube');
+      if (!instagramUrl || !instagramUrl.trim()) cleanDesc = purgeSocialEmbedFromText(cleanDesc, 'instagram');
+      if (!facebookUrl || !facebookUrl.trim()) cleanDesc = purgeSocialEmbedFromText(cleanDesc, 'facebook');
 
       if (pdfBlockHtml && !pdfPlaced && /\[PDF_DOCUMENT\]/i.test(cleanDesc)) {
         cleanDesc = cleanDesc.replace(/\[PDF_DOCUMENT\]/gi, `\n\n${pdfBlockHtml}\n\n`);
@@ -1232,9 +1260,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     // Purge PDF markup from working string
     let workingRaw = purgePdfFromText(raw).trim();
 
-    // Strip and extract ONLY trailing standalone embeds from the very end of the content.
-    // In-body embeds (inside Description 1 or continuation sections) are preserved untouched.
-    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>\s*)*(?:<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-twitter-embed-wrap|gp-x-card|gp-x-link)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?|<div[^>]*aspect-video[^>]*>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<p[^>]*>\s*(?:<br\s*\/?>)?\s*<\/p>)*\s*$/i;
+    // Strip and extract standalone embeds from the content.
+    // Handles trailing embeds, empty tags, non-breaking spaces, and scripts.
+    const trailingEmbedPattern = /(?:<p[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>\s*)*(?:<figure\b[^>]*(?:data-article-social-platform|data-social-platform)=["']([^"']+)["'][^>]*>(?:(?!<\/figure>)[\s\S])*<\/figure>|<div[^>]*class=["'][^"']*(?:gp-twitter-embed-wrap|gp-x-card|gp-x-link)[^"']*["']>(?:(?!<\/div>)[\s\S])*<\/div>|<blockquote[^>]*class=["'][^"']*twitter-tweet[^"']*["'][\s\S]*?<\/blockquote>(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?|<div[^>]*class=["'][^"']*aspect-video[^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>|<div[^>]*class=["'][^"']*max-w-\[540px\][^"']*["']>[\s\S]*?<\/iframe>\s*<\/div>)(?:\s*<script[^>]*widgets\.js[^>]*><\/script>)?(?:\s*<p[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>)*\s*$/i;
 
     while (true) {
       const match = workingRaw.match(trailingEmbedPattern);
@@ -1242,9 +1270,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       const platMatch = match[0].match(/(?:data-article-social-platform|data-social-platform)=["']([^"']+)["']/i);
       const urlMatch =
         match[0].match(/(?:data-article-social-url|data-social-url|data-tweet-url)=["']([^"']+)["']/i) ||
+        match[0].match(/https?:\/\/(?:twitter\.com|x\.com)\/[^\s"'<>]+/i) ||
         match[0].match(/href=["']([^"']+)["']/i);
       const plat = platMatch ? platMatch[1].toLowerCase() : '';
-      const u = urlMatch ? urlMatch[1] : '';
+      const u = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
       if (plat === 'twitter' || (!plat && (match[0].includes('twitter') || match[0].includes('x.com') || match[0].includes('gp-x')))) {
         if (!extractedTw) extractedTw = u;
       } else if (plat === 'youtube' || (!plat && match[0].includes('youtube'))) {
@@ -1256,6 +1285,33 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       }
       workingRaw = workingRaw.slice(0, match.index).trim();
     }
+
+    // In-body embeds fallback: If social embeds exist anywhere in the text body (e.g. from older imports),
+    // extract their URLs so they populate the form's dedicated social inputs, and purge them from workingRaw
+    // so they do not pollute Description 1 editor or duplicate upon save.
+    if (!extractedTw) {
+      const inlineTw = getSavedArticleEmbedInput(workingRaw, 'twitter');
+      if (inlineTw) extractedTw = inlineTw;
+    }
+    workingRaw = purgeSocialEmbedFromText(workingRaw, 'twitter');
+
+    if (!extractedYt) {
+      const inlineYt = getSavedArticleEmbedInput(workingRaw, 'youtube');
+      if (inlineYt) extractedYt = inlineYt;
+    }
+    workingRaw = purgeSocialEmbedFromText(workingRaw, 'youtube');
+
+    if (!extractedIg) {
+      const inlineIg = getSavedArticleEmbedInput(workingRaw, 'instagram');
+      if (inlineIg) extractedIg = inlineIg;
+    }
+    workingRaw = purgeSocialEmbedFromText(workingRaw, 'instagram');
+
+    if (!extractedFb) {
+      const inlineFb = getSavedArticleEmbedInput(workingRaw, 'facebook');
+      if (inlineFb) extractedFb = inlineFb;
+    }
+    workingRaw = purgeSocialEmbedFromText(workingRaw, 'facebook');
 
     // Extract quote block
     const quoteRegex = /(?:^|\n)(>[^\n]*(?:\n>[^\n]*)*)/;
@@ -2042,9 +2098,31 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const finalHlGu = primaryHl ? (highlightsGu.trim() || primaryHl) : "";
     const finalHlHi = primaryHl ? (highlightsHi.trim() || primaryHl) : "";
 
-    const compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, 'en');
-    const compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, 'gu');
-    const compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, 'hi');
+    let compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, 'en');
+    let compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, 'gu');
+    let compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, 'hi');
+
+    // Hard guarantee: if any social input was cleared by the user, permanently purge that platform's embeds from compiled content
+    if (!twitterUrl.trim()) {
+      compiledEn = purgeSocialEmbedFromText(compiledEn, 'twitter');
+      compiledGu = purgeSocialEmbedFromText(compiledGu, 'twitter');
+      compiledHi = purgeSocialEmbedFromText(compiledHi, 'twitter');
+    }
+    if (!youtubeUrl.trim()) {
+      compiledEn = purgeSocialEmbedFromText(compiledEn, 'youtube');
+      compiledGu = purgeSocialEmbedFromText(compiledGu, 'youtube');
+      compiledHi = purgeSocialEmbedFromText(compiledHi, 'youtube');
+    }
+    if (!instagramUrl.trim()) {
+      compiledEn = purgeSocialEmbedFromText(compiledEn, 'instagram');
+      compiledGu = purgeSocialEmbedFromText(compiledGu, 'instagram');
+      compiledHi = purgeSocialEmbedFromText(compiledHi, 'instagram');
+    }
+    if (!facebookUrl.trim()) {
+      compiledEn = purgeSocialEmbedFromText(compiledEn, 'facebook');
+      compiledGu = purgeSocialEmbedFromText(compiledGu, 'facebook');
+      compiledHi = purgeSocialEmbedFromText(compiledHi, 'facebook');
+    }
 
     const extraPrimary = primaryMediaList.slice(1).map((u) => u.trim()).filter(Boolean);
     const storySectionImgs = storySections.map((slot) => slot.imageUrl.trim()).filter(Boolean);
@@ -2116,10 +2194,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           ...additionalCategoryIds.filter((id) => id && id.trim() !== '' && id !== categoryId),
         ].filter(Boolean))
       ),
-      youtubeUrl: youtubeUrl.trim() || undefined,
-      twitterUrl: twitterUrl.trim() || undefined,
-      instagramUrl: instagramUrl.trim() || undefined,
-      facebookUrl: facebookUrl.trim() || undefined,
+      youtubeUrl: youtubeUrl.trim() || null,
+      twitterUrl: twitterUrl.trim() || null,
+      instagramUrl: instagramUrl.trim() || null,
+      facebookUrl: facebookUrl.trim() || null,
       pdfUrl: pdfUrl.trim() || undefined,
       showPdfPages: Boolean(pdfUrl.trim() && showPdfPages),
       pdfPosition: pdfUrl.trim() ? pdfPosition : undefined,
@@ -4589,61 +4667,201 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             {/* YouTube Video URL / Embed ID */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
-                <span className="text-red-600">▶</span> YouTube Video URL / ID
-              </label>
-              <input
-                type="text"
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="Ex: https://www.youtube.com/watch?v=... or embed code"
-                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="text-red-600">▶</span> YouTube Video URL / ID
+                </label>
+                {youtubeUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setYoutubeUrl('');
+                      purgePlatformEmbedsFromState('youtube');
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
+                    title="YouTube વિડિયો હટાવો"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>લિંક દૂર કરો</span>
+                  </button>
+                ) : null}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={youtubeUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setYoutubeUrl(val);
+                    if (!val.trim()) purgePlatformEmbedsFromState('youtube');
+                  }}
+                  placeholder="Ex: https://www.youtube.com/watch?v=... or embed code"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
+                />
+                {youtubeUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setYoutubeUrl('');
+                      purgePlatformEmbedsFromState('youtube');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                    title="Clear YouTube URL"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
               <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste YouTube URL or iframe embed code.</p>
             </div>
 
             {/* Twitter / X Post URL */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
-                <span className="text-sky-500 font-bold">𝕏</span> Twitter / X Post URL
-              </label>
-              <input
-                type="text"
-                value={twitterUrl}
-                onChange={(e) => setTwitterUrl(e.target.value)}
-                placeholder="Ex: https://x.com/.../status/... or embed code"
-                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-sky-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="text-sky-500 font-bold">𝕏</span> Twitter / X Post URL
+                </label>
+                {twitterUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTwitterUrl('');
+                      purgePlatformEmbedsFromState('twitter');
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
+                    title="Twitter / X લિંક અને પોસ્ટ કાયમ માટે હટાવો"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>લિંક દૂર કરો</span>
+                  </button>
+                ) : null}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={twitterUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setTwitterUrl(val);
+                    if (!val.trim()) purgePlatformEmbedsFromState('twitter');
+                  }}
+                  placeholder="Ex: https://x.com/.../status/... or embed code"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-sky-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
+                />
+                {twitterUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTwitterUrl('');
+                      purgePlatformEmbedsFromState('twitter');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                    title="Clear Twitter URL"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
               <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste tweet URL or embed code to display post card.</p>
             </div>
 
             {/* Instagram Post / Reel URL / Embed */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white text-[10px]">📸</span> Instagram Post / Reel URL / Embed
-              </label>
-              <input
-                type="text"
-                value={instagramUrl}
-                onChange={(e) => setInstagramUrl(e.target.value)}
-                placeholder="Ex: https://www.instagram.com/p/... or /reel/... or embed code"
-                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-pink-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white text-[10px]">📸</span> Instagram Post / Reel URL / Embed
+                </label>
+                {instagramUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInstagramUrl('');
+                      purgePlatformEmbedsFromState('instagram');
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
+                    title="Instagram પોસ્ટ હટાવો"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>લિંક દૂર કરો</span>
+                  </button>
+                ) : null}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={instagramUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInstagramUrl(val);
+                    if (!val.trim()) purgePlatformEmbedsFromState('instagram');
+                  }}
+                  placeholder="Ex: https://www.instagram.com/p/... or /reel/... or embed code"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-pink-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
+                />
+                {instagramUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInstagramUrl('');
+                      purgePlatformEmbedsFromState('instagram');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                    title="Clear Instagram URL"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
               <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste Instagram post/reel link or iframe embed code.</p>
             </div>
 
             {/* Facebook Post / Video URL / Embed */}
             <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-zinc-100 mb-1.5 flex items-center gap-1.5">
-                <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-[#1877F2] text-white text-[10px] font-bold">f</span> Facebook Post / Video URL / Embed
-              </label>
-              <input
-                type="text"
-                value={facebookUrl}
-                onChange={(e) => setFacebookUrl(e.target.value)}
-                placeholder="Ex: https://www.facebook.com/... or watch link or embed code"
-                className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-blue-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-[#1877F2] text-white text-[10px] font-bold">f</span> Facebook Post / Video URL / Embed
+                </label>
+                {facebookUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFacebookUrl('');
+                      purgePlatformEmbedsFromState('facebook');
+                    }}
+                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
+                    title="Facebook પોસ્ટ હટાવો"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                    <span>લિંક દૂર કરો</span>
+                  </button>
+                ) : null}
+              </div>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={facebookUrl}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setFacebookUrl(val);
+                    if (!val.trim()) purgePlatformEmbedsFromState('facebook');
+                  }}
+                  placeholder="Ex: https://www.facebook.com/... or watch link or embed code"
+                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-blue-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
+                />
+                {facebookUrl ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFacebookUrl('');
+                      purgePlatformEmbedsFromState('facebook');
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
+                    title="Clear Facebook URL"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                ) : null}
+              </div>
               <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste Facebook post, video link, or iframe embed code.</p>
             </div>
           </div>
