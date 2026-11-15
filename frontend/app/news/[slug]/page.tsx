@@ -206,6 +206,26 @@ export default async function NewsDetailPage(
       getPublicArticles({ categorySlug: article.category.toLowerCase().trim(), limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
     );
   }
+  if (article.categorySlug && article.categorySlug.toLowerCase().trim() !== canonicalCat) {
+    catQueries.push(
+      getPublicArticles({ categorySlug: article.categorySlug.toLowerCase().trim(), limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
+    );
+  }
+  if (Array.isArray((article as any).categories)) {
+    for (const c of (article as any).categories) {
+      const slug = c?.category?.slug || c?.slug;
+      const id = c?.categoryId || c?.id;
+      if (slug && slug.toLowerCase().trim() !== canonicalCat) {
+        catQueries.push(
+          getPublicArticles({ categorySlug: slug.toLowerCase().trim(), limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
+        );
+      } else if (id && id !== article.categoryId) {
+        catQueries.push(
+          getPublicArticles({ categorySlug: id, limit: 100, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 }))
+        );
+      }
+    }
+  }
 
   const [catResponses, fallbackRes, trendingRes] = await Promise.all([
     Promise.all(catQueries),
@@ -236,48 +256,13 @@ export default async function NewsDetailPage(
   const allRawCandidates = [...categoryArticles, ...fallbackArticles];
   const uniquePool = filterUniqueArticles(allRawCandidates, [article]).filter((a) => !isCurrentArticle(a));
 
-  // Determine dynamic reference time to protect against client/server clock discrepancies
-  const maxCandidateTime = Math.max(0, ...uniquePool.map((a) => getArticleTimestamp(a)).filter((t) => t > 0));
-  const effectiveRefTime = maxCandidateTime > 0 ? Math.max(Date.now(), maxCandidateTime) : Date.now();
-
-  // 1. Separate candidates into same-category and other-categories, sorted newest first
-  // Standalone health stories are strictly excluded from general story recommendations
+  // Construct related list strictly prioritizing same-category articles, sorted newest first
+  // Standalone health stories are strictly excluded
   const sameCategoryCandidates = sortArticlesByNewest(
-    uniquePool.filter((item) => isSameCategory(item, article))
-  );
-  const otherCategoryCandidates = sortArticlesByNewest(
-    uniquePool.filter((item) => !isSameCategory(item, article) && !isSolelyHealthArticle(item))
+    uniquePool.filter((item) => isSameCategory(item, article) && !isSolelyHealthArticle(item))
   );
 
-  // 2. Partition by freshness:
-  // Fresh news: last 3-4 days (<= 4.0 days)
-  const freshSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) <= 4.0);
-  const freshOtherCategory = otherCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) <= 4.0);
-
-  // 3. Medium fresh news: 4 to 7 days
-  const mediumSameCategory = sameCategoryCandidates.filter((item) => {
-    const age = getArticleAgeDays(item, effectiveRefTime);
-    return age > 4.0 && age <= 7.0;
-  });
-  const mediumOtherCategory = otherCategoryCandidates.filter((item) => {
-    const age = getArticleAgeDays(item, effectiveRefTime);
-    return age > 4.0 && age <= 7.0;
-  });
-
-  // 4. Older articles: > 7 days
-  const olderSameCategory = sameCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) > 7.0);
-  const olderOtherCategory = otherCategoryCandidates.filter((item) => getArticleAgeDays(item, effectiveRefTime) > 7.0);
-
-  // 5. Construct related list strictly prioritizing fresh news:
-  // Fresh same-category first, then fresh news across the site, then medium fresh, then older
-  let related: typeof uniquePool = [
-    ...freshSameCategory,
-    ...freshOtherCategory,
-    ...mediumSameCategory,
-    ...mediumOtherCategory,
-    ...olderSameCategory,
-    ...olderOtherCategory,
-  ];
+  let related: typeof uniquePool = sameCategoryCandidates;
 
   // Deep deduplicate related list
   related = filterUniqueArticles(related, [article]).filter((a) => !isCurrentArticle(a));

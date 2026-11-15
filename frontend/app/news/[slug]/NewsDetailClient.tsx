@@ -3156,9 +3156,9 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
         <RelatedStoriesSection
           article={article}
-          related={(related || []).filter((a) => !isSolelyHealthArticle(a))}
+          related={(related || []).filter((a) => !isSolelyHealthArticle(a) && isSameCategory(a, article))}
           excludeArticles={(related || []).length >= 12 ? readAlsoPool : undefined}
-          fallbackArticles={(latestArticles || []).filter((a) => !isSolelyHealthArticle(a))}
+          fallbackArticles={(latestArticles || []).filter((a) => !isSolelyHealthArticle(a) && isSameCategory(a, article))}
           language={language}
           savedIds={savedIds}
           relatedLimit={relatedLimit}

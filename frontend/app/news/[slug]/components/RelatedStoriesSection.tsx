@@ -8,7 +8,7 @@ import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle } f
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
-import { sortArticlesByNewest, isSolelyHealthArticle } from '@/lib/articleCategory';
+import { sortArticlesByNewest, isSolelyHealthArticle, isSameCategory } from '@/lib/articleCategory';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 
 interface RelatedStoriesSectionProps {
@@ -41,8 +41,12 @@ export default function RelatedStoriesSection({
   const displayRelated = React.useMemo(() => {
     const excludeList = [article, ...(excludeArticles || [])];
     const candidatePool = [...(related || []), ...(fallbackArticles || [])].filter((a) => !isSolelyHealthArticle(a));
-    const result = filterUniqueArticles(candidatePool, excludeList);
-    return sortArticlesByNewest(result);
+    const uniquePool = filterUniqueArticles(candidatePool, excludeList);
+
+    // STRICT RULE: Only show articles belonging to the same category as the active article!
+    const sameCatArticles = uniquePool.filter((item) => isSameCategory(item, article));
+
+    return sortArticlesByNewest(sameCatArticles);
   }, [related, fallbackArticles, excludeArticles, article]);
 
   if (!displayRelated || displayRelated.length === 0) return null;

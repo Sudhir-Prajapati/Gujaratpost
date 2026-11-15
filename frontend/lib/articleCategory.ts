@@ -56,11 +56,70 @@ export function isSameCategory(item: Article | null | undefined, target: Article
     return true;
   }
 
+  // 1b. Multi-category ID match (via categories or categoryIds arrays)
+  const itemCatIds = new Set<string>();
+  if (item.categoryId) itemCatIds.add(String(item.categoryId).trim());
+  if (Array.isArray((item as any).categories)) {
+    for (const c of (item as any).categories) {
+      const id = typeof c === 'string' ? c : (c?.categoryId || c?.id);
+      if (id) itemCatIds.add(String(id).trim());
+    }
+  }
+  if (Array.isArray((item as any).categoryIds)) {
+    for (const id of (item as any).categoryIds) {
+      if (id) itemCatIds.add(String(id).trim());
+    }
+  }
+
+  const targetCatIds = new Set<string>();
+  if (target.categoryId) targetCatIds.add(String(target.categoryId).trim());
+  if (Array.isArray((target as any).categories)) {
+    for (const c of (target as any).categories) {
+      const id = typeof c === 'string' ? c : (c?.categoryId || c?.id);
+      if (id) targetCatIds.add(String(id).trim());
+    }
+  }
+  if (Array.isArray((target as any).categoryIds)) {
+    for (const id of (target as any).categoryIds) {
+      if (id) targetCatIds.add(String(id).trim());
+    }
+  }
+
+  for (const id of itemCatIds) {
+    if (targetCatIds.has(id)) return true;
+  }
+
   // 2. Canonical category key match
   const catA = normalizeCategory(item.categorySlug || item.category || item.categoryGu || item.categoryHi);
   const catB = normalizeCategory(target.categorySlug || target.category || target.categoryGu || target.categoryHi);
   if (catA && catB && catA === catB) {
     return true;
+  }
+
+  // 2b. Multi-category normalized slugs/names match
+  const getArticleNormalizedCats = (art: any): Set<string> => {
+    const set = new Set<string>();
+    const primary = normalizeCategory(art.categorySlug || art.category || art.categoryGu || art.categoryHi);
+    if (primary) set.add(primary);
+    if (Array.isArray(art.categories)) {
+      for (const c of art.categories) {
+        const slug = normalizeCategory(c?.category?.slug || c?.category?.name || c?.slug || c?.name || c?.nameGu);
+        if (slug) set.add(slug);
+      }
+    }
+    return set;
+  };
+
+  const itemCats = getArticleNormalizedCats(item);
+  const targetCats = getArticleNormalizedCats(target);
+  for (const c of itemCats) {
+    if (targetCats.has(c)) return true;
+    if (
+      (c === 'gujarat' && [...targetCats].some((t) => GUJARAT_CITIES.has(t))) ||
+      (targetCats.has('gujarat') && GUJARAT_CITIES.has(c))
+    ) {
+      return true;
+    }
   }
 
   // 3. Gujarati category string exact match
