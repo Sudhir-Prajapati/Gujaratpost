@@ -46,14 +46,11 @@ const STATIC_PRIMARY_CATEGORIES: CategoryItem[] = [
   { id: 'national', slug: 'national', name: 'National', nameGu: 'ભારત', nameHi: 'भारत', href: '/category/national', section: 'primary' },
   { id: 'world', slug: 'world', name: 'World', nameGu: 'વિશ્વ', nameHi: 'विश्व', href: '/category/world', section: 'primary' },
   { id: 'politics', slug: 'politics', name: 'Politics', nameGu: 'રાજનીતિ', nameHi: 'राजनीति', href: '/category/politics', section: 'primary' },
+  { id: 'crime', slug: 'crime', name: 'Crime', nameGu: 'ક્રાઇમ', nameHi: 'क्राइम', href: '/category/crime', section: 'primary' },
+  { id: 'health', slug: 'health', name: 'Health', nameGu: 'હેલ્થ', nameHi: 'स्वास्थ्य', href: '/category/health', section: 'primary' },
   { id: 'entertainment', slug: 'entertainment', name: 'Entertainment', nameGu: 'મનોરંજન', nameHi: 'मनोरंजन', href: '/category/entertainment', section: 'primary' },
   { id: 'technology', slug: 'technology', name: 'Technology', nameGu: 'ટેકનોલોજી', nameHi: 'तकनीक', href: '/category/technology', section: 'primary' },
-  { id: 'health', slug: 'health', name: 'Health', nameGu: 'હેલ્થ & ફિટનેસ', nameHi: 'स्वास्थ्य', href: '/category/health', section: 'primary' },
-  { id: 'crime', slug: 'crime', name: 'Crime', nameGu: 'ક્રાઇમ', nameHi: 'क्राइम', href: '/category/crime', section: 'primary' },
-  { id: 'education', slug: 'education', name: 'Education', nameGu: 'શિક્ષણ & કારકિર્દી', nameHi: 'शिक्षा', href: '/category/education', section: 'primary' },
   { id: 'fact-check', slug: 'fact-check', name: 'Fact Check', nameGu: 'ફેક્ટ ચેક', nameHi: 'फैक्ट चेक', href: '/category/fact-check', section: 'primary' },
-  { id: 'lifestyle', slug: 'lifestyle', name: 'Lifestyle', nameGu: 'લાઇફસ્ટાઇલ', nameHi: 'लाइफस्टाइल', href: '/category/lifestyle', section: 'primary' },
-  { id: 'latest-news', slug: 'latest-news', name: 'Latest News', nameGu: 'તાજા સમાચાર', nameHi: 'ताज़ा समाचार', href: '/category/latest-news', section: 'primary' },
   { id: 'trending', slug: 'trending', name: 'Trending', nameGu: 'ટ્રેન્ડિંગ', nameHi: 'ट्रेंडिंग', href: '/category/trending', section: 'primary' },
 ];
 
@@ -69,12 +66,7 @@ const STATIC_CITY_CATEGORIES: CategoryItem[] = [
 const STATIC_MULTIMEDIA_CATEGORIES: CategoryItem[] = [
   { id: 'videos', slug: 'videos', name: 'Videos', nameGu: 'વીડિયો', nameHi: 'वीडियो', href: '/videos', section: 'multimedia', badge: 'HD' },
   { id: 'photos', slug: 'photos', name: 'Photo Gallery', nameGu: 'ફોટો ગેલેરી', nameHi: 'फोटो गैलरी', href: '/photos', section: 'multimedia' },
-  { id: 'shorts', slug: 'shorts', name: 'YouTube Shorts', nameGu: 'શોર્ટ્સ', nameHi: 'शॉर्ट्स', href: '/shorts', section: 'multimedia' },
-  { id: 'instagram', slug: 'instagram', name: 'Instagram Reels', nameGu: 'ઇન્સ્ટાગ્રામ રીલ્સ', nameHi: 'इंस्टाग्राम', href: '/instagram', section: 'multimedia' },
   { id: 'epaper', slug: 'epaper', name: 'E-Paper', nameGu: 'ઇ-પેપર', nameHi: 'ई-पेपर', href: '/epaper', section: 'multimedia', badge: 'PDF' },
-  { id: 'web-stories', slug: 'web-stories', name: 'Web Stories', nameGu: 'વેબ સ્ટોરીઝ', nameHi: 'वेब स्टोरीज़', href: '/web-stories', section: 'multimedia' },
-  { id: 'aqi', slug: 'aqi', name: 'Weather & AQI', nameGu: 'હવામાન & AQI', nameHi: 'मौसम & AQI', href: '/aqi', section: 'multimedia' },
-  { id: 'live-center', slug: 'live-center', name: 'Live Center', nameGu: 'લાઈવ સેન્ટર (ક્રિકેટ / બજાર)', nameHi: 'लाइव सेंटर', href: '/#live-center', section: 'multimedia', badge: 'LIVE' },
 ];
 
 function getCategoryIcon(slug: string, name?: string) {
@@ -100,6 +92,9 @@ function getCategoryIcon(slug: string, name?: string) {
         <path d="M12 1 2 6v2h20V6L12 1zm-7 9v9h2v-9H5zm4 0v9h2v-9H9zm4 0v9h2v-9h-2zm4 0v9h2v-9h-2zm-15 11v2h20v-2H2z" />
       </svg>
     );
+  }
+  if (s === 'trending' || s === 'trend' || n.includes('ટ્રેન્ડ')) {
+    return <TrendingUp className="h-6 w-6 text-red-600 shrink-0" />;
   }
   if (s === 'business' || s === 'bigness' || s === 'market' || n.includes('બિઝનેસ')) {
     return <TrendingUp className="h-6 w-6 text-emerald-600 shrink-0" />;
@@ -156,7 +151,7 @@ export default function CategoriesClient({ initialCategories = [] }: { initialCa
   const { language } = useApp();
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Merge database categories with static defaults to ensure 100% coverage
+  // Only the exact categories present in the header (10 Primary + 6 Cities + 3 Multimedia = 19)
   const allCategories = useMemo(() => {
     const list: CategoryItem[] = [];
     const seenSlugs = new Set<string>();
@@ -169,7 +164,7 @@ export default function CategoriesClient({ initialCategories = [] }: { initialCa
       }
     };
 
-    // 1. Primary categories first
+    // 1. Primary news categories
     STATIC_PRIMARY_CATEGORIES.forEach(add);
 
     // 2. City categories
@@ -178,28 +173,8 @@ export default function CategoriesClient({ initialCategories = [] }: { initialCa
     // 3. Multimedia & special
     STATIC_MULTIMEDIA_CATEGORIES.forEach(add);
 
-    // 4. Any additional active categories from DB that aren't yet in the list
-    if (Array.isArray(initialCategories)) {
-      for (const cat of initialCategories) {
-        if (!cat || !cat.slug || cat.isActive === false) continue;
-        const slug = cat.slug.toLowerCase().trim();
-        if (!seenSlugs.has(slug)) {
-          seenSlugs.add(slug);
-          list.push({
-            id: cat.id || slug,
-            slug: slug,
-            name: cat.nameEn || cat.name || slug,
-            nameGu: cat.nameGu || cat.name,
-            nameHi: cat.nameHi || cat.name,
-            href: `/category/${slug}`,
-            section: cat.headerType === 'GUJARAT' ? 'city' : 'primary',
-          });
-        }
-      }
-    }
-
     return list;
-  }, [initialCategories]);
+  }, []);
 
   // Filter based on search query
   const filteredCategories = useMemo(() => {
@@ -273,7 +248,7 @@ export default function CategoriesClient({ initialCategories = [] }: { initialCa
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={
                   language === 'gu'
-                    ? 'કેટેગરી શોધો (દા.ત. ગુજરાત, બિઝનેસ)...'
+                    ? 'કેટેગરી શોધો (દા.ત. ગુજરાત, ભારત, રાજનીતિ)...'
                     : language === 'hi'
                     ? 'श्रेणी खोजें...'
                     : 'Search categories...'
@@ -397,7 +372,7 @@ export default function CategoriesClient({ initialCategories = [] }: { initialCa
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {multimediaGroup.map((cat) => (
                 <Link
                   key={cat.id}
