@@ -160,7 +160,7 @@ export default function ArticleMedia({
       ? 'bottom center'
       : effectiveObjectFit === 'contain'
       ? 'center'
-      : 'center 15%');
+      : 'top center');
 
   const shouldRenderAmbient = effectiveObjectFit === 'contain' || enableAmbientBackdrop;
 

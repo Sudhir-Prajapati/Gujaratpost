@@ -879,7 +879,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         parts.push(cleanDesc);
       }
       if (sec.imageUrl && sec.imageUrl.trim()) {
-        if (sec.showImageAfterDesc === false || !cleanDesc) {
+        if (sec.showImageAfterDesc === false) {
           parts.push(`<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`);
         } else {
           const sectionAlt = (lang === 'gu' ? titleGu : lang === 'hi' ? titleHi : title) || title || 'Gujarat Post Image';
@@ -2194,10 +2194,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           ...additionalCategoryIds.filter((id) => id && id.trim() !== '' && id !== categoryId),
         ].filter(Boolean))
       ),
-      youtubeUrl: youtubeUrl.trim() || null,
-      twitterUrl: twitterUrl.trim() || null,
-      instagramUrl: instagramUrl.trim() || null,
-      facebookUrl: facebookUrl.trim() || null,
+      youtubeUrl: youtubeUrl.trim() || '',
+      twitterUrl: twitterUrl.trim() || '',
+      instagramUrl: instagramUrl.trim() || '',
+      facebookUrl: facebookUrl.trim() || '',
       pdfUrl: pdfUrl.trim() || undefined,
       showPdfPages: Boolean(pdfUrl.trim() && showPdfPages),
       pdfPosition: pdfUrl.trim() ? pdfPosition : undefined,
@@ -2345,17 +2345,23 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const keywordSet = new Set<string>();
     const tagSet = new Set<string>();
 
-    // Add bilingual core keywords
-    keywordSet.add('gujarat news');
+    const selectedCatObj = categories.find((c) => c.id === activeCatId);
+    const catSlug = (selectedCatObj?.slug || '').toLowerCase();
+    const isCatGujarat = catSlug === 'gujarat' || (selectedCatObj ? isGujaratCat(selectedCatObj) : false);
+
+    // Add brand keywords
     keywordSet.add('gujaratpost news');
     keywordSet.add('gujarat post');
-    keywordSet.add('ગુજરાત સમાચાર');
-    keywordSet.add('ગુજરાત ન્યૂઝ');
-
-    tagSet.add('gujarat');
     tagSet.add('gujaratpost');
-    tagSet.add('ગુજરાત');
     tagSet.add('સમાચાર');
+
+    // ONLY add Gujarat keywords & tags if the story is genuinely under Gujarat category or district!
+    if (isCatGujarat || activeLoc) {
+      keywordSet.add('gujarat news');
+      keywordSet.add('ગુજરાત સમાચાર');
+      tagSet.add('gujarat');
+      tagSet.add('ગુજરાત');
+    }
 
     // Analyze Title against Topic Dictionary
     SEO_TOPIC_DICTIONARY.forEach((topic) => {

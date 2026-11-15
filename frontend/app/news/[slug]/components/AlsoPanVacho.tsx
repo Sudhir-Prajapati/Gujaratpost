@@ -113,13 +113,13 @@ export default function AlsoPanVacho({
                 </div>
 
                 {/* Thumbnail Image */}
-                <div className="relative w-[100px] h-[72px] sm:w-[110px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                <div className="relative aspect-[16/10] w-[120px] h-[80px] sm:w-[136px] sm:h-[90px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
                   <Image
                     src={thumbSrc}
                     alt={art.title || ''}
                     fill
-                    sizes="110px"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="136px"
+                    className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
                   />
                 </div>
               </div>

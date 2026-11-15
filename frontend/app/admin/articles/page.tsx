@@ -95,6 +95,7 @@ export default function ArticleList() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [selectedDate, setSelectedDate] = useState('');
+  const [trendingFilter, setTrendingFilter] = useState<'all' | 'trending'>('all');
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -380,6 +381,7 @@ export default function ArticleList() {
         if (selectedCategory) params.set('categorySlug', selectedCategory);
         if (selectedStatus) params.set('status', selectedStatus);
         if (selectedDate) params.set('date', selectedDate);
+        if (trendingFilter === 'trending') params.set('isTrending', 'true');
 
         const res = await authFetch(getBackendApiUrl(`/api/admin/articles?${params.toString()}`));
         const json = await res.json();
@@ -396,7 +398,7 @@ export default function ArticleList() {
       }
     }
     loadArticles();
-  }, [isInitialized, page, pageSize, query, selectedCategory, selectedStatus, selectedDate]);
+  }, [isInitialized, page, pageSize, query, selectedCategory, selectedStatus, selectedDate, trendingFilter]);
 
   // Handle page size change
   const handlePageSizeChange = (newSize: number) => {
@@ -767,8 +769,26 @@ export default function ArticleList() {
               )}
             </div>
 
+            {/* Trending Filter Toggle */}
+            <button
+              type="button"
+              onClick={() => {
+                setTrendingFilter((prev) => (prev === 'trending' ? 'all' : 'trending'));
+                setPage(1);
+              }}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-bold border transition-all cursor-pointer ${
+                trendingFilter === 'trending'
+                  ? 'bg-amber-500 text-white border-amber-600 shadow-xs'
+                  : 'bg-zinc-50 dark:bg-zinc-950/40 text-zinc-800 dark:text-zinc-200 border-black dark:border-zinc-600 hover:border-amber-500'
+              }`}
+              title="Show only trending stories"
+            >
+              <span>🔥</span>
+              <span>{trendingFilter === 'trending' ? 'Trending (Active)' : 'Trending'}</span>
+            </button>
+
             {/* Reset All Filters button */}
-            {(query || selectedCategory || selectedStatus || selectedDate || page > 1) && (
+            {(query || selectedCategory || selectedStatus || selectedDate || trendingFilter !== 'all' || page > 1) && (
               <button
                 type="button"
                 onClick={() => {
@@ -776,6 +796,7 @@ export default function ArticleList() {
                   setSelectedCategory('');
                   setSelectedStatus('');
                   setSelectedDate('');
+                  setTrendingFilter('all');
                   handlePageChange(1);
                   scrollToTop();
                 }}
@@ -967,9 +988,16 @@ export default function ArticleList() {
                     {/* Category */}
                     <td className="px-4 py-3.5 text-center text-sm border border-black dark:border-zinc-600">
                       <div className="flex flex-col items-center justify-center gap-1.5">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300 shadow-2xs">
-                          {art.category.name}
-                        </span>
+                        <div className="flex flex-wrap items-center justify-center gap-1">
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/50 dark:border-emerald-800 dark:text-emerald-300 shadow-2xs">
+                            {art.category.name}
+                          </span>
+                          {art.isTrending && (
+                            <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300 dark:bg-amber-950/60 dark:border-amber-800 dark:text-amber-300 shadow-2xs" title="Trending Story">
+                              🔥 Trending
+                            </span>
+                          )}
+                        </div>
                         {(() => {
                           const catItems: string[] = [];
                           if (art.isFeatured && art.category?.name?.toLowerCase() !== 'home') {

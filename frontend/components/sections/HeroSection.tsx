@@ -382,7 +382,7 @@ function MobileHorizontalCardStrip({
               src={art.image || (art as any).featuredImage || getArticleImage(art)}
               alt={art.title || ''}
               showPlayBadge={false}
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
             />
 
             {/* Category badge top-right */}

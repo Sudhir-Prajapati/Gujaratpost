@@ -334,7 +334,7 @@ function StreamArticleItem({
           src={articleData.image}
           alt={getArticleTitle(articleData, language)}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          style={{ objectFit: 'cover', objectPosition: 'center' }}
+          style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
           loading="lazy"
         />
       </Link>

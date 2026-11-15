@@ -1335,9 +1335,9 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">
 
           {/* ── LEFT: Hero + Top Stories (Controlled by activeTab) ── */}
-          <div className={`grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-x-8 gap-y-0 min-w-0 transition-opacity duration-200 ${pageLoading || (activeTab === 'paired' && pairedLoading && pairedArticles.length === 0) ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
-            {/* Row 1, Col 1: Main Big Hero Article / Video Card */}
-            <div className="order-1 md:col-start-1 md:row-start-1 flex flex-col justify-start pb-4">
+          <div className={`grid grid-cols-1 md:grid-cols-[1.25fr_1fr] gap-x-8 gap-y-6 md:gap-y-0 min-w-0 transition-opacity duration-200 ${pageLoading || (activeTab === 'paired' && pairedLoading && pairedArticles.length === 0) ? 'opacity-40 pointer-events-none' : 'opacity-100'}`}>
+            {/* Col 1: Main Big Hero Article + Sub-Hero Article below */}
+            <div className="flex flex-col justify-between pb-0 md:pb-1">
               {heroArticle && (
                 <div>
                   {activeTab === 'video' || isVideoItem(heroArticle) ? (
@@ -1352,7 +1352,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={heroArticle.image || (heroArticle as any).thumbnail || (heroArticle.videoId ? `https://img.youtube.com/vi/${heroArticle.videoId}/hqdefault.jpg` : undefined)}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
                         />
                         <div className="absolute inset-0 bg-black/30 flex items-center justify-center group-hover:bg-black/20 transition">
                           <div className="w-14 h-14 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition">
@@ -1371,7 +1371,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={heroArticle.image || (heroArticle as any).featuredImage}
                           alt={getArticleTitle(heroArticle, language)}
                           className="transition-transform duration-500"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
                         />
                       </div>
                     </Link>
@@ -1404,86 +1404,10 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                   )}
                 </div>
               )}
-            </div>
 
-            {/* Row 1, Col 2: Top Stories (Items 1-3) */}
-            <div className="order-3 md:col-start-2 md:row-start-1 flex flex-col justify-start pb-0 md:pb-4 mt-4 md:mt-0">
-              {/* Mobile (< md): Modern separated cards */}
-              <div className="flex flex-col gap-3.5 md:hidden">
-                {topStoriesFirstThree.map((art: any, idx: number) => (
-                  <MobileCategoryArticleCard
-                    key={art.id || idx}
-                    article={art}
-                    language={language}
-                    defaultCategorySlug={currentActiveCatSlug}
-                    defaultCategoryLabel={currentActiveCatLabel}
-                    index={idx}
-                    isVideo={activeTab === 'video' || isVideoItem(art)}
-                  />
-                ))}
-              </div>
-
-              {/* Desktop (>= md): UNTOUCHED */}
-              <div className="hidden md:flex flex-1 flex-col justify-start divide-y divide-border">
-                {topStories.slice(0, 3).map((art: any) => {
-                  const isVid = activeTab === 'video' || isVideoItem(art);
-                  const ytUrl = isVid ? getArticleYouTubeUrl(art) : '';
-                  const cardBody = (
-                    <>
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
-                          {isVid && <Play className="w-2.5 h-2.5 fill-current text-red-600" />}
-                          {getArticleLocation(art)}
-                        </span>
-                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                          <AutoArticleTitle article={art} language={language} />
-                        </h3>
-                      </div>
-                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                        <ArticleMedia
-                          src={art.image || art.featuredImage || art.thumbnail}
-                          alt={getArticleTitle(art, language)}
-                          className="transition-transform duration-300"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
-                        />
-                        {isVid && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
-                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
-                              <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  );
-
-                  return isVid ? (
-                    <a
-                      key={art.id}
-                      href={ytUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-start gap-4 py-2.5 first:pt-0"
-                    >
-                      {cardBody}
-                    </a>
-                  ) : (
-                    <Link
-                      key={art.id}
-                      href={art.slug ? `/news/${art.slug}` : '#'}
-                      className="group flex items-start gap-4 py-2.5 first:pt-0"
-                    >
-                      {cardBody}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Row 2, Col 1: Small Sub-Hero Article below Hero Article */}
-            <div className={`order-2 md:col-start-1 md:row-start-2 md:-mt-12 ${subHeroArticle ? 'border-t border-border/60 md:border-0 md:pt-3.5 md:pb-2' : ''}`}>
+              {/* Sub-Hero Article (bottom of Col 1 on desktop, 2nd card on mobile) */}
               {subHeroArticle && (
-                <>
+                <div className="mt-3.5 pt-3 border-t border-border/70">
                   {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
                   <div className="md:hidden">
                     <MobileCategoryArticleCard
@@ -1518,7 +1442,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
                           <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
@@ -1542,82 +1466,87 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                           src={subHeroArticle.image || (subHeroArticle as any).featuredImage || (subHeroArticle as any).thumbnail}
                           alt={getArticleTitle(subHeroArticle, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
                         />
                       </div>
                     </Link>
                   )}
-                </>
+                </div>
               )}
             </div>
 
-            {/* Row 2, Col 2: Fourth Top Story (Aligned perfectly with Sub-Hero Article) */}
-            <div className={`order-4 md:col-start-2 md:row-start-2 md:-mt-12 ${fourthStory ? 'border-t border-border/60 pt-3.5 pb-2 md:border-t md:border-border md:pt-3.5 md:pb-2' : ''}`}>
-              {fourthStory && (
-                <>
-                  {/* Mobile view (< md): Divya Bhaskar / Hero section style card */}
-                  <div className="md:hidden">
-                    <MobileCategoryArticleCard
-                      article={fourthStory}
-                      language={language}
-                      defaultCategorySlug={currentActiveCatSlug}
-                      defaultCategoryLabel={currentActiveCatLabel}
-                      index={3}
-                      isVideo={activeTab === 'video' || isVideoItem(fourthStory)}
-                    />
-                  </div>
-                  {activeTab === 'video' || isVideoItem(fourthStory) ? (
-                    <a
-                      href={getArticleYouTubeUrl(fourthStory)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hidden md:flex group items-start gap-4"
-                    >
+            {/* Col 2: Top Stories (All 4 Items, aligned evenly with Col 1 and Trending column) */}
+            <div className="flex flex-col justify-between mt-2 md:mt-0">
+              {/* Mobile (< md): Modern separated cards */}
+              <div className="flex flex-col gap-3.5 md:hidden">
+                {topStories.slice(0, 4).map((art: any, idx: number) => (
+                  <MobileCategoryArticleCard
+                    key={art.id || idx}
+                    article={art}
+                    language={language}
+                    defaultCategorySlug={currentActiveCatSlug}
+                    defaultCategoryLabel={currentActiveCatLabel}
+                    index={idx + 1}
+                    isVideo={activeTab === 'video' || isVideoItem(art)}
+                  />
+                ))}
+              </div>
+
+              {/* Desktop (>= md): All 4 Top Stories with divide-y */}
+              <div className="hidden md:flex flex-1 flex-col justify-between divide-y divide-border">
+                {topStories.slice(0, 4).map((art: any) => {
+                  const isVid = activeTab === 'video' || isVideoItem(art);
+                  const ytUrl = isVid ? getArticleYouTubeUrl(art) : '';
+                  const cardBody = (
+                    <>
                       <div className="min-w-0 flex-1">
                         <span className="text-[10px] font-black uppercase tracking-wide text-accent flex items-center gap-1">
-                          <Play className="w-2.5 h-2.5 fill-current text-red-600" />
-                          {getArticleLocation(fourthStory)}
+                          {isVid && <Play className="w-2.5 h-2.5 fill-current text-red-600" />}
+                          {getArticleLocation(art)}
                         </span>
                         <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                          <AutoArticleTitle article={fourthStory} language={language} />
+                          <AutoArticleTitle article={art} language={language} />
                         </h3>
                       </div>
                       <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
                         <ArticleMedia
-                          src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
-                          alt={getArticleTitle(fourthStory, language)}
+                          src={art.image || art.featuredImage || art.thumbnail}
+                          alt={getArticleTitle(art, language)}
                           className="transition-transform duration-300"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
+                          style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
                         />
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
-                            <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
-                          </span>
-                        </div>
+                        {isVid && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-all">
+                            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-red-600/90 text-white shadow">
+                              <Play className="h-3.5 w-3.5 fill-current ml-0.5" />
+                            </span>
+                          </div>
+                        )}
                       </div>
+                    </>
+                  );
+
+                  return isVid ? (
+                    <a
+                      key={art.id}
+                      href={ytUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex items-start gap-4 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      {cardBody}
                     </a>
                   ) : (
-                    <Link href={fourthStory.slug ? `/news/${fourthStory.slug}` : '#'} className="hidden md:flex group items-start gap-4">
-                      <div className="min-w-0 flex-1">
-                        <span className="text-[10px] font-black uppercase tracking-wide text-accent">
-                          {getArticleLocation(fourthStory)}
-                        </span>
-                        <h3 className="mt-0.5 text-[14.5px] md:text-[15px] font-bold leading-snug tracking-tight text-foreground group-hover:text-accent transition-colors line-clamp-3">
-                          <AutoArticleTitle article={fourthStory} language={language} />
-                        </h3>
-                      </div>
-                      <div className="relative w-[128px] h-[86px] sm:w-[138px] sm:h-[92px] shrink-0 overflow-hidden rounded-md bg-muted shadow-sm self-start">
-                        <ArticleMedia
-                          src={fourthStory.image || fourthStory.featuredImage || fourthStory.thumbnail}
-                          alt={getArticleTitle(fourthStory, language)}
-                          className="transition-transform duration-300"
-                          style={{ objectFit: 'cover', objectPosition: 'center' }}
-                        />
-                      </div>
+                    <Link
+                      key={art.id}
+                      href={art.slug ? `/news/${art.slug}` : '#'}
+                      className="group flex items-start gap-4 py-2.5 first:pt-0 last:pb-0"
+                    >
+                      {cardBody}
                     </Link>
-                  )}
-                </>
-              )}
+                  );
+                })}
+              </div>
             </div>
           </div>
 
@@ -1656,7 +1585,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         {/* CATEGORY NEWS ARTICLES SECTION HEADER (Separates News from Videos above; hidden in 'all' / badhu section) */}
         {displayArticles.length > 0 && (
           activeTab === 'all' ? (
-            <div className="mt-7 md:mt-10 mb-4 md:mb-5 border-t border-border/40" />
+            <div className="my-5 md:my-6 border-t border-border/60" />
           ) : (
             <div className={`mt-7 md:mt-10 mb-4 md:mb-5 ${activeTab === 'video' ? 'pt-6 border-t-2 border-border/80' : 'pt-4 border-t border-border/40'}`}>
               <div className="flex items-center justify-between">
@@ -1867,7 +1796,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
                       <img
                         src={artImg}
                         alt={artTitle}
-                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center' }}
+                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: '50% 12%' }}
                         onError={(e) => { (e.currentTarget as HTMLImageElement).src = fallbackImg; }}
                         loading="lazy"
                       />

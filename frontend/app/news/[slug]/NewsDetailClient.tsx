@@ -752,11 +752,8 @@ function normalizeArticleMarkdown(rawHtml: string): string {
     .replace(/\\r/g, '')
     .replace(/\\n/g, '\n')
     .replace(/\\t/g, ' ');
-  clean = clean.replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '');
-  // Strip orphan section delimiters and gallery images that have no text in that section
-  clean = clean.replace(/<!--\s*gp-section-\d+\s*-->\s*!\[(?:Gallery Image \d+|.*?)\]\([^\s)]+\)\s*(?=(?:<!--\s*gp-section-\d+\s*-->|$))/gi, '');
-  // Also strip any trailing ![Gallery Image \d+](url) at the end of the text
-  clean = clean.replace(/\n\s*!\[(?:Gallery Image \d+|.*?)\]\([^\s)]+\)\s*$/gi, '');
+  // Restore any hidden section images so uploaded secondary images (Image 2, etc.) always render
+  clean = clean.replace(/<!--\s*gp-section-\d+-hidden-image:\s*([^\s>]+)\s*-->/gi, '\n\n![Gujarat Post Image]($1)\n\n');
   clean = clean.replace(/<!--\s*gp-section-\d+\s*-->/gi, '');
   return stripArticleUtilityLines(clean)
     .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
@@ -1537,7 +1534,21 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   const paragraphs = useMemo(() => body.split(/\n\n+/), [body]);
 
   const displayParagraphs = useMemo(() => {
-    return parseArticleBodyBlocks(body, language, (article as any)?.pdfUrl || (article as any)?.pdf);
+    const blocks = parseArticleBodyBlocks(body, language, (article as any)?.pdfUrl || (article as any)?.pdf);
+    // Guarantee that secondary Image 2 is always visible in the story body
+    const img2 = (article as any)?.image2 || (article as any)?.galleryImage2 || (article as any)?.secondaryImage;
+    if (img2 && typeof img2 === 'string' && img2.trim() !== '' && img2 !== article.image && img2 !== (article as any)?.featuredImage) {
+      const cleanImg2 = sanitizeImageUrl(img2.trim());
+      const alreadyPresent = blocks.some((b) => b.includes(cleanImg2) || b.includes(img2.trim()));
+      if (!alreadyPresent && blocks.length > 0) {
+        const figureHtml = `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><div class="absolute inset-0 overflow-hidden pointer-events-none select-none"><img src="${cleanImg2}" alt="" aria-hidden="true" class="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none" /></div><img src="${cleanImg2}" alt="Gujarat Post Image" class="relative z-10 w-full h-full object-contain transition-transform duration-300" style="object-fit: contain; object-position: center;" /></div></figure>`;
+        const insertIdx = blocks.length >= 2 ? 1 : 0;
+        const newBlocks = [...blocks];
+        newBlocks.splice(insertIdx + 1, 0, figureHtml);
+        return newBlocks;
+      }
+    }
+    return blocks;
   }, [body, language, article]);
 
   const pdfDocumentUrl = useMemo(() => {
@@ -2738,13 +2749,13 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                                   </div>
 
                                   {/* Thumbnail Image matching AlsoPanVacho container dimensions */}
-                                  <div className="relative w-[100px] h-[72px] sm:w-[110px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                                  <div className="relative aspect-[16/10] w-[120px] h-[80px] sm:w-[136px] sm:h-[90px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
                                     <Image
                                       src={thumbSrc}
                                       alt={item.title || ''}
                                       fill
-                                      sizes="110px"
-                                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                      sizes="136px"
+                                      className="object-cover object-top transition-transform duration-500 group-hover:scale-105"
                                     />
                                   </div>
                                 </div>
@@ -2961,7 +2972,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                               alt={item.title || ''}
                               fill
                               sizes="100px"
-                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                             />
                           </div>
                         </div>
@@ -3087,7 +3098,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                                 alt={item.title || ''}
                                 fill
                                 sizes="100px"
-                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                               />
                             </div>
                           </div>

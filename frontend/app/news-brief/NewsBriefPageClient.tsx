@@ -386,7 +386,7 @@ export default function NewsBriefPageClient() {
                 fill
                 sizes="(max-width: 640px) 380px, 456px"
                 className="object-cover relative z-20"
-                style={{ objectFit: 'cover', objectPosition: 'center' }}
+                style={{ objectFit: 'cover', objectPosition: '50% 12%' }}
                 priority
                 unoptimized
                 onError={() => {

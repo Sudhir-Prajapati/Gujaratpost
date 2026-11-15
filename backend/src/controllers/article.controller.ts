@@ -771,26 +771,38 @@ export class ArticleController {
       if (contentGu !== undefined) updateData.contentGu = contentGu.trim();
       if (contentHi !== undefined) updateData.contentHi = contentHi.trim();
 
-      // If client explicitly passed empty or null social media URLs, guarantee their embed markups are completely removed from content fields
+      // If client explicitly passed empty or null social media URLs, guarantee their embed markups are completely removed from all content fields
       if (req.body.twitterUrl === '' || req.body.twitterUrl === null || req.body.twitterUrl === false) {
-        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'twitter');
-        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'twitter');
-        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'twitter');
+        const baseContent = updateData.content !== undefined ? updateData.content : existingPost.content;
+        const baseContentGu = updateData.contentGu !== undefined ? updateData.contentGu : existingPost.contentGu;
+        const baseContentHi = updateData.contentHi !== undefined ? updateData.contentHi : existingPost.contentHi;
+        updateData.content = purgeSocialEmbedFromContent(baseContent || '', 'twitter');
+        updateData.contentGu = purgeSocialEmbedFromContent(baseContentGu || '', 'twitter');
+        updateData.contentHi = purgeSocialEmbedFromContent(baseContentHi || '', 'twitter');
       }
       if (req.body.youtubeUrl === '' || req.body.youtubeUrl === null || req.body.youtubeUrl === false) {
-        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'youtube');
-        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'youtube');
-        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'youtube');
+        const baseContent = updateData.content !== undefined ? updateData.content : existingPost.content;
+        const baseContentGu = updateData.contentGu !== undefined ? updateData.contentGu : existingPost.contentGu;
+        const baseContentHi = updateData.contentHi !== undefined ? updateData.contentHi : existingPost.contentHi;
+        updateData.content = purgeSocialEmbedFromContent(baseContent || '', 'youtube');
+        updateData.contentGu = purgeSocialEmbedFromContent(baseContentGu || '', 'youtube');
+        updateData.contentHi = purgeSocialEmbedFromContent(baseContentHi || '', 'youtube');
       }
       if (req.body.instagramUrl === '' || req.body.instagramUrl === null || req.body.instagramUrl === false) {
-        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'instagram');
-        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'instagram');
-        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'instagram');
+        const baseContent = updateData.content !== undefined ? updateData.content : existingPost.content;
+        const baseContentGu = updateData.contentGu !== undefined ? updateData.contentGu : existingPost.contentGu;
+        const baseContentHi = updateData.contentHi !== undefined ? updateData.contentHi : existingPost.contentHi;
+        updateData.content = purgeSocialEmbedFromContent(baseContent || '', 'instagram');
+        updateData.contentGu = purgeSocialEmbedFromContent(baseContentGu || '', 'instagram');
+        updateData.contentHi = purgeSocialEmbedFromContent(baseContentHi || '', 'instagram');
       }
       if (req.body.facebookUrl === '' || req.body.facebookUrl === null || req.body.facebookUrl === false) {
-        if (updateData.content !== undefined) updateData.content = purgeSocialEmbedFromContent(updateData.content, 'facebook');
-        if (updateData.contentGu !== undefined) updateData.contentGu = purgeSocialEmbedFromContent(updateData.contentGu, 'facebook');
-        if (updateData.contentHi !== undefined) updateData.contentHi = purgeSocialEmbedFromContent(updateData.contentHi, 'facebook');
+        const baseContent = updateData.content !== undefined ? updateData.content : existingPost.content;
+        const baseContentGu = updateData.contentGu !== undefined ? updateData.contentGu : existingPost.contentGu;
+        const baseContentHi = updateData.contentHi !== undefined ? updateData.contentHi : existingPost.contentHi;
+        updateData.content = purgeSocialEmbedFromContent(baseContent || '', 'facebook');
+        updateData.contentGu = purgeSocialEmbedFromContent(baseContentGu || '', 'facebook');
+        updateData.contentHi = purgeSocialEmbedFromContent(baseContentHi || '', 'facebook');
       }
       if (featuredImage !== undefined) updateData.featuredImage = featuredImage.trim();
       if (status !== undefined) updateData.status = status;

@@ -28,6 +28,14 @@ body.mobile-menu-active [aria-label="Scroll to top"] {
   visibility: hidden !important;
 }
 
+/* Ensure news article image thumbnails prioritize top portion so heads/faces/graphics are never cropped */
+.art-thumb img,
+.gp-card-thumb img,
+article img.object-cover,
+.group img.object-cover {
+  object-position: 50% 12% !important;
+}
+
 html.news-brief-open, body.news-brief-open {
   overflow: hidden !important;
   height: 100vh !important;
