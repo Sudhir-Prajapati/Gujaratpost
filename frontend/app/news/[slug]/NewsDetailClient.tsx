@@ -753,6 +753,11 @@ function normalizeArticleMarkdown(rawHtml: string): string {
     .replace(/\\n/g, '\n')
     .replace(/\\t/g, ' ');
   clean = clean.replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '');
+  // Strip orphan section delimiters and gallery images that have no text in that section
+  clean = clean.replace(/<!--\s*gp-section-\d+\s*-->\s*!\[(?:Gallery Image \d+|.*?)\]\([^\s)]+\)\s*(?=(?:<!--\s*gp-section-\d+\s*-->|$))/gi, '');
+  // Also strip any trailing ![Gallery Image \d+](url) at the end of the text
+  clean = clean.replace(/\n\s*!\[(?:Gallery Image \d+|.*?)\]\([^\s)]+\)\s*$/gi, '');
+  clean = clean.replace(/<!--\s*gp-section-\d+\s*-->/gi, '');
   return stripArticleUtilityLines(clean)
     .replace(/^###\s+(.+)$/gm, '<h3>$1</h3>')
     .replace(/^##\s+(.+)$/gm, '<h2>$1</h2>')
@@ -771,14 +776,16 @@ function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, incl
     const cleanUrl = (url || '').replace(/\s+/g, '').trim();
     const isGallery = isGalleryImageAlt(cleanAlt);
 
-    const caption = includeCaption
+    // If it's a gallery image placeholder, suppress the caption completely
+    const caption = includeCaption && !isGallery
       ? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>તસવીર: ગુજરાત પોસ્ટ</span></figcaption>`
       : cleanAlt && !isGallery
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
 
     const safeImgUrl = sanitizeImageUrl(cleanUrl);
-    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><div class="absolute inset-0 overflow-hidden pointer-events-none select-none"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none" /></div><img src="${safeImgUrl}" alt="${cleanAlt || titleText || 'Gujarat Post Image'}" class="relative z-10 w-full h-full object-contain transition-transform duration-300" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
+    const safeAlt = isGallery ? (titleText || 'Gujarat Post Image') : (cleanAlt || titleText || 'Gujarat Post Image');
+    return `<figure class="my-6 space-y-2"><div class="relative aspect-[16/9] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-950 shadow-sm"><div class="absolute inset-0 overflow-hidden pointer-events-none select-none"><img src="${safeImgUrl}" alt="" aria-hidden="true" class="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none" /></div><img src="${safeImgUrl}" alt="${safeAlt}" class="relative z-10 w-full h-full object-contain transition-transform duration-300" style="object-fit: contain; object-position: center;" /></div>${caption}</figure>`;
   });
 }
 
@@ -873,12 +880,9 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
       }
     }
 
-    const isGalleryImg = trimmed.match(/!\[Gallery Image \d+\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/i);
-    if (isGalleryImg) {
-      galleryImageCount++;
-      if (galleryImageCount > 10) {
-        continue;
-      }
+    const isGalleryImg = trimmed.match(/!\[(?:Gallery Image \d+|.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/i);
+    if (isGalleryImg && /gallery\s*image/i.test(trimmed)) {
+      continue;
     }
 
     result.push(trimmed);

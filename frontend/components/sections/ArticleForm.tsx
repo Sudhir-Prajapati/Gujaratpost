@@ -851,10 +851,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         parts.push(cleanDesc);
       }
       if (sec.imageUrl && sec.imageUrl.trim()) {
-        if (sec.showImageAfterDesc === false) {
+        if (sec.showImageAfterDesc === false || !cleanDesc) {
           parts.push(`<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`);
         } else {
-          parts.push(`![Gallery Image ${sectionNum}](${sec.imageUrl.trim()})`);
+          const sectionAlt = (lang === 'gu' ? titleGu : lang === 'hi' ? titleHi : title) || title || 'Gujarat Post Image';
+          parts.push(`![${sectionAlt}](${sec.imageUrl.trim()})`);
         }
       }
 
