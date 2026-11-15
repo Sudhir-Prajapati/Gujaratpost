@@ -1781,20 +1781,20 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   }, [article, isContentExpanded]);
 
   const desktopMostReadLimit = useMemo(() => {
-    return isShortStory ? 3 : 5;
-  }, [isShortStory]);
+    return 4;
+  }, []);
 
   const desktopRecommendedLimit = useMemo(() => {
-    return isShortStory ? 3 : 6;
-  }, [isShortStory]);
+    return 4;
+  }, []);
 
   const desktopLatestLimit = useMemo(() => {
-    return isShortStory ? 0 : 4; // HIDE latest news in sidebar on short stories
-  }, [isShortStory]);
+    return 0; // HIDE latest news in sidebar so right sidebar stays sleek and sticky
+  }, []);
 
   const desktopPhotoLimit = useMemo(() => {
-    return isShortStory ? 0 : 3; // HIDE photo gallery from sidebar on short stories (shown on left instead!)
-  }, [isShortStory]);
+    return 0; // HIDE photo gallery in sidebar (always on the left side as a row!)
+  }, []);
 
   const desktopMustReadLimit = useMemo(() => {
     return 4;
@@ -2741,8 +2741,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                       </div>
                     )}
 
-                    {/* Photo Gallery on the Left in a Row / Grid for Short Stories (Balances layout and eliminates whitespace) */}
-                    {isShortStory && sidebarPhotos.length > 0 && (
+                    {/* Photo Gallery on the Left in a Row / Grid (Full Width under Story) */}
+                    {sidebarPhotos.length > 0 && (
                       <div className="hidden md:flex flex-col mt-6 pt-5 border-t border-slate-200 dark:border-neutral-800">
                         <div className="flex items-center justify-between mb-3.5">
                           <div className="flex items-center gap-2">
@@ -2830,7 +2830,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
           </article>
 
-          <aside className="side select-none w-full max-w-[340px] min-w-0 md:sticky md:top-20 md:self-start" suppressHydrationWarning>
+          <aside className="side select-none w-full max-w-[340px] min-w-0 md:sticky md:top-20 md:self-start" style={{ height: 'fit-content' }} suppressHydrationWarning>
             <div className="flex flex-col gap-6">
               {/* Most Read widget */}
               <div className="mostread">
@@ -3082,69 +3082,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                 </div>
               )}
 
-              {/* Desktop Photo Gallery Widget below Latest News (One-by-one in column & Sticky to eliminate white space on LONG stories) */}
-              {!isShortStory && sidebarPhotos.length > 0 && desktopPhotoLimit > 0 && (
-                <div className="hidden md:flex flex-col mt-5 sticky top-20 z-10">
-                  <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-neutral-800 pb-2 mb-3 bg-white/80 dark:bg-[#0f111a]/80 backdrop-blur-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="block w-[3.5px] h-5 rounded-full bg-[#B3121B]"></span>
-                      <h3 className="text-[16px] font-black tracking-tight text-neutral-900 dark:text-white">
-                        {uiLabel(language, { en: 'Photo Gallery', gu: 'ફોટો ગેલેરી', hi: 'फोटो गैलरी' })}
-                      </h3>
-                    </div>
-                    <Link
-                      href="/photos"
-                      className="text-[#B3121B] hover:text-red-700 font-bold text-[12.5px] hover:underline flex items-center gap-0.5"
-                    >
-                      <span>{uiLabel(language, { en: 'View All →', gu: 'બધા જુઓ →', hi: 'सभी देखें →' })}</span>
-                    </Link>
-                  </div>
 
-                  <div className="flex flex-col gap-3.5">
-                    {sidebarPhotos.slice(0, desktopPhotoLimit).map((photo, index) => {
-                      const caption = photo.captionGu || photo.caption || photo.alt || 'ફોટો ગેલેરી';
-                      const photoSrc = resolvePhotoUrl(photo.src || photo.image, FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length]);
-                      const photoHref = photo.id ? `/photos/${photo.id}` : '/photos';
-                      const imgCount = Array.isArray(photo.images) && photo.images.length > 1 ? photo.images.length : (index + 4);
-
-                      return (
-                        <Link
-                          key={`sidebar-photo-${photo.id || index}`}
-                          href={photoHref}
-                          className="group flex flex-col p-2.5 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-[#B3121B]/40 transition-all text-left"
-                        >
-                          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
-                            <Image
-                              src={photoSrc}
-                              alt={caption}
-                              fill
-                              sizes="340px"
-                              className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute top-2 left-2 z-10 pointer-events-none">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-[#B3121B] px-2.5 py-0.5 text-[9.5px] font-black text-white shadow-xs">
-                                <Camera className="w-2.5 h-2.5 text-white" />
-                                <span>{language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photos'}</span>
-                              </span>
-                            </div>
-                            <div className="absolute top-2 right-2 z-10 pointer-events-none">
-                              <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-xs px-2 py-0.5 text-[9.5px] font-black text-white shadow-sm border border-white/20">
-                                <Camera className="w-2.5 h-2.5 text-red-400" />
-                                <span>{imgCount}</span>
-                              </span>
-                            </div>
-                          </div>
-                          <div className="mt-2 min-w-0 px-0.5">
-                            <h4 className="text-[13px] sm:text-[13.5px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
-                              <AutoTranslateString text={caption} language={language} />
-                            </h4>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {/* Trending Topics Tags */}
               {/* <div className="mt-6">
