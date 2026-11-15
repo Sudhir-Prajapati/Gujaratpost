@@ -2771,13 +2771,13 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                                 href={photoHref}
                                 className="group flex flex-col p-2.5 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-[#B3121B]/40 transition-all text-left"
                               >
-                                <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
                                   <Image
                                     src={photoSrc}
                                     alt={caption}
                                     fill
-                                    sizes="220px"
-                                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                                    sizes="(max-width: 768px) 50vw, 220px"
+                                    className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                                   />
                                   <div className="absolute top-2 left-2 z-10 pointer-events-none">
                                     <span className="inline-flex items-center gap-1 rounded-full bg-[#B3121B] px-2 py-0.5 text-[9px] font-black text-white shadow-xs">
@@ -3113,13 +3113,13 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                           href={photoHref}
                           className="group flex flex-col p-2.5 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-[#B3121B]/40 transition-all text-left"
                         >
-                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                          <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
                             <Image
                               src={photoSrc}
                               alt={caption}
                               fill
                               sizes="340px"
-                              className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                             />
                             <div className="absolute top-2 left-2 z-10 pointer-events-none">
                               <span className="inline-flex items-center gap-1 rounded-full bg-[#B3121B] px-2.5 py-0.5 text-[9.5px] font-black text-white shadow-xs">
