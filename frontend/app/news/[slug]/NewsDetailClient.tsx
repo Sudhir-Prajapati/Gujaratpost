@@ -1497,23 +1497,36 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return Math.max(0, (refTime - pubTime) / (1000 * 60 * 60 * 24));
   };
 
+  // Categorize article length into 4 responsive tiers to balance desktop layout and completely eliminate white space
+  const articleStoryTier = useMemo(() => {
+    const rawContent = (article.content || '') + ((article as any).contentGu || '') + (article.excerpt || '');
+    const pureText = rawContent.replace(/<[^>]*>/g, '').replace(/[#*_`\[\]()]/g, '').trim();
+    const len = pureText.length;
+    if (len < 900) return 'very_short';
+    if (len < 1800) return 'short';
+    if (len < 3200) return 'medium';
+    return 'long';
+  }, [article]);
+
   const readAlsoPool = useMemo(() => {
     const topMostRead = (mostReadArticles || []).slice(0, 3);
     const pool = [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])];
     const uniquePool = filterUniqueArticles(pool, [article, ...topMostRead]);
     const sortedPool = sortArticlesByNewest(uniquePool);
 
+    const targetCount = (articleStoryTier === 'very_short' || articleStoryTier === 'short') ? 6 : 4;
+
     // Strictly prioritize fresh news from the last 3-4 days (<= 4.0 days)
     const freshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 4.0);
-    if (freshArticles.length >= 4) {
-      return freshArticles.slice(0, 4);
+    if (freshArticles.length >= targetCount) {
+      return freshArticles.slice(0, targetCount);
     }
     const mediumFreshArticles = sortedPool.filter((a) => calcArticleAgeDays(a) <= 7.0);
-    if (mediumFreshArticles.length >= 4) {
-      return mediumFreshArticles.slice(0, 4);
+    if (mediumFreshArticles.length >= targetCount) {
+      return mediumFreshArticles.slice(0, targetCount);
     }
-    return [...freshArticles, ...sortedPool.filter((a) => !freshArticles.includes(a))].slice(0, 4);
-  }, [article, related, trending, latestArticles, mostReadArticles]);
+    return [...freshArticles, ...sortedPool.filter((a) => !freshArticles.includes(a))].slice(0, targetCount);
+  }, [article, related, trending, latestArticles, mostReadArticles, articleStoryTier]);
 
   const isTrafficArticle = article.slug.includes('traffic-rules') || article.slug.includes('penalty-and-locations');
 
@@ -1772,41 +1785,37 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return 5;
   }, [article, isContentExpanded]);
 
-  // Categorize article length to balance desktop layout and eliminate white space
-  const articleStoryTier = useMemo(() => {
-    const rawContent = (article.content || '') + ((article as any).contentGu || '') + (article.excerpt || '');
-    const pureText = rawContent.replace(/<[^>]*>/g, '').replace(/[#*_`\[\]()]/g, '').trim();
-    const len = pureText.length;
-    if (len < 1000) return 'short';
-    if (len < 2600) return 'medium';
-    return 'long';
-  }, [article]);
-
   const desktopMostReadLimit = useMemo(() => {
-    return articleStoryTier === 'short' ? 4 : 5;
+    if (articleStoryTier === 'very_short') return 3;
+    if (articleStoryTier === 'short') return 4;
+    return 5;
   }, [articleStoryTier]);
 
   const desktopRecommendedLimit = useMemo(() => {
-    if (articleStoryTier === 'short') return 3;
+    if (articleStoryTier === 'very_short') return 3;
+    if (articleStoryTier === 'short') return 4;
     if (articleStoryTier === 'medium') return 5;
-    return 8;
+    return 7;
   }, [articleStoryTier]);
 
   const desktopLatestLimit = useMemo(() => {
+    if (articleStoryTier === 'very_short') return 0; // HIDE latest news in sidebar on very short articles to completely eliminate left-side whitespace
     if (articleStoryTier === 'short') return 2;
-    if (articleStoryTier === 'medium') return 4;
-    return 6;
+    if (articleStoryTier === 'medium') return 3;
+    return 5;
   }, [articleStoryTier]);
 
   const desktopPhotoLimit = useMemo(() => {
+    if (articleStoryTier === 'very_short') return 1; // 1 clean photo card on very short stories
     if (articleStoryTier === 'short') return 2;
-    if (articleStoryTier === 'medium') return 3;
+    if (articleStoryTier === 'medium') return 2;
     return 3;
   }, [articleStoryTier]);
 
   const desktopMustReadLimit = useMemo(() => {
-    if (articleStoryTier === 'short') return 8;
-    if (articleStoryTier === 'medium') return 6;
+    if (articleStoryTier === 'very_short') return 8; // 4 rows x 2 cols = 8 cards on left side
+    if (articleStoryTier === 'short') return 6;
+    if (articleStoryTier === 'medium') return 4;
     return 4;
   }, [articleStoryTier]);
 
@@ -2777,7 +2786,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
           </article>
 
-          <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
+          <aside className="side select-none w-full max-w-[340px] min-w-0" suppressHydrationWarning>
             <div className="flex flex-col gap-6">
               {/* Most Read widget */}
               <div className="mostread">
@@ -2957,7 +2966,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
               </div>
 
               {/* Desktop Additional Latest News Widget below WhatsApp (Eliminates Blank Whitespace) */}
-              {desktopExtraLatestPool.length > 0 && (
+              {desktopExtraLatestPool.length > 0 && desktopLatestLimit > 0 && (
                 <div className="hidden md:flex flex-col mt-5">
                   <div className="wtitle mb-3">
                     <span className="d"></span>
@@ -3030,7 +3039,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
               )}
 
               {/* Desktop Photo Gallery Widget below Latest News (One-by-one in column & Sticky to eliminate white space) */}
-              {sidebarPhotos.length > 0 && (
+              {sidebarPhotos.length > 0 && desktopPhotoLimit > 0 && (
                 <div className="hidden md:flex flex-col mt-5 sticky top-20 z-10">
                   <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-neutral-800 pb-2 mb-3 bg-white/80 dark:bg-[#0f111a]/80 backdrop-blur-xs">
                     <div className="flex items-center gap-2">
