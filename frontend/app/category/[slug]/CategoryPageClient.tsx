@@ -1653,36 +1653,40 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
           </div>
         </div>
 
-        {/* CATEGORY NEWS ARTICLES SECTION HEADER (Separates News from Videos above) */}
+        {/* CATEGORY NEWS ARTICLES SECTION HEADER (Separates News from Videos above; hidden in 'all' / badhu section) */}
         {displayArticles.length > 0 && (
-          <div className={`mt-7 md:mt-10 mb-4 md:mb-5 ${activeTab === 'video' ? 'pt-6 border-t-2 border-border/80' : 'pt-4 border-t border-border/40'}`}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-1 my-0.5" style={{ minHeight: '1.2em' }} aria-hidden="true" />
-                <h2 className="text-[20px] sm:text-[22px] md:text-[23px] font-black tracking-tight text-foreground flex items-center flex-wrap gap-2">
-                  <span>
-                    {activeTab === 'video'
-                      ? getLocalized(language, { gu: 'મુખ્ય સમાચાર', hi: 'प्रमुख समाचार', en: 'Top Stories' })
-                      : getCategoryNewsTitle()}
-                  </span>
-                  {activeTab === 'video' && (
-                    <span className="text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-[#B3121B] dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
-                      {getLocalized(language, { gu: 'વિવિધ કેટેગરીના સમાચાર', hi: 'विभिन्न कैटेगरी के समाचार', en: 'Across Categories' })}
+          activeTab === 'all' ? (
+            <div className="mt-7 md:mt-10 mb-4 md:mb-5 border-t border-border/40" />
+          ) : (
+            <div className={`mt-7 md:mt-10 mb-4 md:mb-5 ${activeTab === 'video' ? 'pt-6 border-t-2 border-border/80' : 'pt-4 border-t border-border/40'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-1 my-0.5" style={{ minHeight: '1.2em' }} aria-hidden="true" />
+                  <h2 className="text-[20px] sm:text-[22px] md:text-[23px] font-black tracking-tight text-foreground flex items-center flex-wrap gap-2">
+                    <span>
+                      {activeTab === 'video'
+                        ? getLocalized(language, { gu: 'મુખ્ય સમાચાર', hi: 'प्रमुख समाचार', en: 'Top Stories' })
+                        : getCategoryNewsTitle()}
                     </span>
-                  )}
-                </h2>
+                    {activeTab === 'video' && (
+                      <span className="text-[11px] sm:text-xs font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-[#B3121B] dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-800">
+                        {getLocalized(language, { gu: 'વિવિધ કેટેગરીના સમાચાર', hi: 'विभिन्न कैटेगरी के समाचार', en: 'Across Categories' })}
+                      </span>
+                    )}
+                  </h2>
+                </div>
+                <span className="text-xs font-semibold text-muted-foreground hidden sm:inline-block">
+                  {activeTab === 'video'
+                    ? getLocalized(language, {
+                      gu: 'ગુજરાત, દેશ અને વિશ્વના મહત્વના સમાચારો',
+                      hi: 'गुजरात, देश और दुनिया के महत्वपूर्ण समाचार',
+                      en: 'Important updates across categories',
+                    })
+                    : getLocalized(language, { gu: 'બધા સમાચાર અને વિગતો', hi: 'सभी समाचार और विवरण', en: 'All News & Updates' })}
+                </span>
               </div>
-              <span className="text-xs font-semibold text-muted-foreground hidden sm:inline-block">
-                {activeTab === 'video'
-                  ? getLocalized(language, {
-                    gu: 'ગુજરાત, દેશ અને વિશ્વના મહત્વના સમાચારો',
-                    hi: 'गुजरात, देश और दुनिया के महत्वपूर्ण समाचार',
-                    en: 'Important updates across categories',
-                  })
-                  : getLocalized(language, { gu: 'બધા સમાચાર અને વિગતો', hi: 'सभी समाचार और विवरण', en: 'All News & Updates' })}
-              </span>
             </div>
-          </div>
+          )
         )}
 
         {/* POPULAR ARTICLES GRID */}
