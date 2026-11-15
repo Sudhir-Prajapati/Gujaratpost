@@ -19,7 +19,7 @@ import {
   getArticlesByCategory,
   PHOTOS,
 } from '@/data';
-import { getCategoryColor, getTrendingTopicHref, getCategoryBadgeStyle } from '@/lib/utils';
+import { getCategoryColor, getTrendingTopicHref, getCategoryBadgeStyle, isExcludedFromLatestNews } from '@/lib/utils';
 import { safeYouTubeId } from '@/lib/youtube';
 import { getPublicArticles, getPublicVideos, getHeroSettings, getMarketRates, getPublicWeather, getPublicCategories, getLiveCenterData, getPublicGallery, getPublicAstrology } from '@/lib/api';
 
@@ -853,10 +853,11 @@ export default function HeroSection({
     return true;
   };
 
-  // Helper to exclude non-hard-news categories (e.g. Health, Ayurveda, Lifestyle) from homepage top Hero slots
+  // Helper to exclude non-hard-news categories (e.g. Health, Technology, Entertainment, Lifestyle) from homepage top Hero slots
   const isExcludedFromHeroTop = (a: any): boolean => {
     if (!a) return true;
-    if (articleMatchesCat(a, 'health', 'heath', 'હેલ્થ', 'સ્વાસ્થ્ય', 'આરોગ્ય', 'lifestyle', 'લાઈફસ્ટાઈલ', 'ayurved', 'ayurveda', 'આયુર્વેદ')) {
+    if (isExcludedFromLatestNews(a)) return true;
+    if (articleMatchesCat(a, 'health', 'heath', 'હેલ્થ', 'સ્વાસ્થ્ય', 'આરોગ્ય', 'lifestyle', 'લાઈફસ્ટાઈલ', 'ayurved', 'ayurveda', 'આયુર્વેદ', 'entertainment', 'manoranjan', 'મનોરંજન', 'technology', 'tech', 'ટેકનોલોજી')) {
       return true;
     }
     const catSlug = (
@@ -864,7 +865,7 @@ export default function HeroSection({
       (typeof (a as any).category === 'string' ? (a as any).category : (a as any).category?.slug) ||
       ''
     ).toLowerCase().trim();
-    if (catSlug === 'health' || catSlug === 'heath' || catSlug === 'lifestyle') return true;
+    if (catSlug === 'health' || catSlug === 'heath' || catSlug === 'lifestyle' || catSlug === 'entertainment' || catSlug === 'manoranjan' || catSlug === 'technology' || catSlug === 'tech') return true;
     return false;
   };
 

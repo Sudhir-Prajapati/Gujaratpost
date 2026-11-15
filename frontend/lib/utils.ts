@@ -535,7 +535,7 @@ export function sortArticlesByLatest<T extends any>(list: T[]): T[] {
   });
 }
 
-export { isSolelyHealthArticle } from './articleCategory';
+export { isSolelyHealthArticle, isExcludedFromLatestNews, isSoftNewsCategoryString } from './articleCategory';
 
 
 

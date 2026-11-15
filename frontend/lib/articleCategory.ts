@@ -126,55 +126,118 @@ export function sortArticlesByNewest(articles: Article[]): Article[] {
 }
 
 /**
- * Determines if an article solely/exclusively belongs to the Health category
- * (e.g. standalone wellness, diet, medical advice tips with no hard news categories like Gujarat, Politics, Crime, etc.).
- * Standalone health stories are excluded from "Latest News" (લેટેસ્ટ સમાચાર) and general story suggestions/recommendations.
+ * Determines whether a category string or slug belongs to soft-news / lifestyle / feature categories:
+ * - Health / Wellness / Lifestyle (હેલ્થ / સ્વાસ્થ્ય / આરોગ્ય / લાઈફસ્ટાઈલ)
+ * - Technology / Gadgets (ટેકનોલોજી / ટેક્નોલોજી / ટેક)
+ * - Entertainment / Cinema / Bollywood / Manoranjan (મનોરંજન / સિનેમા / બોલિવૂડ / ફિલ્મ)
  */
-export function isSolelyHealthArticle(cand: any): boolean {
-  if (!cand) return false;
+export function isSoftNewsCategoryString(str?: string | null): boolean {
+  if (!str) return false;
+  const clean = String(str).toLowerCase().trim().replace(/[\s\-_]+/g, '');
+  if (!clean) return false;
 
-  const isHealthString = (str?: string | null): boolean => {
-    if (!str) return false;
-    const clean = String(str).toLowerCase().trim().replace(/[\s\-_]+/g, '');
-    return (
-      clean === 'health' ||
-      clean === 'helth' ||
-      clean.includes('health') ||
-      clean.includes('હેલ્થ') ||
-      clean.includes('સ્વાસ્થ્ય') ||
-      clean.includes('આરોગ્ય') ||
-      clean.includes('swasthya') ||
-      clean.includes('arogya')
-    );
-  };
+  // 1. Health / Wellness / Lifestyle
+  if (
+    clean === 'health' ||
+    clean === 'helth' ||
+    clean === 'lifestyle' ||
+    clean.includes('health') ||
+    clean.includes('હેલ્થ') ||
+    clean.includes('સ્વાસ્થ્ય') ||
+    clean.includes('આરોગ્ય') ||
+    clean.includes('swasthya') ||
+    clean.includes('arogya') ||
+    clean.includes('lifestyle') ||
+    clean.includes('લાઇફસ્ટાઇલ') ||
+    clean.includes('લાઈફસ્ટાઈલ') ||
+    clean.includes('fitness') ||
+    clean.includes('તંદુરસ્તી') ||
+    clean.includes('ayurved')
+  ) {
+    return true;
+  }
+
+  // 2. Technology / Tech / Gadgets
+  if (
+    clean === 'technology' ||
+    clean === 'tech' ||
+    clean === 'gadgets' ||
+    clean.includes('technology') ||
+    clean.includes('tech') ||
+    clean.includes('ટેકનોલોજી') ||
+    clean.includes('ટેક્નોલોજી') ||
+    clean.includes('ટેકનો') ||
+    clean.includes('ટેક્નો') ||
+    clean.includes('टेक्नोलॉजी') ||
+    clean.includes('तकनीक') ||
+    clean.includes('gadget')
+  ) {
+    return true;
+  }
+
+  // 3. Entertainment / Cinema / Bollywood / Manoranjan
+  if (
+    clean === 'entertainment' ||
+    clean === 'manoranjan' ||
+    clean === 'cinema' ||
+    clean === 'bollywood' ||
+    clean.includes('entertainment') ||
+    clean.includes('manoranjan') ||
+    clean.includes('મનોરંજન') ||
+    clean.includes('એન્ટરટેઈનમેન્ટ') ||
+    clean.includes('मनोरंजन') ||
+    clean.includes('bollywood') ||
+    clean.includes('બોલિવૂડ') ||
+    clean.includes('બોલીવુડ') ||
+    clean.includes('સિનેમા') ||
+    clean.includes('cinema') ||
+    clean.includes('movies') ||
+    clean.includes('ફિલ્મ') ||
+    clean.includes('film')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Determines if an article solely/exclusively belongs to soft-news categories:
+ * Health (હેલ્થ), Technology (ટેકનોલોજી), or Entertainment (મનોરંજન).
+ * Standalone health, tech, and entertainment stories are strictly excluded from
+ * "Latest News" (લેટેસ્ટ સમાચાર) and general story suggestions/recommendations.
+ * (If an article also has hard news categories like Gujarat, Politics, Crime, National, etc., it is kept).
+ */
+export function isExcludedFromLatestNews(cand: any): boolean {
+  if (!cand) return false;
 
   // 1. Check all entries in categories array if present
   if (Array.isArray(cand.categories) && cand.categories.length > 0) {
     const validCats = cand.categories.filter(Boolean);
     if (validCats.length > 0) {
-      const hasHealth = validCats.some((c: any) =>
-        isHealthString(c?.slug) ||
-        isHealthString(c?.name) ||
-        isHealthString(c?.nameGu) ||
-        isHealthString(c?.nameHi) ||
-        isHealthString(c?.category?.slug) ||
-        isHealthString(c?.category?.name) ||
-        isHealthString(c?.category?.nameGu)
+      const hasSoft = validCats.some((c: any) =>
+        isSoftNewsCategoryString(c?.slug) ||
+        isSoftNewsCategoryString(c?.name) ||
+        isSoftNewsCategoryString(c?.nameGu) ||
+        isSoftNewsCategoryString(c?.nameHi) ||
+        isSoftNewsCategoryString(c?.category?.slug) ||
+        isSoftNewsCategoryString(c?.category?.name) ||
+        isSoftNewsCategoryString(c?.category?.nameGu)
       );
 
-      if (hasHealth) {
-        // Check if there are other categories that are NOT health
-        const hasNonHealth = validCats.some((c: any) => {
+      if (hasSoft) {
+        // Check if there are other categories that are NOT soft news (i.e. Hard news)
+        const hasHardNews = validCats.some((c: any) => {
           const s = c?.slug || c?.category?.slug || '';
           const n = c?.name || c?.nameGu || c?.category?.name || c?.category?.nameGu || '';
-          return !isHealthString(s) && !isHealthString(n);
+          return !isSoftNewsCategoryString(s) && !isSoftNewsCategoryString(n);
         });
 
-        // If it has NO other non-health categories, it's solely health!
-        if (!hasNonHealth) {
+        // If it has NO hard news categories, it is solely soft news (health, tech, or entertainment)!
+        if (!hasHardNews) {
           return true;
         }
-        // It has other categories (e.g. Gujarat, Politics), so it's a hard news story
+        // It has other hard news categories (e.g. Gujarat, Politics, Crime, National), so it's a hard news story
         return false;
       }
     }
@@ -184,11 +247,18 @@ export function isSolelyHealthArticle(cand: any): boolean {
   const primarySlug = cand.categorySlug || cand.category?.slug || '';
   const primaryName = cand.category || cand.categoryGu || cand.categoryHi || cand.category?.name || cand.category?.nameGu || '';
 
-  if (isHealthString(primarySlug) || isHealthString(primaryName)) {
+  if (isSoftNewsCategoryString(primarySlug) || isSoftNewsCategoryString(primaryName)) {
     return true;
   }
 
   return false;
 }
+
+/**
+ * Backward compatibility alias so all existing callers of isSolelyHealthArticle
+ * automatically exclude Health, Technology, and Entertainment from Latest News & suggestions.
+ */
+export const isSolelyHealthArticle = isExcludedFromLatestNews;
+
 
 
