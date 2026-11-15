@@ -2408,10 +2408,12 @@ html[data-theme="dark"] .share-x {
   gap: 12px;
 }
 
-.article-body {
+.article-body,
+.article-body p,
+.article-body div:not([class*="gp-"]):not([class*="aspect-"]):not([class*="ad-"]):not([class*="figure"]) {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", sans-serif;
-  font-size: var(--t-body);
-  line-height: 1.85;
+  font-size: 1.125rem !important;
+  line-height: 1.85 !important;
   color: var(--ink);
   text-align: justify;
 }
@@ -2742,8 +2744,8 @@ html[data-theme="dark"] .share-x {
 
 .s-rank h3 {
   font-family: "Hind Vadodara", "Noto Sans Gujarati", sans-serif;
-  font-weight: 600;
-  font-size: var(--t-compact);
+  font-weight: 700;
+  font-size: 14.5px;
   line-height: 1.42;
   color: var(--ink);
   display: -webkit-box;

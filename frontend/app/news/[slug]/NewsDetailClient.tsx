@@ -396,7 +396,7 @@ const ArticleContentBody = memo(function ArticleContentBody({
       ref={bodyRef}
       suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: cleanHtml }}
-      className="article-body text-[1.15625rem] sm:text-[1.25rem] leading-[1.85] sm:leading-[1.9] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[1.0625rem] sm:[&_p]:text-[1.125rem] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2 [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4 [&_figure[data-article-social-platform]]:my-3 [&_figure[data-article-social-platform]]:w-full [&_figure[data-article-social-platform]]:flex [&_figure[data-article-social-platform]]:justify-center [&_iframe]:w-full [&_iframe:not([data-social-platform]):not([srcdoc])]:aspect-video [&_figure[data-article-social-platform]_iframe]:aspect-auto [&_figure[data-article-social-platform]_iframe]:max-w-[550px] [&_figure[data-article-social-platform]_iframe]:mx-auto [&_iframe[srcdoc]]:aspect-auto [&_iframe[srcdoc]]:max-w-[550px] [&_iframe[srcdoc]]:mx-auto [&_iframe]:rounded-xl [&_iframe]:shadow-md [&_video]:w-full [&_video]:rounded-xl"
+      className="article-body text-[1.0625rem] sm:text-[1.125rem] leading-[1.8] sm:leading-[1.85] text-neutral-900 dark:text-neutral-100 prose dark:prose-invert max-w-none [&_p]:text-[1.0625rem] sm:[&_p]:text-[1.125rem] [&_p]:leading-[1.8] sm:[&_p]:leading-[1.85] [&_p]:my-2.5 [&_div]:text-[1.0625rem] sm:[&_div]:text-[1.125rem] [&_div]:leading-[1.8] sm:[&_div]:leading-[1.85] [&_.article-para]:text-[1.0625rem] sm:[&_.article-para]:text-[1.125rem] [&_.article-para]:leading-[1.8] sm:[&_.article-para]:leading-[1.85] [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_a]:text-[#B3121B] [&_a]:underline [&_h1]:text-2xl [&_h1]:font-bold [&_h1]:my-3 [&_h2]:text-xl [&_h2]:font-bold [&_h2]:my-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:my-2 [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-2 [&_li]:list-item [&_li]:my-1 [&_blockquote]:border-l-[3px] [&_blockquote]:border-[#B3121B] [&_blockquote]:pl-4 [&_blockquote]:font-bold [&_blockquote]:not-italic [&_blockquote]:my-3 [&_img]:rounded-xl [&_figure]:my-4 [&_figure[data-article-social-platform]]:my-3 [&_figure[data-article-social-platform]]:w-full [&_figure[data-article-social-platform]]:flex [&_figure[data-article-social-platform]]:justify-center [&_iframe]:w-full [&_iframe:not([data-social-platform]):not([srcdoc])]:aspect-video [&_figure[data-article-social-platform]_iframe]:aspect-auto [&_figure[data-article-social-platform]_iframe]:max-w-[550px] [&_figure[data-article-social-platform]_iframe]:mx-auto [&_iframe[srcdoc]]:aspect-auto [&_iframe[srcdoc]]:max-w-[550px] [&_iframe[srcdoc]]:mx-auto [&_iframe]:rounded-xl [&_iframe]:shadow-md [&_video]:w-full [&_video]:rounded-xl"
     />
   );
 });
@@ -1655,13 +1655,23 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       }
     }
 
+    // Balance open/unclosed tags before block conversions so trailing blocks close properly
+    cleaned = balanceHtmlTags(cleaned);
+
+    // Strip redundant outer wrapping <div>...</div> if it simply wraps the entire text
+    let prevCleaned = '';
+    while (prevCleaned !== cleaned) {
+      prevCleaned = cleaned;
+      cleaned = cleaned.trim().replace(/^<div\b(?![^>]*(?:gp-pdf|twitter|instagram|facebook|aspect-video))[^>]*>([\s\S]*?)<\/div>$/i, '$1').trim();
+    }
+
     // Clean empty spacer divs and empty paragraphs (safely preserving gp-pdf-pages-viewer and embed containers)
     cleaned = cleaned
       .replace(/<div\b(?![^>]*(?:gp-pdf-pages-viewer|data-pdf-url))[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/div>/gi, '')
       .replace(/<p\b[^>]*>\s*(?:<br\s*\/?>|&nbsp;|\s)*<\/p>/gi, '');
 
     // Convert paragraph-level <div> into proper <p class="article-para my-3"> elements (excluding special widgets)
-    cleaned = cleaned.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
+    cleaned = cleaned.replace(/<div\b([^>]*)>([\s\S]*?)(?:<\/div>|$)/gi, (match, attrs, inner) => {
       if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
         return match;
       }
