@@ -11,6 +11,23 @@ html.modal-open, body.modal-open {
   height: 100vh !important;
 }
 
+/* When mobile menu drawer is open: lock page scrolling & hide floating action buttons */
+html.mobile-menu-active, body.mobile-menu-active {
+  overflow: hidden !important;
+  touch-action: none !important;
+  overscroll-behavior: none !important;
+}
+
+body.mobile-menu-active .gp-floating-font-control,
+body.mobile-menu-active .gp-floating-megaphone,
+body.mobile-menu-active .gp-floating-scroll-top,
+body.mobile-menu-active [aria-label="Scroll to top"] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
 html.news-brief-open, body.news-brief-open {
   overflow: hidden !important;
   height: 100vh !important;

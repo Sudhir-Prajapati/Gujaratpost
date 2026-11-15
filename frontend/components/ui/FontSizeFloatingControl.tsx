@@ -185,6 +185,7 @@ export default function FontSizeFloatingControl() {
   return (
     <div
       ref={containerRef}
+      className="gp-floating-font-control"
       style={{
         position: 'fixed',
         bottom: bottomPos,

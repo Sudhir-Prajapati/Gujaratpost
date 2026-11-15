@@ -2,6 +2,7 @@
 
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -419,34 +420,42 @@ export default function Header() {
   // Close menu and release any scroll lock on navigation
   useEffect(() => {
     setMenuOpen(false);
+    document.body.classList.remove('mobile-menu-active');
+    document.documentElement.classList.remove('mobile-menu-active');
     document.body.style.overflow = '';
     document.documentElement.style.overflow = '';
   }, [pathname]);
 
-  // Measure header height so mobile menu overlay starts right below it
-  useEffect(() => {
-    const updateHeight = () => {
-      if (headerRef.current) {
-        setHeaderHeight(headerRef.current.getBoundingClientRect().height);
-      }
-    };
-    updateHeight();
-    window.addEventListener('resize', updateHeight);
-    return () => window.removeEventListener('resize', updateHeight);
-  }, [mounted, menuOpen]);
-
-  // Lock body scroll when mobile menu is open
+  // Lock body scroll and set mobile-menu-active class when mobile menu is open
   useEffect(() => {
     if (menuOpen) {
+      document.body.classList.add('mobile-menu-active');
+      document.documentElement.classList.add('mobile-menu-active');
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
     } else {
+      document.body.classList.remove('mobile-menu-active');
+      document.documentElement.classList.remove('mobile-menu-active');
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     }
     return () => {
+      document.body.classList.remove('mobile-menu-active');
+      document.documentElement.classList.remove('mobile-menu-active');
       document.body.style.overflow = '';
       document.documentElement.style.overflow = '';
     };
+  }, [menuOpen]);
+
+  // Close menu on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && menuOpen) {
+        setMenuOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [menuOpen]);
 
   const closeMenu = () => setMenuOpen(false);
@@ -1174,21 +1183,37 @@ export default function Header() {
           </button>
         </div>
 
-        {/* -- Full-Screen Mobile Menu Drawer Overlay (below header) ------------- */}
-        <div
-          className="fixed inset-x-0 bottom-0 z-[999999] flex flex-col bg-[#F9FAFB] dark:bg-zinc-950 text-foreground md:hidden overflow-y-auto select-none"
-          style={{
-            top: `${headerHeight}px`,
-            opacity: menuOpen ? 1 : 0,
-            visibility: menuOpen ? 'visible' : 'hidden',
-            display: menuOpen ? 'flex' : 'none',
-            transform: menuOpen ? 'translateY(0)' : 'translateY(-10px)',
-            pointerEvents: menuOpen ? 'auto' : 'none',
-            transition: 'opacity 0.2s cubic-bezier(0.4,0,0.2,1), transform 0.2s cubic-bezier(0.4,0,0.2,1), visibility 0.2s',
-          }}
-        >
-          {/* Menu Drawer Content Container */}
-          <div className="px-3.5 py-3.5 space-y-3.5 pb-24">
+        {/* -- Full-Screen Mobile Menu Drawer Overlay (rendered into document.body) ------------- */}
+        {mounted &&
+          createPortal(
+            <div
+              className={`fixed inset-0 z-[99999999] flex flex-col bg-[#F9FAFB] dark:bg-zinc-950 text-foreground md:hidden select-none transition-all duration-200 ${
+                menuOpen ? 'opacity-100 visible pointer-events-auto' : 'opacity-0 invisible pointer-events-none'
+              }`}
+              style={{ overscrollBehavior: 'contain' }}
+              aria-hidden={!menuOpen}
+            >
+              {/* Sticky Top Bar inside Drawer: Logo + Close Button */}
+              <div className="shrink-0 h-14 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 px-4 flex items-center justify-between shadow-2xs z-20">
+                <Link href="/" onClick={closeMenu} className="flex items-center gap-2">
+                  <img
+                    src="/GujaratpostFinalLogo.png"
+                    alt="Gujarat Post"
+                    className="h-8 w-auto object-contain"
+                  />
+                </Link>
+                <button
+                  type="button"
+                  onClick={closeMenu}
+                  className="h-9 w-9 flex items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-red-50 hover:text-red-600 active:scale-90 transition-all cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="h-5 w-5 stroke-[2.5]" />
+                </button>
+              </div>
+
+              {/* Menu Drawer Content Container */}
+              <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3.5 py-3.5 space-y-3.5 pb-28">
             {/* 4. Login Section Card */}
             <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#FFF0F2] dark:bg-red-950/25 border border-red-100 dark:border-red-900/30 shadow-xs">
               <div className="flex items-center gap-3 min-w-0">
@@ -1519,7 +1544,9 @@ export default function Header() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
+      )}
       </header>
 
       {/* -- Sticky Nav Section (Category Bar + District Bar) (Desktop only) ------------------ */}

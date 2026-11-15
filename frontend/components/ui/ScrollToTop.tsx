@@ -36,6 +36,7 @@ export default function ScrollToTop() {
       onClick={scrollToTop}
       aria-label="Scroll to top"
       title="ઉપર જાઓ"
+      className="gp-floating-scroll-top"
       style={{
         position: 'fixed',
         bottom: bottomPos,

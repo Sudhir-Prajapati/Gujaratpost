@@ -252,6 +252,7 @@ export default function TajSamacharDrawer() {
 
       {/* Floating Megaphone Button (Bottom Left - Fixed px positioning so font size changes never break alignment) */}
       <div
+        className="gp-floating-megaphone"
         style={{
           position: 'fixed',
           bottom: isApk ? '72px' : '24px',
