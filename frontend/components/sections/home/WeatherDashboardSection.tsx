@@ -365,7 +365,7 @@ export default function WeatherDashboardSection({ language }: { language: Langua
                 {selectedCity}
               </h2>
             </div>
-            <span className="hidden sm:inline-block text-slate-300 dark:text-slate-700 font-light select-none">|</span>
+            <span className="hidden sm:inline-block text-slate-300 dark:text-slate-700 font-light select-none">•</span>
             <span className="text-xs sm:text-sm font-semibold text-[#64748B] dark:text-slate-400">
               {isGu ? 'વર્તમાન હવામાનની સ્થિતિ' : isHi ? 'वर्तमान मौसम की स्थिति' : 'Current Weather Conditions'}
             </span>

@@ -646,7 +646,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 {stocks[0].changePercent.toFixed(2)}%
               </span>
             </span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
             <span className="whitespace-nowrap">
               {stocks[1].name} ₹{stocks[1].value.toLocaleString('en-IN', { maximumFractionDigits: 1 })}{' '}
               <span className={`font-black ${stocks[1].change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}>
@@ -654,7 +654,7 @@ export default function LiveCenterSection({ language }: { language: Language }) 
                 {stocks[1].changePercent.toFixed(2)}%
               </span>
             </span>
-            <span className="text-slate-300 dark:text-slate-700">|</span>
+            <span className="text-slate-300 dark:text-slate-700 select-none">•</span>
             <span className="whitespace-nowrap">
               {stocks[2].name} ₹{stocks[2].value.toLocaleString('en-IN', { maximumFractionDigits: 1 })}{' '}
               <span className={`font-black ${stocks[2].change >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600'}`}>

@@ -44,7 +44,7 @@ export default function NotFoundClient() {
             <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
           </span>
           <span className="tracking-wide">404 • પૃષ્ઠ મળ્યું નથી</span>
-          <span className="text-red-300 dark:text-red-700">|</span>
+          <span className="text-red-300 dark:text-red-700 select-none">•</span>
           <span className="font-normal opacity-90">Page Not Found</span>
         </div>
 

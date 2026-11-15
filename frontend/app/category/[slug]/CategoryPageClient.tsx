@@ -1315,12 +1315,13 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         </div>
 
         {/* ── FILTER TABS (3 Options: Badhu, Taja Samachar, Video) ────── */}
-        <div className="flex gap-2 flex-wrap mb-2">
+        <div className="flex gap-2 flex-wrap mb-2 select-none">
           {tabs.map((tab) => (
             <button
               key={tab.id}
+              type="button"
               onClick={() => handleTabClick(tab.id)}
-              className={`rounded-full px-5 py-2 text-xs sm:text-sm font-black transition cursor-pointer ${activeTab === tab.id
+              className={`rounded-full px-5 py-2 text-xs sm:text-sm font-black transition cursor-pointer select-none outline-none ${activeTab === tab.id
                 ? 'bg-accent text-white font-black shadow-sm'
                 : 'border border-border bg-card text-foreground hover:border-accent hover:text-accent font-semibold'
                 }`}

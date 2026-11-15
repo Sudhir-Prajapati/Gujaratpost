@@ -33,8 +33,7 @@ html {
   min-height: 100%;
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: auto;
 }
@@ -42,8 +41,7 @@ html {
 body {
   scrollbar-width: none !important;
   -ms-overflow-style: none !important;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: clip;
   min-height: 100%;
   min-height: 100dvh;
   -webkit-overflow-scrolling: touch;
@@ -176,16 +174,14 @@ body {
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   font-size: var(--gp-font-size, 16px);
 }
 
 body {
   margin: 0;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow-x: clip;
   -webkit-overflow-scrolling: touch;
   background:
     radial-gradient(circle at 15% 0%, rgb(225 29 46 / 0.08), transparent 28rem),
@@ -346,8 +342,135 @@ a {
 }
 
 button,
-input {
+input,
+select,
+textarea {
   font: inherit;
+}
+
+/* ========================================================
+   GLOBAL UI PURITY & INTERACTION INTEGRITY
+   - Eliminates unwanted vertical lines, text insertion carets,
+     and cursor glitches appearing inside or around buttons,
+     tabs, filters, navigation links, dropdowns, pills, badges,
+     cards, and interactive elements upon clicking or interacting.
+   - Prevents accidental text selection / I-beam cursors on controls.
+   - Preserves text editing, selection, and brand-accent carets
+     ONLY for real text input fields, search bars, and textareas.
+   ======================================================== */
+
+/* 1. Eliminate unwanted text carets & text selection on all interactive elements */
+button,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+[role="combobox"],
+[role="link"],
+a,
+nav,
+nav *,
+summary,
+select,
+option,
+label,
+.tab,
+.btn,
+.pill,
+.badge,
+.card,
+.nav-link,
+.filter-tab,
+.menu-item,
+.dropdown-item,
+.pagination-btn,
+[data-state],
+[data-gp-interactive="true"] {
+  caret-color: transparent !important;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 2. Enforce clean pointer cursor on all buttons and interactive controls (no text I-beam) */
+button,
+[role="button"],
+[role="tab"],
+[role="menuitem"],
+[role="option"],
+[role="link"],
+a,
+summary,
+select,
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="range"],
+input[type="color"],
+input[type="file"] {
+  cursor: pointer !important;
+}
+
+button *,
+[role="button"] *,
+[role="tab"] *,
+a *,
+summary * {
+  cursor: inherit;
+}
+
+/* 3. Eliminate unwanted focus outlines / border lines on mouse click while preserving keyboard accessibility */
+:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+button:focus:not(:focus-visible),
+[role="button"]:focus:not(:focus-visible),
+[role="tab"]:focus:not(:focus-visible),
+a:focus:not(:focus-visible),
+summary:focus:not(:focus-visible),
+select:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 4. EXPLICITLY RESTORE proper text caret and text selection ONLY for actual text inputs & textareas */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input:not([type]),
+textarea,
+[contenteditable="true"],
+[contenteditable=""] {
+  caret-color: var(--accent, #B3121B) !important;
+  -webkit-user-select: text !important;
+  -moz-user-select: text !important;
+  -ms-user-select: text !important;
+  user-select: text !important;
+  cursor: text !important;
+}
+
+input[type="text"] *,
+input[type="search"] *,
+textarea * {
+  cursor: text !important;
+}
+
+/* 5. Clean search inputs: remove default browser cancel/search decoration glitches */
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+  -webkit-appearance: none;
 }
 
 @layer base {

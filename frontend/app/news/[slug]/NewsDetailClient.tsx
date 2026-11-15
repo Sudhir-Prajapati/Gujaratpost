@@ -1772,6 +1772,44 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return 5;
   }, [article, isContentExpanded]);
 
+  // Categorize article length to balance desktop layout and eliminate white space
+  const articleStoryTier = useMemo(() => {
+    const rawContent = (article.content || '') + ((article as any).contentGu || '') + (article.excerpt || '');
+    const pureText = rawContent.replace(/<[^>]*>/g, '').replace(/[#*_`\[\]()]/g, '').trim();
+    const len = pureText.length;
+    if (len < 1000) return 'short';
+    if (len < 2600) return 'medium';
+    return 'long';
+  }, [article]);
+
+  const desktopMostReadLimit = useMemo(() => {
+    return articleStoryTier === 'short' ? 4 : 5;
+  }, [articleStoryTier]);
+
+  const desktopRecommendedLimit = useMemo(() => {
+    if (articleStoryTier === 'short') return 3;
+    if (articleStoryTier === 'medium') return 5;
+    return 8;
+  }, [articleStoryTier]);
+
+  const desktopLatestLimit = useMemo(() => {
+    if (articleStoryTier === 'short') return 2;
+    if (articleStoryTier === 'medium') return 4;
+    return 6;
+  }, [articleStoryTier]);
+
+  const desktopPhotoLimit = useMemo(() => {
+    if (articleStoryTier === 'short') return 2;
+    if (articleStoryTier === 'medium') return 3;
+    return 3;
+  }, [articleStoryTier]);
+
+  const desktopMustReadLimit = useMemo(() => {
+    if (articleStoryTier === 'short') return 8;
+    if (articleStoryTier === 'medium') return 6;
+    return 4;
+  }, [articleStoryTier]);
+
   // 1. Helper to identify health category articles (strictly excluded from Recommended sidebars)
   const isHealthArticle = (cand: any): boolean => {
     if (!cand) return false;
@@ -1941,7 +1979,12 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     const pool = [...(trending || []), ...(related || []), ...(latestArticles || []), ...(mostReadArticles || [])];
     const uniquePool = filterUniqueArticles(pool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
-    return sortedPool.slice(0, 4);
+    if (sortedPool.length < 10) {
+      const fallbackPool = filterUniqueArticles(pool, [article, ...readAlsoPool]);
+      const combined = [...sortedPool, ...fallbackPool.filter((f) => !sortedPool.some((s) => s.id === f.id))];
+      return sortArticlesByNewest(combined).slice(0, 12);
+    }
+    return sortedPool.slice(0, 12);
   }, [article, mostReadArticles, readAlsoPool, sidebarRecommendedPool, desktopExtraLatestPool, trending, related, latestArticles]);
 
   // 7. Photo Gallery Pool for Desktop Sidebar (eliminates remaining right whitespace)
@@ -1959,19 +2002,21 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
   const sidebarPhotos = useMemo(() => {
     const list = galleryPhotos.length > 0 ? [...galleryPhotos] : [...PHOTOS];
-    if (list.length < 4) {
+    if (list.length < 6) {
       const fallbackList = [
         { id: 'p1', src: FALLBACK_NEWS_IMAGES[0], captionGu: 'ગુજરાતના દર્શનીય સ્થળો અને પ્રાકૃતિક સૌંદર્ય', caption: 'Scenic places and natural beauty of Gujarat' },
         { id: 'p2', src: FALLBACK_NEWS_IMAGES[1], captionGu: 'અમદાવાદ રિવરફ્રન્ટ ફ્લાવર શોની આકર્ષક તસવીરો', caption: 'Attractive photos of Ahmedabad Riverfront Flower Show' },
         { id: 'p3', src: FALLBACK_NEWS_IMAGES[2], captionGu: 'ગીર નેશનલ પાર્કમાં એશિયાટીક સિંહોની અદભૂત ક્ષણો', caption: 'Stunning moments of Asiatic lions in Gir National Park' },
         { id: 'p4', src: FALLBACK_NEWS_IMAGES[3], captionGu: 'રણોત્સવ કચ્છ: સફેદ રણની મોહક સંધ્યા અને સંસ્કૃતિ', caption: 'Rann Utsav Kutch: Enchanting dusk and culture of White Rann' },
+        { id: 'p5', src: FALLBACK_NEWS_IMAGES[4 % FALLBACK_NEWS_IMAGES.length], captionGu: 'ગુજરાતના ઐતિહાસિક વારસાની અદભૂત ઝાંખી', caption: 'Stunning glimpses of Gujarat historical heritage' },
+        { id: 'p6', src: FALLBACK_NEWS_IMAGES[5 % FALLBACK_NEWS_IMAGES.length], captionGu: 'સોમનાથ અને દ્વારકા તીર્થક્ષેત્રની અલૌકિક તસવીરો', caption: 'Divine photos of Somnath and Dwarka pilgrimage' },
       ];
       for (const f of fallbackList) {
-        if (list.length >= 4) break;
+        if (list.length >= 6) break;
         list.push(f);
       }
     }
-    return list.slice(0, 4);
+    return list.slice(0, 6);
   }, [galleryPhotos]);
 
   useEffect(() => {
@@ -2668,7 +2713,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                           </h3>
                         </div>
                         <div className="grid grid-cols-2 gap-3.5">
-                          {desktopExtraMustReadPool.slice(0, 4).map((item, index) => {
+                          {desktopExtraMustReadPool.slice(0, desktopMustReadLimit).map((item, index) => {
                             const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                             return (
                               <Link
@@ -2733,7 +2778,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
           </article>
 
           <aside className="side select-none w-full max-w-[340px] min-w-0" style={{ alignSelf: 'stretch' }} suppressHydrationWarning>
-            <div className="side-sticky sticky top-4 transition-all duration-300">
+            <div className="flex flex-col gap-6">
               {/* Most Read widget */}
               <div className="mostread">
                 <div className="wtitle">
@@ -2754,9 +2799,9 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                   })}
                 </div>
 
-                {/* Desktop Most Read (Always 5 items) */}
+                {/* Desktop Most Read */}
                 <div className="space-y-0 mt-3 hidden md:block">
-                  {mostReadArticles.slice(0, 5).map((item, index) => {
+                  {mostReadArticles.slice(0, desktopMostReadLimit).map((item, index) => {
                     const rankNum = String(index + 1);
 
                     return (
@@ -2793,7 +2838,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
                 {/* Desktop view (>= md): Modern Separated Cards with Bottom Shadow & Share */}
                 <div className="hidden md:flex flex-col gap-3 mt-3 transition-all duration-300">
-                  {sidebarRecommendedPool.slice(0, 8).map((item, index) => {
+                  {sidebarRecommendedPool.slice(0, desktopRecommendedLimit).map((item, index) => {
                     const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                     return (
                       <Link
@@ -2919,7 +2964,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                     <span>{uiLabel(language, { en: 'Latest News', gu: 'તાજા સમાચાર', hi: 'ताजा खबरें' })}</span>
                   </div>
                   <div className="flex flex-col gap-3">
-                    {desktopExtraLatestPool.slice(0, 4).map((item, index) => {
+                    {desktopExtraLatestPool.slice(0, desktopLatestLimit).map((item, index) => {
                       const itemCategory = normalizeDisplayText(getCategoryLabel(item, language));
                       return (
                         <Link
@@ -2984,10 +3029,10 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                 </div>
               )}
 
-              {/* Desktop Photo Gallery Widget below Latest News (Fills remaining right-side whitespace) */}
+              {/* Desktop Photo Gallery Widget below Latest News (One-by-one in column & Sticky to eliminate white space) */}
               {sidebarPhotos.length > 0 && (
-                <div className="hidden md:flex flex-col mt-5">
-                  <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-neutral-800 pb-2 mb-3">
+                <div className="hidden md:flex flex-col mt-5 sticky top-20 z-10">
+                  <div className="flex items-center justify-between border-b-2 border-slate-200 dark:border-neutral-800 pb-2 mb-3 bg-white/80 dark:bg-[#0f111a]/80 backdrop-blur-xs">
                     <div className="flex items-center gap-2">
                       <span className="block w-[3.5px] h-5 rounded-full bg-[#B3121B]"></span>
                       <h3 className="text-[16px] font-black tracking-tight text-neutral-900 dark:text-white">
@@ -3002,8 +3047,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                     </Link>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {sidebarPhotos.map((photo, index) => {
+                  <div className="flex flex-col gap-3.5">
+                    {sidebarPhotos.slice(0, desktopPhotoLimit).map((photo, index) => {
                       const caption = photo.captionGu || photo.caption || photo.alt || 'ફોટો ગેલેરી';
                       const photoSrc = resolvePhotoUrl(photo.src || photo.image, FALLBACK_NEWS_IMAGES[index % FALLBACK_NEWS_IMAGES.length]);
                       const photoHref = photo.id ? `/photos/${photo.id}` : '/photos';
@@ -3013,25 +3058,31 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                         <Link
                           key={`sidebar-photo-${photo.id || index}`}
                           href={photoHref}
-                          className="group flex flex-col p-2 rounded-xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-xs hover:shadow-md hover:border-[#B3121B]/40 transition-all text-left"
+                          className="group flex flex-col p-2.5 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.06)] hover:shadow-lg hover:border-[#B3121B]/40 transition-all text-left"
                         >
-                          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-neutral-900">
+                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
                             <Image
                               src={photoSrc}
                               alt={caption}
                               fill
-                              sizes="160px"
+                              sizes="340px"
                               className="object-cover transition-transform duration-300 group-hover:scale-105"
                             />
-                            <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none">
+                            <div className="absolute top-2 left-2 z-10 pointer-events-none">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-[#B3121B] px-2.5 py-0.5 text-[9.5px] font-black text-white shadow-xs">
+                                <Camera className="w-2.5 h-2.5 text-white" />
+                                <span>{language === 'gu' ? 'ફોટો ગેલેરી' : language === 'hi' ? 'फोटो गैलरी' : 'Photos'}</span>
+                              </span>
+                            </div>
+                            <div className="absolute top-2 right-2 z-10 pointer-events-none">
                               <span className="inline-flex items-center gap-1 rounded-full bg-black/75 backdrop-blur-xs px-2 py-0.5 text-[9.5px] font-black text-white shadow-sm border border-white/20">
                                 <Camera className="w-2.5 h-2.5 text-red-400" />
                                 <span>{imgCount}</span>
                               </span>
                             </div>
                           </div>
-                          <div className="mt-1.5 min-w-0">
-                            <h4 className="text-[12px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
+                          <div className="mt-2 min-w-0 px-0.5">
+                            <h4 className="text-[13px] sm:text-[13.5px] font-bold leading-snug tracking-tight text-neutral-900 dark:text-neutral-100 group-hover:text-[#B3121B] dark:group-hover:text-red-400 transition-colors line-clamp-2">
                               <AutoTranslateString text={caption} language={language} />
                             </h4>
                           </div>

@@ -317,7 +317,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-white/90">
                               <Eye className="h-3 w-3" />
                               <span>{card.viewsGu} વ્યુ</span>
-                              <span>|</span>
+                              <span className="opacity-60 select-none">•</span>
                               <Clock className="h-3 w-3" />
                               <span>{card.duration}</span>
                             </div>
@@ -360,7 +360,7 @@ export default function VideoDesk({ videos, language, showShorts = true, onlySho
                             <div className="flex items-center gap-1.5 text-[10px] font-extrabold text-white/90 mt-1.5 drop-shadow">
                               <Eye className="h-3 w-3 text-white/80" />
                               <span>{card.viewsGu} {language === 'gu' ? 'વ્યુ' : language === 'hi' ? 'व्यू' : 'views'}</span>
-                              <span>|</span>
+                              <span className="opacity-60 select-none">•</span>
                               <Clock className="h-3 w-3 text-white/80" />
                               <span>{card.duration}</span>
                             </div>
