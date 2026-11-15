@@ -12,7 +12,7 @@ import { SocialIcon } from '@/components/ui/SocialLinks';
 import ArticleShareAudioBar from './ArticleShareAudioBar';
 import { getPublicArticleBySlug } from '@/lib/api';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
-import { isSameCategory, sortArticlesByNewest, getArticleAgeDays } from '@/lib/articleCategory';
+import { isSameCategory, sortArticlesByNewest, getArticleAgeDays, isSolelyHealthArticle } from '@/lib/articleCategory';
 
 interface ArticleInfiniteStreamProps {
   mounted: boolean;
@@ -566,7 +566,7 @@ export default function ArticleInfiniteStream({
       ...(trending || []),
       ...(mostReadArticles || []),
       ...(related || []),
-    ];
+    ].filter((a) => !isSolelyHealthArticle(a));
     const uniquePool = filterUniqueArticles(pool, excludeList);
     return sortArticlesByNewest(uniquePool);
   }, [article, streamList, streamSidebarRecommendedPool, sidebarRecommendedPool, latestArticles, trending, mostReadArticles, related]);
@@ -599,7 +599,7 @@ export default function ArticleInfiniteStream({
 
         // Master candidate pool strictly pre-filtered using deep deduplication (ID, slug, title)
         const masterCandidatePool = filterUniqueArticles(
-          [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])],
+          [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])].filter((a) => !isSolelyHealthArticle(a)),
           globalForbiddenArticles
         );
 

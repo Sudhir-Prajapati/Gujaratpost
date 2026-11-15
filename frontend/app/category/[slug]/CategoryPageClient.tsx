@@ -13,7 +13,7 @@ import {
   formatViews,
   CategorySeoMeta,
 } from '@/data';
-import { getCategoryColor, toGu, sortArticlesByLatest } from '@/lib/utils';
+import { getCategoryColor, toGu, sortArticlesByLatest, isSolelyHealthArticle } from '@/lib/utils';
 import { getPublicVideos, getPublicArticles, getPublicGallery } from '@/lib/api';
 import { safeYouTubeId, youtubeEmbedUrl } from '@/lib/youtube';
 import NewsCard from '@/components/ui/NewsCard';
@@ -584,7 +584,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   useEffect(() => {
     if (trending && trending.length > 0) {
-      setTrendingStories(trending);
+      setTrendingStories(trending.filter((a: any) => !isSolelyHealthArticle(a)));
     }
   }, [trending]);
 
@@ -597,7 +597,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
       getPublicArticles({ isTrending: true, limit: 10 })
         .then((res) => {
           if (active && res?.articles && res.articles.length > 0) {
-            setTrendingStories(res.articles);
+            setTrendingStories(res.articles.filter((a: any) => !isSolelyHealthArticle(a)));
           }
         })
         .catch(() => { });
@@ -1193,7 +1193,7 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
         getPublicArticles({ page: 1, limit: 90, sort: 'latest' })
           .then((res) => {
             if (res?.articles?.length) {
-              setMixedNews(sortArticlesByLatest(res.articles));
+              setMixedNews(sortArticlesByLatest(res.articles.filter((a: any) => !isSolelyHealthArticle(a))));
             }
           })
           .catch(() => { });

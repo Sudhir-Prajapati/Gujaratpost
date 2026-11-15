@@ -10,7 +10,7 @@ import { safeYouTubeId } from '@/lib/youtube';
 import { useApp } from '@/components/AppProvider';
 import { useIsApk } from '@/lib/useIsApk';
 import ApkVideoPlayer from '@/components/apk/ApkVideoPlayer';
-import { toGu } from '@/lib/utils';
+import { toGu, isSolelyHealthArticle } from '@/lib/utils';
 import type { Article } from '@/types';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
@@ -180,7 +180,7 @@ export default function VideosPageClient() {
     });
     getPublicArticles({ limit: 50, sort: 'latest' }).then((res) => {
       if (res?.articles?.length > 0) {
-        setArticlesList(res.articles);
+        setArticlesList(res.articles.filter((a: any) => !isSolelyHealthArticle(a)));
       }
     });
     getPublicGallery({ limit: 60 }).then((res) => {
@@ -308,8 +308,9 @@ export default function VideosPageClient() {
 
   // Latest news with thumbnail images for right sidebar
   const latestImageArticles = useMemo(() => {
-    if (articlesList.length > 0) {
-      return articlesList;
+    const validArticles = (articlesList || []).filter((a: any) => !isSolelyHealthArticle(a));
+    if (validArticles.length > 0) {
+      return validArticles;
     }
     return [
       {

@@ -125,3 +125,70 @@ export function sortArticlesByNewest(articles: Article[]): Article[] {
   });
 }
 
+/**
+ * Determines if an article solely/exclusively belongs to the Health category
+ * (e.g. standalone wellness, diet, medical advice tips with no hard news categories like Gujarat, Politics, Crime, etc.).
+ * Standalone health stories are excluded from "Latest News" (લેટેસ્ટ સમાચાર) and general story suggestions/recommendations.
+ */
+export function isSolelyHealthArticle(cand: any): boolean {
+  if (!cand) return false;
+
+  const isHealthString = (str?: string | null): boolean => {
+    if (!str) return false;
+    const clean = String(str).toLowerCase().trim().replace(/[\s\-_]+/g, '');
+    return (
+      clean === 'health' ||
+      clean === 'helth' ||
+      clean.includes('health') ||
+      clean.includes('હેલ્થ') ||
+      clean.includes('સ્વાસ્થ્ય') ||
+      clean.includes('આરોગ્ય') ||
+      clean.includes('swasthya') ||
+      clean.includes('arogya')
+    );
+  };
+
+  // 1. Check all entries in categories array if present
+  if (Array.isArray(cand.categories) && cand.categories.length > 0) {
+    const validCats = cand.categories.filter(Boolean);
+    if (validCats.length > 0) {
+      const hasHealth = validCats.some((c: any) =>
+        isHealthString(c?.slug) ||
+        isHealthString(c?.name) ||
+        isHealthString(c?.nameGu) ||
+        isHealthString(c?.nameHi) ||
+        isHealthString(c?.category?.slug) ||
+        isHealthString(c?.category?.name) ||
+        isHealthString(c?.category?.nameGu)
+      );
+
+      if (hasHealth) {
+        // Check if there are other categories that are NOT health
+        const hasNonHealth = validCats.some((c: any) => {
+          const s = c?.slug || c?.category?.slug || '';
+          const n = c?.name || c?.nameGu || c?.category?.name || c?.category?.nameGu || '';
+          return !isHealthString(s) && !isHealthString(n);
+        });
+
+        // If it has NO other non-health categories, it's solely health!
+        if (!hasNonHealth) {
+          return true;
+        }
+        // It has other categories (e.g. Gujarat, Politics), so it's a hard news story
+        return false;
+      }
+    }
+  }
+
+  // 2. Check primary category fields
+  const primarySlug = cand.categorySlug || cand.category?.slug || '';
+  const primaryName = cand.category || cand.categoryGu || cand.categoryHi || cand.category?.name || cand.category?.nameGu || '';
+
+  if (isHealthString(primarySlug) || isHealthString(primaryName)) {
+    return true;
+  }
+
+  return false;
+}
+
+

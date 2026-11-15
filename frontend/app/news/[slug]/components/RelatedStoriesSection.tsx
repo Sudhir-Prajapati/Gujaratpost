@@ -8,7 +8,7 @@ import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle } f
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
-import { sortArticlesByNewest } from '@/lib/articleCategory';
+import { sortArticlesByNewest, isSolelyHealthArticle } from '@/lib/articleCategory';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 
 interface RelatedStoriesSectionProps {
@@ -40,7 +40,7 @@ export default function RelatedStoriesSection({
 }: RelatedStoriesSectionProps) {
   const displayRelated = React.useMemo(() => {
     const excludeList = [article, ...(excludeArticles || [])];
-    const candidatePool = [...(related || []), ...(fallbackArticles || [])];
+    const candidatePool = [...(related || []), ...(fallbackArticles || [])].filter((a) => !isSolelyHealthArticle(a));
     const result = filterUniqueArticles(candidatePool, excludeList);
     return sortArticlesByNewest(result);
   }, [related, fallbackArticles, excludeArticles, article]);

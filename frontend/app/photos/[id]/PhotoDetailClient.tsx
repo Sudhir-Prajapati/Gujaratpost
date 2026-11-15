@@ -18,6 +18,7 @@ import { useApp } from '@/components/AppProvider';
 import { getPublicGallery } from '@/lib/api';
 import { useAutoTranslate } from '@/lib/translate';
 import { AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
+import { isSolelyHealthArticle } from '@/lib/articleCategory';
 import type { Language } from '@/types';
 import AdSectionBanner from '@/components/ads/AdSectionBanner';
 import ArticleShareAudioBar from '@/app/news/[slug]/components/ArticleShareAudioBar';
@@ -983,7 +984,10 @@ export default function PhotoDetailClient({ activeId, photo: dbPhoto, allPhotos:
 
             {/* Latest News List — text left, image right */}
             <div className="space-y-0">
-              {(dbTrending && dbTrending.length > 0 ? dbTrending : sidebarRecommendedPool).slice(0, 8).map((item: any, index: number) => {
+              {((dbTrending && dbTrending.length > 0 ? dbTrending : sidebarRecommendedPool) || [])
+                .filter((item: any) => !isSolelyHealthArticle(item))
+                .slice(0, 8)
+                .map((item: any, index: number) => {
                 const isNewsItem = !!(item.title || item.titleGu || item.titleEn);
                 const rawItemTitle = isNewsItem
                   ? (getLocalized(language, { en: item.title || item.titleEn || '', gu: item.titleGu || item.title || '', hi: item.titleHi || item.title || '' }) || item.title || '')

@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Play, Flame, ChevronRight } from 'lucide-react';
 import type { Article, Video } from '@/types';
 import { getPublicArticles, getPublicReels } from '@/lib/api';
+import { isSolelyHealthArticle } from '@/lib/articleCategory';
 import { useApp } from '@/components/AppProvider';
 import { safeYouTubeId } from '@/lib/youtube';
 import ApkVideoPlayer from './ApkVideoPlayer';
@@ -196,7 +197,7 @@ export default function ApkHomeFeed({
     setIsLoadingMore(true);
     try {
       const result = await getPublicArticles({ page, limit: 20, sort: 'latest' });
-      const newArticles = result.articles || [];
+      const newArticles = (result.articles || []).filter((a: any) => !isSolelyHealthArticle(a));
       if (newArticles.length === 0 || page >= result.totalPages) {
         setHasMore(false);
       } else {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getLocalized } from '@/data';
 import { getPublicArticles } from '@/lib/api';
+import { isSolelyHealthArticle } from '@/lib/utils';
 import NewsCard from '@/components/ui/NewsCard';
 import Advertisement from '@/components/ads/Advertisement';
 import { useApp } from '@/components/AppProvider';
@@ -15,7 +16,7 @@ export default function TrendingSidebar() {
   useEffect(() => {
     getPublicArticles({ isTrending: true, limit: 6 }).then((res) => {
       if (res && res.articles) {
-        setTrending(res.articles);
+        setTrending(res.articles.filter((a: any) => !isSolelyHealthArticle(a)));
       }
     });
   }, []);

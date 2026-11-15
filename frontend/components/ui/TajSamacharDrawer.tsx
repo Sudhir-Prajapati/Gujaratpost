@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getPublicArticles } from '@/lib/api';
 import { Article } from '@/types';
+import { isSolelyHealthArticle } from '@/lib/articleCategory';
 import { Megaphone, X } from 'lucide-react';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { useIsApk } from '@/lib/useIsApk';
@@ -166,7 +167,7 @@ export default function TajSamacharDrawer() {
         if (isMounted) {
           setHasFetched(true);
           if (res?.articles && res.articles.length > 0) {
-            setArticles(res.articles);
+            setArticles(res.articles.filter((a: any) => !isSolelyHealthArticle(a)));
             if (res.articles.length < 15) setHasMore(false);
           }
         }
@@ -198,7 +199,7 @@ export default function TajSamacharDrawer() {
       if (res?.articles && res.articles.length > 0) {
         setArticles((prev) => {
           const existingKeys = new Set(prev.map((a) => String(a.id || a.slug)));
-          const uniqueNew = res.articles.filter((a) => !existingKeys.has(String(a.id || a.slug)));
+          const uniqueNew = res.articles.filter((a: any) => !existingKeys.has(String(a.id || a.slug)) && !isSolelyHealthArticle(a));
           if (uniqueNew.length === 0) {
             setHasMore(false);
             return prev;

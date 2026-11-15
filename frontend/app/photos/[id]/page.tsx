@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/data";
 import { getPublicGallery, getPublicGalleryPhoto, getPublicArticles } from "@/lib/api";
+import { isSolelyHealthArticle } from "@/lib/articleCategory";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import PhotoDetailClient from "./PhotoDetailClient";
 
@@ -73,7 +74,7 @@ export default async function PhotoDetailPage({ params }: { params: Promise<{ id
     ? photo.relatedPhotos
     : (allPhotos || []);
 
-  const trending = trendingRes?.articles || [];
+  const trending = (trendingRes?.articles || []).filter((a: any) => !isSolelyHealthArticle(a));
   const photoUrl = `${SITE_URL}/photos/${photo.id || photo._id || id}`;
 
   return (

@@ -6,7 +6,7 @@ import { getPublicArticleBySlug, getPublicArticles } from "@/lib/api";
 import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
 import { filterUniqueArticles } from "@/lib/articleDeduplication";
-import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays, getArticleTimestamp } from "@/lib/articleCategory";
+import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays, getArticleTimestamp, isSolelyHealthArticle } from "@/lib/articleCategory";
 
 export const revalidate = 30;
 
@@ -214,8 +214,8 @@ export default async function NewsDetailPage(
   ]);
 
   const categoryArticles = catResponses.flatMap((r) => r?.articles || []);
-  const fallbackArticles = fallbackRes?.articles || [];
-  const trending = filterUniqueArticles(trendingRes?.articles || [], [article]);
+  const fallbackArticles = (fallbackRes?.articles || []).filter((a: any) => !isSolelyHealthArticle(a));
+  const trending = filterUniqueArticles(trendingRes?.articles || [], [article]).filter((a: any) => !isSolelyHealthArticle(a));
 
   // Deep deduplication against current active article
   const currentId = String(article.id || '');
@@ -241,11 +241,12 @@ export default async function NewsDetailPage(
   const effectiveRefTime = maxCandidateTime > 0 ? Math.max(Date.now(), maxCandidateTime) : Date.now();
 
   // 1. Separate candidates into same-category and other-categories, sorted newest first
+  // Standalone health stories are strictly excluded from general story recommendations
   const sameCategoryCandidates = sortArticlesByNewest(
     uniquePool.filter((item) => isSameCategory(item, article))
   );
   const otherCategoryCandidates = sortArticlesByNewest(
-    uniquePool.filter((item) => !isSameCategory(item, article))
+    uniquePool.filter((item) => !isSameCategory(item, article) && !isSolelyHealthArticle(item))
   );
 
   // 2. Partition by freshness:

@@ -535,4 +535,7 @@ export function sortArticlesByLatest<T extends any>(list: T[]): T[] {
   });
 }
 
+export { isSolelyHealthArticle } from './articleCategory';
+
+
 

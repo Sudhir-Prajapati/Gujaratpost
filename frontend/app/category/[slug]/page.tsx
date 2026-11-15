@@ -1,6 +1,6 @@
 import { CATEGORY_META, categorySlugMapping, CATEGORY_CUSTOM_SEO, getCategoryCustomSeo } from "@/data";
 import { getPublicArticles, getPublicCategories } from "@/lib/api";
-import { sortArticlesByLatest } from "@/lib/utils";
+import { sortArticlesByLatest, isSolelyHealthArticle } from "@/lib/utils";
 import CategoryPageClient from "./CategoryPageClient";
 import { notFound, redirect } from "next/navigation";
 
@@ -133,8 +133,8 @@ export default async function CategoryPage({
 
   const articles = sortArticlesByLatest(rawArticles);
   const politicsArticles = sortArticlesByLatest(politicsRes?.articles || []);
-  const trendingArticles = sortArticlesByLatest(trendingRes?.articles || []);
-  const mixedArticles = sortArticlesByLatest(mixedRes?.articles || []);
+  const trendingArticles = sortArticlesByLatest((trendingRes?.articles || []).filter((a: any) => !isSolelyHealthArticle(a)));
+  const mixedArticles = sortArticlesByLatest((mixedRes?.articles || []).filter((a: any) => !isSolelyHealthArticle(a)));
 
   return (
     <CategoryPageClient

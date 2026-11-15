@@ -8,6 +8,7 @@ import { PHOTOS, getLocalized, getCategoryLabel } from '@/data';
 import { useApp } from '@/components/AppProvider';
 import AePanVachoSection from '@/components/sections/AePanVachoSection';
 import { getPublicArticles, getPublicGallery } from '@/lib/api';
+import { isSolelyHealthArticle } from '@/lib/articleCategory';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 
 const FALLBACK_NEWS_IMAGES = [
@@ -114,9 +115,10 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
   }, []);
 
   useEffect(() => {
-    getPublicArticles({ page: 1, limit: 8, sort: 'latest' })
+    getPublicArticles({ page: 1, limit: 12, sort: 'latest' })
       .then((res) => {
-        setLatestArticles(res?.articles?.slice(0, 8) || []);
+        const filtered = (res?.articles || []).filter((a: any) => !isSolelyHealthArticle(a));
+        setLatestArticles(filtered.slice(0, 8));
         setLatestTotalPages(res?.totalPages || 1);
       })
       .catch(() => { });
@@ -127,8 +129,8 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
     setLoadingMoreLatest(true);
     try {
       const nextPage = latestPage + 1;
-      const res = await getPublicArticles({ page: nextPage, limit: 8, sort: 'latest' });
-      const newArticles = res?.articles || [];
+      const res = await getPublicArticles({ page: nextPage, limit: 12, sort: 'latest' });
+      const newArticles = (res?.articles || []).filter((a: any) => !isSolelyHealthArticle(a));
       setLatestArticles((current) => {
         const existingIds = new Set(current.map((article) => article.id || article.slug));
         return [...current, ...newArticles.filter((article) => !existingIds.has(article.id || article.slug))];

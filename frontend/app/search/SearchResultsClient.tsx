@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, SearchX, Loader2, ChevronDown } from 'lucide-react';
 import { getPublicArticles } from '@/lib/api';
+import { isSolelyHealthArticle } from '@/lib/articleCategory';
 import NewsCard from '@/components/ui/NewsCard';
 import { useApp } from '@/components/AppProvider';
 import type { Article } from '@/types';
@@ -128,7 +129,7 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
         if (currentRunId !== searchAbortRef.current) return;
 
         const searchArticles = (searchRes && Array.isArray(searchRes.articles)) ? searchRes.articles : [];
-        const fallbackArticles = (latestRes && Array.isArray(latestRes.articles)) ? latestRes.articles : [];
+        const fallbackArticles = (latestRes && Array.isArray(latestRes.articles)) ? latestRes.articles.filter((a: any) => !isSolelyHealthArticle(a)) : [];
 
         setResults(searchArticles);
         setLatestFallback(fallbackArticles);
@@ -146,7 +147,7 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
         const latestRes = await getPublicArticles({ page: 1, limit: 20 });
         if (currentRunId !== searchAbortRef.current) return;
         setResults([]);
-        const fallbackArticles = (latestRes && Array.isArray(latestRes.articles)) ? latestRes.articles : [];
+        const fallbackArticles = (latestRes && Array.isArray(latestRes.articles)) ? latestRes.articles.filter((a: any) => !isSolelyHealthArticle(a)) : [];
         setLatestFallback(fallbackArticles);
         const total = latestRes?.total ?? fallbackArticles.length;
         setTotalCount(total);
@@ -200,7 +201,7 @@ export default function SearchResultsClient({ initialQuery }: { initialQuery: st
           limit: 20,
         });
 
-        const newArticles = (res && Array.isArray(res.articles)) ? res.articles : [];
+        const newArticles = (res && Array.isArray(res.articles)) ? res.articles.filter((a: any) => !isSolelyHealthArticle(a)) : [];
         if (newArticles.length === 0) {
           setHasMore(false);
         } else {

@@ -7,7 +7,7 @@ import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getArticleTitle, getCategoryLabel, formatViews, getLocalized, formatDate } from '@/data';
 import { getPublicArticles, getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
-import { toGuDigits, getCategoryBadgeStyle } from '@/lib/utils';
+import { toGuDigits, getCategoryBadgeStyle, isSolelyHealthArticle } from '@/lib/utils';
 import type { Article, Language } from '@/types';
 
 import ArticleMedia from '@/components/ui/ArticleMedia';
@@ -45,10 +45,12 @@ export default function LatestUpdatesSection({
 }) {
   const { language, epaperEnabled } = useApp();
   const [latestNews, setLatestNews] = useState<Article[]>(() =>
-    initialArticles && initialArticles.length > 0 ? sortArticlesByLatest(initialArticles).slice(0, 10) : []
+    initialArticles && initialArticles.length > 0
+      ? sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)).slice(0, 10)
+      : []
   );
   const [mostRead, setMostRead] = useState<Article[]>(() => {
-    const sortedInit = initialArticles ? sortArticlesByLatest(initialArticles) : [];
+    const sortedInit = initialArticles ? sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)) : [];
     const latestIdSet = new Set(sortedInit.slice(0, 10).map((a) => a.id));
     const pool: Article[] = [
       ...(initialMostRead || []),
@@ -57,7 +59,7 @@ export default function LatestUpdatesSection({
     const topList: Article[] = [];
     const seen = new Set<string>();
     for (const a of pool) {
-      if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id)) {
+      if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a)) {
         seen.add(a.id);
         topList.push(a);
         if (topList.length >= 10) break;
@@ -66,8 +68,8 @@ export default function LatestUpdatesSection({
     return topList;
   });
   const [isMostReadExpanded, setIsMostReadExpanded] = useState(false);
-  const [popularArticles, setPopularArticles] = useState<Article[]>(
-    initialPopularNews || []
+  const [popularArticles, setPopularArticles] = useState<Article[]>(() =>
+    (initialPopularNews || []).filter((a) => !isSolelyHealthArticle(a))
   );
   const [currentPopularIdx, setCurrentPopularIdx] = useState(0);
   const [mobilePopularIdx, setMobilePopularIdx] = useState(0);
@@ -75,7 +77,7 @@ export default function LatestUpdatesSection({
 
   useEffect(() => {
     if (initialArticles && initialArticles.length > 0) {
-      const sortedLatest = sortArticlesByLatest(initialArticles);
+      const sortedLatest = sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a));
       const top10Latest = sortedLatest.slice(0, 10);
       setLatestNews(top10Latest);
 
@@ -87,7 +89,7 @@ export default function LatestUpdatesSection({
       const topList: Article[] = [];
       const seen = new Set<string>();
       for (const a of pool) {
-        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id)) {
+        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a)) {
           seen.add(a.id);
           topList.push(a);
           if (topList.length >= 10) break;
@@ -96,7 +98,7 @@ export default function LatestUpdatesSection({
       setMostRead(topList);
     }
     if (initialPopularNews && initialPopularNews.length > 0) {
-      setPopularArticles(initialPopularNews);
+      setPopularArticles(initialPopularNews.filter((a) => !isSolelyHealthArticle(a)));
     }
 
     // Skip redundant network fetching if SSR already provided articles and hero data
@@ -111,10 +113,10 @@ export default function LatestUpdatesSection({
     ]).then(([res, heroRes, mostViewedRes]: any[]) => {
       let currentLatest: Article[] = [];
       if (res && res.articles && res.articles.length > 0) {
-        currentLatest = sortArticlesByLatest(res.articles).slice(0, 10);
+        currentLatest = sortArticlesByLatest(res.articles).filter((a) => !isSolelyHealthArticle(a)).slice(0, 10);
         setLatestNews(currentLatest);
       } else if (initialArticles && initialArticles.length > 0) {
-        currentLatest = sortArticlesByLatest(initialArticles).slice(0, 10);
+        currentLatest = sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)).slice(0, 10);
       }
 
       const latestIdSet = new Set(currentLatest.map((a) => a.id));
@@ -135,7 +137,7 @@ export default function LatestUpdatesSection({
       const seenIds = new Set<string>();
 
       for (const art of candidatePool) {
-        if (art && art.id && !seenIds.has(art.id) && !latestIdSet.has(art.id)) {
+        if (art && art.id && !seenIds.has(art.id) && !latestIdSet.has(art.id) && !isSolelyHealthArticle(art)) {
           seenIds.add(art.id);
           topListMostRead.push(art);
           if (topListMostRead.length >= 10) break;
@@ -146,9 +148,9 @@ export default function LatestUpdatesSection({
 
       // Fetch Admin-managed Popular News Articles for "લોકપ્રિય સમાચાર"
       if (heroRes && Array.isArray(heroRes.popularNewsArticles) && heroRes.popularNewsArticles.length > 0) {
-        setPopularArticles(heroRes.popularNewsArticles);
+        setPopularArticles(heroRes.popularNewsArticles.filter((a: any) => !isSolelyHealthArticle(a)));
       } else if (res && res.articles && (!initialPopularNews || initialPopularNews.length === 0)) {
-        setPopularArticles(res.articles.slice(0, 12));
+        setPopularArticles(res.articles.filter((a: any) => !isSolelyHealthArticle(a)).slice(0, 12));
       }
     });
   }, [initialArticles, initialMostRead, initialPopularNews]);

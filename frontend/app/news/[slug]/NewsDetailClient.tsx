@@ -16,7 +16,7 @@ import { playArticleAudio, stopArticleAudio, cleanTextForSpeech } from '@/lib/ar
 import RelatedStoriesSection from './components/RelatedStoriesSection';
 import AlsoPanVacho from './components/AlsoPanVacho';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
-import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays as calcArticleAgeDays } from '@/lib/articleCategory';
+import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays as calcArticleAgeDays, isSolelyHealthArticle } from '@/lib/articleCategory';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
@@ -1509,7 +1509,12 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
   const readAlsoPool = useMemo(() => {
     const topMostRead = (mostReadArticles || []).slice(0, 3);
-    const pool = [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])];
+    const pool = [
+      ...(latestArticles || []),
+      ...(related || []),
+      ...(trending || []),
+      ...(mostReadArticles || []),
+    ].filter((item) => !isSolelyHealthArticle(item));
     const uniquePool = filterUniqueArticles(pool, [article, ...topMostRead]);
     const sortedPool = sortArticlesByNewest(uniquePool);
 
@@ -1804,42 +1809,20 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return 4;
   }, []);
 
-  // 1. Helper to identify health category articles (strictly excluded from Recommended sidebars)
+  // 1. Helper to identify standalone health category articles (strictly excluded from Recommended sidebars & suggestions)
   const isHealthArticle = (cand: any): boolean => {
-    if (!cand) return false;
-    const catSlug = String(
-      cand.category ||
-      cand.categorySlug ||
-      cand.category?.slug ||
-      cand.category?.name ||
-      ''
-    ).toLowerCase().trim();
-
-    if (catSlug === 'health' || catSlug.includes('health') || catSlug.includes('હેલ્થ') || catSlug.includes('સ્વાસ્થ્ય')) {
-      return true;
-    }
-
-    if (Array.isArray(cand.categories)) {
-      for (const c of cand.categories) {
-        const cSlug = String(c?.category?.slug || c?.category?.name || c?.slug || c?.name || '').toLowerCase().trim();
-        if (cSlug === 'health' || cSlug.includes('health') || cSlug.includes('હેલ્થ') || cSlug.includes('સ્વાસ્થ્ય')) {
-          return true;
-        }
-      }
-    }
-
-    return false;
+    return isSolelyHealthArticle(cand);
   };
 
   // 2. Top Sidebar Recommended Pool (For Main Article Sidebar)
-  // Strictly excludes main article, Most Read top 3 articles, and Also Read articles
+  // Strictly excludes main article, Most Read top 3 articles, Also Read articles, and standalone health articles
   // Strictly prioritizes fresh news from the last 3-6 days, sorted newest first
   const sidebarRecommendedPool = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
     const excludeList = [article, ...mostReadSubset, ...readAlsoPool];
 
     const pool = [...(latestArticles || []), ...trending, ...related, ...mostReadArticles].filter(
-      (item) => !isHealthArticle(item)
+      (item) => !isSolelyHealthArticle(item)
     );
     const uniquePool = filterUniqueArticles(pool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
@@ -1871,7 +1854,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   }, [article, trending, related, latestArticles, mostReadArticles, trendingLimit, readAlsoPool]);
 
   // 3. Stream Continuation Articles (For Infinite Stream below main article)
-  // Strictly excludes main article, Most Read, Also Read, and Top Sidebar Recommended articles
+  // Strictly excludes main article, Most Read, Also Read, Top Sidebar Recommended, and standalone health articles
   // Streams strictly fresh news from the last 3-4 days, sorted newest first
   const streamList = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
@@ -1882,7 +1865,12 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       ...sidebarRecommendedPool,
     ];
 
-    const rawPool = [...(latestArticles || []), ...(related || []), ...(trending || []), ...(mostReadArticles || [])];
+    const rawPool = [
+      ...(latestArticles || []),
+      ...(related || []),
+      ...(trending || []),
+      ...(mostReadArticles || []),
+    ].filter((item) => !isSolelyHealthArticle(item));
     const uniquePool = filterUniqueArticles(rawPool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
 
@@ -1901,7 +1889,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   }, [latestArticles, related, trending, article, readAlsoPool, sidebarRecommendedPool, mostReadArticles, trendingLimit]);
 
   // 4. Stream Sidebar Recommended Pool (For Infinite Stream right sidebar)
-  // Strictly excludes ALL articles already displayed anywhere on the page!
+  // Strictly excludes ALL articles already displayed anywhere on the page and standalone health articles
   // Strictly prioritizes fresh news from the last 3-6 days, sorted newest first
   const streamSidebarRecommendedPool = useMemo(() => {
     const mostReadSubset = (mostReadArticles || []).slice(0, trendingLimit);
@@ -1914,7 +1902,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     ];
 
     const pool = [...(latestArticles || []), ...trending, ...related, ...mostReadArticles].filter(
-      (item) => !isHealthArticle(item)
+      (item) => !isSolelyHealthArticle(item)
     );
     const uniquePool = filterUniqueArticles(pool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
@@ -1954,7 +1942,12 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       ...readAlsoPool,
       ...sidebarRecommendedPool,
     ];
-    const pool = [...(latestArticles || []), ...(trending || []), ...(related || []), ...(mostReadArticles || [])];
+    const pool = [
+      ...(latestArticles || []),
+      ...(trending || []),
+      ...(related || []),
+      ...(mostReadArticles || []),
+    ].filter((item) => !isSolelyHealthArticle(item));
     const uniquePool = filterUniqueArticles(pool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
     return sortedPool.slice(0, 8);
@@ -1970,7 +1963,12 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       ...sidebarRecommendedPool,
       ...desktopExtraLatestPool,
     ];
-    const pool = [...(trending || []), ...(related || []), ...(latestArticles || []), ...(mostReadArticles || [])];
+    const pool = [
+      ...(trending || []),
+      ...(related || []),
+      ...(latestArticles || []),
+      ...(mostReadArticles || []),
+    ].filter((item) => !isSolelyHealthArticle(item));
     const uniquePool = filterUniqueArticles(pool, excludeList);
     const sortedPool = sortArticlesByNewest(uniquePool);
     if (sortedPool.length < 10) {
@@ -3125,9 +3123,9 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
         <RelatedStoriesSection
           article={article}
-          related={related}
+          related={(related || []).filter((a) => !isSolelyHealthArticle(a))}
           excludeArticles={(related || []).length >= 12 ? readAlsoPool : undefined}
-          fallbackArticles={latestArticles}
+          fallbackArticles={(latestArticles || []).filter((a) => !isSolelyHealthArticle(a))}
           language={language}
           savedIds={savedIds}
           relatedLimit={relatedLimit}

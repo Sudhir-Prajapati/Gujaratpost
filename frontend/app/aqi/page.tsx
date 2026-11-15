@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { useApp } from '@/components/AppProvider';
 import AqiSkeleton from '@/components/aqi/AqiSkeleton';
 import { getPublicArticles } from '@/lib/api';
+import { isSolelyHealthArticle } from '@/lib/articleCategory';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
 import {
   Search,
@@ -410,10 +411,11 @@ function AqiPageContent() {
 
   // Fetch the latest published news for the card grid.
   useEffect(() => {
-    getPublicArticles({ page: 1, limit: 20 })
+    getPublicArticles({ page: 1, limit: 25 })
       .then((res) => {
         if (res?.articles?.length) {
-          setNewsArticles(res.articles);
+          const filtered = res.articles.filter((a: any) => !isSolelyHealthArticle(a));
+          setNewsArticles(filtered);
           setNewsPage(1);
           setNewsTotalPages(Math.max(1, res.totalPages || Math.ceil(res.total / 20)));
         }
@@ -432,9 +434,10 @@ function AqiPageContent() {
     setLoadingMoreNews(true);
     try {
       const nextPage = newsPage + 1;
-      const res = await getPublicArticles({ page: nextPage, limit: 20 });
+      const res = await getPublicArticles({ page: nextPage, limit: 25 });
       if (res?.articles?.length) {
-        setNewsArticles((articles) => [...articles, ...res.articles]);
+        const filtered = res.articles.filter((a: any) => !isSolelyHealthArticle(a));
+        setNewsArticles((articles) => [...articles, ...filtered]);
         setNewsPage(nextPage);
         setNewsTotalPages(Math.max(newsTotalPages, res.totalPages || Math.ceil(res.total / 20)));
         setVisibleNewsCount((count) => count + 4);
