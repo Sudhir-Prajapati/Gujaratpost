@@ -1116,21 +1116,21 @@ export default function ArticleList() {
 
         {/* Pagination bar */}
         {!loading && !error && totalArticles > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-zinc-400 px-6 py-4 dark:border-zinc-700">
-            <div className="flex flex-wrap items-center gap-3.5">
-              <span className="text-base font-medium text-slate-600 dark:text-slate-400">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-zinc-400 px-4 sm:px-6 py-3.5 dark:border-zinc-700">
+            <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+              <span className="text-xs sm:text-sm font-medium text-slate-600 dark:text-slate-400 whitespace-nowrap">
                 Showing <strong className="text-slate-900 dark:text-white font-bold">{articles.length}</strong> of{' '}
                 <strong className="text-slate-900 dark:text-white font-bold">{totalArticles}</strong> results
               </span>
 
-              <div className="flex items-center gap-2 pl-3 border-l border-zinc-300 dark:border-zinc-700">
-                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+              <div className="flex items-center gap-1.5 pl-2.5 border-l border-zinc-300 dark:border-zinc-700">
+                <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                   Show:
                 </span>
                 <select
                   value={pageSize}
                   onChange={(e) => handlePageSizeChange(parseInt(e.target.value, 10) || 10)}
-                  className="rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 px-2.5 py-1 text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-black dark:focus:border-white focus:outline-none dark:border-zinc-700 cursor-pointer shadow-2xs"
+                  className="rounded-lg border border-gray-400 bg-white dark:bg-zinc-900 px-2 py-1 text-xs sm:text-sm font-bold text-zinc-900 dark:text-zinc-100 focus:border-black dark:focus:border-white focus:outline-none dark:border-zinc-700 cursor-pointer shadow-2xs"
                   title="Change number of articles shown per page"
                 >
                   <option value={10}>10</option>
@@ -1142,39 +1142,39 @@ export default function ArticleList() {
                   <option value={300}>300</option>
                   <option value={500}>500</option>
                 </select>
-                <span className="text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
+                <span className="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400 whitespace-nowrap">
                   per page
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2 sm:gap-3">
               {/* Page navigation controls */}
-              <div className="flex items-center gap-2 sm:gap-2.5">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 {/* First page button */}
                 <button
                   onClick={() => handlePageChange(1)}
                   disabled={page === 1}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
                   title="First page (Page 1)"
                 >
-                  <ChevronsLeft className="h-5 w-5" />
+                  <ChevronsLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
 
                 {/* Previous page button */}
                 <button
                   onClick={() => handlePageChange(page - 1)}
                   disabled={page === 1}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
                   title="Previous page"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
 
                 {/* Editable Page Input: Page [ 2 ] of 87 */}
                 <form
                   onSubmit={handlePageInputSubmit}
-                  className="flex items-center gap-1.5 text-sm sm:text-base font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap px-1"
+                  className="flex items-center gap-1 text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-100 whitespace-nowrap px-0.5"
                 >
                   <span>Page</span>
                   <input
@@ -1185,7 +1185,7 @@ export default function ArticleList() {
                     onChange={(e) => setPageInput(e.target.value)}
                     onBlur={handlePageInputSubmit}
                     onFocus={(e) => e.target.select()}
-                    className="w-14 sm:w-16 h-10 px-1 text-center font-black text-sm sm:text-base rounded-xl border-2 border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 shadow-xs transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text hover:border-black dark:hover:border-white"
+                    className="w-12 sm:w-14 h-9 sm:h-10 px-1 text-center font-black text-xs sm:text-sm rounded-xl border-2 border-gray-400 bg-white dark:bg-zinc-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#B3121B] focus:border-[#B3121B] dark:border-zinc-700 shadow-xs transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none cursor-text hover:border-black dark:hover:border-white"
                     title={`Type a page number (1 to ${totalPages}) and press Enter to jump`}
                   />
                   <span>of {totalPages}</span>
@@ -1193,7 +1193,7 @@ export default function ArticleList() {
                   {pageInput !== String(page) && pageInput.trim() !== '' && (
                     <button
                       type="submit"
-                      className="ml-1 h-8 px-2.5 rounded-lg bg-[#B3121B] hover:bg-red-700 text-white text-xs font-black transition active:scale-95 shadow-sm cursor-pointer"
+                      className="ml-1 h-7 sm:h-8 px-2 rounded-lg bg-[#B3121B] hover:bg-red-700 text-white text-xs font-black transition active:scale-95 shadow-sm cursor-pointer"
                       title="Jump to page"
                     >
                       Go
@@ -1205,27 +1205,27 @@ export default function ArticleList() {
                 <button
                   onClick={() => handlePageChange(page + 1)}
                   disabled={page === totalPages}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
                   title="Next page"
                 >
-                  <ChevronRight className="h-5 w-5" />
+                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
 
                 {/* Last page button */}
                 <button
                   onClick={() => handlePageChange(totalPages)}
                   disabled={page === totalPages}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
+                  className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl border border-gray-400 text-zinc-600 hover:bg-zinc-100 disabled:pointer-events-none disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800 transition active:scale-95 cursor-pointer"
                   title={`Last page (Page ${totalPages})`}
                 >
-                  <ChevronsRight className="h-5 w-5" />
+                  <ChevronsRight className="h-4 w-4 sm:h-5 sm:w-5" />
                 </button>
               </div>
 
               {/* Divider */}
               <div className="hidden sm:block h-6 w-px bg-zinc-300 dark:bg-zinc-700" />
 
-              {/* Reset to Page 1 button */}
+              {/* Reset button */}
               <button
                 type="button"
                 onClick={() => {
@@ -1233,18 +1233,18 @@ export default function ArticleList() {
                   scrollToTop();
                 }}
                 disabled={page === 1}
-                className="group inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3 sm:px-3.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
+                className="group inline-flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
                 title="Reset to Page 1 (સીધા પ્રથમ પેજ પર પાછા જાઓ)"
               >
                 <RotateCcw className="h-4 w-4 text-[#B3121B] group-hover:text-white transition-colors" />
-                <span>Reset (Page 1)</span>
+                <span>Reset</span>
               </button>
 
               {/* Neatly integrated To Top button */}
               <button
                 type="button"
                 onClick={scrollToTop}
-                className="group inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3.5 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
+                className="group inline-flex h-9 sm:h-10 items-center gap-1.5 rounded-xl border border-gray-400 bg-white dark:bg-zinc-900 px-3 text-xs sm:text-sm font-bold text-zinc-800 dark:text-zinc-100 hover:bg-[#B3121B] hover:text-white hover:border-[#B3121B] dark:hover:bg-[#B3121B] dark:hover:text-white dark:hover:border-[#B3121B] transition-all active:scale-95 shadow-2xs cursor-pointer whitespace-nowrap"
                 title="Come to top (ટોચ પર જાઓ)"
               >
                 <ArrowUp className="h-4 w-4 text-[#B3121B] group-hover:text-white transition-colors" />

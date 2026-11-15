@@ -887,7 +887,7 @@ export default function GalleryPage() {
               title="Reset to Page 1 (સીધા પેજ ૧ પર પાછા જાઓ)"
             >
               <RotateCcw className="h-3.5 w-3.5 text-[#B3121B] group-hover:text-white transition-colors" />
-              <span>Reset (Page 1)</span>
+              <span>Reset</span>
             </button>
           </div>
         </div>
