@@ -48,6 +48,195 @@ const nextConfig: NextConfig = {
     ],
   },
 
+  async redirects() {
+    return [
+      // 1. Direct redirects for legacy/spreadsheet URLs (exact casing matches)
+      {
+        source: '/news/listing/Gujarat',
+        destination: '/category/gujarat',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Loksabha-Election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Ahmedabad',
+        destination: '/category/ahmedabad',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Surat',
+        destination: '/category/surat',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Rajkot',
+        destination: '/category/rajkot',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Vadodara',
+        destination: '/category/vadodara',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Gandhinagar',
+        destination: '/category/gandhinagar',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/others',
+        destination: '/category/other-cities',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/National',
+        destination: '/category/national',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/national',
+        destination: '/category/national',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/international',
+        destination: '/category/world',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/International',
+        destination: '/category/world',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/entertainment-life-style',
+        destination: '/category/entertainment',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/popular-stories',
+        destination: '/category/trending',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Politics',
+        destination: '/category/politics',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/Fact-Check',
+        destination: '/category/fact-check',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/fact-check',
+        destination: '/category/fact-check',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/photos',
+        destination: '/photos',
+        permanent: true,
+      },
+      {
+        source: '/news/listing/gallery',
+        destination: '/photos',
+        permanent: true,
+      },
+
+      // 2. Generic fallback for any other /news/listing/:slug
+      {
+        source: '/news/listing/:slug',
+        destination: '/category/:slug',
+        permanent: true,
+      },
+
+      // 3. Photo gallery legacy URL redirects
+      {
+        source: '/gallery',
+        destination: '/photos',
+        permanent: true,
+      },
+      {
+        source: '/gallery/:path*',
+        destination: '/photos',
+        permanent: true,
+      },
+
+      // 4. Election route aliases
+      {
+        source: '/Loksabha-Election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+      {
+        source: '/loksabha-election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+      {
+        source: '/Election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+      {
+        source: '/election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+
+      // 5. Category alias redirects
+      {
+        source: '/category/international',
+        destination: '/category/world',
+        permanent: true,
+      },
+      {
+        source: '/category/entertainment-life-style',
+        destination: '/category/entertainment',
+        permanent: true,
+      },
+      {
+        source: '/category/popular-stories',
+        destination: '/category/trending',
+        permanent: true,
+      },
+      {
+        source: '/category/others',
+        destination: '/category/other-cities',
+        permanent: true,
+      },
+      {
+        source: '/category/other',
+        destination: '/category/other-cities',
+        permanent: true,
+      },
+      {
+        source: '/category/loksabha-election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+      {
+        source: '/category/election',
+        destination: '/category/elections',
+        permanent: true,
+      },
+      {
+        source: '/category/Fact-Check',
+        destination: '/category/fact-check',
+        permanent: true,
+      },
+      {
+        source: '/category/factcheck',
+        destination: '/category/fact-check',
+        permanent: true,
+      },
+    ];
+  },
+
   async headers() {
     return [
       {

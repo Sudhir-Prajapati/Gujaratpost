@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import HeroSection from "@/components/sections/HeroSection";
 import ElectionBanner from "@/components/layout/ElectionBanner";
 import BreakingNewsShowcase from "@/components/sections/BreakingNewsShowcase";
@@ -5,6 +6,33 @@ import { getPublicArticles, getHeroSettings, getPublicCategories, getPublicVideo
 
 // Next.js ISR cache revalidation interval (30 seconds)
 export const revalidate = 30;
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Gujaratpost | Gujaratpostnews | Gujarati News Web Portal | Gujarati News Website | Gujarati Breaking News",
+  },
+  description: "Gujarat Post News is leading Gujarati news portal. It covers local, national, international, political events, breaking news and live updates.",
+  keywords: [
+    "Gujarati Samachar",
+    "Gujarati News",
+    "Local News",
+    "Latest News",
+    "Gujaratpost",
+    "Gujaratpostnews",
+    "Gujarati Breaking News",
+    "Gujarat Post",
+    "Live News from Gujarat"
+  ],
+  alternates: {
+    canonical: "https://www.gujaratpost.in/",
+  },
+  openGraph: {
+    title: "Gujaratpost | Gujaratpostnews | Gujarati News Web Portal | Gujarati Breaking News",
+    description: "Gujarat Post News is leading Gujarati news portal. It covers local, national, international, political events, breaking news and live updates.",
+    url: "https://www.gujaratpost.in/",
+    type: "website",
+  },
+};
 
 const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> =>
   Promise.race([
@@ -221,6 +249,25 @@ export default async function HomePage() {
 
   return (
     <div>
+      {/* Search Engine Optimization Headings for Home Page */}
+      <div
+        className="sr-only"
+        aria-hidden="false"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        <h1>Read All Breaking and Latest News</h1>
+        <h2>Breaking News Today, Live News from Gujarat</h2>
+      </div>
       <ElectionBanner initialConfig={electionBannerInitial} />
       <BreakingNewsShowcase initialConfig={breakingBannerInitial} />
       {/* Main 3-column portal layout containing all active sections */}

@@ -146,6 +146,25 @@ export default function PhotosClient({ initialPhotos }: PhotosClientProps) {
 
   return (
     <div className="mx-auto max-w-screen-xl px-4 pt-3 pb-8">
+      {/* Search Engine Optimization Headings for Photo Gallery */}
+      <div
+        className="sr-only"
+        aria-hidden="false"
+        style={{
+          position: 'absolute',
+          width: '1px',
+          height: '1px',
+          padding: 0,
+          margin: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        <h2>Top News Trending Photo Gallery</h2>
+        <h3>News in Photos</h3>
+      </div>
       <header className="flex items-center justify-between border-b border-border pb-2 mb-4">
         <h1 className="flex items-center select-none leading-none">
           <span className="inline-block w-1.5 self-stretch rounded-sm bg-[#B3121B] mr-2.5 my-0.5" style={{ minHeight: '1.4em' }} aria-hidden="true" />

@@ -87,27 +87,64 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // 2. Dynamic Categories
+  // 2. Dynamic & Core Categories
   let categoryRoutes: MetadataRoute.Sitemap = [];
   try {
-    const categories = await getPublicCategories();
+    const coreCategorySlugs = [
+      'gujarat',
+      'national',
+      'world',
+      'politics',
+      'crime',
+      'business',
+      'sports',
+      'entertainment',
+      'technology',
+      'health',
+      'lifestyle',
+      'education',
+      'weather',
+      'varsad',
+      'trending',
+      'elections',
+      'ahmedabad',
+      'surat',
+      'rajkot',
+      'vadodara',
+      'gandhinagar',
+      'other-cities',
+      'fact-check',
+      'gold-silver',
+      'jobs',
+    ];
+
+    const seen = new Set<string>();
+    const allSlugs: string[] = [...coreCategorySlugs];
+
+    const categories = await getPublicCategories().catch(() => []);
     if (Array.isArray(categories) && categories.length > 0) {
-      const seen = new Set<string>();
-      categoryRoutes = categories
+      categories
         .filter((c: any) => c && c.slug && c.isActive !== false)
-        .map((c: any) => c.slug.trim().toLowerCase())
-        .filter((slug: string) => {
-          if (!slug || seen.has(slug) || ['home', 'main'].includes(slug)) return false;
-          seen.add(slug);
-          return true;
-        })
-        .map((slug: string) => ({
-          url: `${baseUrl}/category/${encodeURIComponent(slug)}`,
-          lastModified: now,
-          changeFrequency: 'hourly',
-          priority: 0.85,
-        }));
+        .forEach((c: any) => {
+          const s = String(c.slug).trim().toLowerCase();
+          if (s && !['home', 'main'].includes(s)) {
+            allSlugs.push(s);
+          }
+        });
     }
+
+    categoryRoutes = allSlugs
+      .filter((slug: string) => {
+        if (!slug || seen.has(slug)) return false;
+        seen.add(slug);
+        return true;
+      })
+      .map((slug: string) => ({
+        url: `${baseUrl}/category/${encodeURIComponent(slug)}`,
+        lastModified: now,
+        changeFrequency: 'hourly',
+        priority: 0.85,
+      }));
   } catch (err) {
     if (process.env.NODE_ENV === 'development') {
       console.warn('Sitemap category fetch error:', err);
