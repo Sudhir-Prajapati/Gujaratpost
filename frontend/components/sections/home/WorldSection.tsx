@@ -319,8 +319,8 @@ export default function WorldSection({ language, initialArticles }: { language: 
   const fetchFreshWorldArticles = useCallback(async () => {
     try {
       const [res1, res2] = await Promise.all([
-        getPublicArticles({ categorySlug: 'world', sort: 'latest', limit: 10 }).catch(() => null),
-        getPublicArticles({ categorySlug: 'international', sort: 'latest', limit: 10 }).catch(() => null),
+        getPublicArticles({ categorySlug: 'world', sort: 'latest', limit: 20 }).catch(() => null),
+        getPublicArticles({ categorySlug: 'international', sort: 'latest', limit: 20 }).catch(() => null),
       ]);
       const fetched = [
         ...(res1?.articles || []),
@@ -338,7 +338,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
             if (a?.id && !map.has(a.id)) map.set(a.id, a);
           });
           const sorted = sortWorldArticlesLatest(Array.from(map.values()));
-          return sorted.slice(0, 10);
+          return sorted.slice(0, 20);
         });
       }
     } catch {
@@ -352,14 +352,30 @@ export default function WorldSection({ language, initialArticles }: { language: 
     // Always fetch fresh latest articles from API on client mount to ensure real-time CMS sync
     fetchFreshWorldArticles();
 
+    // Auto-refresh every 60 seconds so news stays dynamically updated
+    const interval = setInterval(() => {
+      fetchFreshWorldArticles();
+    }, 60000);
+
     const handleSync = () => {
       fetchFreshWorldArticles();
     };
 
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchFreshWorldArticles();
+      }
+    };
+
     window.addEventListener('gp-articles-updated', handleSync);
+    window.addEventListener('focus', handleSync);
+    document.addEventListener('visibilitychange', handleVisibility);
 
     return () => {
+      clearInterval(interval);
       window.removeEventListener('gp-articles-updated', handleSync);
+      window.removeEventListener('focus', handleSync);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [fetchFreshWorldArticles]);
 
@@ -456,34 +472,23 @@ export default function WorldSection({ language, initialArticles }: { language: 
   // Sidebar World Articles for Desktop (displays below CurrencyRatesWidget to perfectly align flush with the left column)
   const sidebarWorldArticles = useMemo(() => {
     const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
-    dbWorldArticles.slice(5, 6).forEach((art) => {
+
+    // Pick the 6th article (index 5) so it doesn't duplicate the 1 featured + 4 cards on desktop
+    // Or if fewer than 6 articles exist, pick the last available real article
+    const targetArt = dbWorldArticles.length > 5 ? dbWorldArticles[5] : (dbWorldArticles.length > 0 ? dbWorldArticles[dbWorldArticles.length - 1] : null);
+
+    if (targetArt) {
       list.push({
-        id: art.id,
-        slug: art.slug,
-        image: art.image || (art as any).imageUrl || (art as any).featuredImage || DEMO_IMAGES[2],
-        categoryGu: resolveWorldCategoryName(art, language),
-        article: art,
-        titleGu: art.titleGu || art.title,
-        time: formatTime(art.publishedAt),
+        id: targetArt.id,
+        slug: targetArt.slug,
+        image: targetArt.image || (targetArt as any).imageUrl || (targetArt as any).featuredImage || DEMO_IMAGES[2],
+        categoryGu: resolveWorldCategoryName(targetArt, language),
+        article: targetArt,
+        titleGu: targetArt.titleGu || targetArt.title,
+        time: formatTime(targetArt.publishedAt),
       });
-    });
-    if (list.length < 1) {
+    } else {
       mockWorldCards.slice(4).forEach((card) => {
-        if (list.length < 1 && !list.some((item) => item.id === card.id)) {
-          list.push({
-            id: card.id,
-            slug: card.slug,
-            image: card.image,
-            categoryGu: card.categoryGu,
-            article: null,
-            titleGu: card.titleGu,
-            time: getMockRelativeTime(card.relativeTimeGu, language),
-          });
-        }
-      });
-    }
-    if (list.length < 1) {
-      mockWorldCards.forEach((card) => {
         if (list.length < 1 && !list.some((item) => item.id === card.id)) {
           list.push({
             id: card.id,
@@ -630,7 +635,7 @@ export default function WorldSection({ language, initialArticles }: { language: 
                 <div className="flex items-center gap-1.5">
                   <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
                   <h3 className="text-[15px] font-black text-foreground">
-                    {language === 'gu' ? 'વિશ્વ સમાચાર' : language === 'hi' ? 'विश्व समाचार' : 'World News'}
+                    {language === 'gu' ? 'વિશ્વ વિશેષ સમાચાર' : language === 'hi' ? 'विश्व विशेष समाचार' : 'World Special News'}
                   </h3>
                 </div>
                 <Link

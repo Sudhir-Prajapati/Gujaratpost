@@ -1272,7 +1272,7 @@ export default function HeroSection({
         setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
         setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 25));
         setNationalArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'national' || s === 'india'; }).slice(0, 16));
-        setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 4));
+        setWorldArtDB(sortedArts.filter((a: Article) => { const c = getCatSlug(a); return c === 'world' || c === 'international' || (a.location || '').toLowerCase() === 'international'; }).slice(0, 16));
         setPoliticsArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'politics' || s === 'rajkaran'; }).slice(0, 16));
         setFactCheckArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'fact-check' || s === 'factcheck' || articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ'); }).slice(0, 15));
         setBusinessArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'business').slice(0, 4));

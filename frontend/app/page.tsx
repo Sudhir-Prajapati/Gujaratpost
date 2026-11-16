@@ -17,6 +17,7 @@ export default async function HomePage() {
   // This eliminates 11 redundant database queries and prevents backend connection timeouts.
   const [
     articlesRes,
+    worldArticlesRes,
     techArticlesRes,
     factCheckArticlesRes,
     crimeArticlesRes,
@@ -28,6 +29,7 @@ export default async function HomePage() {
     reelsRes,
   ] = await Promise.all([
     getPublicArticles({ limit: 80, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })),
+    withTimeout(getPublicArticles({ categorySlug: 'world', limit: 20, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
     withTimeout(getPublicArticles({ categorySlug: 'technology', limit: 12, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
     withTimeout(getPublicArticles({ categorySlug: 'fact-check', limit: 15, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
     withTimeout(getPublicArticles({ categorySlug: 'crime', limit: 25, sort: 'latest' }).catch(() => ({ articles: [], total: 0, totalPages: 1 })), 2500, { articles: [], total: 0, totalPages: 1 }),
@@ -121,7 +123,10 @@ export default async function HomePage() {
       ...(((crimeArticlesRes as any)?.articles) || [])
     ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
     national: sortByLatest(articles.filter((a) => isCat(a, 'national', 'india', 'ભારત'))),
-    world: sortByLatest(articles.filter((a) => isCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ'))),
+    world: sortByLatest([
+      ...articles.filter((a) => isCat(a, 'world', 'international', 'videsh', 'વિદેશ', 'વિશ્વ')),
+      ...(((worldArticlesRes as any)?.articles) || [])
+    ].filter((a, idx, self) => (a.id || a.slug) && self.findIndex((b) => (b.id && b.id === a.id) || (b.slug && b.slug === a.slug)) === idx)),
     manoranjan: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
     entertainment: sortByDate(articles.filter((a) => isCat(a, 'manoranjan', 'entertainment', 'મનોરંજન'))),
     health: sortByLatest(articles.filter((a) => isCat(a, 'health', 'હેલ્થ', 'આરોગ્ય'))),
