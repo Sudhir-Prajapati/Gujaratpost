@@ -139,6 +139,18 @@ export default function CityHyperlocalSection({
   const [dynamicCityTabs, setDynamicCityTabs] = useState(DEFAULT_CITY_TABS);
   const [activeTab, setActiveTab] = useState(DEFAULT_CITY_TABS[0].gu);
   const [fetchedCityArticles, setFetchedCityArticles] = useState<Record<string, Article[]>>({});
+  const [latestGujaratArticles, setLatestGujaratArticles] = useState<Article[]>([]);
+
+  // Fetch fresh state-level Gujarat articles for Gujarat Vishesh widget
+  useEffect(() => {
+    getPublicArticles({ categorySlug: 'gujarat', limit: 20, sort: 'latest' })
+      .then((res) => {
+        if (res?.articles && res.articles.length > 0) {
+          setLatestGujaratArticles(res.articles);
+        }
+      })
+      .catch(() => { });
+  }, []);
 
   // Fetch city tabs dynamically from Admin panel categories API
   useEffect(() => {
@@ -1050,71 +1062,79 @@ export default function CityHyperlocalSection({
   }, [realList, activeCityData]);
 
   // Gujarat / City Highlights for Desktop sidebar to perfectly align flush with the left column
-  const sidebarGujaratArticles = useMemo(() => {
+  const sidebarGujaratArticles: Array<{
+    id: string;
+    slug: string;
+    image: string;
+    title: string;
+    category: string;
+    time: string;
+    article?: Article;
+  }> = useMemo(() => {
     const seenIds = new Set<string>();
     realSlides.forEach((s) => seenIds.add(s.id));
     realList.forEach((l) => seenIds.add(l.id));
 
-    const list: Array<{ id: string; slug: string; image: string; title: string; category: string; time: string; article?: Article }> = [];
+    // Gather candidate articles for Gujarat Highlights
+    // Prioritize fresh latestGujaratArticles, then general articles prop with Gujarat matching, then tab articles
+    const pool = [
+      ...latestGujaratArticles,
+      ...(articles || []).filter((a) => {
+        const cat = (typeof a.category === 'object' ? (a.category as any)?.name || (a.category as any)?.slug : a.category || '').toLowerCase();
+        return cat.includes('gujarat') || cat.includes('ગુજરાત');
+      }),
+      ...(articles || []),
+      ...tabApiArticles,
+    ];
 
-    // 1. Pick from tabApiArticles beyond index 9
-    if (tabApiArticles && tabApiArticles.length > 9) {
-      for (const art of tabApiArticles.slice(9)) {
-        if (art && art.id && !seenIds.has(art.id)) {
-          seenIds.add(art.id);
-          list.push({
-            id: art.id,
-            slug: art.slug,
-            image: art.image || (art as any).featuredImage || '/assets/demo/3.jpg',
-            title: art.titleGu || art.title,
-            category: getArtCategoryNameGu(art, activeTab),
-            time: formatTime(art.publishedAt || (art as any).createdAt),
-            article: art,
-          });
-          if (list.length >= 2) break;
-        }
+    // Deduplicate by ID and exclude anything currently displayed in realSlides / realList
+    const uniquePool: Article[] = [];
+    const usedIds = new Set<string>();
+    for (const art of pool) {
+      if (art && art.id && !seenIds.has(art.id) && !usedIds.has(art.id)) {
+        usedIds.add(art.id);
+        uniquePool.push(art);
       }
     }
 
-    // 2. Pick from general articles in `articles` prop
-    if (list.length < 2 && articles && articles.length > 0) {
-      for (const art of articles) {
-        if (art && art.id && !seenIds.has(art.id)) {
-          seenIds.add(art.id);
-          list.push({
-            id: art.id,
-            slug: art.slug,
-            image: art.image || (art as any).featuredImage || '/assets/demo/4.jpg',
-            title: art.titleGu || art.title,
-            category: getArtCategoryNameGu(art, activeTab),
-            time: formatTime(art.publishedAt || (art as any).createdAt),
-            article: art,
-          });
-          if (list.length >= 2) break;
-        }
-      }
+    // Sort newest first
+    uniquePool.sort((a: any, b: any) => {
+      const timeA = new Date(a?.publishedAt || a?.createdAt || 0).getTime();
+      const timeB = new Date(b?.publishedAt || b?.createdAt || 0).getTime();
+      return timeB - timeA;
+    });
+
+    if (uniquePool.length === 0) {
+      return activeCityData.list.filter(item => !seenIds.has(item.id)).slice(0, 2).map((item) => ({
+        id: item.id,
+        slug: item.slug,
+        image: item.image,
+        title: item.titleGu,
+        category: item.categoryGu,
+        time: getLocalized(language, { gu: item.relativeTimeGu, en: item.relativeTime, hi: item.relativeTimeHi }),
+        article: undefined,
+      }));
     }
 
-    // 3. Fallback to activeCityData.list
-    if (list.length < 2) {
-      for (const item of activeCityData.list) {
-        if (!seenIds.has(item.id)) {
-          seenIds.add(item.id);
-          list.push({
-            id: item.id,
-            slug: item.slug,
-            image: item.image,
-            title: item.titleGu,
-            category: item.categoryGu,
-            time: getLocalized(language, { gu: item.relativeTimeGu, en: item.relativeTime, hi: item.relativeTimeHi }),
-          });
-          if (list.length >= 2) break;
-        }
-      }
+    // Dynamic rotation: rotate through the pool based on slideIdx so stories stay updated and change dynamically!
+    const step = 2;
+    const poolSize = uniquePool.length;
+    const startIdx = poolSize >= 2 ? (slideIdx * step) % (poolSize - 1) : 0;
+    const selectedArticles = uniquePool.slice(startIdx, startIdx + 2);
+    if (selectedArticles.length < 2 && poolSize >= 2) {
+      selectedArticles.push(uniquePool[0]);
     }
 
-    return list.slice(0, 2);
-  }, [tabApiArticles, articles, activeTab, realSlides, realList, activeCityData, language]);
+    return selectedArticles.map((art) => ({
+      id: art.id,
+      slug: art.slug,
+      image: art.image || (art as any).featuredImage || '/assets/demo/3.jpg',
+      title: art.titleGu || art.title,
+      category: getArtCategoryNameGu(art, activeTab),
+      time: formatTime(art.publishedAt || (art as any).createdAt),
+      article: art,
+    }));
+  }, [latestGujaratArticles, tabApiArticles, articles, activeTab, realSlides, realList, activeCityData, slideIdx, language]);
 
   useEffect(() => {
     if (mockSlides.length <= 1) return;
@@ -1307,7 +1327,7 @@ export default function CityHyperlocalSection({
         </div>
 
         {/* Right Column: Sidebar Ads and widgets */}
-        <div className="flex flex-col gap-3.5 select-none">
+        <div className="flex flex-col gap-2 select-none">
 
           <SidebarAdBanner
             slot="SIDEBAR_GUJARAT"
@@ -1324,19 +1344,19 @@ export default function CityHyperlocalSection({
           />
 
           {/* WhatsApp Channel widget */}
-          <div className="relative w-full overflow-hidden rounded-xl border-2 border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-3 shadow-[0_3px_12px_rgba(37,211,102,0.09)] hover:border-emerald-500 dark:hover:border-emerald-500 hover:shadow-[0_5px_16px_rgba(37,211,102,0.16)] transition-all border-t-[3px] border-t-[#25D366]">
+          <div className="relative w-full overflow-hidden rounded-xl border-2 border-emerald-400/70 dark:border-emerald-600/60 bg-gradient-to-br from-emerald-50/60 via-white to-white dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900 p-2.5 shadow-[0_3px_10px_rgba(37,211,102,0.08)] hover:border-emerald-500 dark:hover:border-emerald-500 transition-all border-t-[3px] border-t-[#25D366]">
             {/* Ambient decorative WhatsApp glow */}
-            <div className="pointer-events-none absolute -top-5 -right-5 h-16 w-16 rounded-full bg-[#25D366]/10 blur-xl" />
+            <div className="pointer-events-none absolute -top-5 -right-5 h-14 w-14 rounded-full bg-[#25D366]/10 blur-xl" />
 
-            <div className="relative z-10 flex items-center gap-2.5">
+            <div className="relative z-10 flex items-center gap-2">
               {/* WhatsApp branded icon badge */}
               <a
                 href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-sm shadow-emerald-500/25 ring-2 ring-[#25D366]/10 hover:opacity-90 transition-opacity"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#25D366] to-[#128C7E] text-white shadow-xs shadow-emerald-500/25 ring-2 ring-[#25D366]/10 hover:opacity-90 transition-opacity"
               >
-                <SocialIcon platform="whatsapp" className="h-4.5 w-4.5 text-white" />
+                <SocialIcon platform="whatsapp" className="h-4 w-4 text-white" />
               </a>
               <div className="flex flex-col min-w-0">
                 <a
@@ -1345,7 +1365,7 @@ export default function CityHyperlocalSection({
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 hover:underline"
                 >
-                  <h3 className="font-black text-[16px] md:text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
+                  <h3 className="font-black text-[13.5px] text-slate-900 dark:text-white tracking-tight leading-snug">
                     {language === 'gu' ? 'WhatsApp ચેનલ' : language === 'hi' ? 'व्हाट्सएप चैनल' : 'WhatsApp Channel'}
                   </h3>
                   <CheckCircle2 className="h-4 w-4 md:h-3.5 md:w-3.5 text-[#25D366] shrink-0 fill-[#25D366] text-white" />
@@ -1356,7 +1376,7 @@ export default function CityHyperlocalSection({
               </div>
             </div>
 
-            <p className="relative z-10 text-[14px] md:text-[11.5px] text-slate-600 dark:text-slate-300 leading-relaxed my-2.5 font-medium">
+            <p className="relative z-10 text-[11.5px] text-slate-600 dark:text-slate-300 leading-snug my-1.5 font-medium">
               {language === 'gu'
                 ? 'તમારા શહેરના તાજા અને મહત્વના સમાચાર સૌથી પહેલા સીધા તમારા ફોન પર મેળવો.'
                 : language === 'hi'
@@ -1368,36 +1388,36 @@ export default function CityHyperlocalSection({
               href="https://www.whatsapp.com/channel/0029VaFFh7KIiRojqynnOX2N"
               target="_blank"
               rel="noopener noreferrer"
-              className="relative z-10 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[15px] md:text-[12.5px] py-3 md:py-2.5 px-4 md:px-3.5 rounded-lg shadow-sm shadow-emerald-500/20 hover:shadow-md hover:shadow-emerald-500/30 active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
+              className="relative z-10 w-full flex items-center justify-center gap-1.5 bg-gradient-to-r from-[#25D366] via-[#1fad53] to-[#128C7E] hover:from-[#20bd5a] hover:to-[#0f7a6d] text-white font-black text-[12px] py-1.5 px-3 rounded-lg shadow-xs shadow-emerald-500/20 hover:shadow-sm active:scale-[0.98] transition-all cursor-pointer group/btn select-none"
             >
-              <SocialIcon platform="whatsapp" className="h-4 w-4 md:h-3.5 md:w-3.5 text-white shrink-0" />
+              <SocialIcon platform="whatsapp" className="h-3.5 w-3.5 text-white shrink-0" />
               <span>{language === 'gu' ? 'ચેનલ ફોલો કરો' : language === 'hi' ? 'चैनल फॉलो करें' : 'Follow Channel'}</span>
-              <ArrowRight className="h-4 w-4 md:h-4 md:w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1 shrink-0" />
             </a>
           </div>
 
-          {/* Trending Topics widget */}
-          <div className="w-full rounded-xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3 shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 hover:shadow-[0_6px_18px_rgba(179,18,27,0.12)] transition-all">
-            <div className="flex items-center gap-2 border-b border-slate-200/90 dark:border-slate-800 pb-2.5 mb-2.5">
-              <div className="flex h-8 w-8 md:h-7.5 md:w-7.5 items-center justify-center rounded-lg bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
-                <Flame className="h-4.5 w-4.5 md:h-4 md:w-4 fill-[#B3121B] text-[#B3121B]" />
+          {/* Trending Topics widget (Adjusted compact styling moves Gujarat Vishesh cleanly up) */}
+          <div className="w-full rounded-xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-2.5 shadow-[0_3px_10px_rgba(15,23,42,0.06)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B] hover:border-slate-400 dark:hover:border-slate-500 transition-all">
+            <div className="flex items-center gap-1.5 border-b border-slate-200/90 dark:border-slate-800 pb-1.5 mb-2">
+              <div className="flex h-6 w-6 items-center justify-center rounded-md bg-red-50 text-[#B3121B] dark:bg-red-950/40 border border-red-100 dark:border-red-900/30">
+                <Flame className="h-3.5 w-3.5 fill-[#B3121B] text-[#B3121B]" />
               </div>
-              <h3 className="text-[17.5px] md:text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              <h3 className="text-[14px] md:text-[14px] font-black text-slate-900 dark:text-white tracking-tight">
                 {language === 'gu' ? 'ટ્રેન્ડિંગ વિષયો' : language === 'hi' ? 'ट्रेंडिंग विषय' : 'Trending Topics'}
               </h3>
             </div>
 
             <div>
-              <div className="flex flex-wrap gap-2">
-                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).map((tag) => {
+              <div className="flex flex-wrap gap-1.5">
+                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).slice(0, 6).map((tag) => {
                   const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                   return (
                     <Link
                       key={tag}
                       href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-0.5 border-[1.5px] border-slate-300 dark:border-slate-600 text-[14.5px] md:text-[12.5px] font-black px-3.5 py-1.5 md:px-3 md:py-1 rounded-full text-slate-900 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-[0_1px_3px_rgba(15,23,42,0.08)] hover:shadow-md cursor-pointer select-none"
+                      className="group inline-flex items-center gap-0.5 border border-slate-300 dark:border-slate-600 text-[11.5px] md:text-[11.5px] font-bold px-2.5 py-0.5 rounded-full text-slate-800 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-2xs hover:shadow-xs cursor-pointer select-none"
                     >
-                      <span className="text-[#B3121B] font-black mr-0.5 group-hover:text-white transition-colors">#</span>
+                      <span className="text-[#B3121B] font-bold mr-0.5 group-hover:text-white transition-colors">#</span>
                       <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />
                     </Link>
                   );
@@ -1406,19 +1426,19 @@ export default function CityHyperlocalSection({
             </div>
           </div>
 
-          {/* Gujarat / City Highlights Widget for Desktop (eliminates whitespace below Trending Topics) */}
+          {/* Gujarat / City Highlights Widget for Desktop (Dynamically displays and rotates latest fresh Gujarat news) */}
           {sidebarGujaratArticles.length > 0 && (
-            <div className="hidden lg:flex flex-col rounded-xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-3.5 shadow-[0_4px_14px_rgba(15,23,42,0.08)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B]">
-              <div className="flex items-center justify-between border-b border-slate-200/90 dark:border-slate-800 pb-2 mb-2.5">
+            <div className="hidden lg:flex flex-col rounded-xl border-2 border-slate-300/80 dark:border-slate-600/80 bg-white p-2.5 shadow-[0_3px_10px_rgba(15,23,42,0.06)] dark:bg-slate-900 border-t-[3px] border-t-[#B3121B]">
+              <div className="flex items-center justify-between border-b border-slate-200/90 dark:border-slate-800 pb-1.5 mb-2">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
-                  <h3 className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+                  <span className="text-[#B3121B] text-[13px] font-extrabold">♦</span>
+                  <h3 className="text-[14px] font-black text-slate-900 dark:text-white tracking-tight">
                     {language === 'gu' ? 'ગુજરાત વિશેષ' : language === 'hi' ? 'गुजरात विशेष' : 'Gujarat Highlights'}
                   </h3>
                 </div>
                 <Link
-                  href={`/category/${citySlugMap[activeTab] || 'gujarat'}`}
-                  className="text-[#B3121B] hover:text-red-700 font-bold text-[12px] hover:underline"
+                  href="/category/gujarat"
+                  className="text-[#B3121B] hover:text-red-700 font-bold text-[11px] hover:underline"
                 >
                   {language === 'gu' ? 'બધા જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
                 </Link>
@@ -1429,25 +1449,25 @@ export default function CityHyperlocalSection({
                   <Link
                     key={item.id}
                     href={`/news/${item.slug}`}
-                    className="group flex items-start gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-md px-1"
+                    className="group flex items-start gap-2.5 py-1.5 hover:bg-muted/30 transition-colors rounded-md px-1"
                   >
-                    <div className="relative w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
+                    <div className="relative w-[76px] h-[52px] shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
                       <ArticleMedia
                         src={item.image}
                         alt={item.title}
                         className="transition-transform duration-300 group-hover:scale-105"
                       />
                     </div>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase leading-none mb-1">
+                    <div className="flex flex-col min-w-0 flex-1 justify-center">
+                      <span className="text-[#B3121B] font-extrabold text-[10px] uppercase leading-none mb-1">
                         <AutoTranslateString text={item.category} language={language} />
                       </span>
-                      <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
+                      <h4 className="text-[12.5px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
                         {item.article
                           ? <AutoArticleTitle article={item.article} language={language} />
                           : <AutoTranslateString text={item.title} language={language} />}
                       </h4>
-                      <span className="text-[10px] text-muted-foreground font-medium mt-1">
+                      <span className="text-[9.5px] text-muted-foreground font-medium mt-0.5">
                         {item.time}
                       </span>
                     </div>
