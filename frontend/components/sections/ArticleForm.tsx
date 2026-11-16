@@ -103,6 +103,22 @@ const LOCATION_OPTIONS = [
   { value: 'China', label: 'China', sublabel: 'ચીન' },
 ];
 
+// Helper to determine if an image/video URL originated from local device upload (Cloudinary or local /uploads/)
+export const isUploadedMediaUrl = (url?: string | null): boolean => {
+  if (!url || typeof url !== 'string') return false;
+  const clean = url.trim().toLowerCase();
+  if (!clean) return false;
+  // Local server uploaded file paths
+  if (clean.startsWith('/uploads/') || clean.includes('/uploads/')) return true;
+  // Cloudinary storage where /api/admin/upload pushes files uploaded from user device
+  if (clean.includes('res.cloudinary.com')) return true;
+  // Blob or Base64 data URLs
+  if (clean.startsWith('blob:') || clean.startsWith('data:')) return true;
+  // Self-hosted API domain or localhost
+  if (clean.includes('api.gujaratpost.in') || (clean.includes('localhost') && clean.includes('uploads'))) return true;
+  return false;
+};
+
 // Helper to filter out display-only sections (Instagram, YouTube Shorts, Web Stories, Podcasts) from article category choices
 export const isDisplayOnlySectionCategory = (cat: any): boolean => {
   if (!cat) return false;
@@ -1702,6 +1718,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             allParsedImgs.find((img) => img.index === num)?.url ||
             '';
           const sanitizedImg = sanitizeImageUrl(foundImg);
+          const secMode: 'upload' | 'url' = sanitizedImg
+            ? (isUploadedMediaUrl(sanitizedImg) ? 'upload' : (sanitizedImg.startsWith('http://') || sanitizedImg.startsWith('https://') ? 'url' : 'upload'))
+            : 'upload';
 
           loadedStorySections.push({
             id: `section-${num}`,
@@ -1709,7 +1728,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             descGu,
             descHi,
             imageUrl: sanitizedImg,
-            imageMode: sanitizedImg.startsWith('http://') || sanitizedImg.startsWith('https://') ? 'url' : 'upload',
+            imageMode: secMode,
             imageUploading: false,
           });
         }
@@ -1721,7 +1740,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             descGu: art.desc2Gu || art.desc2 || '',
             descHi: art.desc2Hi || art.desc2 || '',
             imageUrl: sanitizeImageUrl(art.image2 || ''),
-            imageMode: 'upload',
+            imageMode: isUploadedMediaUrl(art.image2 || '') ? 'upload' : (art.image2 && (art.image2.startsWith('http://') || art.image2.startsWith('https://')) ? 'url' : 'upload'),
             imageUploading: false,
           });
         }
@@ -1739,8 +1758,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           });
         }
         setPrimaryMediaList(initialPrimary);
-        if (cleanFeat && (cleanFeat.startsWith('http://') || cleanFeat.startsWith('https://'))) {
-          setImageMode('url');
+
+        // Determine default media input mode based on first image's source:
+        // If the first image was uploaded from device (Cloudinary or /uploads/), keep 'upload' mode.
+        // If the first image is an external media URL, set 'url' mode.
+        // If both exist, the first image decides the active mode.
+        const firstPrimaryMedia = initialPrimary[0] || cleanFeat || '';
+        if (firstPrimaryMedia) {
+          if (isUploadedMediaUrl(firstPrimaryMedia)) {
+            setImageMode('upload');
+          } else if (firstPrimaryMedia.startsWith('http://') || firstPrimaryMedia.startsWith('https://')) {
+            setImageMode('url');
+          } else {
+            setImageMode('upload');
+          }
         } else {
           setImageMode('upload');
         }
