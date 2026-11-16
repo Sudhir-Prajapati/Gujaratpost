@@ -224,16 +224,6 @@ const nextConfig: NextConfig = {
         destination: '/category/elections',
         permanent: true,
       },
-      {
-        source: '/category/Fact-Check',
-        destination: '/category/fact-check',
-        permanent: true,
-      },
-      {
-        source: '/category/factcheck',
-        destination: '/category/fact-check',
-        permanent: true,
-      },
     ];
   },
 
