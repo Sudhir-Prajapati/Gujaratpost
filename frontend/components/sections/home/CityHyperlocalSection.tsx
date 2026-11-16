@@ -987,9 +987,9 @@ export default function CityHyperlocalSection({
       categoryHi: (art as any).categoryHi || activeTab,
       viewsGu: `${art.views || 25}K`,
       views: `${art.views || 25}K`,
-      excerptGu: art.excerptGu || art.excerpt || art.title,
-      excerpt: art.excerpt || art.title,
-      excerptHi: art.excerptHi || art.excerpt || art.title,
+      excerptGu: stripHtmlTags(art.excerptGu || art.excerpt || art.title),
+      excerpt: stripHtmlTags(art.excerpt || art.title),
+      excerptHi: stripHtmlTags(art.excerptHi || art.excerpt || art.title),
       tags: (art.tags as any) && (art.tags as any).length > 0
         ? (art.tags as any).map((t: any) => typeof t === 'string' ? t : t.tag?.nameGu || t.tag?.name || t.name || t)
         : [getArtCategoryNameGu(art, activeTab), 'સમાચાર', 'લાઇવ'],
@@ -1174,13 +1174,13 @@ export default function CityHyperlocalSection({
             {/* Carousel Slide */}
             {currentSlide && (
               <div className="group relative flex flex-col min-w-0">
-                {/* Image container */}
-                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted shadow-sm">
+                {/* Image container: strictly 16:9 to match news graphics perfectly without cropping text or headers */}
+                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted shadow-sm">
                   <Link href={`/news/${currentSlide.slug}`} className="absolute inset-0 cursor-pointer">
                     <ArticleMedia
                       src={currentSlide.image}
                       alt={currentSlide.titleGu}
-                      className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                      className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
                     />
                   </Link>
                   {/* Left / Right Arrows */}
@@ -1214,30 +1214,35 @@ export default function CityHyperlocalSection({
                   </span>
                 </div>
 
-                {/* Info Text below image (Fixed heights prevent jumping layout shift on mobile when description length changes) */}
-                <div className="mt-2 md:mt-3 flex flex-col">
-                  <span className="text-[#B3121B] font-black text-[12.5px] uppercase tracking-wide mb-1 select-none leading-none h-[18px] flex items-center truncate">
-                    {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
-                  </span>
+                {/* Info Text below image (Strict fixed slots guarantee 0 layout shift regardless of content length) */}
+                <div className="mt-2.5 md:mt-3 flex flex-col">
+                  {/* Category Pill / Label Slot */}
+                  <div className="h-[20px] min-h-[20px] max-h-[20px] flex items-center mb-1 overflow-hidden">
+                    <span className="text-[#B3121B] font-black text-[12.5px] uppercase tracking-wide select-none leading-none truncate">
+                      {getLocalized(language, { en: currentSlide.category, gu: currentSlide.categoryGu, hi: currentSlide.categoryHi })}
+                    </span>
+                  </div>
 
-                  <Link href={`/news/${currentSlide.slug}`} className="group/link">
-                    <div className="h-[46px] md:h-[52px] min-h-[46px] md:min-h-[52px] overflow-hidden flex items-start">
+                  {/* Title Link Slot */}
+                  <Link href={`/news/${currentSlide.slug}`} className="block group/link">
+                    <div className="h-[48px] md:h-[52px] min-h-[48px] md:min-h-[52px] max-h-[48px] md:max-h-[52px] overflow-hidden flex items-start">
                       <h3 className="font-extrabold text-[16px] md:text-[18px] leading-snug tracking-tight text-foreground group-hover/link:text-[#B3121B] transition-colors line-clamp-2">
                         <AutoTranslateString text={getLocalized(language, { en: currentSlide.title, gu: currentSlide.titleGu, hi: currentSlide.titleHi })} language={language} />
                       </h3>
                     </div>
                   </Link>
 
-                  <div className="h-[40px] md:h-[44px] min-h-[40px] md:min-h-[44px] mt-1 md:mt-1.5 overflow-hidden flex items-start">
+                  {/* Excerpt Slot */}
+                  <div className="h-[40px] md:h-[44px] min-h-[40px] md:min-h-[44px] max-h-[40px] md:max-h-[44px] mt-1 md:mt-1.5 overflow-hidden flex items-start">
                     <p className="text-muted-foreground text-[13px] md:text-[13.5px] leading-snug line-clamp-2 font-medium">
                       <AutoTranslateString text={stripHtmlTags(getLocalized(language, { en: currentSlide.excerpt, gu: currentSlide.excerptGu, hi: currentSlide.excerptHi }))} language={language} />
                     </p>
                   </div>
 
-                  {/* Meta Details with Inline Tags (Fixed height prevents multi-line wrap shifts) */}
-                  <div className="h-[26px] min-h-[26px] mt-1.5 md:mt-3 flex items-center overflow-hidden md:border-b md:border-border/40 pb-0.5 md:pb-3 mb-0 md:mb-3.5">
+                  {/* Meta Details with Inline Tags Slot */}
+                  <div className="h-[28px] min-h-[28px] max-h-[28px] mt-2 md:mt-2.5 flex items-center overflow-hidden border-t border-border/30 pt-1.5">
                     <div className="flex items-center gap-1.5 overflow-hidden flex-nowrap">
-                      {currentSlide.tags.slice(0, 3).map((tag) => {
+                      {currentSlide.tags && currentSlide.tags.slice(0, 3).map((tag) => {
                         const tagLabel = getLocalizedTag(tag, language);
                         return (
                           <span

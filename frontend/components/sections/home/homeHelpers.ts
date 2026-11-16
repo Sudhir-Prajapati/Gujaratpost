@@ -1,6 +1,20 @@
 import type { Language } from '@/types';
 
-export const stripHtmlTags = (str?: string) => (str || '').replace(/<[^>]*>?/gm, '').replace(/!\[.*?\]\(.*?\)/g, '');
+export const stripHtmlTags = (str?: string) => {
+  if (!str) return '';
+  return str
+    .replace(/<[^>]*>?/gm, '')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&hellip;/gi, '...')
+    .replace(/\s+/g, ' ')
+    .trim();
+};
 
 export const DEMO_IMAGES = [
   'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&auto=format&fit=crop&q=80',

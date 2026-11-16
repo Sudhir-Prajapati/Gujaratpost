@@ -154,7 +154,9 @@ export default function ArticleMedia({
   const effectiveObjectPosition =
     objectPosition ||
     style?.objectPosition ||
-    (className.includes('object-top')
+    (className.includes('object-center')
+      ? 'center'
+      : className.includes('object-top')
       ? 'top center'
       : className.includes('object-bottom')
       ? 'bottom center'

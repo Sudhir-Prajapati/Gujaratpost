@@ -225,7 +225,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0 rounded-xl border border-border bg-card overflow-hidden">
-              <div className="aspect-[16/10] sm:aspect-[4/3] w-full bg-muted/40" />
+              <div className="aspect-[16/10] sm:aspect-[16/10] w-full bg-muted/40" />
             </div>
           ))}
         </div>
@@ -294,7 +294,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
               className="group relative flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card hover:border-[#B3121B]/40 shadow-xs hover:shadow-md transition-all snap-center w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
             >
               {/* Image Container */}
-              <div className="relative aspect-[16/10] sm:aspect-[4/3] w-full overflow-hidden bg-muted">
+              <div className="relative aspect-[16/10] sm:aspect-[16/10] w-full overflow-hidden bg-muted">
                 <Image
                   src={getDistinctArticleImage(article, index)}
                   alt={article.title}
