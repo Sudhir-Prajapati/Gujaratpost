@@ -476,14 +476,14 @@ export class HeroController {
             ).catch(() => [])
             : Promise.resolve([]),
 
-          // Query F: Top-read posts from past 7 days (last week) for auto mode & fallback
+          // Query F: Top-read posts from past 3 days for auto mode & fallback
           withDbRetry(() => {
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
             return prisma.post.findMany({
               where: {
                 status: 'PUBLISHED',
-                createdAt: { gte: sevenDaysAgo },
+                createdAt: { gte: threeDaysAgo },
               },
               orderBy: [
                 { views: 'desc' },
@@ -655,13 +655,15 @@ export class HeroController {
           parsedHeroGridIds = heroGridArticles.map((a: any) => a.id);
         }
 
-        // Resolve Most Read (Automatic 30-day top read articles vs Manual Top 10)
+        // Resolve Most Read (Automatic 3-day top read articles vs Manual Top 10)
         let autoMostReadPosts = [...mostReadFallbackRes];
         if (autoMostReadPosts.length < 10) {
           const seenIds = new Set(autoMostReadPosts.map((p: any) => p?.id).filter(Boolean));
+          const threeDaysAgoTime = Date.now() - 3 * 24 * 60 * 60 * 1000;
           for (const p of featuredFallbackRes) {
             if (autoMostReadPosts.length >= 10) break;
-            if (p?.id && !seenIds.has(p.id)) {
+            const pTime = p?.createdAt ? new Date(p.createdAt).getTime() : 0;
+            if (p?.id && !seenIds.has(p.id) && pTime >= threeDaysAgoTime) {
               seenIds.add(p.id);
               autoMostReadPosts.push(p);
             }
@@ -692,7 +694,7 @@ export class HeroController {
             }
           }
         } else {
-          // Automatic mode: strictly past 7 days top read articles
+          // Automatic mode: strictly past 3 days top read articles
           mostReadArticles = formattedAutoMostRead;
           parsedMostReadIds = mostReadArticles.map((a: any) => a.id);
         }
@@ -1110,13 +1112,13 @@ export class HeroController {
       }
       finalMostReadMode = finalMostReadMode || 'auto';
 
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
       const autoTopPosts = await withDbRetry(() =>
         prisma.post.findMany({
           where: {
             status: 'PUBLISHED',
-            createdAt: { gte: sevenDaysAgo },
+            createdAt: { gte: threeDaysAgo },
           },
           orderBy: [
             { views: 'desc' },
@@ -1131,7 +1133,10 @@ export class HeroController {
       if (autoPool.length < 10) {
         const extraPosts = await withDbRetry(() =>
           prisma.post.findMany({
-            where: { status: 'PUBLISHED' },
+            where: {
+              status: 'PUBLISHED',
+              createdAt: { gte: threeDaysAgo },
+            },
             orderBy: [
               { views: 'desc' },
               { articleNumber: 'desc' },

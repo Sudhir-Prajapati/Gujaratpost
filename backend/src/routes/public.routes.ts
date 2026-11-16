@@ -618,6 +618,19 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
 
     const sortParam = ((req.query.sort as string) || (req.query.orderBy as string) || '').toLowerCase();
 
+    if (req.query.days) {
+      const d = parseInt(req.query.days as string, 10);
+      if (!isNaN(d) && d > 0) {
+        const daysAgo = new Date();
+        daysAgo.setDate(daysAgo.getDate() - d);
+        where.createdAt = { gte: daysAgo };
+      }
+    } else if ((sortParam === 'most-read' || sortParam === 'most_read') && !where.createdAt) {
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      where.createdAt = { gte: threeDaysAgo };
+    }
+
     // Single-column { articleNumber: 'desc' } matches @@index([status, articleNumber]) and @@index([categoryId, status, articleNumber]) perfectly (4ms index scan vs 2500ms filesort)
     const orderByClause: any =
       (sortParam === 'views' || sortParam === 'popular' || sortParam === 'most-read' || sortParam === 'most_read')

@@ -985,9 +985,21 @@ export default function HeroSection({
 
   const initialCustomTrendingArts: Article[] = (initialHeroSettings?.trendingNewsArticles || []).filter(isPublicArticle);
   const initialCustomPopularArts: Article[] = (initialHeroSettings?.popularNewsArticles || []).filter(isPublicArticle);
-  const initialCustomMostReadArts: Article[] = (initialHeroSettings?.mostReadArticles || []).filter(isPublicArticle);
+  const threeDaysAgoMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
+  const initialCustomMostReadArts: Article[] = (initialHeroSettings?.mostReadArticles || [])
+    .filter(isPublicArticle)
+    .filter((a: Article) => {
+      if (initialHeroSettings?.mostReadMode === 'manual') return true;
+      const t = a.publishedAt || a.createdAt;
+      return t ? new Date(t).getTime() >= threeDaysAgoMs : true;
+    });
   const initialPopularPool = fillPool([...initialCustomTrendingArts, ...initTrending, ...initialCustomPopularArts], publishedInitialArticles, 10);
-  const initialMostReadPool = initialCustomMostReadArts.length > 0 ? initialCustomMostReadArts.slice(0, 10) : publishedInitialArticles.slice(0, 10);
+  const initialMostReadPool = initialCustomMostReadArts.length > 0
+    ? initialCustomMostReadArts.slice(0, 10)
+    : publishedInitialArticles.filter((a: Article) => {
+        const t = a.publishedAt || a.createdAt;
+        return t ? new Date(t).getTime() >= threeDaysAgoMs : true;
+      }).slice(0, 10);
 
   const initialCategoriesDB = Array.isArray(initialCategories)
     ? initialCategories.filter((c) => c.showInHome !== false && c.isActive !== false).sort((a, b) => (b.homeOrder ?? b.displayOrder ?? 0) - (a.homeOrder ?? a.displayOrder ?? 0))
@@ -1237,11 +1249,25 @@ export default function HeroSection({
         setBottomFeatured(getBottomCards(heroPool, heroRes));
         const customTrendingArts: Article[] = (heroRes?.trendingNewsArticles || []).filter(Boolean);
         const customPopularArts: Article[] = (heroRes?.popularNewsArticles || []).filter(Boolean);
-        const customMostReadArts: Article[] = (heroRes?.mostReadArticles || []).filter(Boolean);
+        const threeDaysAgoLiveMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
+        const customMostReadArts: Article[] = (heroRes?.mostReadArticles || [])
+          .filter(Boolean)
+          .filter((a: Article) => {
+            if (heroRes?.mostReadMode === 'manual') return true;
+            const t = a.publishedAt || a.createdAt;
+            return t ? new Date(t).getTime() >= threeDaysAgoLiveMs : true;
+          });
         const trendingArts = sortedArts.filter((a: Article) => a.isTrending);
         const popularPool = fillPool([...customTrendingArts, ...trendingArts, ...customPopularArts], sortedArts, 10);
         setTrendingArtDB(popularPool);
-        const mostReadPool = (customMostReadArts.length > 0 ? customMostReadArts : sortedArts).slice(0, 10);
+        const mostReadPool = (
+          customMostReadArts.length > 0
+            ? customMostReadArts
+            : sortedArts.filter((a: Article) => {
+                const t = a.publishedAt || a.createdAt;
+                return t ? new Date(t).getTime() >= threeDaysAgoLiveMs : true;
+              })
+        ).slice(0, 10);
         setMostReadArtDB(mostReadPool);
         setGujaratArtDB(sortedArts.filter((a: Article) => { const s = getCatSlug(a); return s === 'gujarat' || s === 'state'; }).slice(0, 16));
         setCrimeArtDB(sortedArts.filter((a: Article) => getCatSlug(a) === 'crime').slice(0, 25));

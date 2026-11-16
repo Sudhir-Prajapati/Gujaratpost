@@ -1261,7 +1261,14 @@ export default function NewsDetailClient({ article, related, trending, latestArt
   const [sidebarMoreRecommended, setSidebarMoreRecommended] = useState(false);
   const isRecommendedExpanded = isContentExpanded || sidebarMoreRecommended;
 
-  const [mostReadArticles, setMostReadArticles] = useState<typeof trending>(trending.slice(0, 10));
+  const [mostReadArticles, setMostReadArticles] = useState<typeof trending>(() => {
+    const threeDaysAgoTime = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    const filtered = (trending || []).filter((a: any) => {
+      const t = a?.publishedAt || a?.createdAt;
+      return t ? new Date(t).getTime() >= threeDaysAgoTime : true;
+    });
+    return (filtered.length > 0 ? filtered : trending).slice(0, 10);
+  });
 
   // Mounted guard: prevents language-dependent SSR/client HTML mismatch
   useEffect(() => {
@@ -1272,19 +1279,36 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     }
   }, []);
 
-  // Fetch hero-settings to get the same Most Read list as the home screen
+  // Fetch hero-settings to get the same Most Read list as the home screen (restricted to latest 3 days)
   useEffect(() => {
     getHeroSettings().then((heroRes: any) => {
-      const customMostRead: typeof trending = (heroRes?.mostReadArticles || []).filter(Boolean);
+      const threeDaysAgoTime = Date.now() - 3 * 24 * 60 * 60 * 1000;
+      const isManual = heroRes?.mostReadMode === 'manual';
+      const customMostRead: typeof trending = (heroRes?.mostReadArticles || [])
+        .filter(Boolean)
+        .filter((a: any) => {
+          if (isManual) return true;
+          const t = a?.publishedAt || a?.createdAt;
+          return t ? new Date(t).getTime() >= threeDaysAgoTime : true;
+        });
       if (customMostRead.length > 0) {
         setMostReadArticles(customMostRead.slice(0, 10));
       } else {
-        setMostReadArticles(trending.slice(0, 10));
+        const filteredTrending = (trending || []).filter((a: any) => {
+          const t = a?.publishedAt || a?.createdAt;
+          return t ? new Date(t).getTime() >= threeDaysAgoTime : true;
+        });
+        setMostReadArticles((filteredTrending.length > 0 ? filteredTrending : trending).slice(0, 10));
       }
     }).catch(() => {
-      setMostReadArticles(trending.slice(0, 10));
+      const threeDaysAgoTime = Date.now() - 3 * 24 * 60 * 60 * 1000;
+      const filteredTrending = (trending || []).filter((a: any) => {
+        const t = a?.publishedAt || a?.createdAt;
+        return t ? new Date(t).getTime() >= threeDaysAgoTime : true;
+      });
+      setMostReadArticles((filteredTrending.length > 0 ? filteredTrending : trending).slice(0, 10));
     });
-  }, []);
+  }, [trending]);
 
   useEffect(() => {
     const timer = setInterval(() => {

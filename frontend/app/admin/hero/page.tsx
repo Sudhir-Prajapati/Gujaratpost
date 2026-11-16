@@ -4658,11 +4658,11 @@ export default function HeroManagerPage() {
                     ? 'bg-emerald-50 text-emerald-800 border-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
                     : 'bg-amber-50 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300'
                     }`}>
-                    {mostReadMode === 'auto' ? '⚡ Auto Mode (Top 10 Past 7 Days)' : `${mostReadArticles.length} / 10 Positions (Manual)`}
+                    {mostReadMode === 'auto' ? '⚡ Auto Mode (Top 10 Past 3 Days)' : `${mostReadArticles.length} / 10 Positions (Manual)`}
                   </span>
                 </div>
                 <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1.5">
-                  Manage the Top 10 articles displayed in the &quot;સૌથી વધુ વંચાયેલા&quot; (Most Read) sidebar widget on the homepage. Toggle between Automatic (past 7 days most read) or Manual (admin-curated positions #1 to #10).
+                  Manage the Top 10 articles displayed in the &quot;સૌથી વધુ વંચાયેલા&quot; (Most Read) sidebar widget on the homepage. Toggle between Automatic (past 3 days most read) or Manual (admin-curated positions #1 to #10).
                 </p>
               </div>
 
@@ -4701,11 +4701,11 @@ export default function HeroManagerPage() {
                   <div>
                     <p className={`text-sm font-black flex items-center gap-2 ${mostReadMode === 'auto' ? 'text-emerald-700 dark:text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'
                       }`}>
-                      ⚡ Automatic Mode (છેલ્લા ૭ દિવસના સૌથી વધુ વંચાયેલા)
+                      ⚡ Automatic Mode (છેલ્લા ૩ દિવસના સૌથી વધુ વંચાયેલા)
                       <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-700">DEFAULT</span>
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-                      આજના દિવસથી પાછલા ૭ દિવસ (છેલ્લા ૧ અઠવાડિયા) ના સૌથી વધુ વંચાયેલા ૧૦ સમાચાર ડેટાબેઝના વ્યુઝ કાઉન્ટના આધારે ઓટોમેટિકલી રેન્ક #1 થી #10 પર ગોઠવાય છે અને દર અઠવાડિયે આપમેળે બદલાય છે.
+                      આજના દિવસથી પાછલા ૩ દિવસના સૌથી વધુ વંચાયેલા ૧૦ સમાચાર ડેટાબેઝના વ્યુઝ કાઉન્ટના આધારે ઓટોમેટિકલી રેન્ક #1 થી #10 પર ગોઠવાય છે અને દરરોજ આપમેળે અપડેટ થાય છે.
                     </p>
                   </div>
                 </button>
@@ -4750,7 +4750,7 @@ export default function HeroManagerPage() {
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
                     <p className="text-sm font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
-                      Live Auto-Feed Active (છેલ્લા ૭ દિવસના ટોપ 10 સમાચાર)
+                      Live Auto-Feed Active (છેલ્લા ૩ દિવસના ટોપ 10 સમાચાર)
                     </p>
                   </div>
                   <button

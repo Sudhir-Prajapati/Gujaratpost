@@ -50,6 +50,7 @@ export default function LatestUpdatesSection({
       : []
   );
   const [mostRead, setMostRead] = useState<Article[]>(() => {
+    const threeDaysAgoMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
     const sortedInit = initialArticles ? sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)) : [];
     const latestIdSet = new Set(sortedInit.slice(0, 10).map((a) => a.id));
     const pool: Article[] = [
@@ -59,7 +60,9 @@ export default function LatestUpdatesSection({
     const topList: Article[] = [];
     const seen = new Set<string>();
     for (const a of pool) {
-      if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a)) {
+      const aTime = a ? new Date(a.publishedAt || a.createdAt || 0).getTime() : 0;
+      const isRecent = aTime > 0 ? aTime >= threeDaysAgoMs : true;
+      if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a) && isRecent) {
         seen.add(a.id);
         topList.push(a);
         if (topList.length >= 10) break;
@@ -82,6 +85,7 @@ export default function LatestUpdatesSection({
       setLatestNews(top10Latest);
 
       const latestIdSet = new Set(top10Latest.map((a) => a.id));
+      const threeDaysAgoMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
       const pool: Article[] = [
         ...(initialMostRead || []),
         ...(initialArticles || []),
@@ -89,7 +93,9 @@ export default function LatestUpdatesSection({
       const topList: Article[] = [];
       const seen = new Set<string>();
       for (const a of pool) {
-        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a)) {
+        const aTime = a ? new Date(a.publishedAt || a.createdAt || 0).getTime() : 0;
+        const isRecent = aTime > 0 ? aTime >= threeDaysAgoMs : true;
+        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a) && isRecent) {
           seen.add(a.id);
           topList.push(a);
           if (topList.length >= 10) break;
@@ -135,9 +141,12 @@ export default function LatestUpdatesSection({
 
       const topListMostRead: Article[] = [];
       const seenIds = new Set<string>();
+      const threeDaysAgoMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
 
       for (const art of candidatePool) {
-        if (art && art.id && !seenIds.has(art.id) && !latestIdSet.has(art.id) && !isSolelyHealthArticle(art)) {
+        const artTime = art ? new Date(art.publishedAt || art.createdAt || 0).getTime() : 0;
+        const isRecent = artTime > 0 ? artTime >= threeDaysAgoMs : true;
+        if (art && art.id && !seenIds.has(art.id) && !latestIdSet.has(art.id) && !isSolelyHealthArticle(art) && isRecent) {
           seenIds.add(art.id);
           topListMostRead.push(art);
           if (topListMostRead.length >= 10) break;

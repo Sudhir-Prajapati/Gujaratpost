@@ -250,7 +250,14 @@ export default function ApkHomeFeed({
   // Section data slices
   const currentHero = heroArticles[activeSlide] || articles[0];
   const topNewsArticles = useMemo(() => articles.slice(5, 13), [articles]);
-  const mostReadArticles = useMemo(() => articles.slice(13, 17), [articles]);
+  const mostReadArticles = useMemo(() => {
+    const threeDaysAgoMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
+    const candidates = articles.slice(5).filter((a: Article) => {
+      const t = a.publishedAt || a.createdAt;
+      return t ? new Date(t).getTime() >= threeDaysAgoMs : true;
+    });
+    return (candidates.length >= 4 ? candidates : articles.slice(13)).slice(0, 4);
+  }, [articles]);
   const feedVideos = useMemo(() => videos.slice(0, 10), [videos]);
 
   const remainingArticles = useMemo(() => {
