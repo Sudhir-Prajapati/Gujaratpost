@@ -392,14 +392,14 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
 
     // No slow correlated subquery joins in the general feed where clause.
 
+    let slugLower = categorySlug ? categorySlug.toLowerCase().trim() : '';
+    if (slugLower && CATEGORY_ALIASES[slugLower]) {
+      slugLower = CATEGORY_ALIASES[slugLower];
+    }
+
     let targetCategoryIds: string[] | null = null;
 
     if (categorySlug) {
-      let slugLower = categorySlug.toLowerCase().trim();
-      if (CATEGORY_ALIASES[slugLower]) {
-        slugLower = CATEGORY_ALIASES[slugLower];
-      }
-
       if (slugLower === 'all-cities' || slugLower === 'allcities') {
         const cacheEntry = categoryLookupCache.get('__all_cities__');
         let allCityCatIds: string[];
@@ -428,25 +428,69 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         targetCategoryIds = allCityCatIds;
         where.categoryId = { in: allCityCatIds };
       } else if (slugLower === 'other-cities' || slugLower === 'othercities') {
-        const cacheEntry = categoryLookupCache.get('__other_cities__');
+        const otherCacheEntry = categoryLookupCache.get('__other_cities__');
+        const big5CacheEntry = categoryLookupCache.get('__big5_cities__');
         let otherCityCatIds: string[];
-        if (cacheEntry && Date.now() < cacheEntry.expiresAt) {
-          otherCityCatIds = cacheEntry.ids;
+        let big5CatIds: string[];
+        if (otherCacheEntry && Date.now() < otherCacheEntry.expiresAt && big5CacheEntry && Date.now() < big5CacheEntry.expiresAt) {
+          otherCityCatIds = otherCacheEntry.ids;
+          big5CatIds = big5CacheEntry.ids;
         } else {
-          const otherCitiesCats = await withDbRetry(() =>
-            prisma.category.findMany({
-              where: { slug: { in: ['other-cities', 'othercities', 'gujarat', 'state'] } },
-              select: { id: true },
-            })
-          );
+          const [otherCitiesCats, big5Cats] = await Promise.all([
+            withDbRetry(() =>
+              prisma.category.findMany({
+                where: { slug: { in: ['other-cities', 'othercities'] } },
+                select: { id: true },
+              })
+            ),
+            withDbRetry(() =>
+              prisma.category.findMany({
+                where: { slug: { in: ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot'] } },
+                select: { id: true },
+              })
+            ),
+          ]);
           otherCityCatIds = otherCitiesCats.map((c) => c.id);
+          big5CatIds = big5Cats.map((c) => c.id);
           categoryLookupCache.set('__other_cities__', {
             ids: otherCityCatIds,
             expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
           });
+          categoryLookupCache.set('__big5_cities__', {
+            ids: big5CatIds,
+            expiresAt: Date.now() + CATEGORY_LOOKUP_TTL_MS,
+          });
         }
         targetCategoryIds = otherCityCatIds;
-        where.categoryId = { in: otherCityCatIds };
+
+        const BIG5_LOCATIONS = [
+          'Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot',
+          'ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot',
+          'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ',
+        ];
+
+        const OTHER_GUJARAT_LOCATIONS = [
+          'Banaskantha', 'Anand', 'Bhavnagar', 'Surendranagar', 'Amreli',
+          'Gir Somnath', 'Narmada', 'Mehsana', 'Mahesana', 'Jamnagar',
+          'ભરુચ', 'Devbhoomi Dwarka', 'Patan', 'Morbi', 'Junagadh', 'Kutch', 'Navsari', 'Valsad', 'Porbandar', 'Panchmahal', 'Dahod', 'Mahisagar', 'Aravalli', 'Sabarkantha', 'Tapi', 'Dang', 'Botad', 'Chhota Udepur'
+        ];
+
+        where.OR = [
+          { categoryId: { in: otherCityCatIds } },
+          { categories: { some: { categoryId: { in: otherCityCatIds } } } },
+          { location: { in: OTHER_GUJARAT_LOCATIONS } },
+        ];
+
+        if (!where.NOT) {
+          where.NOT = [];
+        } else if (!Array.isArray(where.NOT)) {
+          where.NOT = [where.NOT];
+        }
+        (where.NOT as any[]).push(
+          { categoryId: { in: big5CatIds } },
+          { categories: { some: { categoryId: { in: big5CatIds } } } },
+          { location: { in: BIG5_LOCATIONS } }
+        );
       } else {
         const cacheKey = `cat:${slugLower}`;
         const cachedCat = categoryLookupCache.get(cacheKey);
@@ -719,6 +763,8 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
     const isStandardCategoryFeed =
       targetCategoryIds &&
       targetCategoryIds.length > 0 &&
+      slugLower !== 'other-cities' &&
+      slugLower !== 'othercities' &&
       !query &&
       !locationParam &&
       !isTrending &&
@@ -829,7 +875,7 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
       if (cachedCount && now < cachedCount.expiresAt) {
         total = cachedCount.total;
       } else {
-        if (targetCategoryIds && targetCategoryIds.length > 0 && !query && !locationParam && !isTrending && !isBreaking && !isFeatured) {
+        if (targetCategoryIds && targetCategoryIds.length > 0 && slugLower !== 'other-cities' && slugLower !== 'othercities' && !query && !locationParam && !isTrending && !isBreaking && !isFeatured) {
           total = await withDbRetry(() => prisma.postCategory.count({ where: { categoryId: { in: targetCategoryIds } } }));
         } else if (isTrending && !query && !locationParam && !categorySlug && !isBreaking && !isFeatured) {
           total = await withDbRetry(() => prisma.post.count({ where: { status: 'PUBLISHED', isTrending: true } }));

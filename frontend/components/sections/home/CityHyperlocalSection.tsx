@@ -969,9 +969,19 @@ export default function CityHyperlocalSection({
 
 
   const tabApiArticles = useMemo(() => {
-    const list = (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length > 0)
+    let list = (fetchedCityArticles[activeTab] && fetchedCityArticles[activeTab].length > 0)
       ? fetchedCityArticles[activeTab]
       : getArticlesForTab(activeTab);
+
+    if (activeTab === 'અન્ય શહેરો' || activeTab === 'અન્ય') {
+      const mainCities = ['ahmedabad', 'surat', 'vadodara', 'rajkot', 'gandhinagar', 'અમદાવાદ', 'સુરત', 'વડોદરા', 'રાજકોટ', 'ગાંધીનગર'];
+      list = list.filter((art) => {
+        const loc = ((art as any).location || '').toLowerCase();
+        const cat = getCategoryStr(art);
+        const catGu = ((art as any).categoryGu || '').toLowerCase();
+        return !mainCities.some((c) => loc === c || loc.includes(c) || cat === c || cat.includes(c) || catGu === c || catGu.includes(c));
+      });
+    }
 
     return [...list].sort((a: any, b: any) => {
       const aNum = typeof a?.articleNumber === 'number' ? a.articleNumber : (parseInt(a?.articleNumber, 10) || 0);

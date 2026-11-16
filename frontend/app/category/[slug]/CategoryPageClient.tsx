@@ -123,12 +123,6 @@ export const CATEGORY_PAIRS: Record<string, PairedCategoryConfig> = {
   // in gandhinagar want other cities
   gandhinagar: { slug: 'other-cities', name: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' },
   gandhinager: { slug: 'other-cities', name: 'Other Cities', gu: 'અન્ય શહેરો', hi: 'अन्य शहर' },
-
-  // in other-cities want ahmedabad
-  'other-cities': { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
-  othercities: { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
-  'other-city': { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
-  other: { slug: 'ahmedabad', name: 'Ahmedabad', gu: 'અમદાવાદ', hi: 'अहमदाबाद' },
 };
 
 export const ALSO_READ_CATEGORY_CONFIG: Record<string, [string, string]> = {
@@ -518,11 +512,18 @@ function WebCategoryPageClient({ articles, category, slug, resolvedSlug, trendin
 
   // Active articles for current page & tab (updates dynamically when page or tab changes)
   const currentArticles = useMemo(() => {
-    if (isPairedTab) {
-      return pairedArticles;
+    let list = isPairedTab ? pairedArticles : mainArticles;
+    if (!isPairedTab && (normSlug === 'other-cities' || normSlug === 'othercities' || normSlug === 'other' || normSlug === 'other-city')) {
+      const big5 = ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'];
+      list = list.filter((a) => {
+        const loc = ((a as any).location || '').toLowerCase();
+        const cat = typeof a.category === 'object' ? ((a.category as any)?.slug || (a.category as any)?.name || '').toLowerCase() : (a.category || '').toLowerCase();
+        const catGu = ((a as any).categoryGu || '').toLowerCase();
+        return !big5.some((b) => loc === b || loc.includes(b) || cat === b || cat.includes(b) || catGu === b || catGu.includes(b));
+      });
     }
-    return mainArticles;
-  }, [isPairedTab, pairedArticles, mainArticles]);
+    return list;
+  }, [isPairedTab, pairedArticles, mainArticles, normSlug]);
 
   // Fetch public videos stream for Video tab
   useEffect(() => {

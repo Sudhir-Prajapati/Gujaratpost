@@ -219,7 +219,19 @@ export class ArticleController {
         let catSlugsToMatch = [catSlugLower];
 
         if (catSlugLower === 'other-cities' || catSlugLower === 'othercities') {
-          catSlugsToMatch = ['other-cities', 'othercities', 'gujarat', 'state'];
+          catSlugsToMatch = ['other-cities', 'othercities'];
+          const big5Cats = await prisma.category.findMany({
+            where: { slug: { in: ['ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot'] } },
+            select: { id: true },
+          });
+          const big5Ids = big5Cats.map((c) => c.id);
+          andConditions.push({
+            NOT: [
+              { categoryId: { in: big5Ids } },
+              { categories: { some: { categoryId: { in: big5Ids } } } },
+              { location: { in: ['Ahmedabad', 'Gandhinagar', 'Surat', 'Vadodara', 'Rajkot', 'ahmedabad', 'gandhinagar', 'surat', 'vadodara', 'rajkot', 'અમદાવાદ', 'ગાંધીનગર', 'સુરત', 'વડોદરા', 'રાજકોટ'] } },
+            ],
+          });
         } else if (catSlugLower === 'world' || catSlugLower === 'international' || catSlugLower === 'videsh') {
           catSlugsToMatch = ['world', 'international'];
         } else if (catSlugLower === 'national' || catSlugLower === 'india' || catSlugLower === 'bharat' || catSlugLower === 'desh') {
