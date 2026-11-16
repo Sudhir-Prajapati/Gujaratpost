@@ -1013,7 +1013,12 @@ export default function HeroSection({
   const [bottomFeatured, setBottomFeatured] = useState<Article[]>(() =>
     getBottomCards(initialHeroPool, initialHeroSettings)
   );
-  const [trendingArtDB, setTrendingArtDB] = useState<Article[]>(initialPopularPool);
+  const [trendingArtDB, setTrendingArtDB] = useState<Article[]>(() => {
+    if (initialCategoryArticles['trending'] && initialCategoryArticles['trending'].length > 0) {
+      return initialCategoryArticles['trending'];
+    }
+    return initialPopularPool;
+  });
   const [mostReadArtDB, setMostReadArtDB] = useState<Article[]>(initialMostReadPool);
   const [isHeroMostReadExpanded, setIsHeroMostReadExpanded] = useState(false);
   const [gujaratArtDB, setGujaratArtDB] = useState<Article[]>(
@@ -1129,13 +1134,30 @@ export default function HeroSection({
           setFactCheckArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')).slice(0, 15));
           setBusinessArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'business', 'વેપાર', 'બિઝનેસ')).slice(0, 4));
           setSportsArtDB(sorted.filter((a: Article) => articleMatchesCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત')).slice(0, 7));
+
+          // Real-time update for trending articles
+          const freshTrending = sorted.filter((a: Article) => a.isTrending || articleMatchesCat(a, 'trending', 'ટ્રેન્ડિંગ'));
+          setTrendingArtDB(freshTrending);
         }
       }).catch(() => { });
+    };
+
+    const handleVisibilityOrFocus = () => {
+      if (typeof document !== 'undefined' && !document.hidden) {
+        handleSyncArticles();
+      }
     };
 
     window.addEventListener('gp-categories-updated', handleSyncCategories);
     window.addEventListener('gp-articles-updated', handleSyncArticles);
     window.addEventListener('gp-hero-updated', handleSyncArticles);
+    window.addEventListener('focus', handleVisibilityOrFocus);
+    document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+
+    // Auto-update stories continuously every 45 seconds so newly published stories appear automatically
+    const liveUpdateTimer = setInterval(() => {
+      handleSyncArticles();
+    }, 45000);
 
     // BroadcastChannel: listen for admin saves from any tab — triggers instant re-fetch
     let adminBroadcastChannel: BroadcastChannel | null = null;
@@ -1156,6 +1178,9 @@ export default function HeroSection({
       window.removeEventListener('gp-categories-updated', handleSyncCategories);
       window.removeEventListener('gp-articles-updated', handleSyncArticles);
       window.removeEventListener('gp-hero-updated', handleSyncArticles);
+      window.removeEventListener('focus', handleVisibilityOrFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+      clearInterval(liveUpdateTimer);
       if (adminBroadcastChannel) {
         adminBroadcastChannel.close();
       }
@@ -1778,43 +1803,93 @@ export default function HeroSection({
   }, [uniqueTopStories, articlesList, initialArticles]);
 
   // Dedicated Trending Stories for Desktop Right Sidebar in Hero Section to eliminate whitespace
+  // Displays the freshest/latest trending news (marked isTrending or category 'trending', latest published date first)
   const heroSidebarTrending = useMemo(() => {
-    const usedIds = new Set<string>();
-    // Exclude top stories / hero articles
-    (topStories || []).slice(0, 12).forEach((a) => { if (a?.id) usedIds.add(a.id); });
-    (topNews || []).slice(0, 6).forEach((a) => { if (a?.id) usedIds.add(a.id); });
-    // Exclude top 4 from mostRead
-    const mostReadSubset = (mostReadArtDB.length > 0 ? mostReadArtDB : uniqueTrendingArt).slice(0, 4);
-    mostReadSubset.forEach((a) => { if (a?.id) usedIds.add(a.id); });
+    // Only exclude the single lead hero headline to prevent immediate visual duplication at the top of the page
+    const leadId = uniqueTopStories[0]?.id;
 
-    const list: Article[] = [];
-    for (const art of (uniqueTrendingArt || [])) {
-      if (art && art.id && !usedIds.has(art.id)) {
-        usedIds.add(art.id);
-        list.push(art);
-        if (list.length >= 3) break;
+    const isFactCheck = (a: any): boolean => {
+      if (!a) return true;
+      const catSlug = ((a as any).categorySlug || (a as any).category?.slug || '').toLowerCase();
+      const catName = ((a as any).category || (a as any).categoryName || '').toLowerCase();
+      const title = (a.title || '').toLowerCase();
+      const slug = (a.slug || '').toLowerCase();
+      return (
+        catSlug === 'fact-check' ||
+        catSlug === 'factcheck' ||
+        catSlug.includes('fact') ||
+        catName.includes('fact') ||
+        catName.includes('ફેક્ટ') ||
+        slug.includes('fact-check') ||
+        title.includes('fact check') ||
+        title.includes('ફેક્ટ ચેક') ||
+        articleMatchesCat(a, 'fact-check', 'factcheck', 'ફેક્ટ')
+      );
+    };
+
+    const isTrending = (a: any): boolean => {
+      if (!a || !a.id || !isPublicArticle(a) || isFactCheck(a)) return false;
+      return (
+        Boolean(a.isTrending) ||
+        articleMatchesCat(a, 'trending', 'ટ્રેન્ડિંગ') ||
+        (Array.isArray((a as any).categories) && (a as any).categories.some((c: any) => c.category?.slug === 'trending' || c.slug === 'trending'))
+      );
+    };
+
+    const sortLatest = (a: Article, b: Article): number => {
+      const aTime = new Date(a.publishedAt || (a as any).createdAt || 0).getTime();
+      const bTime = new Date(b.publishedAt || (b as any).createdAt || 0).getTime();
+      if (bTime !== aTime) return bTime - aTime;
+      const aNum = (a as any).articleNumber || 0;
+      const bNum = (b as any).articleNumber || 0;
+      return bNum - aNum;
+    };
+
+    // Combine all available pools of fresh articles
+    const allPool = [
+      ...(initialCategoryArticles['trending'] || []),
+      ...(trendingArtDB || []),
+      ...(articlesList || []),
+      ...(initialArticles || []),
+    ];
+
+    const seenIds = new Set<string>();
+    if (leadId) seenIds.add(leadId);
+
+    const candidates: Article[] = [];
+    for (const art of allPool) {
+      if (art && art.id && !seenIds.has(art.id) && isPublicArticle(art) && !isFactCheck(art)) {
+        seenIds.add(art.id);
+        candidates.push(art);
       }
     }
-    if (list.length < 3) {
-      for (const art of (articlesList || [])) {
-        if (art && art.id && !usedIds.has(art.id)) {
-          usedIds.add(art.id);
-          list.push(art);
-          if (list.length >= 3) break;
-        }
+
+    // 1. Primary: Genuine trending articles (isTrending or category 'trending'), latest date first!
+    const trendingList = candidates.filter(isTrending).sort(sortLatest);
+
+    const result: Article[] = [];
+    for (const art of trendingList) {
+      result.push(art);
+      if (result.length >= 3) break;
+    }
+
+    // 2. Fallback: If fewer than 3 trending-tagged articles, fill with freshest latest news articles (sorted by latest date first)
+    if (result.length < 3) {
+      const resultIds = new Set(result.map((a) => a.id));
+      if (leadId) resultIds.add(leadId);
+
+      const freshNews = candidates
+        .filter((a) => !resultIds.has(a.id))
+        .sort(sortLatest);
+
+      for (const art of freshNews) {
+        result.push(art);
+        if (result.length >= 3) break;
       }
     }
-    if (list.length < 3) {
-      for (const art of (initialArticles || [])) {
-        if (art && art.id && !usedIds.has(art.id)) {
-          usedIds.add(art.id);
-          list.push(art);
-          if (list.length >= 3) break;
-        }
-      }
-    }
-    return list.slice(0, 3);
-  }, [topStories, topNews, mostReadArtDB, uniqueTrendingArt, articlesList, initialArticles]);
+
+    return result.slice(0, 3);
+  }, [uniqueTopStories, articlesList, initialArticles, trendingArtDB, initialCategoryArticles]);
 
   // DEDICATED ANDROID APK FEED:
   // Shows ONLY inside the installed Android APK (TWA).

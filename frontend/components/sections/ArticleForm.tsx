@@ -2385,6 +2385,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       clearApiCache();
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('gp-articles-updated'));
+        try {
+          const bc = new BroadcastChannel('gp-admin-updates');
+          bc.postMessage({ type: 'HERO_UPDATED', action: 'ARTICLE_SAVED' });
+          bc.close();
+        } catch { }
       }
       fetch('/api/revalidate', {
         method: 'POST',

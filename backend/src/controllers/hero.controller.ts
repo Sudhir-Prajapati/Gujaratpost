@@ -567,12 +567,16 @@ export class HeroController {
           );
         };
 
-        const validTrendingFromSetting = trendingNewsArticles.filter(isFactCheckPost);
-        const formattedTrendingRes = activeTrendingRes.map(formatPost);
-        const allFactChecks = [...formattedTrendingRes, ...validTrendingFromSetting];
-        trendingNewsArticles = allFactChecks
+        const formattedTrendingPosts = (activeTrendingPostsRes || []).map(formatPost);
+        const combinedTrending = [...trendingNewsArticles, ...formattedTrendingPosts].filter((a) => !isFactCheckPost(a));
+        trendingNewsArticles = combinedTrending
           .filter((art, idx, arr) => art && arr.findIndex((x) => x?.id === art.id) === idx)
-          .sort((a: any, b: any) => (b.articleNumber || 0) - (a.articleNumber || 0))
+          .sort((a: any, b: any) => {
+            const aTime = new Date(a.publishedAt || a.createdAt || 0).getTime();
+            const bTime = new Date(b.publishedAt || b.createdAt || 0).getTime();
+            if (bTime !== aTime) return bTime - aTime;
+            return (b.articleNumber || 0) - (a.articleNumber || 0);
+          })
           .slice(0, 10);
 
         // Resolve Popular News ("લોકપ્રિય સમાચાર" slider on homepage)
@@ -580,7 +584,6 @@ export class HeroController {
         // and eliminates stale/old articles (> 14 days old).
         const autoPopularNewsArticles = await getAutoPopularNewsArticles();
         const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
-        const formattedTrendingPosts = (activeTrendingPostsRes || []).map(formatPost);
 
         let popularNewsArticles: any[] = [];
         const seenPopIds = new Set<string>();

@@ -145,6 +145,7 @@ export default async function HomePage() {
     sports: sortByLatest(articles.filter((a) => isCat(a, 'sports', 'સ્પોર્ટ્સ', 'રમત'))),
     politics: sortByLatest(articles.filter((a) => isCat(a, 'politics', 'rajkaran', 'રાજકારણ'))),
     business: sortByLatest(articles.filter((a) => isCat(a, 'business', 'વેપાર', 'બિઝનેસ'))),
+    trending: sortByLatest(articles.filter((a) => a.isTrending || isCat(a, 'trending', 'ટ્રેન્ડિંગ'))),
   };
 
   let electionBannerInitial: any = null;
