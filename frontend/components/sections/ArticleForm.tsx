@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink, Search, Filter, Check, Layers, ChevronDown, ChevronUp, RotateCcw, BookOpen, FileText, PenLine, Users, Lock, Unlock } from 'lucide-react';
+import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, CheckCircle2, Upload, UploadCloud, Link as LinkIcon, Sparkles, Quote, List, Heading, Type, Copy, Plus, Trash2, Image as ImageIcon, Video, Eye, X, ExternalLink, Search, Filter, Check, Layers, ChevronDown, ChevronUp, RotateCcw, BookOpen, FileText, PenLine, Users, Lock, Unlock, Camera } from 'lucide-react';
 import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache } from '@/lib/api';
 import { sanitizeImageUrl } from '@/lib/media';
 import { translateOnFly } from '@/lib/translate';
@@ -476,6 +476,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
   const [primaryMediaList, setPrimaryMediaList] = useState<string[]>([]);
   const [primaryUrlInput, setPrimaryUrlInput] = useState('');
   const [imageMode, setImageMode] = useState<'upload' | 'url'>('upload');
+  const [photoCredit, setPhotoCredit] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
 
   const addPrimaryMediaUrl = (inputVal: string) => {
@@ -843,13 +844,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     qC: string,
     pairedSections: { desc: string; imageUrl: string; showImageAfterDesc?: boolean; imagePlacement?: 'after' | 'before' }[],
     extraPrimaryUrls: string[],
-    lang: 'en' | 'gu' | 'hi'
+    lang: 'en' | 'gu' | 'hi',
+    credit?: string
   ) => {
     const parts: string[] = [];
 
     // Embed extra primary media URLs (items 2, 3... in Primary Media) as primary gallery comment
     if (extraPrimaryUrls && extraPrimaryUrls.length > 0) {
       parts.push(`<!-- gp-primary-gallery: ${JSON.stringify(extraPrimaryUrls)} -->`);
+    }
+
+    // Embed dynamic photo / image credit comment if provided
+    const effectiveCredit = (credit !== undefined ? credit : photoCredit)?.trim();
+    if (effectiveCredit) {
+      parts.push(`<!-- gp-photo-credit: ${JSON.stringify(effectiveCredit)} -->`);
     }
 
     if (hl.trim()) {
@@ -1332,8 +1340,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       }
     }
 
-    // Purge PDF markup from working string
-    let workingRaw = purgePdfFromText(raw).trim();
+    // Purge PDF markup and embedded metadata comments from working string
+    let workingRaw = purgePdfFromText(raw)
+      .replace(/<!--\s*gp-photo-credit:[\s\S]*?-->/gi, '')
+      .replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '')
+      .trim();
 
     // Strip and extract standalone embeds from the content.
     // Handles trailing embeds, empty tags, non-breaking spaces, and scripts.
@@ -1518,7 +1529,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     // Check if new structured section delimiters <!-- gp-section-N --> exist
     if (/<!--\s*gp-section-\d+[^>]*-->/.test(workingRaw)) {
       const parts = workingRaw.split(/<!--\s*gp-section-(\d+)(?:\s+pos=["']?(\w+)["']?)?\s*-->/);
-      d1Str = purgePdfFromText(parts[0].replace(/!\[(?:.*?)\]\((?:https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '').trim())
+      d1Str = purgePdfFromText(parts[0].replace(/!\[(?:.*?)\]\((?:https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '').replace(/<!--\s*gp-photo-credit:[\s\S]*?-->/gi, '').trim())
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
@@ -1985,6 +1996,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           fallbackPdfPosition ||
           'end'
         );
+
+        // Extract saved photo credit from comment <!-- gp-photo-credit: ... --> or article properties
+        const photoCreditMatch = rawCombinedContent.match(/<!--\s*gp-photo-credit:\s*(?:json:)?(".*?"|[^>]+)\s*-->/i);
+        let savedPhotoCredit = '';
+        if (photoCreditMatch && photoCreditMatch[1]) {
+          try {
+            savedPhotoCredit = JSON.parse(photoCreditMatch[1]);
+          } catch {
+            savedPhotoCredit = photoCreditMatch[1].trim().replace(/^["']|["']$/g, '');
+          }
+        }
+        const resolvedCredit = savedPhotoCredit || (art as any).photoCredit || (art as any).imageCredit || (art as any).imageSource || '';
+        setPhotoCredit(resolvedCredit);
+
         setCategoryId(art.categoryId || art.category?.id || '');
         setLocation(art.location || '');
         const loadedAuthorId = art.authorId || art.author?.id || '';
@@ -2225,9 +2250,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const extraPrimary = primaryMediaList.slice(1).map((u) => u.trim()).filter(Boolean);
     const galleryPayload = extraPrimary;
 
-    let compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, extraPrimary, 'en');
-    let compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, extraPrimary, 'gu');
-    let compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, extraPrimary, 'hi');
+    let compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, extraPrimary, 'en', photoCredit);
+    let compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, extraPrimary, 'gu', photoCredit);
+    let compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, extraPrimary, 'hi', photoCredit);
 
     // Hard guarantee: if any social input was cleared by the user, permanently purge that platform's embeds from compiled content
     if (!twitterUrl.trim()) {
@@ -2294,6 +2319,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       contentGu: compiledGu,
       contentHi: compiledHi,
       featuredImage: finalPrimaryImage,
+      photoCredit: photoCredit.trim() || undefined,
       thumbnail: finalPrimaryImage,
       image2: storySections[0]?.imageUrl?.trim() || '',
       image3: storySections[1]?.imageUrl?.trim() || '',
@@ -4421,6 +4447,68 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
               </div>
             </div>
           )}
+
+          {/* 🏷️ Dynamic Photo / Image Credit / Source */}
+          <div className="pt-3 border-t border-gray-200 dark:border-zinc-800 space-y-2">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <label
+                htmlFor="photo-credit-input"
+                className="text-xs font-bold text-gray-800 dark:text-zinc-200 flex items-center gap-1.5"
+              >
+                <Camera className="h-4 w-4 text-red-600" />
+                <span>તસવીર સ્ત્રોત / ફોટો ક્રેડિટ (Photo / Image Source)</span>
+              </label>
+              <span className="text-[11px] text-gray-500 dark:text-zinc-400">
+                ખાલી રાખશો તો આપમેળે <strong className="text-zinc-700 dark:text-zinc-200">&quot;તસવીર: ગુજરાત પોસ્ટ&quot;</strong> દેખાશે
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                id="photo-credit-input"
+                type="text"
+                value={photoCredit}
+                onChange={(e) => setPhotoCredit(e.target.value)}
+                placeholder="Ex: ગુજરાત પોસ્ટ, સોશિયલ મીડિયા, ANI, PTI, Reuters, X, Facebook, ફાઇલ ફોટો..."
+                className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm placeholder:text-gray-400 text-gray-900 focus:border-red-500 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 shadow-2xs"
+              />
+              {photoCredit && (
+                <button
+                  type="button"
+                  onClick={() => setPhotoCredit('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-zinc-200 text-xs font-bold px-1.5 py-0.5 rounded cursor-pointer"
+                  title="Clear photo credit"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5 text-[11px] text-gray-600 dark:text-zinc-400">
+              <span className="font-semibold text-gray-700 dark:text-zinc-300">ઝડપી પસંદગી:</span>
+              {[
+                'ગુજરાત પોસ્ટ',
+                'સોશિયલ મીડિયા',
+                'ANI',
+                'PTI',
+                'X (Twitter)',
+                'ઇન્સ્ટાગ્રામ',
+                'ફેસબુક',
+                'ફાઇલ ફોટો',
+              ].map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  onClick={() => setPhotoCredit(preset)}
+                  className={`px-2 py-0.5 rounded-md border text-[11px] font-medium transition-colors cursor-pointer ${
+                    photoCredit === preset
+                      ? 'bg-red-50 text-red-700 border-red-400 dark:bg-red-950/50 dark:text-red-300 dark:border-red-700 font-bold'
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-700'
+                  }`}
+                >
+                  + {preset}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* 📰 DISTINCT SECTION 3: Description 1 (*) / Main Content Body */}
@@ -5699,14 +5787,58 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                       ))}
                     </div>
                   )}
+                  {/* Photo Caption & Dynamic Credit */}
+                  <div className="flex items-center justify-between text-xs text-neutral-500 font-medium px-1 pt-0.5">
+                    <span className="truncate max-w-[65%]">
+                      {(contentLang === 'gu' ? titleGu : contentLang === 'hi' ? titleHi : title) || 'Gujarat Post'}
+                    </span>
+                    <span className="whitespace-nowrap font-semibold text-zinc-600 dark:text-zinc-400">
+                      {photoCredit.trim()
+                        ? (/^(તસવીર|तस्वीर|photo)\s*:/i.test(photoCredit.trim())
+                          ? photoCredit.trim()
+                          : contentLang === 'gu'
+                            ? `તસવીર: ${photoCredit.trim()}`
+                            : contentLang === 'hi'
+                              ? `तस्वीर: ${photoCredit.trim()}`
+                              : `Photo: ${photoCredit.trim()}`)
+                        : contentLang === 'gu'
+                          ? 'તસવીર: ગુજરાત પોસ્ટ'
+                          : contentLang === 'hi'
+                            ? 'तस्वीर: ગુજરાત પોસ્ટ'
+                            : 'Photo: Gujarat Post'}
+                    </span>
+                  </div>
                 </div>
               ) : featuredImage && (
-                <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
-                  {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ? (
-                    <video src={featuredImage} controls className="h-full w-full object-cover" />
-                  ) : (
-                    <img src={sanitizeImageUrl(featuredImage)} alt="Featured Media" className="h-full w-full object-cover" />
-                  )}
+                <div className="space-y-2">
+                  <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
+                    {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ? (
+                      <video src={featuredImage} controls className="h-full w-full object-cover" />
+                    ) : (
+                      <img src={sanitizeImageUrl(featuredImage)} alt="Featured Media" className="h-full w-full object-cover" />
+                    )}
+                  </div>
+                  {/* Photo Caption & Dynamic Credit */}
+                  <div className="flex items-center justify-between text-xs text-neutral-500 font-medium px-1 pt-0.5">
+                    <span className="truncate max-w-[65%]">
+                      {(contentLang === 'gu' ? titleGu : contentLang === 'hi' ? titleHi : title) || 'Gujarat Post'}
+                    </span>
+                    <span className="whitespace-nowrap font-semibold text-zinc-600 dark:text-zinc-400">
+                      {photoCredit.trim()
+                        ? (/^(તસવીર|तस्वीर|photo)\s*:/i.test(photoCredit.trim())
+                          ? photoCredit.trim()
+                          : contentLang === 'gu'
+                            ? `તસવીર: ${photoCredit.trim()}`
+                            : contentLang === 'hi'
+                              ? `तस्वीर: ${photoCredit.trim()}`
+                              : `Photo: ${photoCredit.trim()}`)
+                        : contentLang === 'gu'
+                          ? 'તસવીર: ગુજરાત પોસ્ટ'
+                          : contentLang === 'hi'
+                            ? 'तस्वीर: ગુજરાત પોસ્ટ'
+                            : 'Photo: Gujarat Post'}
+                    </span>
+                  </div>
                 </div>
               )}
 

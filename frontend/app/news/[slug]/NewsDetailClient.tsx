@@ -813,15 +813,36 @@ function isGalleryImageAlt(alt: string): boolean {
   return /gallery\s*image|ગેલેરી|गैलरी|छवि|છબી/i.test(alt || '');
 }
 
-function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, includeCaption = false): string {
+function formatPhotoCredit(credit: string, language: string = 'gu'): string {
+  const trimmed = (credit || '').trim();
+  if (!trimmed) {
+    return language === 'gu'
+      ? 'તસવીર: ગુજરાત પોસ્ટ'
+      : language === 'hi'
+        ? 'तस्वीर: ગુજરાત પોસ્ટ'
+        : 'Photo: Gujarat Post';
+  }
+  if (/^(તસવીર|तस्वीर|photo)\s*:/i.test(trimmed)) {
+    return trimmed;
+  }
+  return language === 'gu'
+    ? `તસવીર: ${trimmed}`
+    : language === 'hi'
+      ? `तस्वीर: ${trimmed}`
+      : `Photo: ${trimmed}`;
+}
+
+function convertMarkdownImagesToFigures(rawHtml: string, titleText: string, includeCaption = false, photoCredit = '', language = 'gu'): string {
   return (rawHtml || '').replace(MARKDOWN_IMAGE_RE, (match, alt, url) => {
     const cleanAlt = (alt || '').trim();
     const cleanUrl = (url || '').replace(/\s+/g, '').trim();
     const isGallery = isGalleryImageAlt(cleanAlt);
 
+    const creditText = formatPhotoCredit(photoCredit, language);
+
     // If it's a gallery image placeholder, suppress the caption completely
     const caption = includeCaption && !isGallery
-      ? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>તસવીર: ગુજરાત પોસ્ટ</span></figcaption>`
+      ? `<figcaption class="flex items-center justify-between text-xs text-neutral-500 font-medium"><span>${cleanAlt || 'Gujarat Post'}</span><span>${creditText}</span></figcaption>`
       : cleanAlt && !isGallery
         ? `<figcaption class="text-xs text-center text-neutral-500 font-medium">${cleanAlt}</figcaption>`
         : '';
@@ -839,6 +860,7 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
     .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
     .replace(/----------------+/g, '')
     .replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '')
+    .replace(/<!--\s*gp-photo-credit:[\s\S]*?-->/gi, '')
     .replace(/<!--\s*gp-section-\d+-hidden-image:[\s\S]*?-->/gi, '')
     .replace(/<!--\s*gp-section-\d+[^>]*-->/gi, '')
     .replace(/\s*data-start="[^"]*"/gi, '')
@@ -1496,6 +1518,23 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     return uniqueImages.length > 0 ? uniqueImages : ['/assets/placeholder.jpg'];
   }, [article]);
 
+  const primaryPhotoCredit = useMemo(() => {
+    const rawContent = `${article?.content || ''}\n${article?.contentGu || ''}\n${article?.contentHi || ''}`;
+    const creditMatch = rawContent.match(/<!--\s*gp-photo-credit:\s*(?:json:)?(".*?"|[^>]+)\s*-->/i);
+    if (creditMatch && creditMatch[1]) {
+      try {
+        const parsed = JSON.parse(creditMatch[1]);
+        if (typeof parsed === 'string' && parsed.trim()) return parsed.trim();
+      } catch {
+        const rawVal = creditMatch[1].trim().replace(/^["']|["']$/g, '');
+        if (rawVal) return rawVal;
+      }
+    }
+    const propCredit = (article as any)?.photoCredit || (article as any)?.imageCredit || (article as any)?.imageSource;
+    if (typeof propCredit === 'string' && propCredit.trim()) return propCredit.trim();
+    return '';
+  }, [article]);
+
   const handleNextImage = useCallback(() => {
     if (slideImages.length <= 1) return;
     setActiveImageIndex((prev) => (prev + 1) % slideImages.length);
@@ -1683,6 +1722,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
       .replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '')
+      .replace(/<!--\s*gp-photo-credit:[\s\S]*?-->/gi, '')
       .replace(/<!--\s*gp-section-\d+-hidden-image:[\s\S]*?-->/gi, '')
       .replace(/<!--\s*gp-section-\d+[^>]*-->/gi, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
@@ -1708,7 +1748,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     });
 
     // Convert markdown images after translation as labels may no longer be English.
-    cleaned = convertMarkdownImagesToFigures(cleaned, title);
+    cleaned = convertMarkdownImagesToFigures(cleaned, title, false, primaryPhotoCredit, language);
 
     // Collapse multiple nested generic blockquotes (preserve twitter-tweet and instagram-media embeds)
     cleaned = cleaned
@@ -2699,7 +2739,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                           : title}
                 </span>
                 <span style={{ whiteSpace: 'nowrap' }}>
-                  {uiLabel(language, { en: 'Photo: Gujarat Post', gu: 'તસવીર: ગુજરાત પોસ્ટ', hi: 'तस्वीर: ગુજરાત પોસ્ટ' })}
+                  {formatPhotoCredit(primaryPhotoCredit, language)}
                 </span>
               </figcaption>
             </figure>
