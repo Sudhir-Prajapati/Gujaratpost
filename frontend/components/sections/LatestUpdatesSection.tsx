@@ -395,7 +395,7 @@ export default function LatestUpdatesSection({
                     <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
-                <div className="relative h-[76px] w-[114px] sm:h-[82px] sm:w-[122px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <div className="relative aspect-[16/9] w-[120px] sm:w-[128px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted shadow-2xs">
                   <ArticleMedia
                     src={mediaSrc}
                     alt={getArticleTitle(art, language)}
@@ -441,7 +441,7 @@ export default function LatestUpdatesSection({
                     <AutoArticleTitle article={art} language={language} />
                   </h3>
                 </div>
-                <div className="relative h-[76px] w-[114px] sm:h-[82px] sm:w-[122px] shrink-0 overflow-hidden rounded-sm border border-border/10 bg-muted">
+                <div className="relative aspect-[16/9] w-[120px] sm:w-[128px] shrink-0 overflow-hidden rounded-lg border border-border/15 bg-muted shadow-2xs">
                   <ArticleMedia
                     src={mediaSrc}
                     alt={getArticleTitle(art, language)}

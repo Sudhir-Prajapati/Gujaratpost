@@ -176,9 +176,10 @@ export default function ArticleMedia({
             src={cleanSrc}
             alt=""
             aria-hidden="true"
-            className="w-full h-full object-cover blur-2xl scale-110 opacity-30 dark:opacity-20 select-none"
+            className="w-full h-full object-cover blur-md scale-125 opacity-90 dark:opacity-85 select-none brightness-95"
             onError={() => {}}
           />
+          <div className="absolute inset-0 bg-black/10 dark:bg-black/25 pointer-events-none" />
         </div>
       )}
       <img
