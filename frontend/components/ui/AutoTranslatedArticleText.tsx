@@ -48,6 +48,33 @@ export function AutoArticleTitle({ article, language, fallback }: { article: Art
   return <AutoTranslatedArticleText article={article} field="title" language={language} fallback={fallback} />;
 }
 
+/**
+ * Detects the index of a colon separator in headline kickers.
+ * Supports:
+ * - Standard ASCII colon: ':' (\u003A)
+ * - Gujarati sign visarga: 'ઃ' (\u0A83) (typed on Gujarati keyboards)
+ * - Devanagari sign visarga: 'ः' (\u0903)
+ * - Fullwidth colon: '：' (\uFF1A)
+ * - Triangular/ratio colon: 'ː' (\u02D0), '∶' (\u2236)
+ * Ignores colons surrounded by digits (e.g. timestamps like '10:30').
+ */
+export function findHeadlineColonIndex(text: string): number {
+  if (!text || typeof text !== 'string') return -1;
+  const regex = /[:ઃः：ː∶]/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(text)) !== null) {
+    const idx = match.index;
+    const prevChar = text[idx - 1] || '';
+    const nextChar = text[idx + 1] || '';
+    // Skip timestamps like 10:30 or 12:45
+    if (/\d/.test(prevChar) && /\d/.test(nextChar)) {
+      continue;
+    }
+    return idx;
+  }
+  return -1;
+}
+
 export function AutoArticleTitleWithPrefix({
   article,
   language,
@@ -59,7 +86,7 @@ export function AutoArticleTitleWithPrefix({
   prefixClassName?: string;
   fallback?: string;
 }) {
-  const sourceText = getFieldValue(article, 'title', language) || fallback;
+  const sourceText = getFieldValue(article, 'title', language) || (article as any)?.titleGu || (article as any)?.title || fallback;
   const translatedText = useAutoTranslate(sourceText, language);
 
   let finalTitle = translatedText || sourceText;
@@ -71,8 +98,8 @@ export function AutoArticleTitleWithPrefix({
     if (language === 'en' && explicitEn) finalTitle = explicitEn;
   }
 
-  const colonIdx = finalTitle.indexOf(':');
-  const hasPrefix = colonIdx > 2 && colonIdx <= 48;
+  const colonIdx = findHeadlineColonIndex(finalTitle);
+  const hasPrefix = colonIdx >= 2 && colonIdx <= 85 && (finalTitle.length - colonIdx > 2);
 
   if (hasPrefix) {
     const prefix = finalTitle.substring(0, colonIdx + 1);

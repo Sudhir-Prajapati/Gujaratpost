@@ -10,7 +10,7 @@ import { Megaphone, X } from 'lucide-react';
 import ArticleMedia from '@/components/ui/ArticleMedia';
 import { useIsApk } from '@/lib/useIsApk';
 import { useApp } from '@/components/AppProvider';
-import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import { AutoArticleTitle, AutoArticleTitleWithPrefix } from '@/components/ui/AutoTranslatedArticleText';
 
 // Helper to resolve absolute or relative image URLs cleanly
 function getFullImageUrl(url?: string | null): string {
@@ -375,10 +375,15 @@ export default function TajSamacharDrawer() {
                         {/* Title & Metadata */}
                         <div className="flex-1 min-w-0 flex flex-col justify-between h-full py-0.5">
                           <h4 className={`text-[14px] sm:text-[14.5px] font-semibold text-gray-900 dark:text-gray-100 leading-snug line-clamp-3 group-hover:text-red-700 dark:group-hover:text-red-400 transition-colors ${language === 'gu' ? 'font-gujarati' : ''}`}>
-                            <AutoArticleTitle
+                            <AutoArticleTitleWithPrefix
                               article={{ ...item, titleGu: item.titleGu || item.title } as any}
                               language={language as any}
                               fallback={item.titleGu || item.title || ''}
+                              prefixClassName={
+                                idx % 2 === 0
+                                  ? 'text-[#0284c7] dark:text-[#38bdf8] font-black mr-1'
+                                  : 'text-[#d97706] dark:text-[#fbbf24] font-black mr-1'
+                              }
                             />
                           </h4>
                         </div>
