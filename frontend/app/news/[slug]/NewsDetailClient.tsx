@@ -216,6 +216,52 @@ const ArticleContentBody = memo(function ArticleContentBody({
       }
     );
 
+    // Transform any Instagram embed (figure with iframe or blockquote) into a clean direct iframe
+    raw = raw.replace(
+      /<figure[^>]*data-article-social-platform=["']instagram["'][^>]*>[\s\S]*?<\/figure>/gi,
+      (match) => {
+        const urlMatch = match.match(/data-article-social-url=["']([^"']+)["']/i) || match.match(/https?:\/\/(?:www\.)?instagram\.com\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/i);
+        const igUrl = urlMatch ? (urlMatch[1] || urlMatch[0]) : '';
+        if (igUrl) {
+          const embedUrl = getInstagramEmbedUrl(igUrl);
+          if (embedUrl) {
+            return `<div class="my-6 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${embedUrl}" class="w-full min-h-[580px] border-0" allowtransparency="true" allowfullscreen="true" frameborder="0" scrolling="no"></iframe></div>`;
+          }
+        }
+        return match;
+      }
+    );
+
+    // Transform any YouTube embed into responsive 16:9 container
+    raw = raw.replace(
+      /<figure[^>]*data-article-social-platform=["']youtube["'][^>]*>([\s\S]*?)<\/figure>/gi,
+      (match, inner) => {
+        const urlMatch = match.match(/data-article-social-url=["']([^"']+)["']/i) || match.match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([\w-]{11})/i);
+        const ytIdMatch = urlMatch ? (urlMatch[1] || urlMatch[0]).match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([\w-]{11})/i) : null;
+        const ytId = ytIdMatch ? ytIdMatch[1] : null;
+        if (ytId) {
+          return `<div class="my-6 aspect-video w-full max-w-[720px] mx-auto overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-black"><iframe src="https://www.youtube.com/embed/${ytId}" class="h-full w-full border-0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" frameborder="0"></iframe></div>`;
+        }
+        return inner || match;
+      }
+    );
+
+    // Transform any Facebook embed into clean container
+    raw = raw.replace(
+      /<figure[^>]*data-article-social-platform=["']facebook["'][^>]*>[\s\S]*?<\/figure>/gi,
+      (match) => {
+        const urlMatch = match.match(/data-article-social-url=["']([^"']+)["']/i);
+        const fbUrl = urlMatch ? urlMatch[1] : '';
+        if (fbUrl) {
+          const embedUrl = getFacebookEmbedUrl(fbUrl);
+          if (embedUrl) {
+            return `<div class="my-6 mx-auto max-w-[500px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${embedUrl}" class="w-full min-h-[460px] border-0" allowfullscreen="true" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+          }
+        }
+        return match;
+      }
+    );
+
     // Convert paragraph-level <div> to <p class="article-para my-3">
     raw = raw.replace(/<div\b([^>]*)>([\s\S]*?)<\/div>/gi, (match, attrs, inner) => {
       if (/<(div|blockquote|figure|table|iframe|hr|h[1-6]|ul|ol)\b/i.test(inner)) {
@@ -1675,38 +1721,51 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       return `${prefix}<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-[#B3121B] font-bold underline hover:text-[#8E0E15] break-all">${url}</a>`;
     });
 
-    // Append YouTube embed if set on article object and not already present in body HTML
+    // 1. Append YouTube embed if set on article object and not already present in body HTML
     const ytUrl = (article as any).youtubeUrl || (article as any).youtube;
-    if (ytUrl && ytUrl.trim() && !cleaned.includes('iframe') && !cleaned.includes('youtube.com/embed')) {
-      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-      const match = ytUrl.match(regExp);
-      const embedUrl = match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}` : null;
-      if (embedUrl) {
-        cleaned += `<div class="my-6 aspect-video w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md"><iframe src="${embedUrl}" class="h-full w-full" allowfullscreen frameborder="0"></iframe></div>`;
+    if (ytUrl && ytUrl.trim() && !cleaned.includes('data-article-social-platform="youtube"')) {
+      const iframeSrc = ytUrl.match(/<iframe[^>]+src=["']([^"']+)["']/i);
+      let ytEmbedUrl = iframeSrc && iframeSrc[1] ? iframeSrc[1] : '';
+      if (!ytEmbedUrl) {
+        const idMatch = ytUrl.match(/(?:youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|shorts\/)([\w-]{11})/i) || ytUrl.match(/^[\w-]{11}$/);
+        if (idMatch && (idMatch[1] || idMatch[0])) {
+          ytEmbedUrl = `https://www.youtube.com/embed/${idMatch[1] || idMatch[0]}`;
+        }
+      }
+      if (ytEmbedUrl && !cleaned.includes(ytEmbedUrl)) {
+        cleaned += `<div class="my-6 aspect-video w-full max-w-[720px] mx-auto overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-black"><iframe src="${ytEmbedUrl}" class="h-full w-full border-0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" frameborder="0"></iframe></div>`;
       }
     }
 
-    // Append Twitter card if set on article object and not already present in body HTML
+    // 2. Append Twitter card if set on article object and not already present in body HTML
     const twUrl = (article as any).twitterUrl || (article as any).twitter;
-    if (twUrl && twUrl.trim() && !cleaned.includes('data-gp-x-link') && !cleaned.includes('data-article-social-platform="twitter"') && !cleaned.includes('x.com/') && !cleaned.includes('twitter.com/')) {
-      cleaned += buildTwitterCardHtml(twUrl.trim(), language);
-    }
-
-    // Append Instagram embed if set on article object and not already present in body HTML
-    const igUrl = (article as any).instagramUrl || (article as any).instagram;
-    if (igUrl && igUrl.trim() && !cleaned.includes('instagram.com/')) {
-      const igEmbed = getInstagramEmbedUrl(igUrl.trim());
-      if (igEmbed) {
-        cleaned += `<div class="my-6 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${igEmbed}" class="w-full min-h-[540px] border-0" allowtransparency="true" allowfullscreen="true" frameborder="0" scrolling="no"></iframe></div>`;
+    if (twUrl && twUrl.trim() && !cleaned.includes('data-article-social-platform="twitter"') && !cleaned.includes('twitter-tweet')) {
+      const tweetIdMatch = twUrl.match(/(?:status|i\/status)\/(\d+)/i);
+      if (tweetIdMatch) {
+        const canonicalTweet = `https://x.com/i/status/${tweetIdMatch[1]}`;
+        cleaned += `<div class="gp-twitter-embed-wrap my-6 flex justify-center w-full" data-tweet-url="${canonicalTweet}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${canonicalTweet}">View post on X</a></blockquote></div>`;
+      } else if (twUrl.includes('<blockquote') || twUrl.includes('<iframe')) {
+        cleaned += `<div class="gp-twitter-embed-wrap my-6 flex justify-center w-full">${twUrl}</div>`;
+      } else {
+        cleaned += buildTwitterCardHtml(twUrl.trim(), language);
       }
     }
 
-    // Append Facebook embed if set on article object and not already present in body HTML
+    // 3. Append Instagram embed if set on article object and not already present in body HTML
+    const igUrl = (article as any).instagramUrl || (article as any).instagram;
+    if (igUrl && igUrl.trim() && !cleaned.includes('data-article-social-platform="instagram"')) {
+      const igEmbed = getInstagramEmbedUrl(igUrl.trim());
+      if (igEmbed && !cleaned.includes(igEmbed)) {
+        cleaned += `<div class="my-6 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${igEmbed}" class="w-full min-h-[580px] border-0" allowtransparency="true" allowfullscreen="true" frameborder="0" scrolling="no"></iframe></div>`;
+      }
+    }
+
+    // 4. Append Facebook embed if set on article object and not already present in body HTML
     const fbUrl = (article as any).facebookUrl || (article as any).facebook;
-    if (fbUrl && fbUrl.trim() && !cleaned.includes('facebook.com/plugins')) {
+    if (fbUrl && fbUrl.trim() && !cleaned.includes('data-article-social-platform="facebook"')) {
       const fbEmbed = getFacebookEmbedUrl(fbUrl.trim());
-      if (fbEmbed) {
-        cleaned += `<div class="my-6 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${fbEmbed}" class="w-full min-h-[460px] border-0" allowfullscreen="true" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
+      if (fbEmbed && !cleaned.includes(fbEmbed)) {
+        cleaned += `<div class="my-6 mx-auto max-w-[500px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${fbEmbed}" class="w-full min-h-[460px] border-0" allowfullscreen="true" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>`;
       }
     }
 

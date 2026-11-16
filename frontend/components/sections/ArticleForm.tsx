@@ -536,9 +536,25 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
   // Social Media & Video / PDF Embeds
   const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [youtubeMode, setYoutubeMode] = useState<'normal' | 'embed'>('normal');
+  const [youtubeNormal, setYoutubeNormal] = useState('');
+  const [youtubeEmbed, setYoutubeEmbed] = useState('');
+
   const [twitterUrl, setTwitterUrl] = useState('');
+  const [twitterMode, setTwitterMode] = useState<'normal' | 'embed'>('normal');
+  const [twitterNormal, setTwitterNormal] = useState('');
+  const [twitterEmbed, setTwitterEmbed] = useState('');
+
   const [instagramUrl, setInstagramUrl] = useState('');
+  const [instagramMode, setInstagramMode] = useState<'normal' | 'embed'>('normal');
+  const [instagramNormal, setInstagramNormal] = useState('');
+  const [instagramEmbed, setInstagramEmbed] = useState('');
+
   const [facebookUrl, setFacebookUrl] = useState('');
+  const [facebookMode, setFacebookMode] = useState<'normal' | 'embed'>('normal');
+  const [facebookNormal, setFacebookNormal] = useState('');
+  const [facebookEmbed, setFacebookEmbed] = useState('');
+
   const [pdfUrl, setPdfUrl] = useState('');
   const [showPdfPages, setShowPdfPages] = useState(false);
   const [pdfPosition, setPdfPosition] = useState<string>('end');
@@ -546,6 +562,23 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
   // Helper to purge embeds of a given platform from all state fields so they never resurface
   const purgePlatformEmbedsFromState = (platform: 'twitter' | 'youtube' | 'instagram' | 'facebook') => {
+    if (platform === 'youtube') {
+      setYoutubeUrl('');
+      setYoutubeNormal('');
+      setYoutubeEmbed('');
+    } else if (platform === 'twitter') {
+      setTwitterUrl('');
+      setTwitterNormal('');
+      setTwitterEmbed('');
+    } else if (platform === 'instagram') {
+      setInstagramUrl('');
+      setInstagramNormal('');
+      setInstagramEmbed('');
+    } else if (platform === 'facebook') {
+      setFacebookUrl('');
+      setFacebookNormal('');
+      setFacebookEmbed('');
+    }
     setDesc1((p) => purgeSocialEmbedFromText(p, platform));
     setDesc1Gu((p) => purgeSocialEmbedFromText(p, platform));
     setDesc1Hi((p) => purgeSocialEmbedFromText(p, platform));
@@ -903,8 +936,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
       const imgTag = hasImg
         ? (isVisible
-            ? `![${sectionAlt}](${sec.imageUrl.trim()})`
-            : `<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`)
+          ? `![${sectionAlt}](${sec.imageUrl.trim()})`
+          : `<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`)
         : '';
 
       const posAttr = isBefore ? ' pos="before"' : '';
@@ -1880,9 +1913,28 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           art.facebook ||
           '';
 
+        const isYtEmbed = resolvedYt.includes('<iframe') || resolvedYt.includes('/embed/');
+        setYoutubeMode(isYtEmbed ? 'embed' : 'normal');
+        setYoutubeNormal(isYtEmbed ? '' : resolvedYt);
+        setYoutubeEmbed(isYtEmbed ? resolvedYt : '');
         setYoutubeUrl(resolvedYt);
+
+        const isTwEmbed = resolvedTw.includes('<blockquote') || resolvedTw.includes('<iframe');
+        setTwitterMode(isTwEmbed ? 'embed' : 'normal');
+        setTwitterNormal(isTwEmbed ? '' : resolvedTw);
+        setTwitterEmbed(isTwEmbed ? resolvedTw : '');
         setTwitterUrl(resolvedTw);
+
+        const isIgEmbed = resolvedIg.includes('<iframe') || resolvedIg.includes('<blockquote') || resolvedIg.includes('/embed');
+        setInstagramMode(isIgEmbed ? 'embed' : 'normal');
+        setInstagramNormal(isIgEmbed ? '' : resolvedIg);
+        setInstagramEmbed(isIgEmbed ? resolvedIg : '');
         setInstagramUrl(resolvedIg);
+
+        const isFbEmbed = resolvedFb.includes('<iframe') || resolvedFb.includes('/plugins/');
+        setFacebookMode(isFbEmbed ? 'embed' : 'normal');
+        setFacebookNormal(isFbEmbed ? '' : resolvedFb);
+        setFacebookEmbed(isFbEmbed ? resolvedFb : '');
         setFacebookUrl(resolvedFb);
         const fallbackPdfMatch =
           rawCombinedContent.match(/data-pdf-url=["']([^"']+)["']/i) ||
@@ -4594,54 +4646,52 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         </button>
                       </div>
 
-                    {/* Image Placement & Visibility in Article */}
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 mt-2 border-t border-dashed border-gray-300 dark:border-zinc-700/60 bg-gray-50/80 dark:bg-zinc-800/40 px-3.5 py-2.5 rounded-xl">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <ImageIcon className="h-4 w-4 text-emerald-600 shrink-0" />
-                        <span className="text-xs font-bold text-gray-800 dark:text-zinc-200">
-                          આ ફોટો ક્યાં દર્શાવવો (Position):
-                        </span>
-                        <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xs">
-                          <button
-                            type="button"
-                            onClick={() => updateStorySection(idx, { imagePlacement: 'after' })}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                              (slot.imagePlacement || 'after') === 'after'
+                      {/* Image Placement & Visibility in Article */}
+                      <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 mt-2 border-t border-dashed border-gray-300 dark:border-zinc-700/60 bg-gray-50/80 dark:bg-zinc-800/40 px-3.5 py-2.5 rounded-xl">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <ImageIcon className="h-4 w-4 text-emerald-600 shrink-0" />
+                          <span className="text-xs font-bold text-gray-800 dark:text-zinc-200">
+                            આ ફોટો ક્યાં દર્શાવવો (Position):
+                          </span>
+                          <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xs">
+                            <button
+                              type="button"
+                              onClick={() => updateStorySection(idx, { imagePlacement: 'after' })}
+                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${(slot.imagePlacement || 'after') === 'after'
                                 ? 'bg-blue-600 text-white shadow-xs'
                                 : 'text-gray-600 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white'
-                            }`}
-                          >
-                            વર્ણન {sectionNum} પછી (After Desc)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateStorySection(idx, { imagePlacement: 'before' })}
-                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
-                              slot.imagePlacement === 'before'
+                                }`}
+                            >
+                              વર્ણન {sectionNum} પછી (After Desc)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateStorySection(idx, { imagePlacement: 'before' })}
+                              className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${slot.imagePlacement === 'before'
                                 ? 'bg-blue-600 text-white shadow-xs'
                                 : 'text-gray-600 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white'
-                            }`}
-                          >
-                            વર્ણન {sectionNum} પહેલાં (Before Desc)
-                          </button>
+                                }`}
+                            >
+                              વર્ણન {sectionNum} પહેલાં (Before Desc)
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <label className="relative inline-flex items-center cursor-pointer select-none">
+                            <input
+                              type="checkbox"
+                              checked={slot.showImageAfterDesc !== false}
+                              onChange={(e) => updateStorySection(idx, { showImageAfterDesc: e.target.checked })}
+                              className="sr-only peer"
+                            />
+                            <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
+                            <span className="ml-2 text-xs font-extrabold text-gray-700 dark:text-zinc-300 min-w-[70px]">
+                              {slot.showImageAfterDesc !== false ? '✓ દર્શાવો (Show)' : '✕ છુપાવો (Hide)'}
+                            </span>
+                          </label>
                         </div>
                       </div>
-
-                      <div className="flex items-center gap-2">
-                        <label className="relative inline-flex items-center cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={slot.showImageAfterDesc !== false}
-                            onChange={(e) => updateStorySection(idx, { showImageAfterDesc: e.target.checked })}
-                            className="sr-only peer"
-                          />
-                          <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
-                          <span className="ml-2 text-xs font-extrabold text-gray-700 dark:text-zinc-300 min-w-[70px]">
-                            {slot.showImageAfterDesc !== false ? '✓ દર્શાવો (Show)' : '✕ છુપાવો (Hide)'}
-                          </span>
-                        </label>
-                      </div>
-                    </div>
                     </>
                   )}
                 </div>
@@ -4717,204 +4767,408 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            {/* YouTube Video URL / Embed ID */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span className="text-red-600">▶</span> YouTube Video URL / ID
+            {/* 1. YouTube Video URL / Embed */}
+            <div className="rounded-xl border border-gray-300 dark:border-zinc-700 p-4 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-sm font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="text-red-600 font-black">▶</span> YouTube Video
                 </label>
-                {youtubeUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setYoutubeUrl('');
-                      purgePlatformEmbedsFromState('youtube');
-                    }}
-                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
-                    title="YouTube વિડિયો હટાવો"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    <span>લિંક દૂર કરો</span>
-                  </button>
-                ) : null}
+
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-lg bg-gray-200/80 dark:bg-zinc-800 p-0.5 border border-gray-300 dark:border-zinc-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setYoutubeMode('normal');
+                        if (youtubeNormal) setYoutubeUrl(youtubeNormal);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        youtubeMode === 'normal'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      🔗 Normal Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setYoutubeMode('embed');
+                        if (youtubeEmbed) setYoutubeUrl(youtubeEmbed);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        youtubeMode === 'embed'
+                          ? 'bg-red-600 text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      📜 Embed Code
+                    </button>
+                  </div>
+
+                  {youtubeUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setYoutubeUrl('');
+                        setYoutubeNormal('');
+                        setYoutubeEmbed('');
+                        purgePlatformEmbedsFromState('youtube');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-semibold cursor-pointer p-1"
+                      title="YouTube લિંક દૂર કરો"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">દૂર કરો</span>
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={youtubeUrl}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setYoutubeUrl(val);
-                    if (!val.trim()) purgePlatformEmbedsFromState('youtube');
-                  }}
-                  placeholder="Ex: https://www.youtube.com/watch?v=... or embed code"
-                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-                />
-                {youtubeUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setYoutubeUrl('');
-                      purgePlatformEmbedsFromState('youtube');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    title="Clear YouTube URL"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste YouTube URL or iframe embed code.</p>
+
+              {youtubeMode === 'normal' ? (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={youtubeNormal}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setYoutubeNormal(val);
+                        setYoutubeUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('youtube');
+                      }}
+                      placeholder="Ex: https://www.youtube.com/watch?v=... or https://youtu.be/..."
+                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm font-medium placeholder:text-gray-400 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Normal Link:</strong> Paste direct YouTube URL, share link, or Shorts link.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={youtubeEmbed}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setYoutubeEmbed(val);
+                        setYoutubeUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('youtube');
+                      }}
+                      placeholder='Ex: <iframe width="560" height="315" src="https://www.youtube.com/embed/..." ...></iframe>'
+                      className="w-full font-mono text-xs rounded-xl border border-gray-400 bg-white px-4 py-2.5 placeholder:text-gray-400 text-gray-900 focus:border-red-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 resize-none"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Embed Code:</strong> Paste YouTube &lt;iframe&gt; embed code or /embed/ URL.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Twitter / X Post URL */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span className="text-sky-500 font-bold">𝕏</span> Twitter / X Post URL
+            {/* 2. Twitter / X Post URL */}
+            <div className="rounded-xl border border-gray-300 dark:border-zinc-700 p-4 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-sm font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="text-sky-500 font-bold">𝕏</span> Twitter / X Post
                 </label>
-                {twitterUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTwitterUrl('');
-                      purgePlatformEmbedsFromState('twitter');
-                    }}
-                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
-                    title="Twitter / X લિંક અને પોસ્ટ કાયમ માટે હટાવો"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    <span>લિંક દૂર કરો</span>
-                  </button>
-                ) : null}
+
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-lg bg-gray-200/80 dark:bg-zinc-800 p-0.5 border border-gray-300 dark:border-zinc-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwitterMode('normal');
+                        if (twitterNormal) setTwitterUrl(twitterNormal);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        twitterMode === 'normal'
+                          ? 'bg-sky-500 text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      🔗 Normal Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwitterMode('embed');
+                        if (twitterEmbed) setTwitterUrl(twitterEmbed);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        twitterMode === 'embed'
+                          ? 'bg-sky-500 text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      📜 Embed Code
+                    </button>
+                  </div>
+
+                  {twitterUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTwitterUrl('');
+                        setTwitterNormal('');
+                        setTwitterEmbed('');
+                        purgePlatformEmbedsFromState('twitter');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-semibold cursor-pointer p-1"
+                      title="Twitter / X લિંક દૂર કરો"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">દૂર કરો</span>
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={twitterUrl}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setTwitterUrl(val);
-                    if (!val.trim()) purgePlatformEmbedsFromState('twitter');
-                  }}
-                  placeholder="Ex: https://x.com/.../status/... or embed code"
-                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-sky-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-                />
-                {twitterUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTwitterUrl('');
-                      purgePlatformEmbedsFromState('twitter');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    title="Clear Twitter URL"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste tweet URL or embed code to display post card.</p>
+
+              {twitterMode === 'normal' ? (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={twitterNormal}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTwitterNormal(val);
+                        setTwitterUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('twitter');
+                      }}
+                      placeholder="Ex: https://x.com/username/status/1234567890"
+                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm font-medium placeholder:text-gray-400 text-gray-900 focus:border-sky-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Normal Link:</strong> Paste direct tweet URL (https://x.com/... or https://twitter.com/...).
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={twitterEmbed}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setTwitterEmbed(val);
+                        setTwitterUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('twitter');
+                      }}
+                      placeholder='Ex: <blockquote class="twitter-tweet">...</blockquote> or embed code'
+                      className="w-full font-mono text-xs rounded-xl border border-gray-400 bg-white px-4 py-2.5 placeholder:text-gray-400 text-gray-900 focus:border-sky-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 resize-none"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Embed Code:</strong> Paste Twitter &lt;blockquote&gt; embed code or iframe.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Instagram Post / Reel URL / Embed */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white text-[10px]">📸</span> Instagram Post / Reel URL / Embed
+            {/* 3. Instagram Post / Reel URL / Embed */}
+            <div className="rounded-xl border border-gray-300 dark:border-zinc-700 p-4 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-sm font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] text-white text-[10px]">📸</span> Instagram Post / Reel
                 </label>
-                {instagramUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInstagramUrl('');
-                      purgePlatformEmbedsFromState('instagram');
-                    }}
-                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
-                    title="Instagram પોસ્ટ હટાવો"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    <span>લિંક દૂર કરો</span>
-                  </button>
-                ) : null}
+
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-lg bg-gray-200/80 dark:bg-zinc-800 p-0.5 border border-gray-300 dark:border-zinc-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInstagramMode('normal');
+                        if (instagramNormal) setInstagramUrl(instagramNormal);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        instagramMode === 'normal'
+                          ? 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      🔗 Normal Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInstagramMode('embed');
+                        if (instagramEmbed) setInstagramUrl(instagramEmbed);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        instagramMode === 'embed'
+                          ? 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      📜 Embed Code
+                    </button>
+                  </div>
+
+                  {instagramUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setInstagramUrl('');
+                        setInstagramNormal('');
+                        setInstagramEmbed('');
+                        purgePlatformEmbedsFromState('instagram');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-semibold cursor-pointer p-1"
+                      title="Instagram લિંક દૂર કરો"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">દૂર કરો</span>
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={instagramUrl}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setInstagramUrl(val);
-                    if (!val.trim()) purgePlatformEmbedsFromState('instagram');
-                  }}
-                  placeholder="Ex: https://www.instagram.com/p/... or /reel/... or embed code"
-                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-pink-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-                />
-                {instagramUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setInstagramUrl('');
-                      purgePlatformEmbedsFromState('instagram');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    title="Clear Instagram URL"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste Instagram post/reel link or iframe embed code.</p>
+
+              {instagramMode === 'normal' ? (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={instagramNormal}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInstagramNormal(val);
+                        setInstagramUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('instagram');
+                      }}
+                      placeholder="Ex: https://www.instagram.com/reel/C8xxx/ or /p/C8xxx/"
+                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm font-medium placeholder:text-gray-400 text-gray-900 focus:border-pink-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Normal Link:</strong> Paste direct Instagram Reel or Post link.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={instagramEmbed}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInstagramEmbed(val);
+                        setInstagramUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('instagram');
+                      }}
+                      placeholder='Ex: <iframe src="https://www.instagram.com/reel/.../embed/" ...></iframe> or blockquote'
+                      className="w-full font-mono text-xs rounded-xl border border-gray-400 bg-white px-4 py-2.5 placeholder:text-gray-400 text-gray-900 focus:border-pink-500 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 resize-none"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Embed Code:</strong> Paste Instagram &lt;iframe&gt; or &lt;blockquote&gt; embed code.
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Facebook Post / Video URL / Embed */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-sm font-semibold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
-                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-[#1877F2] text-white text-[10px] font-bold">f</span> Facebook Post / Video URL / Embed
+            {/* 4. Facebook Post / Video URL / Embed */}
+            <div className="rounded-xl border border-gray-300 dark:border-zinc-700 p-4 bg-zinc-50/50 dark:bg-zinc-950/40 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <label className="text-sm font-bold text-gray-900 dark:text-zinc-100 flex items-center gap-1.5">
+                  <span className="flex h-4 w-4 items-center justify-center rounded-sm bg-[#1877F2] text-white text-[10px] font-bold">f</span> Facebook Post / Video
                 </label>
-                {facebookUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFacebookUrl('');
-                      purgePlatformEmbedsFromState('facebook');
-                    }}
-                    className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-medium cursor-pointer transition-colors"
-                    title="Facebook પોસ્ટ હટાવો"
-                  >
-                    <Trash2 className="h-3 w-3" />
-                    <span>લિંક દૂર કરો</span>
-                  </button>
-                ) : null}
+
+                <div className="flex items-center gap-2">
+                  <div className="inline-flex rounded-lg bg-gray-200/80 dark:bg-zinc-800 p-0.5 border border-gray-300 dark:border-zinc-700">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFacebookMode('normal');
+                        if (facebookNormal) setFacebookUrl(facebookNormal);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        facebookMode === 'normal'
+                          ? 'bg-[#1877F2] text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      🔗 Normal Link
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFacebookMode('embed');
+                        if (facebookEmbed) setFacebookUrl(facebookEmbed);
+                      }}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                        facebookMode === 'embed'
+                          ? 'bg-[#1877F2] text-white shadow-xs'
+                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                      }`}
+                    >
+                      📜 Embed Code
+                    </button>
+                  </div>
+
+                  {facebookUrl ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFacebookUrl('');
+                        setFacebookNormal('');
+                        setFacebookEmbed('');
+                        purgePlatformEmbedsFromState('facebook');
+                      }}
+                      className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 dark:text-red-400 font-semibold cursor-pointer p-1"
+                      title="Facebook લિંક દૂર કરો"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      <span className="hidden sm:inline">દૂર કરો</span>
+                    </button>
+                  ) : null}
+                </div>
               </div>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={facebookUrl}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setFacebookUrl(val);
-                    if (!val.trim()) purgePlatformEmbedsFromState('facebook');
-                  }}
-                  placeholder="Ex: https://www.facebook.com/... or watch link or embed code"
-                  className="w-full rounded-xl border border-gray-400 bg-zinc-50/50 px-4 py-3 pr-10 text-base font-medium placeholder:text-gray-500 text-gray-900 focus:border-blue-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100"
-                />
-                {facebookUrl ? (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setFacebookUrl('');
-                      purgePlatformEmbedsFromState('facebook');
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
-                    title="Clear Facebook URL"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                ) : null}
-              </div>
-              <p className="text-xs text-gray-600 dark:text-zinc-400 mt-1">Paste Facebook post, video link, or iframe embed code.</p>
+
+              {facebookMode === 'normal' ? (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={facebookNormal}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFacebookNormal(val);
+                        setFacebookUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('facebook');
+                      }}
+                      placeholder="Ex: https://www.facebook.com/... or https://fb.watch/..."
+                      className="w-full rounded-xl border border-gray-400 bg-white px-4 py-2.5 text-sm font-medium placeholder:text-gray-400 text-gray-900 focus:border-blue-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Normal Link:</strong> Paste direct Facebook post, video, or reel link.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  <div className="relative">
+                    <textarea
+                      rows={2}
+                      value={facebookEmbed}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setFacebookEmbed(val);
+                        setFacebookUrl(val);
+                        if (!val.trim()) purgePlatformEmbedsFromState('facebook');
+                      }}
+                      placeholder='Ex: <iframe src="https://www.facebook.com/plugins/video.php?..." ...></iframe>'
+                      className="w-full font-mono text-xs rounded-xl border border-gray-400 bg-white px-4 py-2.5 placeholder:text-gray-400 text-gray-900 focus:border-blue-600 focus:outline-none dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 resize-none"
+                    />
+                  </div>
+                  <p className="text-[11.5px] text-gray-500 dark:text-zinc-400">
+                    📌 <strong>Embed Code:</strong> Paste Facebook &lt;iframe&gt; embed plugin code.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

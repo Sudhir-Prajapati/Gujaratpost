@@ -22,10 +22,6 @@ export function parseArticleEmbedInput(input: string, platform: ArticleSocialPla
   if (platform === 'instagram' || platform === 'facebook') {
     const social = getSocialEmbed(text, platform);
     if (social) {
-      if (platform === 'instagram') {
-        const document = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}blockquote{margin:0!important;width:100%!important;min-width:0!important}</style></head><body><blockquote class="instagram-media" data-instgrm-permalink="${escapeEmbedAttribute(social.url)}" data-instgrm-version="14"><a href="${escapeEmbedAttribute(social.url)}">View post on Instagram</a></blockquote><script async src="https://www.instagram.com/embed.js"></script></body></html>`;
-        return { platform, mode: 'embed', url: social.url, src: social.src, document };
-      }
       return { platform, mode: 'embed', url: social.url, src: social.src };
     }
   }
@@ -94,29 +90,23 @@ export function buildArticleEmbedHtml(input: string, platform: ArticleSocialPlat
   if (!media) return '';
   const label = { youtube: 'YouTube', twitter: 'X (Twitter)', instagram: 'Instagram', facebook: 'Facebook' }[platform];
 
-  let buttonText = `Open on ${label} ↗`;
   if (platform === 'twitter') {
-    if (media.url.includes('/broadcasts/')) buttonText = 'Watch Live Broadcast on X ↗';
-    else if (media.url.includes('/spaces/')) buttonText = 'Listen on Spaces on X ↗';
-    else buttonText = 'View on X (Twitter) ↗';
+    return `<figure data-article-social-platform="twitter" data-article-social-mode="embed" data-article-social-url="${escapeEmbedAttribute(media.url)}" class="my-6 flex justify-center w-full overflow-hidden"><div class="gp-twitter-embed-wrap my-4 flex justify-center w-full" data-tweet-url="${escapeEmbedAttribute(media.url)}"><blockquote class="twitter-tweet" data-dnt="true" data-theme="light"><a href="${escapeEmbedAttribute(media.url)}">View post on X</a></blockquote></div></figure>`;
   }
 
-  const link = `<a href="${escapeEmbedAttribute(media.url)}" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:10px;padding:12px 22px;border-radius:12px;background:#000;color:white;text-decoration:none;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(0,0,0,0.15)">${platform === 'twitter' ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>' : ''}<span>${buttonText}</span></a>`;
-
-  let frameStyle = 'display:block;width:100%;border:0;';
-  if (platform === 'twitter') {
-    frameStyle += 'max-width:550px;margin:0 auto;height:480px;min-height:220px;aspect-ratio:auto;';
-  } else if (platform === 'youtube') {
-    frameStyle += 'aspect-ratio:16/9;width:100%;max-width:720px;margin:0 auto;height:auto;min-height:360px;border-radius:12px;';
-  } else {
-    frameStyle += 'max-width:540px;margin:0 auto;height:650px;aspect-ratio:auto;';
+  if (platform === 'youtube') {
+    return `<figure data-article-social-platform="youtube" data-article-social-mode="embed" data-article-social-url="${escapeEmbedAttribute(media.url)}" class="my-6 flex justify-center w-full overflow-hidden"><div class="my-2 aspect-video w-full max-w-[720px] mx-auto overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-black"><iframe src="${escapeEmbedAttribute(media.src || '')}" title="YouTube video player" class="h-full w-full border-0" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" frameborder="0"></iframe></div></figure>`;
   }
 
-  const frame = media.mode === 'embed'
-    ? `<iframe ${media.document ? `srcdoc="${escapeEmbedAttribute(media.document)}" sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"` : `src="${escapeEmbedAttribute(media.src || '')}"`} title="${label} embedded post" data-social-platform="${platform}" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="${frameStyle}"></iframe>`
-    : '';
+  if (platform === 'instagram') {
+    return `<figure data-article-social-platform="instagram" data-article-social-mode="embed" data-article-social-url="${escapeEmbedAttribute(media.url)}" class="my-6 flex justify-center w-full overflow-hidden"><div class="my-2 mx-auto max-w-[540px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${escapeEmbedAttribute(media.src || '')}" title="Instagram post" class="w-full min-h-[580px] border-0" allowtransparency="true" allowfullscreen="true" frameborder="0" scrolling="no"></iframe></div></figure>`;
+  }
 
-  return `<figure data-article-social-platform="${platform}" data-article-social-mode="${media.mode}" data-article-social-url="${escapeEmbedAttribute(media.url)}" class="my-4 flex justify-center w-full overflow-hidden">${frame}${media.mode === 'embed' ? '' : link}</figure>`;
+  if (platform === 'facebook') {
+    return `<figure data-article-social-platform="facebook" data-article-social-mode="embed" data-article-social-url="${escapeEmbedAttribute(media.url)}" class="my-6 flex justify-center w-full overflow-hidden"><div class="my-2 mx-auto max-w-[500px] w-full overflow-hidden rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-md bg-white dark:bg-zinc-900"><iframe src="${escapeEmbedAttribute(media.src || '')}" title="Facebook post" class="w-full min-h-[460px] border-0" allowfullscreen="true" frameborder="0" scrolling="no" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div></figure>`;
+  }
+
+  return '';
 }
 
 export function getSavedArticleEmbedInput(body: string, platform: ArticleSocialPlatform): string {
