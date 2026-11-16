@@ -389,6 +389,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     imageUrl: string;
     imageMode: 'upload' | 'url';
     imageUploading: boolean;
+    imagePlacement?: 'after' | 'before';
     showImageAfterDesc?: boolean;
   }
 
@@ -807,10 +808,17 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     d1Str: string,
     qT: string,
     qC: string,
-    pairedSections: { desc: string; imageUrl: string; showImageAfterDesc?: boolean }[],
+    pairedSections: { desc: string; imageUrl: string; showImageAfterDesc?: boolean; imagePlacement?: 'after' | 'before' }[],
+    extraPrimaryUrls: string[],
     lang: 'en' | 'gu' | 'hi'
   ) => {
     const parts: string[] = [];
+
+    // Embed extra primary media URLs (items 2, 3... in Primary Media) as primary gallery comment
+    if (extraPrimaryUrls && extraPrimaryUrls.length > 0) {
+      parts.push(`<!-- gp-primary-gallery: ${JSON.stringify(extraPrimaryUrls)} -->`);
+    }
+
     if (hl.trim()) {
       const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 એક નજર મેં (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
       parts.push(`${header}\n--------------------------------------------------\n${hl.trim()}\n--------------------------------------------------`);
@@ -888,19 +896,35 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         pdfPlaced = true;
       }
 
-      if (cleanDesc || (sec.imageUrl && sec.imageUrl.trim())) {
-        parts.push(`<!-- gp-section-${sectionNum} -->`);
+      const hasImg = Boolean(sec.imageUrl && sec.imageUrl.trim());
+      const sectionAlt = (lang === 'gu' ? titleGu : lang === 'hi' ? titleHi : title) || title || 'Gujarat Post Image';
+      const isVisible = sec.showImageAfterDesc !== false;
+      const isBefore = sec.imagePlacement === 'before';
+
+      const imgTag = hasImg
+        ? (isVisible
+            ? `![${sectionAlt}](${sec.imageUrl.trim()})`
+            : `<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`)
+        : '';
+
+      const posAttr = isBefore ? ' pos="before"' : '';
+      if (cleanDesc || hasImg) {
+        parts.push(`<!-- gp-section-${sectionNum}${posAttr} -->`);
       }
+
+      // If editor configured Image Before Description:
+      if (hasImg && isBefore && imgTag) {
+        parts.push(imgTag);
+      }
+
+      // Description text
       if (cleanDesc) {
         parts.push(cleanDesc);
       }
-      if (sec.imageUrl && sec.imageUrl.trim()) {
-        if (sec.showImageAfterDesc === false) {
-          parts.push(`<!-- gp-section-${sectionNum}-hidden-image: ${sec.imageUrl.trim()} -->`);
-        } else {
-          const sectionAlt = (lang === 'gu' ? titleGu : lang === 'hi' ? titleHi : title) || title || 'Gujarat Post Image';
-          parts.push(`![${sectionAlt}](${sec.imageUrl.trim()})`);
-        }
+
+      // If editor configured Image After Description (Default):
+      if (hasImg && !isBefore && imgTag) {
+        parts.push(imgTag);
       }
 
       if (!pdfPlaced && pdfBlockHtml && pdfPosition === `after_desc_${sectionNum}`) {
@@ -1185,7 +1209,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           const filtered = rawCats.filter((c) => !isDisplayOnlySectionCategory(c) && (c.showInArticle !== false || (articleId && c.id === articleId)));
           setCategories(filtered);
         })
-        .catch(() => {});
+        .catch(() => { });
     };
     window.addEventListener('gp-categories-updated', handleCategoriesUpdated);
     return () => {
@@ -1206,7 +1230,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     let extractedPdfUrl = '';
     let hasPdfPages = false;
     let extractedPdfPosition = 'end';
-    const extractedImgs: { index: number; url: string; showImageAfterDesc?: boolean }[] = [];
+    const extractedImgs: { index: number; url: string; showImageAfterDesc?: boolean; imagePlacement?: 'after' | 'before' }[] = [];
     const extractedDescsMap: { index: number; text: string }[] = [];
 
     if (!raw) return { hl, d1Str, qT, qC, extractedDescsMap, extractedImgs, extractedYt, extractedTw, extractedIg, extractedFb, extractedPdfUrl, hasPdfPages, extractedPdfPosition };
@@ -1253,24 +1277,26 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       }
     }
 
-    // Extract all gallery images with their numbers (e.g. ![Gallery Image 2](...))
+    // 1. Extract hidden section images (showImageAfterDesc = false)
+    const hiddenImgRegex = /<!--\s*gp-section-(\d+)-hidden-image:\s*([^\s>]+)\s*-->/gi;
+    let hMatch: RegExpExecArray | null;
+    while ((hMatch = hiddenImgRegex.exec(raw)) !== null) {
+      if (hMatch[2]) {
+        const num = parseInt(hMatch[1], 10) || 2;
+        extractedImgs.push({ index: num, url: hMatch[2], showImageAfterDesc: false, imagePlacement: 'after' });
+      }
+    }
+
+    // 2. Extract legacy ![Gallery Image N](...)
     const galleryRegex = /!\[Gallery Image (\d+)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi;
     let gMatch: RegExpExecArray | null;
     while ((gMatch = galleryRegex.exec(raw)) !== null) {
       if (gMatch[2]) {
         const num = parseInt(gMatch[1], 10) || 2;
-        extractedImgs.push({ index: num, url: gMatch[2], showImageAfterDesc: true });
-      }
-
-        // Extract hidden section images (showImageAfterDesc = false)
-        const hiddenImgRegex = /<!--\s*gp-section-(\d+)-hidden-image:\s*([^\s>]+)\s*-->/gi;
-        let hMatch: RegExpExecArray | null;
-        while ((hMatch = hiddenImgRegex.exec(raw)) !== null) {
-          if (hMatch[2]) {
-            const num = parseInt(hMatch[1], 10) || 2;
-            extractedImgs.push({ index: num, url: hMatch[2], showImageAfterDesc: false });
-          }
+        if (!extractedImgs.some((x) => x.index === num)) {
+          extractedImgs.push({ index: num, url: gMatch[2], showImageAfterDesc: true, imagePlacement: 'after' });
         }
+      }
     }
 
     // Purge PDF markup from working string
@@ -1457,16 +1483,36 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     // Check if new structured section delimiters <!-- gp-section-N --> exist
-    if (/<!--\s*gp-section-\d+\s*-->/.test(workingRaw)) {
-      const parts = workingRaw.split(/<!--\s*gp-section-(\d+)\s*-->/);
-      d1Str = purgePdfFromText(parts[0].replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
+    if (/<!--\s*gp-section-\d+[^>]*-->/.test(workingRaw)) {
+      const parts = workingRaw.split(/<!--\s*gp-section-(\d+)(?:\s+pos=["']?(\w+)["']?)?\s*-->/);
+      d1Str = purgePdfFromText(parts[0].replace(/!\[(?:.*?)\]\((?:https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '').trim())
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
-      for (let i = 1; i < parts.length; i += 2) {
+      for (let i = 1; i < parts.length; i += 3) {
         const secNum = parseInt(parts[i], 10);
-        const secContent = parts[i + 1] || '';
-        const cleanSecText = purgePdfFromText(secContent.replace(/!\[Gallery Image \d+\]\([^\s)]+\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
+        const explicitPos = parts[i + 1] === 'before' ? 'before' : 'after';
+        const secContent = parts[i + 2] || '';
+
+        // Extract any inline markdown image inside this section block
+        const imgMatch = secContent.match(/!\[(?:.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/i);
+        let secPlacement: 'after' | 'before' = explicitPos;
+        if (imgMatch && imgMatch[1]) {
+          const imgUrl = imgMatch[1];
+          const imgIdx = secContent.indexOf(imgMatch[0]);
+          const textBeforeImg = secContent.slice(0, imgIdx).replace(/<!--.*?-->/g, '').trim();
+          if (explicitPos === 'before' || textBeforeImg.length === 0) {
+            secPlacement = 'before';
+          }
+          if (!extractedImgs.some((x) => x.index === secNum)) {
+            extractedImgs.push({ index: secNum, url: imgUrl, showImageAfterDesc: true, imagePlacement: secPlacement });
+          } else {
+            const existing = extractedImgs.find((x) => x.index === secNum);
+            if (existing) existing.imagePlacement = secPlacement;
+          }
+        }
+
+        const cleanSecText = purgePdfFromText(secContent.replace(/!\[(?:.*?)\]\((?:https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').trim())
           .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
           .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
           .trim();
@@ -1678,15 +1724,6 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           { index: 10, url: art.image10 || '' },
         ].filter((item) => item.url && item.url !== art.featuredImage);
 
-        if (Array.isArray(art.galleryImages)) {
-          art.galleryImages.forEach((url: string, i: number) => {
-            const secIdx = i + 2;
-            if (secIdx <= 10 && url && !artImages.some((x) => x.index === secIdx)) {
-              artImages.push({ index: secIdx, url });
-            }
-          });
-        }
-
         const allParsedImgs = [
           ...(parsedEn.extractedImgs || []),
           ...(parsedGu.extractedImgs || []),
@@ -1722,6 +1759,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             ? (isUploadedMediaUrl(sanitizedImg) ? 'upload' : (sanitizedImg.startsWith('http://') || sanitizedImg.startsWith('https://') ? 'url' : 'upload'))
             : 'upload';
 
+          const foundParsed = allParsedImgs.find((img) => img.index === num);
           loadedStorySections.push({
             id: `section-${num}`,
             descEn,
@@ -1730,6 +1768,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             imageUrl: sanitizedImg,
             imageMode: secMode,
             imageUploading: false,
+            imagePlacement: foundParsed?.imagePlacement || 'after',
+            showImageAfterDesc: foundParsed?.showImageAfterDesc !== false,
           });
         }
 
@@ -1742,6 +1782,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             imageUrl: sanitizeImageUrl(art.image2 || ''),
             imageMode: isUploadedMediaUrl(art.image2 || '') ? 'upload' : (art.image2 && (art.image2.startsWith('http://') || art.image2.startsWith('https://')) ? 'url' : 'upload'),
             imageUploading: false,
+            imagePlacement: 'after',
+            showImageAfterDesc: true,
           });
         }
         setStorySections(loadedStorySections);
@@ -1749,11 +1791,39 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         const cleanFeat = sanitizeImageUrl(art.featuredImage || '');
         setFeaturedImage(cleanFeat);
         const initialPrimary = cleanFeat ? [cleanFeat] : [];
+
+        // Extract extra primary gallery from HTML comment <!-- gp-primary-gallery: [...] -->
+        const rawFullContent = `${art.content || ''}\n${art.contentGu || ''}\n${art.contentHi || ''}`;
+        const primaryGalleryMatch = rawFullContent.match(/<!--\s*gp-primary-gallery:\s*(\[[^\]]*\]|[^\s>]+)\s*-->/i);
+        if (primaryGalleryMatch && primaryGalleryMatch[1]) {
+          try {
+            const parsed = JSON.parse(primaryGalleryMatch[1]);
+            if (Array.isArray(parsed)) {
+              parsed.forEach((img: string) => {
+                if (img && typeof img === 'string' && img.trim()) {
+                  const clean = sanitizeImageUrl(img.trim());
+                  if (clean && !initialPrimary.includes(clean)) initialPrimary.push(clean);
+                }
+              });
+            }
+          } catch {
+            const splitUrls = primaryGalleryMatch[1].split(',').map((u) => u.trim()).filter(Boolean);
+            splitUrls.forEach((img) => {
+              const clean = sanitizeImageUrl(img);
+              if (clean && !initialPrimary.includes(clean)) initialPrimary.push(clean);
+            });
+          }
+        }
+
+        // If art.galleryImages exists from API, only include images that are NOT story continuation section images!
         if (Array.isArray(art.galleryImages)) {
           art.galleryImages.forEach((img: string) => {
             if (img && typeof img === 'string' && img.trim()) {
-              const clean = sanitizeImageUrl(img);
-              if (!initialPrimary.includes(clean)) initialPrimary.push(clean);
+              const clean = sanitizeImageUrl(img.trim());
+              const isStorySectionImg = artImages.some((x) => x.url === clean) || allParsedImgs.some((x) => x.url === clean);
+              if (clean && !initialPrimary.includes(clean) && !isStorySectionImg) {
+                initialPrimary.push(clean);
+              }
             }
           });
         }
@@ -1982,35 +2052,6 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         if (!featuredImage && uploadedUrls[0]) {
           setFeaturedImage(uploadedUrls[0]);
         }
-
-        // If multiple images were selected, also populate Story Continuation Sections (Section 2, 3...)
-        if (uploadedUrls.length > 1) {
-          setStorySections((prevSections) => {
-            const nextSections = [...prevSections];
-            for (let i = 1; i < uploadedUrls.length; i++) {
-              const secIdx = i - 1; // index 0 is Section 2
-              if (secIdx < 9) {
-                if (!nextSections[secIdx]) {
-                  nextSections[secIdx] = {
-                    id: `section-${secIdx + 2}-${Date.now()}-${i}`,
-                    descEn: '',
-                    descGu: '',
-                    descHi: '',
-                    imageUrl: uploadedUrls[i],
-                    imageMode: 'upload',
-                    imageUploading: false,
-                  };
-                } else if (!nextSections[secIdx].imageUrl) {
-                  nextSections[secIdx] = {
-                    ...nextSections[secIdx],
-                    imageUrl: uploadedUrls[i],
-                  };
-                }
-              }
-            }
-            return nextSections;
-          });
-        }
       } else {
         throw new Error('No media URL returned by server.');
       }
@@ -2030,7 +2071,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const effectiveStatus = userRole === 'REPORTER' || requestedStatus === 'DRAFT'
       ? 'DRAFT'
       : status === 'ARCHIVED' ? 'ARCHIVED'
-      : scheduledAt.trim() ? 'SCHEDULED' : 'PUBLISHED';
+        : scheduledAt.trim() ? 'SCHEDULED' : 'PUBLISHED';
     setStatus(effectiveStatus);
     setError(null);
     setLoading(true);
@@ -2117,9 +2158,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     // Compile distinct input sections into complete article content strings
-    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
-    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
-    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc }));
+    const sectionsEn = storySections.map((s) => ({ desc: s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc, imagePlacement: s.imagePlacement }));
+    const sectionsGu = storySections.map((s) => ({ desc: s.descGu || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc, imagePlacement: s.imagePlacement }));
+    const sectionsHi = storySections.map((s) => ({ desc: s.descHi || s.descEn, imageUrl: s.imageUrl, showImageAfterDesc: s.showImageAfterDesc, imagePlacement: s.imagePlacement }));
 
     // Language-specific highlights: do NOT inject highlights if the admin left them blank!
     // If the primary language has no highlights, NO language gets highlights.
@@ -2129,9 +2170,12 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const finalHlGu = primaryHl ? (highlightsGu.trim() || primaryHl) : "";
     const finalHlHi = primaryHl ? (highlightsHi.trim() || primaryHl) : "";
 
-    let compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, 'en');
-    let compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, 'gu');
-    let compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, 'hi');
+    const extraPrimary = primaryMediaList.slice(1).map((u) => u.trim()).filter(Boolean);
+    const galleryPayload = extraPrimary;
+
+    let compiledEn = compileStructuredContent(finalHlEn, desc1.trim() || effectiveD1, quoteText.trim() || effectiveQuoteText, quoteCite.trim() || effectiveQuoteCite, sectionsEn, extraPrimary, 'en');
+    let compiledGu = compileStructuredContent(finalHlGu, desc1Gu.trim() || effectiveD1, quoteTextGu.trim() || effectiveQuoteText, quoteCiteGu.trim() || effectiveQuoteCite, sectionsGu, extraPrimary, 'gu');
+    let compiledHi = compileStructuredContent(finalHlHi, desc1Hi.trim() || effectiveD1, quoteTextHi.trim() || effectiveQuoteText, quoteCiteHi.trim() || effectiveQuoteCite, sectionsHi, extraPrimary, 'hi');
 
     // Hard guarantee: if any social input was cleared by the user, permanently purge that platform's embeds from compiled content
     if (!twitterUrl.trim()) {
@@ -2154,11 +2198,6 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       compiledGu = purgeSocialEmbedFromText(compiledGu, 'facebook');
       compiledHi = purgeSocialEmbedFromText(compiledHi, 'facebook');
     }
-
-    const extraPrimary = primaryMediaList.slice(1).map((u) => u.trim()).filter(Boolean);
-    const storySectionImgs = storySections.map((slot) => slot.imageUrl.trim()).filter(Boolean);
-    const galleryPayload = Array.from(new Set([...extraPrimary, ...storySectionImgs]));
-
 
     // Combine explicit tagsString tags and additional category names as tags
     const additionalCatNames = additionalCategoryIds
@@ -2204,15 +2243,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       contentHi: compiledHi,
       featuredImage: finalPrimaryImage,
       thumbnail: finalPrimaryImage,
-      image2: storySections[0]?.imageUrl?.trim() || extraPrimary[0] || '',
-      image3: storySections[1]?.imageUrl?.trim() || extraPrimary[1] || '',
-      image4: storySections[2]?.imageUrl?.trim() || extraPrimary[2] || '',
-      image5: storySections[3]?.imageUrl?.trim() || extraPrimary[3] || '',
-      image6: storySections[4]?.imageUrl?.trim() || extraPrimary[4] || '',
-      image7: storySections[5]?.imageUrl?.trim() || extraPrimary[5] || '',
-      image8: storySections[6]?.imageUrl?.trim() || extraPrimary[6] || '',
-      image9: storySections[7]?.imageUrl?.trim() || extraPrimary[7] || '',
-      image10: storySections[8]?.imageUrl?.trim() || extraPrimary[8] || '',
+      image2: storySections[0]?.imageUrl?.trim() || '',
+      image3: storySections[1]?.imageUrl?.trim() || '',
+      image4: storySections[2]?.imageUrl?.trim() || '',
+      image5: storySections[3]?.imageUrl?.trim() || '',
+      image6: storySections[4]?.imageUrl?.trim() || '',
+      image7: storySections[5]?.imageUrl?.trim() || '',
+      image8: storySections[6]?.imageUrl?.trim() || '',
+      image9: storySections[7]?.imageUrl?.trim() || '',
+      image10: storySections[8]?.imageUrl?.trim() || '',
       desc2: storySections[0]?.descEn?.trim() || undefined,
       desc2Gu: storySections[0]?.descGu?.trim() || undefined,
       desc2Hi: storySections[0]?.descHi?.trim() || undefined,
@@ -2820,8 +2859,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   }
                 }}
                 className={`inline-flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer select-none py-1 px-2.5 rounded-lg border shadow-2xs ${isSlugBlocked
-                    ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
-                    : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
+                  ? 'text-amber-800 bg-amber-50 hover:bg-amber-100 border-amber-300 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800'
+                  : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800'
                   }`}
                 title={isSlugBlocked ? 'Slug is blocked from auto-updating. Click to unblock for editing' : 'Slug is unblocked. Click to lock'}
               >
@@ -2875,8 +2914,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
               }}
               placeholder="e.g. Major-operation-regarding-drugs:-Ahmedabad-and-Surat-Crime-Branches-seize-drugs-worth-Rs-25-crore"
               className={`w-full rounded-xl border px-4 py-3 pr-11 text-base font-mono placeholder:text-gray-500 focus:outline-none transition-all ${isSlugBlocked
-                  ? 'bg-zinc-100/90 text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-300 cursor-not-allowed border-gray-300 dark:border-zinc-700 select-none'
-                  : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100'
+                ? 'bg-zinc-100/90 text-zinc-700 dark:bg-zinc-800/60 dark:text-zinc-300 cursor-not-allowed border-gray-300 dark:border-zinc-700 select-none'
+                : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-zinc-100'
                 } ${fieldErrors.slug
                   ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
                   : ''
@@ -2977,8 +3016,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   : 'Enter main news article title...'
             }
             className={`w-full rounded-xl border px-4 py-3 text-base font-bold placeholder:text-gray-500 focus:outline-none transition-all ${fieldErrors.title
-                ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
-                : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-white'
+              ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
+              : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-white'
               }`}
             required
           />
@@ -3087,8 +3126,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     if (fieldErrors.author) setFieldErrors((prev) => ({ ...prev, author: false }));
                   }}
                   className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-lg border transition-all shrink-0 cursor-pointer ${authorInputMode === 'select'
-                      ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
-                      : 'bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700'
+                    ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800'
+                    : 'bg-zinc-100 text-zinc-700 border-zinc-200 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700'
                     }`}
                   title={authorInputMode === 'select' ? 'Switch to manual author name entry' : 'Switch to select from existing author list'}
                 >
@@ -3122,8 +3161,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   }}
                   placeholder="Type Author / Reporter Name (e.g. Ramesh Patel)..."
                   className={`w-full rounded-xl border px-4 py-3 pr-10 text-base font-semibold shadow-sm transition-all duration-200 outline-none ${fieldErrors.author
-                      ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
-                      : 'border-gray-400 bg-white text-gray-900 placeholder:text-gray-400 hover:border-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-100 dark:hover:bg-zinc-900/60'
+                    ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
+                    : 'border-gray-400 bg-white text-gray-900 placeholder:text-gray-400 hover:border-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 dark:border-zinc-600 dark:bg-zinc-950/40 dark:text-zinc-100 dark:hover:bg-zinc-900/60'
                     }`}
                   autoFocus
                 />
@@ -3409,14 +3448,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   type="button"
                   onClick={() => setCategoryFilterTab('all')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'all'
-                      ? 'bg-zinc-900 text-white shadow-xs dark:bg-white dark:text-zinc-900'
-                      : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                    ? 'bg-zinc-900 text-white shadow-xs dark:bg-white dark:text-zinc-900'
+                    : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>All</span>
                   <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${categoryFilterTab === 'all'
-                      ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900'
-                      : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
+                    ? 'bg-white/20 text-white dark:bg-zinc-900/20 dark:text-zinc-900'
+                    : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300'
                     }`}>
                     {sortedCategories.allSorted.length}
                   </span>
@@ -3426,8 +3465,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   type="button"
                   onClick={() => setCategoryFilterTab('gujarat')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'gujarat'
-                      ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'bg-white border border-gray-300 text-emerald-800 hover:bg-emerald-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-emerald-400 dark:hover:bg-zinc-750'
+                    ? 'bg-emerald-700 text-white shadow-xs'
+                    : 'bg-white border border-gray-300 text-emerald-800 hover:bg-emerald-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-emerald-400 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>📍 Gujarat & Cities</span>
@@ -3441,8 +3480,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   type="button"
                   onClick={() => setCategoryFilterTab('news')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'news'
-                      ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>📰 Main News</span>
@@ -3456,8 +3495,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   type="button"
                   onClick={() => setCategoryFilterTab('elections')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'elections'
-                      ? 'bg-purple-600 text-white shadow-xs'
-                      : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                    ? 'bg-purple-600 text-white shadow-xs'
+                    : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>🗳️ Elections</span>
@@ -3471,14 +3510,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   type="button"
                   onClick={() => setCategoryFilterTab('selected')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'selected'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-emerald-50/70 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'bg-emerald-50/70 border border-emerald-200 text-emerald-800 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:border-emerald-800 dark:text-emerald-300'
                     }`}
                 >
                   <span>✓ Selected</span>
                   <span className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${categoryFilterTab === 'selected'
-                      ? 'bg-white text-emerald-700'
-                      : 'bg-emerald-600 text-white'
+                    ? 'bg-white text-emerald-700'
+                    : 'bg-emerald-600 text-white'
                     }`}>
                     {selectedCount}
                   </span>
@@ -3590,20 +3629,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                       }
                     }}
                     className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${isPrimary
-                        ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/25'
-                        : isChecked
-                          ? 'border-blue-500 bg-blue-50/80 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/25'
-                          : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
+                      ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/25'
+                      : isChecked
+                        ? 'border-blue-500 bg-blue-50/80 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/25'
+                        : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
                       }`}
                   >
                     {/* Custom Styled Check Indicator */}
                     <div className="pt-0.5 shrink-0">
                       <div
                         className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${isPrimary
-                            ? 'bg-emerald-600 text-white shadow-2xs'
-                            : isChecked
-                              ? 'bg-blue-600 text-white shadow-2xs'
-                              : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-emerald-500'
+                          ? 'bg-emerald-600 text-white shadow-2xs'
+                          : isChecked
+                            ? 'bg-blue-600 text-white shadow-2xs'
+                            : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-emerald-500'
                           }`}
                       >
                         {isChecked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -3615,10 +3654,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                       <div className="flex min-w-0 items-center justify-between gap-1.5">
                         <span
                           className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${isPrimary
-                              ? 'text-emerald-900 dark:text-emerald-200'
-                              : isChecked
-                                ? 'text-blue-900 dark:text-blue-200'
-                                : 'text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300'
+                            ? 'text-emerald-900 dark:text-emerald-200'
+                            : isChecked
+                              ? 'text-blue-900 dark:text-blue-200'
+                              : 'text-zinc-900 dark:text-zinc-100 group-hover:text-emerald-700 dark:group-hover:text-emerald-300'
                             }`}
                         >
                           {cat.name}
@@ -3704,20 +3743,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                               <div
                                 key="__home_hero_card__"
                                 onClick={() => setIsFeatured(!isFeatured)}
-                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${
-                                  isFeatured
-                                    ? 'border-amber-500 bg-amber-50/90 text-amber-950 dark:border-amber-500 dark:bg-amber-950/40 dark:text-amber-100 shadow-xs ring-2 ring-amber-500/25'
-                                    : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
-                                }`}
+                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${isFeatured
+                                  ? 'border-amber-500 bg-amber-50/90 text-amber-950 dark:border-amber-500 dark:bg-amber-950/40 dark:text-amber-100 shadow-xs ring-2 ring-amber-500/25'
+                                  : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
+                                  }`}
                               >
                                 {/* Custom Styled Check Indicator */}
                                 <div className="pt-0.5 shrink-0">
                                   <div
-                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
-                                      isFeatured
-                                        ? 'bg-amber-500 text-white shadow-2xs'
-                                        : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-amber-500'
-                                    }`}
+                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${isFeatured
+                                      ? 'bg-amber-500 text-white shadow-2xs'
+                                      : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-amber-500'
+                                      }`}
                                   >
                                     {isFeatured && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                                   </div>
@@ -3727,11 +3764,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                 <div className="min-w-0 flex-1">
                                   <div className="flex min-w-0 items-center justify-between gap-1.5">
                                     <span
-                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${
-                                        isFeatured
-                                          ? 'text-amber-900 dark:text-amber-200'
-                                          : 'text-zinc-900 dark:text-zinc-100 group-hover:text-amber-700 dark:group-hover:text-amber-300'
-                                      }`}
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${isFeatured
+                                        ? 'text-amber-900 dark:text-amber-200'
+                                        : 'text-zinc-900 dark:text-zinc-100 group-hover:text-amber-700 dark:group-hover:text-amber-300'
+                                        }`}
                                     >
                                       Home / News
                                     </span>
@@ -3801,20 +3837,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                               <div
                                 key="__breaking_news_card__"
                                 onClick={() => setIsBreaking(!isBreaking)}
-                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${
-                                  isBreaking
-                                    ? 'border-orange-500 bg-orange-50/90 text-orange-950 dark:border-orange-500 dark:bg-orange-950/40 dark:text-orange-100 shadow-xs ring-2 ring-orange-500/25'
-                                    : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
-                                }`}
+                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${isBreaking
+                                  ? 'border-orange-500 bg-orange-50/90 text-orange-950 dark:border-orange-500 dark:bg-orange-950/40 dark:text-orange-100 shadow-xs ring-2 ring-orange-500/25'
+                                  : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
+                                  }`}
                               >
                                 {/* Custom Styled Check Indicator */}
                                 <div className="pt-0.5 shrink-0">
                                   <div
-                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
-                                      isBreaking
-                                        ? 'bg-orange-500 text-white shadow-2xs'
-                                        : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-orange-500'
-                                    }`}
+                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${isBreaking
+                                      ? 'bg-orange-500 text-white shadow-2xs'
+                                      : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-orange-500'
+                                      }`}
                                   >
                                     {isBreaking && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                                   </div>
@@ -3824,11 +3858,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                 <div className="min-w-0 flex-1">
                                   <div className="flex min-w-0 items-center justify-between gap-1.5">
                                     <span
-                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${
-                                        isBreaking
-                                          ? 'text-orange-900 dark:text-orange-200'
-                                          : 'text-zinc-900 dark:text-zinc-100 group-hover:text-orange-700 dark:group-hover:text-orange-300'
-                                      }`}
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${isBreaking
+                                        ? 'text-orange-900 dark:text-orange-200'
+                                        : 'text-zinc-900 dark:text-zinc-100 group-hover:text-orange-700 dark:group-hover:text-orange-300'
+                                        }`}
                                     >
                                       Breaking News
                                     </span>
@@ -3862,20 +3895,18 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                               <div
                                 key="__trending_story_card__"
                                 onClick={() => handleToggleTrendingStory()}
-                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${
-                                  isTrending
-                                    ? 'border-blue-500 bg-blue-50/90 text-blue-950 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/25'
-                                    : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
-                                }`}
+                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${isTrending
+                                  ? 'border-blue-500 bg-blue-50/90 text-blue-950 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/25'
+                                  : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
+                                  }`}
                               >
                                 {/* Custom Styled Check Indicator */}
                                 <div className="pt-0.5 shrink-0">
                                   <div
-                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
-                                      isTrending
-                                        ? 'bg-blue-600 text-white shadow-2xs'
-                                        : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-blue-500'
-                                    }`}
+                                    className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${isTrending
+                                      ? 'bg-blue-600 text-white shadow-2xs'
+                                      : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-blue-500'
+                                      }`}
                                   >
                                     {isTrending && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                                   </div>
@@ -3885,11 +3916,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                 <div className="min-w-0 flex-1">
                                   <div className="flex min-w-0 items-center justify-between gap-1.5">
                                     <span
-                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${
-                                        isTrending
-                                          ? 'text-blue-900 dark:text-blue-200'
-                                          : 'text-zinc-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-300'
-                                      }`}
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${isTrending
+                                        ? 'text-blue-900 dark:text-blue-200'
+                                        : 'text-zinc-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-300'
+                                        }`}
                                     >
                                       Trending Story
                                     </span>
@@ -3971,8 +4001,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           <div className="grid gap-3 sm:grid-cols-3">
             {/* BREAKING NEWS */}
             <label className={`flex flex-col justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${isBreaking
-                ? 'border-amber-400 bg-amber-50/80 dark:border-amber-800/80 dark:bg-amber-950/30 shadow-sm'
-                : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
+              ? 'border-amber-400 bg-amber-50/80 dark:border-amber-800/80 dark:bg-amber-950/30 shadow-sm'
+              : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
               }`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -4000,8 +4030,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
             {/* TRENDING STORY */}
             <label className={`flex flex-col justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${isTrending
-                ? 'border-blue-400 bg-blue-50/80 dark:border-blue-800/80 dark:bg-blue-950/30 shadow-sm'
-                : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
+              ? 'border-blue-400 bg-blue-50/80 dark:border-blue-800/80 dark:bg-blue-950/30 shadow-sm'
+              : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
               }`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -4029,8 +4059,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
             {/* FEATURED COVERAGE */}
             <label className={`flex flex-col justify-between rounded-xl border p-3.5 cursor-pointer transition-all ${isFeatured
-                ? 'border-emerald-400 bg-emerald-50/80 dark:border-emerald-800/80 dark:bg-emerald-950/30 shadow-sm'
-                : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
+              ? 'border-emerald-400 bg-emerald-50/80 dark:border-emerald-800/80 dark:bg-emerald-950/30 shadow-sm'
+              : 'border-gray-400 bg-white hover:border-gray-500 dark:border-zinc-600 dark:bg-zinc-900'
               }`}>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -4282,8 +4312,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   <div
                     key={`${mediaUrl}-${idx}`}
                     className={`relative rounded-xl border p-2 bg-white dark:bg-zinc-900 space-y-2 shadow-2xs transition-all ${idx === 0
-                        ? 'border-red-500 ring-2 ring-red-500/20'
-                        : 'border-gray-300 dark:border-zinc-700'
+                      ? 'border-red-500 ring-2 ring-red-500/20'
+                      : 'border-gray-300 dark:border-zinc-700'
                       }`}
                   >
                     <div className="relative aspect-[16/9] w-full overflow-hidden rounded-lg bg-black">
@@ -4351,11 +4381,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
               <button
                 type="button"
                 onClick={() => setPdfPosition(pdfPosition === 'after_desc_1' ? 'end' : 'after_desc_1')}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                  pdfPosition === 'after_desc_1'
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                    : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
-                }`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold border transition-all cursor-pointer ${pdfPosition === 'after_desc_1'
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                  : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+                  }`}
               >
                 <FileText className="h-3.5 w-3.5" />
                 <span>{pdfPosition === 'after_desc_1' ? '✓ PDF Placed After Description 1' : 'Place PDF After Description 1 (વર્ણન ૧ પછી)'}</span>
@@ -4414,11 +4443,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                       <button
                         type="button"
                         onClick={() => setPdfPosition(pdfPosition === `after_desc_${sectionNum}` ? 'end' : `after_desc_${sectionNum}`)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${
-                          pdfPosition === `after_desc_${sectionNum}`
-                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                            : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer ${pdfPosition === `after_desc_${sectionNum}`
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-white text-zinc-700 border-zinc-300 hover:bg-zinc-100 dark:bg-zinc-900 dark:text-zinc-200 dark:border-zinc-700'
+                          }`}
                       >
                         <FileText className="h-3 w-3" />
                         <span>{pdfPosition === `after_desc_${sectionNum}` ? `✓ PDF Placed After Desc ${sectionNum}` : `Place PDF After Desc ${sectionNum}`}</span>
@@ -4477,8 +4505,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         type="button"
                         onClick={() => updateStorySection(idx, { imageMode: 'upload' })}
                         className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all ${slot.imageMode === 'upload'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
                           }`}
                       >
                         Upload File
@@ -4487,8 +4515,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         type="button"
                         onClick={() => updateStorySection(idx, { imageMode: 'url' })}
                         className={`text-[11px] font-bold px-2.5 py-1 rounded-md transition-all ${slot.imageMode === 'url'
-                            ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
-                            : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
+                          ? 'bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xs'
+                          : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-white'
                           }`}
                       >
                         Image URL
@@ -4539,55 +4567,80 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                   {slot.imageUrl && (
                     <>
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-zinc-700/60">
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
-                          {slot.imageUrl.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ||
-                            slot.imageUrl.includes('/video/upload/') ? (
-                            <video src={slot.imageUrl} controls className="h-full w-full object-cover" />
-                          ) : (
-                            <img
-                              src={sanitizeImageUrl(slot.imageUrl)}
-                              alt={`Media ${photoNum} preview`}
-                              className="h-full w-full object-cover"
-                            />
-                          )}
+                      <div className="flex items-center justify-between pt-2 border-t border-gray-300 dark:border-zinc-700/60">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-14 w-24 overflow-hidden rounded-lg border border-gray-400 bg-black shrink-0">
+                            {slot.imageUrl.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ||
+                              slot.imageUrl.includes('/video/upload/') ? (
+                              <video src={slot.imageUrl} controls className="h-full w-full object-cover" />
+                            ) : (
+                              <img
+                                src={sanitizeImageUrl(slot.imageUrl)}
+                                alt={`Media ${photoNum} preview`}
+                                className="h-full w-full object-cover"
+                              />
+                            )}
+                          </div>
+                          <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-xs">
+                            {slot.imageUrl}
+                          </span>
                         </div>
-                        <span className="text-xs font-mono text-gray-600 dark:text-zinc-400 truncate max-w-xs">
-                          {slot.imageUrl}
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateStorySection(idx, { imageUrl: '' })}
+                          className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                        >
+                          Clear Image {sectionNum}
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => updateStorySection(idx, { imageUrl: '' })}
-                        className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
-                      >
-                        Clear Image {sectionNum}
-                      </button>
-                    </div>
 
-                    {/* Toggle: Show Image After Description N in Article */}
-                    <div className="flex items-center justify-between pt-2.5 mt-2 border-t border-dashed border-gray-300 dark:border-zinc-700/60 bg-gray-50/80 dark:bg-zinc-800/40 px-3.5 py-2.5 rounded-xl">
-                      <div className="flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4 text-emerald-600" />
+                    {/* Image Placement & Visibility in Article */}
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 mt-2 border-t border-dashed border-gray-300 dark:border-zinc-700/60 bg-gray-50/80 dark:bg-zinc-800/40 px-3.5 py-2.5 rounded-xl">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <ImageIcon className="h-4 w-4 text-emerald-600 shrink-0" />
                         <span className="text-xs font-bold text-gray-800 dark:text-zinc-200">
-                          {sectionNum === 2
-                            ? 'વર્ણન ૨ પછી આર્ટિકલમાં આ ફોટો દર્શાવો (Show Image After Description 2)'
-                            : `વિભાગ ${sectionNum} (વર્ણન ${sectionNum}) પછી આ ફોટો દર્શાવો (Show Image After Desc ${sectionNum})`}
+                          આ ફોટો ક્યાં દર્શાવવો (Position):
                         </span>
+                        <div className="inline-flex rounded-lg border border-gray-300 bg-white p-0.5 dark:border-zinc-700 dark:bg-zinc-900 shadow-2xs">
+                          <button
+                            type="button"
+                            onClick={() => updateStorySection(idx, { imagePlacement: 'after' })}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
+                              (slot.imagePlacement || 'after') === 'after'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-gray-600 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white'
+                            }`}
+                          >
+                            વર્ણન {sectionNum} પછી (After Desc)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateStorySection(idx, { imagePlacement: 'before' })}
+                            className={`px-2.5 py-1 text-xs font-bold rounded-md transition-all ${
+                              slot.imagePlacement === 'before'
+                                ? 'bg-blue-600 text-white shadow-xs'
+                                : 'text-gray-600 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white'
+                            }`}
+                          >
+                            વર્ણન {sectionNum} પહેલાં (Before Desc)
+                          </button>
+                        </div>
                       </div>
-                      <label className="relative inline-flex items-center cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={slot.showImageAfterDesc !== false}
-                          onChange={(e) => updateStorySection(idx, { showImageAfterDesc: e.target.checked })}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
-                        <span className="ml-2.5 text-xs font-extrabold text-gray-700 dark:text-zinc-300 min-w-[55px]">
-                          {slot.showImageAfterDesc !== false ? '✓ હા (Show)' : '✕ ના (Hide)'}
-                        </span>
-                      </label>
+
+                      <div className="flex items-center gap-2">
+                        <label className="relative inline-flex items-center cursor-pointer select-none">
+                          <input
+                            type="checkbox"
+                            checked={slot.showImageAfterDesc !== false}
+                            onChange={(e) => updateStorySection(idx, { showImageAfterDesc: e.target.checked })}
+                            className="sr-only peer"
+                          />
+                          <div className="w-10 h-5 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-zinc-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-zinc-600 peer-checked:bg-emerald-600"></div>
+                          <span className="ml-2 text-xs font-extrabold text-gray-700 dark:text-zinc-300 min-w-[70px]">
+                            {slot.showImageAfterDesc !== false ? '✓ દર્શાવો (Show)' : '✕ છુપાવો (Hide)'}
+                          </span>
+                        </label>
+                      </div>
                     </div>
                     </>
                   )}
@@ -4960,14 +5013,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           {pdfUrl && pdfUrl.trim() && (
             <>
               <div className={`rounded-xl border p-3.5 sm:p-4 transition-all duration-200 shadow-xs ${showPdfPages
-                  ? 'border-blue-300 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 dark:border-blue-800/80 dark:from-blue-950/40 dark:via-zinc-900 dark:to-blue-950/40 ring-1 ring-blue-500/20'
-                  : 'border-gray-300 bg-zinc-50/70 dark:border-zinc-700/80 dark:bg-zinc-950/40'
+                ? 'border-blue-300 bg-gradient-to-r from-blue-50/90 via-indigo-50/70 to-blue-50/90 dark:border-blue-800/80 dark:from-blue-950/40 dark:via-zinc-900 dark:to-blue-950/40 ring-1 ring-blue-500/20'
+                : 'border-gray-300 bg-zinc-50/70 dark:border-zinc-700/80 dark:bg-zinc-950/40'
                 }`}>
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-start gap-3 min-w-0">
                     <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl transition-colors shadow-xs ${showPdfPages
-                        ? 'bg-blue-600 text-white shadow-blue-600/30'
-                        : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                      ? 'bg-blue-600 text-white shadow-blue-600/30'
+                      : 'bg-zinc-200 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
                       }`}>
                       <BookOpen className="h-5 w-5 stroke-[2.2]" />
                     </div>
@@ -4981,12 +5034,12 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                           {pdfPosition === 'after_desc_1'
                             ? '(વર્ણન ૧ પછી આખું PDF પાનાવાર દર્શાવો)'
                             : pdfPosition === 'after_desc_2'
-                            ? '(વર્ણન ૨ પછી આખું PDF પાનાવાર દર્શાવો)'
-                            : pdfPosition.startsWith('after_desc_')
-                            ? `(વિભાગ ${pdfPosition.replace('after_desc_', '')} પછી આખું PDF પાનાવાર દર્શાવો)`
-                            : pdfPosition === 'custom'
-                            ? '(કસ્ટમ સ્થાને આખું PDF પાનાવાર દર્શાવો)'
-                            : '(આર્ટિકલના અંતે આખું PDF પાનાવાર દર્શાવો)'}
+                              ? '(વર્ણન ૨ પછી આખું PDF પાનાવાર દર્શાવો)'
+                              : pdfPosition.startsWith('after_desc_')
+                                ? `(વિભાગ ${pdfPosition.replace('after_desc_', '')} પછી આખું PDF પાનાવાર દર્શાવો)`
+                                : pdfPosition === 'custom'
+                                  ? '(કસ્ટમ સ્થાને આખું PDF પાનાવાર દર્શાવો)'
+                                  : '(આર્ટિકલના અંતે આખું PDF પાનાવાર દર્શાવો)'}
                         </span>
                         {showPdfPages && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
@@ -5119,8 +5172,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
               <div id="field-scheduledAt">
                 <div className="flex items-center justify-between mb-1.5">
                   <label className={`block text-sm font-semibold ${scheduledAtError || fieldErrors.scheduledAt
-                      ? 'text-red-600 dark:text-red-400'
-                      : 'text-gray-900 dark:text-zinc-100'
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-gray-900 dark:text-zinc-100'
                     }`}>
                     Scheduled Publish Date & Time ⏰
                   </label>
@@ -5160,8 +5213,8 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     setFieldErrors((prev) => ({ ...prev, scheduledAt: Boolean(err) }));
                   }}
                   className={`w-full rounded-xl border px-4 py-3 text-base font-mono focus:outline-none transition-all ${scheduledAtError || fieldErrors.scheduledAt
-                      ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
-                      : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-white'
+                    ? 'border-2 border-red-500 bg-red-50/80 text-red-900 ring-2 ring-red-500/20 dark:border-red-600 dark:bg-red-950/40 dark:text-red-200'
+                    : 'border-gray-400 bg-zinc-50/50 text-gray-900 focus:border-primary dark:border-zinc-600 dark:bg-zinc-950/20 dark:text-white'
                     }`}
                 />
                 {scheduledAtError || fieldErrors.scheduledAt ? (
@@ -5443,24 +5496,29 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                 const descVal = (contentLang === 'gu' ? sec.descGu : contentLang === 'hi' ? sec.descHi : sec.descEn) || '';
                 const hasDesc = Boolean(descVal.trim());
                 const hasImg = Boolean(sec.imageUrl && sec.imageUrl.trim());
+                const isBefore = sec.imagePlacement === 'before';
+                const isVisible = sec.showImageAfterDesc !== false;
                 if (!hasDesc && !hasImg) return null;
+
+                const imgPreviewNode = hasImg && isVisible && (
+                  <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
+                    <img
+                      src={sanitizeImageUrl(sec.imageUrl)}
+                      alt={`Story section ${idx + 2} preview`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                );
 
                 return (
                   <div key={sec.id || idx} className="space-y-4 pt-2">
+                    {hasImg && isBefore && imgPreviewNode}
                     {hasDesc && (
                       <div className="border-t border-gray-300 pt-4 dark:border-zinc-700">
                         {renderFormattedPreviewContent(descVal)}
                       </div>
                     )}
-                    {hasImg && sec.showImageAfterDesc !== false && (
-                      <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
-                        <img
-                          src={sanitizeImageUrl(sec.imageUrl)}
-                          alt={`Story section ${idx + 2} preview`}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    )}
+                    {hasImg && !isBefore && imgPreviewNode}
 
                     {/* PDF Preview after this Story Section */}
                     {pdfPosition === `after_desc_${idx + 2}` && renderLivePreviewPdf()}

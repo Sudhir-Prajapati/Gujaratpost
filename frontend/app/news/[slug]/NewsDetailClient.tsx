@@ -792,6 +792,9 @@ function parseArticleBodyBlocks(rawBody: string, language?: string, articlePdfUr
   let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(rawBody, language, articlePdfUrl)))
     .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
     .replace(/----------------+/g, '')
+    .replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '')
+    .replace(/<!--\s*gp-section-\d+-hidden-image:[\s\S]*?-->/gi, '')
+    .replace(/<!--\s*gp-section-\d+[^>]*-->/gi, '')
     .replace(/\s*data-start="[^"]*"/gi, '')
     .replace(/\s*data-end="[^"]*"/gi, '')
     .replace(/\s*data-content-reference-start="[^"]*"/gi, '')
@@ -1374,45 +1377,70 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
   const slideImages = useMemo(() => {
     const images: string[] = [];
-    if (article.image) images.push(sanitizeImageUrl(article.image));
-    if ((article as any).featuredImage) {
-      const feat = sanitizeImageUrl((article as any).featuredImage);
-      if (!images.includes(feat)) images.push(feat);
+    const mainFeat = (article as any).featuredImage || article.image;
+    if (mainFeat && typeof mainFeat === 'string' && mainFeat.trim()) {
+      const clean = sanitizeImageUrl(mainFeat.trim());
+      if (clean) images.push(clean);
     }
 
-    // Extract secondary images from direct properties if present
+    // Collect all story-specific image URLs from secondary properties, inline body markdown, and section markers.
+    // These belong INLINE inside the story body and MUST NEVER pollute the top primary hero slider.
+    const rawContent = `${article.content || ''}\n${(article as any).contentGu || ''}\n${(article as any).contentHi || ''}`;
+    const storyInlineImageUrls = new Set<string>();
+
     ['image2', 'image3', 'image4', 'image5', 'image6', 'image7', 'image8', 'image9', 'image10', 'galleryImage2', 'secondaryImage'].forEach((prop) => {
       const val = (article as any)[prop];
       if (val && typeof val === 'string' && val.trim()) {
-        const clean = sanitizeImageUrl(val);
-        if (!images.includes(clean)) images.push(clean);
+        storyInlineImageUrls.add(sanitizeImageUrl(val.trim()));
       }
     });
 
-    // Extract markdown image URLs ![...](url) from all article content strings
-    const rawContent = `${article.content || ''}\n${(article as any).contentGu || ''}\n${(article as any).contentHi || ''}`;
-    const matches = rawContent.matchAll(/!\[(?:Gallery Image \d+|.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi);
-    for (const match of matches) {
+    const mdMatches = rawContent.matchAll(/!\[(?:.*?)\]\((https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi);
+    for (const match of mdMatches) {
       if (match[1]) {
-        const clean = sanitizeImageUrl(match[1]);
-        if (!images.includes(clean)) images.push(clean);
+        storyInlineImageUrls.add(sanitizeImageUrl(match[1].trim()));
       }
     }
 
     const hiddenImgMatches = rawContent.matchAll(/<!--\s*gp-section-\d+-hidden-image:\s*([^\s>]+)\s*-->/gi);
     for (const match of hiddenImgMatches) {
       if (match[1]) {
-        const clean = sanitizeImageUrl(match[1]);
-        if (!images.includes(clean)) images.push(clean);
+        storyInlineImageUrls.add(sanitizeImageUrl(match[1].trim()));
       }
     }
 
+    // 1. Check for primary media gallery embedded via HTML comment: <!-- gp-primary-gallery: [...] -->
+    const primaryGalleryMatch = rawContent.match(/<!--\s*gp-primary-gallery:\s*(\[[^\]]*\]|[^\s>]+)\s*-->/i);
+    if (primaryGalleryMatch && primaryGalleryMatch[1]) {
+      try {
+        const parsed = JSON.parse(primaryGalleryMatch[1]);
+        if (Array.isArray(parsed)) {
+          parsed.forEach((img: string) => {
+            if (img && typeof img === 'string' && img.trim()) {
+              const clean = sanitizeImageUrl(img.trim());
+              if (clean && !images.includes(clean)) images.push(clean);
+            }
+          });
+        }
+      } catch {
+        const splitUrls = primaryGalleryMatch[1].split(',').map((u) => u.trim()).filter(Boolean);
+        splitUrls.forEach((img) => {
+          const clean = sanitizeImageUrl(img);
+          if (clean && !images.includes(clean)) images.push(clean);
+        });
+      }
+    }
+
+    // 2. Additional primary gallery images from direct object properties (e.g. if passed by API / seed),
+    // strictly excluding any story inline continuation images
     const extraImages = (article as any).images || (article as any).gallery || (article as any).galleryImages || [];
     if (Array.isArray(extraImages)) {
       extraImages.forEach((img) => {
         if (img && typeof img === 'string' && img.trim()) {
-          const clean = sanitizeImageUrl(img);
-          if (!images.includes(clean)) images.push(clean);
+          const clean = sanitizeImageUrl(img.trim());
+          if (clean && !images.includes(clean) && !storyInlineImageUrls.has(clean)) {
+            images.push(clean);
+          }
         }
       });
     }
@@ -1608,6 +1636,9 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages, (article as any)?.pdfPosition)))
       .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
       .replace(/----------------+/g, '')
+      .replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '')
+      .replace(/<!--\s*gp-section-\d+-hidden-image:[\s\S]*?-->/gi, '')
+      .replace(/<!--\s*gp-section-\d+[^>]*-->/gi, '')
       .replace(/\s*data-start="[^"]*"/gi, '')
       .replace(/\s*data-end="[^"]*"/gi, '')
       .replace(/\s*data-content-reference-start="[^"]*"/gi, '')
