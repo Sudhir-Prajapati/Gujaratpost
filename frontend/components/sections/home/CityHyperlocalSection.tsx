@@ -1019,7 +1019,7 @@ export default function CityHyperlocalSection({
   }, [tabApiArticles, activeTab]);
 
   const realList: ListItem[] = useMemo(() => {
-    return tabApiArticles.slice(3, 9).map((art: Article) => ({
+    return tabApiArticles.slice(3, 8).map((art: Article) => ({
       id: art.id,
       slug: art.slug,
       image: art.image || (art as any).featuredImage || '/assets/demo/2.jpg',
@@ -1057,18 +1057,18 @@ export default function CityHyperlocalSection({
   }, [realSlides, activeCityData]);
 
   const mockList = useMemo(() => {
-    if (realList.length >= 6) return realList;
+    if (realList.length >= 5) return realList.slice(0, 5);
     if (realList.length > 0) {
       const combined = [...realList];
       for (const fallback of activeCityData.list) {
-        if (combined.length >= 6) break;
+        if (combined.length >= 5) break;
         if (!combined.some((l) => l.id === fallback.id)) {
           combined.push(fallback);
         }
       }
-      return combined;
+      return combined.slice(0, 5);
     }
-    return activeCityData.list;
+    return activeCityData.list.slice(0, 5);
   }, [realList, activeCityData]);
 
   // Gujarat / City Highlights for Desktop sidebar to perfectly align flush with the left column
