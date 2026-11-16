@@ -3157,9 +3157,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         </div>
 
         {/* 🏷️ MULTIPLE CATEGORY SELECTOR (Modern UI/UX with Active Preview Tray, Accordions & Polished Cards) */}
-        <div className="rounded-2xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900 overflow-hidden transition-all">
+        <div className="rounded-2xl border border-gray-300 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900 overflow-hidden transition-all">
           {/* 1. Header Bar: Title, Status Badge, Explanatory Hint & Quick Actions */}
-          <div className="border-b border-zinc-100 bg-gradient-to-r from-emerald-50/80 via-teal-50/30 to-white px-5 py-4 dark:border-zinc-800 dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900">
+          <div className="border-b border-gray-200 bg-gradient-to-r from-emerald-50/80 via-teal-50/30 to-white px-5 py-4 dark:border-zinc-800 dark:from-emerald-950/20 dark:via-zinc-900 dark:to-zinc-900">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5 flex-wrap">
@@ -3348,7 +3348,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
           )}
 
           {/* 3. Search Bar & Quick Filter Tabs Toolbar */}
-          <div className="p-4 sm:p-5 bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 space-y-3">
+          <div className="p-4 sm:p-5 bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-gray-200 dark:border-zinc-800 space-y-3">
             <div className="flex flex-col xl:flex-row items-stretch xl:items-center gap-3">
               {/* Live Search Input with generous width */}
               <div className="relative flex-1 min-w-[280px]">
@@ -3358,7 +3358,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   value={categorySearch}
                   onChange={(e) => setCategorySearch(e.target.value)}
                   placeholder="Search category (e.g. Gujarat, Surat, Politics, Crime, Sports, અમદાવાદ)..."
-                  className="w-full h-10.5 rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-800 pl-10 pr-9 text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-xs"
+                  className="w-full h-10.5 rounded-xl border border-gray-300 bg-white dark:border-zinc-700 dark:bg-zinc-800 pl-10 pr-9 text-xs sm:text-sm font-medium text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 focus:outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-500/20 transition-all shadow-xs"
                 />
                 {categorySearch && (
                   <button
@@ -3379,7 +3379,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   onClick={() => setCategoryFilterTab('all')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'all'
                       ? 'bg-zinc-900 text-white shadow-xs dark:bg-white dark:text-zinc-900'
-                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                      : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>All</span>
@@ -3396,7 +3396,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   onClick={() => setCategoryFilterTab('gujarat')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'gujarat'
                       ? 'bg-emerald-700 text-white shadow-xs'
-                      : 'bg-white border border-zinc-200 text-emerald-800 hover:bg-emerald-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-emerald-400 dark:hover:bg-zinc-750'
+                      : 'bg-white border border-gray-300 text-emerald-800 hover:bg-emerald-50 dark:bg-zinc-800 dark:border-zinc-700 dark:text-emerald-400 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>📍 Gujarat & Cities</span>
@@ -3411,7 +3411,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   onClick={() => setCategoryFilterTab('news')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'news'
                       ? 'bg-blue-600 text-white shadow-xs'
-                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                      : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>📰 Main News</span>
@@ -3426,7 +3426,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   onClick={() => setCategoryFilterTab('elections')}
                   className={`px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${categoryFilterTab === 'elections'
                       ? 'bg-purple-600 text-white shadow-xs'
-                      : 'bg-white border border-zinc-200 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
+                      : 'bg-white border border-gray-300 text-zinc-700 hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-750'
                     }`}
                 >
                   <span>🗳️ Elections</span>
@@ -3558,13 +3558,11 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         }
                       }
                     }}
-                    className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${isPrimary
-                        ? 'border-emerald-500 bg-emerald-50/80 text-emerald-950 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100 shadow-xs ring-1 ring-emerald-500/30'
+                    className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${isPrimary
+                        ? 'border-emerald-600 bg-emerald-50/90 text-emerald-950 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100 shadow-xs ring-2 ring-emerald-500/25'
                         : isChecked
-                          ? 'border-blue-400 bg-blue-50/70 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-100 shadow-xs ring-1 ring-blue-400/30'
-                          : isSpecialGujaratState
-                            ? 'border-emerald-200/90 bg-emerald-50/30 text-zinc-900 hover:border-emerald-400 hover:bg-emerald-50/70 dark:border-emerald-900/50 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-emerald-700 shadow-2xs'
-                            : 'border-zinc-200 bg-white text-zinc-900 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-700 dark:hover:bg-zinc-850 shadow-2xs'
+                          ? 'border-blue-500 bg-blue-50/80 text-blue-950 dark:border-blue-500 dark:bg-blue-950/30 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/25'
+                          : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
                       }`}
                   >
                     {/* Custom Styled Check Indicator */}
@@ -3574,7 +3572,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                             ? 'bg-emerald-600 text-white shadow-2xs'
                             : isChecked
                               ? 'bg-blue-600 text-white shadow-2xs'
-                              : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-emerald-500'
+                              : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-emerald-500'
                           }`}
                       >
                         {isChecked && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -3583,9 +3581,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                     {/* Category Name & Badges */}
                     <div className="min-w-0 flex-1">
-                      <div className="flex min-w-0 items-start justify-between gap-1.5">
+                      <div className="flex min-w-0 items-center justify-between gap-1.5">
                         <span
-                          className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${isPrimary
+                          className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${isPrimary
                               ? 'text-emerald-900 dark:text-emerald-200'
                               : isChecked
                                 ? 'text-blue-900 dark:text-blue-200'
@@ -3595,43 +3593,34 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                           {cat.name}
                         </span>
 
-                        {/* Badges */}
+                        {/* Badges / Primary Indicator / Set Main */}
                         <div className="shrink-0 flex items-center gap-1">
                           {isPrimary ? (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-emerald-600 text-white px-1.5 py-0.5 rounded-full shadow-2xs">
                               ★ Primary
                             </span>
-                          ) : isChecked ? null : isSpecialGujaratState ? (
-                            <span className="text-[9px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-1.5 py-0.5 rounded shadow-2xs">
-                              State
-                            </span>
+                          ) : isChecked ? (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (categoryId && categoryId !== cat.id) {
+                                  setAdditionalCategoryIds((prev) => Array.from(new Set([...prev.filter((id) => id !== cat.id), categoryId])));
+                                }
+                                setCategoryId(cat.id);
+                              }}
+                              className="text-[9px] font-bold uppercase tracking-wider bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-1.5 py-0.5 rounded border border-blue-300 dark:border-zinc-700 shadow-2xs transition-colors cursor-pointer"
+                              title="Set as the Primary Canonical Category"
+                            >
+                              Make Main
+                            </button>
                           ) : null}
                         </div>
                       </div>
 
-                      {/* Secondary selected categories can become the primary category */}
-                      {isChecked && !isPrimary && (
-                        <div className="mt-1 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (categoryId && categoryId !== cat.id) {
-                                setAdditionalCategoryIds((prev) => Array.from(new Set([...prev.filter((id) => id !== cat.id), categoryId])));
-                              }
-                              setCategoryId(cat.id);
-                            }}
-                            className="text-[9px] font-bold uppercase tracking-wider bg-white hover:bg-emerald-600 hover:text-white text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 px-1.5 py-0.5 rounded-md border border-zinc-200 dark:border-zinc-700 shadow-2xs transition-colors cursor-pointer"
-                            title="Set as the Primary Canonical Category"
-                          >
-                            Set Main
-                          </button>
-                        </div>
-                      )}
-
                       {/* Gujarati Script Subtitle */}
                       {cat.nameGu && cat.nameGu !== cat.name && (
-                        <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
+                        <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight truncate">
                           {cat.nameGu}
                         </span>
                       )}
@@ -3647,7 +3636,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     <div className="space-y-3">
                       <div
                         onClick={() => setCollapsedSections((p) => ({ ...p, gujarat: !p.gujarat }))}
-                        className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
+                        className="flex items-center justify-between border-b border-gray-200 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
                       >
                         <div className="flex items-center gap-2">
                           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 text-xs font-bold">
@@ -3684,10 +3673,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                               <div
                                 key="__home_hero_card__"
                                 onClick={() => setIsFeatured(!isFeatured)}
-                                className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${
                                   isFeatured
-                                    ? 'border-amber-500 bg-amber-50/80 text-amber-950 dark:border-amber-500 dark:bg-amber-950/40 dark:text-amber-100 shadow-xs ring-1 ring-amber-500/30'
-                                    : 'border-zinc-200 bg-white text-zinc-900 hover:border-amber-400 hover:bg-amber-50/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-amber-700/60 shadow-2xs'
+                                    ? 'border-amber-500 bg-amber-50/90 text-amber-950 dark:border-amber-500 dark:bg-amber-950/40 dark:text-amber-100 shadow-xs ring-2 ring-amber-500/25'
+                                    : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
                                 }`}
                               >
                                 {/* Custom Styled Check Indicator */}
@@ -3696,7 +3685,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                     className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
                                       isFeatured
                                         ? 'bg-amber-500 text-white shadow-2xs'
-                                        : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-amber-500'
+                                        : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-amber-500'
                                     }`}
                                   >
                                     {isFeatured && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -3705,9 +3694,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                                 {/* Category Name & Badges */}
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex min-w-0 items-start justify-between gap-1.5">
+                                  <div className="flex min-w-0 items-center justify-between gap-1.5">
                                     <span
-                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${
                                         isFeatured
                                           ? 'text-amber-900 dark:text-amber-200'
                                           : 'text-zinc-900 dark:text-zinc-100 group-hover:text-amber-700 dark:group-hover:text-amber-300'
@@ -3717,25 +3706,16 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                     </span>
 
                                     {/* Badges */}
-                                    <div className="shrink-0 flex items-center gap-1">
-                                      {isFeatured ? (
-                                        <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white px-2 py-0.5 rounded-full shadow-2xs">
-                                          ⭐ Featured
-                                        </span>
-                                      ) : (
-                                        <span className="text-[9px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 px-1.5 py-0.5 rounded shadow-2xs">
-                                          Hero Grid
-                                        </span>
-                                      )}
-                                    </div>
+                                    {isFeatured && (
+                                      <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-amber-500 text-white px-1.5 py-0.5 rounded-full shadow-2xs">
+                                        ⭐ Hero Grid
+                                      </span>
+                                    )}
                                   </div>
 
                                   {/* Gujarati Script Subtitle */}
-                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
-                                    મુખ્ય હોમ પેજ / સમાચાર (Show in Home / News)
-                                  </span>
-                                  <span className="inline-block text-[9.5px] font-bold text-amber-700 dark:text-amber-400 bg-amber-100/70 dark:bg-amber-950/60 px-1.5 py-0.2 rounded mt-1.5">
-                                    📍 Main Hero Grid
+                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight truncate">
+                                    મુખ્ય હોમ પેજ / સમાચાર
                                   </span>
                                 </div>
                               </div>
@@ -3753,7 +3733,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     <div className="space-y-3">
                       <div
                         onClick={() => setCollapsedSections((p) => ({ ...p, news: !p.news }))}
-                        className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
+                        className="flex items-center justify-between border-b border-gray-200 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
                       >
                         <div className="flex items-center gap-2">
                           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-xs font-bold">
@@ -3790,10 +3770,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                               <div
                                 key="__breaking_news_card__"
                                 onClick={() => setIsBreaking(!isBreaking)}
-                                className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${
                                   isBreaking
-                                    ? 'border-orange-500 bg-orange-50/80 text-orange-950 dark:border-orange-500 dark:bg-orange-950/40 dark:text-orange-100 shadow-xs ring-1 ring-orange-500/30'
-                                    : 'border-zinc-200 bg-white text-zinc-900 hover:border-orange-400 hover:bg-orange-50/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-orange-700/60 shadow-2xs'
+                                    ? 'border-orange-500 bg-orange-50/90 text-orange-950 dark:border-orange-500 dark:bg-orange-950/40 dark:text-orange-100 shadow-xs ring-2 ring-orange-500/25'
+                                    : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
                                 }`}
                               >
                                 {/* Custom Styled Check Indicator */}
@@ -3802,7 +3782,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                     className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
                                       isBreaking
                                         ? 'bg-orange-500 text-white shadow-2xs'
-                                        : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-orange-500'
+                                        : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-orange-500'
                                     }`}
                                   >
                                     {isBreaking && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -3811,9 +3791,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                                 {/* Card Content */}
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex min-w-0 items-start justify-between gap-1.5">
+                                  <div className="flex min-w-0 items-center justify-between gap-1.5">
                                     <span
-                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${
                                         isBreaking
                                           ? 'text-orange-900 dark:text-orange-200'
                                           : 'text-zinc-900 dark:text-zinc-100 group-hover:text-orange-700 dark:group-hover:text-orange-300'
@@ -3823,25 +3803,16 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                     </span>
 
                                     {/* Badges */}
-                                    <div className="shrink-0 flex items-center gap-1">
-                                      {isBreaking ? (
-                                        <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-orange-500 text-white px-2 py-0.5 rounded-full shadow-2xs">
-                                          ⚡ Flash
-                                        </span>
-                                      ) : (
-                                        <span className="text-[9px] font-bold uppercase tracking-wider bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 px-1.5 py-0.5 rounded shadow-2xs">
-                                          Ticker Bar
-                                        </span>
-                                      )}
-                                    </div>
+                                    {isBreaking && (
+                                      <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-orange-500 text-white px-1.5 py-0.5 rounded-full shadow-2xs">
+                                        ⚡ Flash
+                                      </span>
+                                    )}
                                   </div>
 
                                   {/* Gujarati Script Subtitle */}
-                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
-                                    ટોપ બ્રેકિંગ ન્યૂઝ (Top Breaking)
-                                  </span>
-                                  <span className="inline-block text-[9.5px] font-bold text-orange-700 dark:text-orange-400 bg-orange-100/70 dark:bg-orange-950/60 px-1.5 py-0.2 rounded mt-1.5">
-                                    📍 Header & Top Flashes
+                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight truncate">
+                                    ટોપ બ્રેકિંગ ન્યૂઝ
                                   </span>
                                 </div>
                               </div>
@@ -3860,10 +3831,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                               <div
                                 key="__trending_story_card__"
                                 onClick={() => handleToggleTrendingStory()}
-                                className={`group relative flex items-start gap-3 rounded-xl border p-3 transition-all duration-150 cursor-pointer select-none ${
+                                className={`group relative flex items-start gap-2.5 rounded-xl border p-2.5 sm:p-3 transition-all duration-150 cursor-pointer select-none min-h-[64px] ${
                                   isTrending
-                                    ? 'border-blue-500 bg-blue-50/80 text-blue-950 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-100 shadow-xs ring-1 ring-blue-500/30'
-                                    : 'border-zinc-200 bg-white text-zinc-900 hover:border-blue-400 hover:bg-blue-50/30 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-blue-700/60 shadow-2xs'
+                                    ? 'border-blue-500 bg-blue-50/90 text-blue-950 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-100 shadow-xs ring-2 ring-blue-500/25'
+                                    : 'border-gray-300 bg-white text-zinc-900 hover:border-gray-400 hover:bg-zinc-50/70 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:border-zinc-600 shadow-2xs'
                                 }`}
                               >
                                 {/* Custom Styled Check Indicator */}
@@ -3872,7 +3843,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                     className={`h-4.5 w-4.5 rounded-md flex items-center justify-center transition-all ${
                                       isTrending
                                         ? 'bg-blue-600 text-white shadow-2xs'
-                                        : 'border-2 border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 group-hover:border-blue-500'
+                                        : 'border-2 border-gray-400 dark:border-zinc-500 bg-white dark:bg-zinc-800 group-hover:border-blue-500'
                                     }`}
                                   >
                                     {isTrending && <Check className="h-3.5 w-3.5 stroke-[3]" />}
@@ -3881,9 +3852,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
                                 {/* Card Content */}
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex min-w-0 items-start justify-between gap-1.5">
+                                  <div className="flex min-w-0 items-center justify-between gap-1.5">
                                     <span
-                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug break-words ${
+                                      className={`min-w-0 flex-1 text-[13.5px] font-bold leading-snug truncate ${
                                         isTrending
                                           ? 'text-blue-900 dark:text-blue-200'
                                           : 'text-zinc-900 dark:text-zinc-100 group-hover:text-blue-700 dark:group-hover:text-blue-300'
@@ -3893,25 +3864,16 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                                     </span>
 
                                     {/* Badges */}
-                                    <div className="shrink-0 flex items-center gap-1">
-                                      {isTrending ? (
-                                        <span className="inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white px-2 py-0.5 rounded-full shadow-2xs">
-                                          🔥 Trending
-                                        </span>
-                                      ) : (
-                                        <span className="text-[9px] font-bold uppercase tracking-wider bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 px-1.5 py-0.5 rounded shadow-2xs">
-                                          Sidebar
-                                        </span>
-                                      )}
-                                    </div>
+                                    {isTrending && (
+                                      <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-black uppercase tracking-wider bg-blue-600 text-white px-1.5 py-0.5 rounded-full shadow-2xs">
+                                        🔥 Trending
+                                      </span>
+                                    )}
                                   </div>
 
                                   {/* Gujarati Script Subtitle */}
-                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight">
-                                    ટ્રેન્ડિંગ સમાચાર (Sidebar & List)
-                                  </span>
-                                  <span className="inline-block text-[9.5px] font-bold text-blue-700 dark:text-blue-400 bg-blue-100/70 dark:bg-blue-950/60 px-1.5 py-0.2 rounded mt-1.5">
-                                    📍 Right Sidebar & Feed
+                                  <span className="block text-[11.5px] font-semibold text-zinc-500 dark:text-zinc-400 mt-0.5 leading-tight truncate">
+                                    ટ્રેન્ડિંગ સમાચાર
                                   </span>
                                 </div>
                               </div>
@@ -3929,7 +3891,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     <div className="space-y-3">
                       <div
                         onClick={() => setCollapsedSections((p) => ({ ...p, elections: !p.elections }))}
-                        className="flex items-center justify-between border-b border-zinc-100 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
+                        className="flex items-center justify-between border-b border-gray-200 pb-2.5 dark:border-zinc-800 cursor-pointer select-none group/sec"
                       >
                         <div className="flex items-center gap-2">
                           <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 text-xs font-bold">
