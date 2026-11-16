@@ -1431,6 +1431,7 @@ export default function HeroSection({
           key="latest-news"
           view="all"
           initialArticles={articlesList}
+          initialCategories={initialCategories}
           initialPopularNews={initialHeroSettings?.popularNewsArticles || (initialHeroSettings as any)?.setting?.popularNewsArticles}
           initialMostRead={initialHeroSettings?.mostReadArticles || undefined}
         />

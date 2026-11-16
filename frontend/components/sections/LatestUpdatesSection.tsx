@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getArticleTitle, getCategoryLabel, formatViews, getLocalized, formatDate } from '@/data';
-import { getPublicArticles, getHeroSettings } from '@/lib/api';
+import { getPublicArticles, getHeroSettings, getPublicCategories } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import { toGuDigits, getCategoryBadgeStyle, isSolelyHealthArticle } from '@/lib/utils';
 import type { Article, Language } from '@/types';
@@ -32,23 +32,82 @@ const sortArticlesByLatest = (items: Article[]): Article[] => {
   });
 };
 
+const getHomeCatSlugs = (cats?: any[]): Set<string> => {
+  if (!Array.isArray(cats) || cats.length === 0) return new Set();
+  const slugs = cats
+    .filter((c) => c && c.showInHome !== false && c.isActive !== false)
+    .map((c) => c.slug?.toLowerCase().trim())
+    .filter(Boolean);
+  return new Set(slugs);
+};
+
+const isHomeCategoryArticle = (art: Article, homeCatSlugsSet: Set<string>): boolean => {
+  if (!art) return false;
+  // Exclude soft news (Health, Technology, Entertainment) from main Latest News
+  if (isSolelyHealthArticle(art)) return false;
+
+  // If no category list is available at all yet, allow non-soft news articles
+  if (!homeCatSlugsSet || homeCatSlugsSet.size === 0) return true;
+
+  const directCat = (art as any).category;
+  if (directCat && typeof directCat === 'object' && directCat.showInHome === false) {
+    return false;
+  }
+
+  const pSlug = (
+    art.categorySlug ||
+    (typeof directCat === 'string' ? directCat : directCat?.slug) ||
+    ''
+  ).toLowerCase().trim();
+
+  if (pSlug && homeCatSlugsSet.has(pSlug)) return true;
+
+  // Check multi-categories array
+  if (Array.isArray((art as any).categories)) {
+    for (const c of (art as any).categories) {
+      if (!c) continue;
+      const cSlug = (typeof c === 'string' ? c : (c.slug || c.category?.slug || '')).toLowerCase().trim();
+      if (cSlug && homeCatSlugsSet.has(cSlug)) return true;
+      if (c.showInHome === true || c.category?.showInHome === true) return true;
+    }
+  }
+
+  // If 'gujarat' is an active home category, all Gujarat city news qualify
+  if (homeCatSlugsSet.has('gujarat')) {
+    const isGujCity = [
+      'ahmedabad', 'surat', 'vadodara', 'rajkot', 'gandhinagar',
+      'bhavnagar', 'jamnagar', 'kutch', 'junagadh', 'morbi', 'mehsana', 'anand'
+    ].includes(pSlug);
+    if (isGujCity) return true;
+  }
+
+  return false;
+};
+
 export default function LatestUpdatesSection({
   view = 'all',
   initialArticles,
   initialMostRead,
   initialPopularNews,
+  initialCategories,
 }: {
   view?: 'timeline' | 'sidebar' | 'all';
   initialArticles?: Article[];
   initialMostRead?: Article[];
   initialPopularNews?: Article[];
+  initialCategories?: any[];
 }) {
   const { language } = useApp();
-  const [latestNews, setLatestNews] = useState<Article[]>(() =>
-    initialArticles && initialArticles.length > 0
-      ? sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)).slice(0, 10)
-      : []
-  );
+  const [homeCatSlugs, setHomeCatSlugs] = useState<Set<string>>(() => getHomeCatSlugs(initialCategories));
+
+  const [latestNews, setLatestNews] = useState<Article[]>(() => {
+    const slugs = getHomeCatSlugs(initialCategories);
+    return initialArticles && initialArticles.length > 0
+      ? sortArticlesByLatest(initialArticles)
+          .filter((a) => isHomeCategoryArticle(a, slugs))
+          .slice(0, 10)
+      : [];
+  });
   const [mostRead, setMostRead] = useState<Article[]>(() => {
     const threeDaysAgoMs = Date.now() - 3 * 24 * 60 * 60 * 1000;
     const sortedInit = initialArticles ? sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)) : [];
@@ -79,8 +138,10 @@ export default function LatestUpdatesSection({
   const touchStartXRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const activeSlugs = homeCatSlugs.size > 0 ? homeCatSlugs : getHomeCatSlugs(initialCategories);
+
     if (initialArticles && initialArticles.length > 0) {
-      const sortedLatest = sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a));
+      const sortedLatest = sortArticlesByLatest(initialArticles).filter((a) => isHomeCategoryArticle(a, activeSlugs));
       const top10Latest = sortedLatest.slice(0, 10);
       setLatestNews(top10Latest);
 
@@ -95,7 +156,7 @@ export default function LatestUpdatesSection({
       for (const a of pool) {
         const aTime = a ? new Date(a.publishedAt || a.createdAt || 0).getTime() : 0;
         const isRecent = aTime > 0 ? aTime >= threeDaysAgoMs : true;
-        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && !isSolelyHealthArticle(a) && isRecent) {
+        if (a && a.id && !seen.has(a.id) && !latestIdSet.has(a.id) && isHomeCategoryArticle(a, activeSlugs) && isRecent) {
           seen.add(a.id);
           topList.push(a);
           if (topList.length >= 10) break;
@@ -113,16 +174,25 @@ export default function LatestUpdatesSection({
     }
 
     Promise.all([
-      getPublicArticles({ limit: 30, sort: 'latest' }),
+      getPublicArticles({ limit: 60, sort: 'latest' }),
       getHeroSettings(),
       getPublicArticles({ limit: 12, sort: 'views' }),
-    ]).then(([res, heroRes, mostViewedRes]: any[]) => {
+      getPublicCategories({ showInHome: true }).catch(() => []),
+    ]).then(([res, heroRes, mostViewedRes, catsRes]: any[]) => {
+      let liveSlugs = activeSlugs;
+      if (Array.isArray(catsRes) && catsRes.length > 0) {
+        const fetchedSlugs = getHomeCatSlugs(catsRes);
+        if (fetchedSlugs.size > 0) {
+          liveSlugs = fetchedSlugs;
+          setHomeCatSlugs(fetchedSlugs);
+        }
+      }
       let currentLatest: Article[] = [];
       if (res && res.articles && res.articles.length > 0) {
-        currentLatest = sortArticlesByLatest(res.articles).filter((a) => !isSolelyHealthArticle(a)).slice(0, 10);
+        currentLatest = sortArticlesByLatest(res.articles).filter((a) => isHomeCategoryArticle(a, liveSlugs)).slice(0, 10);
         setLatestNews(currentLatest);
       } else if (initialArticles && initialArticles.length > 0) {
-        currentLatest = sortArticlesByLatest(initialArticles).filter((a) => !isSolelyHealthArticle(a)).slice(0, 10);
+        currentLatest = sortArticlesByLatest(initialArticles).filter((a) => isHomeCategoryArticle(a, liveSlugs)).slice(0, 10);
       }
 
       const latestIdSet = new Set(currentLatest.map((a) => a.id));
@@ -330,6 +400,8 @@ export default function LatestUpdatesSection({
                     src={mediaSrc}
                     alt={getArticleTitle(art, language)}
                     className="transition-transform duration-300 group-hover:scale-[1.03]"
+                    objectFit="contain"
+                    enableAmbientBackdrop={true}
                   />
                 </div>
               </Link>
@@ -374,6 +446,8 @@ export default function LatestUpdatesSection({
                     src={mediaSrc}
                     alt={getArticleTitle(art, language)}
                     className="transition-transform duration-300 group-hover:scale-[1.03]"
+                    objectFit="contain"
+                    enableAmbientBackdrop={true}
                   />
                 </div>
               </Link>
@@ -461,6 +535,8 @@ export default function LatestUpdatesSection({
                     src={currentMobileCard.image || (currentMobileCard as any).featuredImage}
                     alt={getArticleTitle(currentMobileCard, language)}
                     className="transition-transform duration-300 group-hover:scale-105"
+                    objectFit="contain"
+                    enableAmbientBackdrop={true}
                   />
                 </div>
 
@@ -552,6 +628,8 @@ export default function LatestUpdatesSection({
                       src={art.image || (art as any).featuredImage}
                       alt={getArticleTitle(art, language)}
                       className="transition-transform duration-300 group-hover:scale-105"
+                      objectFit="contain"
+                      enableAmbientBackdrop={true}
                     />
                   </div>
                   <div className="min-h-[46px] flex items-start">
@@ -695,6 +773,8 @@ export default function LatestUpdatesSection({
                     src={art.image || (art as any).featuredImage}
                     alt={getArticleTitle(art, language)}
                     className="transition-transform duration-300 group-hover:scale-105"
+                    objectFit="contain"
+                    enableAmbientBackdrop={true}
                   />
                 </div>
                 <div className="flex flex-col min-w-0 flex-1">
