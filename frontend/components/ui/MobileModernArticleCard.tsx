@@ -123,12 +123,12 @@ export default function MobileModernArticleCard({
         {/* Right: Media Thumbnail */}
         <Link
           href={href}
-          className="relative aspect-[16/10] w-[124px] h-[82px] sm:w-[136px] sm:h-[90px] shrink-0 overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-muted shadow-2xs"
+          className="relative aspect-video w-[128px] h-[72px] sm:w-[144px] sm:h-[81px] shrink-0 overflow-hidden rounded-xl border border-slate-200/60 dark:border-white/[0.08] bg-muted shadow-2xs"
         >
           <ArticleMedia
             src={imgSrc}
             alt={rawTitle || ''}
-            className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.04]"
+            className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
           />
           {isVideoCard && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/30">

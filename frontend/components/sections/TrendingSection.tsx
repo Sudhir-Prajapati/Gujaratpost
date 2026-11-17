@@ -294,13 +294,13 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
               className="group relative flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card hover:border-[#B3121B]/40 shadow-xs hover:shadow-md transition-all snap-center w-full sm:w-[calc((100%-32px)/3)] md:w-[calc((100%-48px)/4)] lg:w-[calc((100%-64px)/5)] shrink-0"
             >
               {/* Image Container */}
-              <div className="relative aspect-[16/10] sm:aspect-[16/10] w-full overflow-hidden bg-muted">
+              <div className="relative aspect-video w-full overflow-hidden bg-muted">
                 <Image
                   src={getDistinctArticleImage(article, index)}
                   alt={article.title}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 33vw, 20vw"
-                  className="object-cover object-top transition duration-300 group-hover:scale-105"
+                  className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = DEMO_CARD_IMAGES[index % DEMO_CARD_IMAGES.length];
                   }}

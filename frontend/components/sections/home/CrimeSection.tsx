@@ -652,7 +652,7 @@ export default function CrimeSection({
               href={`/news/${col.featured.slug}`}
               className="group flex flex-col mb-2.5"
             >
-              <div className="relative aspect-[16/10] md:aspect-[16/10] w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
+              <div className="relative aspect-video w-full overflow-hidden rounded-xl md:rounded-2xl border border-border/15 bg-muted mb-2.5 shadow-sm">
                 <ArticleMedia
                   src={col.featured.image}
                   alt={col.featured.title}

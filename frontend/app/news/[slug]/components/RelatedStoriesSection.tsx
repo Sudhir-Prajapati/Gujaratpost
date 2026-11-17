@@ -88,13 +88,13 @@ export default function RelatedStoriesSection({
                 className="group flex flex-col justify-between h-full p-3.5 rounded-2xl bg-white dark:bg-[#161822] border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] hover:shadow-lg hover:border-accent/40 transition-all duration-300 text-left"
               >
                 <div>
-                  <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl mb-2.5 bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
+                  <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-2.5 bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
                     <Image
                       src={getCardThumbnail(item, index)}
                       alt={item.title}
                       fill
                       sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover transition duration-300 group-hover:scale-105"
+                      className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
                       }}
