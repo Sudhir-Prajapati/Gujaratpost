@@ -26,7 +26,8 @@ import {
   Check,
   ArrowUp,
   ArrowDown,
-  RotateCcw
+  RotateCcw,
+  Copy
 } from 'lucide-react';
 import { getBackendApiUrl, authFetch } from '@/lib/api';
 import { PHOTOS } from '@/data';
@@ -653,6 +654,65 @@ export default function GalleryPage() {
     }
   };
 
+  const duplicatePhoto = async (photo: any) => {
+    try {
+      setUploading(true);
+      setUploadProgressText('નવી પોસ્ટ તરીકે ફરી પબ્લિશ થઈ રહ્યું છે...');
+
+      let primarySrc = photo.src;
+      let imagesPayload: any = photo.images;
+
+      if (!imagesPayload) {
+        if (typeof photo.src === 'string' && photo.src.startsWith('[')) {
+          try {
+            imagesPayload = JSON.parse(photo.src);
+            primarySrc = imagesPayload[0]?.src || imagesPayload[0]?.url || photo.src;
+          } catch {}
+        }
+      }
+
+      if (!imagesPayload && primarySrc) {
+        imagesPayload = [{
+          src: primarySrc,
+          title: photo.captionGu || photo.caption || 'ઈમેજ ૧',
+          caption: photo.caption || photo.captionGu || '',
+          captionGu: photo.captionGu || photo.caption || '',
+          description: photo.caption || photo.captionGu || '',
+          photographer: photo.photographer || 'Gujarat Post Team',
+        }];
+      }
+
+      const res = await authFetch(getBackendApiUrl('/api/admin/gallery'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          src: imagesPayload ? JSON.stringify(imagesPayload) : primarySrc,
+          alt: photo.alt || photo.captionGu || 'Gujarat Post Gallery',
+          caption: photo.caption || photo.captionGu || '',
+          captionGu: photo.captionGu || photo.caption || '',
+          captionHi: photo.captionHi || '',
+          category: photo.category || 'મનોરંજન',
+          photographer: photo.photographer || 'Gujarat Post Team',
+          copyright: photo.copyright || '© Gujarat Post',
+          images: imagesPayload,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Error duplicating photo');
+
+      showNotification('ગેલેરી સ્ટોરી સફળતાપૂર્વક આજની નવી પોસ્ટ તરીકે ફરી પબ્લિશ થઈ ગઈ છે! Dailyhunt આને નવી પોસ્ટ તરીકે તરત જ ક્રોલ કરશે.', 'success', 'Dailyhunt Re-publish');
+      if (json.data) {
+        setPhotos(prev => [json.data, ...prev]);
+      }
+    } catch (err: any) {
+      showNotification(err.message || 'ડુપ્લિકેટ કરવામાં ભૂલ આવી', 'error');
+    } finally {
+      setUploading(false);
+      setUploadProgressText('');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -764,6 +824,13 @@ export default function GalleryPage() {
 
               {/* Hover overlay actions */}
               <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 dark:bg-zinc-900/80 backdrop-blur p-1 rounded-xl shadow-md border border-gray-400 dark:border-zinc-850">
+                <button
+                  onClick={() => duplicatePhoto(photo)}
+                  className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30 rounded-lg cursor-pointer"
+                  title="Dailyhunt માટે નવી પોસ્ટ તરીકે ફરી પબ્લિશ કરો (Re-publish for Dailyhunt)"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
                 <button
                   onClick={() => openEdit(photo)}
                   className="p-1.5 text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 rounded-lg cursor-pointer"
@@ -1517,13 +1584,64 @@ export default function GalleryPage() {
                 ))}
               </div>
 
-              <div className="flex justify-end gap-3 pt-3 border-t border-zinc-150 dark:border-zinc-850">
+              <div className="flex flex-wrap items-center justify-end gap-3 pt-3 border-t border-zinc-150 dark:border-zinc-850">
                 <button
                   type="button"
                   onClick={() => setEditModalOpen(false)}
                   className="rounded-xl border border-gray-400 px-4 py-2.5 text-sm font-semibold text-zinc-500 hover:bg-zinc-55 dark:border-zinc-700"
                 >
                   Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={uploading}
+                  onClick={async () => {
+                    if (selectedPhoto) {
+                      setEditModalOpen(false);
+                      const validExtra = extraImages.filter(item => item.src && item.src.trim());
+                      let primarySrc = src || selectedPhoto.src;
+                      if (typeof primarySrc === 'string' && primarySrc.startsWith('[')) {
+                        try {
+                          const parsed = JSON.parse(primarySrc);
+                          if (Array.isArray(parsed) && parsed.length > 0) primarySrc = parsed[0]?.src || parsed[0]?.url || parsed[0];
+                        } catch {}
+                      }
+                      const imagesPayload = [
+                        {
+                          src: primarySrc,
+                          title: captionGu || caption || 'ઈમેજ ૧',
+                          caption: caption || captionGu,
+                          captionGu: captionGu || caption,
+                          description: caption || captionGu,
+                          photographer: photographer || 'Gujarat Post Team',
+                        },
+                        ...validExtra.map((item, idx) => ({
+                          src: item.src.trim(),
+                          title: captionGu || item.captionGu || `${captionGu || caption || 'ઈમેજ'} (${idx + 2})`,
+                          caption: item.description || caption || captionGu,
+                          captionGu: captionGu || item.captionGu || caption,
+                          description: item.description || caption || captionGu,
+                          photographer: item.photographer || photographer || 'Gujarat Post Team',
+                        })),
+                      ];
+
+                      await duplicatePhoto({
+                        ...selectedPhoto,
+                        src: JSON.stringify(imagesPayload),
+                        caption,
+                        captionGu,
+                        captionHi,
+                        category: category || selectedPhoto.category || 'મનોરંજન',
+                        photographer,
+                        copyright,
+                        images: imagesPayload,
+                      });
+                    }
+                  }}
+                  className="rounded-xl border border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/30 px-4 py-2.5 text-xs sm:text-sm font-black transition cursor-pointer"
+                  title="આ ગેલેરીને આજની નવી તારીખ સાથે ફરી પબ્લિશ કરો જેથી Dailyhunt તરત જ બધા ફોટા અને લખાણ સાથે ફેચ કરી લે"
+                >
+                  Dailyhunt માટે નવી પોસ્ટ બનાવો (Re-publish for Dailyhunt)
                 </button>
                 <button
                   type="submit"
