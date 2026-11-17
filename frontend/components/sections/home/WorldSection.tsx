@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ChevronRight, TrendingUp, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { ChevronRight, TrendingUp, TrendingDown, ArrowUpRight, Clock, Sun, Moon, Globe } from 'lucide-react';
 import type { Article, Language } from '@/types';
 import { formatTime } from '@/data';
 import { getPublicArticles } from '@/lib/api';
@@ -215,6 +215,197 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
                 <span className={`text-[12px] md:text-[13px] font-black tracking-tight select-none min-w-[56px] text-right ${isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-muted-foreground'}`}>
                   {isUp ? `▲ +${item.change.toFixed(2)}` : isDown ? `▼ ${item.change.toFixed(2)}` : '— Stable'}
                 </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* --- Live World Clocks Widget ───────────────────────────────────────── */
+function WorldClocksWidget({ language }: { language: Language }) {
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState<Date>(new Date());
+
+  useEffect(() => {
+    setMounted(true);
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const cities = useMemo(() => [
+    {
+      code: 'NYC',
+      flag: '🇺🇸',
+      nameEn: 'New York',
+      nameGu: 'ન્યૂયોર્ક',
+      nameHi: 'न्यूयॉर्क',
+      countryEn: 'USA (EST)',
+      countryGu: 'અમેરિકા',
+      countryHi: 'अमेरिका',
+      tz: 'America/New_York',
+      badgeColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    },
+    {
+      code: 'LON',
+      flag: '🇬🇧',
+      nameEn: 'London',
+      nameGu: 'લંડન',
+      nameHi: 'लंदन',
+      countryEn: 'UK (GMT)',
+      countryGu: 'લંડન / યુકે',
+      countryHi: 'लंदन / यूके',
+      tz: 'Europe/London',
+      badgeColor: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
+    },
+    {
+      code: 'DXB',
+      flag: '🇦🇪',
+      nameEn: 'Dubai',
+      nameGu: 'દુબઈ',
+      nameHi: 'दुबई',
+      countryEn: 'UAE (GST)',
+      countryGu: 'દુબઈ / યુએઈ',
+      countryHi: 'दुबई / यूएई',
+      tz: 'Asia/Dubai',
+      badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      code: 'TOR',
+      flag: '🇨🇦',
+      nameEn: 'Toronto',
+      nameGu: 'ટોરોન્ટો',
+      nameHi: 'टोरंटो',
+      countryEn: 'Canada (EST)',
+      countryGu: 'કેનેડા',
+      countryHi: 'कनाडा',
+      tz: 'America/Toronto',
+      badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+    },
+    {
+      code: 'SYD',
+      flag: '🇦🇺',
+      nameEn: 'Sydney',
+      nameGu: 'સિડની',
+      nameHi: 'सिडनी',
+      countryEn: 'Australia (AEST)',
+      countryGu: 'ઑસ્ટ્રેલિયા',
+      countryHi: 'ऑस्ट्रेलिया',
+      tz: 'Australia/Sydney',
+      badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+    },
+  ], []);
+
+  const getCityTimeData = useCallback(
+    (tz: string) => {
+      try {
+        const timeStr = now.toLocaleTimeString('en-US', {
+          timeZone: tz,
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true,
+        });
+        const hour24 = parseInt(
+          now.toLocaleTimeString('en-US', {
+            timeZone: tz,
+            hour: 'numeric',
+            hour12: false,
+          }),
+          10
+        );
+        const isDay = hour24 >= 6 && hour24 < 18;
+
+        const targetDate = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+        const istDate = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+        const diffMinutes = Math.round((targetDate.getTime() - istDate.getTime()) / (1000 * 60));
+        const diffHours = Math.floor(Math.abs(diffMinutes) / 60);
+        const remMinutes = Math.abs(diffMinutes) % 60;
+        const sign = diffMinutes >= 0 ? '+' : '-';
+        const remStr = remMinutes > 0 ? `:${remMinutes.toString().padStart(2, '0')}` : '';
+        const diffStr =
+          language === 'gu'
+            ? `${sign}${diffHours}${remStr} ક.`
+            : language === 'hi'
+            ? `${sign}${diffHours}${remStr} घં.`
+            : `${sign}${diffHours}${remStr}h`;
+
+        return { timeStr, isDay, diffStr };
+      } catch {
+        return { timeStr: '--:--', isDay: true, diffStr: '' };
+      }
+    },
+    [now, language]
+  );
+
+  return (
+    <div className="mt-1">
+      <div className="flex items-center justify-between pb-1.5 mb-1.5 select-none border-b border-border/80">
+        <span className="text-[#B3121B] font-extrabold text-[15px] md:text-[16px] flex items-center gap-1.5">
+          <Clock className="w-4 h-4 text-[#B3121B]" />
+          <span>{language === 'gu' ? '• વિશ્વ સમય' : language === 'hi' ? '• विश्व समय' : '• World Clocks'}</span>
+        </span>
+        <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800">
+          <Globe className="h-3 w-3" />
+          <span>Live 24h</span>
+        </span>
+      </div>
+
+      <div className="border border-border/80 rounded-xl bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
+        {cities.map((city) => {
+          const { timeStr, isDay, diffStr } = mounted
+            ? getCityTimeData(city.tz)
+            : { timeStr: '--:--', isDay: true, diffStr: '' };
+
+          const cityName = language === 'gu' ? city.nameGu : language === 'hi' ? city.nameHi : city.nameEn;
+          const countryName = language === 'gu' ? city.countryGu : language === 'hi' ? city.countryHi : city.countryEn;
+          const diffLabel =
+            language === 'gu'
+              ? `IST થી ${diffStr}`
+              : language === 'hi'
+              ? `IST से ${diffStr}`
+              : `IST ${diffStr}`;
+
+          return (
+            <div
+              key={city.code}
+              className="flex items-center justify-between py-1.5 px-3 hover:bg-muted/30 transition-colors"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div
+                  className={`flex h-7 w-7 items-center justify-center rounded-full text-base select-none shrink-0 ${city.badgeColor} border border-border/40 shadow-2xs`}
+                >
+                  <span className="leading-none">{city.flag}</span>
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[14px] md:text-[15px] font-black leading-tight text-foreground truncate">
+                    {cityName}
+                  </span>
+                  <span className="text-[10px] md:text-[10.5px] text-muted-foreground font-bold uppercase leading-none mt-0.5">
+                    {countryName}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-col items-end">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[14px] md:text-[15px] font-black text-foreground tracking-tight font-mono">
+                      {timeStr}
+                    </span>
+                    {isDay ? (
+                      <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />
+                    ) : (
+                      <Moon className="w-3.5 h-3.5 text-indigo-400 fill-indigo-300 shrink-0" />
+                    )}
+                  </div>
+                  <span className="text-[9.5px] font-bold text-muted-foreground leading-none mt-0.5">
+                    {diffLabel}
+                  </span>
+                </div>
               </div>
             </div>
           );
@@ -469,42 +660,6 @@ export default function WorldSection({ language, initialArticles }: { language: 
     return list;
   }, [dbWorldArticles, language]);
 
-  // Sidebar World Articles for Desktop (displays below CurrencyRatesWidget to perfectly align flush with the left column)
-  const sidebarWorldArticles = useMemo(() => {
-    const list: Array<{ id: string; slug: string; image: string; article: Article | null; titleGu: string; categoryGu: string; time: string }> = [];
-
-    // Pick the 6th article (index 5) so it doesn't duplicate the 1 featured + 4 cards on desktop
-    // Or if fewer than 6 articles exist, pick the last available real article
-    const targetArt = dbWorldArticles.length > 5 ? dbWorldArticles[5] : (dbWorldArticles.length > 0 ? dbWorldArticles[dbWorldArticles.length - 1] : null);
-
-    if (targetArt) {
-      list.push({
-        id: targetArt.id,
-        slug: targetArt.slug,
-        image: targetArt.image || (targetArt as any).imageUrl || (targetArt as any).featuredImage || DEMO_IMAGES[2],
-        categoryGu: resolveWorldCategoryName(targetArt, language),
-        article: targetArt,
-        titleGu: targetArt.titleGu || targetArt.title,
-        time: formatTime(targetArt.publishedAt),
-      });
-    } else {
-      mockWorldCards.slice(4).forEach((card) => {
-        if (list.length < 1 && !list.some((item) => item.id === card.id)) {
-          list.push({
-            id: card.id,
-            slug: card.slug,
-            image: card.image,
-            categoryGu: card.categoryGu,
-            article: null,
-            titleGu: card.titleGu,
-            time: getMockRelativeTime(card.relativeTimeGu, language),
-          });
-        }
-      });
-    }
-    return list.slice(0, 1);
-  }, [dbWorldArticles, language]);
-
   return (
     <div className="mx-auto max-w-screen-xl px-4 mt-4 md:mt-5 pt-0">
       {/* Section Header */}
@@ -628,56 +783,8 @@ export default function WorldSection({ language, initialArticles }: { language: 
           {/* Dynamic Foreign Currency Widget */}
           <CurrencyRatesWidget language={language} />
 
-          {/* Dedicated Top World News Widget for Desktop to eliminate whitespace below Currency Rates */}
-          {sidebarWorldArticles.length > 0 && (
-            <div className="hidden lg:flex flex-col rounded-xl border border-border/80 bg-card p-3.5 shadow-xs">
-              <div className="flex items-center justify-between border-b border-border/80 pb-2 mb-2.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[#B3121B] text-[15px] font-extrabold">♦</span>
-                  <h3 className="text-[15px] font-black text-foreground">
-                    {language === 'gu' ? 'વિશ્વ વિશેષ સમાચાર' : language === 'hi' ? 'विश्व विशेष समाचार' : 'World Special News'}
-                  </h3>
-                </div>
-                <Link
-                  href="/category/world"
-                  className="text-[#B3121B] hover:text-red-700 font-bold text-[12px] hover:underline"
-                >
-                  {language === 'gu' ? 'બધા જુઓ →' : language === 'hi' ? 'सभी देखें →' : 'View all →'}
-                </Link>
-              </div>
-
-              <div className="flex flex-col divide-y divide-border/50">
-                {sidebarWorldArticles.slice(0, 1).map((item) => (
-                  <Link
-                    key={item.id}
-                    href={`/news/${item.slug}`}
-                    className="group flex items-start gap-3 py-2.5 hover:bg-muted/30 transition-colors rounded-md px-1"
-                  >
-                    <div className="relative w-20 h-14 shrink-0 overflow-hidden rounded-lg bg-muted border border-border/30">
-                      <ArticleMedia
-                        src={item.image}
-                        alt={item.titleGu}
-                        className="transition-transform duration-300 group-hover:scale-105"
-                      />
-                    </div>
-                    <div className="flex flex-col min-w-0 flex-1">
-                      <span className="text-[#B3121B] font-extrabold text-[10.5px] uppercase leading-none mb-1">
-                        <AutoTranslateString text={item.categoryGu} language={language} />
-                      </span>
-                      <h4 className="text-[13px] font-black leading-snug text-foreground group-hover:text-[#B3121B] transition-colors line-clamp-2" style={{ fontFamily: "'Hind Vadodara', 'Noto Sans Gujarati', sans-serif" }}>
-                        {item.article
-                          ? <AutoArticleTitle article={item.article} language={language} />
-                          : <AutoTranslateString text={item.titleGu} language={language} />}
-                      </h4>
-                      <span className="text-[10px] text-muted-foreground font-medium mt-1">
-                        {item.time}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Live World Clocks Widget */}
+          <WorldClocksWidget language={language} />
 
         </div>
 
