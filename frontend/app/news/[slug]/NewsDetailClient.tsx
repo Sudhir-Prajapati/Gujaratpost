@@ -2759,22 +2759,24 @@ export default function NewsDetailClient({ article, related, trending, latestArt
               </figcaption>
             </figure>
 
-            <ArticleShareAudioBar
-              title={title}
-              subheading={excerpt}
-              excerpt={excerpt}
-              body={body}
-              articleUrl={articleUrl}
-              language={language}
-              copied={copied}
-              copyUrl={copyUrl}
-              saved={saved}
-              handleToggleSave={handleToggleSave}
-              speaking={speaking}
-              toggleAudio={toggleAudio}
-              isApk={isApk}
-              uiLabel={uiLabel}
-            />
+            <div className="mt-3 mb-6 sm:mb-8">
+              <ArticleShareAudioBar
+                title={title}
+                subheading={excerpt}
+                excerpt={excerpt}
+                body={body}
+                articleUrl={articleUrl}
+                language={language}
+                copied={copied}
+                copyUrl={copyUrl}
+                saved={saved}
+                handleToggleSave={handleToggleSave}
+                speaking={speaking}
+                toggleAudio={toggleAudio}
+                isApk={isApk}
+                uiLabel={uiLabel}
+              />
+            </div>
 
             {/* Article Main Content Body — with "વધુ વાંચો" (Read More) expand button */}
             {(() => {
