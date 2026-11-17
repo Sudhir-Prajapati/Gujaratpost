@@ -14,7 +14,7 @@ import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
-import { stripHtmlTags, getLocalizedTrendingTags, getAutoTrendingTopics } from './homeHelpers';
+import { stripHtmlTags, getLocalizedTrendingTags, getAutoTrendingTopics, packTrendingInto3Rows } from './homeHelpers';
 
 const toGuLocal = (num: number | string): string => {
   const guDigits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -145,9 +145,10 @@ export default function CityHyperlocalSection({
   const [fetchedCityArticles, setFetchedCityArticles] = useState<Record<string, Article[]>>({});
   const [latestGujaratArticles, setLatestGujaratArticles] = useState<Article[]>([]);
 
-  // Dynamically resolve 9 trending topics across 3 rows from articles + custom topics + fallbacks
-  const resolvedTrendingTopics = useMemo(() => {
-    return getAutoTrendingTopics(articles, dynamicTrendingTopics, language);
+  // Dynamically resolve trending topics packed into exactly 3 single-line rows
+  const trendingRows = useMemo(() => {
+    const allTopics = getAutoTrendingTopics(articles, dynamicTrendingTopics, language);
+    return packTrendingInto3Rows(allTopics, 36);
   }, [articles, dynamicTrendingTopics, language]);
 
   // Fetch fresh state-level Gujarat articles for Gujarat Vishesh widget
@@ -1426,22 +1427,24 @@ export default function CityHyperlocalSection({
               </h3>
             </div>
 
-            <div>
-              <div className="flex flex-wrap gap-1.5">
-                {resolvedTrendingTopics.slice(0, 9).map((tag) => {
-                  const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
-                  return (
-                    <Link
-                      key={tag}
-                      href={getTrendingTopicHref(cleanTag)}
-                      className="group inline-flex items-center gap-0.5 border border-slate-300 dark:border-slate-600 text-[11.5px] md:text-[11.5px] font-bold px-2.5 py-0.5 rounded-full text-slate-800 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-2xs hover:shadow-xs cursor-pointer select-none"
-                    >
-                      <span className="text-[#B3121B] font-bold mr-0.5 group-hover:text-white transition-colors">#</span>
-                      <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />
-                    </Link>
-                  );
-                })}
-              </div>
+            <div className="flex flex-col gap-1.5">
+              {trendingRows.map((row, rIdx) => (
+                <div key={rIdx} className="flex items-center gap-1.5 flex-nowrap overflow-hidden">
+                  {row.map((tag) => {
+                    const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
+                    return (
+                      <Link
+                        key={tag}
+                        href={getTrendingTopicHref(cleanTag)}
+                        className="group inline-flex items-center gap-0.5 border border-slate-300 dark:border-slate-600 text-[11.5px] md:text-[11.5px] font-bold px-2.5 py-0.5 rounded-full text-slate-800 dark:text-slate-100 hover:border-[#B3121B] hover:bg-[#B3121B] hover:text-white transition-all bg-white dark:bg-slate-800 shadow-2xs hover:shadow-xs cursor-pointer select-none whitespace-nowrap shrink-0"
+                      >
+                        <span className="text-[#B3121B] font-bold mr-0.5 group-hover:text-white transition-colors">#</span>
+                        <AutoTranslateString text={getLocalizedTag(cleanTag, language)} language={language} />
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
             </div>
           </div>
 

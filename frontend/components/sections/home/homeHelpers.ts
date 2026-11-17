@@ -287,8 +287,46 @@ export function getAutoTrendingTopics(
     addTopic(fb);
   }
 
-  // Return 9 items for exactly 3 rows
-  return result.slice(0, 9);
+  // Return items for trending topics
+  return result.slice(0, 12);
+}
+
+/**
+ * Organizes trending topics into exactly 3 single-line rows.
+ * Guarantees that topics never spill into a 4th row, regardless of individual topic word lengths.
+ */
+export function packTrendingInto3Rows(topics: string[], maxCharsPerRow = 36): string[][] {
+  const rows: string[][] = [[], [], []];
+  let currentRow = 0;
+  let currentChars = 0;
+
+  for (const topic of topics) {
+    const clean = topic.startsWith('#') ? topic.slice(1) : topic;
+    const weight = clean.length + 3;
+
+    if (currentChars + weight > maxCharsPerRow && rows[currentRow].length > 0) {
+      if (currentRow < 2) {
+        currentRow++;
+        currentChars = 0;
+      } else {
+        break; // Stop when 3rd row is full
+      }
+    }
+
+    rows[currentRow].push(topic);
+    currentChars += weight;
+
+    if (rows[currentRow].length >= 3) {
+      if (currentRow < 2) {
+        currentRow++;
+        currentChars = 0;
+      } else {
+        break; // Stop when 3rd row reaches 3 items
+      }
+    }
+  }
+
+  return rows.filter((r) => r.length > 0);
 }
 
 export function getRealisticViews(key?: string): number {
