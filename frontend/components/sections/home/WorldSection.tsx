@@ -200,19 +200,19 @@ function CurrencyRatesWidget({ language }: { language: Language }) {
           const isDown = item.change < 0;
 
           return (
-            <div key={item.code} className="flex items-center justify-between py-1.5 px-3 hover:bg-muted/30 transition-colors">
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className={`flex h-7 w-7 items-center justify-center rounded-full ${item.bgColor} ${item.textColor} font-black text-[13px] select-none shrink-0`}>
+            <div key={item.code} className="flex items-center justify-between py-1 px-3 hover:bg-muted/30 transition-colors">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className={`flex h-6 w-6 items-center justify-center rounded-full ${item.bgColor} ${item.textColor} font-black text-[12px] select-none shrink-0`}>
                   {item.symbol}
                 </div>
                 <div className="flex flex-col min-w-0">
-                  <span className="text-[14px] md:text-[15px] font-black leading-tight text-foreground truncate">{name}</span>
-                  <span className="text-[10px] md:text-[10.5px] text-muted-foreground font-bold uppercase leading-none mt-0.5">{item.pair}</span>
+                  <span className="text-[13.5px] md:text-[14px] font-black leading-tight text-foreground truncate">{name}</span>
+                  <span className="text-[9.5px] md:text-[10px] text-muted-foreground font-bold uppercase leading-none mt-0.5">{item.pair}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2.5 md:gap-3 shrink-0">
-                <span className="text-[15.5px] md:text-[16.5px] font-black text-foreground tracking-tight">₹{item.rate.toFixed(2)}</span>
-                <span className={`text-[12px] md:text-[13px] font-black tracking-tight select-none min-w-[56px] text-right ${isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-muted-foreground'}`}>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[14.5px] md:text-[15px] font-black text-foreground tracking-tight">₹{item.rate.toFixed(2)}</span>
+                <span className={`text-[11px] md:text-[11.5px] font-black tracking-tight select-none min-w-[50px] text-right ${isUp ? 'text-green-600' : isDown ? 'text-red-600' : 'text-muted-foreground'}`}>
                   {isUp ? `▲ +${item.change.toFixed(2)}` : isDown ? `▼ ${item.change.toFixed(2)}` : '— Stable'}
                 </span>
               </div>
@@ -244,11 +244,7 @@ function WorldClocksWidget({ language }: { language: Language }) {
       nameEn: 'New York',
       nameGu: 'ન્યૂયોર્ક',
       nameHi: 'न्यूयॉर्क',
-      countryEn: 'USA (EST)',
-      countryGu: 'અમેરિકા',
-      countryHi: 'अमेरिका',
       tz: 'America/New_York',
-      badgeColor: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
     },
     {
       code: 'LON',
@@ -256,11 +252,7 @@ function WorldClocksWidget({ language }: { language: Language }) {
       nameEn: 'London',
       nameGu: 'લંડન',
       nameHi: 'लंदन',
-      countryEn: 'UK (GMT)',
-      countryGu: 'લંડન / યુકે',
-      countryHi: 'लंदन / यूके',
       tz: 'Europe/London',
-      badgeColor: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
     },
     {
       code: 'DXB',
@@ -268,11 +260,7 @@ function WorldClocksWidget({ language }: { language: Language }) {
       nameEn: 'Dubai',
       nameGu: 'દુબઈ',
       nameHi: 'दुबई',
-      countryEn: 'UAE (GST)',
-      countryGu: 'દુબઈ / યુએઈ',
-      countryHi: 'दुबई / यूएई',
       tz: 'Asia/Dubai',
-      badgeColor: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     },
     {
       code: 'TOR',
@@ -280,11 +268,7 @@ function WorldClocksWidget({ language }: { language: Language }) {
       nameEn: 'Toronto',
       nameGu: 'ટોરોન્ટો',
       nameHi: 'टोरंटो',
-      countryEn: 'Canada (EST)',
-      countryGu: 'કેનેડા',
-      countryHi: 'कनाडा',
       tz: 'America/Toronto',
-      badgeColor: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     },
     {
       code: 'SYD',
@@ -292,11 +276,15 @@ function WorldClocksWidget({ language }: { language: Language }) {
       nameEn: 'Sydney',
       nameGu: 'સિડની',
       nameHi: 'सिडनी',
-      countryEn: 'Australia (AEST)',
-      countryGu: 'ઑસ્ટ્રેલિયા',
-      countryHi: 'ऑस्ट्रेलिया',
       tz: 'Australia/Sydney',
-      badgeColor: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
+    },
+    {
+      code: 'SIN',
+      flag: '🇸🇬',
+      nameEn: 'Singapore',
+      nameGu: 'સિંગાપોર',
+      nameHi: 'सिंगापुर',
+      tz: 'Asia/Singapore',
     },
   ], []);
 
@@ -343,73 +331,57 @@ function WorldClocksWidget({ language }: { language: Language }) {
 
   return (
     <div className="mt-1">
-      <div className="flex items-center justify-between pb-1.5 mb-1.5 select-none border-b border-border/80">
-        <span className="text-[#B3121B] font-extrabold text-[15px] md:text-[16px] flex items-center gap-1.5">
-          <Clock className="w-4 h-4 text-[#B3121B]" />
+      <div className="flex items-center justify-between pb-1 mb-1 select-none border-b border-border/80">
+        <span className="text-[#B3121B] font-extrabold text-[14.5px] md:text-[15px] flex items-center gap-1.5">
+          <Clock className="w-3.5 h-3.5 text-[#B3121B]" />
           <span>{language === 'gu' ? '• વિશ્વ સમય' : language === 'hi' ? '• विश्व समय' : '• World Clocks'}</span>
         </span>
-        <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 px-2.5 py-0.5 rounded-full border border-sky-200 dark:border-sky-800">
+        <span className="text-[10.5px] font-semibold text-sky-600 dark:text-sky-400 flex items-center gap-1 bg-sky-50 dark:bg-sky-950/40 px-2 py-0.5 rounded-full border border-sky-200 dark:border-sky-800">
           <Globe className="h-3 w-3" />
           <span>Live 24h</span>
         </span>
       </div>
 
-      <div className="border border-border/80 rounded-xl bg-card divide-y divide-border/60 shadow-sm overflow-hidden">
-        {cities.map((city) => {
-          const { timeStr, isDay, diffStr } = mounted
-            ? getCityTimeData(city.tz)
-            : { timeStr: '--:--', isDay: true, diffStr: '' };
+      <div className="border border-border/80 rounded-xl bg-card p-1.5 shadow-sm overflow-hidden">
+        <div className="grid grid-cols-2 gap-1.5">
+          {cities.map((city) => {
+            const { timeStr, isDay, diffStr } = mounted
+              ? getCityTimeData(city.tz)
+              : { timeStr: '--:--', isDay: true, diffStr: '' };
 
-          const cityName = language === 'gu' ? city.nameGu : language === 'hi' ? city.nameHi : city.nameEn;
-          const countryName = language === 'gu' ? city.countryGu : language === 'hi' ? city.countryHi : city.countryEn;
-          const diffLabel =
-            language === 'gu'
-              ? `IST થી ${diffStr}`
-              : language === 'hi'
-              ? `IST से ${diffStr}`
-              : `IST ${diffStr}`;
+            const cityName = language === 'gu' ? city.nameGu : language === 'hi' ? city.nameHi : city.nameEn;
 
-          return (
-            <div
-              key={city.code}
-              className="flex items-center justify-between py-1.5 px-3 hover:bg-muted/30 transition-colors"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div
-                  className={`flex h-7 w-7 items-center justify-center rounded-full text-base select-none shrink-0 ${city.badgeColor} border border-border/40 shadow-2xs`}
-                >
-                  <span className="leading-none">{city.flag}</span>
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="text-[14px] md:text-[15px] font-black leading-tight text-foreground truncate">
-                    {cityName}
-                  </span>
-                  <span className="text-[10px] md:text-[10.5px] text-muted-foreground font-bold uppercase leading-none mt-0.5">
-                    {countryName}
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="flex flex-col items-end">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[14px] md:text-[15px] font-black text-foreground tracking-tight font-mono">
-                      {timeStr}
+            return (
+              <div
+                key={city.code}
+                className="flex flex-col justify-between p-1.5 rounded-lg bg-muted/30 hover:bg-muted/60 border border-border/40 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-1 mb-0.5">
+                  <div className="flex items-center gap-1 min-w-0">
+                    <span className="text-[13px] leading-none select-none shrink-0">{city.flag}</span>
+                    <span className="text-[12.5px] font-black leading-tight text-foreground truncate">
+                      {cityName}
                     </span>
-                    {isDay ? (
-                      <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />
-                    ) : (
-                      <Moon className="w-3.5 h-3.5 text-indigo-400 fill-indigo-300 shrink-0" />
-                    )}
                   </div>
-                  <span className="text-[9.5px] font-bold text-muted-foreground leading-none mt-0.5">
-                    {diffLabel}
+                  {isDay ? (
+                    <Sun className="w-3.5 h-3.5 text-amber-500 fill-amber-400 shrink-0" />
+                  ) : (
+                    <Moon className="w-3.5 h-3.5 text-indigo-400 fill-indigo-300 shrink-0" />
+                  )}
+                </div>
+
+                <div className="flex items-center justify-between gap-1 mt-0.5">
+                  <span className="text-[12.5px] font-black text-foreground tracking-tight font-mono">
+                    {timeStr}
+                  </span>
+                  <span className="text-[9px] font-bold text-muted-foreground whitespace-nowrap">
+                    {diffStr}
                   </span>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
