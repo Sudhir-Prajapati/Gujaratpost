@@ -155,6 +155,180 @@ const CATEGORY_ALIASES: Record<string, string[]> = {
   'reels': ['instagram', 'reels'],
 };
 
+interface GallerySlideItem {
+  src: string;
+  title?: string;
+  caption?: string;
+  description?: string;
+}
+
+function renderGalleryPhotoItemXml(photo: any, baseUrl: string, lang: string, timestamp?: Date): string {
+  const photoUrl = `${baseUrl}/photos/${photo.id}`;
+  const photoTimestamp = timestamp || (photo.updatedAt ? new Date(photo.updatedAt) : (photo.createdAt ? new Date(photo.createdAt) : new Date()));
+  const pubDate = photoTimestamp.toUTCString();
+  const guidValue = `${photoUrl}?v=${photoTimestamp.getTime()}`;
+
+  // Heading / Title (captionGu is always the primary headline in Gujarati)
+  const titleCandidate = lang === 'hi' && photo.captionHi
+    ? (photo.captionHi || photo.captionGu || photo.alt || 'गुजरात पोस्ट फोटो गैलरी')
+    : (photo.captionGu || photo.alt || photo.caption || 'Gujarat Post Photo Gallery');
+  const rawTitle = stripHtmlTags(titleCandidate).trim();
+
+  // Extract all gallery slides / images
+  const slides: GallerySlideItem[] = [];
+  let rawSrc = (photo.src || '').trim();
+
+  if (rawSrc.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(rawSrc);
+      if (Array.isArray(parsed)) {
+        for (const item of parsed) {
+          if (!item) continue;
+          const rawImgUrl = typeof item === 'string' ? item : (item.src || item.url || '');
+          const imgUrl = ensureJpegUrl(rawImgUrl);
+          if (imgUrl && (imgUrl.startsWith('http://') || imgUrl.startsWith('https://'))) {
+            slides.push({
+              src: imgUrl.trim(),
+              title: typeof item === 'object' ? stripHtmlTags(item.title || item.captionGu || '') : '',
+              caption: typeof item === 'object' ? stripHtmlTags(item.caption || item.description || '') : '',
+              description: typeof item === 'object' ? stripHtmlTags(item.description || item.caption || '') : '',
+            });
+          }
+        }
+      }
+    } catch {}
+  } else {
+    // Clean non-JSON rawSrc if it has quotes or trailing fragments appended
+    if (rawSrc.includes('"')) {
+      rawSrc = rawSrc.substring(0, rawSrc.indexOf('"')).trim();
+    }
+    rawSrc = rawSrc.replace(/[,\}\]]+$/, '').trim();
+  }
+
+  if (slides.length === 0) {
+    if (rawSrc.includes('\n') || (rawSrc.includes(',') && !rawSrc.startsWith('data:'))) {
+      const delimiter = rawSrc.includes('\n') ? '\n' : ',';
+      const splitUrls = rawSrc.split(delimiter).map((s: string) => s.trim()).filter(Boolean);
+      for (const u of splitUrls) {
+        const converted = ensureJpegUrl(u);
+        if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
+          slides.push({ src: converted });
+        }
+      }
+    } else if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://') || rawSrc.startsWith('/')) {
+      const converted = ensureJpegUrl(rawSrc);
+      if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
+        slides.push({ src: converted });
+      }
+    }
+  }
+
+  // Story Description (distinct from title)
+  let storyDesc = '';
+  if (photo.caption && photo.caption.trim() && photo.caption.trim() !== rawTitle) {
+    storyDesc = photo.caption.trim();
+  } else if (slides[0]?.description && slides[0].description !== rawTitle) {
+    storyDesc = slides[0].description;
+  } else if (slides[0]?.caption && slides[0].caption !== rawTitle) {
+    storyDesc = slides[0].caption;
+  } else if (photo.alt && photo.alt.trim() !== rawTitle) {
+    storyDesc = photo.alt.trim();
+  }
+
+  // Check all slides if storyDesc is still empty
+  if (!storyDesc) {
+    for (const s of slides) {
+      const cand = (s.description || s.caption || '').trim();
+      if (cand && cand !== rawTitle) {
+        storyDesc = cand;
+        break;
+      }
+    }
+  }
+
+  // If description starts with title, strip duplicate title prefix
+  if (storyDesc && storyDesc.startsWith(rawTitle)) {
+    storyDesc = storyDesc.substring(rawTitle.length).replace(/^[:\s\-]+/, '').trim();
+  }
+
+  const rawDesc = cleanRssExcerpt(storyDesc || rawTitle);
+  const catName = lang === 'en' ? 'Photo Gallery' : lang === 'hi' ? 'फोटो गैलरी' : (photo.category || 'ફોટો ગેલેરી');
+  const authorName = photo.photographer || 'Gujarat Post Team';
+
+  // Dailyhunt & universal RSS compatible HTML body (<content:encoded>)
+  let fullHtml = '';
+  if (storyDesc) {
+    const cleanedStoryDesc = stripKeyHighlights(storyDesc);
+    const paras = cleanedStoryDesc.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+    if (paras.length > 0) {
+      fullHtml += paras.map((p) => `<p>${escapeXml(p)}</p>`).join('\n');
+    } else {
+      fullHtml += `<p>${escapeXml(cleanedStoryDesc)}</p>`;
+    }
+  }
+
+  // Pair each slide image directly followed by its descriptive caption paragraph
+  for (let i = 0; i < slides.length; i++) {
+    const slide = slides[i];
+    const slideAlt = escapeXml(slide.title || rawTitle);
+    let slideCaption = (slide.caption || slide.description || '').trim();
+    if (slideCaption === rawTitle) slideCaption = '';
+    const effectiveCaption = slideCaption || storyDesc || rawTitle;
+
+    fullHtml += `\n<p><img src="${escapeXml(slide.src)}" alt="${slideAlt}" /></p>`;
+    if (effectiveCaption) {
+      fullHtml += `\n<p>${escapeXml(effectiveCaption)}</p>`;
+    }
+  }
+
+  if (!fullHtml.trim()) {
+    fullHtml = `<p>${escapeXml(rawTitle)}</p>`;
+  }
+
+  let xml = `    <item>
+      <title>${wrapCdata(rawTitle)}</title>
+      <link>${photoUrl}</link>
+      <guid isPermaLink="false">${guidValue}</guid>
+      <description>${wrapCdata(rawDesc)}</description>
+      <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
+      <category>${wrapCdata(catName)}</category>
+      <pubDate>${pubDate}</pubDate>
+      <dc:creator>${wrapCdata(authorName)}</dc:creator>
+      <author>editorial@gujaratpost.in (${escapeXml(authorName)})</author>`;
+
+  const leadImg = slides[0]?.src || '';
+  if (leadImg && (leadImg.startsWith('http://') || leadImg.startsWith('https://'))) {
+    const escapedLeadImg = escapeXml(leadImg);
+    xml += `
+      <enclosure url="${escapedLeadImg}" type="image/jpeg" length="0" />
+      <media:content url="${escapedLeadImg}" medium="image" type="image/jpeg">
+        <media:title>${wrapCdata(rawTitle)}</media:title>
+        <media:description>${wrapCdata(rawDesc)}</media:description>
+      </media:content>`;
+  }
+
+  if (slides.length > 0) {
+    xml += `\n      <media:group>`;
+    for (const s of slides) {
+      const sTitle = s.title || rawTitle;
+      let sCap = (s.caption || s.description || '').trim();
+      if (sCap === rawTitle) sCap = '';
+      const sDesc = sCap || storyDesc || rawTitle;
+      xml += `
+        <media:content url="${escapeXml(s.src)}" medium="image" type="image/jpeg">
+          <media:title>${wrapCdata(sTitle)}</media:title>
+          <media:description>${wrapCdata(sDesc)}</media:description>
+        </media:content>`;
+    }
+    xml += `\n      </media:group>`;
+  }
+
+  xml += `
+    </item>\n`;
+
+  return xml;
+}
+
 /**
  * Generates dynamic RSS 2.0 XML for public news articles, photo gallery, videos, and reels.
  */
@@ -284,179 +458,7 @@ export async function generatePublicRssFeed(options: RssFeedOptions = {}): Promi
     let itemsXml = '';
     for (const it of finalItems) {
       if (it.type === 'gallery') {
-        const photo = it.data;
-        const photoUrl = `${baseUrl}/photos/${photo.id}`;
-        const photoTimestamp = it.timestamp;
-        const pubDate = photoTimestamp.toUTCString();
-        const guidValue = `${photoUrl}?v=${photoTimestamp.getTime()}`;
-
-        // Heading / Title (captionGu is always the primary headline in Gujarati)
-        const titleCandidate = lang === 'hi' && photo.captionHi
-          ? (photo.captionHi || photo.captionGu || photo.alt || 'गुजरात पोस्ट फोटो गैलरी')
-          : (photo.captionGu || photo.alt || photo.caption || 'Gujarat Post Photo Gallery');
-        const rawTitle = stripHtmlTags(titleCandidate).trim();
-
-        // Extract all gallery slides / images
-        interface GallerySlideItem {
-          src: string;
-          title?: string;
-          caption?: string;
-          description?: string;
-        }
-        const slides: GallerySlideItem[] = [];
-        let rawSrc = (photo.src || '').trim();
-
-        if (rawSrc.startsWith('[')) {
-          try {
-            const parsed = JSON.parse(rawSrc);
-            if (Array.isArray(parsed)) {
-              for (const item of parsed) {
-                if (!item) continue;
-                const rawImgUrl = typeof item === 'string' ? item : (item.src || item.url || '');
-                const imgUrl = ensureJpegUrl(rawImgUrl);
-                if (imgUrl && (imgUrl.startsWith('http://') || imgUrl.startsWith('https://'))) {
-                  slides.push({
-                    src: imgUrl.trim(),
-                    title: typeof item === 'object' ? stripHtmlTags(item.title || item.captionGu || '') : '',
-                    caption: typeof item === 'object' ? stripHtmlTags(item.caption || item.description || '') : '',
-                    description: typeof item === 'object' ? stripHtmlTags(item.description || item.caption || '') : '',
-                  });
-                }
-              }
-            }
-          } catch {}
-        } else {
-          // Clean non-JSON rawSrc if it has quotes or trailing fragments appended
-          if (rawSrc.includes('"')) {
-            rawSrc = rawSrc.substring(0, rawSrc.indexOf('"')).trim();
-          }
-          rawSrc = rawSrc.replace(/[,\}\]]+$/, '').trim();
-        }
-
-        if (slides.length === 0) {
-          if (rawSrc.includes('\n') || (rawSrc.includes(',') && !rawSrc.startsWith('data:'))) {
-            const delimiter = rawSrc.includes('\n') ? '\n' : ',';
-            const splitUrls = rawSrc.split(delimiter).map((s: string) => s.trim()).filter(Boolean);
-            for (const u of splitUrls) {
-              const converted = ensureJpegUrl(u);
-              if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
-                slides.push({ src: converted });
-              }
-            }
-          } else if (rawSrc.startsWith('http://') || rawSrc.startsWith('https://') || rawSrc.startsWith('/')) {
-            const converted = ensureJpegUrl(rawSrc);
-            if (converted && (converted.startsWith('http://') || converted.startsWith('https://'))) {
-              slides.push({ src: converted });
-            }
-          }
-        }
-
-        // Story Description (distinct from title)
-        let storyDesc = '';
-        if (photo.caption && photo.caption.trim() && photo.caption.trim() !== rawTitle) {
-          storyDesc = photo.caption.trim();
-        } else if (slides[0]?.description && slides[0].description !== rawTitle) {
-          storyDesc = slides[0].description;
-        } else if (slides[0]?.caption && slides[0].caption !== rawTitle) {
-          storyDesc = slides[0].caption;
-        } else if (photo.alt && photo.alt.trim() !== rawTitle) {
-          storyDesc = photo.alt.trim();
-        }
-
-        // Check all slides if storyDesc is still empty
-        if (!storyDesc) {
-          for (const s of slides) {
-            const cand = (s.description || s.caption || '').trim();
-            if (cand && cand !== rawTitle) {
-              storyDesc = cand;
-              break;
-            }
-          }
-        }
-
-        // If description starts with title, strip duplicate title prefix
-        if (storyDesc && storyDesc.startsWith(rawTitle)) {
-          storyDesc = storyDesc.substring(rawTitle.length).replace(/^[:\s\-]+/, '').trim();
-        }
-
-        const rawDesc = cleanRssExcerpt(storyDesc || rawTitle);
-        const catName = lang === 'en' ? 'Photo Gallery' : lang === 'hi' ? 'फोटो गैलरी' : (photo.category || 'ફોટો ગેલેરી');
-        const authorName = photo.photographer || 'Gujarat Post Team';
-
-        // Dailyhunt & universal RSS compatible HTML body (<content:encoded>)
-        // Dailyhunt's parser expects each slide to have its image paired with a descriptive <p> paragraph
-        let fullHtml = '';
-        if (storyDesc) {
-          const cleanedStoryDesc = stripKeyHighlights(storyDesc);
-          const paras = cleanedStoryDesc.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
-          if (paras.length > 0) {
-            fullHtml += paras.map((p) => `<p>${escapeXml(p)}</p>`).join('\n');
-          } else {
-            fullHtml += `<p>${escapeXml(cleanedStoryDesc)}</p>`;
-          }
-        }
-
-        // Pair each slide image directly followed by its descriptive caption paragraph
-        // Aggregators (Dailyhunt) and slideshow viewers expect each image to be paired with its text description
-        for (let i = 0; i < slides.length; i++) {
-          const slide = slides[i];
-          const slideAlt = escapeXml(slide.title || rawTitle);
-          let slideCaption = (slide.caption || slide.description || '').trim();
-          if (slideCaption === rawTitle) slideCaption = '';
-          const effectiveCaption = slideCaption || storyDesc || rawTitle;
-
-          fullHtml += `\n<p><img src="${escapeXml(slide.src)}" alt="${slideAlt}" /></p>`;
-          if (effectiveCaption) {
-            fullHtml += `\n<p>${escapeXml(effectiveCaption)}</p>`;
-          }
-        }
-
-        if (!fullHtml.trim()) {
-          fullHtml = `<p>${escapeXml(rawTitle)}</p>`;
-        }
-
-        itemsXml += `    <item>
-      <title>${wrapCdata(rawTitle)}</title>
-      <link>${photoUrl}</link>
-      <guid isPermaLink="false">${guidValue}</guid>
-      <description>${wrapCdata(rawDesc)}</description>
-      <content:encoded>${wrapCdata(fullHtml)}</content:encoded>
-      <category>${wrapCdata(catName)}</category>
-      <pubDate>${pubDate}</pubDate>
-      <dc:creator>${wrapCdata(authorName)}</dc:creator>
-      <author>editorial@gujaratpost.in (${escapeXml(authorName)})</author>`;
-
-        // Enclosure & Lead Media Content: formatted identically to standard news articles for Dailyhunt article layout
-        const leadImg = slides[0]?.src || '';
-        if (leadImg && (leadImg.startsWith('http://') || leadImg.startsWith('https://'))) {
-          const escapedLeadImg = escapeXml(leadImg);
-          itemsXml += `
-      <enclosure url="${escapedLeadImg}" type="image/jpeg" length="0" />
-      <media:content url="${escapedLeadImg}" medium="image" type="image/jpeg">
-        <media:title>${wrapCdata(rawTitle)}</media:title>
-        <media:description>${wrapCdata(rawDesc)}</media:description>
-      </media:content>`;
-        }
-
-        // Media RSS <media:group> containing all slides with titles & descriptions for aggregators (Dailyhunt)
-        if (slides.length > 0) {
-          itemsXml += `\n      <media:group>`;
-          for (const s of slides) {
-            const sTitle = s.title || rawTitle;
-            let sCap = (s.caption || s.description || '').trim();
-            if (sCap === rawTitle) sCap = '';
-            const sDesc = sCap || storyDesc || rawTitle;
-            itemsXml += `
-        <media:content url="${escapeXml(s.src)}" medium="image" type="image/jpeg">
-          <media:title>${wrapCdata(sTitle)}</media:title>
-          <media:description>${wrapCdata(sDesc)}</media:description>
-        </media:content>`;
-          }
-          itemsXml += `\n      </media:group>`;
-        }
-
-        itemsXml += `
-    </item>\n`;
+        itemsXml += renderGalleryPhotoItemXml(it.data, baseUrl, lang, it.timestamp);
       } else {
         // Render photo story published as a regular article with category "photos"
         const art = it.data;
@@ -850,17 +852,76 @@ ${itemsXml}  </channel>
     },
   });
 
-  const newestArticle = articles[0];
-  const lastModified = newestArticle?.updatedAt || newestArticle?.createdAt || new Date();
+  // Check if this is an entertainment/lifestyle feed to also pull relevant gallery photo stories
+  const isEntertainmentFeed = categorySlug
+    ? (CATEGORY_ALIASES[categorySlug] || [categorySlug]).some((s) => s.includes('entertainment') || s.includes('lifestyle'))
+    : false;
+
+  let matchingGalleryPhotos: any[] = [];
+  if (isEntertainmentFeed) {
+    matchingGalleryPhotos = await prisma.galleryPhoto.findMany({
+      where: {
+        OR: [
+          { category: { in: ['મનોરંજન', 'Entertainment', 'lifestyle', 'Lifestyle', 'entertainment'] } },
+          { category: { contains: 'મનોરંજન' } },
+          { category: { contains: 'Entertainment' } },
+        ],
+      },
+      take: 30,
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+      select: {
+        id: true,
+        src: true,
+        alt: true,
+        caption: true,
+        captionGu: true,
+        captionHi: true,
+        category: true,
+        photographer: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  interface UnifiedRssItem {
+    type: 'article' | 'gallery';
+    timestamp: Date;
+    data: any;
+  }
+
+  const combinedItems: UnifiedRssItem[] = [
+    ...articles.map((art) => ({
+      type: 'article' as const,
+      timestamp: new Date(art.createdAt),
+      data: art,
+    })),
+    ...matchingGalleryPhotos.map((p) => ({
+      type: 'gallery' as const,
+      timestamp: new Date(p.updatedAt || p.createdAt),
+      data: p,
+    })),
+  ];
+
+  combinedItems.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const finalItems = combinedItems.slice(0, limit);
+
+  const newestItem = finalItems[0];
+  const lastModified = newestItem?.timestamp || new Date();
   const lastBuildDate = lastModified.toUTCString();
 
   // Generate strong ETag from newest timestamp and count
-  const etagSource = `${categorySlug || 'home'}:${articles.length}:${lastModified.getTime()}`;
+  const etagSource = `${categorySlug || 'home'}:${finalItems.length}:${lastModified.getTime()}`;
   const etag = `"${crypto.createHash('md5').update(etagSource).digest('hex')}"`;
 
   let itemsXml = '';
 
-  for (const art of articles) {
+  for (const it of finalItems) {
+    if (it.type === 'gallery') {
+      itemsXml += renderGalleryPhotoItemXml(it.data, baseUrl, lang, it.timestamp);
+      continue;
+    }
+    const art = it.data;
     const artUrl = `${baseUrl}/news/${art.slug}`;
     const pubDate = new Date(art.createdAt).toUTCString();
 
@@ -941,7 +1002,7 @@ ${itemsXml}  </channel>
     xml,
     etag,
     lastModified,
-    itemCount: articles.length,
+    itemCount: finalItems.length,
   };
 
   feedCache.set(cacheKey, { result, cachedAt: nowMs });
