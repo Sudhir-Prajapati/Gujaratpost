@@ -18,6 +18,7 @@ import AlsoPanVacho from './components/AlsoPanVacho';
 import { filterUniqueArticles } from '@/lib/articleDeduplication';
 import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays as calcArticleAgeDays, isSolelyHealthArticle } from '@/lib/articleCategory';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 
 const ArticleInfiniteStream = dynamic(() => import('./components/ArticleInfiniteStream'));
 const ArticlePdfPagesViewer = dynamic(() => import('@/components/sections/ArticlePdfPagesViewer'), { ssr: false });
@@ -2928,12 +2929,11 @@ export default function NewsDetailClient({ article, related, trending, latestArt
 
                                   {/* Thumbnail Image matching AlsoPanVacho container dimensions */}
                                   <div className="relative aspect-video w-[128px] h-[72px] sm:w-[144px] sm:h-[81px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
-                                    <Image
+                                    <ArticleMedia
                                       src={thumbSrc}
                                       alt={item.title || ''}
-                                      fill
-                                      sizes="144px"
-                                      className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
+                                      objectFit="contain"
+                                      className="transition-transform duration-300 group-hover:scale-[1.02]"
                                     />
                                   </div>
                                 </div>

@@ -128,7 +128,8 @@ export default function MobileModernArticleCard({
           <ArticleMedia
             src={imgSrc}
             alt={rawTitle || ''}
-            className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
+            objectFit="contain"
+            className="transition-transform duration-300 group-hover:scale-[1.02]"
           />
           {isVideoCard && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/30">

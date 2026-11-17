@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 import type { Article, Language } from '@/types';
 import { normalizeDisplayText, getCategoryLabel, getArticleTitle } from '@/data';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
@@ -114,12 +115,11 @@ export default function AlsoPanVacho({
 
                 {/* Thumbnail Image */}
                 <div className="relative aspect-video w-[128px] h-[72px] sm:w-[144px] sm:h-[81px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
-                  <Image
+                  <ArticleMedia
                     src={thumbSrc}
                     alt={art.title || ''}
-                    fill
-                    sizes="144px"
-                    className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
+                    objectFit="contain"
+                    className="transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                 </div>
               </div>

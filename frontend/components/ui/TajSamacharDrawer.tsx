@@ -367,6 +367,7 @@ export default function TajSamacharDrawer() {
                             src={imageSrc}
                             alt={language === 'gu' ? (item.titleGu || item.title || 'તાજા સમાચાર') : language === 'hi' ? (item.titleHi || item.title || 'ताज़ा समाचार') : (item.titleEn || item.title || 'Latest News')}
                             fill
+                            objectFit="contain"
                             className="group-hover:scale-105 transition-transform duration-300"
                           />
                         </div>

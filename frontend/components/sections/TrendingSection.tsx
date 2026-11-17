@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Image from 'next/image';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { getPublicArticles } from '@/lib/api';
@@ -295,15 +296,11 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
             >
               {/* Image Container */}
               <div className="relative aspect-video w-full overflow-hidden bg-muted">
-                <Image
+                <ArticleMedia
                   src={getDistinctArticleImage(article, index)}
                   alt={article.title}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 768px) 33vw, 20vw"
-                  className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = DEMO_CARD_IMAGES[index % DEMO_CARD_IMAGES.length];
-                  }}
+                  objectFit="contain"
+                  className="transition duration-300 group-hover:scale-[1.02]"
                 />
                 {/* Rank Badge on top of image */}
                 <div

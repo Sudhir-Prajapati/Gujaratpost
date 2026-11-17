@@ -8,6 +8,7 @@ import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, formatArticleDateTime, getCategoryLabel, getArticleTitle, SITE_URL } from '@/data';
 import { AutoArticleTitle, AutoArticleBreadcrumbTitle } from '@/components/ui/AutoTranslatedArticleText';
 import MobileHeroArticleCard from '@/components/ui/MobileHeroArticleCard';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 import ArticleShareAudioBar from './ArticleShareAudioBar';
 import { getPublicArticleBySlug } from '@/lib/api';
@@ -467,15 +468,12 @@ function StreamArticleItem({
                         <AutoArticleTitle article={raArt} language={language} />
                       </h4>
                     </div>
-                    <div className="relative w-[100px] h-[72px] sm:w-[110px] sm:h-[78px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
-                      <img
+                    <div className="relative aspect-video w-[120px] h-[68px] sm:w-[136px] sm:h-[76px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
+                      <ArticleMedia
                         src={getCardThumbnail(raArt, index)}
                         alt={getArticleTitle(raArt, language)}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-                        }}
+                        objectFit="contain"
+                        className="transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
                   </div>
@@ -710,12 +708,12 @@ export default function ArticleInfiniteStream({
                               <AutoArticleTitle article={item} language={language} />
                             </h3>
                           </div>
-                          <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
-                            <img
+                          <div className="relative aspect-video w-[120px] h-[68px] sm:w-[136px] sm:h-[76px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
+                            <ArticleMedia
                               src={getCardThumbnail(item, index)}
                               alt={item.title || ''}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                              loading="lazy"
+                              objectFit="contain"
+                              className="transition-transform duration-300 group-hover:scale-105"
                             />
                           </div>
                         </div>
@@ -817,12 +815,12 @@ export default function ArticleInfiniteStream({
                                 <AutoArticleTitle article={item} language={language} />
                               </h3>
                             </div>
-                            <div className="relative w-[100px] h-[68px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
-                              <img
+                            <div className="relative aspect-video w-[120px] h-[68px] sm:w-[136px] sm:h-[76px] shrink-0 overflow-hidden rounded-xl bg-zinc-100 dark:bg-neutral-900 shadow-2xs border border-slate-200/60 dark:border-white/[0.08]">
+                              <ArticleMedia
                                 src={getCardThumbnail(item, index)}
                                 alt={item.title || ''}
-                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                loading="lazy"
+                                objectFit="contain"
+                                className="transition-transform duration-300 group-hover:scale-105"
                               />
                             </div>
                           </div>

@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 import type { Article, Language } from '@/types';
 import { normalizeDisplayText, formatDate, getCategoryLabel, getArticleTitle } from '@/data';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
@@ -89,15 +90,11 @@ export default function RelatedStoriesSection({
               >
                 <div>
                   <div className="relative aspect-video w-full overflow-hidden rounded-xl mb-2.5 bg-zinc-100 dark:bg-neutral-900 shadow-2xs">
-                    <Image
+                    <ArticleMedia
                       src={getCardThumbnail(item, index)}
                       alt={item.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover object-center transition duration-300 group-hover:scale-[1.02]"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = DEMO_THUMBNAILS[index % DEMO_THUMBNAILS.length];
-                      }}
+                      objectFit="contain"
+                      className="transition duration-300 group-hover:scale-[1.02]"
                     />
                     {isSaved && (
                       <span className="absolute top-2 right-2 z-10 bg-white/90 dark:bg-black/90 p-1.5 rounded-full text-xs shadow-md">
