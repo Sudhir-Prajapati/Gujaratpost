@@ -297,7 +297,7 @@ export class HeroController {
         let slot2Id = heroSetting?.slot2Id;
         let slot3Id = heroSetting?.slot3Id;
 
-        const DEFAULT_TOPICS = ['ચૂંટણી 2026', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડાયમંડ ઉદ્યોગ', 'ટ્રાફિક'];
+        const DEFAULT_TOPICS = ['ચૂંટણી 2027', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડ્રગ્સ કેસ', 'શેરબજાર', 'અકસ્માત'];
         let parsedTopics = DEFAULT_TOPICS;
         if (heroSetting?.trendingTopics) {
           try {

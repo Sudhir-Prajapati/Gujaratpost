@@ -372,6 +372,17 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         { location: { contains: cleanQuery } },
       ];
 
+      if (cleanQuery.includes('-') || cleanQuery.includes(' ')) {
+        const parts = cleanQuery.split(/[- ]+/).map((p) => p.trim()).filter((p) => p.length > 1);
+        for (const part of parts) {
+          orConditions.push(
+            { title: { contains: part } },
+            { titleGu: { contains: part } },
+            { excerptGu: { contains: part } }
+          );
+        }
+      }
+
       if (tagPostIds.length > 0) {
         orConditions.push({ id: { in: tagPostIds } });
       }

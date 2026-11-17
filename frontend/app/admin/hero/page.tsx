@@ -372,7 +372,7 @@ export default function HeroManagerPage() {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
-  const DEFAULT_TOPICS = ['ચૂંટણી 2026', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડાયમંડ ઉદ્યોગ', 'ટ્રાફિક'];
+  const DEFAULT_TOPICS = ['ચૂંટણી 2027', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડ્રગ્સ કેસ', 'શેરબજાર', 'અકસ્માત'];
 
   // 3 bottom image slots, trending topics & trending news slider articles
   const [slots, setSlots] = useState<(Article | null)[]>([null, null, null]);
@@ -1440,8 +1440,8 @@ export default function HeroManagerPage() {
   const handleAddTopic = () => {
     const val = newTopicInput.trim().replace(/^#/, '');
     if (!val) return;
-    if (trendingTopics.length >= 8) {
-      showToast('⚠️ Limit reached (8 topics max). Please remove one topic first before adding a new one.', false);
+    if (trendingTopics.length >= 15) {
+      showToast('⚠️ Limit reached (15 topics max). Please remove one topic first before adding a new one.', false);
       return;
     }
     if (trendingTopics.includes(val)) {
@@ -4929,11 +4929,11 @@ export default function HeroManagerPage() {
                 <div>
                   <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
                     <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white">Trending Topics (Trending વિષયો)</h3>
-                    <span className={`text-sm font-bold px-3 py-1 rounded-full border ${trendingTopics.length >= 8 ? 'bg-amber-100 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-gray-400 dark:bg-zinc-800 dark:text-zinc-300'} shrink-0`}>
-                      {trendingTopics.length} / 8 Max
+                    <span className={`text-sm font-bold px-3 py-1 rounded-full border ${trendingTopics.length >= 15 ? 'bg-amber-100 text-amber-800 border-amber-400 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700' : 'bg-zinc-100 text-zinc-600 border-gray-400 dark:bg-zinc-800 dark:text-zinc-300'} shrink-0`}>
+                      {trendingTopics.length} / 15 Max
                     </span>
                   </div>
-                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1">Maximum 8 trending topic pills allowed. If you want to add a new topic, remove an existing topic first.</p>
+                  <p className="text-sm sm:text-base text-zinc-600 dark:text-zinc-400 font-medium mt-1">Configure up to 15 trending topic pills (recommended 9 topics for 3 clean rows). If left default or dynamic, topics automatically update from latest published articles.</p>
                 </div>
               </div>
               <button
@@ -4973,14 +4973,14 @@ export default function HeroManagerPage() {
                   value={newTopicInput}
                   onChange={(e) => setNewTopicInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddTopic(); } }}
-                  placeholder={trendingTopics.length >= 8 ? '[ Limit 8 reached — remove a topic to add new ]' : '[ Enter new topic, e.g. વડોદરા ]'}
-                  disabled={trendingTopics.length >= 8}
+                  placeholder={trendingTopics.length >= 15 ? '[ Limit 15 reached — remove a topic to add new ]' : '[ Enter new topic, e.g. વડોદરા ]'}
+                  disabled={trendingTopics.length >= 15}
                   className="flex-1 rounded-xl border border-gray-400 bg-zinc-50 px-4 py-3 text-base font-bold text-zinc-900 focus:border-[#B3121B] focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-800 dark:text-white placeholder:text-base"
                 />
                 <button
                   type="button"
                   onClick={handleAddTopic}
-                  disabled={trendingTopics.length >= 8}
+                  disabled={trendingTopics.length >= 15}
                   className="shrink-0 rounded-xl bg-zinc-900 px-5 py-3 text-base font-bold text-white hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 cursor-pointer"
                 >
                   + Add Topic

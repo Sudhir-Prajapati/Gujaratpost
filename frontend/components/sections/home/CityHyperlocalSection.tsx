@@ -14,7 +14,7 @@ import ArticleMedia from '@/components/ui/ArticleMedia';
 import { AutoArticleTitle, AutoTranslateString } from '@/components/ui/AutoTranslatedArticleText';
 import { SocialIcon } from '@/components/ui/SocialLinks';
 import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
-import { stripHtmlTags, getLocalizedTrendingTags } from './homeHelpers';
+import { stripHtmlTags, getLocalizedTrendingTags, getAutoTrendingTopics } from './homeHelpers';
 
 const toGuLocal = (num: number | string): string => {
   const guDigits = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
@@ -105,7 +105,11 @@ const TAG_NAME_MAP: Record<string, { gu: string; hi: string; en: string }> = {
   'સોના-ચાંદી': { gu: 'સોના-ચાંદી', hi: 'सोना-चांदी', en: 'Gold-Silver' },
   'ક્રિકેટ': { gu: 'ક્રિકેટ', hi: 'क्रिकेट', en: 'Cricket' },
   'સેમિકન્ડક્ટર': { gu: 'સેમિકન્ડક્ટર', hi: 'सेमीकंडक्टर', en: 'Semiconductor' },
-  'ડાયમંડ ઉદ્યોગ': { gu: 'ડાયમંડ ઉદ્યોગ', hi: 'डायमंड उद्योग', en: 'Diamond Industry' }
+  'ડાયમંડ ઉદ્યોગ': { gu: 'ડાયમંડ ઉદ્યોગ', hi: 'डायमंड उद्योग', en: 'Diamond Industry' },
+  'ડ્રગ્સ કેસ': { gu: 'ડ્રગ્સ કેસ', hi: 'ड्रग्स केस', en: 'Drugs Case' },
+  'શેરબજાર': { gu: 'શેરબજાર', hi: 'शेयर बाजार', en: 'Stock Market' },
+  'અકસ્માત': { gu: 'અકસ્માત', hi: 'सड़क हादसा', en: 'Accident' },
+  'ફેક્ટ ચેક': { gu: 'ફેક્ટ ચેક', hi: 'फैक्ट चेक', en: 'Fact Check' }
 };
 
 const getLocalizedTag = (tag: string, language: Language) => {
@@ -140,6 +144,11 @@ export default function CityHyperlocalSection({
   const [activeTab, setActiveTab] = useState(DEFAULT_CITY_TABS[0].gu);
   const [fetchedCityArticles, setFetchedCityArticles] = useState<Record<string, Article[]>>({});
   const [latestGujaratArticles, setLatestGujaratArticles] = useState<Article[]>([]);
+
+  // Dynamically resolve 9 trending topics across 3 rows from articles + custom topics + fallbacks
+  const resolvedTrendingTopics = useMemo(() => {
+    return getAutoTrendingTopics(articles, dynamicTrendingTopics, language);
+  }, [articles, dynamicTrendingTopics, language]);
 
   // Fetch fresh state-level Gujarat articles for Gujarat Vishesh widget
   useEffect(() => {
@@ -1419,7 +1428,7 @@ export default function CityHyperlocalSection({
 
             <div>
               <div className="flex flex-wrap gap-1.5">
-                {(dynamicTrendingTopics.length > 0 ? dynamicTrendingTopics : getLocalizedTrendingTags(language)).slice(0, 6).map((tag) => {
+                {resolvedTrendingTopics.slice(0, 9).map((tag) => {
                   const cleanTag = tag.startsWith('#') ? tag.slice(1) : tag;
                   return (
                     <Link

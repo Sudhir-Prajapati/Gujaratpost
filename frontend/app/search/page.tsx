@@ -8,6 +8,12 @@ export const metadata: Metadata = {
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string | string[] }> }) {
   const params = await searchParams;
-  const query = Array.isArray(params.q) ? params.q[0] ?? '' : params.q ?? '';
+  const raw = Array.isArray(params.q) ? params.q[0] ?? '' : params.q ?? '';
+  let query = raw;
+  try {
+    query = decodeURIComponent(raw);
+  } catch {
+    query = raw;
+  }
   return <SearchResultsClient initialQuery={query} />;
 }

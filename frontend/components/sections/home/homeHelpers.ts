@@ -177,9 +177,118 @@ export function parseAqi(val: number) {
 }
 
 export function getLocalizedTrendingTags(lang: string) {
-  if (lang === 'hi') return ['#चुनाव 2026', '#बारिश', '#सोना-चांदी', '#क्रिकेट', '#मेट्रो', '#सेमीकंडक्टर', '#डायमंड उद्योग', '#ट्रैफिक'];
-  if (lang === 'en') return ['#Election 2026', '#Rain', '#Gold-Silver', '#Cricket', '#Metro', '#Semiconductor', '#Diamond Industry', '#Traffic'];
-  return ['#ચૂંટણી 2026', '#વરસાદ', '#સોના-ચાંદી', '#ક્રિકેટ', '#મેટ્રો', '#સેમિકન્ડક્ટર', '#ડાયમંડ ઉદ્યોગ', '#ટ્રાફિક'];
+  if (lang === 'hi') return ['#चुनाव 2027', '#बारिश', '#सोना-चांदी', '#क्रिकेट', '#मेट्रो', '#सेमीकंडक्टर', '#ड्रग्स केस', '#शेयर बाजार', '#सड़क हादसा', '#अहमदाबाद'];
+  if (lang === 'en') return ['#Election 2027', '#Rain', '#Gold-Silver', '#Cricket', '#Metro', '#Semiconductor', '#Drugs Case', '#Stock Market', '#Accident', '#Ahmedabad'];
+  return ['#ચૂંટણી 2027', '#વરસાદ', '#સોના-ચાંદી', '#ક્રિકેટ', '#મેટ્રો', '#સેમિકન્ડક્ટર', '#ડ્રગ્સ કેસ', '#શેરબજાર', '#અકસ્માત', '#અમદાવાદ'];
+}
+
+/**
+ * Dynamically resolves 9 trending topics across 3 rows for the Homepage sidebar.
+ * Extracts fresh topics from recent published articles, merges custom topics from CMS,
+ * and falls back to curated high-volume news topics for the active language.
+ */
+export function getAutoTrendingTopics(
+  articles: any[] = [],
+  customTopics: string[] = [],
+  lang: string = 'gu'
+): string[] {
+  const IGNORED = new Set([
+    'news', 'gujarat', 'national', 'world', 'others', 'popular stories', 'gujaratpost',
+    'trending', 'breaking', 'entertainment/ lifestyle', 'ગુજરાત', 'ભારત', 'વિશ્વ',
+    'samachar', 'update', 'latest', 'live', 'daily'
+  ]);
+
+  const defaultStaleGu = new Set([
+    'ચૂંટણી 2026', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો', 'સેમિકન્ડક્ટર', 'ડાયમંડ ઉદ્યોગ', 'ટ્રાફિક'
+  ]);
+
+  const result: string[] = [];
+  const seenPrefixes = new Set<string>();
+
+  const addTopic = (topic?: string) => {
+    if (!topic || typeof topic !== 'string') return;
+    let clean = topic.replace(/^#/, '').trim();
+    if (clean.length < 2 || clean.length > 20) return;
+    // Modernize legacy year 2026 to 2027
+    if (clean.includes('2026')) {
+      clean = clean.replace('2026', '2027');
+    }
+    const lower = clean.toLowerCase();
+    if (IGNORED.has(lower)) return;
+
+    // Check duplicate
+    if (result.some((t) => t.toLowerCase() === lower)) return;
+
+    // Avoid near-duplicate tags flooding list (e.g., iOS 27.3 Beta vs iOS 27.3 Features)
+    const prefix = lower.slice(0, 4);
+    if (prefix.length >= 4 && seenPrefixes.has(prefix)) return;
+
+    result.push(clean);
+    if (prefix.length >= 4) seenPrefixes.add(prefix);
+  };
+
+  // 1. If admin explicitly configured non-default custom topics in CMS, prioritize them
+  const isDefaultStaleSet =
+    customTopics.length > 0 &&
+    customTopics.every((t) => defaultStaleGu.has(t.replace(/^#/, '').trim()));
+
+  if (customTopics.length > 0 && !isDefaultStaleSet) {
+    customTopics.forEach((t) => addTopic(t));
+  }
+
+  // 2. Extract fresh tags dynamically from recent published articles
+  if (Array.isArray(articles) && articles.length > 0) {
+    for (const art of articles) {
+      if (result.length >= 9) break;
+      let tagsForLang: string[] = [];
+      if (lang === 'gu' && Array.isArray(art.tagsGu) && art.tagsGu.length > 0) {
+        tagsForLang = art.tagsGu;
+      } else if (lang === 'hi' && Array.isArray(art.tagsHi) && art.tagsHi.length > 0) {
+        tagsForLang = art.tagsHi;
+      } else if (Array.isArray(art.tags) && art.tags.length > 0) {
+        tagsForLang = art.tags.map((t: any) => (typeof t === 'string' ? t : t.nameGu || t.name || ''));
+      }
+
+      let countFromThisArt = 0;
+      for (const tag of tagsForLang) {
+        if (result.length >= 9) break;
+        const prevLen = result.length;
+        addTopic(tag);
+        if (result.length > prevLen) {
+          countFromThisArt++;
+          if (countFromThisArt >= 2) break; // Max 2 tags per article for high topic variety
+        }
+      }
+    }
+  }
+
+  // 3. Fallbacks to guarantee exactly 9 topics (3 rows x 3 topics)
+  const fallbacksByLang: Record<string, string[]> = {
+    gu: [
+      'ચૂંટણી 2027', 'વરસાદ', 'સોના-ચાંદી', 'ક્રિકેટ', 'મેટ્રો',
+      'સેમિકન્ડક્ટર', 'ડ્રગ્સ કેસ', 'શેરબજાર', 'અકસ્માત', 'અમદાવાદ',
+      'સુરત', 'રાજકોટ'
+    ],
+    hi: [
+      'चुनाव 2027', 'बारिश', 'सोना-चांदी', 'क्रिकेट', 'मेट्रो',
+      'सेमीकंडक्टर', 'ड्रग्स केस', 'शेयर बाजार', 'सड़क हादसा', 'अहमदाबाद',
+      'सूरत', 'राजकोट'
+    ],
+    en: [
+      'Election 2027', 'Rain', 'Gold-Silver', 'Cricket', 'Metro',
+      'Semiconductor', 'Drugs Case', 'Stock Market', 'Accident', 'Ahmedabad',
+      'Surat', 'Rajkot'
+    ],
+  };
+
+  const fallbacks = fallbacksByLang[lang] || fallbacksByLang.gu;
+  for (const fb of fallbacks) {
+    if (result.length >= 9) break;
+    addTopic(fb);
+  }
+
+  // Return 9 items for exactly 3 rows
+  return result.slice(0, 9);
 }
 
 export function getRealisticViews(key?: string): number {
