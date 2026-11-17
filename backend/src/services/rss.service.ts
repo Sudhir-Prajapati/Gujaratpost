@@ -882,6 +882,24 @@ ${itemsXml}  </channel>
         updatedAt: true,
       },
     });
+  } else if (isHomeSlug) {
+    // Include top recent photo stories in Main News feed so Dailyhunt's frequent crawler ingests them immediately
+    matchingGalleryPhotos = await prisma.galleryPhoto.findMany({
+      take: 10,
+      orderBy: [{ updatedAt: 'desc' }, { createdAt: 'desc' }],
+      select: {
+        id: true,
+        src: true,
+        alt: true,
+        caption: true,
+        captionGu: true,
+        captionHi: true,
+        category: true,
+        photographer: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   interface UnifiedRssItem {
