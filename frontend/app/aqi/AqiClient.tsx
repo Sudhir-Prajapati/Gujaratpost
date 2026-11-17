@@ -14,6 +14,7 @@ import {
   isExcludedFromHeroTop,
 } from '@/lib/articleCategory';
 import { AutoArticleTitle } from '@/components/ui/AutoTranslatedArticleText';
+import ArticleMedia from '@/components/ui/ArticleMedia';
 import {
   Search,
   Wind,
@@ -964,12 +965,10 @@ export default function AqiClient({ initialNewsArticles = [] }: AqiClientProps) 
               >
                 <div className="space-y-3">
                   <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl bg-zinc-100 dark:bg-zinc-800">
-                    <Image
+                    <ArticleMedia
                       src={image}
                       alt={title}
-                      fill
-                      unoptimized
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      className="transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                   <h4 className="font-extrabold text-sm sm:text-base text-zinc-900 dark:text-zinc-100 line-clamp-2 leading-snug group-hover:text-red-600 transition-colors">

@@ -173,9 +173,9 @@ export default function ArticleMedia({
   // If objectFit is 'auto' or 'contain', dynamically check natural aspect ratio:
   // - Wide graphics / banners (ratio >= 1.65) get 'contain' with ambient backdrop so no text is cut
   // - Standard photos (ratio < 1.65, e.g. 4:3, 3:2, square) get 'cover' to fill edge-to-edge without side frame gaps
-  const isAutoFit = objectFit === 'auto' || objectFit === 'contain';
+  const isAutoFit = !objectFit || objectFit === 'auto' || objectFit === 'contain';
   const effectiveObjectFit = isAutoFit
-    ? (detectedFit || 'cover')
+    ? (detectedFit || (className.includes('object-contain') ? 'contain' : 'cover'))
     : objectFit ||
       style?.objectFit ||
       (className.includes('object-contain') ? 'contain' : 'cover');
@@ -183,13 +183,13 @@ export default function ArticleMedia({
   const effectiveObjectPosition =
     objectPosition ||
     style?.objectPosition ||
-    (className.includes('object-center')
-      ? 'center'
-      : className.includes('object-top')
+    (className.includes('object-top')
       ? 'top center'
       : className.includes('object-bottom')
       ? 'bottom center'
-      : 'center');
+      : effectiveObjectFit === 'contain'
+      ? 'center'
+      : 'top center');
 
   const shouldRenderAmbient = effectiveObjectFit === 'contain' || enableAmbientBackdrop;
 

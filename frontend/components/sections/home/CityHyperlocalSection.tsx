@@ -1220,7 +1220,7 @@ export default function CityHyperlocalSection({
                     <ArticleMedia
                       src={currentSlide.image}
                       alt={currentSlide.titleGu}
-                      className="object-cover object-center transition-transform duration-300 group-hover:scale-[1.02]"
+                      className="transition-transform duration-300 group-hover:scale-[1.02]"
                     />
                   </Link>
                   {/* Left / Right Arrows */}
@@ -1335,7 +1335,7 @@ export default function CityHyperlocalSection({
                     <ArticleMedia
                       src={item.image}
                       alt={item.titleGu}
-                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      className="transition-transform duration-300 group-hover:scale-105"
                     />
                   </div>
                 </Link>
