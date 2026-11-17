@@ -472,7 +472,7 @@ function StreamArticleItem({
                       <ArticleMedia
                         src={getCardThumbnail(raArt, index)}
                         alt={getArticleTitle(raArt, language)}
-                        objectFit="contain"
+                        objectFit="auto"
                         className="transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
@@ -712,7 +712,7 @@ export default function ArticleInfiniteStream({
                             <ArticleMedia
                               src={getCardThumbnail(item, index)}
                               alt={item.title || ''}
-                              objectFit="contain"
+                              objectFit="auto"
                               className="transition-transform duration-300 group-hover:scale-105"
                             />
                           </div>
@@ -819,7 +819,7 @@ export default function ArticleInfiniteStream({
                               <ArticleMedia
                                 src={getCardThumbnail(item, index)}
                                 alt={item.title || ''}
-                                objectFit="contain"
+                                objectFit="auto"
                                 className="transition-transform duration-300 group-hover:scale-105"
                               />
                             </div>

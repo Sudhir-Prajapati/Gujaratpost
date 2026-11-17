@@ -299,7 +299,7 @@ export default function TrendingSection({ initialArticles }: { initialArticles?:
                 <ArticleMedia
                   src={getDistinctArticleImage(article, index)}
                   alt={article.title}
-                  objectFit="contain"
+                  objectFit="auto"
                   className="transition duration-300 group-hover:scale-[1.02]"
                 />
                 {/* Rank Badge on top of image */}

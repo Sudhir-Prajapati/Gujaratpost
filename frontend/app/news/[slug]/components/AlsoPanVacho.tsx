@@ -118,7 +118,7 @@ export default function AlsoPanVacho({
                   <ArticleMedia
                     src={thumbSrc}
                     alt={art.title || ''}
-                    objectFit="contain"
+                    objectFit="auto"
                     className="transition-transform duration-300 group-hover:scale-[1.02]"
                   />
                 </div>

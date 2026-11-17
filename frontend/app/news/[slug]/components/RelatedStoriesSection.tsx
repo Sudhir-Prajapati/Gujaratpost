@@ -93,7 +93,7 @@ export default function RelatedStoriesSection({
                     <ArticleMedia
                       src={getCardThumbnail(item, index)}
                       alt={item.title}
-                      objectFit="contain"
+                      objectFit="auto"
                       className="transition duration-300 group-hover:scale-[1.02]"
                     />
                     {isSaved && (

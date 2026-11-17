@@ -2932,7 +2932,7 @@ export default function NewsDetailClient({ article, related, trending, latestArt
                                     <ArticleMedia
                                       src={thumbSrc}
                                       alt={item.title || ''}
-                                      objectFit="contain"
+                                      objectFit="auto"
                                       className="transition-transform duration-300 group-hover:scale-[1.02]"
                                     />
                                   </div>

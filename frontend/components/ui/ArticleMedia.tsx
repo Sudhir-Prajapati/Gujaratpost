@@ -18,7 +18,7 @@ interface ArticleMediaProps {
   autoPlayOnHover?: boolean;
   videoControls?: boolean;
   sizes?: string;
-  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down' | 'auto';
   objectPosition?: string;
   enableAmbientBackdrop?: boolean;
 }
@@ -42,12 +42,29 @@ export default function ArticleMedia({
 }: ArticleMediaProps) {
   const isVideo = isMediaVideo(src);
   const [hasError, setHasError] = useState(false);
+  const [detectedFit, setDetectedFit] = useState<'cover' | 'contain' | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
 
-  // Reset error status if src changes
+  // Reset error and detected fit status if src changes
   useEffect(() => {
     setHasError(false);
+    setDetectedFit(null);
   }, [src]);
+
+  // Clean / sanitize Cloudinary or raw URLs safely with centralized optimizer
+  const cleanSrc = sanitizeImageUrl(src);
+
+  // Check if image is already cached/complete on mount or src change
+  useEffect(() => {
+    if (imgRef.current && imgRef.current.complete) {
+      const { naturalWidth, naturalHeight } = imgRef.current;
+      if (naturalWidth && naturalHeight) {
+        const ratio = naturalWidth / naturalHeight;
+        setDetectedFit(ratio >= 1.65 ? 'contain' : 'cover');
+      }
+    }
+  }, [cleanSrc]);
 
   useEffect(() => {
     if (isVideo && autoPlay && videoRef.current) {
@@ -57,8 +74,15 @@ export default function ArticleMedia({
     }
   }, [isVideo, autoPlay, src]);
 
-  // Clean / sanitize Cloudinary or raw URLs safely with centralized optimizer
-  const cleanSrc = sanitizeImageUrl(src);
+  const handleImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    if (naturalWidth && naturalHeight) {
+      const ratio = naturalWidth / naturalHeight;
+      // Wide graphics / banners (ratio >= 1.65) get 'contain' with ambient backdrop so no text is cut
+      // Standard photos (ratio < 1.65, e.g. 4:3, 3:2, square) get 'cover' to fill edge-to-edge without side frames
+      setDetectedFit(ratio >= 1.65 ? 'contain' : 'cover');
+    }
+  };
 
   const isAbsolute = className.includes('absolute');
   const posClass = isAbsolute ? 'absolute inset-0' : 'relative';
@@ -146,10 +170,15 @@ export default function ArticleMedia({
   }
 
   // Derive effective objectFit and objectPosition cleanly
-  const effectiveObjectFit =
-    objectFit ||
-    style?.objectFit ||
-    (className.includes('object-contain') ? 'contain' : 'cover');
+  // If objectFit is 'auto' or 'contain', dynamically check natural aspect ratio:
+  // - Wide graphics / banners (ratio >= 1.65) get 'contain' with ambient backdrop so no text is cut
+  // - Standard photos (ratio < 1.65, e.g. 4:3, 3:2, square) get 'cover' to fill edge-to-edge without side frame gaps
+  const isAutoFit = objectFit === 'auto' || objectFit === 'contain';
+  const effectiveObjectFit = isAutoFit
+    ? (detectedFit || 'cover')
+    : objectFit ||
+      style?.objectFit ||
+      (className.includes('object-contain') ? 'contain' : 'cover');
 
   const effectiveObjectPosition =
     objectPosition ||
@@ -160,9 +189,7 @@ export default function ArticleMedia({
       ? 'top center'
       : className.includes('object-bottom')
       ? 'bottom center'
-      : effectiveObjectFit === 'contain'
-      ? 'center'
-      : 'top center');
+      : 'center');
 
   const shouldRenderAmbient = effectiveObjectFit === 'contain' || enableAmbientBackdrop;
 
@@ -183,8 +210,10 @@ export default function ArticleMedia({
         </div>
       )}
       <img
+        ref={imgRef}
         src={cleanSrc}
         alt={alt}
+        onLoad={handleImageLoad}
         className={`w-full h-full transition-transform duration-300 ${shouldRenderAmbient ? 'relative z-10' : ''} ${className}`}
         style={{
           width: '100%',
