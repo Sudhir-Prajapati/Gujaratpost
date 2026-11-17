@@ -48,13 +48,16 @@ function buildFallbackNewsParagraphs(article: Article, language: Language): stri
         : article.title || article.titleGu
   ) || '';
 
-  const excerpt = (
+  const cleanCandidate = (
     language === 'gu'
-      ? article.excerptGu || article.excerpt || article.titleGu || article.title
+      ? article.excerptGu || article.excerpt
       : language === 'hi'
-        ? article.excerptHi || article.excerpt || article.titleHi || article.title
-        : article.excerpt || article.excerptGu || article.title
+        ? article.excerptHi || article.excerpt
+        : article.excerpt || article.excerptGu
   ) || '';
+  const excerpt = cleanCandidate && cleanCandidate !== 'null' && cleanCandidate !== 'undefined' && cleanCandidate !== 'Gujarat Post news flash.'
+    ? cleanCandidate
+    : (language === 'gu' ? article.titleGu || article.title : language === 'hi' ? article.titleHi || article.title : article.title || article.titleGu || '');
 
   const cat = (article.category || '').toLowerCase();
   const loc = (article.location || '').trim();
@@ -246,13 +249,17 @@ function StreamArticleItem({
 
   // 2. Second priority: formatted excerpt
   if (streamParagraphs.length === 0) {
-    const rawExcerpt = (
+    const rawCandidate = (
       language === 'gu'
         ? articleData.excerptGu || articleData.excerpt || articleData.titleGu
         : language === 'hi'
           ? articleData.excerptHi || articleData.excerpt || articleData.titleHi
           : articleData.excerpt || articleData.excerptGu || articleData.title
     ) || '';
+
+    const rawExcerpt = rawCandidate && rawCandidate !== 'null' && rawCandidate !== 'undefined' && rawCandidate !== 'Gujarat Post news flash.'
+      ? rawCandidate
+      : '';
 
     if (rawExcerpt && rawExcerpt.trim()) {
       const cleanExcerpt = rawExcerpt.replace(/<[^>]*>/g, '').trim();

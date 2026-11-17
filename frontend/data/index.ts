@@ -1764,34 +1764,38 @@ export const getArticleTitle = (article: Article, language: Language) =>
 
 
 export const getArticleExcerpt = (article: Article, language: Language) => {
+  if (!article) return '';
+  const cleanField = (val?: string | null) => {
+    if (!val || val === 'null' || val === 'undefined' || val === 'Gujarat Post news flash.') return '';
+    return val.trim();
+  };
+  const raw = getLocalized(language, {
+    en: cleanField(article?.excerpt),
+    gu: cleanField(article?.excerptGu),
+    hi: cleanField(article?.excerptHi)
+  });
 
-
-
-  const raw = getLocalized(language, { en: article?.excerpt || '', gu: article?.excerptGu || '', hi: article?.excerptHi || '' });
-
-
-
-  return cleanArticlePlainText(raw);
-
-
-
+  const cleaned = cleanArticlePlainText(raw);
+  if (cleaned === 'null' || cleaned === 'undefined' || cleaned === 'Gujarat Post news flash.') return '';
+  return cleaned;
 };
 
-
-
-
-
-
-
 export const getArticleExcerptHtml = (article: Article, language: Language) => {
+  if (!article) return '';
+  const cleanField = (val?: string | null) => {
+    if (!val || val === 'null' || val === 'undefined' || val === 'Gujarat Post news flash.') return '';
+    return val.trim();
+  };
+  const raw = getLocalized(language, {
+    en: cleanField(article?.excerpt),
+    gu: cleanField(article?.excerptGu),
+    hi: cleanField(article?.excerptHi)
+  });
 
-
-
-  const raw = getLocalized(language, { en: article?.excerpt || '', gu: article?.excerptGu || '', hi: article?.excerptHi || '' });
-
-
+  if (!raw || raw === 'null' || raw === 'undefined' || raw === 'Gujarat Post news flash.') return '';
 
   let text = decodeHtmlEntities(raw).replace(/!\[.*?\]\(.*?\)/g, '').trim();
+  if (!text || text === 'null' || text === 'undefined' || text === 'Gujarat Post news flash.') return '';
 
 
 

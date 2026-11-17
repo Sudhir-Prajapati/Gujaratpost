@@ -1856,7 +1856,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     const points: string[] = [];
 
     const cleanStr = (s: string) => {
-      return normalizeDisplayText(s)
+      if (!s || s === 'null' || s === 'undefined' || s === 'Gujarat Post news flash.') return '';
+      const res = normalizeDisplayText(s)
         .replace(/<[^>]*>/g, '')
         .replace(/^[•*\-#\d\.\s📌]+/, '')
         .replace(/^[•*\-#\d\.\s📌]+/, '')
@@ -1870,6 +1871,8 @@ export default function NewsDetailClient({ article, related, trending, latestArt
         .replace(/[*#]/g, '')
         .replace(/\s+/g, ' ')
         .trim();
+      if (res === 'null' || res === 'undefined' || res === 'Gujarat Post news flash.') return '';
+      return res;
     };
 
     const lines = rawContent.split(/\r?\n/);
@@ -1914,14 +1917,16 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       const explicitHl = (language === 'gu' ? (article as any).highlightsGu : language === 'hi' ? (article as any).highlightsHi : (article as any).highlights) || (article as any).highlightsGu || (article as any).highlights;
       if (Array.isArray(explicitHl)) {
         for (const item of explicitHl) {
+          if (!item || item === 'null' || item === 'undefined' || item === 'Gujarat Post news flash.') continue;
           const c = cleanStr(String(item));
-          if (c.length > 3 && !points.includes(c)) points.push(c);
+          if (c.length > 3 && c !== 'null' && c !== 'undefined' && !points.includes(c)) points.push(c);
         }
-      } else if (typeof explicitHl === 'string' && explicitHl.trim()) {
+      } else if (typeof explicitHl === 'string' && explicitHl.trim() && explicitHl !== 'null' && explicitHl !== 'undefined' && explicitHl !== 'Gujarat Post news flash.') {
         const itemLines = explicitHl.split(/\r?\n/);
         for (const l of itemLines) {
+          if (!l || l === 'null' || l === 'undefined') continue;
           const c = cleanStr(l);
-          if (c.length > 3 && !points.includes(c)) points.push(c);
+          if (c.length > 3 && c !== 'null' && c !== 'undefined' && !points.includes(c)) points.push(c);
         }
       }
     }
@@ -2566,11 +2571,20 @@ export default function NewsDetailClient({ article, related, trending, latestArt
             <h1 className={`article-title transition-all duration-200 ${speaking && activeSpeechIndex === 0 ? 'text-[#B3121B] dark:text-red-400 font-black border-b-4 border-[#B3121B] pb-1.5' : ''}`}>
               {title}
             </h1>
-            <div
-              className="article-sub [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-md [&_video]:w-full [&_video]:rounded-xl [&_figure]:my-4 [&_figure]:w-full [&_figure]:flex [&_figure]:justify-center"
-              suppressHydrationWarning
-              dangerouslySetInnerHTML={{ __html: excerpt }}
-            />
+            {Boolean(
+              excerpt &&
+              excerpt.trim() &&
+              excerpt !== 'null' &&
+              excerpt !== 'undefined' &&
+              excerpt !== 'Gujarat Post news flash.' &&
+              excerpt.replace(/<[^>]*>/g, '').trim().length > 0
+            ) && (
+              <div
+                className="article-sub [&_b]:font-extrabold [&_strong]:font-extrabold [&_i]:italic [&_em]:italic [&_u]:underline [&_s]:line-through [&_iframe]:w-full [&_iframe]:rounded-xl [&_iframe]:shadow-md [&_video]:w-full [&_video]:rounded-xl [&_figure]:my-4 [&_figure]:w-full [&_figure]:flex [&_figure]:justify-center"
+                suppressHydrationWarning
+                dangerouslySetInnerHTML={{ __html: excerpt }}
+              />
+            )}
 
             <div data-nosnippet="true" className="byline select-none">
               <div className="flex items-center gap-[11px]">

@@ -663,9 +663,9 @@ export class ArticleController {
           title: title.trim(),
           titleGu: (titleGu || title).trim(),
           titleHi: (titleHi || title).trim(),
-          excerpt: (excerpt || '').trim(),
-          excerptGu: (excerptGu || excerpt || '').trim(),
-          excerptHi: (excerptHi || excerpt || '').trim(),
+          excerpt: excerpt && excerpt !== 'null' && excerpt !== 'undefined' && excerpt !== 'Gujarat Post news flash.' ? String(excerpt).trim() : '',
+          excerptGu: excerptGu && excerptGu !== 'null' && excerptGu !== 'undefined' && excerptGu !== 'Gujarat Post news flash.' ? String(excerptGu).trim() : (excerpt && excerpt !== 'null' && excerpt !== 'undefined' && excerpt !== 'Gujarat Post news flash.' ? String(excerpt).trim() : ''),
+          excerptHi: excerptHi && excerptHi !== 'null' && excerptHi !== 'undefined' && excerptHi !== 'Gujarat Post news flash.' ? String(excerptHi).trim() : (excerpt && excerpt !== 'null' && excerpt !== 'undefined' && excerpt !== 'Gujarat Post news flash.' ? String(excerpt).trim() : ''),
           content: cleanContent,
           contentGu: cleanContentGu,
           contentHi: cleanContentHi,
@@ -776,9 +776,9 @@ export class ArticleController {
       if (title !== undefined) updateData.title = title.trim();
       if (titleGu !== undefined) updateData.titleGu = titleGu.trim();
       if (titleHi !== undefined) updateData.titleHi = titleHi.trim();
-      if (excerpt !== undefined) updateData.excerpt = excerpt.trim();
-      if (excerptGu !== undefined) updateData.excerptGu = excerptGu.trim();
-      if (excerptHi !== undefined) updateData.excerptHi = excerptHi.trim();
+      if (excerpt !== undefined) updateData.excerpt = excerpt && excerpt !== 'null' && excerpt !== 'undefined' && excerpt !== 'Gujarat Post news flash.' ? String(excerpt).trim() : '';
+      if (excerptGu !== undefined) updateData.excerptGu = excerptGu && excerptGu !== 'null' && excerptGu !== 'undefined' && excerptGu !== 'Gujarat Post news flash.' ? String(excerptGu).trim() : '';
+      if (excerptHi !== undefined) updateData.excerptHi = excerptHi && excerptHi !== 'null' && excerptHi !== 'undefined' && excerptHi !== 'Gujarat Post news flash.' ? String(excerptHi).trim() : '';
       if (content !== undefined) updateData.content = content.trim();
       if (contentGu !== undefined) updateData.contentGu = contentGu.trim();
       if (contentHi !== undefined) updateData.contentHi = contentHi.trim();

@@ -1672,9 +1672,15 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         setTitleGu(art.titleGu || primaryTitle);
         setTitleHi(art.titleHi || primaryTitle);
 
-        setExcerpt(primaryExcerpt);
-        setExcerptGu(art.excerptGu || primaryExcerpt);
-        setExcerptHi(art.excerptHi || primaryExcerpt);
+        const cleanLoadedExcerpt = (text?: string | null) => {
+          if (!text || text === 'null' || text === 'undefined' || text === 'Gujarat Post news flash.') return '';
+          return text;
+        };
+
+        const safePrimaryExcerpt = cleanLoadedExcerpt(primaryExcerpt);
+        setExcerpt(safePrimaryExcerpt);
+        setExcerptGu(cleanLoadedExcerpt(art.excerptGu) || safePrimaryExcerpt);
+        setExcerptHi(cleanLoadedExcerpt(art.excerptHi) || safePrimaryExcerpt);
 
         setContent(primaryContent);
         setContentGu(art.contentGu || primaryContent);
@@ -2164,7 +2170,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     const safeFeaturedImage = (featuredImage || '').trim();
 
     const effectiveTitle = safeTitle || safeTitleGu || safeTitleHi;
-    const effectiveExcerpt = (excerpt || excerptGu || excerptHi || 'Gujarat Post news flash.').trim();
+    const effectiveExcerpt = (excerpt || excerptGu || excerptHi || '').trim();
     const finalFeaturedImage = safeFeaturedImage || '/assets/demo/1.jpg';
 
     const effectiveHighlights = (highlights || highlightsGu || highlightsHi || '').trim();
@@ -2312,9 +2318,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       title: finalTitleEn,
       titleGu: safeTitleGu || effectiveTitle,
       titleHi: safeTitleHi || effectiveTitle,
-      excerpt: (excerpt || '').trim() || effectiveExcerpt,
-      excerptGu: (excerptGu || '').trim() || effectiveExcerpt,
-      excerptHi: (excerptHi || '').trim() || effectiveExcerpt,
+      excerpt: (excerpt || '').trim() || effectiveExcerpt || '',
+      excerptGu: (excerptGu || '').trim() || effectiveExcerpt || '',
+      excerptHi: (excerptHi || '').trim() || effectiveExcerpt || '',
       content: compiledEn,
       contentGu: compiledGu,
       contentHi: compiledHi,

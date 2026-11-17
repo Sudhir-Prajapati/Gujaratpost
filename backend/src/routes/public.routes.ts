@@ -119,7 +119,7 @@ function generateRichGujaratiNewsBody(title?: string, excerpt?: string, category
   const loc = location || 'ગુજરાત';
   const cat = category || 'સમાચાર';
   const cleanTitle = title || '';
-  const cleanExcerpt = excerpt || '';
+  const cleanExcerpt = excerpt && excerpt !== 'null' && excerpt !== 'undefined' && excerpt !== 'Gujarat Post news flash.' ? excerpt : '';
 
   const isMusicOrInsta = cleanTitle.includes('ઇન્સ્ટાગ્રામ') || cleanTitle.includes('ગરબા') || cleanTitle.includes('મ્યુઝિક') || cleanTitle.includes('રીલ્સ') || cat.includes('ઇન્સ્ટાગ્રામ');
   const isWeather = cleanTitle.includes('વરસાદ') || cleanTitle.includes('હવામાન') || cleanTitle.includes('મેઘમહેર') || cleanTitle.includes('ડેમ');
@@ -908,9 +908,9 @@ router.get('/articles', cacheResponse(30), async (req, res, next) => {
         title: p.title,
         titleGu: p.titleGu,
         titleHi: p.titleHi,
-        excerpt: p.excerpt || '',
-        excerptGu: p.excerptGu || '',
-        excerptHi: p.excerptHi || '',
+        excerpt: p.excerpt && p.excerpt !== 'null' && p.excerpt !== 'undefined' && p.excerpt !== 'Gujarat Post news flash.' ? p.excerpt : '',
+        excerptGu: p.excerptGu && p.excerptGu !== 'null' && p.excerptGu !== 'undefined' && p.excerptGu !== 'Gujarat Post news flash.' ? p.excerptGu : '',
+        excerptHi: p.excerptHi && p.excerptHi !== 'null' && p.excerptHi !== 'undefined' && p.excerptHi !== 'Gujarat Post news flash.' ? p.excerptHi : '',
         content: p.content || '',
         contentGu: p.contentGu || '',
         contentHi: p.contentHi || '',
@@ -1039,9 +1039,9 @@ router.get('/articles/:slug', cacheResponse(60), async (req, res, next) => {
       title: p.title,
       titleGu: p.titleGu,
       titleHi: p.titleHi,
-      excerpt: p.excerpt || '',
-      excerptGu: p.excerptGu || '',
-      excerptHi: p.excerptHi || '',
+      excerpt: p.excerpt && p.excerpt !== 'null' && p.excerpt !== 'undefined' && p.excerpt !== 'Gujarat Post news flash.' ? p.excerpt : '',
+      excerptGu: p.excerptGu && p.excerptGu !== 'null' && p.excerptGu !== 'undefined' && p.excerptGu !== 'Gujarat Post news flash.' ? p.excerptGu : '',
+      excerptHi: p.excerptHi && p.excerptHi !== 'null' && p.excerptHi !== 'undefined' && p.excerptHi !== 'Gujarat Post news flash.' ? p.excerptHi : '',
       content: sanitizeUrlInContent(rawContent),
       contentGu: sanitizeUrlInContent(rawContentGu),
       contentHi: sanitizeUrlInContent(p.contentHi || rawContentGu),
