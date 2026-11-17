@@ -319,5 +319,165 @@ export function isExcludedFromLatestNews(cand: any): boolean {
  */
 export const isSolelyHealthArticle = isExcludedFromLatestNews;
 
+/**
+ * Safely extracts all category tokens from an article (category, categorySlug, categories array, location).
+ */
+export function getArticleCategoryTokens(a: any): string[] {
+  if (!a) return [];
+  const tokens: string[] = [];
+  const add = (v: any) => {
+    if (typeof v === 'string' && v.trim()) tokens.push(v.toLowerCase().trim());
+  };
+
+  add(a.categoryId);
+  add(a.categorySlug);
+  if (typeof a.category === 'string') {
+    add(a.category);
+  } else if (a.category && typeof a.category === 'object') {
+    add(a.category.id);
+    add(a.category.slug);
+    add(a.category.name);
+    add(a.category.nameGu);
+    add(a.category.nameHi);
+  }
+  add(a.categoryName);
+  add(a.categoryGu);
+  add(a.categoryHi);
+  add(a.location);
+
+  if (Array.isArray(a.categories)) {
+    for (const item of a.categories) {
+      if (!item) continue;
+      add(item.id);
+      add(item.categoryId);
+      add(item.slug);
+      add(item.name);
+      add(item.nameGu);
+      add(item.nameHi);
+      if (item.category && typeof item.category === 'object') {
+        add(item.category.id);
+        add(item.category.slug);
+        add(item.category.name);
+        add(item.category.nameGu);
+        add(item.category.nameHi);
+      }
+    }
+  }
+
+  return tokens;
+}
+
+/**
+ * Returns true if an article belongs to any of the specified target category names/slugs.
+ */
+export function articleMatchesCat(a: any, ...targets: string[]): boolean {
+  const tokens = getArticleCategoryTokens(a);
+  return targets.some((target) => {
+    const t = target.toLowerCase().trim();
+    return tokens.some((token) => token === t);
+  });
+}
+
+/**
+ * Validates that an article is publicly visible (published, not draft/archived).
+ */
+export function isPublicArticle(a: any): boolean {
+  if (!a || typeof a !== 'object') return false;
+  const s = String(a.status || '').toUpperCase();
+  if (s && s !== 'PUBLISHED') return false;
+  if (a.isPublished === false) return false;
+  return Boolean(a.id || a.slug);
+}
+
+/**
+ * Excludes soft-news / non-hard-news categories (e.g. Health, Technology, Entertainment, Lifestyle)
+ * from homepage top slots and latest news samachar.
+ */
+export function isExcludedFromHeroTop(a: any): boolean {
+  if (!a) return true;
+  if (isExcludedFromLatestNews(a)) return true;
+  if (articleMatchesCat(a, 'health', 'heath', 'હેલ્થ', 'સ્વાસ્થ્ય', 'આરોગ્ય', 'lifestyle', 'લાઈફસ્ટાઈલ', 'ayurved', 'ayurveda', 'આયુર્વેદ', 'entertainment', 'manoranjan', 'મનોરંજન', 'technology', 'tech', 'ટેકનોલોજી')) {
+    return true;
+  }
+  const catSlug = (
+    (a as any).categorySlug ||
+    (typeof (a as any).category === 'string' ? (a as any).category : (a as any).category?.slug) ||
+    ''
+  ).toLowerCase().trim();
+  if (catSlug === 'health' || catSlug === 'heath' || catSlug === 'lifestyle' || catSlug === 'entertainment' || catSlug === 'manoranjan' || catSlug === 'technology' || catSlug === 'tech') return true;
+  return false;
+}
+
+/**
+ * Helper to ensure an article was designated for the Home / News section (isFeatured or news category)
+ */
+export function isHomeArticle(a: any): boolean {
+  if (!a || !isPublicArticle(a) || isExcludedFromHeroTop(a)) return false;
+  if (a.isFeatured) return true;
+  if (articleMatchesCat(a, 'news', 'latest-news', 'મુખ્ય સમાચાર')) return true;
+  const catSlug = (
+    a.categorySlug ||
+    (typeof a.category === 'string' ? a.category : a.category?.slug) ||
+    ''
+  ).toLowerCase().trim();
+  if (catSlug === 'news' || catSlug === 'latest-news') return true;
+  if (Array.isArray(a.categories)) {
+    if (a.categories.some((c: any) => {
+      const s = (c?.slug || c?.category?.slug || '').toLowerCase().trim();
+      return s === 'news' || s === 'latest-news';
+    })) return true;
+  }
+  return false;
+}
+
+/**
+ * Generates the unified Home News Articles feed (matching the Home Hero & latest samachar exactly).
+ */
+export function getHomeNewsArticles(articles: any[], heroSettingsData?: any): any[] {
+  const manualGridArts: any[] = (
+    heroSettingsData?.heroGridArticles ||
+    heroSettingsData?.setting?.heroGridArticles ||
+    []
+  ).filter(isPublicArticle);
+
+  const candidates = [...manualGridArts, ...(articles || [])];
+  const seen = new Set<string>();
+  const pubArts: any[] = [];
+  for (const a of candidates) {
+    if (!a) continue;
+    const key = a.id || a.slug;
+    if (!key || seen.has(key)) continue;
+    if (manualGridArts.some((m) => (m.id && m.id === a.id) || (m.slug && m.slug === a.slug)) || isHomeArticle(a)) {
+      seen.add(key);
+      pubArts.push(a);
+    }
+  }
+
+  // Backfill if fewer than 8 articles
+  if (pubArts.length < 8) {
+    for (const a of (articles || [])) {
+      if (!a) continue;
+      const key = a.id || a.slug;
+      if (!key || seen.has(key)) continue;
+      if (isPublicArticle(a) && !isExcludedFromHeroTop(a)) {
+        seen.add(key);
+        pubArts.push(a);
+      }
+    }
+  }
+
+  pubArts.sort((a: any, b: any) => {
+    const aNum = typeof a.articleNumber === 'number' ? a.articleNumber : (parseInt(a.articleNumber, 10) || 0);
+    const bNum = typeof b.articleNumber === 'number' ? b.articleNumber : (parseInt(b.articleNumber, 10) || 0);
+    if (bNum !== aNum) return bNum - aNum;
+    const aTime = Math.max(new Date(a.publishedAt || 0).getTime(), new Date(a.createdAt || 0).getTime());
+    const bTime = Math.max(new Date(b.publishedAt || 0).getTime(), new Date(b.createdAt || 0).getTime());
+    return bTime - aTime;
+  });
+
+  return pubArts;
+}
+
+
 
 
