@@ -3,7 +3,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ExternalLink, Play, Radio } from 'lucide-react';
 import { getHeroSettings } from '@/lib/api';
 import { useApp } from '@/components/AppProvider';
 import { useAutoTranslate } from '@/lib/translate';
@@ -66,57 +65,125 @@ interface BreakingNewsShowcaseProps {
   previewConfig?: BreakingBannerConfig | null;
 }
 
+/**
+ * Formats broadcast headlines by highlighting numbers, currencies, percentages,
+ * and quoted phrases in brilliant golden yellow (#FFD700) matching professional TV news graphics.
+ */
+function renderHighlightedHeadline(text: string) {
+  if (!text) return null;
+  // Match numbers (including decimals, commas, e.g. 2.30, 1,000), currencies (₹, $, રૂ.),
+  // units (e.g. કરોડ, લાખ, ટકા, %), or text wrapped in quotes
+  const regex = /(₹\s*[\d,.]+|રૂ\.\s*[\d,.]+|\$?\d+(?:[.,]\d+)*(?:\s*(?:%|કરોડ|લાખ|હજાર|ટકા|પોઇન્ટ))?|["'‘“][^"'’”]+["'’”])/g;
+  const parts = text.split(regex);
 
-const BREAKING_I18N: Record<string, Record<Language, string>> = {
-  visualReport: {
-    gu: 'વિઝ્યુઅલ રિપોર્ટ',
-    hi: 'विजुअल रिपोर्ट',
-    en: 'Visual Report',
-  },
-  liveUpdate: {
-    gu: 'લાઇવ અપડેટ્સ',
-    hi: 'लाइव अपडेट्स',
-    en: 'Live Updates',
-  },
-  brandName: {
-    gu: 'ગુજરાત પોસ્ટ',
-    hi: 'गुजरात पोस्ट',
-    en: 'Gujarat Post',
-  },
-  readFull: {
-    gu: 'સંપૂર્ણ વાંચો',
-    hi: 'पूरा पढ़ें',
-    en: 'Read More',
-  },
-};
+  return parts.map((part, index) => {
+    if (!part) return null;
+    const isHighlight =
+      /^[₹$]/.test(part) ||
+      /^રૂ\./.test(part) ||
+      /\d/.test(part) ||
+      /^["'‘“]/.test(part);
+
+    if (isHighlight) {
+      return (
+        <span
+          key={index}
+          className="text-[#FFD700] drop-shadow-[0_0_12px_rgba(255,215,0,0.65)] font-black"
+        >
+          {part}
+        </span>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+}
 
 /**
- * Renders the broadcast header badge matching the exact requested design:
- * "BREAKING" in bold red text on white background, followed by a solid red box with "NEWS" in bold white text.
- * Prominently sized with enlarged font for maximum impact.
+ * Renders the prominent 3D television-news-style header badge:
+ * Skewed container, glossy bevel, red pill for BREAKING (with white bold italic text),
+ * and white pill for NEWS (with dark bold italic text).
  */
-function renderBroadcastBadge(badgeText: string) {
+function renderTvBreakingHeader(badgeText: string) {
   const clean = (badgeText || 'BREAKING NEWS').trim();
   const parts = clean.split(/\s+/);
-  if (parts.length >= 2) {
-    const firstWord = parts[0];
-    const rest = parts.slice(1).join(' ');
-    return (
-      <div className="inline-flex items-center gap-2 sm:gap-3 md:gap-3.5 select-none py-0.5">
-        <span className="text-[#CC1D0C] font-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[54px] tracking-wide uppercase select-none leading-none drop-shadow-xs">
-          {firstWord}
-        </span>
-        <span className="bg-[#CC1D0C] text-white font-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[54px] px-3 sm:px-4 md:px-5 py-1 sm:py-1.5 md:py-2 tracking-wide uppercase select-none leading-none rounded-none shadow-sm">
-          {rest}
-        </span>
-      </div>
-    );
-  }
+  const firstWord = parts.length >= 2 ? parts[0] : clean;
+  const restWord = parts.length >= 2 ? parts.slice(1).join(' ') : '';
+
   return (
-    <div className="inline-flex items-center select-none py-0.5">
-      <span className="bg-[#CC1D0C] text-white font-black text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-[54px] px-4 sm:px-6 md:px-8 py-1 sm:py-1.5 md:py-2 tracking-wide uppercase select-none leading-none shadow-sm">
-        {clean}
-      </span>
+    <div className="relative inline-flex items-center justify-center select-none py-1">
+      {/* Background ambient red glow */}
+      <div className="absolute inset-0 bg-[#ff2000]/70 blur-xl rounded-2xl scale-125 pointer-events-none" />
+
+      {/* 3D Skewed Television News Badge */}
+      <div className="relative flex items-center overflow-hidden rounded-xl sm:rounded-2xl shadow-[0_12px_35px_rgba(0,0,0,0.9),0_0_25px_rgba(255,40,40,0.6)] border border-white/50 transform -skew-x-12">
+        {/* BREAKING (Red) */}
+        <div className="relative bg-gradient-to-b from-[#ff3322] via-[#cc1108] to-[#800700] text-white font-black italic tracking-wider text-xl sm:text-2xl md:text-3xl lg:text-[38px] px-6 sm:px-8 md:px-10 py-1.5 sm:py-2.5 flex items-center justify-center">
+          {/* Top Gloss Highlight */}
+          <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/45 to-transparent pointer-events-none" />
+          <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] uppercase transform skew-x-12">
+            {firstWord}
+          </span>
+        </div>
+
+        {/* NEWS (White) */}
+        {restWord ? (
+          <div className="relative bg-gradient-to-b from-white via-zinc-50 to-zinc-200 text-zinc-950 font-black italic tracking-wider text-xl sm:text-2xl md:text-3xl lg:text-[38px] px-6 sm:px-8 md:px-10 py-1.5 sm:py-2.5 flex items-center justify-center border-l-2 border-black/20">
+            {/* Top Gloss Highlight */}
+            <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/95 to-transparent pointer-events-none" />
+            <span className="relative z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)] uppercase transform skew-x-12">
+              {restWord}
+            </span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Dotted world map overlay in television broadcast ruby/red, rendered in the top-right quadrant.
+ */
+function DottedWorldMap() {
+  return (
+    <div className="pointer-events-none absolute -top-2 -right-4 sm:right-2 w-56 sm:w-72 md:w-88 h-32 sm:h-40 md:h-48 opacity-35 select-none overflow-hidden">
+      <svg viewBox="0 0 320 160" className="w-full h-full">
+        <defs>
+          <pattern id="worldDotsPattern" width="5" height="5" patternUnits="userSpaceOnUse">
+            <circle cx="2.5" cy="2.5" r="1.3" fill="rgba(255, 75, 75, 0.75)" />
+          </pattern>
+        </defs>
+        <g fill="url(#worldDotsPattern)">
+          {/* Eurasia & Europe */}
+          <path d="M130,25 Q150,15 180,22 Q220,15 250,22 Q275,32 265,55 Q245,65 230,55 Q210,65 195,50 Q175,65 155,55 Q135,45 130,25 Z" />
+          {/* Middle East & India */}
+          <path d="M175,45 Q190,40 205,48 Q215,65 200,80 Q190,85 185,75 Q175,65 175,45 Z" />
+          {/* East Asia & SE Asia */}
+          <path d="M215,45 Q245,35 260,50 Q265,75 245,85 Q225,80 215,65 Z" />
+          {/* Africa */}
+          <path d="M140,55 Q165,50 175,65 Q175,95 160,115 Q145,115 135,90 Q130,75 140,55 Z" />
+          {/* Australia */}
+          <path d="M245,95 Q275,90 280,105 Q275,125 255,125 Q240,115 245,95 Z" />
+          {/* Americas background */}
+          <path d="M30,25 Q60,15 75,35 Q65,60 50,55 Q35,70 30,50 Z" />
+          <path d="M55,75 Q75,70 80,90 Q75,120 60,120 Q50,100 55,75 Z" />
+        </g>
+      </svg>
+    </div>
+  );
+}
+
+/**
+ * Diagonal red light streaks across the top-left area.
+ */
+function DiagonalLightStreaks() {
+  return (
+    <div className="pointer-events-none absolute -top-24 -left-24 w-96 h-96 overflow-hidden select-none">
+      {/* Broad glow beam */}
+      <div className="absolute -top-12 -left-12 w-[600px] h-32 bg-gradient-to-r from-transparent via-[#ff3b30]/35 to-transparent transform -rotate-45 blur-md" />
+      {/* Bright sharp streaks */}
+      <div className="absolute top-10 -left-10 w-[500px] h-[3px] bg-gradient-to-r from-transparent via-white/80 via-[#ff6b6b] to-transparent transform -rotate-45 blur-[0.5px]" />
+      <div className="absolute top-20 -left-10 w-[550px] h-[2px] bg-gradient-to-r from-transparent via-[#ff8888]/70 to-transparent transform -rotate-45 blur-[1px]" />
+      <div className="absolute top-36 -left-10 w-[600px] h-[4px] bg-gradient-to-r from-transparent via-[#ff2200]/50 to-transparent transform -rotate-45 blur-xs" />
     </div>
   );
 }
@@ -125,11 +192,11 @@ function getBadgeForLang(raw: string, lang: Language): string {
   const t = (raw || '').trim();
   const lower = t.toLowerCase();
   if (lower === 'breaking news' || lower === 'breakingnews') {
-    if (lang === 'hi') return 'ब्रेકિંગ न्यूज़';
+    if (lang === 'hi') return 'ब्रेकिंग न्यूज़';
     return 'BREAKING NEWS';
   }
   if (t === 'બ્રેકિંગ ન્યૂઝ') {
-    if (lang === 'hi') return 'ब्रेકિંગ न्यूज़';
+    if (lang === 'hi') return 'ब्रेकिंग न्यूज़';
     if (lang === 'en') return 'BREAKING NEWS';
     return 'બ્રેકિંગ ન્યૂઝ';
   }
@@ -142,10 +209,6 @@ function getBadgeForLang(raw: string, lang: Language): string {
     if (lang === 'hi') return 'विशेष रिपोर्ट';
     if (lang === 'en') return 'SPECIAL REPORT';
     return 'ખાસ અહેવાલ';
-  }
-  if (lower === 'live updates' || lower === 'live update') {
-    if (lang === 'hi') return 'लाइव अपडेट्स';
-    return 'LIVE UPDATES';
   }
   return '';
 }
@@ -323,10 +386,7 @@ export default function BreakingNewsShowcase({
 
   const { language } = useApp();
 
-  // Dynamic Badge Translation:
-  // Both words / whole phrase update live from what the admin configures!
-  // In primary view ('gu'), faithfully render the admin's exact configured badge.
-  // When switched to Hindi ('hi') or English ('en'), translate dynamically.
+  // Dynamic Badge Translation
   const rawBadge = (effectiveConfig.badgeText || 'BREAKING NEWS').trim();
   const presetBadge = getBadgeForLang(rawBadge, language);
   const autoTranslatedBadge = useAutoTranslate(rawBadge, language);
@@ -337,30 +397,6 @@ export default function BreakingNewsShowcase({
   // Dynamic Headline Translation
   const translatedHeadline = useAutoTranslate(currentText, language);
   const displayedHeadline = (language === 'gu' ? currentText : (translatedHeadline || currentText)) || currentText;
-
-  // Step backwards (previous step or previous slide)
-  const advancePrev = useCallback(() => {
-    if (activeSlides.length === 0) return;
-    setIsTextExiting(true);
-    setTimeout(() => {
-      if (stepIndex > 0) {
-        setStepIndex((prev) => prev - 1);
-      } else {
-        const prevSlideIdx = (slideIndex - 1 + activeSlides.length) % activeSlides.length;
-        const prevSlide = activeSlides[prevSlideIdx];
-        const prevTexts = (prevSlide?.texts || []).filter((t) => typeof t === 'string' && t.trim());
-        const prevImgs = (Array.isArray(prevSlide?.images) && prevSlide.images.length > 0)
-          ? prevSlide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
-          : (prevSlide?.image && prevSlide.image.trim() !== '' ? [prevSlide.image.trim()] : []);
-        const prevMax = Math.max(prevTexts.length || 1, prevImgs.length || 1);
-        setSlideIndex(prevSlideIdx);
-        setStepIndex(Math.max(0, prevMax - 1));
-      }
-      setTimeout(() => {
-        setIsTextExiting(false);
-      }, 40);
-    }, 240);
-  }, [activeSlides, slideIndex, stepIndex]);
 
   // Step to the next headline point / image, or to next slide if all steps finished
   const advanceNext = useCallback(() => {
@@ -389,7 +425,7 @@ export default function BreakingNewsShowcase({
     }, 240);
   }, [activeSlides, slideIndex, stepIndex]);
 
-  // Timer interval (Continuous broadcast ticker, never stops on cursor hover)
+  // Timer interval (Continuous broadcast ticker)
   useEffect(() => {
     if (activeSlides.length === 0) return;
     const duration = Math.max(2500, (effectiveConfig.intervalSeconds || 4) * 1000);
@@ -404,43 +440,48 @@ export default function BreakingNewsShowcase({
     return null;
   }
 
+  const slideLink = currentSlide?.link && currentSlide.link.trim() ? currentSlide.link.trim() : null;
+
   return (
-    <section className="mx-auto max-w-screen-xl px-4 py-2 sm:py-2.5 mb-4 sm:mb-6 md:mb-7 w-full select-none">
-      <style>{`
-        @keyframes broadcast_globe_spin {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-360px); }
-        }
-        @keyframes broadcast_beam {
-          0% { transform: translateX(-150%) skewX(-25deg); opacity: 0; }
-          20% { opacity: 0.35; }
-          50% { opacity: 0.15; }
-          100% { transform: translateX(450%) skewX(-25deg); opacity: 0; }
-        }
-        @keyframes broadcast_pulse_glow {
-          0%, 100% { opacity: 0.35; transform: translateY(-50%) scale(1); }
-          50% { opacity: 0.65; transform: translateY(-50%) scale(1.08); }
-        }
-      `}</style>
-      {/* ── High-Fidelity Breaking News Card Container (Exact Gujarat Post Logo Red: #CC1D0C) ── */}
-      <div
-        className="group relative w-full overflow-hidden rounded-2xl sm:rounded-3xl border-[3px] border-[#CC1D0C] dark:border-[#CC1D0C] bg-[#750A00] shadow-2xl shadow-[#CC1D0C]/25 transition-all"
-      >
-        {/* ── Top Ribbon Bar (Crisp White Header Matching Broadcast Reference) ── */}
-        <div className="relative overflow-hidden flex items-center justify-center border-b-[3px] border-[#CC1D0C] py-2.5 sm:py-3.5 md:py-4 px-3 sm:px-6 bg-white shadow-sm">
-          {/* Centered Broadcast Badge ("BREAKING" in red text, "NEWS" in solid red box) */}
-          <div className="flex items-center justify-center mx-auto relative z-10">
-            {renderBroadcastBadge(displayedBadge)}
-          </div>
+    <section className="mx-auto max-w-screen-xl px-3 sm:px-4 py-2 sm:py-3 mb-4 sm:mb-6 w-full select-none">
+      {/* ══════════════════════════════════════════════════════════════════════
+           PREMIUM TV NEWS BREAKING BANNER (Exact Reference Match)
+           ══════════════════════════════════════════════════════════════════════ */}
+      <div className="relative w-full overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-b from-[#850000] via-[#520000] to-[#240000] p-3 sm:p-5 md:p-7 lg:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(180,0,0,0.4)] border border-[#ff3333]/30">
+
+        {/* ─── 1. BACKGROUND TV STUDIO EFFECTS ─── */}
+        {/* A. Radial Center Glow */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,40,40,0.45)_0%,transparent_65%)]" />
+
+        {/* B. Diagonal Red Light Streaks (Top Left) */}
+        <DiagonalLightStreaks />
+
+        {/* C. Dotted World Map (Top Right) */}
+        <DottedWorldMap />
+
+        {/* ─── 2. TOP HEADER BADGE (Centered BREAKING NEWS) ─── */}
+        <div className="relative z-20 flex justify-center mb-4 sm:mb-6">
+          {renderTvBreakingHeader(displayedBadge)}
         </div>
 
-        {/* ── Inner Showcase Container with White Border Framing (Framing Image Box & Headline Box) ── */}
-        <div className="p-1.5 sm:p-2 md:p-2.5 bg-gradient-to-b from-[#8B0B00] via-[#520700] to-[#1A0200]">
-          <div className="relative w-full overflow-hidden rounded-xl sm:rounded-2xl border-2 sm:border-[2.5px] border-white/90 shadow-2xl flex flex-col md:flex-row min-h-[240px] sm:min-h-[270px] md:min-h-[300px] lg:min-h-[330px] bg-black">
-            {/* ── Left Side: Visual Image Box with Defined Border ── */}
+        {/* ─── 3. MAIN INNER CONTENT CARD (Glowing Red/Orange Border + Horizontal Lens Flares) ─── */}
+        <div className="relative w-full rounded-2xl sm:rounded-3xl border-[1.5px] border-[#ff3b30]/85 bg-gradient-to-br from-[#4a0002] via-[#2d0001] to-[#140000] p-3.5 sm:p-5 md:p-6 lg:p-7 shadow-[0_0_30px_rgba(255,30,30,0.45),inset_0_0_25px_rgba(255,0,0,0.3)] z-10">
+
+          {/* Top Border Horizontal Lens Flare */}
+          <div className="pointer-events-none absolute -top-[1.5px] left-1/2 -translate-x-1/2 w-3/4 sm:w-1/2 h-[3px] bg-gradient-to-r from-transparent via-amber-200 via-white to-transparent blur-[0.5px]" />
+          <div className="pointer-events-none absolute -top-[6px] left-1/2 -translate-x-1/2 w-16 sm:w-24 h-3 bg-white/90 blur-[3px] rounded-full" />
+
+          {/* Bottom Border Horizontal Lens Flare */}
+          <div className="pointer-events-none absolute -bottom-[1.5px] left-1/2 -translate-x-1/2 w-3/4 sm:w-1/2 h-[3px] bg-gradient-to-r from-transparent via-amber-200 via-white to-transparent blur-[0.5px]" />
+          <div className="pointer-events-none absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-16 sm:w-24 h-3 bg-white/90 blur-[3px] rounded-full" />
+
+          {/* Two-Column Layout (Left ~45% Media / Right ~55% Headline + Logo) */}
+          <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-7 lg:gap-8">
+
+            {/* ── LEFT SECTION: News Image / Media (Approx 45%) ── */}
             {hasImage && (
-              <div className="relative w-full md:w-[48%] lg:w-[46%] xl:w-[45%] shrink-0 overflow-hidden bg-[#09090b]">
-                <div className="relative h-56 sm:h-64 md:h-full min-h-[220px] sm:min-h-[250px] md:min-h-[280px] lg:min-h-[310px] w-full overflow-hidden">
+              <div className="w-full md:w-[45%] lg:w-[44%] shrink-0">
+                <div className="relative w-full h-56 sm:h-64 md:h-72 lg:h-80 rounded-xl sm:rounded-2xl border-2 sm:border-[2.5px] border-white/95 shadow-[0_8px_30px_rgba(0,0,0,0.7)] overflow-hidden bg-black/85 flex items-center justify-center">
                   {activeSlides.map((slide, sIdx) => {
                     const slideImgs = (Array.isArray(slide.images) && slide.images.length > 0)
                       ? slide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
@@ -453,212 +494,120 @@ export default function BreakingNewsShowcase({
                       return (
                         <div
                           key={`${slide.id || sIdx}-img-${imgIdx}`}
-                          className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                          className={`absolute inset-0 transition-opacity duration-700 ease-in-out ${
                             isImgActive
-                              ? 'opacity-100 scale-100 z-10'
-                              : 'opacity-0 scale-105 pointer-events-none z-0'
+                              ? 'opacity-100 z-10'
+                              : 'opacity-0 pointer-events-none z-0'
                           }`}
                         >
+                          {/* Ambient soft blurred backdrop of image */}
                           <Image
                             src={imgUrl}
-                            alt={slide.texts?.[0] || 'Breaking News'}
+                            alt=""
                             fill
-                            sizes="(max-width: 768px) 100vw, 620px"
-                            className="object-cover object-center"
+                            sizes="(max-width: 768px) 100vw, 550px"
+                            className="object-cover blur-xl opacity-25 scale-105"
                             unoptimized
                             priority={sIdx === 0 && imgIdx === 0}
                           />
+
+                          {/* Foreground sharp media maintaining original aspect ratio without cropping */}
+                          <div className="relative w-full h-full p-1 sm:p-2 flex items-center justify-center">
+                            <Image
+                              src={imgUrl}
+                              alt={slide.texts?.[0] || 'Breaking News'}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 550px"
+                              className="object-contain"
+                              unoptimized
+                              priority={sIdx === 0 && imgIdx === 0}
+                            />
+                          </div>
                         </div>
                       );
                     });
                   })}
-
-                  {/* Gradient Overlays for Depth */}
-                  <div className="pointer-events-none absolute inset-0 z-15 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-black/40" />
-
-                  {/* TV Badge on bottom left of image: [ ▶ વિઝ્યુઅલ રિપોર્ટ ] (Matching Logo Red: #CC1D0C) */}
-                  <div className="absolute bottom-3 left-3 z-20 flex items-center gap-2 rounded-full bg-black/85 px-3 py-1 sm:px-3.5 sm:py-1.5 text-xs sm:text-sm font-black text-white backdrop-blur-sm border border-white/40 shadow-lg">
-                    <span className="flex items-center justify-center w-4 h-4 sm:w-4.5 sm:h-4.5 rounded-full bg-[#CC1D0C] text-white">
-                      <Play className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-current ml-0.5" />
-                    </span>
-                    <span>{BREAKING_I18N.visualReport[language] || 'વિઝ્યુઅલ રિપોર્ટ'}</span>
-                    {currentSlideImages.length > 1 && (
-                      <span className="text-[11px] font-bold text-yellow-300 ml-0.5 pl-1.5 border-l border-white/30">
-                        {(stepIndex % currentSlideImages.length) + 1}/{currentSlideImages.length}
-                      </span>
-                    )}
-                  </div>
                 </div>
               </div>
             )}
 
-            {/* ── High-Contrast Broadcast Divider Border Between Left (Image) and Right (Text) Sections ── */}
-            {hasImage && (
-              <>
-                {/* Desktop: Vertical 2px-3px Glowing White & Gold Divider Bar */}
-                <div
-                  className="hidden md:flex flex-col shrink-0 w-1.5 self-stretch bg-gradient-to-b from-white via-amber-300 to-white shadow-[0_0_10px_rgba(255,255,255,0.7)] z-20 relative"
-                  aria-hidden="true"
-                />
-                {/* Mobile: Horizontal 2px-3px Glowing White & Gold Divider Bar */}
-                <div
-                  className="block md:hidden h-1.5 w-full bg-gradient-to-r from-white via-amber-300 to-white shadow-[0_0_10px_rgba(255,255,255,0.7)] z-20 relative"
-                  aria-hidden="true"
-                />
-              </>
-            )}
+            {/* ── RIGHT SECTION: Headline & Gujarat Post Logo (Approx 55% or 100% if no image) ── */}
+            <div
+              className={`w-full ${
+                hasImage ? 'md:w-[55%] lg:w-[56%]' : 'w-full'
+              } flex flex-col justify-between self-stretch min-h-[160px] sm:min-h-[200px] md:min-h-[240px]`}
+            >
+              {/* Headline with Thick Vertical Yellow Accent Bar */}
+              <div className="flex items-start gap-3.5 sm:gap-4 md:gap-5 my-auto">
+                {/* Vertical Yellow Accent Bar */}
+                <div className="w-2 sm:w-2.5 bg-[#FFD700] rounded-full self-stretch shrink-0 shadow-[0_0_12px_rgba(255,215,0,0.7)]" />
 
-          {/* ── Headline Card: Gujarat Post Signature Logo Red (#CC1D0C) ── */}
-          <div className={`relative flex-1 flex flex-col justify-between bg-gradient-to-br from-[#A00E02] via-[#CC1D0C] to-[#520700] ${
-            hasImage
-              ? 'p-5 sm:p-6 md:p-8 lg:p-9'
-              : 'p-6 sm:p-8 md:p-10 lg:p-12'
-          } text-white overflow-hidden transition-all duration-300`}>
-
-            {/* 1. Broadcast Studio Background Texture (Matching User Reference Image) */}
-            <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden mix-blend-screen opacity-50 select-none">
-              <Image
-                src="/assets/breaking-globe-bg.jpg"
-                alt=""
-                fill
-                sizes="(max-width: 768px) 100vw, 800px"
-                className="object-cover object-left scale-105"
-                priority
-              />
-            </div>
-
-            {/* 2. Digital World Map / Tech Dot Matrix Grid Overlay */}
-            <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(rgba(255,255,255,0.2)_1.2px,transparent_1.2px)] [background-size:16px_16px] opacity-30 select-none" />
-
-            {/* 3. Animated 3D Wireframe Broadcast Globe with Rotating Continents & Orbit Rings */}
-            <div className="pointer-events-none absolute -left-14 sm:-left-10 md:-left-8 top-1/2 -translate-y-1/2 w-64 h-64 sm:w-76 sm:h-76 md:w-88 md:h-88 z-0 opacity-45 sm:opacity-55 select-none">
-              <svg viewBox="0 0 320 320" className="w-full h-full">
-                <defs>
-                  {/* Sphere Shadow & Illumination Gradient */}
-                  <radialGradient id="globeSphereGrad" cx="35%" cy="38%" r="65%">
-                    <stop offset="0%" stopColor="#ff6659" stopOpacity="0.45" />
-                    <stop offset="45%" stopColor="#CC1D0C" stopOpacity="0.2" />
-                    <stop offset="80%" stopColor="#1A0200" stopOpacity="0.85" />
-                    <stop offset="100%" stopColor="#080100" stopOpacity="0.95" />
-                  </radialGradient>
-
-                  {/* Rim Glow Gradient */}
-                  <linearGradient id="globeRimGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#ff7b70" stopOpacity="0.95" />
-                    <stop offset="40%" stopColor="#CC1D0C" stopOpacity="0.75" />
-                    <stop offset="100%" stopColor="#520700" stopOpacity="0.15" />
-                  </linearGradient>
-
-                  {/* Circular Sphere ClipPath */}
-                  <clipPath id="globeSphereClip">
-                    <circle cx="160" cy="160" r="132" />
-                  </clipPath>
-                </defs>
-
-                {/* Outer Atmosphere Glow */}
-                <circle cx="160" cy="160" r="135" fill="none" stroke="url(#globeRimGrad)" strokeWidth="3" className="opacity-70 blur-xs" />
-
-                {/* Globe Sphere Interior */}
-                <g clipPath="url(#globeSphereClip)">
-                  {/* Dark Base Sphere */}
-                  <circle cx="160" cy="160" r="132" fill="#240300" />
-
-                  {/* Seamless Rotating Continents (Drifting across globe) */}
-                  <g className="animate-[broadcast_globe_spin_30s_linear_infinite]" style={{ transformBox: 'fill-box' }}>
-                    <svg x="0" y="30" width="720" height="260" viewBox="0 0 720 260">
-                      {/* Americas & Europe/Africa/Asia continent silhouettes (Repeated twice for seamless loop) */}
-                      <path
-                        fill="rgba(255, 255, 255, 0.28)"
-                        d="M35,45 Q55,30 85,42 Q105,52 90,85 Q82,102 70,115 Q65,130 72,150 Q80,175 68,210 Q60,225 50,215 Q40,195 48,160 Q42,130 30,110 Q20,80 35,45 Z M120,40 Q150,25 180,35 Q195,50 185,75 Q170,90 155,80 Q135,70 120,40 Z M130,95 Q155,90 170,110 Q180,140 175,180 Q160,215 140,205 Q125,180 132,145 Q120,120 130,95 Z M200,45 Q245,30 290,55 Q310,95 285,130 Q250,145 220,120 Q195,90 200,45 Z M260,150 Q285,145 300,165 Q295,195 270,195 Q250,185 260,150 Z M395,45 Q415,30 445,42 Q465,52 450,85 Q442,102 430,115 Q425,130 432,150 Q440,175 428,210 Q420,225 410,215 Q400,195 408,160 Q402,130 390,110 Q380,80 395,45 Z M480,40 Q510,25 540,35 Q555,50 545,75 Q530,90 515,80 Q495,70 480,40 Z M490,95 Q515,90 530,110 Q540,140 535,180 Q520,215 500,205 Q485,180 492,145 Q480,120 490,95 Z M560,45 Q605,30 650,55 Q670,95 645,130 Q610,145 580,120 Q555,90 560,45 Z M620,150 Q645,145 660,165 Q655,195 630,195 Q610,185 620,150 Z"
-                      />
-                    </svg>
-                  </g>
-
-                  {/* 3D Wireframe Latitude Lines */}
-                  <ellipse cx="160" cy="90" rx="115" ry="24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="3 4" />
-                  <ellipse cx="160" cy="130" rx="130" ry="28" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" strokeDasharray="4 4" />
-                  <line x1="28" y1="160" x2="292" y2="160" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" strokeDasharray="6 4" />
-                  <ellipse cx="160" cy="190" rx="130" ry="28" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" strokeDasharray="4 4" />
-                  <ellipse cx="160" cy="230" rx="115" ry="24" fill="none" stroke="rgba(255,255,255,0.18)" strokeWidth="1" strokeDasharray="3 4" />
-
-                  {/* 3D Spherical Volume Overlay (Lighting & Deep Shadowing) */}
-                  <circle cx="160" cy="160" r="132" fill="url(#globeSphereGrad)" />
-                </g>
-
-                {/* Orbital Broadcast Satellite Ring */}
-                <ellipse cx="160" cy="160" rx="148" ry="46" fill="none" stroke="rgba(255,215,0,0.4)" strokeWidth="1.5" strokeDasharray="6 6" transform="rotate(-20 160 160)" />
-              </svg>
-            </div>
-
-            {/* 4. Sweeping Broadcast Light Beam (Like TV Studio Ticker) */}
-            <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden select-none">
-              <div className="h-full w-48 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg] animate-[broadcast_beam_8s_cubic-bezier(0.4,0,0.2,1)_infinite]" />
-            </div>
-
-            {/* 5. Pulsing Atmospheric Red Glow */}
-            <div className="pointer-events-none absolute -left-16 top-1/2 -translate-y-1/2 w-80 h-80 rounded-full bg-[#CC1D0C]/40 blur-3xl animate-[broadcast_pulse_glow_5s_ease-in-out_infinite]" />
-
-            {/* Large Bold Gujarati Headline (Increased Text Size for Maximum Broadcast Impact) */}
-            <div className="relative z-10 my-auto min-h-[95px] sm:min-h-[115px] md:min-h-[135px] lg:min-h-[150px] flex items-center py-2 sm:py-3 overflow-hidden">
-              <h2
-                className={`${
-                  hasImage
-                    ? 'text-2xl sm:text-3xl md:text-[34px] lg:text-[38px] xl:text-[42px]'
-                    : 'text-3xl sm:text-4xl md:text-[42px] lg:text-[48px] xl:text-[54px]'
-                } font-black leading-snug md:leading-tight text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.95)] transition-all duration-400 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-                  isTextExiting
-                    ? 'opacity-0 -translate-y-3 scale-[0.98]'
-                    : 'opacity-100 translate-y-0 scale-100'
-                }`}
-              >
-                <span>{displayedHeadline}</span>
-              </h2>
-            </div>
-
-            {/* Bottom Meta Bar: ((•)) લાઇવ અપડેટ્સ  |  ✒ ગુજરાત પોસ્ટ (Clean, Bold, Polished) */}
-            <div className="relative z-10 mt-4 sm:mt-5 flex items-center justify-between gap-3 pt-3 sm:pt-3.5 border-t-2 border-white/30">
-              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-white">
-                <Radio className="h-4.5 w-4.5 sm:h-5 sm:w-5 text-red-300 animate-pulse shrink-0" />
-                <span>
-                  {(effectiveConfig.liveUpdateText && effectiveConfig.liveUpdateText.trim()) ||
-                    BREAKING_I18N.liveUpdate[language] ||
-                    'લાઇવ અપડેટ્સ'}
-                </span>
-              </div>
-
-              <span className="text-white/60 font-semibold text-base sm:text-lg select-none">|</span>
-
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                {currentSlide?.link && (
+                {/* Gujarati / English Headline with Yellow Highlight on Numbers */}
+                {slideLink ? (
                   <Link
-                    href={currentSlide.link}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-white px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-black text-[#CC1D0C] shadow-md hover:bg-zinc-100 transition active:scale-95 shrink-0"
+                    href={slideLink}
+                    className="block group cursor-pointer hover:opacity-95 transition-opacity"
                   >
-                    <span>{BREAKING_I18N.readFull[language] || 'સંપૂર્ણ વાંચો'}</span>
-                    <ExternalLink className="h-4 w-4" />
+                    <h2
+                      className={`font-black text-2xl sm:text-3xl md:text-[34px] lg:text-[40px] xl:text-[44px] leading-[1.28] tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all duration-300 ${
+                        isTextExiting
+                          ? 'opacity-0 -translate-y-2'
+                          : 'opacity-100 translate-y-0'
+                      }`}
+                    >
+                      {renderHighlightedHeadline(displayedHeadline)}
+                    </h2>
                   </Link>
+                ) : (
+                  <h2
+                    className={`font-black text-2xl sm:text-3xl md:text-[34px] lg:text-[40px] xl:text-[44px] leading-[1.28] tracking-tight text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.9)] transition-all duration-300 ${
+                      isTextExiting
+                        ? 'opacity-0 -translate-y-2'
+                        : 'opacity-100 translate-y-0'
+                    }`}
+                  >
+                    {renderHighlightedHeadline(displayedHeadline)}
+                  </h2>
                 )}
+              </div>
 
-                <Link
-                  href={currentSlide?.link || '/'}
-                  className="inline-flex items-center bg-white px-2.5 py-1 sm:px-3 sm:py-1 rounded-lg shadow-md border border-white/50 hover:opacity-95 transition shrink-0"
-                  title="Gujarat Post"
-                >
-                  <Image
-                    src="/GujaratpostFinalLogo.png"
-                    alt="Gujarat Post"
-                    width={110}
-                    height={26}
-                    className="h-5 sm:h-6 w-auto object-contain"
-                    priority
-                  />
-                </Link>
+              {/* Bottom-Right Gujarat Post Branding (Logo in crisp white rounded card) */}
+              <div className="flex items-center justify-end mt-4 sm:mt-6">
+                {slideLink ? (
+                  <Link
+                    href={slideLink}
+                    className="bg-white rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-1.5 sm:py-2 shadow-lg border border-white/90 shrink-0 flex items-center justify-center hover:shadow-xl transition"
+                    title="Gujarat Post"
+                  >
+                    <Image
+                      src="/GujaratpostFinalLogo.png"
+                      alt="Gujarat Post"
+                      width={130}
+                      height={30}
+                      className="h-5 sm:h-6 md:h-7 w-auto object-contain"
+                      priority
+                    />
+                  </Link>
+                ) : (
+                  <div className="bg-white rounded-xl sm:rounded-2xl px-3.5 sm:px-4 py-1.5 sm:py-2 shadow-lg border border-white/90 shrink-0 flex items-center justify-center">
+                    <Image
+                      src="/GujaratpostFinalLogo.png"
+                      alt="Gujarat Post"
+                      width={130}
+                      height={30}
+                      className="h-5 sm:h-6 md:h-7 w-auto object-contain"
+                      priority
+                    />
+                  </div>
+                )}
               </div>
             </div>
+
           </div>
+
         </div>
+
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
 }
