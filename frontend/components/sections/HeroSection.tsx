@@ -518,10 +518,10 @@ function HeroStorySlider({
     >
       {/* ─── MOBILE VIEW (< md): Header First, then Image, then Category & Share (matches Image 2) ─── */}
       <div className="flex md:hidden flex-col w-full bg-white dark:bg-[#161822] rounded-2xl border border-slate-200/90 dark:border-white/[0.08] shadow-[0_4px_14px_rgba(0,0,0,0.09),0_2px_6px_rgba(0,0,0,0.04)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] p-3.5 sm:p-4 mb-2">
-        {/* 1. Header on Top: LIVE badge inline with Headline (Reserved min-height to prevent layout shifts without clipping) */}
+        {/* 1. Header on Top: LIVE badge inline with Headline (Fixed 2-line height with line-clamp-2 to prevent layout shifts) */}
         <Link href={`/news/${current.slug}`} className="group block mb-3">
-          <div className="min-h-[4.6rem] sm:min-h-[5.2rem] flex items-start">
-            <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.38] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-4">
+          <div className="h-[2.95rem] sm:h-[3.25rem] flex items-start overflow-hidden">
+            <h1 className="text-foreground font-bold text-[1.0625rem] sm:text-[1.125rem] leading-[1.38] tracking-tight group-hover:text-[#B3121B] transition-colors line-clamp-2">
               <span className="inline-block align-middle mr-1.5 bg-[#B3121B] text-white text-[11px] sm:text-[12px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider leading-none shadow-xs select-none -translate-y-[1px]">
                 LIVE
               </span>
@@ -534,9 +534,9 @@ function HeroStorySlider({
           </div>
         </Link>
 
-        {/* 2. Image in the Middle with Slider Controls */}
+        {/* 2. Image in the Middle with Slider Controls (aspect-[3/2] for taller length) */}
         <div
-          className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[16/9] bg-muted"
+          className="relative w-full overflow-hidden rounded-xl shadow-xs aspect-[3/2] sm:aspect-[16/10] bg-muted"
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
