@@ -561,7 +561,63 @@ export function sortArticlesByLatest<T extends any>(list: T[]): T[] {
   });
 }
 
+/**
+ * Thoroughly and safely strips the highlights ("એક નજરમાં" / "AT A GLANCE") block from article content.
+ * Resilient against:
+ * - Language header variations (Gujarati: એક નજરમાં, Hindi: एक नजर में / એક નજર મેં, English: AT A GLANCE / KEY HIGHLIGHTS / HIGHLIGHTS)
+ * - Missing or broken markdown tokens / emojis (📌, ##)
+ * - HTML paragraph or div wrappers (<p>, <div>)
+ * - Missing closing dashes
+ * - Delimiter lines (---, ***, ___)
+ */
+export function stripHighlightsBlock(text: string): string {
+  if (!text) return '';
+  let out = text;
+
+  // 1. Matches ## (or HTML) header down to closing dashes (with optional <p> wrappers)
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi,
+    ''
+  );
+
+  // 2. Matches header + opening dashes down to next ## header, standard HTML block tag, or next section
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?=(?:##|<h[1-6]|<div|<p(?:\s+[^>]*>|(?!\s*•|\s*&bull;))|<!-- gp-section|\n\s*\n\s*[^\s•*\-#<]))/gi,
+    ''
+  );
+
+  // 3. Matches header without dashes down to next HTML tag, next section, or next paragraph
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\S]*?(?=(?:<h[1-6]|<div|<p(?:\s+[^>]*>|(?!\s*•|\s*&bull;))|<!-- gp-section|\n\s*\n\s*[^\s•*\-#<]))/gi,
+    ''
+  );
+
+  // 4. Fallback for standalone header line anywhere
+  out = out.replace(
+    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?/gi,
+    ''
+  );
+
+  // 5. Fallback for inline ## 📌 ... (KEY HIGHLIGHTS)
+  out = out.replace(
+    /##\s*📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*/gi,
+    ''
+  );
+
+  // 6. Dashed line block at the beginning without header: ----- text -----
+  out = out.replace(
+    /^[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/i,
+    ''
+  );
+
+  // 7. Strip leftover delimiter dashes
+  out = out.replace(/(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi, '');
+
+  return out.trim();
+}
+
 export { isSolelyHealthArticle, isExcludedFromLatestNews, isSoftNewsCategoryString } from './articleCategory';
+
 
 
 

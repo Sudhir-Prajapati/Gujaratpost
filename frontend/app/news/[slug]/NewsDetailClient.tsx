@@ -94,39 +94,8 @@ function balanceHtmlTags(html: string): string {
   return result;
 }
 
-export function stripHighlightsBlock(text: string): string {
-  if (!text) return '';
-  let out = text;
-
-  // 1. Matches ## (or HTML) header down to closing dashes (with optional <p> wrappers)
-  out = out.replace(
-    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi,
-    ''
-  );
-
-  // 2. Matches header down to next section, standard HTML tag, or blank line followed by non-bullet text
-  out = out.replace(
-    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?[\s\S]*?(?=(?:<h[1-6]|<div|<p(?:\s+[^>]*>|(?!\s*•|\s*&bull;))|<!-- gp-section|\n\s*\n\s*[^\s•*\-#<]))/gi,
-    ''
-  );
-
-  // 3. Fallback for standalone header line
-  out = out.replace(
-    /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?/gi,
-    ''
-  );
-
-  // 4. Dashed line block at the beginning without header: ----- text -----
-  out = out.replace(
-    /^[\s\r\n]*(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?[\s\S]*?(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/i,
-    ''
-  );
-
-  // 5. Strip leftover delimiter dashes
-  out = out.replace(/(?:<p[^>]*>)?\s*[-*—_]{3,}\s*(?:<\/p>)?/gi, '');
-
-  return out.trim();
-}
+import { stripHighlightsBlock } from '@/lib/utils';
+export { stripHighlightsBlock };
 
 const ArticleContentBody = memo(function ArticleContentBody({
   html,
@@ -1716,11 +1685,106 @@ export default function NewsDetailClient({ article, related, trending, latestArt
     );
   }, [article, body, pdfDocumentUrl]);
 
+  const gistPoints = useMemo(() => {
+    const rawContent = getArticleContent(article, language) || article.content || (article as any).contentGu || (article as any).contentHi || '';
+    const points: string[] = [];
+
+    const cleanStr = (s: string) => {
+      if (!s || s === 'null' || s === 'undefined' || s === 'Gujarat Post news flash.') return '';
+      const res = normalizeDisplayText(s)
+        .replace(/<[^>]*>/g, '')
+        .replace(/^[•*\-#\d\.\s📌]+/, '')
+        .replace(/^[•*\-#\d\.\s📌]+/, '')
+        .replace(/^[•*\-#\d\.\s]+/, '')
+        .replace(/[📌📌]/gi, '')
+        .replace(/#+/g, '')
+        .replace(/\(KEY HIGHLIGHTS\)/gi, '')
+        .replace(/એક નજરમાં/gi, '')
+        .replace(/એક નજર મેં/gi, '')
+        .replace(/एक नजर में/gi, '')
+        .replace(/AT A GLANCE/gi, '')
+        .replace(/[*#]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (res === 'null' || res === 'undefined' || res === 'Gujarat Post news flash.') return '';
+      return res;
+    };
+
+    const lines = rawContent.split(/\r?\n/);
+    let insideHighlights = false;
+
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      if (
+        trimmed.includes('KEY HIGHLIGHTS') ||
+        normalizeDisplayText(trimmed).includes('એક નજરમાં') ||
+        normalizeDisplayText(trimmed).includes('એક નજર મેં') ||
+        normalizeDisplayText(trimmed).includes('एक नजर में') ||
+        trimmed.includes('AT A GLANCE') ||
+        (trimmed.startsWith('##') && trimmed.includes('📌'))
+      ) {
+        insideHighlights = true;
+        continue;
+      }
+
+      if (insideHighlights) {
+        if (trimmed.startsWith('---') || trimmed.startsWith('***') || /^[-*—_]{3,}$/.test(trimmed)) {
+          if (points.length > 0) {
+            insideHighlights = false;
+            break;
+          }
+          continue;
+        }
+        if (trimmed.startsWith('##') || trimmed.startsWith('<!--') || trimmed.startsWith('>')) {
+          insideHighlights = false;
+          break;
+        }
+        const cleaned = cleanStr(trimmed);
+        if (cleaned.length > 3 && !points.includes(cleaned)) {
+          points.push(cleaned);
+        }
+      }
+    }
+
+    // Explicit highlights from article object if not in body markdown
+    if (points.length === 0) {
+      const explicitHl = (language === 'gu' ? (article as any).highlightsGu : language === 'hi' ? (article as any).highlightsHi : (article as any).highlights) || (article as any).highlightsGu || (article as any).highlights;
+      if (Array.isArray(explicitHl)) {
+        for (const item of explicitHl) {
+          if (!item || item === 'null' || item === 'undefined' || item === 'Gujarat Post news flash.') continue;
+          const c = cleanStr(String(item));
+          if (c.length > 3 && c !== 'null' && c !== 'undefined' && !points.includes(c)) points.push(c);
+        }
+      } else if (typeof explicitHl === 'string' && explicitHl.trim() && explicitHl !== 'null' && explicitHl !== 'undefined' && explicitHl !== 'Gujarat Post news flash.') {
+        const itemLines = explicitHl.split(/\r?\n/);
+        for (const l of itemLines) {
+          if (!l || l === 'null' || l === 'undefined') continue;
+          const c = cleanStr(l);
+          if (c.length > 3 && c !== 'null' && c !== 'undefined' && !points.includes(c)) points.push(c);
+        }
+      }
+    }
+
+    // If only 1 point was found and it matches rawExcerpt or rawTitle (legacy fallback artifact), do not show it
+    if (points.length === 1) {
+      const cleanTitle = cleanStr(rawTitle);
+      const cleanExcerpt = cleanStr(rawExcerpt);
+      if (cleanStr(points[0]) === cleanExcerpt || cleanStr(points[0]) === cleanTitle) {
+        return [];
+      }
+    }
+
+    return points.slice(0, 10);
+  }, [rawTitle, rawExcerpt, article, language]);
+
   const formattedArticleBodyHtml = useMemo(() => {
     if (!body) return '';
 
     let cleaned = stripHighlightsBlock(normalizeArticleMarkdown(upgradeEmbedCards(body, language, (article as any)?.pdfUrl || (article as any)?.pdf, hasPdfPages, (article as any)?.pdfPosition)))
-      .replace(/^##\s*📌?\s*(એક નજરમાં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
+      .replace(/^##\s*📌?\s*(એક નજરમાં|એક નજર મેં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE).*?$/gmi, '')
+      .replace(/##\s*📌?\s*(એક નજરમાં|એક નજર મેં|KEY HIGHLIGHTS|एक नजर में|AT A GLANCE)[^\n<]*/gi, '')
       .replace(/----------------+/g, '')
       .replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '')
       .replace(/<!--\s*gp-photo-credit:[\s\S]*?-->/gi, '')
@@ -1838,111 +1902,46 @@ export default function NewsDetailClient({ article, related, trending, latestArt
       return `<p class="article-para my-3"${attrs}>${inner}</p>`;
     });
 
-    // Ensure all plain text paragraphs are properly wrapped in <p> elements
+    // Ensure all plain text paragraphs are properly wrapped in <p> elements,
+    // and strictly filter out any leaked bullet points or duplicate blocks matching gistPoints
     const rawBlocks = cleaned.split(/\n\s*\n+/);
-    const wrappedBlocks = rawBlocks.map((block) => {
+    const seenParagraphs = new Set<string>();
+    const wrappedBlocks: string[] = [];
+
+    for (const block of rawBlocks) {
       const trimmed = block.trim();
-      if (!trimmed) return '';
-      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
-        return trimmed;
-      }
-      return `<p class="article-para my-3">${trimmed}</p>`;
-    });
-    cleaned = wrappedBlocks.filter(Boolean).join('\n\n');
-    return cleaned;
-  }, [body, title, language, article, hasPdfPages]);
-
-  const gistPoints = useMemo(() => {
-    const rawContent = getArticleContent(article, language) || article.content || (article as any).contentGu || (article as any).contentHi || '';
-    const points: string[] = [];
-
-    const cleanStr = (s: string) => {
-      if (!s || s === 'null' || s === 'undefined' || s === 'Gujarat Post news flash.') return '';
-      const res = normalizeDisplayText(s)
-        .replace(/<[^>]*>/g, '')
-        .replace(/^[•*\-#\d\.\s📌]+/, '')
-        .replace(/^[•*\-#\d\.\s📌]+/, '')
-        .replace(/^[•*\-#\d\.\s]+/, '')
-        .replace(/[📌📌]/gi, '')
-        .replace(/#+/g, '')
-        .replace(/\(KEY HIGHLIGHTS\)/gi, '')
-        .replace(/એક નજરમાં/gi, '')
-        .replace(/एक नजर में/gi, '')
-        .replace(/AT A GLANCE/gi, '')
-        .replace(/[*#]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-      if (res === 'null' || res === 'undefined' || res === 'Gujarat Post news flash.') return '';
-      return res;
-    };
-
-    const lines = rawContent.split(/\r?\n/);
-    let insideHighlights = false;
-
-    for (const line of lines) {
-      const trimmed = line.trim();
       if (!trimmed) continue;
 
-      if (
-        trimmed.includes('KEY HIGHLIGHTS') ||
-        normalizeDisplayText(trimmed).includes('એક નજરમાં') ||
-        normalizeDisplayText(trimmed).includes('एक नजर में') ||
-        trimmed.includes('AT A GLANCE') ||
-        (trimmed.startsWith('##') && trimmed.includes('📌'))
-      ) {
-        insideHighlights = true;
+      const plain = trimmed.replace(/<[^>]*>/g, '').replace(/^[•*\-#\s]+/, '').trim();
+      if (!plain) continue;
+
+      // Filter out any standalone paragraph that matches any gist highlight point
+      if (plain.length < 350 && gistPoints.length > 0) {
+        const matchesGist = gistPoints.some((gp) => {
+          const cleanGp = gp.replace(/^[•*\-#\s]+/, '').trim();
+          return cleanGp === plain || (plain.length > 25 && cleanGp.startsWith(plain)) || (cleanGp.length > 25 && plain.startsWith(cleanGp));
+        });
+        if (matchesGist) continue;
+      }
+
+      // Check if it's a residual highlight heading line
+      if (plain.length < 100 && /📌|એક નજર|एक नजर|KEY HIGHLIGHTS|AT A GLANCE/i.test(plain)) {
         continue;
       }
 
-      if (insideHighlights) {
-        if (trimmed.startsWith('---') || trimmed.startsWith('***') || /^[-*—_]{3,}$/.test(trimmed)) {
-          if (points.length > 0) {
-            insideHighlights = false;
-            break;
-          }
-          continue;
-        }
-        if (trimmed.startsWith('##') || trimmed.startsWith('<!--') || trimmed.startsWith('>')) {
-          insideHighlights = false;
-          break;
-        }
-        const cleaned = cleanStr(trimmed);
-        if (cleaned.length > 3 && !points.includes(cleaned)) {
-          points.push(cleaned);
-        }
+      // Filter out exact duplicate paragraphs
+      if (seenParagraphs.has(plain)) continue;
+      seenParagraphs.add(plain);
+
+      if (/^<(p|div|blockquote|figure|h[1-6]|ul|ol|table|iframe|hr)\b/i.test(trimmed)) {
+        wrappedBlocks.push(trimmed);
+      } else {
+        wrappedBlocks.push(`<p class="article-para my-3">${trimmed}</p>`);
       }
     }
-
-    // Explicit highlights from article object if not in body markdown
-    if (points.length === 0) {
-      const explicitHl = (language === 'gu' ? (article as any).highlightsGu : language === 'hi' ? (article as any).highlightsHi : (article as any).highlights) || (article as any).highlightsGu || (article as any).highlights;
-      if (Array.isArray(explicitHl)) {
-        for (const item of explicitHl) {
-          if (!item || item === 'null' || item === 'undefined' || item === 'Gujarat Post news flash.') continue;
-          const c = cleanStr(String(item));
-          if (c.length > 3 && c !== 'null' && c !== 'undefined' && !points.includes(c)) points.push(c);
-        }
-      } else if (typeof explicitHl === 'string' && explicitHl.trim() && explicitHl !== 'null' && explicitHl !== 'undefined' && explicitHl !== 'Gujarat Post news flash.') {
-        const itemLines = explicitHl.split(/\r?\n/);
-        for (const l of itemLines) {
-          if (!l || l === 'null' || l === 'undefined') continue;
-          const c = cleanStr(l);
-          if (c.length > 3 && c !== 'null' && c !== 'undefined' && !points.includes(c)) points.push(c);
-        }
-      }
-    }
-
-    // If only 1 point was found and it matches rawExcerpt or rawTitle (legacy fallback artifact), do not show it
-    if (points.length === 1) {
-      const cleanTitle = cleanStr(rawTitle);
-      const cleanExcerpt = cleanStr(rawExcerpt);
-      if (cleanStr(points[0]) === cleanExcerpt || cleanStr(points[0]) === cleanTitle) {
-        return [];
-      }
-    }
-
-    return points.slice(0, 10);
-  }, [rawTitle, rawExcerpt, article, language]);
+    cleaned = wrappedBlocks.join('\n\n');
+    return cleaned;
+  }, [body, title, language, article, hasPdfPages, gistPoints]);
 
   const trendingTopics = useMemo(() => {
     if (language === 'gu') {

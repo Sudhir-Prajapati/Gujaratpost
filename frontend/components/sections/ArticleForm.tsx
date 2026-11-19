@@ -6,6 +6,7 @@ import { Loader2, ArrowLeft, Save, Globe, Settings2, BarChart2, AlertCircle, Che
 import { getBackendApiUrl, authFetch, getPublicArticles, clearApiCache } from '@/lib/api';
 import { sanitizeImageUrl } from '@/lib/media';
 import { translateOnFly } from '@/lib/translate';
+import { stripHighlightsBlock } from '@/lib/utils';
 import CustomSelect, { SelectOption } from '@/components/ui/CustomSelect';
 import RichTextArea from '@/components/ui/RichTextArea';
 import ArticlePdfPagesViewer from './ArticlePdfPagesViewer';
@@ -861,7 +862,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     if (hl.trim()) {
-      const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 એક નજર મેં (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
+      const header = lang === 'gu' ? '## 📌 એક નજરમાં (KEY HIGHLIGHTS)' : lang === 'hi' ? '## 📌 एक नजर में (KEY HIGHLIGHTS)' : '## 📌 AT A GLANCE (KEY HIGHLIGHTS)';
       parts.push(`${header}\n--------------------------------------------------\n${hl.trim()}\n--------------------------------------------------`);
     }
 
@@ -894,11 +895,25 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
 
     let pdfPlaced = false;
 
-    // Description 1
-    let cleanD1 = purgeEmbedsFromText(purgePdfFromText(d1Str))
+    // Description 1: strictly strip any highlight headers or blocks before compiling
+    let cleanD1 = stripHighlightsBlock(purgeEmbedsFromText(purgePdfFromText(d1Str)))
       .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
       .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
       .trim();
+
+    // If hl was compiled at top, ensure no identical bullet points duplicate inside cleanD1
+    if (hl.trim()) {
+      const hlBullets = hl.split(/\r?\n/).map((l) => l.replace(/^[•*\-#\s]+/, '').trim()).filter((l) => l.length > 5);
+      if (hlBullets.length > 0) {
+        const d1Lines = cleanD1.split(/\r?\n/);
+        const filteredLines = d1Lines.filter((line) => {
+          const plain = line.replace(/<[^>]*>/g, '').replace(/^[•*\-#\s]+/, '').trim();
+          if (!plain) return true;
+          return !hlBullets.some((b) => b === plain || (plain.length > 25 && b.startsWith(plain)));
+        });
+        cleanD1 = filteredLines.join('\n').trim();
+      }
+    }
 
     if (!twitterUrl || !twitterUrl.trim()) cleanD1 = purgeSocialEmbedFromText(cleanD1, 'twitter');
     if (!youtubeUrl || !youtubeUrl.trim()) cleanD1 = purgeSocialEmbedFromText(cleanD1, 'youtube');
@@ -1415,7 +1430,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
 
     // Extract highlights block: handles ## header, dashed block, HTML wrappers, and plain text highlights
-    const hlHeaderRegex = /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?/i;
+    const hlHeaderRegex = /(?:^|\n)\s*(?:<p[^>]*>)?\s*(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*(?:<\/p>)?/i;
     const hlMatch = workingRaw.match(hlHeaderRegex);
 
     if (hlMatch && hlMatch.index !== undefined) {
@@ -1477,6 +1492,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             !/^[-*—_]{3,}$/.test(cleanText) &&
             !cleanText.includes('HIGHLIGHTS') &&
             !cleanText.includes('એક નજરમાં') &&
+            !cleanText.includes('એક નજર મેં') &&
             !cleanText.includes('एक नजर में') &&
             !cleanText.includes('AT A GLANCE')
           ) {
@@ -1510,14 +1526,14 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         }
       } else {
         // 3. Plain text / HTML heading fallback
-        const plainHlRegex = /^(?:<p[^>]*>)?\s*(?:📌|##)?\s*(?:એક નજરમાં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^<\n]*\s*(?:<\/p>)?[\s\r\n]*[-*—_]*[\s\r\n]*([\s\S]*?)(?:[-*—_]{3,}|(?=<h[1-6]|<p|<div|<!-- gp-section)|$)/i;
+        const plainHlRegex = /^(?:<p[^>]*>)?\s*(?:📌|##)?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^<\n]*\s*(?:<\/p>)?[\s\r\n]*[-*—_]*[\s\r\n]*([\s\S]*?)(?:[-*—_]{3,}|(?=<h[1-6]|<p|<div|<!-- gp-section)|$)/i;
         const plainHlMatch = workingRaw.match(plainHlRegex);
         if (plainHlMatch) {
           const cleanLines = plainHlMatch[1]
             .replace(/<[^>]*>/g, '\n')
             .split('\n')
             .map((l) => l.replace(/^[•*\-#\s]+/, '').trim())
-            .filter((l) => l && !/^[-*—_]{3,}$/.test(l) && !l.includes('HIGHLIGHTS') && !l.includes('એક નજરમાં') && !l.includes('एक नजर में') && !l.includes('AT A GLANCE'));
+            .filter((l) => l && !/^[-*—_]{3,}$/.test(l) && !l.includes('HIGHLIGHTS') && !l.includes('એક નજરમાં') && !l.includes('એક નજર મેં') && !l.includes('एक नजर में') && !l.includes('AT A GLANCE'));
           if (cleanLines.length > 0) {
             hl = cleanLines.map((l) => `• ${l}`).join('\n');
           }
@@ -1526,9 +1542,13 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       }
     }
 
+    // Strip any residual highlights from workingRaw before splitting into sections
+    workingRaw = stripHighlightsBlock(workingRaw);
+
     // Check if new structured section delimiters <!-- gp-section-N --> exist
     if (/<!--\s*gp-section-\d+[^>]*-->/.test(workingRaw)) {
       const parts = workingRaw.split(/<!--\s*gp-section-(\d+)(?:\s+pos=["']?(\w+)["']?)?\s*-->/);
+      d1Str = purgePdfFromText(parts[0].replace(/!\[(?:.*?)\]\((?:https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '').trim())
       d1Str = purgePdfFromText(parts[0].replace(/!\[(?:.*?)\]\((?:https?:\/\/[^\s)]+|\/uploads\/[^\s)]+|\/assets\/[^\s)]+)\)/gi, '').replace(/<!--\s*gp-section-\d+-hidden-image:[^>]*-->/gi, '').replace(/<!--\s*gp-primary-gallery:[\s\S]*?-->/gi, '').replace(/<!--\s*gp-photo-credit:[\s\S]*?-->/gi, '').trim())
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
@@ -1600,6 +1620,20 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
         .replace(/^[\s\r\n]*[-*—_]{3,}[\s\r\n]*/, '')
         .replace(/[\s\r\n]*[-*—_]{3,}[\s\r\n]*$/, '')
         .trim();
+    }
+
+    d1Str = stripHighlightsBlock(d1Str);
+    if (hl.trim()) {
+      const hlBullets = hl.split(/\r?\n/).map((l) => l.replace(/^[•*\-#\s]+/, '').trim()).filter((l) => l.length > 5);
+      if (hlBullets.length > 0) {
+        const d1Lines = d1Str.split(/\r?\n/);
+        const filteredLines = d1Lines.filter((line) => {
+          const plain = line.replace(/<[^>]*>/g, '').replace(/^[•*\-#\s]+/, '').trim();
+          if (!plain) return true;
+          return !hlBullets.some((b) => b === plain || (plain.length > 25 && b.startsWith(plain)));
+        });
+        d1Str = filteredLines.join('\n').trim();
+      }
     }
 
     return {
@@ -1717,6 +1751,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
             .replace(/#+/g, '')
             .replace(/\(KEY HIGHLIGHTS\)/gi, '')
             .replace(/એક નજરમાં/gi, '')
+            .replace(/એક નજર મેં/gi, '')
             .replace(/एक नजर में/gi, '')
             .replace(/AT A GLANCE/gi, '')
             .replace(/\s+/g, ' ')
@@ -4509,11 +4544,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                   key={preset}
                   type="button"
                   onClick={() => setPhotoCredit(preset)}
-                  className={`px-2 py-0.5 rounded-md border text-[11px] font-medium transition-colors cursor-pointer ${
-                    photoCredit === preset
-                      ? 'bg-red-50 text-red-700 border-red-400 dark:bg-red-950/50 dark:text-red-300 dark:border-red-700 font-bold'
-                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-700'
-                  }`}
+                  className={`px-2 py-0.5 rounded-md border text-[11px] font-medium transition-colors cursor-pointer ${photoCredit === preset
+                    ? 'bg-red-50 text-red-700 border-red-400 dark:bg-red-950/50 dark:text-red-300 dark:border-red-700 font-bold'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 dark:text-zinc-300 dark:border-zinc-700'
+                    }`}
                 >
                   + {preset}
                 </button>
@@ -4881,11 +4915,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setYoutubeMode('normal');
                         if (youtubeNormal) setYoutubeUrl(youtubeNormal);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        youtubeMode === 'normal'
-                          ? 'bg-red-600 text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${youtubeMode === 'normal'
+                        ? 'bg-red-600 text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       🔗 Normal Link
                     </button>
@@ -4895,11 +4928,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setYoutubeMode('embed');
                         if (youtubeEmbed) setYoutubeUrl(youtubeEmbed);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        youtubeMode === 'embed'
-                          ? 'bg-red-600 text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${youtubeMode === 'embed'
+                        ? 'bg-red-600 text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       📜 Embed Code
                     </button>
@@ -4982,11 +5014,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setTwitterMode('normal');
                         if (twitterNormal) setTwitterUrl(twitterNormal);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        twitterMode === 'normal'
-                          ? 'bg-sky-500 text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${twitterMode === 'normal'
+                        ? 'bg-sky-500 text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       🔗 Normal Link
                     </button>
@@ -4996,11 +5027,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setTwitterMode('embed');
                         if (twitterEmbed) setTwitterUrl(twitterEmbed);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        twitterMode === 'embed'
-                          ? 'bg-sky-500 text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${twitterMode === 'embed'
+                        ? 'bg-sky-500 text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       📜 Embed Code
                     </button>
@@ -5083,11 +5113,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setInstagramMode('normal');
                         if (instagramNormal) setInstagramUrl(instagramNormal);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        instagramMode === 'normal'
-                          ? 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${instagramMode === 'normal'
+                        ? 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       🔗 Normal Link
                     </button>
@@ -5097,11 +5126,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setInstagramMode('embed');
                         if (instagramEmbed) setInstagramUrl(instagramEmbed);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        instagramMode === 'embed'
-                          ? 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${instagramMode === 'embed'
+                        ? 'bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       📜 Embed Code
                     </button>
@@ -5184,11 +5212,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setFacebookMode('normal');
                         if (facebookNormal) setFacebookUrl(facebookNormal);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        facebookMode === 'normal'
-                          ? 'bg-[#1877F2] text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${facebookMode === 'normal'
+                        ? 'bg-[#1877F2] text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       🔗 Normal Link
                     </button>
@@ -5198,11 +5225,10 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                         setFacebookMode('embed');
                         if (facebookEmbed) setFacebookUrl(facebookEmbed);
                       }}
-                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                        facebookMode === 'embed'
-                          ? 'bg-[#1877F2] text-white shadow-xs'
-                          : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
-                      }`}
+                      className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${facebookMode === 'embed'
+                        ? 'bg-[#1877F2] text-white shadow-xs'
+                        : 'text-gray-700 dark:text-zinc-300 hover:text-gray-900 dark:hover:text-white'
+                        }`}
                     >
                       📜 Embed Code
                     </button>
@@ -5820,7 +5846,7 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     </span>
                   </div>
                 </div>
-              ) : featuredImage && (
+              ) : featuredImage ? (
                 <div className="space-y-2">
                   <div className="relative aspect-[16/9] w-full overflow-hidden rounded-2xl border border-gray-400 dark:border-zinc-700 bg-black shadow-md">
                     {featuredImage.match(/\.(mp4|webm|mov|m4v|avi)(\?.*)?$/i) ? (
@@ -5851,187 +5877,187 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
                     </span>
                   </div>
                 </div>
-              )}
+              ) : null}
 
-              {/* Highlights Box */}
-              {((contentLang === 'gu' ? highlightsGu : contentLang === 'hi' ? highlightsHi : highlights) || '').trim() && (
-                <div className="rounded-2xl border border-red-400 bg-red-50/50 p-4 dark:border-red-950/40 dark:bg-red-950/20 space-y-2">
-                  <h4 className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="h-4 w-4 text-red-500" />
-                    <span>📌 એક નજરમાં (KEY HIGHLIGHTS)</span>
-                  </h4>
-                  <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
-                    {renderFormattedPreviewContent(contentLang === 'gu' ? highlightsGu : contentLang === 'hi' ? highlightsHi : highlights)}
-                  </div>
-                </div>
-              )}
-
-              {/* Main Content (Desc 1) */}
-              {((contentLang === 'gu' ? desc1Gu : contentLang === 'hi' ? desc1Hi : desc1) || '').trim() && (
-                renderFormattedPreviewContent(contentLang === 'gu' ? desc1Gu : contentLang === 'hi' ? desc1Hi : desc1)
-              )}
-
-              {/* PDF Preview after Desc 1 */}
-              {pdfPosition === 'after_desc_1' && renderLivePreviewPdf()}
-
-              {/* Quote Box Preview */}
-              {((contentLang === 'gu' ? quoteTextGu : contentLang === 'hi' ? quoteTextHi : quoteText) || '').trim() && (
-                <blockquote className="my-6 border-l-[3px] border-red-600 pl-4 py-1 font-sans">
-                  <p className="text-lg md:text-[20px] font-bold text-zinc-900 dark:text-white leading-snug">
-                    "{(contentLang === 'gu' ? quoteTextGu : contentLang === 'hi' ? quoteTextHi : quoteText).replace(/^"/, '').replace(/"$/, '')}"
-                  </p>
-                  {((contentLang === 'gu' ? quoteCiteGu : contentLang === 'hi' ? quoteCiteHi : quoteCite) || '').trim() && (
-                    <footer className="mt-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
-                      — {(contentLang === 'gu' ? quoteCiteGu : contentLang === 'hi' ? quoteCiteHi : quoteCite)}
-                    </footer>
-                  )}
-                </blockquote>
-              )}
-
-              {/* Story Continuation Sections Preview (Sequential Description N & Image N) */}
-              {storySections.map((sec, idx) => {
-                const descVal = (contentLang === 'gu' ? sec.descGu : contentLang === 'hi' ? sec.descHi : sec.descEn) || '';
-                const hasDesc = Boolean(descVal.trim());
-                const hasImg = Boolean(sec.imageUrl && sec.imageUrl.trim());
-                const isBefore = sec.imagePlacement === 'before';
-                const isVisible = sec.showImageAfterDesc !== false;
-                if (!hasDesc && !hasImg) return null;
-
-                const imgPreviewNode = hasImg && isVisible && (
-                  <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
-                    <img
-                      src={sanitizeImageUrl(sec.imageUrl)}
-                      alt={`Story section ${idx + 2} preview`}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                );
-
-                return (
-                  <div key={sec.id || idx} className="space-y-4 pt-2">
-                    {hasImg && isBefore && imgPreviewNode}
-                    {hasDesc && (
-                      <div className="border-t border-gray-300 pt-4 dark:border-zinc-700">
-                        {renderFormattedPreviewContent(descVal)}
+                  {/* Highlights Box */}
+                  {((contentLang === 'gu' ? highlightsGu : contentLang === 'hi' ? highlightsHi : highlights) || '').trim() && (
+                    <div className="rounded-2xl border border-red-400 bg-red-50/50 p-4 dark:border-red-950/40 dark:bg-red-950/20 space-y-2">
+                      <h4 className="text-xs font-black text-red-700 dark:text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <Sparkles className="h-4 w-4 text-red-500" />
+                        <span>📌 એક નજરમાં (KEY HIGHLIGHTS)</span>
+                      </h4>
+                      <div className="text-sm font-medium text-zinc-800 dark:text-zinc-200 leading-relaxed">
+                        {renderFormattedPreviewContent(contentLang === 'gu' ? highlightsGu : contentLang === 'hi' ? highlightsHi : highlights)}
                       </div>
-                    )}
-                    {hasImg && !isBefore && imgPreviewNode}
+                    </div>
+                  )}
 
-                    {/* PDF Preview after this Story Section */}
-                    {pdfPosition === `after_desc_${idx + 2}` && renderLivePreviewPdf()}
-                  </div>
-                );
-              })}
+                  {/* Main Content (Desc 1) */}
+                  {((contentLang === 'gu' ? desc1Gu : contentLang === 'hi' ? desc1Hi : desc1) || '').trim() && (
+                    renderFormattedPreviewContent(contentLang === 'gu' ? desc1Gu : contentLang === 'hi' ? desc1Hi : desc1)
+                  )}
 
-              <ArticleSocialPreview input={youtubeUrl} platform="youtube" />
-              <ArticleSocialPreview input={twitterUrl} platform="twitter" />
-              <ArticleSocialPreview input={instagramUrl} platform="instagram" />
-              <ArticleSocialPreview input={facebookUrl} platform="facebook" />
+                  {/* PDF Preview after Desc 1 */}
+                  {pdfPosition === 'after_desc_1' && renderLivePreviewPdf()}
 
-              {/* PDF Document Attachment Preview (At End of Article) */}
-              {(pdfPosition === 'end' || !pdfPosition) && renderLivePreviewPdf()}
+                  {/* Quote Box Preview */}
+                  {((contentLang === 'gu' ? quoteTextGu : contentLang === 'hi' ? quoteTextHi : quoteText) || '').trim() && (
+                    <blockquote className="my-6 border-l-[3px] border-red-600 pl-4 py-1 font-sans">
+                      <p className="text-lg md:text-[20px] font-bold text-zinc-900 dark:text-white leading-snug">
+                        "{(contentLang === 'gu' ? quoteTextGu : contentLang === 'hi' ? quoteTextHi : quoteText).replace(/^"/, '').replace(/"$/, '')}"
+                      </p>
+                      {((contentLang === 'gu' ? quoteCiteGu : contentLang === 'hi' ? quoteCiteHi : quoteCite) || '').trim() && (
+                        <footer className="mt-2 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+                          — {(contentLang === 'gu' ? quoteCiteGu : contentLang === 'hi' ? quoteCiteHi : quoteCite)}
+                        </footer>
+                      )}
+                    </blockquote>
+                  )}
 
-            </div>
+                  {/* Story Continuation Sections Preview (Sequential Description N & Image N) */}
+                  {storySections.map((sec, idx) => {
+                    const descVal = (contentLang === 'gu' ? sec.descGu : contentLang === 'hi' ? sec.descHi : sec.descEn) || '';
+                    const hasDesc = Boolean(descVal.trim());
+                    const hasImg = Boolean(sec.imageUrl && sec.imageUrl.trim());
+                    const isBefore = sec.imagePlacement === 'before';
+                    const isVisible = sec.showImageAfterDesc !== false;
+                    if (!hasDesc && !hasImg) return null;
+
+                    const imgPreviewNode = hasImg && isVisible && (
+                      <div className="relative aspect-[16/9] w-full max-w-xl overflow-hidden rounded-xl border border-gray-400 bg-black dark:border-zinc-700 shadow-sm mx-auto">
+                        <img
+                          src={sanitizeImageUrl(sec.imageUrl)}
+                          alt={`Story section ${idx + 2} preview`}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                    );
+
+                    return (
+                      <div key={sec.id || idx} className="space-y-4 pt-2">
+                        {hasImg && isBefore && imgPreviewNode}
+                        {hasDesc && (
+                          <div className="border-t border-gray-300 pt-4 dark:border-zinc-700">
+                            {renderFormattedPreviewContent(descVal)}
+                          </div>
+                        )}
+                        {hasImg && !isBefore && imgPreviewNode}
+
+                        {/* PDF Preview after this Story Section */}
+                        {pdfPosition === `after_desc_${idx + 2}` && renderLivePreviewPdf()}
+                      </div>
+                    );
+                  })}
+
+                  <ArticleSocialPreview input={youtubeUrl} platform="youtube" />
+                  <ArticleSocialPreview input={twitterUrl} platform="twitter" />
+                  <ArticleSocialPreview input={instagramUrl} platform="instagram" />
+                  <ArticleSocialPreview input={facebookUrl} platform="facebook" />
+
+                  {/* PDF Document Attachment Preview (At End of Article) */}
+                  {(pdfPosition === 'end' || !pdfPosition) && renderLivePreviewPdf()}
+
+                </div>
 
             {/* Modal Footer */}
-            <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
-              <span className="text-xs font-mono text-zinc-400">Slug: /{slug || 'preview-news'}</span>
-              <button
-                type="button"
-                onClick={() => setShowLivePreview(false)}
-                className="rounded-xl bg-zinc-900 px-5 py-2 text-xs font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 transition-all cursor-pointer"
-              >
-                Close Preview
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Custom City / Location Creation Modal */}
-      {showCustomLocModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in-50 duration-150">
-          <div
-            className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400">
-                  <Plus className="h-5 w-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">Add Custom City / Location</h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Saved permanently for all future articles</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCustomLocModal(false)}
-                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (!customLocInputName.trim()) return;
-                handleCreateCustomLocation(customLocInputName, customLocInputSublabel);
-                setShowCustomLocModal(false);
-              }}
-              className="mt-4 space-y-4"
-            >
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-1">
-                  City / Location Name (In English) <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  autoFocus
-                  value={customLocInputName}
-                  onChange={(e) => setCustomLocInputName(e.target.value)}
-                  placeholder="e.g. Patan, Deesa, Mandvi, Sydney"
-                  className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-1">
-                  Regional / Gujarati Label <span className="text-xs text-zinc-400 font-normal">(Optional)</span>
-                </label>
-                <input
-                  type="text"
-                  value={customLocInputSublabel}
-                  onChange={(e) => setCustomLocInputSublabel(e.target.value)}
-                  placeholder="e.g. પાટણ, ડીસા"
-                  className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
+              <div className="flex items-center justify-between border-t border-gray-400 pt-4 dark:border-zinc-700">
+                <span className="text-xs font-mono text-zinc-400">Slug: /{slug || 'preview-news'}</span>
                 <button
                   type="button"
-                  onClick={() => setShowCustomLocModal(false)}
-                  className="px-4 py-2 rounded-xl border border-gray-300 dark:border-zinc-700 text-xs font-semibold text-gray-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                  onClick={() => setShowLivePreview(false)}
+                  className="rounded-xl bg-zinc-900 px-5 py-2 text-xs font-bold text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 transition-all cursor-pointer"
                 >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!customLocInputName.trim()}
-                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  + Add & Select Location
+                  Close Preview
                 </button>
               </div>
-            </form>
+
+            </div>
           </div>
-        </div>
       )}
-    </div>
-  );
+
+          {/* Custom City / Location Creation Modal */}
+          {showCustomLocModal && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in-50 duration-150">
+              <div
+                className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-900 animate-in zoom-in-95 duration-150"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-200 dark:border-zinc-800">
+                  <div className="flex items-center gap-2.5">
+                    <div className="p-2 rounded-xl bg-red-50 text-red-600 dark:bg-red-950/50 dark:text-red-400">
+                      <Plus className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-gray-900 dark:text-zinc-100">Add Custom City / Location</h3>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400">Saved permanently for all future articles</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomLocModal(false)}
+                    className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!customLocInputName.trim()) return;
+                    handleCreateCustomLocation(customLocInputName, customLocInputSublabel);
+                    setShowCustomLocModal(false);
+                  }}
+                  className="mt-4 space-y-4"
+                >
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-1">
+                      City / Location Name (In English) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      autoFocus
+                      value={customLocInputName}
+                      onChange={(e) => setCustomLocInputName(e.target.value)}
+                      placeholder="e.g. Patan, Deesa, Mandvi, Sydney"
+                      className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 dark:text-zinc-300 mb-1">
+                      Regional / Gujarati Label <span className="text-xs text-zinc-400 font-normal">(Optional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={customLocInputSublabel}
+                      onChange={(e) => setCustomLocInputSublabel(e.target.value)}
+                      placeholder="e.g. પાટણ, ડીસા"
+                      className="w-full rounded-xl border border-gray-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-950 px-3.5 py-2.5 text-sm font-medium text-gray-900 dark:text-zinc-100 focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowCustomLocModal(false)}
+                      className="px-4 py-2 rounded-xl border border-gray-300 dark:border-zinc-700 text-xs font-semibold text-gray-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!customLocInputName.trim()}
+                      className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-sm hover:shadow cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      + Add & Select Location
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+        </div>
+      );
 }

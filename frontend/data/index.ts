@@ -1963,23 +1963,13 @@ export const getArticleContent = (article: Article, language: Language) => {
 
 
 
+  const cleanPref = (preferred || '').trim();
+  if (cleanPref && cleanPref !== 'Gujarat Post news flash.' && cleanPref.length > 30) {
+    return cleanLiteralEscapeSequences(cleanPref);
+  }
+
   const richest = available.reduce((best, entry) => (entry.score > best.score ? entry : best), available[0]);
-
-
-
-  const preferredScore = getContentScore(preferred);
-
-
-
-
-
-
-
-  const selected = preferredScore >= richest.score * 0.6 ? preferred : richest.content;
-
-
-
-  return cleanLiteralEscapeSequences(selected);
+  return cleanLiteralEscapeSequences(richest.content);
 
 
 
