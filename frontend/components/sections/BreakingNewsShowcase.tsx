@@ -97,6 +97,125 @@ function renderHighlightedHeadline(text: string) {
 }
 
 /**
+ * High-definition vector TV studio background layer:
+ * Includes the radial red background glow, volumetric light cones, razor-sharp diagonal laser lines,
+ * high-contrast crimson dotted world map, and blazing anamorphic horizontal lens flares.
+ */
+function TvStudioVectorBackground() {
+  return (
+    <div className="absolute inset-0 pointer-events-none select-none z-0">
+      <svg viewBox="0 0 1024 512" preserveAspectRatio="none" className="w-full h-full">
+        <defs>
+          {/* Background Crimson Studio Gradient */}
+          <radialGradient id="tvBgGlow" cx="50%" cy="15%" r="75%">
+            <stop offset="0%" stopColor="#cc0000" stopOpacity="0.9" />
+            <stop offset="45%" stopColor="#800000" stopOpacity="0.95" />
+            <stop offset="100%" stopColor="#280000" stopOpacity="1" />
+          </radialGradient>
+
+          {/* Top-Left Corner Radial Flare */}
+          <radialGradient id="cornerFlare" cx="0%" cy="0%" r="55%">
+            <stop offset="0%" stopColor="#ff4d4d" stopOpacity="0.9" />
+            <stop offset="40%" stopColor="#cc1100" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#800000" stopOpacity="0" />
+          </radialGradient>
+
+          {/* Anamorphic Lens Flare Horizontal Gradient */}
+          <linearGradient id="flareLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ff3300" stopOpacity="0" />
+            <stop offset="25%" stopColor="#ff6600" stopOpacity="0.85" />
+            <stop offset="48%" stopColor="#ffe6aa" stopOpacity="1" />
+            <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="52%" stopColor="#ffe6aa" stopOpacity="1" />
+            <stop offset="75%" stopColor="#ff6600" stopOpacity="0.85" />
+            <stop offset="100%" stopColor="#ff3300" stopOpacity="0" />
+          </linearGradient>
+
+          {/* Diagonal Laser Line Gradient */}
+          <linearGradient id="laserGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
+            <stop offset="35%" stopColor="#ff8888" stopOpacity="0.85" />
+            <stop offset="75%" stopColor="#ff2200" stopOpacity="0.55" />
+            <stop offset="100%" stopColor="#990000" stopOpacity="0" />
+          </linearGradient>
+
+          {/* Volumetric Laser Beam Soft Gradient */}
+          <linearGradient id="beamGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#ff4444" stopOpacity="0.55" />
+            <stop offset="50%" stopColor="#ff1100" stopOpacity="0.25" />
+            <stop offset="100%" stopColor="#660000" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* 1. Base Studio Gradient Fill */}
+        <rect width="1024" height="512" fill="url(#tvBgGlow)" />
+        <rect width="1024" height="512" fill="url(#cornerFlare)" />
+
+        {/* 2. DIAGONAL LIGHT STREAKS / LASER BEAMS (Top-Left) */}
+        {/* Volumetric Light Cones */}
+        <polygon points="0,0 260,0 460,260 0,260" fill="url(#beamGrad)" />
+        <polygon points="0,0 180,0 360,280 0,180" fill="url(#beamGrad)" opacity="0.6" />
+
+        {/* Razor-sharp Diagonal Laser Lines */}
+        <line x1="0" y1="15" x2="380" y2="395" stroke="url(#laserGrad)" strokeWidth="4.5" strokeLinecap="round" />
+        <line x1="15" y1="0" x2="440" y2="425" stroke="#ffffff" strokeWidth="2.5" strokeOpacity="0.95" strokeLinecap="round" />
+        <line x1="60" y1="0" x2="490" y2="430" stroke="#ff8888" strokeWidth="3" strokeOpacity="0.85" strokeLinecap="round" />
+        <line x1="120" y1="0" x2="520" y2="400" stroke="#ff3b30" strokeWidth="5" strokeOpacity="0.8" strokeLinecap="round" />
+        <line x1="180" y1="0" x2="540" y2="360" stroke="#ff2200" strokeWidth="2.5" strokeOpacity="0.65" strokeLinecap="round" />
+
+        {/* 3. DOTTED WORLD MAP (Top-Right - High-Contrast Visible Dots) */}
+        <g fill="#ff4d4d">
+          {/* North America */}
+          <circle cx="760" cy="25" r="2.5" /><circle cx="768" cy="22" r="2.5" /><circle cx="776" cy="20" r="2.5" /><circle cx="784" cy="22" r="2.5" /><circle cx="792" cy="26" r="2.5" />
+          <circle cx="762" cy="34" r="2.5" /><circle cx="770" cy="32" r="2.5" /><circle cx="778" cy="30" r="2.5" /><circle cx="786" cy="32" r="2.5" /><circle cx="794" cy="36" r="2.5" />
+          <circle cx="766" cy="44" r="2.5" /><circle cx="774" cy="42" r="2.5" /><circle cx="782" cy="42" r="2.5" /><circle cx="790" cy="46" r="2.5" />
+          <circle cx="776" cy="54" r="2.5" /><circle cx="784" cy="56" r="2.5" /><circle cx="790" cy="66" r="2.5" /><circle cx="794" cy="76" r="2.5" />
+          {/* South America */}
+          <circle cx="796" cy="86" r="2.5" /><circle cx="804" cy="88" r="2.5" /><circle cx="812" cy="90" r="2.5" />
+          <circle cx="798" cy="96" r="2.5" /><circle cx="806" cy="98" r="2.5" /><circle cx="814" cy="100" r="2.5" />
+          <circle cx="802" cy="106" r="2.5" /><circle cx="810" cy="108" r="2.5" /><circle cx="806" cy="116" r="2.5" />
+          {/* Europe */}
+          <circle cx="830" cy="20" r="2.5" /><circle cx="838" cy="18" r="2.5" /><circle cx="846" cy="18" r="2.5" /><circle cx="854" cy="20" r="2.5" /><circle cx="862" cy="22" r="2.5" />
+          <circle cx="828" cy="28" r="2.5" /><circle cx="836" cy="28" r="2.5" /><circle cx="844" cy="28" r="2.5" /><circle cx="852" cy="30" r="2.5" /><circle cx="860" cy="32" r="2.5" />
+          {/* Africa */}
+          <circle cx="832" cy="40" r="2.5" /><circle cx="840" cy="40" r="2.5" /><circle cx="848" cy="42" r="2.5" /><circle cx="856" cy="44" r="2.5" />
+          <circle cx="834" cy="50" r="2.5" /><circle cx="842" cy="52" r="2.5" /><circle cx="850" cy="54" r="2.5" /><circle cx="858" cy="54" r="2.5" />
+          <circle cx="838" cy="62" r="2.5" /><circle cx="846" cy="64" r="2.5" /><circle cx="854" cy="64" r="2.5" />
+          <circle cx="842" cy="74" r="2.5" /><circle cx="850" cy="74" r="2.5" /><circle cx="846" cy="84" r="2.5" />
+          {/* Russia & Asia */}
+          <circle cx="870" cy="16" r="2.5" /><circle cx="878" cy="16" r="2.5" /><circle cx="886" cy="18" r="2.5" /><circle cx="894" cy="18" r="2.5" /><circle cx="902" cy="20" r="2.5" /><circle cx="910" cy="20" r="2.5" /><circle cx="918" cy="22" r="2.5" /><circle cx="926" cy="24" r="2.5" />
+          <circle cx="872" cy="26" r="2.5" /><circle cx="880" cy="26" r="2.5" /><circle cx="888" cy="28" r="2.5" /><circle cx="896" cy="28" r="2.5" /><circle cx="904" cy="30" r="2.5" /><circle cx="912" cy="32" r="2.5" /><circle cx="920" cy="34" r="2.5" /><circle cx="928" cy="36" r="2.5" />
+          <circle cx="874" cy="36" r="2.5" /><circle cx="882" cy="38" r="2.5" /><circle cx="890" cy="38" r="2.5" /><circle cx="898" cy="40" r="2.5" /><circle cx="906" cy="42" r="2.5" /><circle cx="914" cy="44" r="2.5" />
+          {/* Middle East & India */}
+          <circle cx="866" cy="46" r="2.5" /><circle cx="874" cy="48" r="2.5" /><circle cx="882" cy="50" r="2.5" /><circle cx="890" cy="52" r="2.5" />
+          <circle cx="878" cy="58" r="2.5" /><circle cx="886" cy="62" r="2.5" /><circle cx="894" cy="62" r="2.5" /><circle cx="888" cy="72" r="2.5" />
+          {/* East Asia & SE Asia */}
+          <circle cx="918" cy="46" r="2.5" /><circle cx="926" cy="48" r="2.5" /><circle cx="934" cy="50" r="2.5" /><circle cx="942" cy="52" r="2.5" />
+          <circle cx="912" cy="56" r="2.5" /><circle cx="920" cy="58" r="2.5" /><circle cx="928" cy="62" r="2.5" />
+          {/* Australia */}
+          <circle cx="924" cy="86" r="2.5" /><circle cx="932" cy="86" r="2.5" /><circle cx="940" cy="88" r="2.5" /><circle cx="948" cy="90" r="2.5" />
+          <circle cx="922" cy="96" r="2.5" /><circle cx="930" cy="96" r="2.5" /><circle cx="938" cy="98" r="2.5" /><circle cx="946" cy="100" r="2.5" />
+          <circle cx="926" cy="106" r="2.5" /><circle cx="934" cy="106" r="2.5" /><circle cx="942" cy="108" r="2.5" />
+        </g>
+
+        {/* 4. BLAZING ANAMORPHIC LENS FLARES (Top & Bottom of Inner Box) */}
+        {/* Top Border Flare */}
+        <line x1="80" y1="130" x2="944" y2="130" stroke="url(#flareLineGrad)" strokeWidth="3" />
+        <ellipse cx="512" cy="130" rx="90" ry="4" fill="#ffffff" opacity="0.95" />
+        <circle cx="512" cy="130" r="8" fill="#ffffff" />
+        <ellipse cx="512" cy="130" rx="160" ry="10" fill="#ff7700" opacity="0.75" />
+
+        {/* Bottom Border Flare */}
+        <line x1="80" y1="465" x2="944" y2="465" stroke="url(#flareLineGrad)" strokeWidth="3" />
+        <ellipse cx="512" cy="465" rx="90" ry="4" fill="#ffffff" opacity="0.95" />
+        <circle cx="512" cy="465" r="8" fill="#ffffff" />
+        <ellipse cx="512" cy="465" rx="160" ry="10" fill="#ff7700" opacity="0.75" />
+      </svg>
+    </div>
+  );
+}
+
+/**
  * Renders the prominent 3D television-news-style header badge:
  * Skewed container, glossy bevel, red pill for BREAKING (with white bold italic text),
  * and white pill for NEWS (with dark bold italic text).
@@ -109,11 +228,13 @@ function renderTvBreakingHeader(badgeText: string) {
 
   return (
     <div className="relative inline-flex items-center justify-center select-none">
+      {/* Deep Ambient Occlusion Shadow casting down onto the card */}
+      <div className="absolute -bottom-4 inset-x-4 h-12 bg-black/90 blur-xl rounded-full pointer-events-none" />
       {/* Background ambient red glow */}
       <div className="absolute inset-0 bg-[#ff2000]/85 blur-xl rounded-2xl scale-125 pointer-events-none" />
 
       {/* 3D Skewed Television News Badge */}
-      <div className="relative flex items-center overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[22px] shadow-[0_12px_35px_rgba(0,0,0,0.95),0_0_25px_rgba(255,40,40,0.6)] border border-white/50 transform -skew-x-12">
+      <div className="relative flex items-center overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[22px] shadow-[0_16px_40px_rgba(0,0,0,0.95),0_0_25px_rgba(255,40,40,0.6)] border border-white/50 transform -skew-x-12">
         {/* BREAKING (Red) */}
         <div className="relative bg-gradient-to-b from-[#ff3322] via-[#cc1108] to-[#7a0600] text-white font-black italic tracking-wider text-xl sm:text-3xl md:text-4xl lg:text-[44px] px-6 sm:px-10 md:px-12 py-1.5 sm:py-2 md:py-2.5 flex items-center justify-center">
           {/* Top Gloss Highlight */}
@@ -138,54 +259,6 @@ function renderTvBreakingHeader(badgeText: string) {
   );
 }
 
-/**
- * Dotted world map overlay in television broadcast ruby/red, rendered in the top-right quadrant.
- */
-function DottedWorldMap() {
-  return (
-    <div className="pointer-events-none absolute top-2 right-2 sm:right-6 md:right-8 w-56 sm:w-72 md:w-88 h-28 sm:h-36 md:h-44 opacity-60 select-none overflow-hidden">
-      <svg viewBox="0 0 320 160" className="w-full h-full fill-[#ff4444]">
-        <defs>
-          <pattern id="worldDotsPattern" width="4.5" height="4.5" patternUnits="userSpaceOnUse">
-            <circle cx="2.25" cy="2.25" r="1.35" fill="rgba(255, 75, 75, 0.95)" />
-          </pattern>
-        </defs>
-        <g fill="url(#worldDotsPattern)">
-          {/* Eurasia & Europe */}
-          <path d="M130,22 Q150,12 180,20 Q220,12 250,20 Q275,30 265,52 Q245,62 230,52 Q210,62 195,48 Q175,62 155,52 Q135,42 130,22 Z" />
-          {/* Middle East & India */}
-          <path d="M175,42 Q190,38 205,45 Q215,62 200,78 Q190,82 185,72 Q175,62 175,42 Z" />
-          {/* East Asia & SE Asia */}
-          <path d="M215,42 Q245,32 260,48 Q265,72 245,82 Q225,78 215,62 Z" />
-          {/* Africa */}
-          <path d="M140,52 Q165,48 175,62 Q175,92 160,112 Q145,112 135,88 Q130,72 140,52 Z" />
-          {/* Australia */}
-          <path d="M245,92 Q275,88 280,102 Q275,122 255,122 Q240,112 245,92 Z" />
-          {/* Americas background */}
-          <path d="M30,22 Q60,12 75,32 Q65,58 50,52 Q35,68 30,48 Z" />
-          <path d="M55,72 Q75,68 80,88 Q75,118 60,118 Q50,98 55,72 Z" />
-        </g>
-      </svg>
-    </div>
-  );
-}
-
-/**
- * Diagonal red light streaks across the top-left area.
- */
-function DiagonalLightStreaks() {
-  return (
-    <div className="pointer-events-none absolute -top-16 -left-16 w-96 h-96 overflow-hidden select-none">
-      {/* Broad ambient red beam */}
-      <div className="absolute -top-10 -left-10 w-[600px] h-36 bg-gradient-to-r from-transparent via-[#ff2200]/50 to-transparent transform -rotate-45 blur-xl" />
-      {/* Laser-sharp bright light streaks */}
-      <div className="absolute top-8 -left-8 w-[550px] h-[3.5px] bg-gradient-to-r from-transparent via-white via-[#ff7777] to-transparent transform -rotate-45 blur-[0.4px]" />
-      <div className="absolute top-18 -left-8 w-[580px] h-[2.5px] bg-gradient-to-r from-transparent via-[#ffbbbb]/90 to-transparent transform -rotate-45 blur-[0.6px]" />
-      <div className="absolute top-32 -left-8 w-[600px] h-[5px] bg-gradient-to-r from-transparent via-[#ff3b30]/75 to-transparent transform -rotate-45 blur-xs" />
-    </div>
-  );
-}
-
 function getBadgeForLang(raw: string, lang: Language): string {
   const t = (raw || '').trim();
   const lower = t.toLowerCase();
@@ -194,7 +267,7 @@ function getBadgeForLang(raw: string, lang: Language): string {
     return 'BREAKING NEWS';
   }
   if (t === 'બ્રેકિંગ ન્યૂઝ') {
-    if (lang === 'hi') return 'ब्रेકિંગ न्यूज़';
+    if (lang === 'hi') return 'ब्रेकिंग न्यूज़';
     if (lang === 'en') return 'BREAKING NEWS';
     return 'બ્રેકિંગ ન્યૂઝ';
   }
@@ -445,38 +518,18 @@ export default function BreakingNewsShowcase({
       {/* ══════════════════════════════════════════════════════════════════════
            PREMIUM TV NEWS BREAKING BANNER (Exact Match to User Reference Graphic)
            ══════════════════════════════════════════════════════════════════════ */}
-      <div className="relative w-full overflow-hidden rounded-2xl md:rounded-[28px] bg-gradient-to-b from-[#A00000] via-[#6b0000] to-[#2c0000] p-3 sm:p-5 md:p-6 lg:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(220,0,0,0.45)] border border-[#ff4444]/60">
+      <div className="relative w-full overflow-hidden rounded-2xl md:rounded-[30px] bg-[#750000] p-3 sm:p-5 md:p-6 lg:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.95)] border border-[#ff4444]/60">
 
-        {/* ─── 1. TV STUDIO BACKGROUND LIGHTING ─── */}
-        {/* Center Radiant Ambient Glow */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_10%,rgba(255,50,50,0.7)_0%,transparent_75%)]" />
+        {/* ─── 1. VECTOR TV STUDIO BACKGROUND LAYER (Laser Streaks, World Map, Flares) ─── */}
+        <TvStudioVectorBackground />
 
-        {/* Top-Left Corner Radiant Flare */}
-        <div className="pointer-events-none absolute -top-16 -left-16 w-96 h-96 bg-[radial-gradient(circle_at_20%_20%,rgba(255,80,60,0.75)_0%,transparent_60%)]" />
-
-        {/* Diagonal Red Light Streaks (Top Left) */}
-        <DiagonalLightStreaks />
-
-        {/* Dotted World Map (Top Right) */}
-        <DottedWorldMap />
-
-        {/* ─── 2. TOP HEADER BADGE (Large Prominent 3D Skewed BREAKING NEWS) ─── */}
+        {/* ─── 2. TOP HEADER BADGE (With Deep TV News Broadcast Drop Shadow) ─── */}
         <div className="relative z-20 flex justify-center mb-3 sm:mb-4 md:mb-5">
           {renderTvBreakingHeader(displayedBadge)}
         </div>
 
-        {/* ─── 3. MAIN INNER CONTENT CARD (Rich Deep Crimson Studio Interior + Blazing Lens Flares) ─── */}
-        <div className="relative w-full rounded-xl sm:rounded-2xl md:rounded-[24px] border-[2px] border-[#ff3b30] bg-gradient-to-br from-[#400002] via-[#240001] to-[#120000] p-3.5 sm:p-5 md:p-6 lg:p-7 shadow-[0_0_35px_rgba(255,30,30,0.5),inset_0_0_25px_rgba(255,0,0,0.3)] z-10">
-
-          {/* Top Border Blazing Anamorphic Horizontal Light Flare */}
-          <div className="pointer-events-none absolute -top-[2px] left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#ff9900] via-white via-[#ff9900] to-transparent shadow-[0_0_15px_#ff6600]" />
-          <div className="pointer-events-none absolute -top-[6px] left-1/2 -translate-x-1/2 w-36 sm:w-56 h-[12px] bg-white blur-[3px] rounded-full" />
-          <div className="pointer-events-none absolute -top-[12px] left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[24px] bg-[#ff6600]/60 blur-[10px] rounded-full" />
-
-          {/* Bottom Border Blazing Anamorphic Horizontal Light Flare */}
-          <div className="pointer-events-none absolute -bottom-[2px] left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#ff9900] via-white via-[#ff9900] to-transparent shadow-[0_0_15px_#ff6600]" />
-          <div className="pointer-events-none absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-36 sm:w-56 h-[12px] bg-white blur-[3px] rounded-full" />
-          <div className="pointer-events-none absolute -bottom-[12px] left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[24px] bg-[#ff6600]/60 blur-[10px] rounded-full" />
+        {/* ─── 3. MAIN INNER CONTENT CARD (Deep Crimson Background + Glowing Red Border) ─── */}
+        <div className="relative w-full rounded-xl sm:rounded-2xl md:rounded-[24px] border-[2px] border-[#ff3b30] bg-gradient-to-br from-[#3b0002]/95 via-[#220001]/95 to-[#100000]/95 p-3.5 sm:p-5 md:p-6 lg:p-7 shadow-[0_15px_50px_rgba(0,0,0,0.9),inset_0_0_30px_rgba(0,0,0,0.85)] z-10 backdrop-blur-xs">
 
           {/* Two-Column Layout (Media Left ~45% / Text Right ~55%) */}
           <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-7 lg:gap-8">
@@ -484,7 +537,7 @@ export default function BreakingNewsShowcase({
             {/* ── LEFT SECTION: News Image / Media (Approx 45%) ── */}
             {hasImage && (
               <div className="w-full md:w-[45%] lg:w-[45%] shrink-0">
-                <div className="relative w-full h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px] rounded-xl sm:rounded-2xl border-[3px] border-white shadow-[0_10px_35px_rgba(0,0,0,0.95)] overflow-hidden bg-black flex items-center justify-center">
+                <div className="relative w-full h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px] rounded-xl sm:rounded-2xl border-[3px] border-white shadow-[0_12px_40px_rgba(0,0,0,0.95)] overflow-hidden bg-black flex items-center justify-center">
                   {activeSlides.map((slide, sIdx) => {
                     const slideImgs = (Array.isArray(slide.images) && slide.images.length > 0)
                       ? slide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
