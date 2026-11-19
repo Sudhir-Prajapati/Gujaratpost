@@ -67,7 +67,7 @@ interface BreakingNewsShowcaseProps {
 
 /**
  * Formats broadcast headlines by highlighting numbers, currencies, percentages,
- * and quoted phrases in brilliant golden yellow (#FFD700) matching professional TV news graphics.
+ * and quoted phrases in brilliant golden yellow (#FFE600) matching professional TV news graphics.
  */
 function renderHighlightedHeadline(text: string) {
   if (!text) return null;
@@ -86,7 +86,7 @@ function renderHighlightedHeadline(text: string) {
       return (
         <span
           key={index}
-          className="text-[#FFD700] drop-shadow-[0_0_10px_rgba(255,215,0,0.65)] font-black"
+          className="text-[#FFE600] drop-shadow-[0_0_15px_rgba(255,230,0,0.75)] font-black"
         >
           {part}
         </span>
@@ -110,22 +110,22 @@ function renderTvBreakingHeader(badgeText: string) {
   return (
     <div className="relative inline-flex items-center justify-center select-none">
       {/* Background ambient red glow */}
-      <div className="absolute inset-0 bg-[#ff2000]/75 blur-lg rounded-2xl scale-110 pointer-events-none" />
+      <div className="absolute inset-0 bg-[#ff2000]/85 blur-xl rounded-2xl scale-125 pointer-events-none" />
 
       {/* 3D Skewed Television News Badge */}
-      <div className="relative flex items-center overflow-hidden rounded-xl sm:rounded-2xl shadow-[0_8px_25px_rgba(0,0,0,0.85),0_0_15px_rgba(255,40,40,0.5)] border border-white/40 transform -skew-x-12">
+      <div className="relative flex items-center overflow-hidden rounded-xl sm:rounded-2xl md:rounded-[22px] shadow-[0_12px_35px_rgba(0,0,0,0.95),0_0_25px_rgba(255,40,40,0.6)] border border-white/50 transform -skew-x-12">
         {/* BREAKING (Red) */}
-        <div className="relative bg-gradient-to-b from-[#ff3322] via-[#cc1108] to-[#7a0600] text-white font-black italic tracking-wider text-base sm:text-xl md:text-2xl lg:text-[28px] px-4 sm:px-7 md:px-8 py-1 sm:py-1.5 flex items-center justify-center">
+        <div className="relative bg-gradient-to-b from-[#ff3322] via-[#cc1108] to-[#7a0600] text-white font-black italic tracking-wider text-xl sm:text-3xl md:text-4xl lg:text-[44px] px-6 sm:px-10 md:px-12 py-1.5 sm:py-2 md:py-2.5 flex items-center justify-center">
           {/* Top Gloss Highlight */}
           <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/45 to-transparent pointer-events-none" />
-          <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)] uppercase transform skew-x-12">
+          <span className="relative z-10 drop-shadow-[0_2px_4px_rgba(0,0,0,0.95)] uppercase transform skew-x-12">
             {firstWord}
           </span>
         </div>
 
         {/* NEWS (White) */}
         {restWord ? (
-          <div className="relative bg-gradient-to-b from-white via-zinc-100 to-zinc-200 text-zinc-950 font-black italic tracking-wider text-base sm:text-xl md:text-2xl lg:text-[28px] px-4 sm:px-7 md:px-8 py-1 sm:py-1.5 flex items-center justify-center border-l-2 border-black/15">
+          <div className="relative bg-gradient-to-b from-white via-zinc-100 to-zinc-200 text-zinc-950 font-black italic tracking-wider text-xl sm:text-3xl md:text-4xl lg:text-[44px] px-6 sm:px-10 md:px-12 py-1.5 sm:py-2 md:py-2.5 flex items-center justify-center border-l-2 border-black/15">
             {/* Top Gloss Highlight */}
             <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/95 to-transparent pointer-events-none" />
             <span className="relative z-10 drop-shadow-[0_1px_1px_rgba(0,0,0,0.25)] uppercase transform skew-x-12">
@@ -143,11 +143,11 @@ function renderTvBreakingHeader(badgeText: string) {
  */
 function DottedWorldMap() {
   return (
-    <div className="pointer-events-none absolute top-1 right-2 sm:right-6 w-48 sm:w-64 md:w-76 h-24 sm:h-32 opacity-40 select-none overflow-hidden">
-      <svg viewBox="0 0 320 160" className="w-full h-full fill-[#ff4d4d]">
+    <div className="pointer-events-none absolute top-2 right-2 sm:right-6 md:right-8 w-56 sm:w-72 md:w-88 h-28 sm:h-36 md:h-44 opacity-60 select-none overflow-hidden">
+      <svg viewBox="0 0 320 160" className="w-full h-full fill-[#ff4444]">
         <defs>
           <pattern id="worldDotsPattern" width="4.5" height="4.5" patternUnits="userSpaceOnUse">
-            <circle cx="2.25" cy="2.25" r="1.3" fill="rgba(255, 80, 80, 0.9)" />
+            <circle cx="2.25" cy="2.25" r="1.35" fill="rgba(255, 75, 75, 0.95)" />
           </pattern>
         </defs>
         <g fill="url(#worldDotsPattern)">
@@ -175,13 +175,13 @@ function DottedWorldMap() {
  */
 function DiagonalLightStreaks() {
   return (
-    <div className="pointer-events-none absolute -top-12 -left-12 w-80 h-80 overflow-hidden select-none">
-      {/* Broad ambient red flare */}
-      <div className="absolute -top-6 -left-6 w-[500px] h-32 bg-gradient-to-r from-transparent via-[#ff2200]/45 to-transparent transform -rotate-45 blur-lg" />
+    <div className="pointer-events-none absolute -top-16 -left-16 w-96 h-96 overflow-hidden select-none">
+      {/* Broad ambient red beam */}
+      <div className="absolute -top-10 -left-10 w-[600px] h-36 bg-gradient-to-r from-transparent via-[#ff2200]/50 to-transparent transform -rotate-45 blur-xl" />
       {/* Laser-sharp bright light streaks */}
-      <div className="absolute top-6 -left-6 w-[450px] h-[3px] bg-gradient-to-r from-transparent via-white via-[#ff6666] to-transparent transform -rotate-45 blur-[0.4px]" />
-      <div className="absolute top-14 -left-6 w-[480px] h-[2px] bg-gradient-to-r from-transparent via-[#ffaaaa]/85 to-transparent transform -rotate-45 blur-[0.6px]" />
-      <div className="absolute top-24 -left-6 w-[500px] h-[4px] bg-gradient-to-r from-transparent via-[#ff3b30]/65 to-transparent transform -rotate-45 blur-xs" />
+      <div className="absolute top-8 -left-8 w-[550px] h-[3.5px] bg-gradient-to-r from-transparent via-white via-[#ff7777] to-transparent transform -rotate-45 blur-[0.4px]" />
+      <div className="absolute top-18 -left-8 w-[580px] h-[2.5px] bg-gradient-to-r from-transparent via-[#ffbbbb]/90 to-transparent transform -rotate-45 blur-[0.6px]" />
+      <div className="absolute top-32 -left-8 w-[600px] h-[5px] bg-gradient-to-r from-transparent via-[#ff3b30]/75 to-transparent transform -rotate-45 blur-xs" />
     </div>
   );
 }
@@ -441,15 +441,18 @@ export default function BreakingNewsShowcase({
   const slideLink = currentSlide?.link && currentSlide.link.trim() ? currentSlide.link.trim() : null;
 
   return (
-    <section className="mx-auto max-w-screen-xl px-2.5 sm:px-4 py-1.5 sm:py-2.5 mb-2.5 sm:mb-4 w-full select-none">
+    <section className="mx-auto max-w-screen-xl px-2.5 sm:px-4 py-2 sm:py-3 mb-3 sm:mb-5 w-full select-none">
       {/* ══════════════════════════════════════════════════════════════════════
-           PREMIUM TV NEWS BREAKING BANNER (Exact Match to Reference Graphic)
+           PREMIUM TV NEWS BREAKING BANNER (Exact Match to User Reference Graphic)
            ══════════════════════════════════════════════════════════════════════ */}
-      <div className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-b from-[#940000] via-[#610000] to-[#2b0000] p-2 sm:p-3 md:p-3.5 shadow-[0_15px_45px_rgba(0,0,0,0.85)] border border-[#ff3333]/50">
+      <div className="relative w-full overflow-hidden rounded-2xl md:rounded-[28px] bg-gradient-to-b from-[#A00000] via-[#6b0000] to-[#2c0000] p-3 sm:p-5 md:p-6 lg:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.9),0_0_40px_rgba(220,0,0,0.45)] border border-[#ff4444]/60">
 
         {/* ─── 1. TV STUDIO BACKGROUND LIGHTING ─── */}
-        {/* Center Ambient Radiant Glow */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_15%,rgba(255,45,45,0.6)_0%,transparent_70%)]" />
+        {/* Center Radiant Ambient Glow */}
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_50%_10%,rgba(255,50,50,0.7)_0%,transparent_75%)]" />
+
+        {/* Top-Left Corner Radiant Flare */}
+        <div className="pointer-events-none absolute -top-16 -left-16 w-96 h-96 bg-[radial-gradient(circle_at_20%_20%,rgba(255,80,60,0.75)_0%,transparent_60%)]" />
 
         {/* Diagonal Red Light Streaks (Top Left) */}
         <DiagonalLightStreaks />
@@ -457,29 +460,31 @@ export default function BreakingNewsShowcase({
         {/* Dotted World Map (Top Right) */}
         <DottedWorldMap />
 
-        {/* ─── 2. TOP HEADER BADGE (Centered 3D BREAKING NEWS) ─── */}
-        <div className="relative z-20 flex justify-center mb-1.5 sm:mb-2.5">
+        {/* ─── 2. TOP HEADER BADGE (Large Prominent 3D Skewed BREAKING NEWS) ─── */}
+        <div className="relative z-20 flex justify-center mb-3 sm:mb-4 md:mb-5">
           {renderTvBreakingHeader(displayedBadge)}
         </div>
 
-        {/* ─── 3. MAIN INNER CONTENT CARD (Slim TV Studio Interior + Glowing Borders) ─── */}
-        <div className="relative w-full rounded-xl sm:rounded-2xl border-[1.5px] border-[#ff3b30]/85 bg-gradient-to-br from-[#380102] via-[#220001] to-[#120000] p-2.5 sm:p-3.5 md:p-4 shadow-[0_0_25px_rgba(255,30,30,0.4),inset_0_0_20px_rgba(255,0,0,0.25)] z-10">
+        {/* ─── 3. MAIN INNER CONTENT CARD (Rich Deep Crimson Studio Interior + Blazing Lens Flares) ─── */}
+        <div className="relative w-full rounded-xl sm:rounded-2xl md:rounded-[24px] border-[2px] border-[#ff3b30] bg-gradient-to-br from-[#400002] via-[#240001] to-[#120000] p-3.5 sm:p-5 md:p-6 lg:p-7 shadow-[0_0_35px_rgba(255,30,30,0.5),inset_0_0_25px_rgba(255,0,0,0.3)] z-10">
 
-          {/* Top Border Anamorphic Horizontal Light Flare */}
-          <div className="pointer-events-none absolute -top-[1.5px] left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff8800] via-white via-[#ff8800] to-transparent shadow-[0_0_10px_#ff6600]" />
-          <div className="pointer-events-none absolute -top-[4px] left-1/2 -translate-x-1/2 w-28 md:w-44 h-[8px] bg-white/90 blur-[3px] rounded-full" />
+          {/* Top Border Blazing Anamorphic Horizontal Light Flare */}
+          <div className="pointer-events-none absolute -top-[2px] left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#ff9900] via-white via-[#ff9900] to-transparent shadow-[0_0_15px_#ff6600]" />
+          <div className="pointer-events-none absolute -top-[6px] left-1/2 -translate-x-1/2 w-36 sm:w-56 h-[12px] bg-white blur-[3px] rounded-full" />
+          <div className="pointer-events-none absolute -top-[12px] left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[24px] bg-[#ff6600]/60 blur-[10px] rounded-full" />
 
-          {/* Bottom Border Anamorphic Horizontal Light Flare */}
-          <div className="pointer-events-none absolute -bottom-[1.5px] left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#ff8800] via-white via-[#ff8800] to-transparent shadow-[0_0_10px_#ff6600]" />
-          <div className="pointer-events-none absolute -bottom-[4px] left-1/2 -translate-x-1/2 w-28 md:w-44 h-[8px] bg-white/90 blur-[3px] rounded-full" />
+          {/* Bottom Border Blazing Anamorphic Horizontal Light Flare */}
+          <div className="pointer-events-none absolute -bottom-[2px] left-0 right-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#ff9900] via-white via-[#ff9900] to-transparent shadow-[0_0_15px_#ff6600]" />
+          <div className="pointer-events-none absolute -bottom-[6px] left-1/2 -translate-x-1/2 w-36 sm:w-56 h-[12px] bg-white blur-[3px] rounded-full" />
+          <div className="pointer-events-none absolute -bottom-[12px] left-1/2 -translate-x-1/2 w-64 sm:w-96 h-[24px] bg-[#ff6600]/60 blur-[10px] rounded-full" />
 
           {/* Two-Column Layout (Media Left ~45% / Text Right ~55%) */}
-          <div className="flex flex-col md:flex-row items-center gap-3 sm:gap-4 md:gap-5">
+          <div className="flex flex-col md:flex-row items-center gap-4 sm:gap-6 md:gap-7 lg:gap-8">
 
             {/* ── LEFT SECTION: News Image / Media (Approx 45%) ── */}
             {hasImage && (
-              <div className="w-full md:w-[45%] lg:w-[44%] shrink-0">
-                <div className="relative w-full aspect-[16/10] max-h-[190px] sm:max-h-[220px] md:max-h-[250px] rounded-lg sm:rounded-xl border-2 sm:border-[2.5px] border-white/95 shadow-[0_6px_25px_rgba(0,0,0,0.85)] overflow-hidden bg-black flex items-center justify-center">
+              <div className="w-full md:w-[45%] lg:w-[45%] shrink-0">
+                <div className="relative w-full h-[220px] sm:h-[260px] md:h-[300px] lg:h-[330px] rounded-xl sm:rounded-2xl border-[3px] border-white shadow-[0_10px_35px_rgba(0,0,0,0.95)] overflow-hidden bg-black flex items-center justify-center">
                   {activeSlides.map((slide, sIdx) => {
                     const slideImgs = (Array.isArray(slide.images) && slide.images.length > 0)
                       ? slide.images.filter((img) => typeof img === 'string' && img.trim() !== '')
@@ -518,22 +523,22 @@ export default function BreakingNewsShowcase({
             {/* ── RIGHT SECTION: Headline & Gujarat Post Logo (Approx 55% or 100% if no image) ── */}
             <div
               className={`w-full ${
-                hasImage ? 'md:w-[55%] lg:w-[56%]' : 'w-full'
-              } flex flex-col justify-between self-stretch min-h-[130px] sm:min-h-[160px] md:min-h-[200px] py-0.5`}
+                hasImage ? 'md:w-[55%] lg:w-[55%]' : 'w-full'
+              } flex flex-col justify-between self-stretch min-h-[180px] sm:min-h-[220px] md:min-h-[270px] lg:min-h-[300px] py-1`}
             >
               {/* Headline with Thick Vertical Yellow Accent Bar */}
-              <div className="flex items-start gap-3 sm:gap-4 my-auto">
-                {/* Vertical Yellow Accent Bar */}
-                <div className="w-2 sm:w-2.5 bg-[#FFD700] rounded-full self-stretch shrink-0 shadow-[0_0_10px_rgba(255,215,0,0.7)]" />
+              <div className="flex items-start gap-4 sm:gap-5 my-auto">
+                {/* Thick Vibrant Golden Yellow Accent Bar */}
+                <div className="w-2.5 sm:w-3.5 bg-[#FFE600] rounded-full self-stretch shrink-0 shadow-[0_0_15px_rgba(255,230,0,0.85)]" />
 
-                {/* Gujarati / English Headline with Yellow Highlight on Numbers */}
+                {/* Gujarati / English Headline */}
                 {slideLink ? (
                   <Link
                     href={slideLink}
                     className="block group cursor-pointer hover:opacity-95 transition-opacity"
                   >
                     <h2
-                      className={`font-black text-xl sm:text-2xl md:text-3xl lg:text-[34px] xl:text-[38px] leading-[1.24] tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-all duration-300 ${
+                      className={`font-black text-2xl sm:text-3xl md:text-4xl lg:text-[44px] xl:text-[48px] leading-[1.22] tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.95)] transition-all duration-300 ${
                         isTextExiting
                           ? 'opacity-0 -translate-y-2'
                           : 'opacity-100 translate-y-0'
@@ -544,7 +549,7 @@ export default function BreakingNewsShowcase({
                   </Link>
                 ) : (
                   <h2
-                    className={`font-black text-xl sm:text-2xl md:text-3xl lg:text-[34px] xl:text-[38px] leading-[1.24] tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] transition-all duration-300 ${
+                    className={`font-black text-2xl sm:text-3xl md:text-4xl lg:text-[44px] xl:text-[48px] leading-[1.22] tracking-tight text-white drop-shadow-[0_3px_12px_rgba(0,0,0,0.95)] transition-all duration-300 ${
                       isTextExiting
                         ? 'opacity-0 -translate-y-2'
                         : 'opacity-100 translate-y-0'
@@ -556,30 +561,30 @@ export default function BreakingNewsShowcase({
               </div>
 
               {/* Bottom-Right Gujarat Post Branding (Logo in crisp white rounded card) */}
-              <div className="flex items-center justify-end mt-2">
+              <div className="flex items-center justify-end mt-3 sm:mt-4">
                 {slideLink ? (
                   <Link
                     href={slideLink}
-                    className="bg-white rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 shadow-md border border-white/90 shrink-0 flex items-center justify-center hover:shadow-lg transition"
+                    className="bg-white rounded-xl sm:rounded-2xl px-3.5 sm:px-4.5 py-1.5 sm:py-2 shadow-xl border border-white shrink-0 flex items-center justify-center hover:shadow-2xl transition"
                     title="Gujarat Post"
                   >
                     <Image
                       src="/GujaratpostFinalLogo.png"
                       alt="Gujarat Post"
-                      width={115}
-                      height={26}
-                      className="h-4 sm:h-5 md:h-5.5 w-auto object-contain"
+                      width={130}
+                      height={30}
+                      className="h-5 sm:h-6 md:h-7 w-auto object-contain"
                       priority
                     />
                   </Link>
                 ) : (
-                  <div className="bg-white rounded-lg sm:rounded-xl px-2.5 sm:px-3 py-1 shadow-md border border-white/90 shrink-0 flex items-center justify-center">
+                  <div className="bg-white rounded-xl sm:rounded-2xl px-3.5 sm:px-4.5 py-1.5 sm:py-2 shadow-xl border border-white shrink-0 flex items-center justify-center">
                     <Image
                       src="/GujaratpostFinalLogo.png"
                       alt="Gujarat Post"
-                      width={115}
-                      height={26}
-                      className="h-4 sm:h-5 md:h-5.5 w-auto object-contain"
+                      width={130}
+                      height={30}
+                      className="h-5 sm:h-6 md:h-7 w-auto object-contain"
                       priority
                     />
                   </div>
