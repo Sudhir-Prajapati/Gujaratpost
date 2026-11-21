@@ -2,7 +2,7 @@ import { Article, Author, NavItem, Photo, Video, Language } from '@/types';
 
 
 
-import { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, hasSpecificTime, formatArticleDateTime, slugify } from '@/lib/utils';
+import { toGu, toGuLocal, toGuDigits, formatViews, formatDate, formatTime, hasSpecificTime, formatArticleDateTime, slugify, stripHighlightsBlock } from '@/lib/utils';
 
 
 
@@ -403,65 +403,28 @@ export function decodeHtmlEntities(value?: string | null): string {
 
 
 export function cleanArticlePlainText(value?: string | null): string {
+  if (!value) return '';
 
-
-
-  let text = decodeHtmlEntities(value)
-
-
-
+  let text = stripHighlightsBlock(decodeHtmlEntities(value))
+    .replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^\n<]*/gi, ' ')
+    .replace(/[-*—_]{3,}/g, ' ')
+    .replace(/^[•*\-#\s]+/gm, ' ')
     .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
-
-
-
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-
-
-
     .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-
-
-
     .replace(/<\/?(p|div|br|h[1-6]|li|ul|ol|blockquote|figure|figcaption)[^>]*>/gi, ' ')
-
-
-
     .replace(/<[^>]*>/g, ' ')
-
-
-
     .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-
-
-
     .replace(/[#*_`~>|]+/g, ' ')
-
-
-
     .replace(/\s+/g, ' ')
-
-
-
     .trim();
 
-
-
-
-
-
-
   // Strip any accidental breadcrumb prefix if extracted from HTML body (e.g. "હોમ / રાજનીતિ / અમદાવાદ / ...")
-
-
-
   text = text.replace(/^(?:હોમ|Home|होम)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
-
-
-
+  text = text.replace(/^(?:📌\s*)?(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)\s*/i, '');
+  text = text.replace(/\(KEY HIGHLIGHTS\)/gi, ' ');
+  text = text.replace(/[-*—_]{3,}/g, ' ');
   return text.trim();
-
-
-
 }
 
 

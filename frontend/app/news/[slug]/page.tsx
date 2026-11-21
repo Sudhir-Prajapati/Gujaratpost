@@ -7,6 +7,7 @@ import { getOpenGraphImageUrl } from "@/lib/facebookShare";
 import NewsDetailClient from "./NewsDetailClient";
 import { filterUniqueArticles } from "@/lib/articleDeduplication";
 import { isSameCategory, normalizeCategory, sortArticlesByNewest, getArticleAgeDays, getArticleTimestamp, isSolelyHealthArticle } from "@/lib/articleCategory";
+import { stripHighlightsBlock } from "@/lib/utils";
 
 export const revalidate = 30;
 
@@ -82,17 +83,35 @@ export async function generateMetadata(
     const cleanTitle = cleanArticlePlainText(translatedTitle) || 'Gujarat Post';
 
     // Localized description: Gujarati by default, or specific selected language (hi / en)
-    const rawCandidateExcerpt = (lang === 'hi' && article.excerptHi && /[\u0900-\u097F]/.test(article.excerptHi))
+    let candidateExcerpt = (lang === 'hi' && article.excerptHi && /[\u0900-\u097F]/.test(article.excerptHi))
       ? article.excerptHi
       : (lang === 'gu' && article.excerptGu)
       ? article.excerptGu
       : (lang === 'en' && article.excerpt)
       ? article.excerpt
-      : (article.excerptGu || article.excerpt || article.contentGu || article.content || '');
+      : (article.excerptGu || article.excerpt || '');
 
-    let cleanDesc = cleanArticlePlainText(rawCandidateExcerpt);
+    candidateExcerpt = stripHighlightsBlock(candidateExcerpt || '');
+
+    if (!candidateExcerpt || candidateExcerpt.trim().length < 15 || candidateExcerpt === 'null' || candidateExcerpt === 'undefined' || candidateExcerpt === 'Gujarat Post news flash.') {
+      const fullBody = (lang === 'hi' && article.contentHi)
+        ? article.contentHi
+        : (lang === 'gu' && article.contentGu)
+        ? article.contentGu
+        : (article.contentGu || article.content || article.contentHi || '');
+
+      const bodyWithoutHl = stripHighlightsBlock(fullBody || '');
+      candidateExcerpt = bodyWithoutHl.trim() ? bodyWithoutHl : fullBody;
+    }
+
+    let cleanDesc = cleanArticlePlainText(candidateExcerpt);
+    cleanDesc = cleanDesc.replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^.\n]*?(?:[-*—_]{2,}|$)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/📌\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/\(KEY HIGHLIGHTS\)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/[-*—_]{3,}/g, ' ');
     cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
     cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
+    cleanDesc = cleanDesc.replace(/\s+/g, ' ').trim();
     if (cleanDesc.length > 170) {
       const slice = cleanDesc.slice(0, 170);
       const lastSpace = slice.lastIndexOf(' ');
@@ -103,8 +122,13 @@ export async function generateMetadata(
     }
 
     // Strip any residual breadcrumbs or category/city prefixes
+    cleanDesc = cleanDesc.replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^.\n]*?(?:[-*—_]{2,}|$)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/📌\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/\(KEY HIGHLIGHTS\)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/[-*—_]{3,}/g, ' ');
     cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
     cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
+    cleanDesc = cleanDesc.replace(/\s+/g, ' ').trim();
     if (cleanDesc.length > 170) {
       const slice = cleanDesc.slice(0, 170);
       const lastSpace = slice.lastIndexOf(' ');

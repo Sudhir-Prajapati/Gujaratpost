@@ -2346,6 +2346,23 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
     }
     if (!finalTitleEn) finalTitleEn = effectiveTitle;
 
+    const generateFallbackExcerpt = (text: string) => {
+      const clean = stripHighlightsBlock(text || '')
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/[#*_`~>|]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      return clean.length > 180 ? clean.slice(0, 180).trim() + '...' : clean;
+    };
+
+    const fallbackGu = generateFallbackExcerpt(desc1Gu || desc1 || desc1Hi || '');
+    const fallbackHi = generateFallbackExcerpt(desc1Hi || desc1 || desc1Gu || '');
+    const fallbackEn = generateFallbackExcerpt(desc1 || desc1Gu || desc1Hi || '');
+
+    const finalExcerptGu = stripHighlightsBlock((excerptGu || '').trim()) || effectiveExcerpt || fallbackGu;
+    const finalExcerptHi = stripHighlightsBlock((excerptHi || '').trim()) || effectiveExcerpt || fallbackHi;
+    const finalExcerptEn = stripHighlightsBlock((excerpt || '').trim()) || effectiveExcerpt || fallbackEn;
+
     const payload = {
       language: articleLanguage,
       slug: safeSlug,
@@ -2353,9 +2370,9 @@ export default function ArticleForm({ articleId }: ArticleFormProps) {
       title: finalTitleEn,
       titleGu: safeTitleGu || effectiveTitle,
       titleHi: safeTitleHi || effectiveTitle,
-      excerpt: (excerpt || '').trim() || effectiveExcerpt || '',
-      excerptGu: (excerptGu || '').trim() || effectiveExcerpt || '',
-      excerptHi: (excerptHi || '').trim() || effectiveExcerpt || '',
+      excerpt: finalExcerptEn,
+      excerptGu: finalExcerptGu,
+      excerptHi: finalExcerptHi,
       content: compiledEn,
       contentGu: compiledGu,
       contentHi: compiledHi,
