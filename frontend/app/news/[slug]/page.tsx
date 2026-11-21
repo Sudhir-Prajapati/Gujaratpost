@@ -94,7 +94,9 @@ export async function generateMetadata(
     candidateExcerpt = stripHighlightsBlock(candidateExcerpt || '');
 
     if (!candidateExcerpt || candidateExcerpt.trim().length < 15 || candidateExcerpt === 'null' || candidateExcerpt === 'undefined' || candidateExcerpt === 'Gujarat Post news flash.') {
-      const fullBody = (lang === 'hi' && article.contentHi)
+      const fullBody = (lang === 'en' && article.content)
+        ? article.content
+        : (lang === 'hi' && article.contentHi)
         ? article.contentHi
         : (lang === 'gu' && article.contentGu)
         ? article.contentGu
@@ -105,10 +107,12 @@ export async function generateMetadata(
     }
 
     let cleanDesc = cleanArticlePlainText(candidateExcerpt);
-    cleanDesc = cleanDesc.replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^.\n]*?(?:[-*—_]{2,}|$)/gi, ' ');
-    cleanDesc = cleanDesc.replace(/📌\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)/gi, ' ');
-    cleanDesc = cleanDesc.replace(/\(KEY HIGHLIGHTS\)/gi, ' ');
-    cleanDesc = cleanDesc.replace(/[-*—_]{3,}/g, ' ');
+    cleanDesc = cleanDesc.replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|At a [Gg]lance|KEY HIGHLIGHTS|Key [Hh]ighlights|HIGHLIGHTS|Highlights)[^.\n]*?(?:[-*—_]{2,}|$)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/📌\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|At a [Gg]lance|KEY HIGHLIGHTS|Key [Hh]ighlights|HIGHLIGHTS|Highlights)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/\(KEY HIGHLIGHTS\)|\(Key Highlights\)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/(?:At a [Gg]lance|Key [Hh]ighlights|KEY HIGHLIGHTS|એક નજરમાં)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/[-*—_]{2,}/g, ' ');
+    cleanDesc = cleanDesc.replace(/📌/g, ' ');
     cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
     cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
     cleanDesc = cleanDesc.replace(/\s+/g, ' ').trim();
@@ -121,11 +125,13 @@ export async function generateMetadata(
       cleanDesc = cleanArticlePlainText(await serverTranslateText(cleanDesc, lang));
     }
 
-    // Strip any residual breadcrumbs or category/city prefixes
-    cleanDesc = cleanDesc.replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)[^.\n]*?(?:[-*—_]{2,}|$)/gi, ' ');
-    cleanDesc = cleanDesc.replace(/📌\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|KEY HIGHLIGHTS|HIGHLIGHTS)/gi, ' ');
-    cleanDesc = cleanDesc.replace(/\(KEY HIGHLIGHTS\)/gi, ' ');
-    cleanDesc = cleanDesc.replace(/[-*—_]{3,}/g, ' ');
+    // Strip any residual breadcrumbs or category/city prefixes and leftover highlights text
+    cleanDesc = cleanDesc.replace(/(?:##\s*)?📌?\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|At a [Gg]lance|KEY HIGHLIGHTS|Key [Hh]ighlights|HIGHLIGHTS|Highlights)[^.\n]*?(?:[-*—_]{2,}|$)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/📌\s*(?:એક નજરમાં|એક નજર મેં|एक नजर में|AT A GLANCE|At a [Gg]lance|KEY HIGHLIGHTS|Key [Hh]ighlights|HIGHLIGHTS|Highlights)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/\(KEY HIGHLIGHTS\)|\(Key Highlights\)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/(?:At a [Gg]lance|Key [Hh]ighlights|KEY HIGHLIGHTS|એક નજરમાં)/gi, ' ');
+    cleanDesc = cleanDesc.replace(/[-*—_]{2,}/g, ' ');
+    cleanDesc = cleanDesc.replace(/📌/g, ' ');
     cleanDesc = cleanDesc.replace(/^(?:હોમ|Home|ભોમ|સમાચાર)\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]\s*[^/]+?\s*[\/|›»•·-]?\s*/i, '');
     cleanDesc = cleanDesc.replace(/^(?:રાજનીતિ|ગુજરાત|અમદાવાદ|સુરત|વડોદરા|રાજકોટ|ગાંધીનગર|ક્રાઇમ|બિઝનેસ)\s*[·•|/–-]\s*/i, '');
     cleanDesc = cleanDesc.replace(/\s+/g, ' ').trim();

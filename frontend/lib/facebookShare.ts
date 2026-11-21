@@ -34,10 +34,11 @@ export function buildLocalizedShareUrl(rawUrl: string, language?: Language): str
   try {
     const url = new URL(publicUrl);
     url.searchParams.set('lang', lang);
+    url.searchParams.set('v', '2');
     return url.toString();
   } catch {
     const separator = publicUrl.includes('?') ? '&' : '?';
-    return `${publicUrl}${separator}lang=${lang}`;
+    return `${publicUrl}${separator}lang=${lang}&v=2`;
   }
 }
 

@@ -14,6 +14,7 @@ import { CATEGORY_PAIRS } from '@/app/category/[slug]/CategoryPageClient';
 import ApkAdBanner from './ApkAdBanner';
 import MobileModernArticleCard from '@/components/ui/MobileModernArticleCard';
 import { SocialIcon } from '@/components/ui/SocialLinks';
+import { buildLocalizedShareUrl } from '@/lib/facebookShare';
 
 interface ApkCategoryFeedProps {
   articles: Article[];
@@ -103,7 +104,8 @@ export default function ApkCategoryFeed({
   const handleShare = async (e: React.MouseEvent, art: Article) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = typeof window !== 'undefined' ? `${window.location.origin}/news/${art.slug || art.id}` : '';
+    const rawUrl = typeof window !== 'undefined' ? `${window.location.origin}/news/${art.slug || art.id}` : '';
+    const url = buildLocalizedShareUrl(rawUrl, language);
     const title = language === 'gu' ? art.titleGu || art.title : language === 'hi' ? art.titleHi || art.title : art.title;
 
     if (navigator.share) {

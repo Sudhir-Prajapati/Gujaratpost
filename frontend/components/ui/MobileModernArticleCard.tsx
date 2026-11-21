@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/AutoTranslatedArticleText';
 import { getArticleTitle, getCategoryLabel } from '@/data';
 import { getCategoryBadgeStyle } from '@/lib/utils';
+import { buildLocalizedShareUrl } from '@/lib/facebookShare';
 
 export interface MobileModernArticleCardProps {
   article: any;
@@ -86,10 +87,11 @@ export default function MobileModernArticleCard({
     const title = getArticleTitle(article, language) || rawTitle;
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const shareUrl = href.startsWith('http') ? href : `${origin}${href}`;
-    const shareText = `${title}\n\n${shareUrl}`;
+    const localizedUrl = buildLocalizedShareUrl(shareUrl, language);
+    const shareText = `${title}\n\n${localizedUrl}`;
 
     if (typeof navigator !== 'undefined' && navigator.share) {
-      navigator.share({ title, url: shareUrl, text: shareText }).catch(() => {
+      navigator.share({ title, url: localizedUrl, text: shareText }).catch(() => {
         window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
       });
     } else {
